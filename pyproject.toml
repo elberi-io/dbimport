@@ -130,9 +130,11 @@ extend-include = [
 
 [tool.ruff.lint]
 # Existing code is checked only for errors that point at real bugs:
-# syntax errors, invalid comparisons and undefined names. tests/ruff.toml
-# applies a stricter rule set to the tests.
-select = ["E9", "F63", "F7", "F82"]
+# syntax errors, invalid comparisons and undefined names. RUF100 reports
+# noqa comments that are no longer needed, so a suppression is removed
+# together with the bug it hides. tests/ruff.toml applies a stricter rule
+# set to the tests.
+select = ["E9", "F63", "F7", "F82", "RUF100"]
 
 [tool.ruff.format]
 # Existing code is not reformatted; only the tests are formatted.
