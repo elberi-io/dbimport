@@ -95,3 +95,48 @@ the section above is not needed for them.
 docker compose up -d --wait
 uv run pytest
 ```
+
+Known bugs are recorded as expected failures (`xfail`, strict), so a fix
+shows up as an unexpected pass and the marker must be removed with it.
+
+## Checks
+
+CI (`.github/workflows/ci.yml`) runs these on every pull request. Run them
+before you open one:
+
+```bash
+uv run ruff format --check
+uv run ruff check
+uv run mypy
+PYTHONPATH=bin uv run lint-imports
+uv run pytest
+```
+
+For the web UI, in `bin/Server/html`:
+
+```bash
+npm ci
+npm run lint
+npm run build
+```
+
+Existing code in `bin/` is only checked for errors that point at real
+bugs (syntax errors, invalid comparisons, undefined names, unused `noqa`)
+and is not reformatted. The tests use the stricter rules in
+`tests/ruff.toml` and `ruff format`. import-linter checks the package
+layering defined in `pyproject.toml`.
+
+## Generated files
+
+Do not edit these by hand; regenerate them and review the diff:
+
+| File | Command |
+|---|---|
+| `uv.lock` | `uv lock` (after changing dependencies in `pyproject.toml`) |
+| `bin/requirements.txt` | `uv export --locked --no-dev --format requirements-txt -o bin/requirements.txt` |
+| `tests/fixtures/dags/*.py.txt` | `DBIMPORT_UPDATE_EXPECTED_DAGS=1 uv run pytest tests/integration/test_airflow_dag_generation.py` |
+
+`tests/fixtures/orm_schema_drift.txt` lists the known differences between
+the ORM and the migrated schema. When the ORM or the migrations change,
+update it from the difference that
+`test_orm_differs_from_migrated_schema_only_by_known_drift` reports.

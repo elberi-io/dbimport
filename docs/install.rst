@@ -64,6 +64,12 @@ As the configuration is all located in a MariaDB database, you need to create th
 
 .. note:: Due to incombability between MariaDB and SQLAlchemy, MariaDB version 10.2.8 or earlier in the 10.2 series is not supported. Either run 10.1.x or 10.2.9 or newer
 
+.. note:: The configuration database must use *latin1* as its character set. With *utf8mb3* or *utf8mb4*, creating the schema fails with error 1071 (specified key was too long), because several primary keys exceed the InnoDB key length limit of 3072 bytes. Create the database with::
+
+        CREATE DATABASE DBImport CHARACTER SET latin1;
+
+   This was verified with MariaDB 11.4.
+
 Create the configuration schema running this command::
 
         bin/setup --createDB
