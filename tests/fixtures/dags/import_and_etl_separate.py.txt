@@ -1,0 +1,174 @@
+# -*- coding: utf-8 -*-
+import airflow
+from airflow import DAG
+from airflow.models import Variable
+from airflow.sensors.external_task import ExternalTaskSensor
+from airflow.sensors.sql_sensor import SqlSensor
+from airflow.operators.bash_operator import BashOperator
+from airflow.operators.python_operator import BranchPythonOperator
+from airflow.operators.dagrun_operator import TriggerDagRunOperator
+from airflow.operators.dummy_operator import DummyOperator
+from airflow.api.common.experimental.pool import get_pool, create_pool
+from airflow.exceptions import PoolNotFound
+from airflow.models import BaseOperator
+from datetime import datetime, timedelta, timezone
+import pendulum
+
+try:
+    Email_receiver = Variable.get("Email_receiver")
+except KeyError:
+    Email_receiver = "not-set@domain.com"
+
+
+class CreatePoolOperator(BaseOperator):
+    ui_color = '#b8e9ee'
+
+    def __init__(
+            self,
+            name,
+            slots,
+            description='',
+            *args, **kwargs):
+        super(CreatePoolOperator, self).__init__(*args, **kwargs)
+        self.description = description
+        self.slots = slots
+        self.name = name
+
+    def execute(self, context):
+        try:
+            pool = get_pool(name=self.name)
+            print('Pool exists: %s'%(pool))
+        except PoolNotFound:
+            # create the pool
+            pool = create_pool(name=self.name, slots=self.slots, description=self.description)
+            print('Pool exists: %s'%(pool))
+
+
+local_tz = pendulum.timezone("UTC")
+
+
+default_args = {
+    'owner': 'airflow',
+    'depends_on_past': False,
+    'start_date': datetime(2017, 1, 1, 0, 0, tzinfo=local_tz),
+    'max_active_runs': 1,
+    'email': Email_receiver,
+    'email_on_failure': False,
+    'email_on_retry': False,
+    'retry_exponential_backoff': False,
+    'retries': 0,
+    'pool': 'DBImport_test',
+    'retry_delay': timedelta(minutes=5),
+}
+
+dag = DAG(
+    'DBImport_test',
+    default_args=default_args,
+    description='DBImport_test',
+    catchup=False,
+    schedule_interval=None)
+
+start = BashOperator(
+    task_id='start',
+    bash_command='sudo -iu dbimport /usr/local/dbimport/bin/manage --checkAirflowExecution --airflowDAG=DBImport_test',
+    priority_weight=100,
+    weight_rule='absolute',
+    pool=None,
+    dag=dag)
+
+stop = BashOperator(
+    task_id='stop',
+    bash_command='sudo -iu dbimport /usr/local/dbimport/bin/manage --sendAirflowStopMessage --airflowDAG=DBImport_test',
+    priority_weight=100,
+    weight_rule='absolute',
+    pool=None,
+    dag=dag)
+
+before_tasks_finished = DummyOperator(
+    task_id='before_tasks_finished',
+    priority_weight=100,
+    weight_rule='absolute',
+    dag=dag)
+
+events_import = BashOperator(
+    task_id='events_import',
+    bash_command='sudo -iu dbimport /usr/local/dbimport/bin/import -h testdb -t events -I -C ',
+    pool='DBImport_server_source.example',
+    priority_weight=1,
+    weight_rule='absolute',
+    retries=5,
+    dag=dag)
+
+events_etl = BashOperator(
+    task_id='events_etl',
+    bash_command='sudo -iu dbimport /usr/local/dbimport/bin/import -h testdb -t events -E ',
+    pool='DBImport_test',
+    priority_weight=1,
+    weight_rule='absolute',
+    retries=5,
+    dag=dag)
+
+before_tasks_finished.set_downstream(events_import)
+events_import.set_downstream(events_etl)
+events_etl.set_downstream(stop)
+
+orders_clearStage = BashOperator(
+    task_id='orders_clearStage',
+    bash_command='sudo -iu dbimport /usr/local/dbimport/bin/manage --clearImportStage -h testdb -t orders ',
+    pool='DBImport_server_source.example',
+    priority_weight=1,
+    weight_rule='absolute',
+    retries=5,
+    dag=dag)
+
+orders_import = BashOperator(
+    task_id='orders_import',
+    bash_command='sudo -iu dbimport /usr/local/dbimport/bin/import -h testdb -t orders -I -C ',
+    pool='DBImport_server_source.example',
+    priority_weight=1,
+    weight_rule='absolute',
+    retries=5,
+    dag=dag)
+
+orders_etl = BashOperator(
+    task_id='orders_etl',
+    bash_command='sudo -iu dbimport /usr/local/dbimport/bin/import -h testdb -t orders -E ',
+    pool='DBImport_test',
+    priority_weight=1,
+    weight_rule='absolute',
+    retries=5,
+    dag=dag)
+
+before_tasks_finished.set_downstream(orders_clearStage)
+orders_clearStage.set_downstream(orders_import)
+orders_import.set_downstream(orders_etl)
+orders_etl.set_downstream(stop)
+
+
+createPool_DBImport_test = CreatePoolOperator(
+    name='DBImport_test',
+    slots=24,
+    task_id='createPool_DBImport_test',
+    retries=5,
+    priority_weight=1,
+    weight_rule='absolute',
+    pool=None,
+    dag=dag)
+
+start.set_downstream(createPool_DBImport_test)
+createPool_DBImport_test.set_downstream(before_tasks_finished)
+
+
+createPool_DBImport_server_source_example = CreatePoolOperator(
+    name='DBImport_server_source.example',
+    slots=24,
+    task_id='createPool_DBImport_server_source_example',
+    retries=5,
+    priority_weight=1,
+    weight_rule='absolute',
+    pool=None,
+    dag=dag)
+
+start.set_downstream(createPool_DBImport_server_source_example)
+createPool_DBImport_server_source_example.set_downstream(before_tasks_finished)
+
