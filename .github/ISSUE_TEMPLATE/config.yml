@@ -4,5 +4,5 @@ contact_links:
     url: https://github.com/elberi-io/dbimport/security/advisories/new
     about: Please report security issues privately, not as public issues. See SECURITY.md.
   - name: Documentation
-    url: https://github.com/elberi-io/dbimport/tree/master/docs
+    url: https://dbimport.readthedocs.io/
     about: Installation, configuration and concepts.
