@@ -103,3 +103,66 @@ dependencies = [
 package = false
 # DBImport only runs on Linux (Kerberos, /tmp paths, Hadoop tooling).
 environments = ["sys_platform == 'linux'"]
+
+[dependency-groups]
+dev = [
+    "mypy>=2.4.1",
+    "ruff>=0.17.3",
+]
+
+[tool.ruff]
+# The launchers in bin/ have no .py extension.
+extend-include = [
+    "bin/copy",
+    "bin/deploy",
+    "bin/export",
+    "bin/import",
+    "bin/mainServer",
+    "bin/manage",
+    "bin/restServer",
+    "bin/setup",
+]
+
+[tool.ruff.lint]
+# Existing code is checked only for errors that point at real bugs:
+# syntax errors, invalid comparisons and undefined names. tests/ruff.toml
+# applies a stricter rule set to the tests.
+select = ["E9", "F63", "F7", "F82"]
+
+[tool.ruff.format]
+# Existing code is not reformatted; only the tests are formatted.
+exclude = ["bin/**", "docs/**"]
+
+[tool.mypy]
+python_version = "3.11"
+files = ["tests"]
+mypy_path = "bin"
+strict = true
+# Calls from typed tests into the existing, untyped code are allowed.
+untyped_calls_exclude = [
+    "ConfigReader",
+    "DBImportConfig",
+    "DBImportOperation",
+    "Schedule",
+    "Server",
+    "catalogService",
+    "common",
+    "setupOperation",
+    "sourceSchemaReader",
+]
+
+[[tool.mypy.overrides]]
+# Existing code has no type annotations; type errors in it are not
+# reported until a module is refactored.
+module = [
+    "ConfigReader.*",
+    "DBImportConfig.*",
+    "DBImportOperation.*",
+    "Schedule.*",
+    "Server.*",
+    "catalogService.*",
+    "common.*",
+    "setupOperation.*",
+    "sourceSchemaReader.*",
+]
+ignore_errors = true
