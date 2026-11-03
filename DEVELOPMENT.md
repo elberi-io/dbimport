@@ -74,3 +74,24 @@ Stop the server and delete its data with:
 ```bash
 docker compose down
 ```
+
+## Running the tests
+
+Unit tests (`tests/unit/`) need no database:
+
+```bash
+uv run pytest -m "not integration"
+```
+
+Integration tests (`tests/integration/`) run against the MariaDB server
+from `compose.yaml`. They delete and recreate all tables in the `DBImport`
+database, and refuse to run against any host other than 127.0.0.1,
+localhost or the host named in the `DBIMPORT_TEST_DB_HOST` environment
+variable (used when the tests run in a container on the compose
+network). The tests generate their own RSA key pair, so the key pair from
+the section above is not needed for them.
+
+```bash
+docker compose up -d --wait
+uv run pytest
+```

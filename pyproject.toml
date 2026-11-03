@@ -108,6 +108,7 @@ environments = ["sys_platform == 'linux'"]
 dev = [
     "import-linter>=2.15",
     "mypy>=2.4.1",
+    "pytest>=9.1.1",
     "ruff>=0.17.3",
 ]
 
@@ -137,7 +138,8 @@ exclude = ["bin/**", "docs/**"]
 [tool.mypy]
 python_version = "3.11"
 files = ["tests"]
-mypy_path = "bin"
+mypy_path = ["bin", "."]
+explicit_package_bases = true
 strict = true
 # Calls from typed tests into the existing, untyped code are allowed.
 untyped_calls_exclude = [
@@ -203,4 +205,13 @@ ignore_imports = [
     # Existing exception: the catalog services use the Hive metastore
     # table definitions in DBImportOperation.hiveSchema.
     "catalogService.* -> DBImportOperation.hiveSchema",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["bin"]
+addopts = ["--strict-markers"]
+xfail_strict = true
+markers = [
+    "integration: needs the MariaDB configuration database from compose.yaml",
 ]
