@@ -13,21 +13,20 @@ Download the source package from the latest release from the `GitHub Release Pag
         tar -xf dbimport-VERSION.tar
    
 
-There is a number of Python dependencies that needs to be in place before DBImport can start. As of python itself, DBImport is verified with Python 3.6 and 3.8. Other versions may work but it's not tested. It's also preferable to use a virtual environment for Python, but creating a virtual environment is not part of this documentation. All required python packages with working versions is available in a requirements.txt file, one for each verified version of python. The version you select will also depend on what Spark version is installed in your cluster 
+There is a number of Python dependencies that needs to be in place before DBImport can start. DBImport supports Python 3.11. It's also preferable to use a virtual environment for Python, but creating a virtual environment is not part of this documentation. All required Python packages and their pinned versions are listed in *bin/requirements.txt*, which is generated from *uv.lock*.
+
+Some of the packages are built from source during installation. This requires a C compiler and the Kerberos development headers, for example the *libkrb5-dev* package on Debian and Ubuntu, or the equivalent package on other distributions.
 
 
-**Python 3.6**
+**Python 3.11**
 
-This version of python works with both Spark2 and Spark3. Please install the python packages for version 3.6::
+Install the Python packages with::
 
-        pip3.6 install -r requirements_python36.txt
+        python3.11 -m pip install -r bin/requirements.txt
 
+If you use `uv <https://docs.astral.sh/uv/>`_, you can create the environment from the lock file instead::
 
-**Python 3.8**
-
-When running python 3.8, you also need to run Spark3. If not, you will get errors in the ETL / Hive steps when running DBImport. Please install the python packages for version 3.8::
-
-        pip3.8 install -r requirements_python38.txt
+        uv sync --locked
 
 
 
