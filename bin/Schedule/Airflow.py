@@ -65,7 +65,7 @@ class initialize(object):
 			self.debugLogLevel = True
 
 		self.common_config = common_config.config()
-#		self.sendStatistics = sendStatistics.sendStatistics()
+		self.sendStatistics = sendStatistics.sendStatistics()
 
 		self.dbimportCommandPath = self.getConfigValue("airflow_dbimport_commandpath")
 		self.defaultSudoUser = self.getConfigValue("airflow_sudo_user")

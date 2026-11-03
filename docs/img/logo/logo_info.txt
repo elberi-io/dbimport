@@ -1,0 +1,38 @@
+DBImport logo
+=============
+
+Files
+-----
+dbimport_logo.svg / .png              Logo only, transparent background (512x512)
+dbimport_logo_white.svg / .png        Logo only, white background (512x512)
+dbimport_logo_100px.png               Logo only, transparent, 100x100 (README)
+dbimport_logo.ico                     Favicon, 16/24/32/48/64/128/256 px
+dbimport_logo_wordmark.png            Logo + "DBImport", transparent background (1530x512)
+dbimport_logo_wordmark_white.png/.jpg Logo + "DBImport", white background (1530x512)
+
+The transparent versions are meant for light backgrounds.
+
+Font
+----
+Avenir Next, Bold (weight 700)
+Used for the "DBImport" text in the wordmark. In the 512 px high
+wordmark the text is 200 px, letter spacing -4 px.
+
+Colours
+-------
+Arrows (flat, no gradients), clockwise from the left:
+  Orange   #D9622B
+  Blue     #2563A8
+  Green    #2E8B57
+  Gold     #D9A21B
+
+Database:
+  Body     #334155
+  Top      #64748B
+
+Text:
+  "DB"     #2563A8   (same blue as the arrow)
+  "Import" #334155   (same slate as the database body)
+
+Background (white versions):
+  White    #FFFFFF

@@ -1210,7 +1210,6 @@ class operation(object, metaclass=Singleton):
 		self.import_config.common_config.updateYarnStatistics(self.yarnApplicationID, "spark") 
 
 		sys.stdout.flush()
-		# self.stopSpark()
 		
 		self.spark.sql("set spark.sql.orc.impl=native")
 
@@ -1218,6 +1217,11 @@ class operation(object, metaclass=Singleton):
 
 
 	def stopSpark(self):
+
+		# This might be called multiple times. Just return in case it's already closed
+		if self.sparkContext == None:
+			return 
+
 		# Connect to the Spark UI and request the API to get the total number of Executors used. This will be saved in the 'yarn_statistics' table
 		sparkURL = "%s/api/v1/applications/%s/allexecutors"%(self.sparkContext.uiWebUrl, self.yarnApplicationID)
 		self.kerberosPrincipal = configuration.get("Kerberos", "principal")
@@ -1235,6 +1239,7 @@ class operation(object, metaclass=Singleton):
 		self.import_config.common_config.updateYarnStatistics(self.yarnApplicationID, "spark", 
 			yarnContainersTotal = sparkExecutorCount) 
 
+		logging.info("Stopping Spark context")
 		self.sparkContext.stop()
 		self.sparkContext = None
 		self.spark = None

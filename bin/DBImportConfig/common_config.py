@@ -467,9 +467,12 @@ class config(object, metaclass=Singleton):
 
 		# Remove the kerberos ticket file
 		if self.kerberosInitiated == True:
-			klistCommandList = ['kdestroy']
-			klistProc = subprocess.Popen(klistCommandList , stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-			stdOut, stdErr = klistProc.communicate()
+			try:
+				klistCommandList = ['kdestroy']
+				klistProc = subprocess.Popen(klistCommandList , stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+				stdOut, stdErr = klistProc.communicate()
+			except:
+				pass
 
 		# We add this check just to make sure that self.tempdir contains a valid path and that no exception forces us to remove example /
 		if len(self.tempdir) > 13 and self.tempdir.startswith( '/tmp/' ):
@@ -1442,8 +1445,8 @@ class config(object, metaclass=Singleton):
 			pass
 
 		except Exception as exception:
-			log.info("Unknown error during disconnection from JDBC database:")
-			log.info(exception.message())
+			log.debug("Unknown error during disconnection from JDBC database:")
+			log.debug(exception.message())
 			pass
 
 
