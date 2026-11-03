@@ -34,7 +34,7 @@ Thank you for considering contributing. Your efforts are incredibly valuable. To
 
 1. Fork the repository.
 2. Create your feature branch: `git checkout -b feature/YourFeature`
-3. Make sure all tests and linting pass.
+3. Make sure all tests and linting pass. See [DEVELOPMENT.md](DEVELOPMENT.md) for how to set up a development environment.
 4. Commit your changes: `git commit -am 'Add: YourFeature'`
 5. Push to the branch: `git push origin feature/YourFeature`
 6. Submit a pull request.

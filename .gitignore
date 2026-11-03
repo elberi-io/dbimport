@@ -20,6 +20,8 @@
 .attach*
 .bash*
 *.cfg
+# Test configuration with throwaway values only (see compose.yaml)
+!/tests/fixtures/*.cfg
 *.pem
 
 # Symbolic Links

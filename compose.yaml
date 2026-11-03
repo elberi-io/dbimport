@@ -1,0 +1,25 @@
+# Local development and test services. Not for production use.
+#
+#   docker compose up -d --wait   # start and wait until healthy
+#   docker compose down           # stop and delete the data
+#
+# The credentials below are throwaway values that match
+# tests/fixtures/dbimport.test.cfg.
+services:
+  mariadb:
+    image: mariadb:11.4
+    # The schema migrations need latin1: with utf8mb3 or utf8mb4 several
+    # primary keys exceed InnoDB's 3072-byte key limit (error 1071).
+    command: ["--character-set-server=latin1", "--collation-server=latin1_swedish_ci"]
+    environment:
+      MARIADB_DATABASE: DBImport
+      MARIADB_USER: dbimport
+      MARIADB_PASSWORD: dbimport
+      MARIADB_RANDOM_ROOT_PASSWORD: "1"
+    ports:
+      - "127.0.0.1:3306:3306"
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
