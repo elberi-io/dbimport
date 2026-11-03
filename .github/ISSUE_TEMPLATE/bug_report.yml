@@ -1,0 +1,68 @@
+name: Bug report
+description: Report something that does not work as expected
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a bug. Please search existing issues first - if it is already reported, add your information there.
+
+        **Security vulnerabilities must not be reported here.** See [SECURITY.md](https://github.com/elberi-io/dbimport/blob/master/SECURITY.md) and use private vulnerability reporting.
+
+        Remove passwords, hostnames, tokens and other sensitive data from logs and configuration before posting.
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      description: A short description of the problem.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Clear, detailed steps, including the command you ran (for example `import -h <db> -t <table>`).
+      placeholder: |
+        1. ...
+        2. ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behaviour
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behaviour
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: DBImport version
+      description: Output of `import --version` or the version in `bin/common/constants.py`.
+      placeholder: "1.00.006"
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Operating system, Python version, platform (on-prem Hadoop distribution and version, or AWS EMR/Glue/MWAA), Spark and Airflow versions, config database engine and version.
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs and error messages
+      description: Relevant output, with sensitive information removed. Do not run with `-v`/`--debug` against real systems before sharing - debug output can contain passwords.
+      render: text
+  - type: textarea
+    id: analysis
+    attributes:
+      label: Root cause or possible fix
+      description: Optional. Technical observations, suspected cause, or ideas for a fix.
