@@ -8,6 +8,7 @@ against anything but a local test database.
 import configparser
 import os
 from collections.abc import Iterator
+from typing import Any
 
 import pytest
 import sqlalchemy as sa
@@ -35,9 +36,21 @@ def _engine() -> sa.Engine:
         port=int(db["mysql_port"]),
         database=db["mysql_database"],
     )
+    # A lock left behind by DBImport code then fails the fixture after 30 s
+    # instead of waiting for the server default of one day.
+    connect_args = {
+        "connect_timeout": 10,
+        "init_command": "SET SESSION lock_wait_timeout = 30",
+    }
     return sa.create_engine(
-        url, connect_args={"connect_timeout": 10}, isolation_level="AUTOCOMMIT"
+        url, connect_args=connect_args, isolation_level="AUTOCOMMIT"
     )
+
+
+def _close(setup: Any) -> None:
+    """Close the database connections of a setupOperation.database object."""
+    setup.mysql_conn.close()
+    setup.configDB.dispose()
 
 
 def _tables(conn: sa.Connection) -> list[str]:
@@ -68,7 +81,9 @@ def config_db(engine: sa.Engine) -> None:
         for table in _tables(conn):
             conn.execute(sa.text(f"DROP TABLE `{table}`"))
         conn.execute(sa.text("SET FOREIGN_KEY_CHECKS = 1"))
-    database.initialize().createDB()
+    setup = database.initialize()
+    setup.createDB()
+    _close(setup)
 
 
 @pytest.fixture
@@ -89,6 +104,7 @@ def clean_config_db(config_db: None, engine: sa.Engine) -> None:
     setup = database.initialize()
     setup.createDefaultEnvironmentTypes()
     setup.updateConfigurationValues()
+    _close(setup)
 
 
 @pytest.fixture

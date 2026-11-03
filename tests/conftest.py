@@ -69,10 +69,28 @@ def pytest_unconfigure(config: pytest.Config) -> None:
     shutil.rmtree(f"/tmp/dbimport.{os.getpid()}.tmp", ignore_errors=True)
 
 
+def close_dbimport_connections(obj: object) -> None:
+    """Close the configuration database connections a DBImport object holds.
+
+    A DBImport command runs in its own process, so its connections end
+    with the process. Tests share one process: an open transaction left
+    behind by one test would block the next test's TRUNCATE on a
+    metadata lock.
+    """
+    conn = getattr(obj, "mysql_conn", None)
+    if conn is not None:
+        conn.close()
+    engine = getattr(obj, "configDB", None)
+    if engine is not None:
+        engine.dispose()
+
+
 @pytest.fixture(autouse=True)
 def _reset_singletons() -> Iterator[None]:
     """Give every test fresh DBImport singletons (common.Singleton)."""
     yield
     from common.Singleton import Singleton
 
+    for instance in Singleton._instances.values():
+        close_dbimport_connections(instance)
     Singleton._instances.clear()
