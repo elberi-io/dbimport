@@ -4,12 +4,6 @@ alembic==1.13.1 ; sys_platform == 'linux' \
     --hash=sha256:2edcc97bed0bd3272611ce3a98d98279e9c209e7186e43e75bbb1b2bdfdbcc43 \
     --hash=sha256:4932c8558bf68f2ee92b9bbcb8218671c627064d5b08939437af6d77dc05e595
     # via dbimport
-aniso8601==9.0.1 ; sys_platform == 'linux' \
-    --hash=sha256:1d2b7ef82963909e93c4f24ce48d4de9e66009a21bf1c1e1c85bdd0812fe412f \
-    --hash=sha256:72e3117667eedf66951bb2d93f4296a56b94b078a8a95905a052611fb3f1b973
-    # via
-    #   dbimport
-    #   flask-restful
 annotated-types==0.6.0 ; sys_platform == 'linux' \
     --hash=sha256:0641064de18ba7a25dee8f96403ebc39113d0cb953a01429249d5c7564666a43 \
     --hash=sha256:563339e807e53ffd9c267e99fc6d9ea23eb8443c08f112651963e24e22f84a5d
@@ -48,12 +42,6 @@ bcrypt==4.1.2 ; sys_platform == 'linux' \
     --hash=sha256:eb3bd3321517916696233b5e0c67fd7d6281f0ef48e66812db35fc963a422a1c \
     --hash=sha256:f70d9c61f9c4ca7d57f3bfe88a5ccf62546ffbadf3681bb1e268d9d2e41c91a7
     # via dbimport
-blinker==1.7.0 ; sys_platform == 'linux' \
-    --hash=sha256:c3f865d4d54db7abc53758a01601cf343fe55b84c1de4e3fa910e420b438d5b9 \
-    --hash=sha256:e6820ff6fa4e4d1d8e2747c2283749c3f547e4fee112b98555cdcdae32996182
-    # via
-    #   dbimport
-    #   flask
 boto3==1.34.50 ; sys_platform == 'linux' \
     --hash=sha256:290952be7899560039cb0042e8a2354f61a7dead0d0ca8bea6ba901930df0468 \
     --hash=sha256:8d709365231234bc4f0ca98fdf33a25eeebf78072853c6aa3d259f0f5cf09877
@@ -104,7 +92,6 @@ click==8.1.7 ; sys_platform == 'linux' \
     --hash=sha256:ca9853ad459e787e2192211578cc907e7594e294c7ccc834310722b41b9ca6de
     # via
     #   dbimport
-    #   flask
     #   uvicorn
 colorama==0.4.6 ; sys_platform == 'linux' \
     --hash=sha256:08695f5cb7ed6e0531a20572697297273c47b8cae5a63ffc6d6ed5c201be6e44 \
@@ -167,20 +154,6 @@ fastapi==0.110.0 ; sys_platform == 'linux' \
     --hash=sha256:266775f0dcc95af9d3ef39bad55cff525329a931d5fd51930aadd4f428bf7ff3 \
     --hash=sha256:87a1f6fb632a218222c5984be540055346a8f5d8a68e8f6fb647b1dc9934de4b
     # via dbimport
-flask==3.0.2 ; sys_platform == 'linux' \
-    --hash=sha256:3232e0e9c850d781933cf0207523d1ece087eb8d87b23777ae38456e2fbe7c6e \
-    --hash=sha256:822c03f4b799204250a7ee84b1eddc40665395333973dfb9deebfe425fefcb7d
-    # via
-    #   dbimport
-    #   flask-jsonpify
-    #   flask-restful
-flask-jsonpify==1.5.0 ; sys_platform == 'linux' \
-    --hash=sha256:8ac4c732aa5b11d9f6c2de58065d3b669f139518ca8f529bce943817e2fedbfb
-    # via dbimport
-flask-restful==0.3.10 ; sys_platform == 'linux' \
-    --hash=sha256:1cf93c535172f112e080b0d4503a8d15f93a48c88bdd36dd87269bdaf405051b \
-    --hash=sha256:fe4af2ef0027df8f9b4f797aba20c5566801b6ade995ac63b588abf1a59cec37
-    # via dbimport
 future==1.0.0 ; sys_platform == 'linux' \
     --hash=sha256:929292d34f5872e70396626ef385ec22355a1fae8ad29e1a734c3e43f9fbc216 \
     --hash=sha256:bd2968309307861edae1458a4f8a4f3598c03be43b97521076aebf5d94c07b05
@@ -236,22 +209,10 @@ importlib-resources==6.1.2 ; sys_platform == 'linux' \
     --hash=sha256:308abf8474e2dba5f867d279237cd4076482c3de7104a40b41426370e891549b \
     --hash=sha256:9a0a862501dc38b68adebc82970140c9e4209fc99601782925178f8386339938
     # via dbimport
-itsdangerous==2.1.2 ; sys_platform == 'linux' \
-    --hash=sha256:2c2349112351b88699d8d4b6b075022c0808887cb7ad10069318a8b0bc88db44 \
-    --hash=sha256:5dbbc68b317e5e42f327f9021763545dc3fc3bfe22e6deb96aaf1fc38874156a
-    # via
-    #   dbimport
-    #   flask
 jaydebeapi==1.2.3 ; sys_platform == 'linux' \
     --hash=sha256:d6256bdad1e14414225fbc839f7d56922ea3abc06153f3a57490fee909fecd64 \
     --hash=sha256:f25e9307fbb5960cb035394c26e37731b64cc465b197c4344cee85ec450ab92f
     # via dbimport
-jinja2==3.1.3 ; sys_platform == 'linux' \
-    --hash=sha256:7d6d50dd97d52cbc355597bd845fabfbac3f551e1f99619e39a35ce8c370b5fa \
-    --hash=sha256:ac8bd6544d4bb2c9792bf3a159e80bba8fda7f07e81bc3aed565432d5925ba90
-    # via
-    #   dbimport
-    #   flask
 jmespath==1.0.1 ; sys_platform == 'linux' \
     --hash=sha256:02e2e4cc71b5bcab88332eebf907519190dd9e6e82107fa7f83b1003a6252980 \
     --hash=sha256:90261b206d6defd58fdd5e85f478bf633a2901798906be2ad389150c5c60edbe
@@ -291,24 +252,12 @@ markupsafe==2.1.5 ; sys_platform == 'linux' \
     --hash=sha256:d283d37a890ba4c1ae73ffadf8046435c76e7bc2247bbb63c00bd1a709c6544b
     # via
     #   dbimport
-    #   jinja2
     #   mako
-    #   werkzeug
-marshmallow==3.21.0 ; sys_platform == 'linux' \
-    --hash=sha256:20f53be28c6e374a711a16165fb22a8dc6003e3f7cda1285e3ca777b9193885b \
-    --hash=sha256:e7997f83571c7fd476042c2c188e4ee8a78900ca5e74bd9c8097afa56624e9bd
-    # via
-    #   dbimport
-    #   webargs
 mysql-connector-python==8.3.0 ; sys_platform == 'linux' \
     --hash=sha256:55cb57d8098c721abce20fdef23232663977c0e5c87a4d0f9f73466f32c7d168 \
     --hash=sha256:b2901391b651d60dab3cc8985df94976fc1ea59fa7324c5b19d0a4177914c8dd \
     --hash=sha256:e4ff23aa8036b4c5b6463fa81398bb5a528a29f99955de6ba937f0bba57a2fe3 \
     --hash=sha256:e868ccc7ad9fbc242546db04673d89cee87d12b8139affd114524553df4e5d6a
-    # via dbimport
-naked==0.1.32 ; sys_platform == 'linux' \
-    --hash=sha256:ea3d7eeada6b89bd8464ba0cfaa631867aaa68a3e2d5d6a6800cbe74f8941e5f \
-    --hash=sha256:f81015107e3aefdc801d7144fbae214bdf3cb179c0020a1dc6d5acb3659d5d5c
     # via dbimport
 numpy==1.26.4 ; sys_platform == 'linux' \
     --hash=sha256:2a02aba9ed12e4ac4eb3ea9421c420301a0c6460d9830d74a9df87efa4912010 \
@@ -326,11 +275,6 @@ packaging==23.2 ; sys_platform == 'linux' \
     #   dbimport
     #   gunicorn
     #   jpype1
-    #   marshmallow
-    #   webargs
-pam==0.2.0 ; sys_platform == 'linux' \
-    --hash=sha256:fcec42cee82e164b77fdf70c52117c668645c17d9756b3af66058816a5102401
-    # via dbimport
 pandas==2.2.1 ; sys_platform == 'linux' \
     --hash=sha256:0ab90f87093c13f3e8fa45b48ba9f39181046e8f3317d3aadb2fffbb1b978572 \
     --hash=sha256:101d0eb9c5361aa0146f500773395a03839a5e6ecde4d4b6ced88b7e5a1a6403 \
@@ -341,10 +285,6 @@ pandas==2.2.1 ; sys_platform == 'linux' \
 passlib==1.7.4 ; sys_platform == 'linux' \
     --hash=sha256:aa6bca462b8d8bda89c70b382f0c298a20b5560af6cbfa2dce410c0a2fb669f1 \
     --hash=sha256:defd50f72b65c5402ab2c573830a6978e5f202ad0d984793c8dde2c4152ebe04
-    # via dbimport
-paste==3.7.1 ; sys_platform == 'linux' \
-    --hash=sha256:6d07a8e1c7fa72b8cf403762a002f80d12c0384056956dd0a87cb9a3be64749a \
-    --hash=sha256:7cad69ce824bbab0bca344328ff1b800eec8104de67a010b841ea16c4c104972
     # via dbimport
 pendulum==3.0.0 ; sys_platform == 'linux' \
     --hash=sha256:597e66e63cbd68dd6d58ac46cb7a92363d2088d37ccde2dae4332ef23e95cd00 \
@@ -466,29 +406,20 @@ python-multipart==0.0.9 ; sys_platform == 'linux' \
 python-pam==2.0.2 ; sys_platform == 'linux' \
     --hash=sha256:4ac51dd8953ac59aa45505882b565eef6a22e0423dcf25d63369902080416c20 \
     --hash=sha256:97235235ba9b82dbae8068d1099508455949b275f77273ca22fdbd8b1fb5d950
-    # via
-    #   dbimport
-    #   pam
+    # via dbimport
 pytz==2024.1 ; sys_platform == 'linux' \
     --hash=sha256:2a29735ea9c18baf14b448846bde5a48030ed267578472d8955cd0e7443a9812 \
     --hash=sha256:328171f4e3623139da4983451950b28e95ac706e13f3f2630a879749e7a8b319
     # via
     #   dbimport
-    #   flask-restful
     #   pandas
-pytzdata==2020.1 ; sys_platform == 'linux' \
-    --hash=sha256:3efa13b335a00a8de1d345ae41ec78dd11c9f8807f522d39850f2dd828681540 \
-    --hash=sha256:e1e14750bcf95016381e4d472bad004eef710f2d6417240904070b3d6654485f
-    # via dbimport
 pyyaml==6.0.1 ; sys_platform == 'linux' \
     --hash=sha256:062582fca9fabdd2c8b54a3ef1c978d786e0f6b3a1510e0ac93ef59e0ddae2bc \
     --hash=sha256:42f8152b8dbc4fe7d96729ec2b99c7097d656dc1213a3229ca5383f973a5ed6d \
     --hash=sha256:bfdf460b1736c775f2ba9f6a92bca30bc2095067b8a9d77876d1fad6cc3b4a43 \
     --hash=sha256:d2b04aac4d386b172d5b9692e2d2da8de7bfb6c387fa4f801fbf6fb2e6ba4673 \
     --hash=sha256:e7d73685e87afe9f3b36c799222440d6cf362062f78be1013661b00c5c6f678b
-    # via
-    #   dbimport
-    #   naked
+    # via dbimport
 reprint==0.6.0 ; sys_platform == 'linux' \
     --hash=sha256:0ebc4dc21aefc810205f3fcc21783ea91bb96292a8500663482e864989bff54d
     # via dbimport
@@ -497,7 +428,6 @@ requests==2.31.0 ; sys_platform == 'linux' \
     --hash=sha256:942c5a758f98d790eaed1a29cb6eefc7ffb0d1cf7af05c3d2791656dbd6ad1e1
     # via
     #   dbimport
-    #   naked
     #   requests-kerberos
 requests-kerberos==0.14.0 ; sys_platform == 'linux' \
     --hash=sha256:cda9d1240ae5392e081869881c8742d0e171fd6a893a7ac0875db2748e966fd1 \
@@ -515,22 +445,12 @@ s3transfer==0.10.0 ; sys_platform == 'linux' \
     # via
     #   boto3
     #   dbimport
-setuptools==84.2.1 ; sys_platform == 'linux' \
-    --hash=sha256:3ff8b3b5492a0aa66960f4419365a86b84e013070d4313e4d4a6894f5d64d6bc \
-    --hash=sha256:ca140b45d5325a9478f880e351484f62fef15f336462e449ca0c03c873d589c2
-    # via paste
-shellescape==3.8.1 ; sys_platform == 'linux' \
-    --hash=sha256:40b310b30479be771bf3ab28bd8d40753778488bd46ea0969ba0b35038c3ec26 \
-    --hash=sha256:f17127e390fa3f9aaa80c69c16ea73615fd9b5318fd8309c1dca6168ae7d85bf
-    # via dbimport
 six==1.16.0 ; sys_platform == 'linux' \
     --hash=sha256:1e61c37477a1626458e36f7b1d82aa5c9b094fa4802892072e49de9c60c4c926 \
     --hash=sha256:8abb2f1d86890a2dfb989f9a77cfcfd3e47c2a354b01111771326f8aa26e0254
     # via
     #   dbimport
     #   ecdsa
-    #   flask-restful
-    #   paste
     #   python-dateutil
     #   reprint
     #   thrift
@@ -625,10 +545,6 @@ uvloop==0.19.0 ; sys_platform == 'linux' \
     --hash=sha256:570fc0ed613883d8d30ee40397b79207eedd2624891692471808a95069a007c1 \
     --hash=sha256:91ab01c6cd00e39cde50173ba4ec68a1e578fee9279ba64f5221810a9e786533
     # via dbimport
-waitress==3.0.0 ; sys_platform == 'linux' \
-    --hash=sha256:005da479b04134cdd9dd602d1ee7c49d79de0537610d653674cc6cbde222b8a1 \
-    --hash=sha256:2a06f242f4ba0cc563444ca3d1998959447477363a2d7e9b8b4d75d35cfd1669
-    # via dbimport
 watchfiles==0.21.0 ; sys_platform == 'linux' \
     --hash=sha256:02d91cbac553a3ad141db016e3350b03184deaafeba09b9d6439826ee594b365 \
     --hash=sha256:11cd0c3100e2233e9c53106265da31d574355c288e15259c0d40a4405cbae317 \
@@ -640,10 +556,6 @@ watchfiles==0.21.0 ; sys_platform == 'linux' \
     --hash=sha256:e7941bbcfdded9c26b0bf720cb7e6fd803d95a55d2c14b4bd1f6a2772230c586 \
     --hash=sha256:fd7ac678b92b29ba630d8c842d8ad6c555abda1b9ef044d6cc092dacbfc9719d
     # via dbimport
-webargs==8.4.0 ; sys_platform == 'linux' \
-    --hash=sha256:22324305fbca6a2c4cce1235280e8b56372fb3211a8dac2ac8ed1948315a6f53 \
-    --hash=sha256:ea99368214a4ce613924be99d71db58c269631e95eff4fa09b7354e52dc006a5
-    # via dbimport
 websockets==12.0 ; sys_platform == 'linux' \
     --hash=sha256:5693ef74233122f8ebab026817b1b37fe25c411ecfca084b29bc7d6efc548f45 \
     --hash=sha256:6e2df67b8014767d0f785baa98393725739287684b9f8d8a1001eb2839031447 \
@@ -654,12 +566,6 @@ websockets==12.0 ; sys_platform == 'linux' \
     --hash=sha256:dc284bbc8d7c78a6c69e0c7325ab46ee5e40bb4d50e494d8131a07ef47500e9e \
     --hash=sha256:dff6cdf35e31d1315790149fee351f9e52978130cef6c87c4b6c9b3baf78bc53
     # via dbimport
-werkzeug==3.0.1 ; sys_platform == 'linux' \
-    --hash=sha256:507e811ecea72b18a404947aded4b3390e1db8f826b494d76550ef45bb3b1dcc \
-    --hash=sha256:90a285dc0e42ad56b34e696398b8122ee4c681833fb35b8334a095d82c56da10
-    # via
-    #   dbimport
-    #   flask
 zipp==3.17.0 ; sys_platform == 'linux' \
     --hash=sha256:0e923e726174922dce09c53c59ad483ff7bbb8e572e00c7f7c46b88556409f31 \
     --hash=sha256:84e64a1c28cf7e91ed2078bb8cc8c259cb19b76942096c8d7b84947690cabaf0
