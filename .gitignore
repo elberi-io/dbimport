@@ -30,3 +30,7 @@ conf
 run/
 /html/
 bin/Server/html/dist/
+
+# Local working notes and local AI assistant instructions
+/tmp/
+/CLAUDE.md
