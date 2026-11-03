@@ -106,6 +106,7 @@ environments = ["sys_platform == 'linux'"]
 
 [dependency-groups]
 dev = [
+    "import-linter>=2.15",
     "mypy>=2.4.1",
     "ruff>=0.17.3",
 ]
@@ -166,3 +167,40 @@ module = [
     "sourceSchemaReader.*",
 ]
 ignore_errors = true
+
+[tool.importlinter]
+# The packages live in bin/, so run with bin/ on the path:
+#   PYTHONPATH=bin uv run lint-imports
+root_packages = [
+    "ConfigReader",
+    "DBImportConfig",
+    "DBImportOperation",
+    "Schedule",
+    "Server",
+    "catalogService",
+    "common",
+    "setupOperation",
+    "sourceSchemaReader",
+]
+
+[[tool.importlinter.contracts]]
+# Current layering of the existing code, highest layer first. A package
+# may only import packages in the layers below it. Server and
+# setupOperation do not import each other.
+name = "Package layers"
+type = "layers"
+layers = [
+    "Server | setupOperation",
+    "Schedule",
+    "DBImportOperation",
+    "catalogService",
+    "DBImportConfig",
+    "sourceSchemaReader",
+    "ConfigReader",
+    "common",
+]
+ignore_imports = [
+    # Existing exception: the catalog services use the Hive metastore
+    # table definitions in DBImportOperation.hiveSchema.
+    "catalogService.* -> DBImportOperation.hiveSchema",
+]
