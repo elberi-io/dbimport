@@ -1,0 +1,52 @@
+name: Feature request
+description: Propose a new feature or a change to existing behaviour or tooling
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please search existing issues first and upvote a request that already describes your need.
+
+        If you plan to implement this yourself, open this issue first so the approach can be discussed before you invest time (see CONTRIBUTING.md).
+  - type: textarea
+    id: use-case
+    attributes:
+      label: Use case
+      description: What are you trying to do, and what is missing or hard today?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behaviour
+      description: What should DBImport do? Include commands, configuration or interfaces affected, if known.
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Why
+      description: How would this improve your workflow or the project?
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope and out of scope
+      description: Optional. What is included, what is explicitly not, and how the work could be split into small pull requests.
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Optional. Other approaches and why they are less suitable.
+  - type: dropdown
+    id: contribute
+    attributes:
+      label: Will you work on this?
+      options:
+        - "Yes, I plan to open pull requests"
+        - "Maybe, with guidance"
+        - "No, requesting only"
+    validations:
+      required: true

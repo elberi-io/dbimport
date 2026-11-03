@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Report a security vulnerability
+    url: https://github.com/elberi-io/dbimport/security/advisories/new
+    about: Please report security issues privately, not as public issues. See SECURITY.md.
+  - name: Documentation
+    url: https://github.com/elberi-io/dbimport/tree/master/docs
+    about: Installation, configuration and concepts.
