@@ -32,7 +32,7 @@ def get(section, key, exitOnError=True):
 
 try:
 	DBImport_Home = os.environ['DBIMPORT_HOME']
-	configFile = DBImport_Home + '/conf/dbimport.cfg'
+	configFile = DBImport_Home + '/conf/dbimport.cfg.dist'
 except KeyError:
 	print("Error: System Environment Variable DBIMPORT_HOME is not set")
 	sys.exit(1)
