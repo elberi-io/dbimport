@@ -1,0 +1,51 @@
+# Known differences between the ORM in bin/DBImportConfig/configSchema.py
+# and the schema that the Alembic migrations create, as reported by
+# alembic.autogenerate.compare_metadata() on MariaDB 11.4 with latin1.
+# One line per difference, sorted; used by
+# tests/integration/test_schema.py.
+#
+# A change here means the ORM or the migrations changed. Fixing drift
+# removes lines; new drift must not be added without a reason.
+add_index airflow_tasks.ix_airflow_tasks_jdbc_dbalias
+add_index airflow_tasks.ix_airflow_tasks_task_type
+add_index copy_async_status.ix_copy_async_status_table_id
+add_index copy_tables.ix_copy_tables_destination
+modify_comment airflow_custom_dags.airflow_notes
+modify_comment airflow_dag_sensors.timeout_minutes
+modify_comment airflow_etl_dags.airflow_notes
+modify_comment airflow_export_dags.airflow_notes
+modify_comment airflow_import_dags.airflow_notes
+modify_comment airflow_tasks.task_dependency_downstream
+modify_comment auth_users.department
+modify_comment auth_users.disabled
+modify_comment auth_users.email
+modify_comment auth_users.fullname
+modify_comment auth_users.password
+modify_comment auth_users.username
+modify_comment export_tables.export_type
+modify_comment import_columns.sqoop_column_type
+modify_comment import_columns.sqoop_column_type_override
+modify_comment import_tables.import_phase_type
+modify_comment import_tables.spark_executor_memory
+modify_comment import_tables.sqoop_options
+modify_comment jdbc_connections.atlas_last_discovery
+modify_comment jdbc_connections.private_key_path
+modify_comment jdbc_connections.public_key_path
+modify_nullable atlas_column_cache.column_name
+modify_nullable atlas_key_cache.column_name
+modify_nullable atlas_key_cache.constraint_name
+modify_nullable auth_users.department
+modify_nullable auth_users.email
+modify_nullable auth_users.fullname
+modify_nullable auth_users.password
+modify_type airflow_import_dags.filter_hive
+modify_type auth_users.department
+modify_type auth_users.email
+modify_type auth_users.fullname
+remove_column export_tables.airflow_notes
+remove_column import_tables.airflow_notes
+remove_index import_tables_indexes.hive_db
+remove_index yarn_statistics.dbalias_target_schema_target_table_last_update_from_source
+remove_index yarn_statistics.hive_db_hive_table_last_update_from_source
+remove_table import_tables_indexes
+remove_table yarn_statistics
