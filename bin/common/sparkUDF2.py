@@ -40,21 +40,21 @@ class sparkUDFClass(object):
 		try:
 			s_new = []
 			for struct in s:
-				s_new.append(list(map(_base64EncodeBinary, struct)))
+				s_new.append(list(map(_base64EncodeBinary, struct)))  # noqa: F821  # TODO(#154): missing self.
 			return s_new
 
 		except TypeError:
-			return _base64EncodeBinary(s)
+			return _base64EncodeBinary(s)  # noqa: F821  # TODO(#154): missing self.
 
 	def _checkBinary(self, s):
 		for b in s:
-			if not _is_bin(b):
+			if not _is_bin(b):  # noqa: F821  # TODO(#154): missing self.
 				return False
 		return True
 
 	def _base64EncodeBinary(self, s):
 		try:
-			if _is_bin(s[0]) and _checkBinary(s[1]):
+			if _is_bin(s[0]) and _checkBinary(s[1]):  # noqa: F821  # TODO(#154): missing self.
 				base_64 = base64.b64encode(s[1]).decode('UTF-8')
 				return [s[0], base_64]
 		except:

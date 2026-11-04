@@ -1,0 +1,223 @@
+[project]
+name = "dbimport"
+# Must match VERSION in bin/common/constants.py.
+version = "1.00.006"
+description = "Ingest relational and NoSQL sources into Hive or Iceberg, export back, and generate Airflow DAGs"
+readme = "README.rst"
+license = "Apache-2.0"
+requires-python = "==3.11.*"
+# Versions carried over unchanged from the former
+# bin/requirements_python39.txt. Packages DBImport does not use were
+# removed, as were sasl and backports.zoneinfo, which do not build on
+# Python 3.11 (see issue #152).
+dependencies = [
+    "alembic==1.13.1",
+    "annotated-types==0.6.0",
+    "anyio==4.3.0",
+    "backports.shutil-get-terminal-size==1.0.0",
+    "bcrypt==4.1.2",
+    "boto3==1.34.50",
+    "botocore==1.34.50",
+    "certifi==2024.2.2",
+    "cffi==1.16.0",
+    "charset-normalizer==3.3.2",
+    "click==8.1.7",
+    "colorama==0.4.6",
+    "configparser==6.0.1",
+    "cryptography==42.0.5",
+    "daemons==1.3.2",
+    "decorator==5.1.1",
+    "dnspython==2.6.1",
+    "ecdsa==0.18.0",
+    "exceptiongroup==1.2.0",
+    "fastapi==0.110.0",
+    "future==1.0.0",
+    "greenlet==3.0.3",
+    "gssapi==1.8.3",
+    "gunicorn==21.2.0",
+    "h11==0.14.0",
+    "httptools==0.6.1",
+    "idna==3.6",
+    "importlib-metadata==7.0.1",
+    "importlib_resources==6.1.2",
+    "JayDeBeApi==1.2.3",
+    "jmespath==1.0.1",
+    "JPype1==1.5.0",
+    "kafka-python==2.0.2",
+    "krb5==0.5.1",
+    "Mako==1.3.2",
+    "MarkupSafe==2.1.5",
+    "mysql-connector-python==8.3.0",
+    "numpy==1.26.4",
+    "packaging==23.2",
+    "pandas==2.2.1",
+    "passlib==1.7.4",
+    "pendulum==3.0.0",
+    "protobuf==4.25.3",
+    "psutil==5.9.8",
+    "pure-sasl==0.6.2",
+    "pure-transport==0.2.0",
+    "pyasn1==0.5.1",
+    "pycparser==2.21",
+    "pycryptodome==3.20.0",
+    "pydantic==2.6.2",
+    "pydantic_core==2.16.3",
+    "PyHive==0.7.0",
+    "pykerberos==1.2.4",
+    "pymongo==4.6.2",
+    "PyMySQL==1.1.0",
+    "pyspnego==0.10.2",
+    "python-dateutil==2.8.2",
+    "python-dotenv==1.0.1",
+    "python-jose==3.3.0",
+    "python-multipart==0.0.9",
+    "python-pam==2.0.2",
+    "pytz==2024.1",
+    "PyYAML==6.0.1",
+    "reprint==0.6.0",
+    "requests==2.31.0",
+    "requests-kerberos==0.14.0",
+    "rsa==4.9",
+    "s3transfer==0.10.0",
+    "six==1.16.0",
+    "sniffio==1.3.1",
+    "SQLAlchemy==2.0.27",
+    "SQLAlchemy-Utils==0.41.1",
+    "sqlalchemy-views==0.3.2",
+    "starlette==0.36.3",
+    "thrift==0.16.0",
+    "thrift-sasl==0.4.3",
+    "time-machine==2.13.0",
+    "typing_extensions==4.10.0",
+    "tzdata==2024.1",
+    "urllib3==1.26.18",
+    "uvicorn==0.27.1",
+    "uvloop==0.19.0",
+    "watchfiles==0.21.0",
+    "websockets==12.0",
+    "zipp==3.17.0",
+]
+
+[tool.uv]
+# DBImport is not installed as a package; bin/ is run in place.
+package = false
+# DBImport only runs on Linux (Kerberos, /tmp paths, Hadoop tooling).
+environments = ["sys_platform == 'linux'"]
+
+[dependency-groups]
+dev = [
+    # Starlette 0.36.3 (via FastAPI) passes app= to httpx.Client in its
+    # TestClient; httpx 0.28 removed that argument.
+    "httpx>=0.27,<0.28",
+    "import-linter>=2.15",
+    "mypy>=2.4.1",
+    "pytest>=9.1.1",
+    "ruff>=0.17.3",
+]
+
+[tool.ruff]
+# The launchers in bin/ have no .py extension.
+extend-include = [
+    "bin/copy",
+    "bin/deploy",
+    "bin/export",
+    "bin/import",
+    "bin/mainServer",
+    "bin/manage",
+    "bin/restServer",
+    "bin/setup",
+]
+
+[tool.ruff.lint]
+# Existing code is checked only for errors that point at real bugs:
+# syntax errors, invalid comparisons and undefined names. RUF100 reports
+# noqa comments that are no longer needed, so a suppression is removed
+# together with the bug it hides. tests/ruff.toml applies a stricter rule
+# set to the tests.
+select = ["E9", "F63", "F7", "F82", "RUF100"]
+
+[tool.ruff.format]
+# Existing code is not reformatted; only the tests are formatted.
+exclude = ["bin/**", "docs/**"]
+
+[tool.mypy]
+python_version = "3.11"
+files = ["tests"]
+mypy_path = ["bin", "."]
+explicit_package_bases = true
+strict = true
+# Calls from typed tests into the existing, untyped code are allowed.
+untyped_calls_exclude = [
+    "ConfigReader",
+    "DBImportConfig",
+    "DBImportOperation",
+    "Schedule",
+    "Server",
+    "catalogService",
+    "common",
+    "setupOperation",
+    "sourceSchemaReader",
+]
+
+[[tool.mypy.overrides]]
+# Existing code has no type annotations; type errors in it are not
+# reported until a module is refactored.
+module = [
+    "ConfigReader.*",
+    "DBImportConfig.*",
+    "DBImportOperation.*",
+    "Schedule.*",
+    "Server.*",
+    "catalogService.*",
+    "common.*",
+    "setupOperation.*",
+    "sourceSchemaReader.*",
+]
+ignore_errors = true
+
+[tool.importlinter]
+# The packages live in bin/, so run with bin/ on the path:
+#   PYTHONPATH=bin uv run lint-imports
+root_packages = [
+    "ConfigReader",
+    "DBImportConfig",
+    "DBImportOperation",
+    "Schedule",
+    "Server",
+    "catalogService",
+    "common",
+    "setupOperation",
+    "sourceSchemaReader",
+]
+
+[[tool.importlinter.contracts]]
+# Current layering of the existing code, highest layer first. A package
+# may only import packages in the layers below it. Server and
+# setupOperation do not import each other.
+name = "Package layers"
+type = "layers"
+layers = [
+    "Server | setupOperation",
+    "Schedule",
+    "DBImportOperation",
+    "catalogService",
+    "DBImportConfig",
+    "sourceSchemaReader",
+    "ConfigReader",
+    "common",
+]
+ignore_imports = [
+    # Existing exception: the catalog services use the Hive metastore
+    # table definitions in DBImportOperation.hiveSchema.
+    "catalogService.* -> DBImportOperation.hiveSchema",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+# "." makes the shared test helpers importable as tests.configdb.
+pythonpath = ["bin", "."]
+addopts = ["--strict-markers"]
+xfail_strict = true
+markers = [
+    "integration: needs the MariaDB configuration database from compose.yaml",
+]

@@ -13,21 +13,20 @@ Download the source package from the latest release from the `GitHub Release Pag
         tar -xf dbimport-VERSION.tar
    
 
-There is a number of Python dependencies that needs to be in place before DBImport can start. As of python itself, DBImport is verified with Python 3.6 and 3.8. Other versions may work but it's not tested. It's also preferable to use a virtual environment for Python, but creating a virtual environment is not part of this documentation. All required python packages with working versions is available in a requirements.txt file, one for each verified version of python. The version you select will also depend on what Spark version is installed in your cluster 
+There is a number of Python dependencies that needs to be in place before DBImport can start. DBImport supports Python 3.11. This needs Spark 3.4 or later on the cluster, as earlier Spark versions do not support Python 3.11. It's also preferable to use a virtual environment for Python, but creating a virtual environment is not part of this documentation. All required Python packages and their pinned versions are listed in *bin/requirements.txt*, which is generated from *uv.lock*.
+
+Some of the packages are built from source during installation. This requires a C compiler and the Kerberos development headers, for example the *libkrb5-dev* package on Debian and Ubuntu, or the equivalent package on other distributions.
 
 
-**Python 3.6**
+**Python 3.11**
 
-This version of python works with both Spark2 and Spark3. Please install the python packages for version 3.6::
+Install the Python packages with::
 
-        pip3.6 install -r requirements_python36.txt
+        python3.11 -m pip install -r bin/requirements.txt
 
+If you use `uv <https://docs.astral.sh/uv/>`_, you can create the environment from the lock file instead::
 
-**Python 3.8**
-
-When running python 3.8, you also need to run Spark3. If not, you will get errors in the ETL / Hive steps when running DBImport. Please install the python packages for version 3.8::
-
-        pip3.8 install -r requirements_python38.txt
+        uv sync --locked
 
 
 
@@ -64,6 +63,12 @@ Database Setup
 As the configuration is all located in a MariaDB database, you need to create this database, give the DBImport user the permissions to create tables and then the *setup* tool will create the required tables in that database. We assume that you have a working MariaDB server as the setup of that is not part of this documentation.
 
 .. note:: Due to incombability between MariaDB and SQLAlchemy, MariaDB version 10.2.8 or earlier in the 10.2 series is not supported. Either run 10.1.x or 10.2.9 or newer
+
+.. note:: The configuration database must use *latin1* as its character set. With *utf8mb3* or *utf8mb4*, creating the schema fails with error 1071 (specified key was too long), because several primary keys exceed the InnoDB key length limit of 3072 bytes. Create the database with::
+
+        CREATE DATABASE DBImport CHARACTER SET latin1;
+
+   This was verified with MariaDB 11.4.
 
 Create the configuration schema running this command::
 

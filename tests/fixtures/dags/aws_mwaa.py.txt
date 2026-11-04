@@ -1,0 +1,406 @@
+# -*- coding: utf-8 -*-
+import airflow
+from airflow import DAG
+from airflow.models import Variable
+from airflow.sensors.external_task import ExternalTaskSensor
+from airflow.sensors.sql_sensor import SqlSensor
+from airflow.operators.bash_operator import BashOperator
+from airflow.operators.python_operator import BranchPythonOperator
+from airflow.operators.dagrun_operator import TriggerDagRunOperator
+from airflow.operators.dummy_operator import DummyOperator
+from airflow.api.common.experimental.pool import get_pool, create_pool
+from airflow.exceptions import PoolNotFound
+from airflow.models import BaseOperator
+from airflow.operators.dummy_operator import DummyOperator
+from airflow.operators.python_operator import PythonOperator
+import botocore
+import boto3
+import time
+from datetime import datetime, timedelta, timezone
+import pendulum
+
+try:
+    Email_receiver = Variable.get("Email_receiver")
+except KeyError:
+    Email_receiver = "not-set@domain.com"
+
+
+class CreatePoolOperator(BaseOperator):
+    ui_color = '#b8e9ee'
+
+    def __init__(
+            self,
+            name,
+            slots,
+            description='',
+            *args, **kwargs):
+        super(CreatePoolOperator, self).__init__(*args, **kwargs)
+        self.description = description
+        self.slots = slots
+        self.name = name
+
+    def execute(self, context):
+        try:
+            pool = get_pool(name=self.name)
+            print('Pool exists: %s'%(pool))
+        except PoolNotFound:
+            # create the pool
+            pool = create_pool(name=self.name, slots=self.slots, description=self.description)
+            print('Pool exists: %s'%(pool))
+
+
+local_tz = pendulum.timezone("UTC")
+
+def printAndFindEventErrors(event, startWithNewline = False):
+    errorFound = False
+
+    if startWithNewline == True:
+        findPattern = "\nERROR"
+    else:
+        findPattern = "ERROR"
+
+    try:
+        print(event['message'], end="")
+        if event['message'].find(findPattern) != -1:
+            errorFound = True
+            print(event)
+    except:
+        print(event)
+        if str(event).find(findPattern) != -1:
+            errorFound = True
+
+    return errorFound
+
+
+def startDBImportExecution(command, instanceID):
+
+    ssm_client = boto3.client('ssm',region_name='eu-west-1')
+    logs_client = boto3.client('logs',region_name='eu-west-1')
+
+    commandPath = "sudo -iu dbimport /usr/local/dbimport/"
+    command = "%sbin/%s || echo ERROR; sleep 1"%(commandPath, command)
+    cloudWatchLogGroupName = "dbimport"
+    errorFound = False
+
+
+    # Start the import by the help of SSM Send Command
+    sendCommand_response = ssm_client.send_command(
+        InstanceIds=[instanceID],
+        DocumentName="AWS-RunShellScript",
+        Parameters={'commands': [command], 'executionTimeout': ['172800']},
+        CloudWatchOutputConfig={'CloudWatchLogGroupName': cloudWatchLogGroupName, 'CloudWatchOutputEnabled': True}
+        )
+
+
+    # Get the commandID and set the logStreamName for CloudWatch
+    commandID = sendCommand_response['Command']['CommandId']
+    logStreamNameStdOut = "%s/%s/aws-runShellScript/stdout"%(commandID, instanceID)
+    logStreamNameStdErr = "%s/%s/aws-runShellScript/stderr"%(commandID, instanceID)
+
+    print('')
+    print('CloudWatch logs is available at:')
+    print(logStreamNameStdOut)
+    print(logStreamNameStdErr)
+    print('')
+
+
+    # Run a loop until the command is actually running
+    commandRunning = False
+    while commandRunning == False:
+        try:
+            commandInvocation_response = ssm_client.get_command_invocation(
+                CommandId=commandID,
+                InstanceId=instanceID
+                )
+            commandStatus = commandInvocation_response['Status']
+
+            if commandStatus in ('InProgress', 'Success'):
+                commandRunning = True
+            elif commandStatus in ('Pending', 'Delayed'):
+                commandRunning = False
+            elif commandStatus in ('DeliveryTimedOut', 'ExecutionTimedOut', 'Failed', 'Cancelled', 'Undeliverable', 'Terminated', 'InvalidPlatform', 'AccessDenied'):
+                raise
+
+        except botocore.exceptions.ClientError as err:
+            if err.response['Error']['Code'] == 'InvocationDoesNotExist':
+                pass
+            else:
+                raise err
+
+        time.sleep(5)
+
+    # Start fetching log from CloudWatch. Initial fetch will be from head and also fetch the token for upcomming messages
+    nextTokenStdOut = None
+    nextTokenStdErr = None
+    logEventsRunning = False
+    while logEventsRunning == False:
+        try:
+            responseStdOut = logs_client.get_log_events(
+                logGroupName='dbimport',
+                logStreamName=logStreamNameStdOut,
+                startFromHead=True
+                )
+
+            for event in responseStdOut['events']:
+                if printAndFindEventErrors(event, startWithNewline = False) == True:
+                    errorFound = True
+
+            nextTokenStdOut = responseStdOut['nextForwardToken']
+            logEventsRunning = True
+
+            responseStdErr = logs_client.get_log_events(
+                logGroupName='dbimport',
+                logStreamName=logStreamNameStdErr,
+                startFromHead=True
+                )
+
+            nextTokenStdErr = responseStdErr['nextForwardToken']
+
+            for event in responseStdErr['events']:
+                if printAndFindEventErrors(event, startWithNewline = True) == True:
+                    errorFound = True
+
+        except botocore.exceptions.ClientError as err:
+            if err.response['Error']['Code'] == 'ResourceNotFoundException':
+                pass
+            elif err.response['Error']['Code'] == 'ThrottlingException':
+                pass
+            else:
+                print("DEBUG: %s"%(err.response['Error']['Code']))
+                raise err
+
+
+        time.sleep(1)
+
+    if commandStatus == 'TimedOut':
+        print('AWS SSM Send-command timeout!')
+        errorFound = True
+
+    # Loop while the command is running and print all messages from CloudWatch at the same time
+    while commandStatus == 'InProgress':
+        try:
+            commandInvocation_response = ssm_client.get_command_invocation(
+                CommandId=commandID,
+                InstanceId=instanceID
+                )
+
+            commandStatus = commandInvocation_response['Status']
+
+            if commandStatus == 'TimedOut':
+                print('AWS SSM Send-command timeout!')
+                errorFound = True
+                break
+            elif commandStatus != 'InProgress':
+                break
+
+            responseStdOut = logs_client.get_log_events(
+                logGroupName='dbimport',
+                logStreamName=logStreamNameStdOut,
+                nextToken=nextTokenStdOut
+                )
+
+            nextTokenStdOut = responseStdOut['nextForwardToken']
+
+            for event in responseStdOut['events']:
+                if printAndFindEventErrors(event, startWithNewline = False) == True:
+                    errorFound = True
+
+            if nextTokenStdErr == None:
+                responseStdErr = logs_client.get_log_events(
+                    logGroupName='dbimport',
+                    logStreamName=logStreamNameStdErr,
+                    startFromHead=True
+                    )
+            else:
+                responseStdErr = logs_client.get_log_events(
+                    logGroupName='dbimport',
+                    logStreamName=logStreamNameStdErr,
+                    nextToken=nextTokenStdErr
+                    )
+
+            nextTokenStdErr = responseStdErr['nextForwardToken']
+
+            for event in responseStdErr['events']:
+                if printAndFindEventErrors(event, startWithNewline = True) == True:
+                    errorFound = True
+
+        except botocore.exceptions.ClientError as err:
+            if err.response['Error']['Code'] == 'ResourceNotFoundException':
+                pass
+            elif err.response['Error']['Code'] == 'ThrottlingException':
+                pass
+            else:
+                print("DEBUG: %s"%(err.response['Error']['Code']))
+                raise err
+
+        except UnboundLocalError:
+            pass
+
+        time.sleep(15)
+
+
+    # Loop to get the last message and print in the output
+    lastMessagePrinted = False
+    while lastMessagePrinted == False:
+        try:
+            responseStdOut = logs_client.get_log_events(
+                logGroupName='dbimport',
+                logStreamName=logStreamNameStdOut,
+                nextToken=nextTokenStdOut
+                )
+
+            nextTokenStdOut = responseStdOut['nextForwardToken']
+            for event in responseStdOut['events']:
+                if printAndFindEventErrors(event, startWithNewline = False) == True:
+                    errorFound = True
+
+            lastMessagePrinted = True
+
+            if nextTokenStdErr == None:
+                responseStdErr = logs_client.get_log_events(
+                    logGroupName='dbimport',
+                    logStreamName=logStreamNameStdErr,
+                    startFromHead=True
+                    )
+            else:
+                responseStdErr = logs_client.get_log_events(
+                    logGroupName='dbimport',
+                    logStreamName=logStreamNameStdErr,
+                    nextToken=nextTokenStdErr
+                    )
+
+            nextTokenStdErr = responseStdErr['nextForwardToken']
+
+            for event in responseStdErr['events']:
+                if printAndFindEventErrors(event, startWithNewline = True) == True:
+                    errorFound = True
+
+        except botocore.exceptions.ClientError as err:
+            if err.response['Error']['Code'] == 'ResourceNotFoundException':
+                pass
+            elif err.response['Error']['Code'] == 'ThrottlingException':
+                pass
+            else:
+                print("DEBUG: %s"%(err.response['Error']['Code']))
+                raise err
+
+        except UnboundLocalError:
+            pass
+
+        time.sleep(1)
+
+    if errorFound == True:
+        raise
+
+
+
+default_args = {
+    'owner': 'airflow',
+    'depends_on_past': False,
+    'start_date': datetime(2017, 1, 1, 0, 0, tzinfo=local_tz),
+    'max_active_runs': 1,
+    'email': Email_receiver,
+    'email_on_failure': False,
+    'email_on_retry': False,
+    'retry_exponential_backoff': False,
+    'retries': 0,
+    'pool': 'DBImport_test',
+    'retry_delay': timedelta(minutes=5),
+}
+
+dag = DAG(
+    'DBImport_test',
+    default_args=default_args,
+    description='DBImport_test',
+    catchup=False,
+    schedule_interval=None)
+
+start = PythonOperator(
+    task_id='start',
+    python_callable=startDBImportExecution,
+    op_kwargs={"command": "manage --checkAirflowExecution --airflowDAG=DBImport_test", "instanceID": "i-xxxxxxxxxxxxxxxxx"},
+    priority_weight=100,
+    weight_rule='absolute',
+    pool=None,
+    dag=dag)
+
+stop = PythonOperator(
+    task_id='stop',
+    python_callable=startDBImportExecution,
+    op_kwargs={"command": "manage --checkAirflowExecution --airflowDAG=DBImport_test", "instanceID": "i-xxxxxxxxxxxxxxxxx"},
+    priority_weight=100,
+    weight_rule='absolute',
+    pool=None,
+    dag=dag)
+
+before_tasks_finished = DummyOperator(
+    task_id='before_tasks_finished',
+    priority_weight=100,
+    weight_rule='absolute',
+    dag=dag)
+
+events = PythonOperator(
+    task_id='events',
+    python_callable=startDBImportExecution,
+    op_kwargs={"command": "import -d testdb -t events ", "instanceID": "i-xxxxxxxxxxxxxxxxx"},
+    pool='i-xxxxxxxxxxxxxxxxx',
+    priority_weight=1,
+    weight_rule='absolute',
+    retries=5,
+    dag=dag)
+
+before_tasks_finished.set_downstream(events)
+events.set_downstream(stop)
+
+orders_clearStage = PythonOperator(
+    task_id='orders_clearStage',
+    python_callable=startDBImportExecution,
+    op_kwargs={"command": "manage --clearImportStage -h testdb -t orders", "instanceID": "i-xxxxxxxxxxxxxxxxx"},
+    pool='i-xxxxxxxxxxxxxxxxx',
+    priority_weight=1,
+    weight_rule='absolute',
+    retries=5,
+    dag=dag)
+
+orders = PythonOperator(
+    task_id='orders',
+    python_callable=startDBImportExecution,
+    op_kwargs={"command": "import -d testdb -t orders ", "instanceID": "i-xxxxxxxxxxxxxxxxx"},
+    pool='i-xxxxxxxxxxxxxxxxx',
+    priority_weight=1,
+    weight_rule='absolute',
+    retries=5,
+    dag=dag)
+
+before_tasks_finished.set_downstream(orders_clearStage)
+orders_clearStage.set_downstream(orders)
+orders.set_downstream(stop)
+
+
+createPool_DBImport_test = CreatePoolOperator(
+    name='DBImport_test',
+    slots=24,
+    task_id='createPool_DBImport_test',
+    retries=5,
+    priority_weight=1,
+    weight_rule='absolute',
+    pool=None,
+    dag=dag)
+
+start.set_downstream(createPool_DBImport_test)
+createPool_DBImport_test.set_downstream(before_tasks_finished)
+
+
+createPool_i_xxxxxxxxxxxxxxxxx = CreatePoolOperator(
+    name='i-xxxxxxxxxxxxxxxxx',
+    slots=24,
+    task_id='createPool_i_xxxxxxxxxxxxxxxxx',
+    retries=5,
+    priority_weight=1,
+    weight_rule='absolute',
+    pool=None,
+    dag=dag)
+
+start.set_downstream(createPool_i_xxxxxxxxxxxxxxxxx)
+createPool_i_xxxxxxxxxxxxxxxxx.set_downstream(before_tasks_finished)
+
