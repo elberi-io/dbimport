@@ -67,7 +67,7 @@ def downgrade():
             "CacheDB",
             "Snowflake",
         ),
-        type_=aEnum(
+        type_=aEnum(  # noqa: F821  # TODO(#153): aEnum is undefined, downgrade fails
             "DB2 AS400",
             "DB2 UDB",
             "MySQL",
@@ -77,7 +77,7 @@ def downgrade():
             "SQL Server",
             "MongoDB",
             "CacheDB",
-        ),  # noqa: F821  # TODO(#153): aEnum is undefined, downgrade fails
+        ),
         existing_comment="Name of database type.  Name is hardcoded into Python scripts, so use only defined values",
         existing_nullable=False,
     )
