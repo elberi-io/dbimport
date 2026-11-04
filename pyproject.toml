@@ -137,8 +137,9 @@ extend-include = [
 select = ["E9", "F63", "F7", "F82", "RUF100"]
 
 [tool.ruff.format]
-# Existing code is not reformatted; only the tests are formatted.
-exclude = ["bin/**", "docs/**"]
+# bin/ was formatted in one commit per package, listed in
+# .git-blame-ignore-revs. The Sphinx configuration in docs/ is left as is.
+exclude = ["docs/**"]
 
 [tool.mypy]
 python_version = "3.11"

@@ -27,321 +27,516 @@ from DBImportOperation import export_operations
 from DBImportOperation import copy_operations
 from Schedule import Airflow
 
-def	printHeader():
-	# Font created at http://patorjk.com/software/taag/#p=display&f=Big&t=DBImport%20-%20Copy
-	sys.stdout.write(u"\u001b[35m")  # Magenta
-	sys.stdout.flush()
-	print("")
-	print("  _____  ____ _____                            _               _____                   ")
-	print(" |  __ \|  _ \_   _|                          | |             / ____|                  ")
-	print(" | |  | | |_) || |  _ __ ___  _ __   ___  _ __| |_   ______  | |     ___  _ __  _   _  ")
-	print(" | |  | |  _ < | | | '_ ` _ \| '_ \ / _ \| '__| __| |______| | |    / _ \| '_ \| | | | ")
-	print(" | |__| | |_) || |_| | | | | | |_) | (_) | |  | |_           | |___| (_) | |_) | |_| | ")
-	print(" |_____/|____/_____|_| |_| |_| .__/ \___/|_|   \__|           \_____\___/| .__/ \__, | ")
-	print("                             | |                                         | |     __/ | ")
-	print("                             |_|                                         |_|    |___/  ")
-	sys.stdout.write(u"\u001b[0m")  # Reset
-	sys.stdout.flush()
-	print("")
-	print("Version: %s"%(constant.VERSION))
-	print("")
+
+def printHeader():
+    # Font created at http://patorjk.com/software/taag/#p=display&f=Big&t=DBImport%20-%20Copy
+    sys.stdout.write("\u001b[35m")  # Magenta
+    sys.stdout.flush()
+    print("")
+    print(
+        "  _____  ____ _____                            _               _____                   "
+    )
+    print(
+        " |  __ \|  _ \_   _|                          | |             / ____|                  "
+    )
+    print(
+        " | |  | | |_) || |  _ __ ___  _ __   ___  _ __| |_   ______  | |     ___  _ __  _   _  "
+    )
+    print(
+        " | |  | |  _ < | | | '_ ` _ \| '_ \ / _ \| '__| __| |______| | |    / _ \| '_ \| | | | "
+    )
+    print(
+        " | |__| | |_) || |_| | | | | | |_) | (_) | |  | |_           | |___| (_) | |_) | |_| | "
+    )
+    print(
+        " |_____/|____/_____|_| |_| |_| .__/ \___/|_|   \__|           \_____\___/| .__/ \__, | "
+    )
+    print(
+        "                             | |                                         | |     __/ | "
+    )
+    print(
+        "                             |_|                                         |_|    |___/  "
+    )
+    sys.stdout.write("\u001b[0m")  # Reset
+    sys.stdout.flush()
+    print("")
+    print("Version: %s" % (constant.VERSION))
+    print("")
+
 
 def printMainHelp():
-	printHeader()
-	print ("Options:")
-	print ("  --copyAirflowImportDAG            Copy an Airflow Import DAG to a remote DBImport instance")
-	print ("  --copyAirflowExportDAG            Copy an Airflow Export DAG to a remote DBImport instance")
-	print ("  --scheduleDAGasyncCopy            Schedule a asynchronous copy of all data for all tables in an Airflow DAG")
-	print ("  --scheduleTableAsyncCopy          Schedule a asynchronous copy of one or more tables")
-	print ("  --exportTable                     Exports a Hive table to HDFS")
-	print ("  --importTable                     Imports a Hive table that was previous exported with --exportTable ")
-	print ("  --copyTableToCluster              DistCP exported Hive table to another cluster")
-	print ("  --copyTableFromCluster            DistCP exported Hive table from another cluster")
-	print ("")
-	print ("General parameters to all commands:")
-	print ("  --help             Show this help message and exit")
-	print ("  -v, --debug        Turn on extensive debug output. This will print passwords in cleartext, so use with caution")
-	print ("  --quiet            Suppress logo and version output")
+    printHeader()
+    print("Options:")
+    print(
+        "  --copyAirflowImportDAG            Copy an Airflow Import DAG to a remote DBImport instance"
+    )
+    print(
+        "  --copyAirflowExportDAG            Copy an Airflow Export DAG to a remote DBImport instance"
+    )
+    print(
+        "  --scheduleDAGasyncCopy            Schedule a asynchronous copy of all data for all tables in an Airflow DAG"
+    )
+    print(
+        "  --scheduleTableAsyncCopy          Schedule a asynchronous copy of one or more tables"
+    )
+    print("  --exportTable                     Exports a Hive table to HDFS")
+    print(
+        "  --importTable                     Imports a Hive table that was previous exported with --exportTable "
+    )
+    print(
+        "  --copyTableToCluster              DistCP exported Hive table to another cluster"
+    )
+    print(
+        "  --copyTableFromCluster            DistCP exported Hive table from another cluster"
+    )
+    print("")
+    print("General parameters to all commands:")
+    print("  --help             Show this help message and exit")
+    print(
+        "  -v, --debug        Turn on extensive debug output. This will print passwords in cleartext, so use with caution"
+    )
+    print("  --quiet            Suppress logo and version output")
 
-	sys.exit(1)
+    sys.exit(1)
+
 
 def print_copyAirflowImportDAG_help():
-	printHeader()
-	print ("Copy the DAG definition and all involved databases, tables and connection aliases to a remote DBImport instance" )
-	print ("If the DAG already exists in the remote DBImport instance, all definitions will be updated. Keep in mind that if a table")
-	print ("exists in the remote DBImport instance, but not in the source, the table wont be deleted from the remote DBImport instance")
-	print ("")
-	print ("Required parameters:")
-	print ("  --airflowDAG=[DAG name]        Name of the DAG to copy.")
-	print ("  --destination=[Destination]    Name of the destination to where you want to copy the DAG")
-	print ("")
-	print ("Optional parameters:")
-	print ("  --noSlave                      Dont setup the DAG on the destination as a copy slave to this DBImport instance")
-	print ("  --setAutoRegenerateDAG         This will enable auto regenerate DAG functions on target system regardless of current setting")
-	print ("")
-	sys.exit(1)
+    printHeader()
+    print(
+        "Copy the DAG definition and all involved databases, tables and connection aliases to a remote DBImport instance"
+    )
+    print(
+        "If the DAG already exists in the remote DBImport instance, all definitions will be updated. Keep in mind that if a table"
+    )
+    print(
+        "exists in the remote DBImport instance, but not in the source, the table wont be deleted from the remote DBImport instance"
+    )
+    print("")
+    print("Required parameters:")
+    print("  --airflowDAG=[DAG name]        Name of the DAG to copy.")
+    print(
+        "  --destination=[Destination]    Name of the destination to where you want to copy the DAG"
+    )
+    print("")
+    print("Optional parameters:")
+    print(
+        "  --noSlave                      Dont setup the DAG on the destination as a copy slave to this DBImport instance"
+    )
+    print(
+        "  --setAutoRegenerateDAG         This will enable auto regenerate DAG functions on target system regardless of current setting"
+    )
+    print("")
+    sys.exit(1)
+
 
 def print_copyAirflowExportDAG_help():
-	printHeader()
-	print ("Copy the DAG definition and all involved databases, tables and connection aliases to a remote DBImport instance" )
-	print ("If the DAG already exists in the remote DBImport instance, all definitions will be updated. Keep in mind that if a table")
-	print ("exists in the remote DBImport instance, but not in the source, the table wont be deleted from the remote DBImport instance")
-	print ("")
-	print ("Required parameters:")
-	print ("  --airflowDAG=[DAG name]        Name of the DAG to copy.")
-	print ("  --destination=[Destination]    Name of the destination to where you want to copy the DAG")
-	print ("")
-	print ("Optional parameters:")
-	print ("  --setAutoRegenerateDAG         This will enable auto regenerate DAG functions on target system regardless of current setting")
-	print ("")
-	sys.exit(1)
+    printHeader()
+    print(
+        "Copy the DAG definition and all involved databases, tables and connection aliases to a remote DBImport instance"
+    )
+    print(
+        "If the DAG already exists in the remote DBImport instance, all definitions will be updated. Keep in mind that if a table"
+    )
+    print(
+        "exists in the remote DBImport instance, but not in the source, the table wont be deleted from the remote DBImport instance"
+    )
+    print("")
+    print("Required parameters:")
+    print("  --airflowDAG=[DAG name]        Name of the DAG to copy.")
+    print(
+        "  --destination=[Destination]    Name of the destination to where you want to copy the DAG"
+    )
+    print("")
+    print("Optional parameters:")
+    print(
+        "  --setAutoRegenerateDAG         This will enable auto regenerate DAG functions on target system regardless of current setting"
+    )
+    print("")
+    sys.exit(1)
+
 
 def print_scheduleDAGasyncCopy_help():
-	printHeader()
-	print ("Schedule an asynchronous copy of all tables that is handled by an Airflow DAG to a specific destination." )
-	print ("This will be executed regardless if a copy definition is created for the table and destination or not")
-	print ("")
-	print ("Required parameters:")
-	print ("  --airflowDAG=[DAG name]        Name of the DAG to copy.")
-	print ("  --destination=[Destination]    Name of the destination to where you want to copy the tables")
-	print ("")
-	print ("Optional parameters:")
-	print ("  --includeIncrImports           The default behaviour is to schedule only full imports. Specify this to include incremental imports")
-	print ("")
-	sys.exit(1)
+    printHeader()
+    print(
+        "Schedule an asynchronous copy of all tables that is handled by an Airflow DAG to a specific destination."
+    )
+    print(
+        "This will be executed regardless if a copy definition is created for the table and destination or not"
+    )
+    print("")
+    print("Required parameters:")
+    print("  --airflowDAG=[DAG name]        Name of the DAG to copy.")
+    print(
+        "  --destination=[Destination]    Name of the destination to where you want to copy the tables"
+    )
+    print("")
+    print("Optional parameters:")
+    print(
+        "  --includeIncrImports           The default behaviour is to schedule only full imports. Specify this to include incremental imports"
+    )
+    print("")
+    sys.exit(1)
+
 
 def print_scheduleTableAsyncCopy_help():
-	printHeader()
-	print ("Schedule an asynchronous copy of one or more Hive tables to a specific destination." )
-	print ("This will be executed regardless if a copy definition is created for the table and destination or not")
-	print ("")
-	print ("Required parameters:")
-	print ("  -h [Hive Database], --hiveDB=[Hive Database]   Filter for database name. Wildcard (*) is supported")
-	print ("  -t [Hive Table], --hiveTable=[Hive Table]      Filter for Table name. Wildcard (*) is supported")
-	print ("  --destination=[Destination]                    Name of the destination to where you want to copy the tables")
-	print ("")
-	sys.exit(1)
+    printHeader()
+    print(
+        "Schedule an asynchronous copy of one or more Hive tables to a specific destination."
+    )
+    print(
+        "This will be executed regardless if a copy definition is created for the table and destination or not"
+    )
+    print("")
+    print("Required parameters:")
+    print(
+        "  -h [Hive Database], --hiveDB=[Hive Database]   Filter for database name. Wildcard (*) is supported"
+    )
+    print(
+        "  -t [Hive Table], --hiveTable=[Hive Table]      Filter for Table name. Wildcard (*) is supported"
+    )
+    print(
+        "  --destination=[Destination]                    Name of the destination to where you want to copy the tables"
+    )
+    print("")
+    sys.exit(1)
+
 
 def print_exportTable_help():
-	printHeader()
-	print ("Exports a Hive table to HDFS . This can be used regardless if table exists in the DBImport configuration database")
-	print ("")
-	print ("Required parameters:")
-	print ("  -h [Hive Database], --hiveDB=[Hive Database]   Hive database name")
-	print ("  -t [Hive Table], --hiveTable=[Hive Table]      Hive table name")
-	print ("  --localHDFSpath=[HDFS Path]                    HDFS directory where to export the table to. DB and Table will be added")
-	print ("")
-	print ("Optional parameters:")
-	print ("  --concatenateTable     This will force a concatenation of the table before export. May improve performance")
-	print ("")
-	sys.exit(1)
+    printHeader()
+    print(
+        "Exports a Hive table to HDFS . This can be used regardless if table exists in the DBImport configuration database"
+    )
+    print("")
+    print("Required parameters:")
+    print("  -h [Hive Database], --hiveDB=[Hive Database]   Hive database name")
+    print("  -t [Hive Table], --hiveTable=[Hive Table]      Hive table name")
+    print(
+        "  --localHDFSpath=[HDFS Path]                    HDFS directory where to export the table to. DB and Table will be added"
+    )
+    print("")
+    print("Optional parameters:")
+    print(
+        "  --concatenateTable     This will force a concatenation of the table before export. May improve performance"
+    )
+    print("")
+    sys.exit(1)
+
 
 def print_copyTableToCluster_help():
-	printHeader()
-	print ("DistCP files to another cluster")
-	print ("")
-	print ("Required parameters:")
-	print ("  -h [Hive Database], --hiveDB=[Hive Database]   Hive database name")
-	print ("  -t [Hive Table], --hiveTable=[Hive Table]      Hive table name")
-	print ("  --remoteInstance=[Instance]                    Name of the remote DBImport instance")
-	print ("  --localHDFSpath=[HDFS Path]                    Local HDFS directory where to copy the data from. DB and Table will be added")
-	print ("  --remoteHDFSpath=[HDFS Path]                   Remote HDFS directory where to copy the data to. DB and Table will be added")
-	print ("")
-	sys.exit(1)
+    printHeader()
+    print("DistCP files to another cluster")
+    print("")
+    print("Required parameters:")
+    print("  -h [Hive Database], --hiveDB=[Hive Database]   Hive database name")
+    print("  -t [Hive Table], --hiveTable=[Hive Table]      Hive table name")
+    print(
+        "  --remoteInstance=[Instance]                    Name of the remote DBImport instance"
+    )
+    print(
+        "  --localHDFSpath=[HDFS Path]                    Local HDFS directory where to copy the data from. DB and Table will be added"
+    )
+    print(
+        "  --remoteHDFSpath=[HDFS Path]                   Remote HDFS directory where to copy the data to. DB and Table will be added"
+    )
+    print("")
+    sys.exit(1)
+
 
 def print_copyTableFromCluster_help():
-	printHeader()
-	print ("DistCP files from another cluster")
-	print ("")
-	print ("Required parameters:")
-	print ("  -h [Hive Database], --hiveDB=[Hive Database]   Hive database name")
-	print ("  -t [Hive Table], --hiveTable=[Hive Table]      Hive table name")
-	print ("  --remoteInstance=[Instance]                    Name of the remote DBImport instance")
-	print ("  --localHDFSpath=[HDFS Path]                    Local HDFS directory where to copy the data to. DB and Table will be added")
-	print ("  --remoteHDFSpath=[HDFS Path]                   Remote HDFS directory where to copy the data from. DB and Table will be added")
-	print ("")
-	sys.exit(1)
+    printHeader()
+    print("DistCP files from another cluster")
+    print("")
+    print("Required parameters:")
+    print("  -h [Hive Database], --hiveDB=[Hive Database]   Hive database name")
+    print("  -t [Hive Table], --hiveTable=[Hive Table]      Hive table name")
+    print(
+        "  --remoteInstance=[Instance]                    Name of the remote DBImport instance"
+    )
+    print(
+        "  --localHDFSpath=[HDFS Path]                    Local HDFS directory where to copy the data to. DB and Table will be added"
+    )
+    print(
+        "  --remoteHDFSpath=[HDFS Path]                   Remote HDFS directory where to copy the data from. DB and Table will be added"
+    )
+    print("")
+    sys.exit(1)
 
 
 def print_importTable_help():
-	printHeader()
-	print ("Imports a Hive table that was previous exported")
-	print ("")
-	print ("Required parameters:")
-	print ("  -h [Hive Database], --hiveDB=[Hive Database]   Hive database name")
-	print ("  -t [Hive Table], --hiveTable=[Hive Table]      Hive table name")
-	print ("  --localHDFSpath=[HDFS Path]                    HDFS directory where data exists. DB and Table will be added")
-	print ("")
-	sys.exit(1)
+    printHeader()
+    print("Imports a Hive table that was previous exported")
+    print("")
+    print("Required parameters:")
+    print("  -h [Hive Database], --hiveDB=[Hive Database]   Hive database name")
+    print("  -t [Hive Table], --hiveTable=[Hive Table]      Hive table name")
+    print(
+        "  --localHDFSpath=[HDFS Path]                    HDFS directory where data exists. DB and Table will be added"
+    )
+    print("")
+    sys.exit(1)
+
 
 def main(argv):
-	try:
-		opts, args = getopt.getopt(argv, "?yvwh:t:a:S:T:", ["quiet", "yes", "help", "Hive_DB=", "hiveDB=", "Hive_Table=", "hiveTable=", "dbAlias=", "debug", "airflowDAG=", "copyAirflowImportDAG", "copyAirflowExportDAG", "remoteInstance=", "destination=", "scheduleDAGasyncCopy", "includeIncrImports", "concatenateTable", "exportTable", "importTable", "copyTableToCluster", "copyTableFromCluster", "HDFSpath", "localHDFSpath=", "remoteHDFSpath=", "scheduleTableAsyncCopy", "noSlave", "setAutoRegenerateDAG" ])
-	except getopt.GetoptError:
-		printMainHelp()
+    try:
+        opts, args = getopt.getopt(
+            argv,
+            "?yvwh:t:a:S:T:",
+            [
+                "quiet",
+                "yes",
+                "help",
+                "Hive_DB=",
+                "hiveDB=",
+                "Hive_Table=",
+                "hiveTable=",
+                "dbAlias=",
+                "debug",
+                "airflowDAG=",
+                "copyAirflowImportDAG",
+                "copyAirflowExportDAG",
+                "remoteInstance=",
+                "destination=",
+                "scheduleDAGasyncCopy",
+                "includeIncrImports",
+                "concatenateTable",
+                "exportTable",
+                "importTable",
+                "copyTableToCluster",
+                "copyTableFromCluster",
+                "HDFSpath",
+                "localHDFSpath=",
+                "remoteHDFSpath=",
+                "scheduleTableAsyncCopy",
+                "noSlave",
+                "setAutoRegenerateDAG",
+            ],
+        )
+    except getopt.GetoptError:
+        printMainHelp()
 
-	Hive_DB = None
-	Hive_Table = None
-	displayHelp = False
-	operation = None
-	loggingLevel = logging.INFO
-	autoYesAnswer = False
-	airflowDAG = None
-	copyDestination = None
-	remoteInstance = None
-	quietMode = False
-	includeIncrImports = False
-	concatenateTable = False
-	HDFSpath = None
-	localHDFSpath = None
-	remoteHDFSpath = None
-	copyDAGnoSlave = None
-	setAutoRegenerateDAG = None
+    Hive_DB = None
+    Hive_Table = None
+    displayHelp = False
+    operation = None
+    loggingLevel = logging.INFO
+    autoYesAnswer = False
+    airflowDAG = None
+    copyDestination = None
+    remoteInstance = None
+    quietMode = False
+    includeIncrImports = False
+    concatenateTable = False
+    HDFSpath = None
+    localHDFSpath = None
+    remoteHDFSpath = None
+    copyDAGnoSlave = None
+    setAutoRegenerateDAG = None
 
-	if len(opts) == 0:
-		printMainHelp()
+    if len(opts) == 0:
+        printMainHelp()
 
-	for opt, arg in opts:
-		if opt in ("-?", "--help"):
-			displayHelp = True
-		elif opt in ("-y", "--yes"):
-			autoYesAnswer = True
-		elif opt in ("-v", "--debug"):
-			loggingLevel = logging.DEBUG
-		elif opt in ("-h", "--hiveDB", "--Hive_DB"):
-			Hive_DB = arg
-		elif opt in ("-t", "--hiveTable", "--Hive_Table"):
-			Hive_Table = arg
-		elif opt == "--quiet":
-			quietMode = True
-		elif opt == "--includeIncrImports":
-			includeIncrImports = True
-		elif opt == "--localHDFSpath":
-			localHDFSpath = str(arg)
-		elif opt == "--remoteHDFSpath":
-			remoteHDFSpath = str(arg)
-		elif opt == "--counterStart":
-			counterStart = str(arg)
-		elif opt == "--destination":
-			copyDestination = str(arg)
-		elif opt == "--remoteInstance":
-			remoteInstance = str(arg)
-		elif opt == "--airflowDAG":
-			airflowDAG = str(arg)
-		elif opt == "--noSlave":
-			copyDAGnoSlave = True
-		elif opt == "--setAutoRegenerateDAG":
-			setAutoRegenerateDAG = True
-		elif opt == "--concatenateTable":
-			concatenateTable = True
-		elif opt == "--copyAirflowImportDAG":
-			operation = "copyAirflowImportDAG"
-		elif opt == "--copyAirflowExportDAG":
-			operation = "copyAirflowExportDAG"
-		elif opt == "--scheduleDAGasyncCopy":
-			operation = "scheduleDAGasyncCopy"
-		elif opt == "--scheduleTableAsyncCopy":
-			operation = "scheduleTableAsyncCopy"
-		elif opt == "--exportTable":
-			operation = "exportTable"
-		elif opt == "--importTable":
-			operation = "importTable"
-		elif opt == "--copyTableToCluster":
-			operation = "copyTableToCluster"
-		elif opt == "--copyTableFromCluster":
-			operation = "copyTableFromCluster"
+    for opt, arg in opts:
+        if opt in ("-?", "--help"):
+            displayHelp = True
+        elif opt in ("-y", "--yes"):
+            autoYesAnswer = True
+        elif opt in ("-v", "--debug"):
+            loggingLevel = logging.DEBUG
+        elif opt in ("-h", "--hiveDB", "--Hive_DB"):
+            Hive_DB = arg
+        elif opt in ("-t", "--hiveTable", "--Hive_Table"):
+            Hive_Table = arg
+        elif opt == "--quiet":
+            quietMode = True
+        elif opt == "--includeIncrImports":
+            includeIncrImports = True
+        elif opt == "--localHDFSpath":
+            localHDFSpath = str(arg)
+        elif opt == "--remoteHDFSpath":
+            remoteHDFSpath = str(arg)
+        elif opt == "--counterStart":
+            counterStart = str(arg)
+        elif opt == "--destination":
+            copyDestination = str(arg)
+        elif opt == "--remoteInstance":
+            remoteInstance = str(arg)
+        elif opt == "--airflowDAG":
+            airflowDAG = str(arg)
+        elif opt == "--noSlave":
+            copyDAGnoSlave = True
+        elif opt == "--setAutoRegenerateDAG":
+            setAutoRegenerateDAG = True
+        elif opt == "--concatenateTable":
+            concatenateTable = True
+        elif opt == "--copyAirflowImportDAG":
+            operation = "copyAirflowImportDAG"
+        elif opt == "--copyAirflowExportDAG":
+            operation = "copyAirflowExportDAG"
+        elif opt == "--scheduleDAGasyncCopy":
+            operation = "scheduleDAGasyncCopy"
+        elif opt == "--scheduleTableAsyncCopy":
+            operation = "scheduleTableAsyncCopy"
+        elif opt == "--exportTable":
+            operation = "exportTable"
+        elif opt == "--importTable":
+            operation = "importTable"
+        elif opt == "--copyTableToCluster":
+            operation = "copyTableToCluster"
+        elif opt == "--copyTableFromCluster":
+            operation = "copyTableFromCluster"
 
+    if operation == None:
+        printMainHelp()
 
-	if operation == None:
-		printMainHelp()
+    if operation == "copyAirflowImportDAG" and (
+        airflowDAG == None or copyDestination == None or displayHelp == True
+    ):
+        print_copyAirflowImportDAG_help()
 
-	if operation == "copyAirflowImportDAG" and (airflowDAG == None or copyDestination == None or displayHelp == True):
-		print_copyAirflowImportDAG_help()
+    if operation == "copyAirflowExportDAG" and (
+        airflowDAG == None or copyDestination == None or displayHelp == True
+    ):
+        print_copyAirflowExportDAG_help()
 
-	if operation == "copyAirflowExportDAG" and (airflowDAG == None or copyDestination == None or displayHelp == True):
-		print_copyAirflowExportDAG_help()
+    if operation == "scheduleDAGasyncCopy" and (
+        airflowDAG == None or copyDestination == None or displayHelp == True
+    ):
+        print_scheduleDAGasyncCopy_help()
 
-	if operation == "scheduleDAGasyncCopy" and (airflowDAG == None or copyDestination == None or displayHelp == True):
-		print_scheduleDAGasyncCopy_help()
+    if operation == "scheduleTableAsyncCopy" and (
+        Hive_DB == None
+        or Hive_Table == None
+        or copyDestination == None
+        or displayHelp == True
+    ):
+        print_scheduleTableAsyncCopy_help()
 
-	if operation == "scheduleTableAsyncCopy" and (Hive_DB == None or Hive_Table == None or copyDestination == None or displayHelp == True):
-		print_scheduleTableAsyncCopy_help()
+    if operation == "exportTable" and (
+        localHDFSpath == None
+        or Hive_DB == None
+        or Hive_Table == None
+        or displayHelp == True
+    ):
+        print_exportTable_help()
 
-	if operation == "exportTable" and (localHDFSpath == None or Hive_DB == None or Hive_Table == None or displayHelp == True):
-		print_exportTable_help()
+    if operation == "importTable" and (
+        localHDFSpath == None
+        or Hive_DB == None
+        or Hive_Table == None
+        or displayHelp == True
+    ):
+        print_importTable_help()
 
-	if operation == "importTable" and (localHDFSpath == None or Hive_DB == None or Hive_Table == None or displayHelp == True):
-		print_importTable_help()
+    if operation == "copyTableToCluster" and (
+        localHDFSpath == None
+        or remoteHDFSpath == None
+        or remoteInstance == None
+        or displayHelp == True
+    ):
+        print_copyTableToCluster_help()
 
-	if operation == "copyTableToCluster" and (localHDFSpath == None or remoteHDFSpath == None or remoteInstance == None or displayHelp == True):
-		print_copyTableToCluster_help()
+    if operation == "copyTableFromCluster" and (
+        localHDFSpath == None
+        or remoteHDFSpath == None
+        or remoteInstance == None
+        or displayHelp == True
+    ):
+        print_copyTableFromCluster_help()
 
-	if operation == "copyTableFromCluster" and (localHDFSpath == None or remoteHDFSpath == None or remoteInstance == None or displayHelp == True):
-		print_copyTableFromCluster_help()
+    if quietMode == False:
+        printHeader()
 
-	if quietMode == False:
-		printHeader()
+    # Initiate the logging functions with the correct level
+    if loggingLevel == logging.DEBUG:
+        logging.basicConfig(
+            stream=sys.stdout,
+            format="%(levelname)s %(funcName)s - %(message)s",
+            level=loggingLevel,
+        )
+    else:
+        logging.basicConfig(
+            stream=sys.stdout, format="%(levelname)s - %(message)s", level=loggingLevel
+        )
 
-	# Initiate the logging functions with the correct level
-	if loggingLevel == logging.DEBUG:
-		logging.basicConfig(stream=sys.stdout, format='%(levelname)s %(funcName)s - %(message)s', level=loggingLevel)
-	else:
-		logging.basicConfig(stream=sys.stdout, format='%(levelname)s - %(message)s', level=loggingLevel)
+    if operation == "exportTable":
+        copyOperation = copy_operations.operation()
+        import_operation = import_operations.operation()
+        if concatenateTable == True:
+            import_operation.concatenateTable(hiveDB=Hive_DB, hiveTable=Hive_Table)
 
-	if operation == "exportTable":
-		copyOperation = copy_operations.operation()
-		import_operation = import_operations.operation()
-		if concatenateTable == True:
-			import_operation.concatenateTable(hiveDB=Hive_DB, hiveTable=Hive_Table)
+        copyOperation.exportTable(
+            hiveDB=Hive_DB, hiveTable=Hive_Table, localHDFSpath=localHDFSpath
+        )
+        import_operation.remove_temporary_files()
 
-		copyOperation.exportTable(hiveDB=Hive_DB, hiveTable=Hive_Table, localHDFSpath = localHDFSpath)
-		import_operation.remove_temporary_files()
+    if operation == "copyTableFromCluster":
+        copyOperation = copy_operations.operation()
+        copyOperation.copyTableToFromCluster(
+            hiveDB=Hive_DB,
+            hiveTable=Hive_Table,
+            remoteInstance=remoteInstance,
+            localHDFSpath=localHDFSpath,
+            remoteHDFSpath=remoteHDFSpath,
+            fromClusterMode=True,
+        )
+        copyOperation.remove_temporary_files()
 
-	if operation == "copyTableFromCluster":
-		copyOperation = copy_operations.operation()
-		copyOperation.copyTableToFromCluster(	hiveDB=Hive_DB, 
-												hiveTable=Hive_Table, 
-												remoteInstance = remoteInstance, 
-												localHDFSpath = localHDFSpath, 
-												remoteHDFSpath = remoteHDFSpath,
-												fromClusterMode = True)
-		copyOperation.remove_temporary_files()
+    if operation == "copyTableToCluster":
+        copyOperation = copy_operations.operation()
+        copyOperation.copyTableToFromCluster(
+            hiveDB=Hive_DB,
+            hiveTable=Hive_Table,
+            remoteInstance=remoteInstance,
+            localHDFSpath=localHDFSpath,
+            remoteHDFSpath=remoteHDFSpath,
+            fromClusterMode=False,
+        )
+        copyOperation.remove_temporary_files()
 
-	if operation == "copyTableToCluster":
-		copyOperation = copy_operations.operation()
-		copyOperation.copyTableToFromCluster(	hiveDB=Hive_DB, 
-												hiveTable=Hive_Table, 
-												remoteInstance = remoteInstance, 
-												localHDFSpath = localHDFSpath, 
-												remoteHDFSpath = remoteHDFSpath,
-												fromClusterMode = False)
-		copyOperation.remove_temporary_files()
+    if operation == "importTable":
+        copyOperation = copy_operations.operation()
+        copyOperation.importCopiedTable(
+            hiveDB=Hive_DB, hiveTable=Hive_Table, localHDFSpath=localHDFSpath
+        )
+        copyOperation.remove_temporary_files()
 
-	if operation == "importTable":
-		copyOperation = copy_operations.operation()
-		copyOperation.importCopiedTable(hiveDB=Hive_DB, hiveTable=Hive_Table, localHDFSpath = localHDFSpath)
-		copyOperation.remove_temporary_files()
+    if operation == "scheduleTableAsyncCopy":
+        copyOperation = copy_operations.operation()
+        copyOperation.scheduleTableAsyncCopy(
+            hiveFilterDB=Hive_DB,
+            hiveFilterTable=Hive_Table,
+            copyDestination=copyDestination,
+        )
+        copyOperation.remove_temporary_files()
 
-	if operation == "scheduleTableAsyncCopy":
-		copyOperation = copy_operations.operation()
-		copyOperation.scheduleTableAsyncCopy(hiveFilterDB=Hive_DB, hiveFilterTable=Hive_Table, copyDestination = copyDestination)
-		copyOperation.remove_temporary_files()
+    if operation == "scheduleDAGasyncCopy":
+        copyOperation = copy_operations.operation()
+        copyOperation.scheduleDAGasyncCopy(
+            airflowDAGname=airflowDAG,
+            copyDestination=copyDestination,
+            includeIncrImports=includeIncrImports,
+        )
+        copyOperation.remove_temporary_files()
 
-	if operation == "scheduleDAGasyncCopy":
-		copyOperation = copy_operations.operation()
-		copyOperation.scheduleDAGasyncCopy(airflowDAGname = airflowDAG, copyDestination = copyDestination, includeIncrImports = includeIncrImports)
-		copyOperation.remove_temporary_files()
+    if operation == "copyAirflowImportDAG":
+        copyOperation = copy_operations.operation()
+        copyOperation.copyAirflowImportDAG(
+            airflowDAGname=airflowDAG,
+            copyDestination=copyDestination,
+            copyDAGnoSlave=copyDAGnoSlave,
+            setAutoRegenerateDAG=setAutoRegenerateDAG,
+        )
+        copyOperation.remove_temporary_files()
 
-	if operation == "copyAirflowImportDAG":
-		copyOperation = copy_operations.operation()
-		copyOperation.copyAirflowImportDAG(airflowDAGname = airflowDAG, copyDestination = copyDestination, copyDAGnoSlave = copyDAGnoSlave, setAutoRegenerateDAG = setAutoRegenerateDAG)
-		copyOperation.remove_temporary_files()
-
-	if operation == "copyAirflowExportDAG":
-		copyOperation = copy_operations.operation()
-		copyOperation.copyAirflowExportDAG(airflowDAGname = airflowDAG, copyDestination = copyDestination, setAutoRegenerateDAG = setAutoRegenerateDAG)
-		copyOperation.remove_temporary_files()
+    if operation == "copyAirflowExportDAG":
+        copyOperation = copy_operations.operation()
+        copyOperation.copyAirflowExportDAG(
+            airflowDAGname=airflowDAG,
+            copyDestination=copyDestination,
+            setAutoRegenerateDAG=setAutoRegenerateDAG,
+        )
+        copyOperation.remove_temporary_files()
 
 
 if __name__ == "__main__":
-	main(sys.argv[1:])
+    main(sys.argv[1:])
