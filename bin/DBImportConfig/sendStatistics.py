@@ -15,13 +15,15 @@
 # specific language governing permissions and limitations
 # under the License.
 
-import sys
-import logging
 import json
-import requests
-from DBImportConfig import common_config
-import kafka
+import logging
 import ssl
+import sys
+
+import kafka
+import requests
+
+from DBImportConfig import common_config
 
 
 class sendStatistics(object):

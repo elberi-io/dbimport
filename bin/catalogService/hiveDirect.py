@@ -15,16 +15,18 @@
 # specific language governing permissions and limitations
 # under the License.
 
-import sys
 import logging
-from common.Singleton import Singleton
-from common.Exceptions import databaseNotFound, rowNotFound
-from ConfigReader import configuration
+import sys
+
 import pandas as pd
 import sqlalchemy as sa
+from sqlalchemy.orm import aliased, sessionmaker
+
+from common.Exceptions import databaseNotFound, rowNotFound
+from common.Singleton import Singleton
+from ConfigReader import configuration
 from DBImportConfig import common_config
 from DBImportOperation import hiveSchema
-from sqlalchemy.orm import aliased, sessionmaker
 
 
 class hiveMetastoreDirect(object, metaclass=Singleton):

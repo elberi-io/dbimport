@@ -15,21 +15,22 @@
 # specific language governing permissions and limitations
 # under the License.
 
-import os
-import sys
 import logging
-import string
+import os
 import random
+import string
+import sys
 from urllib.parse import quote
+
 import mysql.connector
-from mysql.connector import errorcode
 import pandas as pd
 import sqlalchemy as sa
-from sqlalchemy.orm import sessionmaker
-from DBImportConfig import configSchema
-from DBImportConfig import common_config
-from alembic.config import Config
 from alembic import command as alembicCommand
+from alembic.config import Config
+from mysql.connector import errorcode
+from sqlalchemy.orm import sessionmaker
+
+from DBImportConfig import common_config, configSchema
 
 
 class initialize(object):

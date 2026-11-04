@@ -16,16 +16,18 @@
 # specific language governing permissions and limitations
 # under the License.
 
-import os
-import sys
 import getopt
 import logging
+import os
 import signal
+import sys
+
+from gunicorn import glogging
+from gunicorn.app.wsgiapp import WSGIApplication
+
 from common import constants as constant
 from ConfigReader import configuration
 from Server import restServer  # noqa: F401  # connects to the config DB before gunicorn forks the workers
-from gunicorn.app.wsgiapp import WSGIApplication
-from gunicorn import glogging
 
 
 class StandaloneApplication(WSGIApplication):

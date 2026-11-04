@@ -9,7 +9,6 @@ Create Date: 2023-02-10 09:05:05.637761
 from alembic import op
 from sqlalchemy import Enum
 
-
 # revision identifiers, used by Alembic.
 revision = "9f02bade6c68"
 down_revision = "401193cd5776"

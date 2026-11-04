@@ -15,29 +15,31 @@
 # specific language governing permissions and limitations
 # under the License.
 
-import os
-import sys
-import logging
-import subprocess
-import shutil
-import jaydebeapi
-import re
 import json
-import pendulum
-from urllib.parse import quote
-from ConfigReader import configuration
-import mysql.connector
-from mysql.connector import errorcode
+import logging
+import os
+import re
+import shutil
+import subprocess
+import sys
 from datetime import datetime, timedelta
+from urllib.parse import quote
+
+import jaydebeapi
+import mysql.connector
 import pandas as pd
-from sourceSchemaReader import schemaReader
-from common.Singleton import Singleton
-from common import constants as constant
-from DBImportConfig import decryption as decryption
-from common.Exceptions import SQLerror, invalidConfiguration, undevelopedFeature
-import sqlalchemy as sa
-from sqlalchemy.orm import sessionmaker
+import pendulum
 import pymongo
+import sqlalchemy as sa
+from mysql.connector import errorcode
+from sqlalchemy.orm import sessionmaker
+
+from common import constants as constant
+from common.Exceptions import SQLerror, invalidConfiguration, undevelopedFeature
+from common.Singleton import Singleton
+from ConfigReader import configuration
+from DBImportConfig import decryption as decryption
+from sourceSchemaReader import schemaReader
 
 
 class config(object, metaclass=Singleton):

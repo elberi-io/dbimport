@@ -15,21 +15,21 @@
 # specific language governing permissions and limitations
 # under the License.
 
-import sys
-import re
-import logging
 import json
+import logging
+import re
+import sys
+from datetime import datetime
+
 import mysql.connector
-from common.Singleton import Singleton
+import pandas as pd
+
 from common import constants as constant
 from common.Exceptions import invalidConfiguration, undevelopedFeature, validationError
-from DBImportConfig import common_config
+from common.Singleton import Singleton
 
 # from DBImportConfig import rest
-from DBImportConfig import export_stage
-from DBImportConfig import sendStatistics
-from datetime import datetime
-import pandas as pd
+from DBImportConfig import common_config, export_stage, sendStatistics
 
 
 class config(object, metaclass=Singleton):

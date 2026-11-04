@@ -15,12 +15,13 @@
 # specific language governing permissions and limitations
 # under the License.
 
-import logging
 import json
-from datetime import datetime
-from DBImportConfig import sendStatistics
-from DBImportConfig import common_config
+import logging
 import time
+from datetime import datetime
+
+from DBImportConfig import common_config, sendStatistics
+
 # import kafka
 # import ssl
 

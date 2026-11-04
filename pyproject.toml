@@ -127,19 +127,21 @@ extend-include = [
     "bin/restServer",
     "bin/setup",
 ]
+# Import sorting treats the packages in bin/ and the tests as first party.
+src = ["bin", "."]
 
 [tool.ruff.lint]
 # Existing code is checked for errors that point at real bugs (syntax
 # errors, invalid comparisons, undefined names) and for import hygiene:
-# no star imports, no unused or duplicate imports (#159). RUF100 reports
-# noqa comments that are no longer needed, so a suppression is removed
-# together with the bug it hides. tests/ruff.toml applies a stricter rule
-# set to the tests.
-select = ["E9", "F63", "F7", "F82", "F401", "F403", "F405", "F811", "RUF100"]
+# no star imports, no unused or duplicate imports, sorted imports (#159).
+# RUF100 reports noqa comments that are no longer needed, so a
+# suppression is removed together with the bug it hides. tests/ruff.toml
+# applies a stricter rule set to the tests.
+select = ["E9", "F63", "F7", "F82", "F401", "F403", "F405", "F811", "I001", "RUF100"]
 
 [tool.ruff.lint.per-file-ignores]
 # The Sphinx configuration is outside #159; it imports its theme.
-"docs/conf.py" = ["F401"]
+"docs/conf.py" = ["F401", "I001"]
 
 [tool.ruff.format]
 # bin/ was formatted in one commit per package, listed in

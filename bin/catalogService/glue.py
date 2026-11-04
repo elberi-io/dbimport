@@ -15,20 +15,22 @@
 # specific language governing permissions and limitations
 # under the License.
 
-import logging
 import json
-from common.Singleton import Singleton
-from common.Exceptions import catalogError, databaseNotFound, undevelopedFeature
-import pandas as pd
+import logging
 
-# import sqlalchemy as sa
-from DBImportConfig import common_config
+import boto3
+
 # from sqlalchemy.sql import alias, select
 # from sqlalchemy.orm import aliased, sessionmaker
 # from sqlalchemy.pool import QueuePool
-
 import botocore
-import boto3
+import pandas as pd
+
+from common.Exceptions import catalogError, databaseNotFound, undevelopedFeature
+from common.Singleton import Singleton
+
+# import sqlalchemy as sa
+from DBImportConfig import common_config
 
 
 class glueCatalog(object, metaclass=Singleton):

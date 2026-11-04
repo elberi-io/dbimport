@@ -15,30 +15,30 @@
 # specific language governing permissions and limitations
 # under the License.
 
-import sys
-import time
 import logging
-import pandas as pd
-import jpype
-from queue import Queue
-from queue import Empty
+import sys
 import threading
-from ConfigReader import configuration
+import time
 from datetime import datetime, timedelta
+from queue import Empty, Queue
+
+import jpype
+import pandas as pd
+
+# from sourceSchemaReader import schemaReader
+import sqlalchemy as sa
+from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm import aliased, sessionmaker
+
 from common.Exceptions import (
     atlasError,
     connectionError,
     foreignKeyError,
     invalidConfiguration,
 )
-from DBImportConfig import configSchema
-from DBImportConfig import common_config
+from ConfigReader import configuration
+from DBImportConfig import common_config, configSchema
 from DBImportOperation import atlas_operations
-
-# from sourceSchemaReader import schemaReader
-import sqlalchemy as sa
-from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.orm import aliased, sessionmaker
 
 
 class atlasCrawler(threading.Thread):

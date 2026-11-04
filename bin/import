@@ -16,10 +16,11 @@
 # specific language governing permissions and limitations
 # under the License.
 
-import os
-import sys
 import getopt
 import logging
+import os
+import sys
+
 from common import constants as constant
 from common.Exceptions import (
     SQLerror,
@@ -28,9 +29,7 @@ from common.Exceptions import (
     invalidConfiguration,
     validationError,
 )
-from DBImportOperation import import_operations
-from DBImportOperation import copy_operations
-from DBImportOperation import etl_operations
+from DBImportOperation import copy_operations, etl_operations, import_operations
 
 
 def printHelp():

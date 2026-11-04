@@ -15,14 +15,13 @@
 # specific language governing permissions and limitations
 # under the License.
 
-import logging
 import json
+import logging
+import time
 from datetime import datetime
 
 # from DBImportConfig import rest
-from DBImportConfig import common_config
-from DBImportConfig import sendStatistics
-import time
+from DBImportConfig import common_config, sendStatistics
 
 
 class stage(object):

@@ -12,6 +12,7 @@ from pathlib import Path
 
 import pytest
 import sqlalchemy as sa
+
 from ConfigReader import configuration
 from Schedule import Airflow
 from tests.configdb import insert_row, set_mysql_driver_path

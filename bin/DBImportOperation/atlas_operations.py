@@ -15,22 +15,34 @@
 # specific language governing permissions and limitations
 # under the License.
 
-import sys
-import re
-import logging
-
-# import subprocess
-import jaydebeapi
-import jpype
+import getpass
 
 # import shlex
 # from subprocess import Popen, PIPE
 import json
-import getpass
+import logging
+import re
+import sys
+
+# import subprocess
+import jaydebeapi
+import jpype
+import numpy as np
+
+# from common import sparkUDF as sparkUDF
+# from DBImportConfig import import_config
+# from DBImportOperation import common_operations
+import pandas as pd
 import requests
-from requests_kerberos import HTTPKerberosAuth
+
+# import base64
+import sqlalchemy as sa
 from requests.auth import HTTPBasicAuth
-from ConfigReader import configuration
+from requests_kerberos import HTTPKerberosAuth
+from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm import aliased, sessionmaker
+
+from common import constants as constant
 
 # from mysql.connector import errorcode
 # from common.Singleton import Singleton
@@ -42,20 +54,9 @@ from common.Exceptions import (
     invalidConfiguration,
     schemaError,
 )
-from common import constants as constant
-from sourceSchemaReader import schemaReader
+from ConfigReader import configuration
 from DBImportConfig import configSchema
-
-# from common import sparkUDF as sparkUDF
-# from DBImportConfig import import_config
-# from DBImportOperation import common_operations
-import pandas as pd
-import numpy as np
-
-# import base64
-import sqlalchemy as sa
-from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.orm import aliased, sessionmaker
+from sourceSchemaReader import schemaReader
 
 
 class atlasOperation(object):

@@ -16,11 +16,13 @@
 # specific language governing permissions and limitations
 # under the License.
 
-import os
-import sys
 import getopt
 import logging
+import os
+import sys
+
 import psutil
+
 from common import constants as constant
 from ConfigReader import configuration
 from Server import daemon

@@ -15,22 +15,22 @@
 # specific language governing permissions and limitations
 # under the License.
 
-import re
-import logging
 import json
+import logging
 import math
+import re
+from datetime import datetime
 
 # import urllib
 import mysql.connector
-from common.Singleton import Singleton
+import numpy as np
+import pandas as pd
+
 from common import constants as constant
 from common.Exceptions import SQLerror, invalidConfiguration, validationError
-from DBImportConfig import common_config
-from DBImportConfig import sendStatistics
+from common.Singleton import Singleton
+from DBImportConfig import common_config, sendStatistics
 from DBImportConfig import import_stage as stage
-from datetime import datetime
-import pandas as pd
-import numpy as np
 
 
 class config(object, metaclass=Singleton):

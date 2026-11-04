@@ -15,26 +15,26 @@
 # specific language governing permissions and limitations
 # under the License.
 
-import sys
-import time
+import binascii
 import logging
 import subprocess
-import pandas as pd
-import binascii
-from queue import Queue
-from queue import Empty
+import sys
 
 # import Queue
 import threading
-from daemons.prefab import run
-from ConfigReader import configuration
+import time
 from datetime import datetime, timedelta
-from common.Exceptions import SQLerror
-from DBImportConfig import configSchema
-from DBImportConfig import common_config
+from queue import Empty, Queue
+
+import pandas as pd
 import sqlalchemy as sa
+from daemons.prefab import run
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import aliased, sessionmaker
+
+from common.Exceptions import SQLerror
+from ConfigReader import configuration
+from DBImportConfig import common_config, configSchema
 from Server import atlasDiscovery
 
 

@@ -15,14 +15,14 @@
 # specific language governing permissions and limitations
 # under the License.
 
-import sys
 import logging
-from common.Singleton import Singleton
-from common import constants as constant
-from DBImportConfig import import_config
-from DBImportOperation import import_operations
-from DBImportOperation import common_operations
+import sys
 from datetime import datetime
+
+from common import constants as constant
+from common.Singleton import Singleton
+from DBImportConfig import import_config
+from DBImportOperation import common_operations, import_operations
 
 
 class operation(object, metaclass=Singleton):

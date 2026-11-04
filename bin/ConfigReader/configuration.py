@@ -15,9 +15,10 @@
 # specific language governing permissions and limitations
 # under the License.
 
+import configparser
 import os
 import sys
-import configparser
+
 from common.Exceptions import invalidConfiguration
 
 

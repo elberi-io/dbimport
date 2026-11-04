@@ -15,22 +15,23 @@
 # specific language governing permissions and limitations
 # under the License.
 
-import sys
+import binascii
+import fnmatch
 import logging
 import subprocess
-import fnmatch
-import binascii
-from ConfigReader import configuration
-from common.Singleton import Singleton
-from common.Exceptions import invalidConfiguration
-from DBImportConfig import import_config
-from DBImportConfig import configSchema
-from DBImportOperation import common_operations
+import sys
 from datetime import datetime
-import pandas as pd
+
 import numpy as np
+import pandas as pd
 import sqlalchemy as sa
 from sqlalchemy.orm import aliased, sessionmaker
+
+from common.Exceptions import invalidConfiguration
+from common.Singleton import Singleton
+from ConfigReader import configuration
+from DBImportConfig import configSchema, import_config
+from DBImportOperation import common_operations
 
 
 class operation(object, metaclass=Singleton):

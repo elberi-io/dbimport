@@ -15,12 +15,14 @@
 # specific language governing permissions and limitations
 # under the License.
 
-import os
-import logging
 import base64
+import logging
+import os
+
 from Crypto.Cipher import PKCS1_v1_5
 from Crypto.PublicKey import RSA
 from Crypto.Random import get_random_bytes
+
 from common.Exceptions import invalidConfiguration
 
 

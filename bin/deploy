@@ -16,9 +16,10 @@
 # specific language governing permissions and limitations
 # under the License.
 
-import sys
 import getopt
 import logging
+import sys
+
 from common import constants as constant
 from DBImportOperation import copy_operations
 

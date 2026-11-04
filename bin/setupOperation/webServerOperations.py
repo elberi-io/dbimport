@@ -15,20 +15,18 @@
 # specific language governing permissions and limitations
 # under the License.
 
-import os
-import sys
 import logging
+import os
 import subprocess
+import sys
 
 # import jaydebeapi
-
 # from urllib.parse import quote
-
 # import mysql.connector
 # from mysql.connector import errorcode
-
 # import pandas as pd
 from DBImportConfig import common_config
+
 # import sqlalchemy as sa
 # from sqlalchemy.orm import Session, sessionmaker
 # from sqlalchemy.ext.automap import automap_base

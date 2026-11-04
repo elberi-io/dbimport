@@ -16,21 +16,23 @@
 # specific language governing permissions and limitations
 # under the License.
 
-import sys
 import getopt
-import logging
 import json
+import logging
+import sys
+
 from common import constants as constant
 from common.Exceptions import SQLerror, daemonExit, invalidConfiguration
-from DBImportConfig import common_config
-from DBImportConfig import import_config
+from DBImportConfig import common_config, import_config
 
 # from DBImportConfig import rest
-from DBImportOperation import common_operations
-from DBImportOperation import import_operations
-from DBImportOperation import export_operations
-from DBImportOperation import copy_operations
-from DBImportOperation import atlas_operations
+from DBImportOperation import (
+    atlas_operations,
+    common_operations,
+    copy_operations,
+    export_operations,
+    import_operations,
+)
 from Schedule import Airflow
 
 
