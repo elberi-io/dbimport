@@ -1,4 +1,5 @@
 import pytest
+
 from ConfigReader import configuration
 from DBImportConfig import decryption
 

@@ -1,11 +1,21 @@
 # coding: utf-8
-# from sqlalchemy import CHAR, Column, DateTime, Enum, ForeignKey, ForeignKeyConstraint, Index, String, Table, Text, Time, text
-from sqlalchemy import *
-from sqlalchemy.dialects.mysql import BIGINT, INTEGER, TINYINT, SMALLINT
-from sqlalchemy.orm import relationship, aliased
-from sqlalchemy.sql import alias, select, func
+from sqlalchemy import (
+    Column,
+    DateTime,
+    Enum,
+    ForeignKey,
+    ForeignKeyConstraint,
+    Index,
+    Integer,
+    SmallInteger,
+    String,
+    Text,
+    Time,
+    text,
+)
+from sqlalchemy.dialects.mysql import BIGINT, TINYINT
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy_utils import create_view
+from sqlalchemy.orm import relationship
 
 Base = declarative_base()
 metadata = Base.metadata

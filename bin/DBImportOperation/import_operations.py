@@ -15,32 +15,32 @@
 # specific language governing permissions and limitations
 # under the License.
 
-import sys
-import re
+import json
 import logging
-import subprocess
-import errno, os, pty
+import os
+import re
 import shlex
-from subprocess import Popen, PIPE
-from ConfigReader import configuration
-import mysql.connector
-from mysql.connector import errorcode
-from common.Singleton import Singleton
-from common.Exceptions import *
+import subprocess
+import sys
+import time
+from datetime import datetime, timedelta
+
+import pandas as pd
+import requests
+from requests_kerberos import OPTIONAL, HTTPKerberosAuth
+
 from common import constants as constant
 from common import sparkUDF as sparkUDF
+from common.Exceptions import (
+    SQLerror,
+    databaseNotFound,
+    invalidConfiguration,
+    undevelopedFeature,
+)
+from common.Singleton import Singleton
+from ConfigReader import configuration
 from DBImportConfig import import_config
-from DBImportOperation import common_operations
-from DBImportOperation import atlas_operations
-from datetime import datetime, timedelta
-import pandas as pd
-import numpy as np
-import time
-import base64
-import importlib
-import json
-import requests
-from requests_kerberos import HTTPKerberosAuth, REQUIRED, OPTIONAL
+from DBImportOperation import atlas_operations, common_operations
 
 
 class operation(object, metaclass=Singleton):
@@ -1004,12 +1004,10 @@ class operation(object, metaclass=Singleton):
             )
 
         # import all packages after the environment is set
-        from pyspark.context import SparkContext, SparkConf
         import pyspark.sql
-        from pyspark.sql import SparkSession
-        from pyspark import HiveContext
-        from pyspark.context import SparkContext
         import pyspark.sql.types
+        from pyspark.context import SparkConf, SparkContext
+        from pyspark.sql import SparkSession
         from pyspark.sql.functions import udf
 
         conf = SparkConf()
@@ -1063,8 +1061,7 @@ class operation(object, metaclass=Singleton):
 
         sc = SparkContext(conf=conf)
         sc.addPyFile("%s/bin/common/sparkUDF.py" % (os.environ["DBIMPORT_HOME"]))
-        from sparkUDF import base64EncodeArray
-        from sparkUDF import parseStructDate
+        from sparkUDF import base64EncodeArray, parseStructDate
 
         sys.stdout.flush()
 
@@ -1868,11 +1865,11 @@ class operation(object, metaclass=Singleton):
                 sys.stdout.flush()
 
                 if cFunction == "Hash":
-                    df = df.withColumn(cName, udfHashColumn(cName))
+                    df = df.withColumn(cName, udfHashColumn(cName))  # noqa: F821  # TODO(#162): UDF is an attribute, needs self.
                 elif cFunction == "Replace with star":
-                    df = df.withColumn(cName, udfReplaceCharWithStar(cName))
+                    df = df.withColumn(cName, udfReplaceCharWithStar(cName))  # noqa: F821  # TODO(#162): UDF is an attribute, needs self.
                 elif cFunction == "Show first 4 chars":
-                    df = df.withColumn(cName, udfShowFirstFourCharacters(cName))
+                    df = df.withColumn(cName, udfShowFirstFourCharacters(cName))  # noqa: F821  # TODO(#162): UDF is an attribute, needs self.
 
             # Write ORC files
             sys.stdout.flush()
@@ -2844,7 +2841,6 @@ class operation(object, metaclass=Singleton):
 
         if self.import_config.etlEngine == constant.ETL_ENGINE_SPARK:
             self.startSpark()
-            import pyspark
 
         # self.Hive_ColumnName_IUD = self.import_config.Hive_ColumnName_IUD
         # self.Hive_ColumnName_HistoryTimestamp = self.import_config.Hive_ColumnName_HistoryTimestamp
@@ -2945,7 +2941,6 @@ class operation(object, metaclass=Singleton):
 
         if self.import_config.etlEngine == constant.ETL_ENGINE_SPARK:
             self.startSpark()
-            import pyspark
 
         columns = self.common_operations.getColumns(
             hiveDB=self.Hive_DB,
@@ -3706,7 +3701,6 @@ class operation(object, metaclass=Singleton):
 
             if self.import_config.etlEngine == constant.ETL_ENGINE_SPARK:
                 self.startSpark()
-                import pyspark
 
                 query = "drop table if exists %s.`%s`.`%s`" % (
                     self.common_operations.sparkCatalogName,

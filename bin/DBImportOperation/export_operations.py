@@ -15,30 +15,24 @@
 # specific language governing permissions and limitations
 # under the License.
 
-import sys
-import re
 import logging
+import os
 import subprocess
-import errno, os, pty
-import shlex
-from subprocess import Popen, PIPE
-from ConfigReader import configuration
-import mysql.connector
-from mysql.connector import errorcode
-from common.Singleton import Singleton
-from common import constants as constant
-from common.Exceptions import *
-from DBImportConfig import export_config
-from DBImportOperation import common_operations
-from DBImportOperation import atlas_operations
-from datetime import datetime, timedelta
-import pandas as pd
-import numpy as np
+import sys
 import time
+from datetime import datetime
+
 import boto3
-import json
+import pandas as pd
 import requests
-from requests_kerberos import HTTPKerberosAuth, REQUIRED, OPTIONAL
+from requests_kerberos import OPTIONAL, HTTPKerberosAuth
+
+from common import constants as constant
+from common.Exceptions import SQLerror, databaseNotFound, invalidConfiguration
+from common.Singleton import Singleton
+from ConfigReader import configuration
+from DBImportConfig import export_config
+from DBImportOperation import atlas_operations, common_operations
 
 
 class operation(object, metaclass=Singleton):
@@ -1238,13 +1232,9 @@ class operation(object, metaclass=Singleton):
         sys.stdout.flush()
 
         # import all packages after the environment is set
-        from pyspark.context import SparkContext, SparkConf
-        from pyspark.sql import SparkSession
         from pyspark import HiveContext
-        from pyspark.context import SparkContext
-        from pyspark.sql import Row
-        from pyspark.sql.functions import lit
-        import pyspark.sql.session
+        from pyspark.context import SparkConf, SparkContext
+        from pyspark.sql import SparkSession
 
         conf = SparkConf()
         conf.setMaster(self.export_config.common_config.sparkMaster)

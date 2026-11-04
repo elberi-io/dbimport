@@ -16,21 +16,22 @@
 # specific language governing permissions and limitations
 # under the License.
 
-import os
-import time
-import sys
 import getopt
 import logging
-import psutil
+import os
 import signal
-from datetime import date, datetime, time, timedelta
-from common import constants as constant
-from common import Exceptions
-from ConfigReader import configuration
-from Server import restServer
-import uvicorn
-from gunicorn.app.wsgiapp import WSGIApplication
+import sys
+
 from gunicorn import glogging
+from gunicorn.app.wsgiapp import WSGIApplication
+
+from common import constants as constant
+from ConfigReader import configuration
+
+# Kept although unused: importing Server.restServer connects to the
+# configuration database. Without it, the gunicorn workers would make
+# that connection after they fork.
+from Server import restServer  # noqa: F401
 
 
 class StandaloneApplication(WSGIApplication):

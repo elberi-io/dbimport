@@ -15,21 +15,12 @@
 # specific language governing permissions and limitations
 # under the License.
 
-import os
-import io
-import sys
-import logging
 import json
-from ConfigReader import configuration
-import mysql.connector
-from mysql.connector import errorcode
-from datetime import time, date, datetime, timedelta
-from DBImportConfig import sendStatistics
-from DBImportConfig import common_config
+import logging
 import time
-import pandas as pd
-# import kafka
-# import ssl
+from datetime import datetime
+
+from DBImportConfig import common_config, sendStatistics
 
 
 class stage(object):

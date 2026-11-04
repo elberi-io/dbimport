@@ -15,36 +15,23 @@
 # specific language governing permissions and limitations
 # under the License.
 
-import sys
-import re
+import binascii
+import fnmatch
 import logging
 import subprocess
-import errno, os, pty
-import shlex
-import fnmatch
-import Crypto
-import binascii
-from subprocess import Popen, PIPE
-from ConfigReader import configuration
-from common.Singleton import Singleton
-from common.Exceptions import *
-import mysql.connector
-from mysql.connector import errorcode
-from common.Singleton import Singleton
-from common import constants as constant
-from DBImportConfig import import_config
-from DBImportConfig import configSchema
-from DBImportOperation import common_operations
-from datetime import datetime, timedelta
-import pandas as pd
+import sys
+from datetime import datetime
+
 import numpy as np
-import time
+import pandas as pd
 import sqlalchemy as sa
-from sqlalchemy.ext.automap import automap_base
-from sqlalchemy_utils import create_view
-from sqlalchemy_views import CreateView, DropView
-from sqlalchemy.sql import text, alias, select
-from sqlalchemy.orm import aliased, sessionmaker, Query
+from sqlalchemy.orm import aliased, sessionmaker
+
+from common.Exceptions import invalidConfiguration
+from common.Singleton import Singleton
+from ConfigReader import configuration
+from DBImportConfig import configSchema, import_config
+from DBImportOperation import common_operations
 
 
 class operation(object, metaclass=Singleton):
@@ -593,7 +580,7 @@ class operation(object, metaclass=Singleton):
 
             if (
                 self.import_config.import_is_incremental == True
-                and includeIncrImports == False
+                and includeIncrImports == False  # noqa: F821  # TODO(#163): not a parameter of this method
             ):
                 logging.warning(
                     "Asynchronous copy for incremental table %s.%s skipped"

@@ -15,41 +15,26 @@
 # specific language governing permissions and limitations
 # under the License.
 
-import os
-import io
-import sys
 import logging
-import time
-import subprocess
-import re
-from reprint import output
-import requests
-import puretransport
 import random
-from pyhive import hive
-from pyhive import exc
-from common.Singleton import Singleton
-from common.Exceptions import *
-import common.Exceptions
-from common import constants as constant
-from TCLIService.ttypes import TOperationState
-from requests_kerberos import HTTPKerberosAuth, REQUIRED
-import kerberos
-from ConfigReader import configuration
-import mysql.connector
-from mysql.connector import errorcode
-from datetime import date, datetime, timedelta
+import re
+import subprocess
+import sys
+import time
+
 import pandas as pd
+import puretransport
+import requests
+from pyhive import exc, hive
+from requests_kerberos import HTTPKerberosAuth
+from TCLIService.ttypes import TOperationState
+
+from catalogService import glue, hiveDirect
+from common import constants as constant
+from common.Exceptions import SQLerror, invalidConfiguration
+from common.Singleton import Singleton
+from ConfigReader import configuration
 from DBImportConfig import common_config
-
-from catalogService import hiveDirect
-from catalogService import glue
-
-import sqlalchemy as sa
-from DBImportOperation import hiveSchema
-from sqlalchemy.sql import alias, select
-from sqlalchemy.orm import aliased, sessionmaker
-from sqlalchemy.pool import QueuePool
 
 
 class operation(object, metaclass=Singleton):

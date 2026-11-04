@@ -2,6 +2,7 @@
 
 import pytest
 import sqlalchemy as sa
+
 from common.Exceptions import invalidConfiguration
 from DBImportConfig import common_config, import_config
 from tests.configdb import insert_row, set_mysql_driver_path

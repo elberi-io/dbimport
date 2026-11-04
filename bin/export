@@ -16,12 +16,19 @@
 # specific language governing permissions and limitations
 # under the License.
 
-import os
-import sys
 import getopt
 import logging
+import os
+import sys
+
 from common import constants as constant
-from common.Exceptions import *
+from common.Exceptions import (
+    SQLerror,
+    daemonExit,
+    invalidConfiguration,
+    undevelopedFeature,
+    validationError,
+)
 from DBImportOperation import export_operations
 
 

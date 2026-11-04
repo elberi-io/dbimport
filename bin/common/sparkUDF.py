@@ -16,8 +16,8 @@
 # under the License.
 
 import base64
-import re
 import hashlib
+import re
 import sys
 from datetime import datetime
 

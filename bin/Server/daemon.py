@@ -15,39 +15,24 @@
 # specific language governing permissions and limitations
 # under the License.
 
-import os
-import io
-import re
-import sys
-import pty
-import errno
-import time
-import logging
-import signal
-import subprocess
-import shlex
-import pandas as pd
-import Crypto
 import binascii
-from queue import Queue
-from queue import Empty
-
-# import Queue
+import logging
+import subprocess
+import sys
 import threading
-from daemons.prefab import run
-from ConfigReader import configuration
-from datetime import date, datetime, timedelta
-from common import constants as constant
-from common.Exceptions import *
-from DBImportConfig import configSchema
-from DBImportConfig import common_config
+import time
+from datetime import datetime, timedelta
+from queue import Empty, Queue
+
+import pandas as pd
 import sqlalchemy as sa
-from sqlalchemy.ext.automap import automap_base
+from daemons.prefab import run
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy_utils import create_view
-from sqlalchemy_views import CreateView, DropView
-from sqlalchemy.sql import text, alias, select, func
-from sqlalchemy.orm import aliased, sessionmaker, Query
+from sqlalchemy.orm import aliased, sessionmaker
+
+from common.Exceptions import SQLerror
+from ConfigReader import configuration
+from DBImportConfig import common_config, configSchema
 from Server import atlasDiscovery
 
 

@@ -15,37 +15,27 @@
 # specific language governing permissions and limitations
 # under the License.
 
-import os
-import io
-import sys
-import logging
-import subprocess
-import shutil
-import jaydebeapi
-import re
 import json
+import logging
+import os
+import random
+import re
+import shutil
+import sys
+from datetime import datetime, time, timedelta
+from urllib.parse import quote
+
 import boto3
 import botocore
-import random
-from ConfigReader import configuration
-import pendulum
-from urllib.parse import quote
-from datetime import date, datetime, time, timedelta
 import pandas as pd
-from common import constants as constant
-from common.Exceptions import *
-from Schedule import airflowSchema
-from DBImportConfig import configSchema
-from DBImportConfig import common_config
-from DBImportConfig import sendStatistics
+import pendulum
 import sqlalchemy as sa
+from sqlalchemy.orm import Query, aliased, scoped_session, sessionmaker
 
-# from sqlalchemy.orm import Session, sessionmaker
-from sqlalchemy.ext.automap import automap_base
-from sqlalchemy_utils import create_view
-from sqlalchemy_views import CreateView, DropView
-from sqlalchemy.sql import text, alias, select
-from sqlalchemy.orm import aliased, sessionmaker, Query, scoped_session
+from common.Exceptions import SQLerror, invalidConfiguration
+from ConfigReader import configuration
+from DBImportConfig import common_config, configSchema, sendStatistics
+from Schedule import airflowSchema
 
 
 class initialize(object):

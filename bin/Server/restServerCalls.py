@@ -15,46 +15,30 @@
 # specific language governing permissions and limitations
 # under the License.
 
-import os
-import io
-import re
-import sys
-import pty
-import ast
-import errno
-import time
-import logging
-import signal
-import subprocess
-import shlex
-import pandas as pd
-import Crypto
-import binascii
 import json
-import bcrypt
+import logging
+import os
+import re
+import subprocess
+import sys
 from urllib.parse import quote
-from fastapi.encoders import jsonable_encoder
-from fastapi.responses import JSONResponse
-from fastapi import HTTPException, status
-from ConfigReader import configuration
-from datetime import date, datetime, timedelta
-from Server import dataModels
-from common import constants as constant
-from common.Exceptions import *
-from DBImportConfig import configSchema
-from DBImportConfig import common_config
+
+import bcrypt
 import sqlalchemy as sa
-from sqlalchemy import func, bindparam
-from sqlalchemy.ext.automap import automap_base
-from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy_utils import create_view
-from sqlalchemy_views import CreateView, DropView
-from sqlalchemy.sql import text, alias, select, func, update, delete
-from sqlalchemy.sql.operators import like_op
-from sqlalchemy.dialects.mysql import insert
-from sqlalchemy.orm import aliased, sessionmaker, scoped_session, Query
 import sqlalchemy.orm.exc
-# from rich import print
+from fastapi import HTTPException, status
+from fastapi.responses import JSONResponse
+from sqlalchemy import bindparam
+from sqlalchemy.dialects.mysql import insert
+from sqlalchemy.orm import aliased, scoped_session, sessionmaker
+from sqlalchemy.sql import delete, func, update
+from sqlalchemy.sql.operators import like_op
+
+from common import constants as constant
+from common.Exceptions import SQLerror, invalidConfiguration
+from ConfigReader import configuration
+from DBImportConfig import common_config, configSchema
+from Server import dataModels
 
 
 class dbCalls:
@@ -1124,7 +1108,7 @@ class dbCalls:
             session.commit()
         except SQLerror as err:
             log.error(str(err))
-            log.error(column)
+            log.error(column)  # noqa: F821  # TODO(#164): column is undefined here
 
             result = str(err)
             returnCode = 500
@@ -2176,7 +2160,7 @@ class dbCalls:
             session.commit()
         except SQLerror as err:
             log.error(str(err))
-            log.error(column)
+            log.error(column)  # noqa: F821  # TODO(#164): column is undefined here
 
             result = str(err)
             returnCode = 500
@@ -3372,7 +3356,7 @@ class dbCalls:
             session.commit()
         except SQLerror as err:
             log.error(str(err))
-            log.error(column)
+            log.error(column)  # noqa: F821  # TODO(#164): column is undefined here
 
             result = str(err)
             returnCode = 500
@@ -4037,7 +4021,7 @@ class dbCalls:
             session.commit()
         except SQLerror as err:
             log.error(str(err))
-            log.error(column)
+            log.error(column)  # noqa: F821  # TODO(#164): column is undefined here
 
             # session.close()
             session.remove()
@@ -4563,7 +4547,7 @@ class dbCalls:
             session.commit()
         except SQLerror as err:
             log.error(str(err))
-            log.error(column)
+            log.error(column)  # noqa: F821  # TODO(#164): column is undefined here
 
             result = str(err)
             returnCode = 500
@@ -4845,7 +4829,7 @@ class dbCalls:
             session.commit()
         except SQLerror as err:
             log.error(str(err))
-            log.error(column)
+            log.error(column)  # noqa: F821  # TODO(#164): column is undefined here
 
             result = str(err)
             returnCode = 500
@@ -5119,7 +5103,7 @@ class dbCalls:
             session.commit()
         except SQLerror as err:
             log.error(str(err))
-            log.error(column)
+            log.error(column)  # noqa: F821  # TODO(#164): column is undefined here
 
             result = str(err)
             returnCode = 500

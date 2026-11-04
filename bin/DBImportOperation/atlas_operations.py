@@ -15,51 +15,35 @@
 # specific language governing permissions and limitations
 # under the License.
 
-import sys
-import re
+import getpass
+import json
 import logging
+import re
+import sys
 
-# import subprocess
-import errno, os, pty
 import jaydebeapi
 import jpype
-
-# import shlex
-# from subprocess import Popen, PIPE
-import re
-import json
-import getpass
-import ssl
-import requests
-from requests_kerberos import HTTPKerberosAuth
-from requests.auth import HTTPBasicAuth
-import threading
-from ConfigReader import configuration
-import mysql.connector
-
-# from mysql.connector import errorcode
-# from common.Singleton import Singleton
-from common.Exceptions import *
-from common import constants as constant
-from sourceSchemaReader import schemaReader
-from DBImportConfig import configSchema
-
-# from common import sparkUDF as sparkUDF
-# from DBImportConfig import import_config
-# from DBImportOperation import common_operations
-from datetime import datetime, timedelta
-import pandas as pd
 import numpy as np
-import time
-
-# import base64
+import pandas as pd
+import requests
 import sqlalchemy as sa
-from sqlalchemy.ext.automap import automap_base
+from requests.auth import HTTPBasicAuth
+from requests_kerberos import HTTPKerberosAuth
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy_utils import create_view
-from sqlalchemy_views import CreateView, DropView
-from sqlalchemy.sql import text, alias, select, func
-from sqlalchemy.orm import aliased, sessionmaker, Query
+from sqlalchemy.orm import aliased, sessionmaker
+
+from common import constants as constant
+from common.Exceptions import (
+    SQLerror,
+    atlasError,
+    connectionError,
+    foreignKeyError,
+    invalidConfiguration,
+    schemaError,
+)
+from ConfigReader import configuration
+from DBImportConfig import configSchema
+from sourceSchemaReader import schemaReader
 
 
 class atlasOperation(object):
@@ -1150,7 +1134,7 @@ class atlasOperation(object):
             log.warning(
                 "Could not check for deleted tables in Atlas as the name specifications in DBImport was not created correctly"
             )
-            raise valueError
+            raise valueError  # noqa: F821  # TODO(#165): should be ValueError
         dbUri = atlasNameDict["dbUri"]
 
         # if there are no tables in the database, we need to create it in Atlas manually

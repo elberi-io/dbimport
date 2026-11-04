@@ -6,10 +6,8 @@ Create Date: 2021-09-17 03:12:54.428183
 
 """
 
-from alembic import op
 import sqlalchemy as sa
-from sqlalchemy.dialects import mysql
-from sqlalchemy import Enum
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = "8b07d8cde6f6"

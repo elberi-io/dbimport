@@ -1,20 +1,16 @@
 # coding: utf-8
 from sqlalchemy import (
+    BigInteger,
     Column,
-    Float,
     ForeignKey,
     Index,
-    LargeBinary,
-    String,
-    Table,
-    BigInteger,
     Integer,
     SmallInteger,
+    String,
     Text,
 )
-from sqlalchemy.sql import alias, select
-from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import relationship
 
 Base = declarative_base()
 metadata = Base.metadata

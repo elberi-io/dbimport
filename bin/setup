@@ -16,12 +16,11 @@
 # specific language governing permissions and limitations
 # under the License.
 
-import sys
 import getopt
 import logging
+import sys
+
 from common import constants as constant
-from common.Exceptions import *
-from DBImportOperation import import_operations
 from setupOperation import database as databaseOperations
 from setupOperation import webServerOperations
 

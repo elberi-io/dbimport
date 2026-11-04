@@ -15,28 +15,16 @@
 # specific language governing permissions and limitations
 # under the License.
 
-import os
-import io
-import sys
-import logging
-import time
 import json
-from common.Singleton import Singleton
-from common.Exceptions import *
-import common.Exceptions
-from ConfigReader import configuration
-from datetime import date, datetime, timedelta
+import logging
+
+import boto3
+import botocore
 import pandas as pd
 
-# import sqlalchemy as sa
+from common.Exceptions import catalogError, databaseNotFound, undevelopedFeature
+from common.Singleton import Singleton
 from DBImportConfig import common_config
-from DBImportOperation import hiveSchema
-# from sqlalchemy.sql import alias, select
-# from sqlalchemy.orm import aliased, sessionmaker
-# from sqlalchemy.pool import QueuePool
-
-import botocore
-import boto3
 
 
 class glueCatalog(object, metaclass=Singleton):

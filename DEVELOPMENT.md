@@ -121,10 +121,12 @@ npm run build
 ```
 
 All Python code is formatted with `ruff format`. Existing code in `bin/`
-is only checked for errors that point at real bugs (syntax errors,
-invalid comparisons, undefined names, unused `noqa`). The tests use the
-stricter rules in `tests/ruff.toml`. import-linter checks the package
-layering defined in `pyproject.toml`.
+is checked for errors that point at real bugs (syntax errors, invalid
+comparisons, undefined names, unused `noqa`) and for its imports: no
+star imports, no unused or duplicate imports, imports sorted with the
+packages in `bin/` as first party. The tests use the stricter rules in
+`tests/ruff.toml`. import-linter checks the package layering defined in
+`pyproject.toml`.
 
 The commits that reformatted `bin/` are listed in `.git-blame-ignore-revs`.
 GitHub skips them in the blame view; to skip them in `git blame` locally,
