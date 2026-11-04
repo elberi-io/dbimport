@@ -17,12 +17,6 @@ anyio==4.3.0 ; sys_platform == 'linux' \
     #   dbimport
     #   starlette
     #   watchfiles
-backports-shutil-get-terminal-size==1.0.0 ; sys_platform == 'linux' \
-    --hash=sha256:0975ba55054c15e346944b38956a4c9cbee9009391e41b86c68990effb8c1f64 \
-    --hash=sha256:713e7a8228ae80341c70586d1cc0a8caa5207346927e23d09dcbcaf18eadec80
-    # via
-    #   dbimport
-    #   reprint
 bcrypt==4.1.2 ; sys_platform == 'linux' \
     --hash=sha256:1c28973decf4e0e69cee78c68e30a523be441972c826703bb93099868a8ff5b5 \
     --hash=sha256:2a298db2a8ab20056120b45e86c00a0a5eb50ec4075b6142db35f593b97cb3fb \
@@ -93,12 +87,6 @@ click==8.1.7 ; sys_platform == 'linux' \
     # via
     #   dbimport
     #   uvicorn
-colorama==0.4.6 ; sys_platform == 'linux' \
-    --hash=sha256:08695f5cb7ed6e0531a20572697297273c47b8cae5a63ffc6d6ed5c201be6e44 \
-    --hash=sha256:4f1d9991f5acc0ca119f9d443620b77f9d6b33703e51011c16baf57afb285fc6
-    # via
-    #   dbimport
-    #   reprint
 configparser==6.0.1 ; sys_platform == 'linux' \
     --hash=sha256:5a0da275bea56f871abaa9e0806331791e9d8ae2938e8b8797b99ab3e8e192c4 \
     --hash=sha256:db45513e971e509496b150be31bd67b0e14ab20b78a383b677e4b158e2c682d8
@@ -146,10 +134,6 @@ ecdsa==0.18.0 ; sys_platform == 'linux' \
     # via
     #   dbimport
     #   python-jose
-exceptiongroup==1.2.0 ; sys_platform == 'linux' \
-    --hash=sha256:4bfd3996ac73b41e9b9628b04e079f193850720ea5945fc96a08633c66912f14 \
-    --hash=sha256:91f5c769735f051a4290d52edd0858999b57e5876e9f85937691bd4c9fa3ed68
-    # via dbimport
 fastapi==0.110.0 ; sys_platform == 'linux' \
     --hash=sha256:266775f0dcc95af9d3ef39bad55cff525329a931d5fd51930aadd4f428bf7ff3 \
     --hash=sha256:87a1f6fb632a218222c5984be540055346a8f5d8a68e8f6fb647b1dc9934de4b
@@ -201,14 +185,6 @@ idna==3.6 ; sys_platform == 'linux' \
     #   anyio
     #   dbimport
     #   requests
-importlib-metadata==7.0.1 ; sys_platform == 'linux' \
-    --hash=sha256:4805911c3a4ec7c3966410053e9ec6a1fecd629117df5adee56dfc9432a1081e \
-    --hash=sha256:f238736bb06590ae52ac1fab06a3a9ef1d8dce2b7a35b5ab329371d6c8f5d2cc
-    # via dbimport
-importlib-resources==6.1.2 ; sys_platform == 'linux' \
-    --hash=sha256:308abf8474e2dba5f867d279237cd4076482c3de7104a40b41426370e891549b \
-    --hash=sha256:9a0a862501dc38b68adebc82970140c9e4209fc99601782925178f8386339938
-    # via dbimport
 jaydebeapi==1.2.3 ; sys_platform == 'linux' \
     --hash=sha256:d6256bdad1e14414225fbc839f7d56922ea3abc06153f3a57490fee909fecd64 \
     --hash=sha256:f25e9307fbb5960cb035394c26e37731b64cc465b197c4344cee85ec450ab92f
@@ -281,10 +257,6 @@ pandas==2.2.1 ; sys_platform == 'linux' \
     --hash=sha256:7d2ed41c319c9fb4fd454fe25372028dfa417aacb9790f68171b2e3f06eae8cd \
     --hash=sha256:af5d3c00557d657c8773ef9ee702c61dd13b9d7426794c9dfeb1dc4a0bf0ebc7 \
     --hash=sha256:e97fbb5387c69209f134893abc788a6486dbf2f9e511070ca05eed4b930b1b02
-    # via dbimport
-passlib==1.7.4 ; sys_platform == 'linux' \
-    --hash=sha256:aa6bca462b8d8bda89c70b382f0c298a20b5560af6cbfa2dce410c0a2fb669f1 \
-    --hash=sha256:defd50f72b65c5402ab2c573830a6978e5f202ad0d984793c8dde2c4152ebe04
     # via dbimport
 pendulum==3.0.0 ; sys_platform == 'linux' \
     --hash=sha256:597e66e63cbd68dd6d58ac46cb7a92363d2088d37ccde2dae4332ef23e95cd00 \
@@ -420,9 +392,6 @@ pyyaml==6.0.1 ; sys_platform == 'linux' \
     --hash=sha256:d2b04aac4d386b172d5b9692e2d2da8de7bfb6c387fa4f801fbf6fb2e6ba4673 \
     --hash=sha256:e7d73685e87afe9f3b36c799222440d6cf362062f78be1013661b00c5c6f678b
     # via dbimport
-reprint==0.6.0 ; sys_platform == 'linux' \
-    --hash=sha256:0ebc4dc21aefc810205f3fcc21783ea91bb96292a8500663482e864989bff54d
-    # via dbimport
 requests==2.31.0 ; sys_platform == 'linux' \
     --hash=sha256:58cd2187c01e70e6e26505bca751777aa9f2ee0b7f4300988b709f44e013003f \
     --hash=sha256:942c5a758f98d790eaed1a29cb6eefc7ffb0d1cf7af05c3d2791656dbd6ad1e1
@@ -452,7 +421,6 @@ six==1.16.0 ; sys_platform == 'linux' \
     #   dbimport
     #   ecdsa
     #   python-dateutil
-    #   reprint
     #   thrift
     #   thrift-sasl
 sniffio==1.3.1 ; sys_platform == 'linux' \
@@ -471,16 +439,6 @@ sqlalchemy==2.0.27 ; sys_platform == 'linux' \
     # via
     #   alembic
     #   dbimport
-    #   sqlalchemy-utils
-    #   sqlalchemy-views
-sqlalchemy-utils==0.41.1 ; sys_platform == 'linux' \
-    --hash=sha256:6c96b0768ea3f15c0dc56b363d386138c562752b84f647fb8d31a2223aaab801 \
-    --hash=sha256:a2181bff01eeb84479e38571d2c0718eb52042f9afd8c194d0d02877e84b7d74
-    # via dbimport
-sqlalchemy-views==0.3.2 ; sys_platform == 'linux' \
-    --hash=sha256:53a376efc8badbbd6d2d360f0d03fc70f1f5ee7748cf169506ea8a6e4f20326c \
-    --hash=sha256:c396416939bc4459c71f15c0279b72c9eb1f92fe022afe7fa74ed3adeef76e3b
-    # via dbimport
 starlette==0.36.3 ; sys_platform == 'linux' \
     --hash=sha256:13d429aa93a61dc40bf503e8c801db1f1bca3dc706b10ef2434a36123568f044 \
     --hash=sha256:90a671733cfb35771d8cc605e0b679d23b992f8dcfad48cc60b38cb29aeb7080
@@ -566,9 +524,3 @@ websockets==12.0 ; sys_platform == 'linux' \
     --hash=sha256:dc284bbc8d7c78a6c69e0c7325ab46ee5e40bb4d50e494d8131a07ef47500e9e \
     --hash=sha256:dff6cdf35e31d1315790149fee351f9e52978130cef6c87c4b6c9b3baf78bc53
     # via dbimport
-zipp==3.17.0 ; sys_platform == 'linux' \
-    --hash=sha256:0e923e726174922dce09c53c59ad483ff7bbb8e572e00c7f7c46b88556409f31 \
-    --hash=sha256:84e64a1c28cf7e91ed2078bb8cc8c259cb19b76942096c8d7b84947690cabaf0
-    # via
-    #   dbimport
-    #   importlib-metadata
