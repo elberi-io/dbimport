@@ -13,7 +13,7 @@ Download the source package from the latest release from the `GitHub Release Pag
         tar -xf dbimport-VERSION.tar
    
 
-There is a number of Python dependencies that needs to be in place before DBImport can start. DBImport supports Python 3.11. It's also preferable to use a virtual environment for Python, but creating a virtual environment is not part of this documentation. All required Python packages and their pinned versions are listed in *bin/requirements.txt*, which is generated from *uv.lock*.
+There is a number of Python dependencies that needs to be in place before DBImport can start. DBImport supports Python 3.11. This needs Spark 3.4 or later on the cluster, as earlier Spark versions do not support Python 3.11. It's also preferable to use a virtual environment for Python, but creating a virtual environment is not part of this documentation. All required Python packages and their pinned versions are listed in *bin/requirements.txt*, which is generated from *uv.lock*.
 
 Some of the packages are built from source during installation. This requires a C compiler and the Kerberos development headers, for example the *libkrb5-dev* package on Debian and Ubuntu, or the equivalent package on other distributions.
 
