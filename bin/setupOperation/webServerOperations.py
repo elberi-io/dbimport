@@ -23,7 +23,7 @@ import sys
 from DBImportConfig import common_config
 
 
-class webServerOperations(object):
+class webServerOperations:
     def __init__(self):
         logging.debug("Executing webServerOperations.__init__()")
 

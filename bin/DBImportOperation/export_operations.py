@@ -35,7 +35,7 @@ from DBImportConfig import export_config
 from DBImportOperation import atlas_operations, common_operations
 
 
-class operation(object, metaclass=Singleton):
+class operation(metaclass=Singleton):
     def __init__(self, connectionAlias=None, targetSchema=None, targetTable=None):
         logging.debug("Executing export_operations.__init__()")
 

@@ -38,7 +38,7 @@ from DBImportConfig import common_config, configSchema, sendStatistics
 from Schedule import airflowSchema
 
 
-class initialize(object):
+class initialize:
     def __init__(self):
         logging.debug("Executing Airflow.__init__()")
 

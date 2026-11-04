@@ -43,7 +43,7 @@ from DBImportConfig import import_config
 from DBImportOperation import atlas_operations, common_operations
 
 
-class operation(object, metaclass=Singleton):
+class operation(metaclass=Singleton):
     def __init__(self, Hive_DB=None, Hive_Table=None):
         logging.debug("Executing import_operations.__init__()")
         self.Hive_DB = None
@@ -3805,8 +3805,8 @@ class operation(object, metaclass=Singleton):
         # If you change any of the name replace rows, you also need to change the same data in function self.copyHiveTable() and import_definitions.saveColumnData()
         columnsDF["name"].replace([" "], "_", regex=True, inplace=True)
         columnsDF["name"].replace(["%"], "pct", regex=True, inplace=True)
-        columnsDF["name"].replace(["\("], "_", regex=True, inplace=True)
-        columnsDF["name"].replace(["\)"], "_", regex=True, inplace=True)
+        columnsDF["name"].replace([r"\("], "_", regex=True, inplace=True)
+        columnsDF["name"].replace([r"\)"], "_", regex=True, inplace=True)
         columnsDF["name"].replace(["ü"], "u", regex=True, inplace=True)
         columnsDF["name"].replace(["å"], "a", regex=True, inplace=True)
         columnsDF["name"].replace(["ä"], "a", regex=True, inplace=True)

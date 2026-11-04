@@ -23,7 +23,7 @@ from datetime import datetime
 from DBImportConfig import common_config, sendStatistics
 
 
-class stage(object):
+class stage:
     def __init__(self, mysql_conn, Hive_DB, Hive_Table):
         logging.debug("Executing stage.__init__()")
 
@@ -35,9 +35,9 @@ class stage(object):
         self.memoryStage = False
         self.stageTimeStart = None
         self.stageTimeStop = None
-        self.stageDurationStart = float()
-        self.stageDurationStop = float()
-        self.stageDurationTime = float()
+        self.stageDurationStart = 0.0
+        self.stageDurationStop = 0.0
+        self.stageDurationTime = 0.0
 
         self.common_config = common_config.config(Hive_DB, Hive_Table)
         # 		if configuration.get("REST_statistics", "post_import_data").lower() == "true":
@@ -1309,8 +1309,8 @@ class stage(object):
         self.stageTimeStart = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
         self.stageTimeStop = None
         self.stageDurationStart = time.monotonic()
-        self.stageDurationStop = float()
-        self.stageDurationTime = float()
+        self.stageDurationStop = 0.0
+        self.stageDurationTime = 0.0
 
         logging.debug("Executing stage.getStage() - Finished")
         return self.currentStage
@@ -1455,8 +1455,8 @@ class stage(object):
         self.stageTimeStart = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
         self.stageTimeStop = None
         self.stageDurationStart = time.monotonic()
-        self.stageDurationStop = float()
-        self.stageDurationTime = float()
+        self.stageDurationStop = 0.0
+        self.stageDurationTime = 0.0
 
         logging.debug("Executing stage.setStage() - Finished")
 

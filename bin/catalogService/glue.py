@@ -27,7 +27,7 @@ from common.Singleton import Singleton
 from DBImportConfig import common_config
 
 
-class glueCatalog(object, metaclass=Singleton):
+class glueCatalog(metaclass=Singleton):
     def __init__(self):
         logging.debug("Executing glueCatalog.__init__()")
 

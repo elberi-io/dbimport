@@ -292,7 +292,7 @@ class dbCalls:
                 "Default admin user does not exists in the 'auth_users' table. Creating it with password 'admin'"
             )
 
-            password_encoded = "admin".encode("utf-8")
+            password_encoded = b"admin"
             salt = bcrypt.gensalt()
             hashed_password = bcrypt.hashpw(
                 password=password_encoded, salt=salt
@@ -440,11 +440,11 @@ class dbCalls:
         """Generates a JDBC connection string"""
         log = logging.getLogger(self.logger)
 
-        databaseType = getattr(connectionValues, "databaseType")
-        databaseVersion = getattr(connectionValues, "version")
-        hostname = getattr(connectionValues, "hostname")
-        port = getattr(connectionValues, "port")
-        database = getattr(connectionValues, "database")
+        databaseType = connectionValues.databaseType
+        databaseVersion = connectionValues.version
+        hostname = connectionValues.hostname
+        port = connectionValues.port
+        database = connectionValues.database
         jdbcConnectionString = ""
 
         # Validate to make sure we have a valid combination of databaseType and version
@@ -463,7 +463,7 @@ class dbCalls:
 
         # Generate the connection string for each combo of databaseType and databaseVersion
         if databaseType == "DB2 AS400" and databaseVersion == "default":
-            if getattr(connectionValues, "port") == None:
+            if connectionValues.port == None:
                 jdbcConnectionString = "jdbc:as400://%s/%s" % (hostname, database)
             else:
                 jdbcConnectionString = "jdbc:as400://%s:%s/%s" % (
@@ -473,7 +473,7 @@ class dbCalls:
                 )
 
         if databaseType == "DB2 UDB" and databaseVersion == "default":
-            if getattr(connectionValues, "port") == None:
+            if connectionValues.port == None:
                 jdbcConnectionString = "jdbc:db2://%s/%s" % (hostname, database)
             else:
                 jdbcConnectionString = "jdbc:db2://%s:%s/%s" % (
@@ -483,7 +483,7 @@ class dbCalls:
                 )
 
         if databaseType == "MySQL" and databaseVersion == "default":
-            if getattr(connectionValues, "port") == None:
+            if connectionValues.port == None:
                 jdbcConnectionString = "jdbc:mysql://%s/%s" % (hostname, database)
             else:
                 jdbcConnectionString = "jdbc:mysql://%s:%s/%s" % (
@@ -493,7 +493,7 @@ class dbCalls:
                 )
 
         if databaseType == "Oracle" and databaseVersion == "default":
-            if getattr(connectionValues, "port") == None:
+            if connectionValues.port == None:
                 jdbcConnectionString = (
                     "jdbc:oracle:thin:@(DESCRIPTION=(ADDRESS_LIST=(ADDRESS=(PROTOCOL=TCP)(HOST=%s)))(CONNECT_DATA=(SERVICE_NAME=%s)))"
                     % (hostname, database)
@@ -505,7 +505,7 @@ class dbCalls:
                 )
 
         if databaseType == "PostgreSQL" and databaseVersion == "default":
-            if getattr(connectionValues, "port") == None:
+            if connectionValues.port == None:
                 jdbcConnectionString = "jdbc:postgresql://%s/%s" % (hostname, database)
             else:
                 jdbcConnectionString = "jdbc:postgresql://%s:%s/%s" % (
@@ -515,7 +515,7 @@ class dbCalls:
                 )
 
         if databaseType == "Progress DB" and databaseVersion == "default":
-            if getattr(connectionValues, "port") == None:
+            if connectionValues.port == None:
                 jdbcConnectionString = "jdbc:datadirect:openedge://%s/%s" % (
                     hostname,
                     database,
@@ -528,7 +528,7 @@ class dbCalls:
                 )
 
         if databaseType == "SQL Server" and databaseVersion == "default":
-            if getattr(connectionValues, "port") == None:
+            if connectionValues.port == None:
                 jdbcConnectionString = "jdbc:sqlserver://%s;database=%s" % (
                     hostname,
                     database,
@@ -541,7 +541,7 @@ class dbCalls:
                 )
 
         if databaseType == "SQL Server" and databaseVersion == "jTDS":
-            if getattr(connectionValues, "port") == None:
+            if connectionValues.port == None:
                 jdbcConnectionString = (
                     "jdbc:jtds:sqlserver://%s;useNTLMv2=true;databaseName=%s"
                     % (hostname, database)
@@ -553,7 +553,7 @@ class dbCalls:
                 )
 
         if databaseType == "CacheDB" and databaseVersion == "default":
-            if getattr(connectionValues, "port") == None:
+            if connectionValues.port == None:
                 jdbcConnectionString = "jdbc:Cache://%s/%s" % (hostname, database)
             else:
                 jdbcConnectionString = "jdbc:Cache://%s:%s/%s" % (
@@ -563,7 +563,7 @@ class dbCalls:
                 )
 
         if databaseType == "Snowflake" and databaseVersion == "default":
-            if getattr(connectionValues, "port") == None:
+            if connectionValues.port == None:
                 jdbcConnectionString = "jdbc:snowflake://%s/?db=%s" % (
                     hostname,
                     database,
@@ -576,7 +576,7 @@ class dbCalls:
                 )
 
         if databaseType == "Informix" and databaseVersion == "default":
-            if getattr(connectionValues, "port") == None:
+            if connectionValues.port == None:
                 jdbcConnectionString = "jdbc:informix-sqli://%s/%s" % (
                     hostname,
                     database,
@@ -589,7 +589,7 @@ class dbCalls:
                 )
 
         if databaseType == "SQL Anywhere" and databaseVersion == "default":
-            if getattr(connectionValues, "port") == None:
+            if connectionValues.port == None:
                 jdbcConnectionString = "jdbc:sybase:Tds://%s/%s" % (hostname, database)
             else:
                 jdbcConnectionString = "jdbc:sybase:Tds://%s:%s/%s" % (
@@ -654,13 +654,13 @@ class dbCalls:
 
         log.info(
             "User '%s' updated JDBC driver configuration for '%s'"
-            % (currentUser, getattr(jdbcDriver, "databaseType"))
+            % (currentUser, jdbcDriver.databaseType)
         )
 
-        log.debug("databaseType: %s" % getattr(jdbcDriver, "databaseType"))
-        log.debug("version: %s" % getattr(jdbcDriver, "version"))
-        log.debug("driver: %s" % getattr(jdbcDriver, "driver"))
-        log.debug("classpath: %s" % getattr(jdbcDriver, "classpath"))
+        log.debug("databaseType: %s" % jdbcDriver.databaseType)
+        log.debug("version: %s" % jdbcDriver.version)
+        log.debug("driver: %s" % jdbcDriver.driver)
+        log.debug("classpath: %s" % jdbcDriver.classpath)
 
         tableJDBCconnectionsDrivers = aliased(configSchema.jdbcConnectionsDrivers)
         result = "ok"
@@ -671,10 +671,10 @@ class dbCalls:
                 update(tableJDBCconnectionsDrivers),
                 [
                     {
-                        "database_type": getattr(jdbcDriver, "databaseType"),
-                        "version": getattr(jdbcDriver, "version"),
-                        "driver": getattr(jdbcDriver, "driver"),
-                        "classpath": getattr(jdbcDriver, "classpath"),
+                        "database_type": jdbcDriver.databaseType,
+                        "version": jdbcDriver.version,
+                        "driver": jdbcDriver.driver,
+                        "classpath": jdbcDriver.classpath,
                     }
                 ],
             )
@@ -1038,70 +1038,69 @@ class dbCalls:
 
         log.debug(connection)
         log.info(
-            "User '%s' updated/created connection '%s'"
-            % (currentUser, getattr(connection, "name"))
+            "User '%s' updated/created connection '%s'" % (currentUser, connection.name)
         )
 
-        if getattr(connection, "forceString") == None:
-            setattr(connection, "forceString", 0)
-        if getattr(connection, "createDatalakeImport") == None:
-            setattr(connection, "createDatalakeImport", 1)
-        if getattr(connection, "createForeignKey") == None:
-            setattr(connection, "createForeignKey", 1)
-        if getattr(connection, "atlasDiscovery") == None:
-            setattr(connection, "atlasDiscovery", 1)
+        if connection.forceString == None:
+            connection.forceString = 0
+        if connection.createDatalakeImport == None:
+            connection.createDatalakeImport = 1
+        if connection.createForeignKey == None:
+            connection.createForeignKey = 1
+        if connection.atlasDiscovery == None:
+            connection.atlasDiscovery = 1
 
         try:
             query = insert(configSchema.jdbcConnections).values(
-                dbalias=getattr(connection, "name"),
-                jdbc_url=getattr(connection, "connectionString"),
-                private_key_path=getattr(connection, "privateKeyPath"),
-                public_key_path=getattr(connection, "publicKeyPath"),
-                credentials=getattr(connection, "credentials"),
-                datalake_source=getattr(connection, "source"),
-                force_string=getattr(connection, "forceString"),
-                max_import_sessions=getattr(connection, "maxSessions"),
-                create_datalake_import=getattr(connection, "createDatalakeImport"),
-                timewindow_start=getattr(connection, "timeWindowStart"),
-                timewindow_stop=getattr(connection, "timeWindowStop"),
-                timewindow_timezone=getattr(connection, "timeWindowTimezone"),
-                operator_notes=getattr(connection, "operatorNotes"),
-                contact_info=getattr(connection, "contactInformation"),
-                description=getattr(connection, "description"),
-                owner=getattr(connection, "owner"),
-                environment=getattr(connection, "environment"),
-                seed_file=getattr(connection, "seedFile"),
-                create_foreign_keys=getattr(connection, "createForeignKey"),
-                atlas_discovery=getattr(connection, "atlasDiscovery"),
-                atlas_include_filter=getattr(connection, "atlasIncludeFilter"),
-                atlas_exclude_filter=getattr(connection, "atlasExcludeFilter"),
-                atlas_last_discovery=getattr(connection, "atlasLastDiscovery"),
+                dbalias=connection.name,
+                jdbc_url=connection.connectionString,
+                private_key_path=connection.privateKeyPath,
+                public_key_path=connection.publicKeyPath,
+                credentials=connection.credentials,
+                datalake_source=connection.source,
+                force_string=connection.forceString,
+                max_import_sessions=connection.maxSessions,
+                create_datalake_import=connection.createDatalakeImport,
+                timewindow_start=connection.timeWindowStart,
+                timewindow_stop=connection.timeWindowStop,
+                timewindow_timezone=connection.timeWindowTimezone,
+                operator_notes=connection.operatorNotes,
+                contact_info=connection.contactInformation,
+                description=connection.description,
+                owner=connection.owner,
+                environment=connection.environment,
+                seed_file=connection.seedFile,
+                create_foreign_keys=connection.createForeignKey,
+                atlas_discovery=connection.atlasDiscovery,
+                atlas_include_filter=connection.atlasIncludeFilter,
+                atlas_exclude_filter=connection.atlasExcludeFilter,
+                atlas_last_discovery=connection.atlasLastDiscovery,
             )
 
             query = query.on_duplicate_key_update(
-                dbalias=getattr(connection, "name"),
-                jdbc_url=getattr(connection, "connectionString"),
-                private_key_path=getattr(connection, "privateKeyPath"),
-                public_key_path=getattr(connection, "publicKeyPath"),
-                credentials=getattr(connection, "credentials"),
-                datalake_source=getattr(connection, "source"),
-                force_string=getattr(connection, "forceString"),
-                max_import_sessions=getattr(connection, "maxSessions"),
-                create_datalake_import=getattr(connection, "createDatalakeImport"),
-                timewindow_start=getattr(connection, "timeWindowStart"),
-                timewindow_stop=getattr(connection, "timeWindowStop"),
-                timewindow_timezone=getattr(connection, "timeWindowTimezone"),
-                operator_notes=getattr(connection, "operatorNotes"),
-                contact_info=getattr(connection, "contactInformation"),
-                description=getattr(connection, "description"),
-                owner=getattr(connection, "owner"),
-                environment=getattr(connection, "environment"),
-                seed_file=getattr(connection, "seedFile"),
-                create_foreign_keys=getattr(connection, "createForeignKey"),
-                atlas_discovery=getattr(connection, "atlasDiscovery"),
-                atlas_include_filter=getattr(connection, "atlasIncludeFilter"),
-                atlas_exclude_filter=getattr(connection, "atlasExcludeFilter"),
-                atlas_last_discovery=getattr(connection, "atlasLastDiscovery"),
+                dbalias=connection.name,
+                jdbc_url=connection.connectionString,
+                private_key_path=connection.privateKeyPath,
+                public_key_path=connection.publicKeyPath,
+                credentials=connection.credentials,
+                datalake_source=connection.source,
+                force_string=connection.forceString,
+                max_import_sessions=connection.maxSessions,
+                create_datalake_import=connection.createDatalakeImport,
+                timewindow_start=connection.timeWindowStart,
+                timewindow_stop=connection.timeWindowStop,
+                timewindow_timezone=connection.timeWindowTimezone,
+                operator_notes=connection.operatorNotes,
+                contact_info=connection.contactInformation,
+                description=connection.description,
+                owner=connection.owner,
+                environment=connection.environment,
+                seed_file=connection.seedFile,
+                create_foreign_keys=connection.createForeignKey,
+                atlas_discovery=connection.atlasDiscovery,
+                atlas_include_filter=connection.atlasIncludeFilter,
+                atlas_exclude_filter=connection.atlasExcludeFilter,
+                atlas_last_discovery=connection.atlasLastDiscovery,
             )
 
             session.execute(query)
@@ -1257,9 +1256,9 @@ class dbCalls:
         manageCmd = "%s/bin/manage" % (os.environ["DBIMPORT_HOME"])
 
         jsonInput = {}
-        jsonInput["connection"] = getattr(credentials, "connection")
-        jsonInput["username"] = getattr(credentials, "username")
-        jsonInput["password"] = getattr(credentials, "password")
+        jsonInput["connection"] = credentials.connection
+        jsonInput["username"] = credentials.username
+        jsonInput["password"] = credentials.password
 
         processKilled = False
         manageSession = subprocess.Popen(
@@ -1379,46 +1378,31 @@ class dbCalls:
         commandArg.append(manageCmd)
         commandArg.append("--addImportTable")
         commandArg.append("-a")
-        commandArg.append(getattr(data, "connection"))
+        commandArg.append(data.connection)
         commandArg.append("-h")
-        commandArg.append(getattr(data, "database"))
+        commandArg.append(data.database)
 
-        if (
-            getattr(data, "schemaFilter") != None
-            and getattr(data, "schemaFilter").strip() != ""
-        ):
+        if data.schemaFilter != None and data.schemaFilter.strip() != "":
             commandArg.append("-S")
-            commandArg.append(getattr(data, "schemaFilter"))
+            commandArg.append(data.schemaFilter)
 
-        if (
-            getattr(data, "tableFilter") != None
-            and getattr(data, "tableFilter").strip() != ""
-        ):
+        if data.tableFilter != None and data.tableFilter.strip() != "":
             commandArg.append("-T")
-            commandArg.append(getattr(data, "tableFilter"))
+            commandArg.append(data.tableFilter)
 
-        if (
-            getattr(data, "addSchemaToTable") != None
-            and getattr(data, "addSchemaToTable") == True
-        ):
+        if data.addSchemaToTable != None and data.addSchemaToTable == True:
             commandArg.append("--addSchemaToTable")
 
-        if (
-            getattr(data, "addCounterToTable") != None
-            and getattr(data, "addCounterToTable") == True
-        ):
+        if data.addCounterToTable != None and data.addCounterToTable == True:
             commandArg.append("--addCounterToTable")
 
-            if getattr(data, "counterStart") != None:
+            if data.counterStart != None:
                 commandArg.append("--counterStart")
-                commandArg.append(str(getattr(data, "counterStart")))
+                commandArg.append(str(data.counterStart))
 
-        if (
-            getattr(data, "addCustomText") != None
-            and getattr(data, "addCustomText").strip() != ""
-        ):
+        if data.addCustomText != None and data.addCustomText.strip() != "":
             commandArg.append("--addCustomText")
-            commandArg.append(getattr(data, "addCustomText"))
+            commandArg.append(data.addCustomText)
 
         commandArg.append("--quiet")
         commandArg.append("--jsonOutput")
@@ -1449,13 +1433,13 @@ class dbCalls:
         createCounter = 0
         for record in data:
             createCounter = createCounter + 1
-            database = getattr(record, "database")
-            table = getattr(record, "table")
+            database = record.database
+            table = record.table
 
             createData = dataModels.importTableDetailsWrite(
-                connection=getattr(record, "connection"),
-                sourceSchema=getattr(record, "sourceSchema"),
-                sourceTable=getattr(record, "sourceTable"),
+                connection=record.connection,
+                sourceSchema=record.sourceSchema,
+                sourceTable=record.sourceTable,
                 importPhaseType="full",
                 etlPhaseType="truncate_insert",
                 importTool="spark",
@@ -1903,7 +1887,7 @@ class dbCalls:
         """Bulk update of import tables"""
         log = logging.getLogger(self.logger)
 
-        if len(getattr(bulkData, "importTables")) == 0:
+        if len(bulkData.importTables) == 0:
             resultMsg = {
                 "result": "importTables must contain a list of database/tables to update"
             }
@@ -1927,37 +1911,33 @@ class dbCalls:
         # that field wont be part of this loop
         for updateField in bulkData.__pydantic_fields_set__:
             if updateField == "connection":
-                updateStatement = updateStatement.values(
-                    dbalias=getattr(bulkData, "connection")
-                )
+                updateStatement = updateStatement.values(dbalias=bulkData.connection)
             elif updateField == "importPhaseType":
                 updateStatement = updateStatement.values(
-                    import_phase_type=getattr(bulkData, "importPhaseType")
+                    import_phase_type=bulkData.importPhaseType
                 )
             elif updateField == "etlPhaseType":
                 updateStatement = updateStatement.values(
-                    etl_phase_type=getattr(bulkData, "etlPhaseType")
+                    etl_phase_type=bulkData.etlPhaseType
                 )
             elif updateField == "importTool":
                 updateStatement = updateStatement.values(
-                    import_tool=getattr(bulkData, "importTool")
+                    import_tool=bulkData.importTool
                 )
             elif updateField == "etlEngine":
-                updateStatement = updateStatement.values(
-                    etl_engine=getattr(bulkData, "etlEngine")
-                )
+                updateStatement = updateStatement.values(etl_engine=bulkData.etlEngine)
             elif updateField == "includeInAirflow":
                 updateStatement = updateStatement.values(
-                    include_in_airflow=getattr(bulkData, "includeInAirflow")
+                    include_in_airflow=bulkData.includeInAirflow
                 )
             elif updateField == "operatorNotes":
                 updateStatement = updateStatement.values(
-                    operator_notes=getattr(bulkData, "operatorNotes")
+                    operator_notes=bulkData.operatorNotes
                 )
 
         # Create a list of dicts that contain all the databas/table combinations that will be updated
         tableList = []
-        for tables in getattr(bulkData, "importTables"):
+        for tables in bulkData.importTables:
             tableList.append({"database": tables.database, "table": tables.table})
 
         updateStatement = updateStatement.execution_options(synchronize_session=False)
@@ -1995,39 +1975,39 @@ class dbCalls:
         )
 
         # Set default values
-        if getattr(data, "includeInAirflow") == None:
-            setattr(data, "includeInAirflow", 1)
-        if getattr(data, "validateImport") == None:
-            setattr(data, "validateImport", 1)
-        if getattr(data, "validationMethod") == None:
-            setattr(data, "validationMethod", "rowCount")
-        if getattr(data, "validateSource") == None:
-            setattr(data, "validateSource", "query")
-        if getattr(data, "validateDiffAllowed") == None:
-            setattr(data, "validateDiffAllowed", -1)
-        if getattr(data, "validationCustomQueryValidateImportTable") == None:
-            setattr(data, "validationCustomQueryValidateImportTable", 1)
-        if getattr(data, "incrValidationMethod") == None:
-            setattr(data, "incrValidationMethod", "full")
+        if data.includeInAirflow == None:
+            data.includeInAirflow = 1
+        if data.validateImport == None:
+            data.validateImport = 1
+        if data.validationMethod == None:
+            data.validationMethod = "rowCount"
+        if data.validateSource == None:
+            data.validateSource = "query"
+        if data.validateDiffAllowed == None:
+            data.validateDiffAllowed = -1
+        if data.validationCustomQueryValidateImportTable == None:
+            data.validationCustomQueryValidateImportTable = 1
+        if data.incrValidationMethod == None:
+            data.incrValidationMethod = "full"
             # 		if getattr(data, "truncateTable") == None:								setattr(data, "truncateTable", 1)
-        if getattr(data, "sqlSessions") == None:
-            setattr(data, "sqlSessions", -1)
-        if getattr(data, "softDeleteDuringMerge") == None:
-            setattr(data, "softDeleteDuringMerge", 0)
-        if getattr(data, "sqoopUseGeneratedSql") == None:
-            setattr(data, "sqoopUseGeneratedSql", -1)
-        if getattr(data, "allowTextSplitter") == None:
-            setattr(data, "allowTextSplitter", 0)
-        if getattr(data, "forceString") == None:
-            setattr(data, "forceString", -1)
-        if getattr(data, "invalidateImpala") == None:
-            setattr(data, "invalidateImpala", -1)
-        if getattr(data, "mergeCompactionMethod") == None:
-            setattr(data, "mergeCompactionMethod", "default")
-        if getattr(data, "createForeignKeys") == None:
-            setattr(data, "createForeignKeys", -1)
-        if getattr(data, "copySlave") == None:
-            setattr(data, "copySlave", 0)
+        if data.sqlSessions == None:
+            data.sqlSessions = -1
+        if data.softDeleteDuringMerge == None:
+            data.softDeleteDuringMerge = 0
+        if data.sqoopUseGeneratedSql == None:
+            data.sqoopUseGeneratedSql = -1
+        if data.allowTextSplitter == None:
+            data.allowTextSplitter = 0
+        if data.forceString == None:
+            data.forceString = -1
+        if data.invalidateImpala == None:
+            data.invalidateImpala = -1
+        if data.mergeCompactionMethod == None:
+            data.mergeCompactionMethod = "default"
+        if data.createForeignKeys == None:
+            data.createForeignKeys = -1
+        if data.copySlave == None:
+            data.copySlave = 0
 
         try:
             # 				hive_db = getattr(data, "database"),
@@ -2035,125 +2015,109 @@ class dbCalls:
             query = insert(configSchema.importTables).values(
                 hive_db=database,
                 hive_table=table,
-                dbalias=getattr(data, "connection"),
-                source_schema=getattr(data, "sourceSchema"),
-                source_table=getattr(data, "sourceTable"),
-                import_phase_type=getattr(data, "importPhaseType"),
-                etl_phase_type=getattr(data, "etlPhaseType"),
-                import_tool=getattr(data, "importTool"),
-                etl_engine=getattr(data, "etlEngine"),
-                last_update_from_source=getattr(data, "lastUpdateFromSource"),
-                sqoop_sql_where_addition=getattr(data, "sqlWhereAddition"),
-                nomerge_ingestion_sql_addition=getattr(
-                    data, "nomergeIngestionSqlAddition"
-                ),
-                include_in_airflow=getattr(data, "includeInAirflow"),
-                airflow_priority=getattr(data, "airflowPriority"),
-                validate_import=getattr(data, "validateImport"),
-                validationMethod=getattr(data, "validationMethod"),
-                validate_source=getattr(data, "validateSource"),
-                validate_diff_allowed=getattr(data, "validateDiffAllowed"),
-                validationCustomQuerySourceSQL=getattr(
-                    data, "validationCustomQuerySourceSQL"
-                ),
-                validationCustomQueryHiveSQL=getattr(
-                    data, "validationCustomQueryHiveSQL"
-                ),
-                validationCustomQueryValidateImportTable=getattr(
-                    data, "validationCustomQueryValidateImportTable"
-                ),
+                dbalias=data.connection,
+                source_schema=data.sourceSchema,
+                source_table=data.sourceTable,
+                import_phase_type=data.importPhaseType,
+                etl_phase_type=data.etlPhaseType,
+                import_tool=data.importTool,
+                etl_engine=data.etlEngine,
+                last_update_from_source=data.lastUpdateFromSource,
+                sqoop_sql_where_addition=data.sqlWhereAddition,
+                nomerge_ingestion_sql_addition=data.nomergeIngestionSqlAddition,
+                include_in_airflow=data.includeInAirflow,
+                airflow_priority=data.airflowPriority,
+                validate_import=data.validateImport,
+                validationMethod=data.validationMethod,
+                validate_source=data.validateSource,
+                validate_diff_allowed=data.validateDiffAllowed,
+                validationCustomQuerySourceSQL=data.validationCustomQuerySourceSQL,
+                validationCustomQueryHiveSQL=data.validationCustomQueryHiveSQL,
+                validationCustomQueryValidateImportTable=data.validationCustomQueryValidateImportTable,
                 # 				truncate_hive = getattr(data, "truncateTable"),
-                mappers=getattr(data, "sqlSessions"),
-                soft_delete_during_merge=getattr(data, "softDeleteDuringMerge"),
-                incr_mode=getattr(data, "incrMode"),
-                incr_column=getattr(data, "incrColumn"),
-                incr_validation_method=getattr(data, "incrValidationMethod"),
-                pk_column_override=getattr(data, "pkColumnOverride"),
-                pk_column_override_mergeonly=getattr(data, "pkColumnOverrideMergeonly"),
-                hive_merge_heap=getattr(data, "hiveContainerSize"),
-                hive_split_count=getattr(data, "splitCount"),
-                spark_executor_memory=getattr(data, "sparkExecutorMemory"),
-                spark_executors=getattr(data, "sparkExecutors"),
-                split_by_column=getattr(data, "splitByColumn"),
-                sqoop_query=getattr(data, "sqoopCustomQuery"),
-                sqoop_options=getattr(data, "sqoopOptions"),
-                sqoop_use_generated_sql=getattr(data, "sqoopUseGeneratedSql"),
-                sqoop_allow_text_splitter=getattr(data, "allowTextSplitter"),
-                force_string=getattr(data, "forceString"),
-                comment=getattr(data, "comment"),
-                datalake_source=getattr(data, "datalakeSource"),
-                operator_notes=getattr(data, "operatorNotes"),
-                copy_slave=getattr(data, "copySlave"),
-                create_foreign_keys=getattr(data, "createForeignKeys"),
-                invalidate_impala=getattr(data, "invalidateImpala"),
-                custom_max_query=getattr(data, "customMaxQuery"),
-                mergeCompactionMethod=getattr(data, "mergeCompactionMethod"),
-                sourceTableType=getattr(data, "sourceTableType"),
-                import_database=getattr(data, "importDatabase"),
-                import_table=getattr(data, "importTable"),
-                history_database=getattr(data, "historyDatabase"),
-                history_table=getattr(data, "historyTable"),
+                mappers=data.sqlSessions,
+                soft_delete_during_merge=data.softDeleteDuringMerge,
+                incr_mode=data.incrMode,
+                incr_column=data.incrColumn,
+                incr_validation_method=data.incrValidationMethod,
+                pk_column_override=data.pkColumnOverride,
+                pk_column_override_mergeonly=data.pkColumnOverrideMergeonly,
+                hive_merge_heap=data.hiveContainerSize,
+                hive_split_count=data.splitCount,
+                spark_executor_memory=data.sparkExecutorMemory,
+                spark_executors=data.sparkExecutors,
+                split_by_column=data.splitByColumn,
+                sqoop_query=data.sqoopCustomQuery,
+                sqoop_options=data.sqoopOptions,
+                sqoop_use_generated_sql=data.sqoopUseGeneratedSql,
+                sqoop_allow_text_splitter=data.allowTextSplitter,
+                force_string=data.forceString,
+                comment=data.comment,
+                datalake_source=data.datalakeSource,
+                operator_notes=data.operatorNotes,
+                copy_slave=data.copySlave,
+                create_foreign_keys=data.createForeignKeys,
+                invalidate_impala=data.invalidateImpala,
+                custom_max_query=data.customMaxQuery,
+                mergeCompactionMethod=data.mergeCompactionMethod,
+                sourceTableType=data.sourceTableType,
+                import_database=data.importDatabase,
+                import_table=data.importTable,
+                history_database=data.historyDatabase,
+                history_table=data.historyTable,
             )
 
             query = query.on_duplicate_key_update(
-                dbalias=getattr(data, "connection"),
-                source_schema=getattr(data, "sourceSchema"),
-                source_table=getattr(data, "sourceTable"),
-                import_phase_type=getattr(data, "importPhaseType"),
-                etl_phase_type=getattr(data, "etlPhaseType"),
-                import_tool=getattr(data, "importTool"),
-                etl_engine=getattr(data, "etlEngine"),
-                last_update_from_source=getattr(data, "lastUpdateFromSource"),
-                sqoop_sql_where_addition=getattr(data, "sqlWhereAddition"),
-                nomerge_ingestion_sql_addition=getattr(
-                    data, "nomergeIngestionSqlAddition"
-                ),
-                include_in_airflow=getattr(data, "includeInAirflow"),
-                airflow_priority=getattr(data, "airflowPriority"),
-                validate_import=getattr(data, "validateImport"),
-                validationMethod=getattr(data, "validationMethod"),
-                validate_source=getattr(data, "validateSource"),
-                validate_diff_allowed=getattr(data, "validateDiffAllowed"),
-                validationCustomQuerySourceSQL=getattr(
-                    data, "validationCustomQuerySourceSQL"
-                ),
-                validationCustomQueryHiveSQL=getattr(
-                    data, "validationCustomQueryHiveSQL"
-                ),
-                validationCustomQueryValidateImportTable=getattr(
-                    data, "validationCustomQueryValidateImportTable"
-                ),
+                dbalias=data.connection,
+                source_schema=data.sourceSchema,
+                source_table=data.sourceTable,
+                import_phase_type=data.importPhaseType,
+                etl_phase_type=data.etlPhaseType,
+                import_tool=data.importTool,
+                etl_engine=data.etlEngine,
+                last_update_from_source=data.lastUpdateFromSource,
+                sqoop_sql_where_addition=data.sqlWhereAddition,
+                nomerge_ingestion_sql_addition=data.nomergeIngestionSqlAddition,
+                include_in_airflow=data.includeInAirflow,
+                airflow_priority=data.airflowPriority,
+                validate_import=data.validateImport,
+                validationMethod=data.validationMethod,
+                validate_source=data.validateSource,
+                validate_diff_allowed=data.validateDiffAllowed,
+                validationCustomQuerySourceSQL=data.validationCustomQuerySourceSQL,
+                validationCustomQueryHiveSQL=data.validationCustomQueryHiveSQL,
+                validationCustomQueryValidateImportTable=data.validationCustomQueryValidateImportTable,
                 # 				truncate_hive = getattr(data, "truncateTable"),
-                mappers=getattr(data, "sqlSessions"),
-                soft_delete_during_merge=getattr(data, "softDeleteDuringMerge"),
-                incr_mode=getattr(data, "incrMode"),
-                incr_column=getattr(data, "incrColumn"),
-                incr_validation_method=getattr(data, "incrValidationMethod"),
-                pk_column_override=getattr(data, "pkColumnOverride"),
-                pk_column_override_mergeonly=getattr(data, "pkColumnOverrideMergeonly"),
-                hive_merge_heap=getattr(data, "hiveContainerSize"),
-                hive_split_count=getattr(data, "splitCount"),
-                spark_executor_memory=getattr(data, "sparkExecutorMemory"),
-                spark_executors=getattr(data, "sparkExecutors"),
-                split_by_column=getattr(data, "splitByColumn"),
-                sqoop_query=getattr(data, "sqoopCustomQuery"),
-                sqoop_options=getattr(data, "sqoopOptions"),
-                sqoop_use_generated_sql=getattr(data, "sqoopUseGeneratedSql"),
-                sqoop_allow_text_splitter=getattr(data, "allowTextSplitter"),
-                force_string=getattr(data, "forceString"),
-                comment=getattr(data, "comment"),
-                datalake_source=getattr(data, "datalakeSource"),
-                operator_notes=getattr(data, "operatorNotes"),
-                copy_slave=getattr(data, "copySlave"),
-                create_foreign_keys=getattr(data, "createForeignKeys"),
-                invalidate_impala=getattr(data, "invalidateImpala"),
-                custom_max_query=getattr(data, "customMaxQuery"),
-                mergeCompactionMethod=getattr(data, "mergeCompactionMethod"),
-                sourceTableType=getattr(data, "sourceTableType"),
-                import_database=getattr(data, "importDatabase"),
-                import_table=getattr(data, "importTable"),
-                history_database=getattr(data, "historyDatabase"),
-                history_table=getattr(data, "historyTable"),
+                mappers=data.sqlSessions,
+                soft_delete_during_merge=data.softDeleteDuringMerge,
+                incr_mode=data.incrMode,
+                incr_column=data.incrColumn,
+                incr_validation_method=data.incrValidationMethod,
+                pk_column_override=data.pkColumnOverride,
+                pk_column_override_mergeonly=data.pkColumnOverrideMergeonly,
+                hive_merge_heap=data.hiveContainerSize,
+                hive_split_count=data.splitCount,
+                spark_executor_memory=data.sparkExecutorMemory,
+                spark_executors=data.sparkExecutors,
+                split_by_column=data.splitByColumn,
+                sqoop_query=data.sqoopCustomQuery,
+                sqoop_options=data.sqoopOptions,
+                sqoop_use_generated_sql=data.sqoopUseGeneratedSql,
+                sqoop_allow_text_splitter=data.allowTextSplitter,
+                force_string=data.forceString,
+                comment=data.comment,
+                datalake_source=data.datalakeSource,
+                operator_notes=data.operatorNotes,
+                copy_slave=data.copySlave,
+                create_foreign_keys=data.createForeignKeys,
+                invalidate_impala=data.invalidateImpala,
+                custom_max_query=data.customMaxQuery,
+                mergeCompactionMethod=data.mergeCompactionMethod,
+                sourceTableType=data.sourceTableType,
+                import_database=data.importDatabase,
+                import_table=data.importTable,
+                history_database=data.historyDatabase,
+                history_table=data.historyTable,
             )
 
             session.execute(query)
@@ -2183,7 +2147,7 @@ class dbCalls:
         session.execute(query)
         tableID = row[0]
 
-        columns = getattr(data, "columns")
+        columns = data.columns
         for column in columns:
             # PK in import_columns is not the most optimal. So we need to check first if it exists and then insert or update. Upsert is not available
             row = (
@@ -2191,22 +2155,22 @@ class dbCalls:
                 .select_from(importColumns)
                 .filter(
                     (importColumns.table_id == tableID)
-                    & (importColumns.column_name == getattr(column, "columnName"))
+                    & (importColumns.column_name == column.columnName)
                 )
                 .one_or_none()
             )
 
             # Force set to Null if string is empty. This will otherwise cause problems during executions as it's not handled there
             if (
-                getattr(column, "columnNameOverride") != None
-                and getattr(column, "columnNameOverride").strip() == ""
+                column.columnNameOverride != None
+                and column.columnNameOverride.strip() == ""
             ):
-                setattr(column, "columnNameOverride", None)
+                column.columnNameOverride = None
             if (
-                getattr(column, "columnTypeOverride") != None
-                and getattr(column, "columnTypeOverride").strip() == ""
+                column.columnTypeOverride != None
+                and column.columnTypeOverride.strip() == ""
             ):
-                setattr(column, "columnTypeOverride", None)
+                column.columnTypeOverride = None
 
             try:
                 if row == None:
@@ -2218,25 +2182,23 @@ class dbCalls:
                         table_id=tableID,
                         hive_db=database,
                         hive_table=table,
-                        column_name=getattr(column, "columnName"),
-                        column_order=getattr(column, "columnOrder"),
-                        source_column_name=getattr(column, "sourceColumnName"),
-                        column_type=getattr(column, "columnType"),
-                        source_column_type=getattr(column, "sourceColumnType"),
-                        source_database_type=getattr(column, "sourceDatabaseType"),
-                        column_name_override=getattr(column, "columnNameOverride"),
-                        column_type_override=getattr(column, "columnTypeOverride"),
-                        sqoop_column_type=getattr(column, "sqoopColumnType"),
-                        sqoop_column_type_override=getattr(
-                            column, "sqoopColumnTypeOverride"
-                        ),
-                        force_string=getattr(column, "forceString"),
-                        include_in_import=getattr(column, "includeInImport"),
-                        source_primary_key=getattr(column, "sourcePrimaryKey"),
-                        last_update_from_source=getattr(column, "lastUpdateFromSource"),
-                        comment=getattr(column, "comment"),
-                        operator_notes=getattr(column, "operatorNotes"),
-                        anonymization_function=getattr(column, "anonymizationFunction"),
+                        column_name=column.columnName,
+                        column_order=column.columnOrder,
+                        source_column_name=column.sourceColumnName,
+                        column_type=column.columnType,
+                        source_column_type=column.sourceColumnType,
+                        source_database_type=column.sourceDatabaseType,
+                        column_name_override=column.columnNameOverride,
+                        column_type_override=column.columnTypeOverride,
+                        sqoop_column_type=column.sqoopColumnType,
+                        sqoop_column_type_override=column.sqoopColumnTypeOverride,
+                        force_string=column.forceString,
+                        include_in_import=column.includeInImport,
+                        source_primary_key=column.sourcePrimaryKey,
+                        last_update_from_source=column.lastUpdateFromSource,
+                        comment=column.comment,
+                        operator_notes=column.operatorNotes,
+                        anonymization_function=column.anonymizationFunction,
                     )
                     session.execute(query)
 
@@ -2253,41 +2215,23 @@ class dbCalls:
                                 "column_id": columnID,
                                 "hive_db": database,
                                 "hive_table": table,
-                                "column_name": getattr(column, "columnName"),
-                                "column_order": getattr(column, "columnOrder"),
-                                "source_column_name": getattr(
-                                    column, "sourceColumnName"
-                                ),
-                                "column_type": getattr(column, "columnType"),
-                                "source_column_type": getattr(
-                                    column, "sourceColumnType"
-                                ),
-                                "source_database_type": getattr(
-                                    column, "sourceDatabaseType"
-                                ),
-                                "column_name_override": getattr(
-                                    column, "columnNameOverride"
-                                ),
-                                "column_type_override": getattr(
-                                    column, "columnTypeOverride"
-                                ),
-                                "sqoop_column_type": getattr(column, "sqoopColumnType"),
-                                "sqoop_column_type_override": getattr(
-                                    column, "sqoopColumnTypeOverride"
-                                ),
-                                "force_string": getattr(column, "forceString"),
-                                "include_in_import": getattr(column, "includeInImport"),
-                                "source_primary_key": getattr(
-                                    column, "sourcePrimaryKey"
-                                ),
-                                "last_update_from_source": getattr(
-                                    column, "lastUpdateFromSource"
-                                ),
-                                "comment": getattr(column, "comment"),
-                                "operator_notes": getattr(column, "operatorNotes"),
-                                "anonymization_function": getattr(
-                                    column, "anonymizationFunction"
-                                ),
+                                "column_name": column.columnName,
+                                "column_order": column.columnOrder,
+                                "source_column_name": column.sourceColumnName,
+                                "column_type": column.columnType,
+                                "source_column_type": column.sourceColumnType,
+                                "source_database_type": column.sourceDatabaseType,
+                                "column_name_override": column.columnNameOverride,
+                                "column_type_override": column.columnTypeOverride,
+                                "sqoop_column_type": column.sqoopColumnType,
+                                "sqoop_column_type_override": column.sqoopColumnTypeOverride,
+                                "force_string": column.forceString,
+                                "include_in_import": column.includeInImport,
+                                "source_primary_key": column.sourcePrimaryKey,
+                                "last_update_from_source": column.lastUpdateFromSource,
+                                "comment": column.comment,
+                                "operator_notes": column.operatorNotes,
+                                "anonymization_function": column.anonymizationFunction,
                             }
                         ],
                     )
@@ -2663,46 +2607,31 @@ class dbCalls:
         commandArg.append(manageCmd)
         commandArg.append("--addExportTable")
         commandArg.append("-a")
-        commandArg.append(getattr(data, "connection"))
+        commandArg.append(data.connection)
         commandArg.append("-S")
-        commandArg.append(getattr(data, "targetSchema"))
+        commandArg.append(data.targetSchema)
 
-        if (
-            getattr(data, "databaseFilter") != None
-            and getattr(data, "databaseFilter").strip() != ""
-        ):
+        if data.databaseFilter != None and data.databaseFilter.strip() != "":
             commandArg.append("-h")
-            commandArg.append(getattr(data, "databaseFilter"))
+            commandArg.append(data.databaseFilter)
 
-        if (
-            getattr(data, "tableFilter") != None
-            and getattr(data, "tableFilter").strip() != ""
-        ):
+        if data.tableFilter != None and data.tableFilter.strip() != "":
             commandArg.append("-t")
-            commandArg.append(getattr(data, "tableFilter"))
+            commandArg.append(data.tableFilter)
 
-        if (
-            getattr(data, "addDBToTable") != None
-            and getattr(data, "addDBToTable") == True
-        ):
+        if data.addDBToTable != None and data.addDBToTable == True:
             commandArg.append("--addDBToTable")
 
-        if (
-            getattr(data, "addCounterToTable") != None
-            and getattr(data, "addCounterToTable") == True
-        ):
+        if data.addCounterToTable != None and data.addCounterToTable == True:
             commandArg.append("--addCounterToTable")
 
-            if getattr(data, "counterStart") != None:
+            if data.counterStart != None:
                 commandArg.append("--counterStart")
-                commandArg.append(str(getattr(data, "counterStart")))
+                commandArg.append(str(data.counterStart))
 
-        if (
-            getattr(data, "addCustomText") != None
-            and getattr(data, "addCustomText").strip() != ""
-        ):
+        if data.addCustomText != None and data.addCustomText.strip() != "":
             commandArg.append("--addCustomText")
-            commandArg.append(getattr(data, "addCustomText"))
+            commandArg.append(data.addCustomText)
 
         commandArg.append("--quiet")
         commandArg.append("--jsonOutput")
@@ -2733,13 +2662,13 @@ class dbCalls:
         createCounter = 0
         for record in data:
             createCounter = createCounter + 1
-            connection = getattr(record, "connection")
-            targetSchema = getattr(record, "targetSchema")
-            targetTable = getattr(record, "targetTable")
+            connection = record.connection
+            targetSchema = record.targetSchema
+            targetTable = record.targetTable
 
             createData = dataModels.exportTableDetailsWrite(
-                database=getattr(record, "database"),
-                table=getattr(record, "table"),
+                database=record.database,
+                table=record.table,
                 exportType="full",
                 exportTool="spark",
             )
@@ -3184,7 +3113,7 @@ class dbCalls:
         """Bulk update of export tables"""
         log = logging.getLogger(self.logger)
 
-        if len(getattr(bulkData, "exportTables")) == 0:
+        if len(bulkData.exportTables) == 0:
             resultMsg = {
                 "result": "exportTables must contain a list of connections/targetSchema/targetDatabase to update"
             }
@@ -3210,24 +3139,24 @@ class dbCalls:
         for updateField in bulkData.__pydantic_fields_set__:
             if updateField == "exportType":
                 updateStatement = updateStatement.values(
-                    export_type=getattr(bulkData, "exportType")
+                    export_type=bulkData.exportType
                 )
             elif updateField == "exportTool":
                 updateStatement = updateStatement.values(
-                    export_tool=getattr(bulkData, "exportTool")
+                    export_tool=bulkData.exportTool
                 )
             elif updateField == "includeInAirflow":
                 updateStatement = updateStatement.values(
-                    include_in_airflow=getattr(bulkData, "includeInAirflow")
+                    include_in_airflow=bulkData.includeInAirflow
                 )
             elif updateField == "operatorNotes":
                 updateStatement = updateStatement.values(
-                    operator_notes=getattr(bulkData, "operatorNotes")
+                    operator_notes=bulkData.operatorNotes
                 )
 
         # Create a list of dicts that contain all the databas/table combinations that will be updated
         tableList = []
-        for tables in getattr(bulkData, "exportTables"):
+        for tables in bulkData.exportTables:
             tableList.append(
                 {
                     "connection": tables.connection,
@@ -3270,86 +3199,78 @@ class dbCalls:
         )
 
         # Set default values
-        if getattr(data, "includeInAirflow") == None:
-            setattr(data, "includeInAirflow", 1)
-        if getattr(data, "forceCreateTempTable") == None:
-            setattr(data, "forceCreateTempTable", 0)
-        if getattr(data, "validateExport") == None:
-            setattr(data, "validateExport", 1)
-        if getattr(data, "validationMethod") == None:
-            setattr(data, "validationMethod", "rowCount")
-        if getattr(data, "uppercaseColumns") == None:
-            setattr(data, "uppercaseColumns", -1)
-        if getattr(data, "truncateTarget") == None:
-            setattr(data, "truncateTarget", 1)
-        if getattr(data, "sqlSessions") == None:
-            setattr(data, "sqlSessions", -1)
-        if getattr(data, "incrValidationMethod") == None:
-            setattr(data, "incrValidationMethod", "full")
+        if data.includeInAirflow == None:
+            data.includeInAirflow = 1
+        if data.forceCreateTempTable == None:
+            data.forceCreateTempTable = 0
+        if data.validateExport == None:
+            data.validateExport = 1
+        if data.validationMethod == None:
+            data.validationMethod = "rowCount"
+        if data.uppercaseColumns == None:
+            data.uppercaseColumns = -1
+        if data.truncateTarget == None:
+            data.truncateTarget = 1
+        if data.sqlSessions == None:
+            data.sqlSessions = -1
+        if data.incrValidationMethod == None:
+            data.incrValidationMethod = "full"
 
         try:
             query = insert(configSchema.exportTables).values(
                 dbalias=connection,
                 target_schema=schema,
                 target_table=table,
-                export_type=getattr(data, "exportType"),
-                export_tool=getattr(data, "exportTool"),
-                hive_db=getattr(data, "database"),
-                hive_table=getattr(data, "table"),
-                last_update_from_hive=getattr(data, "lastUpdateFromHive"),
-                sql_where_addition=getattr(data, "sqlWhereAddition"),
-                include_in_airflow=getattr(data, "includeInAirflow"),
-                airflow_priority=getattr(data, "airflowPriority"),
-                forceCreateTempTable=getattr(data, "forceCreateTempTable"),
-                validate_export=getattr(data, "validateExport"),
-                validationMethod=getattr(data, "validationMethod"),
-                validationCustomQueryHiveSQL=getattr(
-                    data, "validationCustomQueryHiveSQL"
-                ),
-                validationCustomQueryTargetSQL=getattr(
-                    data, "validationCustomQueryTargetSQL"
-                ),
-                uppercase_columns=getattr(data, "uppercaseColumns"),
-                truncate_target=getattr(data, "truncateTarget"),
-                mappers=getattr(data, "sqlSessions"),
-                incr_column=getattr(data, "incrColumn"),
-                incr_validation_method=getattr(data, "incrValidationMethod"),
-                sqoop_options=getattr(data, "sqoopOptions"),
-                hive_javaheap=getattr(data, "hiveContainerSize"),
-                create_target_table_sql=getattr(data, "createTargetTableSql"),
-                operator_notes=getattr(data, "operatorNotes"),
+                export_type=data.exportType,
+                export_tool=data.exportTool,
+                hive_db=data.database,
+                hive_table=data.table,
+                last_update_from_hive=data.lastUpdateFromHive,
+                sql_where_addition=data.sqlWhereAddition,
+                include_in_airflow=data.includeInAirflow,
+                airflow_priority=data.airflowPriority,
+                forceCreateTempTable=data.forceCreateTempTable,
+                validate_export=data.validateExport,
+                validationMethod=data.validationMethod,
+                validationCustomQueryHiveSQL=data.validationCustomQueryHiveSQL,
+                validationCustomQueryTargetSQL=data.validationCustomQueryTargetSQL,
+                uppercase_columns=data.uppercaseColumns,
+                truncate_target=data.truncateTarget,
+                mappers=data.sqlSessions,
+                incr_column=data.incrColumn,
+                incr_validation_method=data.incrValidationMethod,
+                sqoop_options=data.sqoopOptions,
+                hive_javaheap=data.hiveContainerSize,
+                create_target_table_sql=data.createTargetTableSql,
+                operator_notes=data.operatorNotes,
             )
 
             query = query.on_duplicate_key_update(
                 dbalias=connection,
                 target_schema=schema,
                 target_table=table,
-                export_type=getattr(data, "exportType"),
-                export_tool=getattr(data, "exportTool"),
-                hive_db=getattr(data, "database"),
-                hive_table=getattr(data, "table"),
-                last_update_from_hive=getattr(data, "lastUpdateFromHive"),
-                sql_where_addition=getattr(data, "sqlWhereAddition"),
-                include_in_airflow=getattr(data, "includeInAirflow"),
-                airflow_priority=getattr(data, "airflowPriority"),
-                forceCreateTempTable=getattr(data, "forceCreateTempTable"),
-                validate_export=getattr(data, "validateExport"),
-                validationMethod=getattr(data, "validationMethod"),
-                validationCustomQueryHiveSQL=getattr(
-                    data, "validationCustomQueryHiveSQL"
-                ),
-                validationCustomQueryTargetSQL=getattr(
-                    data, "validationCustomQueryTargetSQL"
-                ),
-                uppercase_columns=getattr(data, "uppercaseColumns"),
-                truncate_target=getattr(data, "truncateTarget"),
-                mappers=getattr(data, "sqlSessions"),
-                incr_column=getattr(data, "incrColumn"),
-                incr_validation_method=getattr(data, "incrValidationMethod"),
-                sqoop_options=getattr(data, "sqoopOptions"),
-                hive_javaheap=getattr(data, "hiveContainerSize"),
-                create_target_table_sql=getattr(data, "createTargetTableSql"),
-                operator_notes=getattr(data, "operatorNotes"),
+                export_type=data.exportType,
+                export_tool=data.exportTool,
+                hive_db=data.database,
+                hive_table=data.table,
+                last_update_from_hive=data.lastUpdateFromHive,
+                sql_where_addition=data.sqlWhereAddition,
+                include_in_airflow=data.includeInAirflow,
+                airflow_priority=data.airflowPriority,
+                forceCreateTempTable=data.forceCreateTempTable,
+                validate_export=data.validateExport,
+                validationMethod=data.validationMethod,
+                validationCustomQueryHiveSQL=data.validationCustomQueryHiveSQL,
+                validationCustomQueryTargetSQL=data.validationCustomQueryTargetSQL,
+                uppercase_columns=data.uppercaseColumns,
+                truncate_target=data.truncateTarget,
+                mappers=data.sqlSessions,
+                incr_column=data.incrColumn,
+                incr_validation_method=data.incrValidationMethod,
+                sqoop_options=data.sqoopOptions,
+                hive_javaheap=data.hiveContainerSize,
+                create_target_table_sql=data.createTargetTableSql,
+                operator_notes=data.operatorNotes,
             )
 
             session.execute(query)
@@ -3380,7 +3301,7 @@ class dbCalls:
         session.execute(query)
         tableID = row[0]
 
-        columns = getattr(data, "columns")
+        columns = data.columns
         for column in columns:
             # PK in export_columns is not the most optimal. So we need to check first if it exists and then insert or update.
             # Upsert is not available
@@ -3389,44 +3310,44 @@ class dbCalls:
                 .select_from(exportColumns)
                 .filter(
                     (exportColumns.table_id == tableID)
-                    & (exportColumns.column_name == getattr(column, "columnName"))
+                    & (exportColumns.column_name == column.columnName)
                 )
                 .one_or_none()
             )
 
             try:
                 columnOrder = None
-                if getattr(column, "columnOrder") != None:
-                    columnOrder = int(getattr(column, "columnOrder")) - 1
+                if column.columnOrder != None:
+                    columnOrder = int(column.columnOrder) - 1
 
                 # Force set to Null if string is empty. This will otherwise cause problems during executions as it's not handled there
                 if (
-                    getattr(column, "targetColumnName") != None
-                    and getattr(column, "targetColumnName").strip() == ""
+                    column.targetColumnName != None
+                    and column.targetColumnName.strip() == ""
                 ):
-                    setattr(column, "targetColumnName", None)
+                    column.targetColumnName = None
                 if (
-                    getattr(column, "targetColumnType") != None
-                    and getattr(column, "targetColumnType").strip() == ""
+                    column.targetColumnType != None
+                    and column.targetColumnType.strip() == ""
                 ):
-                    setattr(column, "targetColumnType", None)
+                    column.targetColumnType = None
 
                 if row == None:
                     log.debug("Column does not exist")
 
                     query = sa.insert(configSchema.exportColumns).values(
                         table_id=tableID,
-                        column_name=getattr(column, "columnName"),
-                        column_type=getattr(column, "columnType"),
+                        column_name=column.columnName,
+                        column_type=column.columnType,
                         column_order=columnOrder,
-                        hive_db=getattr(data, "database"),
-                        hive_table=getattr(data, "table"),
-                        target_column_name=getattr(column, "targetColumnName"),
-                        target_column_type=getattr(column, "targetColumnType"),
-                        last_update_from_hive=getattr(column, "lastUpdateFromHive"),
-                        include_in_export=getattr(column, "includeInExport"),
-                        comment=getattr(column, "comment"),
-                        operator_notes=getattr(column, "operatorNotes"),
+                        hive_db=data.database,
+                        hive_table=data.table,
+                        target_column_name=column.targetColumnName,
+                        target_column_type=column.targetColumnType,
+                        last_update_from_hive=column.lastUpdateFromHive,
+                        include_in_export=column.includeInExport,
+                        comment=column.comment,
+                        operator_notes=column.operatorNotes,
                     )
 
                     session.execute(query)
@@ -3441,23 +3362,17 @@ class dbCalls:
                             {
                                 "table_id": tableID,
                                 "column_id": columnID,
-                                "column_name": getattr(column, "columnName"),
-                                "column_type": getattr(column, "columnType"),
+                                "column_name": column.columnName,
+                                "column_type": column.columnType,
                                 "column_order": columnOrder,
-                                "hive_db": getattr(data, "database"),
-                                "hive_table": getattr(data, "table"),
-                                "target_column_name": getattr(
-                                    column, "targetColumnName"
-                                ),
-                                "target_column_type": getattr(
-                                    column, "targetColumnType"
-                                ),
-                                "last_update_from_hive": getattr(
-                                    column, "lastUpdateFromHive"
-                                ),
-                                "include_in_export": getattr(column, "includeInExport"),
-                                "comment": getattr(column, "comment"),
-                                "operator_notes": getattr(column, "operatorNotes"),
+                                "hive_db": data.database,
+                                "hive_table": data.table,
+                                "target_column_name": column.targetColumnName,
+                                "target_column_type": column.targetColumnType,
+                                "last_update_from_hive": column.lastUpdateFromHive,
+                                "include_in_export": column.includeInExport,
+                                "comment": column.comment,
+                                "operator_notes": column.operatorNotes,
                             }
                         ],
                     )
@@ -3981,40 +3896,40 @@ class dbCalls:
         try:
             query = insert(configSchema.airflowTasks).values(
                 dag_name=dagname,
-                task_name=getattr(task, "name"),
-                task_type=getattr(task, "type"),
-                placement=getattr(task, "placement"),
-                jdbc_dbalias=getattr(task, "connection"),
-                airflow_pool=getattr(task, "airflowPool"),
-                airflow_priority=getattr(task, "airflowPriority"),
-                include_in_airflow=getattr(task, "includeInAirflow"),
-                task_dependency_downstream=getattr(task, "taskDependencyDownstream"),
-                task_dependency_upstream=getattr(task, "taskDependencyUpstream"),
-                task_config=getattr(task, "taskConfig"),
-                sensor_poke_interval=getattr(task, "sensorPokeInterval"),
-                sensor_timeout_minutes=getattr(task, "sensorTimeoutMinutes"),
-                sensor_connection=getattr(task, "sensorConnection"),
-                sensor_soft_fail=getattr(task, "sensorSoftFail"),
-                sudo_user=getattr(task, "sudoUser"),
+                task_name=task.name,
+                task_type=task.type,
+                placement=task.placement,
+                jdbc_dbalias=task.connection,
+                airflow_pool=task.airflowPool,
+                airflow_priority=task.airflowPriority,
+                include_in_airflow=task.includeInAirflow,
+                task_dependency_downstream=task.taskDependencyDownstream,
+                task_dependency_upstream=task.taskDependencyUpstream,
+                task_config=task.taskConfig,
+                sensor_poke_interval=task.sensorPokeInterval,
+                sensor_timeout_minutes=task.sensorTimeoutMinutes,
+                sensor_connection=task.sensorConnection,
+                sensor_soft_fail=task.sensorSoftFail,
+                sudo_user=task.sudoUser,
             )
 
             query = query.on_duplicate_key_update(
                 dag_name=dagname,
-                task_name=getattr(task, "name"),
-                task_type=getattr(task, "type"),
-                placement=getattr(task, "placement"),
-                jdbc_dbalias=getattr(task, "connection"),
-                airflow_pool=getattr(task, "airflowPool"),
-                airflow_priority=getattr(task, "airflowPriority"),
-                include_in_airflow=getattr(task, "includeInAirflow"),
-                task_dependency_downstream=getattr(task, "taskDependencyDownstream"),
-                task_dependency_upstream=getattr(task, "taskDependencyUpstream"),
-                task_config=getattr(task, "taskConfig"),
-                sensor_poke_interval=getattr(task, "sensorPokeInterval"),
-                sensor_timeout_minutes=getattr(task, "sensorTimeoutMinutes"),
-                sensor_connection=getattr(task, "sensorConnection"),
-                sensor_soft_fail=getattr(task, "sensorSoftFail"),
-                sudo_user=getattr(task, "sudoUser"),
+                task_name=task.name,
+                task_type=task.type,
+                placement=task.placement,
+                jdbc_dbalias=task.connection,
+                airflow_pool=task.airflowPool,
+                airflow_priority=task.airflowPriority,
+                include_in_airflow=task.includeInAirflow,
+                task_dependency_downstream=task.taskDependencyDownstream,
+                task_dependency_upstream=task.taskDependencyUpstream,
+                task_config=task.taskConfig,
+                sensor_poke_interval=task.sensorPokeInterval,
+                sensor_timeout_minutes=task.sensorTimeoutMinutes,
+                sensor_connection=task.sensorConnection,
+                sensor_soft_fail=task.sensorSoftFail,
+                sudo_user=task.sudoUser,
             )
 
             session.execute(query)
@@ -4350,7 +4265,7 @@ class dbCalls:
         """Bulk update of Airflow import Dags"""
         log = logging.getLogger(self.logger)
 
-        if len(getattr(bulkData, "dags")) == 0:
+        if len(bulkData.dags) == 0:
             resultMsg = {"result": "dags must contain a list of Airflow dags to update"}
             returnCode = 422
             return (resultMsg, returnCode)
@@ -4373,48 +4288,42 @@ class dbCalls:
         for updateField in bulkData.__pydantic_fields_set__:
             if updateField == "scheduleInterval":
                 updateStatement = updateStatement.values(
-                    schedule_interval=getattr(bulkData, "scheduleInterval")
+                    schedule_interval=bulkData.scheduleInterval
                 )
             elif updateField == "operatorNotes":
                 updateStatement = updateStatement.values(
-                    operator_notes=getattr(bulkData, "operatorNotes")
+                    operator_notes=bulkData.operatorNotes
                 )
             elif updateField == "autoRegenerateDag":
                 updateStatement = updateStatement.values(
-                    auto_regenerate_dag=getattr(bulkData, "autoRegenerateDag")
+                    auto_regenerate_dag=bulkData.autoRegenerateDag
                 )
             elif updateField == "sudoUser":
-                updateStatement = updateStatement.values(
-                    sudo_user=getattr(bulkData, "sudoUser")
-                )
+                updateStatement = updateStatement.values(sudo_user=bulkData.sudoUser)
             elif updateField == "timezone":
-                updateStatement = updateStatement.values(
-                    timezone=getattr(bulkData, "timezone")
-                )
+                updateStatement = updateStatement.values(timezone=bulkData.timezone)
             elif updateField == "email":
-                updateStatement = updateStatement.values(
-                    email=getattr(bulkData, "email")
-                )
+                updateStatement = updateStatement.values(email=bulkData.email)
             elif updateField == "emailOnFailure":
                 updateStatement = updateStatement.values(
-                    email_on_failure=getattr(bulkData, "emailOnFailure")
+                    email_on_failure=bulkData.emailOnFailure
                 )
             elif updateField == "emailOnRetries":
                 updateStatement = updateStatement.values(
-                    email_on_retries=getattr(bulkData, "emailOnRetries")
+                    email_on_retries=bulkData.emailOnRetries
                 )
             elif updateField == "slaWarningTime":
                 updateStatement = updateStatement.values(
-                    sla_warning_time=getattr(bulkData, "slaWarningTime")
+                    sla_warning_time=bulkData.slaWarningTime
                 )
             elif updateField == "concurrency":
                 updateStatement = updateStatement.values(
-                    concurrency=getattr(bulkData, "concurrency")
+                    concurrency=bulkData.concurrency
                 )
 
         # Create a list of dicts that contain all the databas/table combinations that will be updated
         tableList = []
-        for tables in getattr(bulkData, "dags"):
+        for tables in bulkData.dags:
             tableList.append({"dag": tables.name})
 
         updateStatement = updateStatement.execution_options(synchronize_session=False)
@@ -4459,88 +4368,80 @@ class dbCalls:
         )
 
         # Set default values
-        if getattr(airflowDag, "scheduleInterval") == None:
-            setattr(airflowDag, "scheduleInterval", "None")
-        if getattr(airflowDag, "filterTable") == None:
-            setattr(airflowDag, "filterTable", "")
-        if getattr(airflowDag, "finishAllStage1First") == None:
-            setattr(airflowDag, "finishAllStage1First", "0")
-        if getattr(airflowDag, "retries") == None:
-            setattr(airflowDag, "retries", "5")
-        if getattr(airflowDag, "autoRegenerateDag") == None:
-            setattr(airflowDag, "autoRegenerateDag", "1")
-        if getattr(airflowDag, "runImportAndEtlSeparate") == None:
-            setattr(airflowDag, "runImportAndEtlSeparate", "0")
-        if getattr(airflowDag, "metadataImport") == None:
-            setattr(airflowDag, "metadataImport", "0")
-        if getattr(airflowDag, "emailOnFailure") == None:
-            setattr(airflowDag, "emailOnFailure", "0")
-        if getattr(airflowDag, "emailOnRetries") == None:
-            setattr(airflowDag, "emailOnRetries", "0")
-        if getattr(airflowDag, "retryExponentialBackoff") == None:
-            setattr(airflowDag, "retryExponentialBackoff", "0")
+        if airflowDag.scheduleInterval == None:
+            airflowDag.scheduleInterval = "None"
+        if airflowDag.filterTable == None:
+            airflowDag.filterTable = ""
+        if airflowDag.finishAllStage1First == None:
+            airflowDag.finishAllStage1First = "0"
+        if airflowDag.retries == None:
+            airflowDag.retries = "5"
+        if airflowDag.autoRegenerateDag == None:
+            airflowDag.autoRegenerateDag = "1"
+        if airflowDag.runImportAndEtlSeparate == None:
+            airflowDag.runImportAndEtlSeparate = "0"
+        if airflowDag.metadataImport == None:
+            airflowDag.metadataImport = "0"
+        if airflowDag.emailOnFailure == None:
+            airflowDag.emailOnFailure = "0"
+        if airflowDag.emailOnRetries == None:
+            airflowDag.emailOnRetries = "0"
+        if airflowDag.retryExponentialBackoff == None:
+            airflowDag.retryExponentialBackoff = "0"
 
         try:
             query = insert(configSchema.airflowImportDags).values(
                 dag_name=dagname,
-                schedule_interval=getattr(airflowDag, "scheduleInterval"),
-                filter_hive=getattr(airflowDag, "filterTable"),
-                finish_all_stage1_first=getattr(airflowDag, "finishAllStage1First"),
-                run_import_and_etl_separate=getattr(
-                    airflowDag, "runImportAndEtlSeparate"
-                ),
-                retries=getattr(airflowDag, "retries"),
-                retries_stage1=getattr(airflowDag, "retriesStage1"),
-                retries_stage2=getattr(airflowDag, "retriesStage2"),
-                pool_stage1=getattr(airflowDag, "poolStage1"),
-                pool_stage2=getattr(airflowDag, "poolStage2"),
-                operator_notes=getattr(airflowDag, "operatorNotes"),
-                application_notes=getattr(airflowDag, "applicationNotes"),
-                auto_regenerate_dag=getattr(airflowDag, "autoRegenerateDag"),
-                airflow_notes=getattr(airflowDag, "airflowNotes"),
-                sudo_user=getattr(airflowDag, "sudoUser"),
-                metadata_import=getattr(airflowDag, "metadataImport"),
-                timezone=getattr(airflowDag, "timezone"),
-                email=getattr(airflowDag, "email"),
-                email_on_failure=getattr(airflowDag, "emailOnFailure"),
-                email_on_retries=getattr(airflowDag, "emailOnRetries"),
-                tags=getattr(airflowDag, "tags"),
-                sla_warning_time=getattr(airflowDag, "slaWarningTime"),
-                retry_exponential_backoff=getattr(
-                    airflowDag, "retryExponentialBackoff"
-                ),
-                concurrency=getattr(airflowDag, "concurrency"),
+                schedule_interval=airflowDag.scheduleInterval,
+                filter_hive=airflowDag.filterTable,
+                finish_all_stage1_first=airflowDag.finishAllStage1First,
+                run_import_and_etl_separate=airflowDag.runImportAndEtlSeparate,
+                retries=airflowDag.retries,
+                retries_stage1=airflowDag.retriesStage1,
+                retries_stage2=airflowDag.retriesStage2,
+                pool_stage1=airflowDag.poolStage1,
+                pool_stage2=airflowDag.poolStage2,
+                operator_notes=airflowDag.operatorNotes,
+                application_notes=airflowDag.applicationNotes,
+                auto_regenerate_dag=airflowDag.autoRegenerateDag,
+                airflow_notes=airflowDag.airflowNotes,
+                sudo_user=airflowDag.sudoUser,
+                metadata_import=airflowDag.metadataImport,
+                timezone=airflowDag.timezone,
+                email=airflowDag.email,
+                email_on_failure=airflowDag.emailOnFailure,
+                email_on_retries=airflowDag.emailOnRetries,
+                tags=airflowDag.tags,
+                sla_warning_time=airflowDag.slaWarningTime,
+                retry_exponential_backoff=airflowDag.retryExponentialBackoff,
+                concurrency=airflowDag.concurrency,
             )
 
             query = query.on_duplicate_key_update(
                 dag_name=dagname,
-                schedule_interval=getattr(airflowDag, "scheduleInterval"),
-                filter_hive=getattr(airflowDag, "filterTable"),
-                finish_all_stage1_first=getattr(airflowDag, "finishAllStage1First"),
-                run_import_and_etl_separate=getattr(
-                    airflowDag, "runImportAndEtlSeparate"
-                ),
-                retries=getattr(airflowDag, "retries"),
-                retries_stage1=getattr(airflowDag, "retriesStage1"),
-                retries_stage2=getattr(airflowDag, "retriesStage2"),
-                pool_stage1=getattr(airflowDag, "poolStage1"),
-                pool_stage2=getattr(airflowDag, "poolStage2"),
-                operator_notes=getattr(airflowDag, "operatorNotes"),
-                application_notes=getattr(airflowDag, "applicationNotes"),
-                auto_regenerate_dag=getattr(airflowDag, "autoRegenerateDag"),
-                airflow_notes=getattr(airflowDag, "airflowNotes"),
-                sudo_user=getattr(airflowDag, "sudoUser"),
-                metadata_import=getattr(airflowDag, "metadataImport"),
-                timezone=getattr(airflowDag, "timezone"),
-                email=getattr(airflowDag, "email"),
-                email_on_failure=getattr(airflowDag, "emailOnFailure"),
-                email_on_retries=getattr(airflowDag, "emailOnRetries"),
-                tags=getattr(airflowDag, "tags"),
-                sla_warning_time=getattr(airflowDag, "slaWarningTime"),
-                retry_exponential_backoff=getattr(
-                    airflowDag, "retryExponentialBackoff"
-                ),
-                concurrency=getattr(airflowDag, "concurrency"),
+                schedule_interval=airflowDag.scheduleInterval,
+                filter_hive=airflowDag.filterTable,
+                finish_all_stage1_first=airflowDag.finishAllStage1First,
+                run_import_and_etl_separate=airflowDag.runImportAndEtlSeparate,
+                retries=airflowDag.retries,
+                retries_stage1=airflowDag.retriesStage1,
+                retries_stage2=airflowDag.retriesStage2,
+                pool_stage1=airflowDag.poolStage1,
+                pool_stage2=airflowDag.poolStage2,
+                operator_notes=airflowDag.operatorNotes,
+                application_notes=airflowDag.applicationNotes,
+                auto_regenerate_dag=airflowDag.autoRegenerateDag,
+                airflow_notes=airflowDag.airflowNotes,
+                sudo_user=airflowDag.sudoUser,
+                metadata_import=airflowDag.metadataImport,
+                timezone=airflowDag.timezone,
+                email=airflowDag.email,
+                email_on_failure=airflowDag.emailOnFailure,
+                email_on_retries=airflowDag.emailOnRetries,
+                tags=airflowDag.tags,
+                sla_warning_time=airflowDag.slaWarningTime,
+                retry_exponential_backoff=airflowDag.retryExponentialBackoff,
+                concurrency=airflowDag.concurrency,
             )
 
             session.execute(query)
@@ -4559,7 +4460,7 @@ class dbCalls:
         # session.close()
         session.remove()
 
-        tasks = getattr(airflowDag, "tasks")
+        tasks = airflowDag.tasks
         for task in tasks:
             if (
                 self.updateAirflowTasks(
@@ -4652,7 +4553,7 @@ class dbCalls:
         """Bulk update of Airflow export Dags"""
         log = logging.getLogger(self.logger)
 
-        if len(getattr(bulkData, "dags")) == 0:
+        if len(bulkData.dags) == 0:
             resultMsg = {"result": "dags must contain a list of Airflow dags to update"}
             returnCode = 422
             return (resultMsg, returnCode)
@@ -4675,48 +4576,42 @@ class dbCalls:
         for updateField in bulkData.__pydantic_fields_set__:
             if updateField == "scheduleInterval":
                 updateStatement = updateStatement.values(
-                    schedule_interval=getattr(bulkData, "scheduleInterval")
+                    schedule_interval=bulkData.scheduleInterval
                 )
             elif updateField == "operatorNotes":
                 updateStatement = updateStatement.values(
-                    operator_notes=getattr(bulkData, "operatorNotes")
+                    operator_notes=bulkData.operatorNotes
                 )
             elif updateField == "autoRegenerateDag":
                 updateStatement = updateStatement.values(
-                    auto_regenerate_dag=getattr(bulkData, "autoRegenerateDag")
+                    auto_regenerate_dag=bulkData.autoRegenerateDag
                 )
             elif updateField == "sudoUser":
-                updateStatement = updateStatement.values(
-                    sudo_user=getattr(bulkData, "sudoUser")
-                )
+                updateStatement = updateStatement.values(sudo_user=bulkData.sudoUser)
             elif updateField == "timezone":
-                updateStatement = updateStatement.values(
-                    timezone=getattr(bulkData, "timezone")
-                )
+                updateStatement = updateStatement.values(timezone=bulkData.timezone)
             elif updateField == "email":
-                updateStatement = updateStatement.values(
-                    email=getattr(bulkData, "email")
-                )
+                updateStatement = updateStatement.values(email=bulkData.email)
             elif updateField == "emailOnFailure":
                 updateStatement = updateStatement.values(
-                    email_on_failure=getattr(bulkData, "emailOnFailure")
+                    email_on_failure=bulkData.emailOnFailure
                 )
             elif updateField == "emailOnRetries":
                 updateStatement = updateStatement.values(
-                    email_on_retries=getattr(bulkData, "emailOnRetries")
+                    email_on_retries=bulkData.emailOnRetries
                 )
             elif updateField == "slaWarningTime":
                 updateStatement = updateStatement.values(
-                    sla_warning_time=getattr(bulkData, "slaWarningTime")
+                    sla_warning_time=bulkData.slaWarningTime
                 )
             elif updateField == "concurrency":
                 updateStatement = updateStatement.values(
-                    concurrency=getattr(bulkData, "concurrency")
+                    concurrency=bulkData.concurrency
                 )
 
         # Create a list of dicts that contain all the databas/table combinations that will be updated
         tableList = []
-        for tables in getattr(bulkData, "dags"):
+        for tables in bulkData.dags:
             tableList.append({"dag": tables.name})
 
         updateStatement = updateStatement.execution_options(synchronize_session=False)
@@ -4761,68 +4656,64 @@ class dbCalls:
         )
 
         # Set default values
-        if getattr(airflowDag, "scheduleInterval") == None:
-            setattr(airflowDag, "scheduleInterval", "None")
-        if getattr(airflowDag, "filterConnection") == None:
-            setattr(airflowDag, "filterConnection", "")
-        if getattr(airflowDag, "retries") == None:
-            setattr(airflowDag, "retries", "5")
-        if getattr(airflowDag, "autoRegenerateDag") == None:
-            setattr(airflowDag, "autoRegenerateDag", "1")
-        if getattr(airflowDag, "emailOnFailure") == None:
-            setattr(airflowDag, "emailOnFailure", "0")
-        if getattr(airflowDag, "emailOnRetries") == None:
-            setattr(airflowDag, "emailOnRetries", "0")
-        if getattr(airflowDag, "retryExponentialBackoff") == None:
-            setattr(airflowDag, "retryExponentialBackoff", "0")
+        if airflowDag.scheduleInterval == None:
+            airflowDag.scheduleInterval = "None"
+        if airflowDag.filterConnection == None:
+            airflowDag.filterConnection = ""
+        if airflowDag.retries == None:
+            airflowDag.retries = "5"
+        if airflowDag.autoRegenerateDag == None:
+            airflowDag.autoRegenerateDag = "1"
+        if airflowDag.emailOnFailure == None:
+            airflowDag.emailOnFailure = "0"
+        if airflowDag.emailOnRetries == None:
+            airflowDag.emailOnRetries = "0"
+        if airflowDag.retryExponentialBackoff == None:
+            airflowDag.retryExponentialBackoff = "0"
 
         try:
             query = insert(configSchema.airflowExportDags).values(
                 dag_name=dagname,
-                schedule_interval=getattr(airflowDag, "scheduleInterval"),
-                filter_dbalias=getattr(airflowDag, "filterConnection"),
-                filter_target_schema=getattr(airflowDag, "filterTargetSchema"),
-                filter_target_table=getattr(airflowDag, "filterTargetTable"),
-                retries=getattr(airflowDag, "retries"),
-                operator_notes=getattr(airflowDag, "operatorNotes"),
-                application_notes=getattr(airflowDag, "applicationNotes"),
-                auto_regenerate_dag=getattr(airflowDag, "autoRegenerateDag"),
-                airflow_notes=getattr(airflowDag, "airflowNotes"),
-                sudo_user=getattr(airflowDag, "sudoUser"),
-                timezone=getattr(airflowDag, "timezone"),
-                email=getattr(airflowDag, "email"),
-                email_on_failure=getattr(airflowDag, "emailOnFailure"),
-                email_on_retries=getattr(airflowDag, "emailOnRetries"),
-                tags=getattr(airflowDag, "tags"),
-                sla_warning_time=getattr(airflowDag, "slaWarningTime"),
-                retry_exponential_backoff=getattr(
-                    airflowDag, "retryExponentialBackoff"
-                ),
-                concurrency=getattr(airflowDag, "concurrency"),
+                schedule_interval=airflowDag.scheduleInterval,
+                filter_dbalias=airflowDag.filterConnection,
+                filter_target_schema=airflowDag.filterTargetSchema,
+                filter_target_table=airflowDag.filterTargetTable,
+                retries=airflowDag.retries,
+                operator_notes=airflowDag.operatorNotes,
+                application_notes=airflowDag.applicationNotes,
+                auto_regenerate_dag=airflowDag.autoRegenerateDag,
+                airflow_notes=airflowDag.airflowNotes,
+                sudo_user=airflowDag.sudoUser,
+                timezone=airflowDag.timezone,
+                email=airflowDag.email,
+                email_on_failure=airflowDag.emailOnFailure,
+                email_on_retries=airflowDag.emailOnRetries,
+                tags=airflowDag.tags,
+                sla_warning_time=airflowDag.slaWarningTime,
+                retry_exponential_backoff=airflowDag.retryExponentialBackoff,
+                concurrency=airflowDag.concurrency,
             )
 
             query = query.on_duplicate_key_update(
                 dag_name=dagname,
-                schedule_interval=getattr(airflowDag, "scheduleInterval"),
-                filter_dbalias=getattr(airflowDag, "filterConnection"),
-                filter_target_schema=getattr(airflowDag, "filterTargetSchema"),
-                filter_target_table=getattr(airflowDag, "filterTargetTable"),
-                retries=getattr(airflowDag, "retries"),
-                operator_notes=getattr(airflowDag, "operatorNotes"),
-                application_notes=getattr(airflowDag, "applicationNotes"),
-                auto_regenerate_dag=getattr(airflowDag, "autoRegenerateDag"),
-                airflow_notes=getattr(airflowDag, "airflowNotes"),
-                sudo_user=getattr(airflowDag, "sudoUser"),
-                timezone=getattr(airflowDag, "timezone"),
-                email=getattr(airflowDag, "email"),
-                email_on_failure=getattr(airflowDag, "emailOnFailure"),
-                email_on_retries=getattr(airflowDag, "emailOnRetries"),
-                tags=getattr(airflowDag, "tags"),
-                sla_warning_time=getattr(airflowDag, "slaWarningTime"),
-                retry_exponential_backoff=getattr(
-                    airflowDag, "retryExponentialBackoff"
-                ),
-                concurrency=getattr(airflowDag, "concurrency"),
+                schedule_interval=airflowDag.scheduleInterval,
+                filter_dbalias=airflowDag.filterConnection,
+                filter_target_schema=airflowDag.filterTargetSchema,
+                filter_target_table=airflowDag.filterTargetTable,
+                retries=airflowDag.retries,
+                operator_notes=airflowDag.operatorNotes,
+                application_notes=airflowDag.applicationNotes,
+                auto_regenerate_dag=airflowDag.autoRegenerateDag,
+                airflow_notes=airflowDag.airflowNotes,
+                sudo_user=airflowDag.sudoUser,
+                timezone=airflowDag.timezone,
+                email=airflowDag.email,
+                email_on_failure=airflowDag.emailOnFailure,
+                email_on_retries=airflowDag.emailOnRetries,
+                tags=airflowDag.tags,
+                sla_warning_time=airflowDag.slaWarningTime,
+                retry_exponential_backoff=airflowDag.retryExponentialBackoff,
+                concurrency=airflowDag.concurrency,
             )
 
             session.execute(query)
@@ -4841,7 +4732,7 @@ class dbCalls:
         # session.close()
         session.remove()
 
-        tasks = getattr(airflowDag, "tasks")
+        tasks = airflowDag.tasks
         for task in tasks:
             if (
                 self.updateAirflowTasks(
@@ -4934,7 +4825,7 @@ class dbCalls:
         """Bulk update of Airflow custom Dags"""
         log = logging.getLogger(self.logger)
 
-        if len(getattr(bulkData, "dags")) == 0:
+        if len(bulkData.dags) == 0:
             resultMsg = {"result": "dags must contain a list of Airflow dags to update"}
             returnCode = 422
             return (resultMsg, returnCode)
@@ -4957,48 +4848,42 @@ class dbCalls:
         for updateField in bulkData.__pydantic_fields_set__:
             if updateField == "scheduleInterval":
                 updateStatement = updateStatement.values(
-                    schedule_interval=getattr(bulkData, "scheduleInterval")
+                    schedule_interval=bulkData.scheduleInterval
                 )
             elif updateField == "operatorNotes":
                 updateStatement = updateStatement.values(
-                    operator_notes=getattr(bulkData, "operatorNotes")
+                    operator_notes=bulkData.operatorNotes
                 )
             elif updateField == "autoRegenerateDag":
                 updateStatement = updateStatement.values(
-                    auto_regenerate_dag=getattr(bulkData, "autoRegenerateDag")
+                    auto_regenerate_dag=bulkData.autoRegenerateDag
                 )
             elif updateField == "sudoUser":
-                updateStatement = updateStatement.values(
-                    sudo_user=getattr(bulkData, "sudoUser")
-                )
+                updateStatement = updateStatement.values(sudo_user=bulkData.sudoUser)
             elif updateField == "timezone":
-                updateStatement = updateStatement.values(
-                    timezone=getattr(bulkData, "timezone")
-                )
+                updateStatement = updateStatement.values(timezone=bulkData.timezone)
             elif updateField == "email":
-                updateStatement = updateStatement.values(
-                    email=getattr(bulkData, "email")
-                )
+                updateStatement = updateStatement.values(email=bulkData.email)
             elif updateField == "emailOnFailure":
                 updateStatement = updateStatement.values(
-                    email_on_failure=getattr(bulkData, "emailOnFailure")
+                    email_on_failure=bulkData.emailOnFailure
                 )
             elif updateField == "emailOnRetries":
                 updateStatement = updateStatement.values(
-                    email_on_retries=getattr(bulkData, "emailOnRetries")
+                    email_on_retries=bulkData.emailOnRetries
                 )
             elif updateField == "slaWarningTime":
                 updateStatement = updateStatement.values(
-                    sla_warning_time=getattr(bulkData, "slaWarningTime")
+                    sla_warning_time=bulkData.slaWarningTime
                 )
             elif updateField == "concurrency":
                 updateStatement = updateStatement.values(
-                    concurrency=getattr(bulkData, "concurrency")
+                    concurrency=bulkData.concurrency
                 )
 
         # Create a list of dicts that contain all the databas/table combinations that will be updated
         tableList = []
-        for tables in getattr(bulkData, "dags"):
+        for tables in bulkData.dags:
             tableList.append({"dag": tables.name})
 
         updateStatement = updateStatement.execution_options(synchronize_session=False)
@@ -5043,60 +4928,56 @@ class dbCalls:
         )
 
         # Set default values
-        if getattr(airflowDag, "scheduleInterval") == None:
-            setattr(airflowDag, "scheduleInterval", "None")
-        if getattr(airflowDag, "retries") == None:
-            setattr(airflowDag, "retries", "0")
-        if getattr(airflowDag, "autoRegenerateDag") == None:
-            setattr(airflowDag, "autoRegenerateDag", "1")
-        if getattr(airflowDag, "emailOnFailure") == None:
-            setattr(airflowDag, "emailOnFailure", "0")
-        if getattr(airflowDag, "emailOnRetries") == None:
-            setattr(airflowDag, "emailOnRetries", "0")
-        if getattr(airflowDag, "retryExponentialBackoff") == None:
-            setattr(airflowDag, "retryExponentialBackoff", "0")
+        if airflowDag.scheduleInterval == None:
+            airflowDag.scheduleInterval = "None"
+        if airflowDag.retries == None:
+            airflowDag.retries = "0"
+        if airflowDag.autoRegenerateDag == None:
+            airflowDag.autoRegenerateDag = "1"
+        if airflowDag.emailOnFailure == None:
+            airflowDag.emailOnFailure = "0"
+        if airflowDag.emailOnRetries == None:
+            airflowDag.emailOnRetries = "0"
+        if airflowDag.retryExponentialBackoff == None:
+            airflowDag.retryExponentialBackoff = "0"
 
         try:
             query = insert(configSchema.airflowCustomDags).values(
                 dag_name=dagname,
-                schedule_interval=getattr(airflowDag, "scheduleInterval"),
-                retries=getattr(airflowDag, "retries"),
-                operator_notes=getattr(airflowDag, "operatorNotes"),
-                application_notes=getattr(airflowDag, "applicationNotes"),
-                auto_regenerate_dag=getattr(airflowDag, "autoRegenerateDag"),
-                airflow_notes=getattr(airflowDag, "airflowNotes"),
-                sudo_user=getattr(airflowDag, "sudoUser"),
-                timezone=getattr(airflowDag, "timezone"),
-                email=getattr(airflowDag, "email"),
-                email_on_failure=getattr(airflowDag, "emailOnFailure"),
-                email_on_retries=getattr(airflowDag, "emailOnRetries"),
-                tags=getattr(airflowDag, "tags"),
-                sla_warning_time=getattr(airflowDag, "slaWarningTime"),
-                retry_exponential_backoff=getattr(
-                    airflowDag, "retryExponentialBackoff"
-                ),
-                concurrency=getattr(airflowDag, "concurrency"),
+                schedule_interval=airflowDag.scheduleInterval,
+                retries=airflowDag.retries,
+                operator_notes=airflowDag.operatorNotes,
+                application_notes=airflowDag.applicationNotes,
+                auto_regenerate_dag=airflowDag.autoRegenerateDag,
+                airflow_notes=airflowDag.airflowNotes,
+                sudo_user=airflowDag.sudoUser,
+                timezone=airflowDag.timezone,
+                email=airflowDag.email,
+                email_on_failure=airflowDag.emailOnFailure,
+                email_on_retries=airflowDag.emailOnRetries,
+                tags=airflowDag.tags,
+                sla_warning_time=airflowDag.slaWarningTime,
+                retry_exponential_backoff=airflowDag.retryExponentialBackoff,
+                concurrency=airflowDag.concurrency,
             )
 
             query = query.on_duplicate_key_update(
                 dag_name=dagname,
-                schedule_interval=getattr(airflowDag, "scheduleInterval"),
-                retries=getattr(airflowDag, "retries"),
-                operator_notes=getattr(airflowDag, "operatorNotes"),
-                application_notes=getattr(airflowDag, "applicationNotes"),
-                auto_regenerate_dag=getattr(airflowDag, "autoRegenerateDag"),
-                airflow_notes=getattr(airflowDag, "airflowNotes"),
-                sudo_user=getattr(airflowDag, "sudoUser"),
-                timezone=getattr(airflowDag, "timezone"),
-                email=getattr(airflowDag, "email"),
-                email_on_failure=getattr(airflowDag, "emailOnFailure"),
-                email_on_retries=getattr(airflowDag, "emailOnRetries"),
-                tags=getattr(airflowDag, "tags"),
-                sla_warning_time=getattr(airflowDag, "slaWarningTime"),
-                retry_exponential_backoff=getattr(
-                    airflowDag, "retryExponentialBackoff"
-                ),
-                concurrency=getattr(airflowDag, "concurrency"),
+                schedule_interval=airflowDag.scheduleInterval,
+                retries=airflowDag.retries,
+                operator_notes=airflowDag.operatorNotes,
+                application_notes=airflowDag.applicationNotes,
+                auto_regenerate_dag=airflowDag.autoRegenerateDag,
+                airflow_notes=airflowDag.airflowNotes,
+                sudo_user=airflowDag.sudoUser,
+                timezone=airflowDag.timezone,
+                email=airflowDag.email,
+                email_on_failure=airflowDag.emailOnFailure,
+                email_on_retries=airflowDag.emailOnRetries,
+                tags=airflowDag.tags,
+                sla_warning_time=airflowDag.slaWarningTime,
+                retry_exponential_backoff=airflowDag.retryExponentialBackoff,
+                concurrency=airflowDag.concurrency,
             )
 
             session.execute(query)
@@ -5115,7 +4996,7 @@ class dbCalls:
         # session.close()
         session.remove()
 
-        tasks = getattr(airflowDag, "tasks")
+        tasks = airflowDag.tasks
         for task in tasks:
             if (
                 self.updateAirflowTasks(

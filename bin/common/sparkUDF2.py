@@ -21,7 +21,7 @@ import re
 from datetime import datetime
 
 
-class sparkUDFClass(object):
+class sparkUDFClass:
     def __init__(self):
 
         self.seedStringEncoded = None
@@ -63,7 +63,7 @@ class sparkUDFClass(object):
 
     def parseStructDate(self, timestampString):
         timestampString = str(timestampString)
-        m = re.match('\{ *"\$date" *: *(-?\d+)\ *}', timestampString)
+        m = re.match(r'\{ *"\$date" *: *(-?\d+)\ *}', timestampString)
         if m:
             num = m.group(1)
             timestamp = datetime.utcfromtimestamp(int(num) / 1000)

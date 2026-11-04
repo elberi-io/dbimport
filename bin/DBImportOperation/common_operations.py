@@ -37,7 +37,7 @@ from ConfigReader import configuration
 from DBImportConfig import common_config
 
 
-class operation(object, metaclass=Singleton):
+class operation(metaclass=Singleton):
     def __init__(self, Hive_DB=None, Hive_Table=None):
         logging.debug("Executing common_operation.__init__()")
 
