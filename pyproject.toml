@@ -215,9 +215,9 @@ layers = [
     "common",
 ]
 ignore_imports = [
-    # Existing exception: the catalog services use the Hive metastore
+    # Existing exception: the Hive catalog service uses the Hive metastore
     # table definitions in DBImportOperation.hiveSchema.
-    "catalogService.* -> DBImportOperation.hiveSchema",
+    "catalogService.hiveDirect -> DBImportOperation.hiveSchema",
 ]
 
 [tool.pytest.ini_options]
