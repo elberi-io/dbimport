@@ -17,15 +17,15 @@ config = context.config
 # for 'autogenerate' support
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
-#target_metadata = None
+# target_metadata = None
 
 try:
-    DBImport_Home = os.environ['DBIMPORT_HOME']
+    DBImport_Home = os.environ["DBIMPORT_HOME"]
 except KeyError:
-    print ("Error: System Environment Variable DBIMPORT_HOME is not set")
+    print("Error: System Environment Variable DBIMPORT_HOME is not set")
     sys.exit(1)
 
-sys.path.append("%s/bin"%(DBImport_Home))
+sys.path.append("%s/bin" % (DBImport_Home))
 from DBImportConfig.configSchema import Base
 
 target_metadata = Base.metadata
@@ -49,9 +49,7 @@ def run_migrations_offline():
 
     """
     url = config.get_main_option("sqlalchemy.url")
-    context.configure(
-        url=url, target_metadata=target_metadata, literal_binds=True
-    )
+    context.configure(url=url, target_metadata=target_metadata, literal_binds=True)
 
     with context.begin_transaction():
         context.run_migrations()
@@ -71,9 +69,7 @@ def run_migrations_online():
     )
 
     with connectable.connect() as connection:
-        context.configure(
-            connection=connection, target_metadata=target_metadata
-        )
+        context.configure(connection=connection, target_metadata=target_metadata)
 
         with context.begin_transaction():
             context.run_migrations()

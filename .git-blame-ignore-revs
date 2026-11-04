@@ -1,0 +1,37 @@
+# Commits that only reformatted code (ruff format, #159).
+# GitHub skips them in the blame view. Locally, run once:
+#   git config blame.ignoreRevsFile .git-blame-ignore-revs
+# Keep the hashes valid: merge with a merge commit, do not rebase or squash.
+
+# chore: format bin/ConfigReader with ruff format
+584cdb557e20fd9601dfd3c3cfe9514f105aeaec
+
+# chore: format bin/DBImportConfig with ruff format
+648274b10de53b696ea399fa9d598c742ef65bb4
+
+# chore: format bin/DBImportOperation with ruff format
+4153f4574c9b4e5c71d9774128253015ebf4dbf7
+
+# chore: format bin/Schedule with ruff format
+24fbe4867368939c4872faef0223ff781beb2206
+
+# chore: format bin/SchemaUpgrade with ruff format
+7112e5d6ca6f9c474c49dd7d75806972f4378a34
+
+# chore: format bin/Server with ruff format
+ecd3cd0db46a03bc66669ba5d34638a58a222398
+
+# chore: format bin/catalogService with ruff format
+2519a19c3dcfa0d95cf494a95fbfc07b57606e5f
+
+# chore: format bin/common with ruff format
+29d1ae18d4bc44dda5a30fb040a3766a41b1856f
+
+# chore: format bin/setupOperation with ruff format
+47eec98a59ebe9d032bfe5a81a2ba684a7f90c6b
+
+# chore: format bin/sourceSchemaReader with ruff format
+11d19f15831db3b87eeb08b2db9bdb3800c75c8a
+
+# chore: format the launchers in bin/ with ruff format
+ceafde3387a8aff73b5cfc793d67bc16193965d0
