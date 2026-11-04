@@ -51,4 +51,3 @@ CATALOG_GLUE = "glue_catalog"
 RESULT_OK = "ok"
 RESULT_FAILED = "failed"
 RESULT_FOREIGN_KEY_FAILED = "fk_failed"
-

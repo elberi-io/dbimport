@@ -22,102 +22,147 @@ import logging
 from common import constants as constant
 from common.Exceptions import *
 from DBImportOperation import import_operations
-from setupOperation import database as databaseOperations 
-from setupOperation import webServerOperations 
+from setupOperation import database as databaseOperations
+from setupOperation import webServerOperations
+
 
 def printHelp():
-	print ("Options:")
-	print ("  --createDB         Creates the database schema in the DBImport configuration database")
-	print ("  --upgradeDB        Upgrades the configuration database to support a new DBImport version")
-	print ("")
-	print ("  --buildHTML        Installs required npm packages and guild HTML files for DBImport UI")
-	print ("")
-	print ("  --help             Show this help message and exit")
-	print ("  -v, --debug        Turn on extensive debug output. This will print passwords in cleartext, so use with caution")
-	sys.exit(1)
-	
+    print("Options:")
+    print(
+        "  --createDB         Creates the database schema in the DBImport configuration database"
+    )
+    print(
+        "  --upgradeDB        Upgrades the configuration database to support a new DBImport version"
+    )
+    print("")
+    print(
+        "  --buildHTML        Installs required npm packages and guild HTML files for DBImport UI"
+    )
+    print("")
+    print("  --help             Show this help message and exit")
+    print(
+        "  -v, --debug        Turn on extensive debug output. This will print passwords in cleartext, so use with caution"
+    )
+    sys.exit(1)
+
+
 def main(argv):
 
-	try:
-		opts, args = getopt.getopt(argv, "v", ["help", "createDB", "upgradeDB", "downgradeDB", "createSchemaRst", "debug", "buildHTML"])
-	except getopt.GetoptError:
-		printHelp()
+    try:
+        opts, args = getopt.getopt(
+            argv,
+            "v",
+            [
+                "help",
+                "createDB",
+                "upgradeDB",
+                "downgradeDB",
+                "createSchemaRst",
+                "debug",
+                "buildHTML",
+            ],
+        )
+    except getopt.GetoptError:
+        printHelp()
 
-	version = "0.10"
-	Hive_DB = None
-	Hive_Table = None
-	operation = None
-	loggingLevel = logging.INFO
-	printHeader = True
+    version = "0.10"
+    Hive_DB = None
+    Hive_Table = None
+    operation = None
+    loggingLevel = logging.INFO
+    printHeader = True
 
-	if  len(opts) == 0:
-		printHelp()
+    if len(opts) == 0:
+        printHelp()
 
-	for opt, arg in opts:
-		if opt in ("-v", "--debug"):
-			loggingLevel = logging.DEBUG
-		elif opt == "--help":
-			printHelp()
-		elif opt == "--createDB":
-			operation = "createDB"
-		elif opt == "--upgradeDB":
-			operation = "upgradeDB"
-		elif opt == "--downgradeDB":
-			operation = "downgradeDB"
-		elif opt == "--buildHTML":
-			operation = "buildHTML"
-		elif opt == "--createSchemaRst":
-			operation = "createSchemaRst"
-			printHeader = False
+    for opt, arg in opts:
+        if opt in ("-v", "--debug"):
+            loggingLevel = logging.DEBUG
+        elif opt == "--help":
+            printHelp()
+        elif opt == "--createDB":
+            operation = "createDB"
+        elif opt == "--upgradeDB":
+            operation = "upgradeDB"
+        elif opt == "--downgradeDB":
+            operation = "downgradeDB"
+        elif opt == "--buildHTML":
+            operation = "buildHTML"
+        elif opt == "--createSchemaRst":
+            operation = "createSchemaRst"
+            printHeader = False
 
-	if operation == None:
-		printHelp()
+    if operation == None:
+        printHelp()
 
-	if printHeader == True:
-		# Font created at http://patorjk.com/software/taag/#p=display&f=Big&t=DBImport%20-%20Setup
-		sys.stdout.write(u"\u001b[35m")  # Magenta
-		sys.stdout.flush()
-		print("")
-		print(" _____  ____ _____                            _               _____      _               ") 
-		print("|  __ \|  _ \_   _|                          | |             / ____|    | |              ")
-		print("| |  | | |_) || |  _ __ ___  _ __   ___  _ __| |_   ______  | (___   ___| |_ _   _ _ __  ")
-		print("| |  | |  _ < | | | '_ ` _ \| '_ \ / _ \| '__| __| |______|  \___ \ / _ \ __| | | | '_ \ ")
-		print("| |__| | |_) || |_| | | | | | |_) | (_) | |  | |_            ____) |  __/ |_| |_| | |_) |")
-		print("|_____/|____/_____|_| |_| |_| .__/ \___/|_|   \__|          |_____/ \___|\__|\__,_| .__/ ")
-		print("                            | |                                                   | |    ")
-		print("                            |_|                                                   |_|    ")
-		sys.stdout.write(u"\u001b[0m")  # Reset
-		sys.stdout.flush()
-		print("")
-		print("Version: %s"%(constant.VERSION))
-		print("")
-		print("")
+    if printHeader == True:
+        # Font created at http://patorjk.com/software/taag/#p=display&f=Big&t=DBImport%20-%20Setup
+        sys.stdout.write("\u001b[35m")  # Magenta
+        sys.stdout.flush()
+        print("")
+        print(
+            " _____  ____ _____                            _               _____      _               "
+        )
+        print(
+            "|  __ \|  _ \_   _|                          | |             / ____|    | |              "
+        )
+        print(
+            "| |  | | |_) || |  _ __ ___  _ __   ___  _ __| |_   ______  | (___   ___| |_ _   _ _ __  "
+        )
+        print(
+            "| |  | |  _ < | | | '_ ` _ \| '_ \ / _ \| '__| __| |______|  \___ \ / _ \ __| | | | '_ \ "
+        )
+        print(
+            "| |__| | |_) || |_| | | | | | |_) | (_) | |  | |_            ____) |  __/ |_| |_| | |_) |"
+        )
+        print(
+            "|_____/|____/_____|_| |_| |_| .__/ \___/|_|   \__|          |_____/ \___|\__|\__,_| .__/ "
+        )
+        print(
+            "                            | |                                                   | |    "
+        )
+        print(
+            "                            |_|                                                   |_|    "
+        )
+        sys.stdout.write("\u001b[0m")  # Reset
+        sys.stdout.flush()
+        print("")
+        print("Version: %s" % (constant.VERSION))
+        print("")
+        print("")
 
-	# Initiate the logging functions with the correct level
-	if loggingLevel == logging.DEBUG:
-		logging.basicConfig(stream=sys.stdout, format='%(levelname)s %(funcName)s - %(message)s', level=loggingLevel)
-	else:
-		logging.basicConfig(stream=sys.stdout, format='%(levelname)s - %(message)s', level=loggingLevel)
+    # Initiate the logging functions with the correct level
+    if loggingLevel == logging.DEBUG:
+        logging.basicConfig(
+            stream=sys.stdout,
+            format="%(levelname)s %(funcName)s - %(message)s",
+            level=loggingLevel,
+        )
+    else:
+        logging.basicConfig(
+            stream=sys.stdout, format="%(levelname)s - %(message)s", level=loggingLevel
+        )
 
-	if operation == "createDB":
-		dbOperations = databaseOperations.initialize()
-		dbOperations.createDB()
+    if operation == "createDB":
+        dbOperations = databaseOperations.initialize()
+        dbOperations.createDB()
 
-	if operation == "upgradeDB":
-		dbOperations = databaseOperations.initialize()
-		dbOperations.upgradeDB()
+    if operation == "upgradeDB":
+        dbOperations = databaseOperations.initialize()
+        dbOperations.upgradeDB()
 
-	if operation == "downgradeDB":
-		dbOperations = databaseOperations.initialize()
-		dbOperations.downgradeDB()
+    if operation == "downgradeDB":
+        dbOperations = databaseOperations.initialize()
+        dbOperations.downgradeDB()
 
-	if operation == "createSchemaRst":
-		dbOperations = databaseOperations.initialize()
-		dbOperations.generateSchemaRst()
+    if operation == "createSchemaRst":
+        dbOperations = databaseOperations.initialize()
+        dbOperations.generateSchemaRst()
 
-	if operation == "buildHTML":
-		webOperations = webServerOperations.webServerOperations()
-		webOperations.buildHTML()
+    if operation == "buildHTML":
+        webOperations = webServerOperations.webServerOperations()
+        webOperations.buildHTML()
+
 
 if __name__ == "__main__":
-	main(sys.argv[1:])
+    main(sys.argv[1:])

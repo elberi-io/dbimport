@@ -19,17 +19,21 @@ import os
 import io
 import sys
 import logging
-import subprocess 
+import subprocess
 import shutil
+
 # import jaydebeapi
 import base64
 import string
 import random
+
 # from urllib.parse import quote
 from ConfigReader import configuration
+
 # import mysql.connector
 # from mysql.connector import errorcode
 from datetime import date, datetime, time, timedelta
+
 # import pandas as pd
 from common import constants as constant
 from DBImportConfig import configSchema
@@ -44,102 +48,105 @@ from DBImportConfig import common_config
 # from alembic.config import Config
 # from alembic import command as alembicCommand
 
+
 class webServerOperations(object):
-	def __init__(self):
-		logging.debug("Executing webServerOperations.__init__()")
+    def __init__(self):
+        logging.debug("Executing webServerOperations.__init__()")
 
-		self.debugLogLevel = False
+        self.debugLogLevel = False
 
-		if logging.root.level == 10:        # DEBUG
-			self.debugLogLevel = True
+        if logging.root.level == 10:  # DEBUG
+            self.debugLogLevel = True
 
-		try:
-			self.DBImport_Home = os.environ['DBIMPORT_HOME']
-		except KeyError:
-			logging.error("System Environment Variable DBIMPORT_HOME is not set")
-			sys.exit(1)
+        try:
+            self.DBImport_Home = os.environ["DBIMPORT_HOME"]
+        except KeyError:
+            logging.error("System Environment Variable DBIMPORT_HOME is not set")
+            sys.exit(1)
 
-		self.common_config = common_config.config()
+        self.common_config = common_config.config()
 
-#		# Fetch configuration about MySQL database and how to connect to it
-#		self.databaseCredentials = self.common_config.getMysqlCredentials()
-#		self.configHostname = self.databaseCredentials["mysql_hostname"]
-#		self.configPort =     self.databaseCredentials["mysql_port"]
-#		self.configDatabase = self.databaseCredentials["mysql_database"]
-#		self.configUsername = self.databaseCredentials["mysql_username"]
-#		self.configPassword = self.databaseCredentials["mysql_password"]
-#		# self.configPassword = quote(self.databaseCredentials["mysql_password"], safe=" +")
-#
-#		self.connectStr = "mysql+pymysql://%s:%s@%s:%s/%s"%(
-#			self.configUsername, 
-#			# self.configPassword, 
-#			quote(self.configPassword, safe=" +"),
-#			self.configHostname, 
-#			self.configPort, 
-#			self.configDatabase)
-#
-#		# Esablish a SQLAlchemy connection to the DBImport database 
-#		try:
-#			self.configDB = sa.create_engine(self.connectStr, echo = self.debugLogLevel)
-#			self.configDB.connect()
-#			self.configDBSession = sessionmaker(bind=self.configDB)
-#
-#		except sa.exc.OperationalError as err:
-#			logging.error("%s"%err)
-#			sys.exit(1)
-#		except:
-#			print("Unexpected error: ")
-#			print(sys.exc_info())
-#			sys.exit(1)
+        # 		# Fetch configuration about MySQL database and how to connect to it
+        # 		self.databaseCredentials = self.common_config.getMysqlCredentials()
+        # 		self.configHostname = self.databaseCredentials["mysql_hostname"]
+        # 		self.configPort =     self.databaseCredentials["mysql_port"]
+        # 		self.configDatabase = self.databaseCredentials["mysql_database"]
+        # 		self.configUsername = self.databaseCredentials["mysql_username"]
+        # 		self.configPassword = self.databaseCredentials["mysql_password"]
+        # 		# self.configPassword = quote(self.databaseCredentials["mysql_password"], safe=" +")
+        #
+        # 		self.connectStr = "mysql+pymysql://%s:%s@%s:%s/%s"%(
+        # 			self.configUsername,
+        # 			# self.configPassword,
+        # 			quote(self.configPassword, safe=" +"),
+        # 			self.configHostname,
+        # 			self.configPort,
+        # 			self.configDatabase)
+        #
+        # 		# Esablish a SQLAlchemy connection to the DBImport database
+        # 		try:
+        # 			self.configDB = sa.create_engine(self.connectStr, echo = self.debugLogLevel)
+        # 			self.configDB.connect()
+        # 			self.configDBSession = sessionmaker(bind=self.configDB)
+        #
+        # 		except sa.exc.OperationalError as err:
+        # 			logging.error("%s"%err)
+        # 			sys.exit(1)
+        # 		except:
+        # 			print("Unexpected error: ")
+        # 			print(sys.exc_info())
+        # 			sys.exit(1)
 
-		logging.debug("Executing webServerOperations.__init__() - Finished")
+        logging.debug("Executing webServerOperations.__init__() - Finished")
 
+    def buildHTML(self):
+        logging.debug("Executing webServerOperations.buildHTML()")
 
-	def buildHTML(self):
-		logging.debug("Executing webServerOperations.buildHTML()")
+        self.runNPMinstall()
+        self.runNPMbuild()
 
-		self.runNPMinstall()
-		self.runNPMbuild()
+        print()
+        logging.info("WebServer files built and installed successfully")
+        logging.debug("Executing webServerOperations.buildHTML() - Finished")
 
-		print()
-		logging.info("WebServer files built and installed successfully")
-		logging.debug("Executing webServerOperations.buildHTML() - Finished")
+    def runNPMinstall(self):
+        logging.debug("Executing webServerOperations.runNPMinstall()")
+        logging.info("Installing NPM Packages")
 
+        prefixDir = self.DBImport_Home + "/bin/Server/html"
 
-	def runNPMinstall(self):
-		logging.debug("Executing webServerOperations.runNPMinstall()")
-		logging.info("Installing NPM Packages")
+        result = subprocess.run(["npm", "config", "set", "fund", "false"])
+        if result.returncode != 0:
+            logging.error(
+                "Unknown error when executing 'npm config' command. Please solve this and rerun setup command"
+            )
+            sys.exit(1)
 
-		prefixDir = self.DBImport_Home + "/bin/Server/html"
+        result = subprocess.run(["npm", "install", "--prefix", prefixDir])
+        if result.returncode != 0:
+            logging.error(
+                "Unknown error when executing 'npm install' command. Please solve this and rerun setup command"
+            )
+            sys.exit(1)
 
-		result = subprocess.run(["npm", "config", "set", "fund", "false"])
-		if result.returncode != 0:
-			logging.error("Unknown error when executing 'npm config' command. Please solve this and rerun setup command")
-			sys.exit(1)
+        logging.debug("Executing webServerOperations.runNPMinstall() - Finished")
 
-		result = subprocess.run(["npm", "install", "--prefix", prefixDir])
-		if result.returncode != 0:
-			logging.error("Unknown error when executing 'npm install' command. Please solve this and rerun setup command")
-			sys.exit(1)
+    def runNPMbuild(self):
+        logging.debug("Executing webServerOperations.runNPMbuild()")
+        logging.info("Building HTML files")
 
-		logging.debug("Executing webServerOperations.runNPMinstall() - Finished")
+        prefixDir = self.DBImport_Home + "/bin/Server/html"
+        envFile = prefixDir + "/.env"
 
+        if not os.path.isfile(envFile):
+            with open(envFile, "w") as file:
+                file.write("VITE_PROXY_TARGET='https://127.0.0.1:5188'\n")
 
-	def runNPMbuild(self):
-		logging.debug("Executing webServerOperations.runNPMbuild()")
-		logging.info("Building HTML files")
+        result = subprocess.run(["npm", "run", "build", "--prefix", prefixDir])
+        if result.returncode != 0:
+            logging.error(
+                "Unknown error when executing 'npm run build' command. Please solve this and rerun setup command"
+            )
+            sys.exit(1)
 
-		prefixDir = self.DBImport_Home + "/bin/Server/html"
-		envFile = prefixDir + "/.env"
-
-		if not os.path.isfile(envFile):
-			with open(envFile, "w") as file:
-				file.write("VITE_PROXY_TARGET='https://127.0.0.1:5188'\n")
-
-		result = subprocess.run(["npm", "run", "build", "--prefix", prefixDir])
-		if result.returncode != 0:
-			logging.error("Unknown error when executing 'npm run build' command. Please solve this and rerun setup command")
-			sys.exit(1)
-
-		logging.debug("Executing webServerOperations.runNPMbuild() - Finished")
-
+        logging.debug("Executing webServerOperations.runNPMbuild() - Finished")
