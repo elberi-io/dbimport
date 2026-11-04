@@ -1683,23 +1683,23 @@ class config(object, metaclass=Singleton):
                     sqoop_column_type = "String"
                     column_type = "string"
 
-                column_type = re.sub("^nvarchar\(", "varchar(", column_type)
+                column_type = re.sub(r"^nvarchar\(", "varchar(", column_type)
                 column_type = re.sub("^datetime$", "timestamp", column_type)
                 column_type = re.sub("^datetime2$", "timestamp", column_type)
                 column_type = re.sub("^smalldatetime$", "timestamp", column_type)
                 column_type = re.sub("^bit$", "tinyint", column_type)
-                column_type = re.sub("^binary\([0-9]*\)$", "binary", column_type)
+                column_type = re.sub(r"^binary\([0-9]*\)$", "binary", column_type)
                 column_type = re.sub("^varbinary$", "binary", column_type)
-                column_type = re.sub("^varbinary\([0-9]*\)$", "binary", column_type)
+                column_type = re.sub(r"^varbinary\([0-9]*\)$", "binary", column_type)
                 column_type = re.sub("^geometry$", "binary", column_type)
-                column_type = re.sub("^geography\(-1\)$", "binary", column_type)
+                column_type = re.sub(r"^geography\(-1\)$", "binary", column_type)
                 column_type = re.sub("^image$", "binary", column_type)
                 column_type = re.sub("^money$", "decimal", column_type)
-                column_type = re.sub("^nchar\(", "char(", column_type)
-                column_type = re.sub("^numeric\(", "decimal(", column_type)
+                column_type = re.sub(r"^nchar\(", "char(", column_type)
+                column_type = re.sub(r"^numeric\(", "decimal(", column_type)
                 column_type = re.sub("^real$", "float", column_type)
-                column_type = re.sub("^varchar\(-1\)$", "string", column_type)
-                column_type = re.sub("^varchar\(65355\)$", "string", column_type)
+                column_type = re.sub(r"^varchar\(-1\)$", "string", column_type)
+                column_type = re.sub(r"^varchar\(65355\)$", "string", column_type)
                 column_type = re.sub("^smallmoney$", "float", column_type)
 
             if self.common_config.db_oracle == True:
@@ -1733,37 +1733,37 @@ class config(object, metaclass=Singleton):
                 if source_column_type.startswith("float"):
                     sqoop_column_type = "Float"
 
-                column_type = re.sub("^nvarchar\(", "varchar(", column_type)
-                column_type = re.sub(" char\)$", ")", column_type)
-                column_type = re.sub(" byte\)$", ")", column_type)
-                column_type = re.sub("^char\(0\)$", "char(4000)", column_type)
-                column_type = re.sub("^varchar2\(0\)$", "varchar(4000)", column_type)
-                column_type = re.sub("^varchar2\(", "varchar(", column_type)
-                column_type = re.sub("^nvarchar2\(", "varchar(", column_type)
-                column_type = re.sub("^rowid\(", "varchar(", column_type)
+                column_type = re.sub(r"^nvarchar\(", "varchar(", column_type)
+                column_type = re.sub(r" char\)$", ")", column_type)
+                column_type = re.sub(r" byte\)$", ")", column_type)
+                column_type = re.sub(r"^char\(0\)$", "char(4000)", column_type)
+                column_type = re.sub(r"^varchar2\(0\)$", "varchar(4000)", column_type)
+                column_type = re.sub(r"^varchar2\(", "varchar(", column_type)
+                column_type = re.sub(r"^nvarchar2\(", "varchar(", column_type)
+                column_type = re.sub(r"^rowid\(", "varchar(", column_type)
                 column_type = re.sub("^number$", "decimal(38,19)", column_type)
-                if re.search("^number\([0-9]\)", column_type):
+                if re.search(r"^number\([0-9]\)", column_type):
                     column_type = "int"
                     sqoop_column_type = "Integer"
-                if re.search("^number\(1[0-8]\)", column_type):
+                if re.search(r"^number\(1[0-8]\)", column_type):
                     column_type = "bigint"
                     sqoop_column_type = "String"
-                column_type = re.sub("^number\(", "decimal(", column_type)
+                column_type = re.sub(r"^number\(", "decimal(", column_type)
                 column_type = re.sub("^date$", "timestamp", column_type)
                 column_type = re.sub(
-                    "^timestamp\([0-9]*\) with time zone", "timestamp", column_type
+                    r"^timestamp\([0-9]*\) with time zone", "timestamp", column_type
                 )
                 column_type = re.sub("^blob$", "binary", column_type)
-                column_type = re.sub("^xmltype\([0-9]*\)$", "string", column_type)
+                column_type = re.sub(r"^xmltype\([0-9]*\)$", "string", column_type)
                 column_type = re.sub("^raw$", "binary", column_type)
-                column_type = re.sub("^raw\([0-9]*\)$", "binary", column_type)
-                column_type = re.sub("^timestamp\([0-9]\)", "timestamp", column_type)
-                column_type = re.sub("^long raw\([0-9]*\)$", "string", column_type)
+                column_type = re.sub(r"^raw\([0-9]*\)$", "binary", column_type)
+                column_type = re.sub(r"^timestamp\([0-9]\)", "timestamp", column_type)
+                column_type = re.sub(r"^long raw\([0-9]*\)$", "string", column_type)
                 column_type = re.sub(
-                    "^decimal\(3,4\)", "decimal(8,4)", column_type
+                    r"^decimal\(3,4\)", "decimal(8,4)", column_type
                 )  # Very stange Oracle type number(3,4), how can pricision be smaller than scale?
-                if re.search("^decimal\([0-9][0-9]\)$", column_type) != None:
-                    column_type = re.sub("\)$", ",0)", column_type)
+                if re.search(r"^decimal\([0-9][0-9]\)$", column_type) != None:
+                    column_type = re.sub(r"\)$", ",0)", column_type)
 
             if self.common_config.db_mysql == True:
                 if source_column_type == "bit":
@@ -1774,41 +1774,43 @@ class config(object, metaclass=Singleton):
                     column_type = "int"
                     sqoop_column_type = "Integer"
 
-                if re.search("^enum\(", column_type):
+                if re.search(r"^enum\(", column_type):
                     column_type = "string"
                     sqoop_column_type = "String"
 
-                column_type = re.sub("^character varying\(", "varchar(", column_type)
-                column_type = re.sub("^mediumtext\([0-9]*\)", "string", column_type)
-                column_type = re.sub("^tinytext\([0-9]*\)", "varchar(255)", column_type)
-                column_type = re.sub("^text\([0-9]*\)", "string", column_type)
+                column_type = re.sub(r"^character varying\(", "varchar(", column_type)
+                column_type = re.sub(r"^mediumtext\([0-9]*\)", "string", column_type)
+                column_type = re.sub(
+                    r"^tinytext\([0-9]*\)", "varchar(255)", column_type
+                )
+                column_type = re.sub(r"^text\([0-9]*\)", "string", column_type)
                 column_type = re.sub("^json$", "string", column_type)
                 column_type = re.sub("^datetime$", "timestamp", column_type)
                 column_type = re.sub("^varbinary$", "binary", column_type)
-                column_type = re.sub("^varbinary\([0-9]*\)$", "binary", column_type)
-                column_type = re.sub("^binary\([0-9]*\)$", "binary", column_type)
-                column_type = re.sub("^blob\([0-9]*\)$", "binary", column_type)
+                column_type = re.sub(r"^varbinary\([0-9]*\)$", "binary", column_type)
+                column_type = re.sub(r"^binary\([0-9]*\)$", "binary", column_type)
+                column_type = re.sub(r"^blob\([0-9]*\)$", "binary", column_type)
                 if column_type == "time":
                     column_type = "string"
                     sqoop_column_type = "String"
 
             if self.common_config.db_postgresql == True:
-                column_type = re.sub("^character varying\(", "varchar(", column_type)
+                column_type = re.sub(r"^character varying\(", "varchar(", column_type)
                 column_type = re.sub("^text", "string", column_type)
 
             if self.common_config.db_progress == True:
                 column_type = re.sub("^integer", "int", column_type)
-                column_type = re.sub("^numeric\(", "decimal(", column_type)
-                column_type = re.sub("^date\([0-9]\)", "date", column_type)
-                column_type = re.sub("^bit\([1]\)", "boolean", column_type)
-                column_type = re.sub(",none\)", ",0)", column_type)
+                column_type = re.sub(r"^numeric\(", "decimal(", column_type)
+                column_type = re.sub(r"^date\([0-9]\)", "date", column_type)
+                column_type = re.sub(r"^bit\([1]\)", "boolean", column_type)
+                column_type = re.sub(r",none\)", ",0)", column_type)
 
             if self.common_config.db_db2udb == True:
                 if re.search("^clob", column_type):
                     column_type = "string"
                     sqoop_column_type = "String"
 
-                if re.search("^time\([0-9]\)", column_type):
+                if re.search(r"^time\([0-9]\)", column_type):
                     column_type = "varchar(9)"
                     sqoop_column_type = "String"
 
@@ -1820,9 +1822,9 @@ class config(object, metaclass=Singleton):
                 column_type = re.sub("^graphic", "varchar", column_type)
 
             if self.common_config.db_db2as400 == True:
-                if re.search("^numeric\(", column_type):
-                    column_type = re.sub("^numeric\(", "decimal(", column_type)
-                    column_type = re.sub("\)$", ",0)", column_type)
+                if re.search(r"^numeric\(", column_type):
+                    column_type = re.sub(r"^numeric\(", "decimal(", column_type)
+                    column_type = re.sub(r"\)$", ",0)", column_type)
 
                 if re.search("^clob", column_type):
                     column_type = "string"
@@ -1830,9 +1832,9 @@ class config(object, metaclass=Singleton):
 
                 column_type = re.sub("^integer", "int", column_type)
                 column_type = re.sub("^timestmp", "timestamp", column_type)
-                column_type = re.sub("^timestamp\(.*\)", "timestamp", column_type)
+                column_type = re.sub(r"^timestamp\(.*\)", "timestamp", column_type)
                 column_type = re.sub("^varbinary$", "binary", column_type)
-                column_type = re.sub("^varbinary\([0-9]*\)$", "binary", column_type)
+                column_type = re.sub(r"^varbinary\([0-9]*\)$", "binary", column_type)
                 column_type = re.sub("^blob", "binary", column_type)
                 column_type = re.sub("^real", "float", column_type)
 
@@ -1892,12 +1894,12 @@ class config(object, metaclass=Singleton):
             if column_type.startswith("char("):
                 column_precision = int(column_type.split("(")[1].split(")")[0])
                 if column_precision > 255:
-                    column_type = re.sub("^char\(", "varchar(", column_type)
+                    column_type = re.sub(r"^char\(", "varchar(", column_type)
 
             # Remove precision from datatypes that doesnt include a precision
-            column_type = re.sub("^float\([0-9]*\)", "float", column_type)
-            column_type = re.sub("^bigint\([0-9]*\)", "bigint", column_type)
-            column_type = re.sub("^int\([0-9]*\)", "int", column_type)
+            column_type = re.sub(r"^float\([0-9]*\)", "float", column_type)
+            column_type = re.sub(r"^bigint\([0-9]*\)", "bigint", column_type)
+            column_type = re.sub(r"^int\([0-9]*\)", "int", column_type)
 
             if columnTypeOverride != None:
                 column_type = columnTypeOverride
@@ -1909,7 +1911,7 @@ class config(object, metaclass=Singleton):
             # As Parquet imports some column types wrong, we need to map them all to string
             if column_type in ("timestamp", "date", "bigint"):
                 sqoop_column_type = "String"
-            if re.search("^decimal\(", column_type):
+            if re.search(r"^decimal\(", column_type):
                 sqoop_column_type = "String"
 
             # Fetch if we should force this column to 'string' in Hive
@@ -2825,7 +2827,7 @@ class config(object, metaclass=Singleton):
                     self.sqoopIncrMaxvaluePending = maxValue
                 try:
                     if self.sqoop_incr_mode == "lastmodified":
-                        if re.search("\.([0-9]{3}|[0-9]{6})$", maxValue):
+                        if re.search(r"\.([0-9]{3}|[0-9]{6})$", maxValue):
                             self.sqoopIncrMaxvaluePending = datetime.strptime(
                                 maxValue, "%Y-%m-%d %H:%M:%S.%f"
                             )

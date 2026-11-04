@@ -931,32 +931,32 @@ class config(object, metaclass=Singleton):
             columnType = re.sub("^boolean$", "tinyint", columnType)
 
             if sourceDatabaseType == constant.ORACLE:
-                columnType = re.sub("^varchar2\(", "varchar(", columnType)
+                columnType = re.sub(r"^varchar2\(", "varchar(", columnType)
 
         if self.common_config.db_oracle == True:
-            columnType = re.sub("^varchar\(-1\)$", "string", columnType)
-            columnType = re.sub("^nvarchar\(-1\)$", "string", columnType)
+            columnType = re.sub(r"^varchar\(-1\)$", "string", columnType)
+            columnType = re.sub(r"^nvarchar\(-1\)$", "string", columnType)
             columnType = re.sub("^tinyint$", "number(3)", columnType)
             columnType = re.sub("^smallint$", "number(5)", columnType)
-            columnType = re.sub("^decimal\(", "number(", columnType)
+            columnType = re.sub(r"^decimal\(", "number(", columnType)
             columnType = re.sub("^bigint$", "number(19)", columnType)
             columnType = re.sub("^double$", "binary_double", columnType)
             columnType = re.sub("^boolean$", "number(1)", columnType)
             columnType = re.sub("^uniqueidentifier$", "varchar2(36)", columnType)
-            columnType = re.sub("^nvarchar\(", "varchar2(", columnType)
-            columnType = re.sub("^varchar\(", "varchar2(", columnType)
+            columnType = re.sub(r"^nvarchar\(", "varchar2(", columnType)
+            columnType = re.sub(r"^varchar\(", "varchar2(", columnType)
             columnType = re.sub("^timestamp$", "date", columnType)
             columnType = re.sub("^text$", "string", columnType)
             columnType = re.sub("^int$", "number", columnType)
 
             # If the column is a NUMBER but with decimal 0, it will be read without the decimal.
-            if re.search("^number\([0-9]*,0\)$", columnType):
-                columnType = re.sub(",0\)$", ")", columnType)
+            if re.search(r"^number\([0-9]*,0\)$", columnType):
+                columnType = re.sub(r",0\)$", ")", columnType)
 
             # Oracle only supports varchar up to 4000. After that it have to be a CLOB. This will rewrite the soure tabletype
             # to string and will later be converted to clob.
             if columnType.startswith("varchar2("):
-                columnType = re.sub(" char\)$", ")", columnType)
+                columnType = re.sub(r" char\)$", ")", columnType)
                 columnSize = int(columnType.split("(")[1].split(")")[0])
                 if columnSize > 4000:
                     columnType = "clob"
@@ -984,15 +984,15 @@ class config(object, metaclass=Singleton):
             columnType = re.sub(
                 "^timestamp$", "timestamp without time zone", columnType
             )
-            columnType = re.sub("^decimal\(", "numeric(", columnType)
+            columnType = re.sub(r"^decimal\(", "numeric(", columnType)
             columnType = re.sub("^int$", "integer", columnType)
-            columnType = re.sub("^char\(", "character(", columnType)
-            columnType = re.sub("^varchar\(", "character varying(", columnType)
+            columnType = re.sub(r"^char\(", "character(", columnType)
+            columnType = re.sub(r"^varchar\(", "character varying(", columnType)
 
         if self.common_config.db_snowflake == True:
             columnType = re.sub("^timestamp$", "TIMESTAMP_NTZ", columnType)
-            columnType = re.sub("^char\(", "TEXT(", columnType)
-            columnType = re.sub("^varchar\(", "TEXT(", columnType)
+            columnType = re.sub(r"^char\(", "TEXT(", columnType)
+            columnType = re.sub(r"^varchar\(", "TEXT(", columnType)
 
         logging.debug(
             "Executing export_config.convertColumnTypeForTargetTable() - Finished"
