@@ -26,7 +26,7 @@ from Crypto.Random import get_random_bytes
 from common.Exceptions import invalidConfiguration
 
 
-class crypto(object):
+class crypto:
     def __init__(self):
         logging.debug("Executing crypto.__init__()")
         self.privateKeyFile = None
@@ -50,7 +50,7 @@ class crypto(object):
                 + "Please check the path in the configuration file for settings Credentials/private_key"
             )
 
-        self.privateKeyString = open(self.privateKeyFile, "r").read()
+        self.privateKeyString = open(self.privateKeyFile).read()
         self.privateKey = RSA.importKey(self.privateKeyString)
 
     def setPublicKeyFile(self, publicKeyFile):
@@ -65,7 +65,7 @@ class crypto(object):
                 + "Please check the path in the configuration file for settings Credentials/public_key"
             )
 
-        self.publicKeyString = open(self.publicKeyFile, "r").read()
+        self.publicKeyString = open(self.publicKeyFile).read()
         self.publicKey = RSA.importKey(self.publicKeyString)
 
     def decrypt(self, strToDecrypt):

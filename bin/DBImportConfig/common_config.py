@@ -42,7 +42,7 @@ from DBImportConfig import decryption as decryption
 from sourceSchemaReader import schemaReader
 
 
-class config(object, metaclass=Singleton):
+class config(metaclass=Singleton):
     def __init__(self, Hive_DB=None, Hive_Table=None):
         logging.debug("Executing common_config.__init__()")
 
@@ -2827,7 +2827,7 @@ class config(object, metaclass=Singleton):
                 self.remove_temporary_files()
                 sys.exit(1)
 
-            seed = open(seedFile, "r").read()
+            seed = open(seedFile).read()
 
         if len(seed) > 16:
             logging.warning(

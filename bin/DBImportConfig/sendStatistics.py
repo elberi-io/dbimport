@@ -26,7 +26,7 @@ import requests
 from DBImportConfig import common_config
 
 
-class sendStatistics(object):
+class sendStatistics:
     def __init__(self):
         logging.debug("Executing rest.__init__()")
 

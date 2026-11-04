@@ -32,7 +32,7 @@ from DBImportConfig import common_config, sendStatistics
 from DBImportConfig import import_stage as stage
 
 
-class config(object, metaclass=Singleton):
+class config(metaclass=Singleton):
     def __init__(self, Hive_DB=None, Hive_Table=None):
         logging.debug("Executing import_config.__init__()")
         self.Hive_DB = Hive_DB

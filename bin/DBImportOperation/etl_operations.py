@@ -25,7 +25,7 @@ from DBImportConfig import import_config
 from DBImportOperation import common_operations, import_operations
 
 
-class operation(object, metaclass=Singleton):
+class operation(metaclass=Singleton):
     def __init__(self, Hive_DB=None, Hive_Table=None):
         logging.debug("Executing etl_operations.__init__()")
         self.Hive_DB = None

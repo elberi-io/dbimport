@@ -29,7 +29,7 @@ from DBImportConfig import common_config
 from DBImportOperation import hiveSchema
 
 
-class hiveMetastoreDirect(object, metaclass=Singleton):
+class hiveMetastoreDirect(metaclass=Singleton):
     def __init__(self):
         logging.debug("Executing hiveMetastoreDirect.__init__()")
 

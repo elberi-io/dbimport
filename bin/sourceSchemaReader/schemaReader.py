@@ -25,7 +25,7 @@ import pandas as pd
 from common import constants as constant
 
 
-class source(object):
+class source:
     def __init__(self):
         logging.debug("Initiating schemaReader.source()")
 

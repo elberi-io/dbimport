@@ -21,7 +21,7 @@ import re
 from datetime import datetime
 
 
-class sparkUDFClass(object):
+class sparkUDFClass:
     def __init__(self):
 
         self.seedStringEncoded = None

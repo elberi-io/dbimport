@@ -46,7 +46,7 @@ from DBImportConfig import configSchema
 from sourceSchemaReader import schemaReader
 
 
-class atlasOperation(object):
+class atlasOperation:
     def __init__(self, loggerName=None):
         self.loggerName = loggerName
         self.debugLogLevel = False

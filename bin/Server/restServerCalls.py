@@ -292,7 +292,7 @@ class dbCalls:
                 "Default admin user does not exists in the 'auth_users' table. Creating it with password 'admin'"
             )
 
-            password_encoded = "admin".encode("utf-8")
+            password_encoded = b"admin"
             salt = bcrypt.gensalt()
             hashed_password = bcrypt.hashpw(
                 password=password_encoded, salt=salt

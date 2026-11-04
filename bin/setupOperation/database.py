@@ -33,7 +33,7 @@ from sqlalchemy.orm import sessionmaker
 from DBImportConfig import common_config, configSchema
 
 
-class initialize(object):
+class initialize:
     def __init__(self):
         logging.debug("Executing database.__init__()")
 

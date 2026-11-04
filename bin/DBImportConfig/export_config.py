@@ -30,7 +30,7 @@ from common.Singleton import Singleton
 from DBImportConfig import common_config, export_stage, sendStatistics
 
 
-class config(object, metaclass=Singleton):
+class config(metaclass=Singleton):
     def __init__(self, connectionAlias=None, targetSchema=None, targetTable=None):
         logging.debug("Executing export_config.__init__()")
         self.mysql_conn = None
