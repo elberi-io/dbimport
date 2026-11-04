@@ -9,7 +9,9 @@ permissions:
   contents: read
 
 concurrency:
-  group: ci-${{ github.ref }}
+  # A new push to a pull request cancels its older run. Each push to master
+  # gets its own group, so every merged commit keeps its own result.
+  group: ci-${{ github.event_name == 'pull_request' && github.ref || github.sha }}
   cancel-in-progress: true
 
 jobs:
