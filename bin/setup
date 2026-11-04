@@ -20,7 +20,6 @@ import sys
 import getopt
 import logging
 from common import constants as constant
-from DBImportOperation import import_operations
 from setupOperation import database as databaseOperations
 from setupOperation import webServerOperations
 

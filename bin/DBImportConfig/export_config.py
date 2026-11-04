@@ -19,9 +19,6 @@ import sys
 import re
 import logging
 import json
-import math
-import getpass
-from ConfigReader import configuration
 import mysql.connector
 from common.Singleton import Singleton
 from common import constants as constant
@@ -31,7 +28,6 @@ from DBImportConfig import common_config
 # from DBImportConfig import rest
 from DBImportConfig import export_stage
 from DBImportConfig import sendStatistics
-from mysql.connector import errorcode
 from datetime import datetime
 import pandas as pd
 

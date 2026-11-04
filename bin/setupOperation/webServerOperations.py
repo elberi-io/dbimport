@@ -16,27 +16,18 @@
 # under the License.
 
 import os
-import io
 import sys
 import logging
 import subprocess
-import shutil
 
 # import jaydebeapi
-import base64
-import string
-import random
 
 # from urllib.parse import quote
-from ConfigReader import configuration
 
 # import mysql.connector
 # from mysql.connector import errorcode
-from datetime import date, datetime, time, timedelta
 
 # import pandas as pd
-from common import constants as constant
-from DBImportConfig import configSchema
 from DBImportConfig import common_config
 # import sqlalchemy as sa
 # from sqlalchemy.orm import Session, sessionmaker

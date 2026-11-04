@@ -1,18 +1,14 @@
 # coding: utf-8
 from sqlalchemy import (
     Column,
-    Float,
     ForeignKey,
     Index,
-    LargeBinary,
     String,
-    Table,
     BigInteger,
     Integer,
     SmallInteger,
     Text,
 )
-from sqlalchemy.sql import alias, select
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 

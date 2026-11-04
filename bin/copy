@@ -20,12 +20,8 @@ import sys
 import getopt
 import logging
 from common import constants as constant
-from DBImportConfig import common_config
-from DBImportOperation import common_operations
 from DBImportOperation import import_operations
-from DBImportOperation import export_operations
 from DBImportOperation import copy_operations
-from Schedule import Airflow
 
 
 def printHeader():

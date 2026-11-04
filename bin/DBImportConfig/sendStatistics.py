@@ -15,19 +15,10 @@
 # specific language governing permissions and limitations
 # under the License.
 
-import os
-import io
 import sys
 import logging
-import base64
 import json
 import requests
-from ConfigReader import configuration
-import mysql.connector
-from mysql.connector import errorcode
-from datetime import date, datetime, time, timedelta
-import pandas as pd
-from common import constants as constant
 from DBImportConfig import common_config
 import kafka
 import ssl

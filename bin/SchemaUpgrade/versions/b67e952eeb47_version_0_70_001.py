@@ -7,8 +7,6 @@ Create Date: 2022-06-07 11:13:00.589011
 """
 
 from alembic import op
-import sqlalchemy as sa
-from sqlalchemy.dialects import mysql
 from sqlalchemy import Enum
 
 

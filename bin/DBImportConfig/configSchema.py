@@ -14,11 +14,9 @@ from sqlalchemy import (
     Time,
     text,
 )
-from sqlalchemy.dialects.mysql import BIGINT, INTEGER, TINYINT, SMALLINT
-from sqlalchemy.orm import relationship, aliased
-from sqlalchemy.sql import alias, select, func
+from sqlalchemy.dialects.mysql import BIGINT, TINYINT
+from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy_utils import create_view
 
 Base = declarative_base()
 metadata = Base.metadata

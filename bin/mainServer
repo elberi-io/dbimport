@@ -17,13 +17,10 @@
 # under the License.
 
 import os
-import time
 import sys
 import getopt
 import logging
 import psutil
-import signal
-from datetime import date, datetime, time, timedelta
 from common import constants as constant
 from ConfigReader import configuration
 from Server import daemon

@@ -16,24 +16,13 @@
 # under the License.
 
 import sys
-import re
 import logging
-import subprocess
-import errno, os, pty
-import shlex
-from subprocess import Popen, PIPE
-from ConfigReader import configuration
-import mysql.connector
-from mysql.connector import errorcode
 from common.Singleton import Singleton
 from common import constants as constant
 from DBImportConfig import import_config
 from DBImportOperation import import_operations
 from DBImportOperation import common_operations
-from datetime import datetime, timedelta
-import pandas as pd
-import numpy as np
-import time
+from datetime import datetime
 
 
 class operation(object, metaclass=Singleton):

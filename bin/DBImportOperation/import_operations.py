@@ -19,12 +19,9 @@ import sys
 import re
 import logging
 import subprocess
-import errno, os, pty
+import os
 import shlex
-from subprocess import Popen, PIPE
 from ConfigReader import configuration
-import mysql.connector
-from mysql.connector import errorcode
 from common.Singleton import Singleton
 from common.Exceptions import (
     SQLerror,
@@ -39,13 +36,10 @@ from DBImportOperation import common_operations
 from DBImportOperation import atlas_operations
 from datetime import datetime, timedelta
 import pandas as pd
-import numpy as np
 import time
-import base64
-import importlib
 import json
 import requests
-from requests_kerberos import HTTPKerberosAuth, REQUIRED, OPTIONAL
+from requests_kerberos import HTTPKerberosAuth, OPTIONAL
 
 
 class operation(object, metaclass=Singleton):
@@ -1012,8 +1006,6 @@ class operation(object, metaclass=Singleton):
         from pyspark.context import SparkContext, SparkConf
         import pyspark.sql
         from pyspark.sql import SparkSession
-        from pyspark import HiveContext
-        from pyspark.context import SparkContext
         import pyspark.sql.types
         from pyspark.sql.functions import udf
 
@@ -2849,7 +2841,6 @@ class operation(object, metaclass=Singleton):
 
         if self.import_config.etlEngine == constant.ETL_ENGINE_SPARK:
             self.startSpark()
-            import pyspark
 
         # self.Hive_ColumnName_IUD = self.import_config.Hive_ColumnName_IUD
         # self.Hive_ColumnName_HistoryTimestamp = self.import_config.Hive_ColumnName_HistoryTimestamp
@@ -2950,7 +2941,6 @@ class operation(object, metaclass=Singleton):
 
         if self.import_config.etlEngine == constant.ETL_ENGINE_SPARK:
             self.startSpark()
-            import pyspark
 
         columns = self.common_operations.getColumns(
             hiveDB=self.Hive_DB,
@@ -3711,7 +3701,6 @@ class operation(object, metaclass=Singleton):
 
             if self.import_config.etlEngine == constant.ETL_ENGINE_SPARK:
                 self.startSpark()
-                import pyspark
 
                 query = "drop table if exists %s.`%s`.`%s`" % (
                     self.common_operations.sparkCatalogName,

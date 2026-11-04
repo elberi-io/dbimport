@@ -16,29 +16,22 @@
 # under the License.
 
 import sys
-import re
 import logging
 import subprocess
-import errno, os, pty
-import shlex
-from subprocess import Popen, PIPE
+import os
 from ConfigReader import configuration
-import mysql.connector
-from mysql.connector import errorcode
 from common.Singleton import Singleton
 from common import constants as constant
 from common.Exceptions import SQLerror, databaseNotFound, invalidConfiguration
 from DBImportConfig import export_config
 from DBImportOperation import common_operations
 from DBImportOperation import atlas_operations
-from datetime import datetime, timedelta
+from datetime import datetime
 import pandas as pd
-import numpy as np
 import time
 import boto3
-import json
 import requests
-from requests_kerberos import HTTPKerberosAuth, REQUIRED, OPTIONAL
+from requests_kerberos import HTTPKerberosAuth, OPTIONAL
 
 
 class operation(object, metaclass=Singleton):
@@ -1241,10 +1234,6 @@ class operation(object, metaclass=Singleton):
         from pyspark.context import SparkContext, SparkConf
         from pyspark.sql import SparkSession
         from pyspark import HiveContext
-        from pyspark.context import SparkContext
-        from pyspark.sql import Row
-        from pyspark.sql.functions import lit
-        import pyspark.sql.session
 
         conf = SparkConf()
         conf.setMaster(self.export_config.common_config.sparkMaster)

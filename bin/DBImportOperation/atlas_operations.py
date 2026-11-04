@@ -20,22 +20,17 @@ import re
 import logging
 
 # import subprocess
-import errno, os, pty
 import jaydebeapi
 import jpype
 
 # import shlex
 # from subprocess import Popen, PIPE
-import re
 import json
 import getpass
-import ssl
 import requests
 from requests_kerberos import HTTPKerberosAuth
 from requests.auth import HTTPBasicAuth
-import threading
 from ConfigReader import configuration
-import mysql.connector
 
 # from mysql.connector import errorcode
 # from common.Singleton import Singleton
@@ -54,19 +49,13 @@ from DBImportConfig import configSchema
 # from common import sparkUDF as sparkUDF
 # from DBImportConfig import import_config
 # from DBImportOperation import common_operations
-from datetime import datetime, timedelta
 import pandas as pd
 import numpy as np
-import time
 
 # import base64
 import sqlalchemy as sa
-from sqlalchemy.ext.automap import automap_base
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy_utils import create_view
-from sqlalchemy_views import CreateView, DropView
-from sqlalchemy.sql import text, alias, select, func
-from sqlalchemy.orm import aliased, sessionmaker, Query
+from sqlalchemy.orm import aliased, sessionmaker
 
 
 class atlasOperation(object):

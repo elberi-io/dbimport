@@ -16,31 +16,18 @@
 # under the License.
 
 import os
-import io
 import sys
 import logging
-import subprocess
-import shutil
-import jaydebeapi
-import base64
 import string
 import random
 from urllib.parse import quote
-from ConfigReader import configuration
 import mysql.connector
 from mysql.connector import errorcode
-from datetime import date, datetime, time, timedelta
 import pandas as pd
-from common import constants as constant
 import sqlalchemy as sa
-from sqlalchemy.orm import Session, sessionmaker
-from sqlalchemy.ext.automap import automap_base
-from sqlalchemy_utils import create_view
+from sqlalchemy.orm import sessionmaker
 from DBImportConfig import configSchema
 from DBImportConfig import common_config
-from sqlalchemy_views import CreateView, DropView
-from sqlalchemy.sql import text
-from sqlalchemy.orm import aliased, sessionmaker, Query
 from alembic.config import Config
 from alembic import command as alembicCommand
 

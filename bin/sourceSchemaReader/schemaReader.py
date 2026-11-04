@@ -15,16 +15,9 @@
 # specific language governing permissions and limitations
 # under the License.
 
-import sys
 import re
 import logging
-import json
-import math
-import time
-from ConfigReader import configuration
-import mysql.connector
 from common import constants as constant
-from mysql.connector import errorcode
 from datetime import datetime
 import pandas as pd
 import jaydebeapi

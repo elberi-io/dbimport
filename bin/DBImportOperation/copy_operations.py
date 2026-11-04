@@ -16,35 +16,21 @@
 # under the License.
 
 import sys
-import re
 import logging
 import subprocess
-import errno, os, pty
-import shlex
 import fnmatch
-import Crypto
 import binascii
-from subprocess import Popen, PIPE
 from ConfigReader import configuration
 from common.Singleton import Singleton
 from common.Exceptions import invalidConfiguration
-import mysql.connector
-from mysql.connector import errorcode
-from common.Singleton import Singleton
-from common import constants as constant
 from DBImportConfig import import_config
 from DBImportConfig import configSchema
 from DBImportOperation import common_operations
-from datetime import datetime, timedelta
+from datetime import datetime
 import pandas as pd
 import numpy as np
-import time
 import sqlalchemy as sa
-from sqlalchemy.ext.automap import automap_base
-from sqlalchemy_utils import create_view
-from sqlalchemy_views import CreateView, DropView
-from sqlalchemy.sql import text, alias, select
-from sqlalchemy.orm import aliased, sessionmaker, Query
+from sqlalchemy.orm import aliased, sessionmaker
 
 
 class operation(object, metaclass=Singleton):

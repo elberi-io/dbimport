@@ -16,43 +16,27 @@
 # under the License.
 
 import os
-import io
 import sys
 import logging
 import subprocess
 import shutil
 import jaydebeapi
-import jpype
-import base64
 import re
 import json
-import ssl
-import requests
 import pendulum
 from urllib.parse import quote
-from itertools import zip_longest
-from requests_kerberos import HTTPKerberosAuth
-from requests.auth import HTTPBasicAuth
-from Crypto.PublicKey import RSA
-from Crypto.Cipher import AES, PKCS1_OAEP
-from subprocess import Popen, PIPE
 from ConfigReader import configuration
 import mysql.connector
 from mysql.connector import errorcode
-from datetime import date, datetime, time, timedelta, timezone
+from datetime import datetime, timedelta
 import pandas as pd
-import numpy as np
 from sourceSchemaReader import schemaReader
 from common.Singleton import Singleton
 from common import constants as constant
 from DBImportConfig import decryption as decryption
 from common.Exceptions import SQLerror, invalidConfiguration, undevelopedFeature
 import sqlalchemy as sa
-from sqlalchemy.ext.automap import automap_base
-from sqlalchemy_utils import create_view
-from sqlalchemy_views import CreateView, DropView
-from sqlalchemy.sql import text, alias, select
-from sqlalchemy.orm import aliased, sessionmaker, Query
+from sqlalchemy.orm import sessionmaker
 import pymongo
 
 

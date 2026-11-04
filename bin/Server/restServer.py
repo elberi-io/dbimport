@@ -1,18 +1,13 @@
-import sys
 import pam
 import json
-import uvicorn
 import bcrypt
 import logging
 from gunicorn.app.wsgiapp import WSGIApplication
 from datetime import datetime, timedelta
-from typing import Union, NewType, List, Union, Any
-from fastapi import Depends, FastAPI, HTTPException, status, Response, Header
+from typing import List
+from fastapi import Depends, FastAPI, HTTPException, status, Response
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from fastapi.responses import PlainTextResponse, RedirectResponse
 from jose import JWTError, jwt
-from passlib.context import CryptContext
-from pydantic import BaseModel
 from typing_extensions import Annotated
 from Server import restServerCalls
 from Server import dataModels
@@ -369,7 +364,7 @@ async def update_user_details(
 
 
 @app.post("/users/{user}/update", response_model=dataModels.User, tags=["Credentials"])
-async def update_user_details(
+async def update_user_details(  # noqa: F811  # the delete handler above has this name; renaming changes its operationId
     user: str,
     user_data: dataModels.changeUser,
     current_user: Annotated[dataModels.User, Depends(get_current_user)],

@@ -15,19 +15,12 @@
 # specific language governing permissions and limitations
 # under the License.
 
-import sys
 import re
 import logging
 import json
 import math
-import ssl
-import requests
-import getpass
 
 # import urllib
-import jpype
-from requests_kerberos import HTTPKerberosAuth
-from ConfigReader import configuration
 import mysql.connector
 from common.Singleton import Singleton
 from common import constants as constant
@@ -35,11 +28,9 @@ from common.Exceptions import SQLerror, invalidConfiguration, validationError
 from DBImportConfig import common_config
 from DBImportConfig import sendStatistics
 from DBImportConfig import import_stage as stage
-from mysql.connector import errorcode
 from datetime import datetime
 import pandas as pd
 import numpy as np
-import pymongo
 
 
 class config(object, metaclass=Singleton):
