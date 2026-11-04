@@ -316,9 +316,9 @@ pure-transport==0.2.0 ; sys_platform == 'linux' \
     --hash=sha256:48da9401731e9022d74da9a7a5055aa7d8ca636bfa3efa6f3cb0eec2ecbf6ec4 \
     --hash=sha256:78f76851ead7395fc725e5f5052f404aa4146374ba98e9d289b575097c49958d
     # via dbimport
-pyasn1==0.5.1 ; sys_platform == 'linux' \
-    --hash=sha256:4439847c58d40b1d0a573d07e3856e95333f1976294494c325775aeca506eb58 \
-    --hash=sha256:6d391a96e59b23130a5cfa74d6fd7f388dbbe26cc8f1edf39fdddf08d9d6676c
+pyasn1==0.6.5 ; sys_platform == 'linux' \
+    --hash=sha256:4017b0fce125096b8573b39c989fdb1a4b19cf761e683398184550fea0e66587 \
+    --hash=sha256:6b11616a6bcf3a40e635f082bb232fa57b5e0dd7f517bd7ddd69ec3794508a47
     # via
     #   dbimport
     #   python-jose
