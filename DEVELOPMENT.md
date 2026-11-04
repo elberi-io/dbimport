@@ -122,9 +122,12 @@ npm run build
 
 All Python code is formatted with `ruff format`. Existing code in `bin/`
 is checked for errors that point at real bugs (syntax errors, invalid
-comparisons, undefined names, unused `noqa`) and for its imports: no
-star imports, no unused or duplicate imports, imports sorted with the
-packages in `bin/` as first party. The tests use the stricter rules in
+comparisons, undefined names, invalid escape sequences, unused `noqa`),
+for its imports (no star imports, no unused or duplicate imports,
+imports sorted with the packages in `bin/` as first party) and for a
+few rewrites that mean the same in Python 3 (`getattr`/`setattr` with a
+constant name, `class X(object)`, literal calls such as `float()`,
+`open(f, "r")`, two-argument `super`). The tests use the stricter rules in
 `tests/ruff.toml`. import-linter checks the package layering defined in
 `pyproject.toml`.
 
