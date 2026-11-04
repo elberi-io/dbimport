@@ -123,14 +123,15 @@ src = ["bin", "."]
 [tool.ruff.lint]
 # Existing code is checked for errors that point at real bugs (syntax
 # errors, invalid comparisons, undefined names, invalid escape
-# sequences) and for import hygiene: no star imports, no unused or
-# duplicate imports, sorted imports (#159). RUF100 reports noqa comments
-# that are no longer needed, so a suppression is removed together with
-# the bug it hides. tests/ruff.toml applies a stricter rule set to the
-# tests.
+# sequences), for import hygiene (no star imports, no unused or
+# duplicate imports, sorted imports) and for a few exact modernisations
+# (#159). RUF100 reports noqa comments that are no longer needed, so a
+# suppression is removed together with the bug it hides. tests/ruff.toml
+# applies a stricter rule set to the tests.
 select = [
     "E9", "F63", "F7", "F82", "W605",
     "F401", "F403", "F405", "F811", "I001",
+    "B009", "B010",
     "RUF100",
 ]
 
