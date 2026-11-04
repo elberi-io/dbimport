@@ -101,7 +101,7 @@ shows up as an unexpected pass and the marker must be removed with it.
 
 ## Checks
 
-CI (`.github/workflows/ci.yml`) runs these on every pull request. Run them
+CI (`.github/workflows/ci.yaml`) runs these on every pull request. Run them
 before you open one:
 
 ```bash
