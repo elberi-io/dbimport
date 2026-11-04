@@ -15,16 +15,54 @@
 # specific language governing permissions and limitations
 # under the License.
 
-class databaseNotFound(Exception): pass
-class tableNotFound(Exception): pass
-class rowNotFound(Exception): pass
-class invalidConfiguration(Exception): pass
-class undevelopedFeature(Exception): pass
-class SQLerror(Exception): pass
-class daemonExit(Exception): pass
-class validationError(Exception): pass
-class foreignKeyError(Exception): pass
-class atlasError(Exception): pass
-class connectionError(Exception): pass
-class schemaError(Exception): pass
-class catalogError(Exception): pass
+
+class databaseNotFound(Exception):
+    pass
+
+
+class tableNotFound(Exception):
+    pass
+
+
+class rowNotFound(Exception):
+    pass
+
+
+class invalidConfiguration(Exception):
+    pass
+
+
+class undevelopedFeature(Exception):
+    pass
+
+
+class SQLerror(Exception):
+    pass
+
+
+class daemonExit(Exception):
+    pass
+
+
+class validationError(Exception):
+    pass
+
+
+class foreignKeyError(Exception):
+    pass
+
+
+class atlasError(Exception):
+    pass
+
+
+class connectionError(Exception):
+    pass
+
+
+class schemaError(Exception):
+    pass
+
+
+class catalogError(Exception):
+    pass

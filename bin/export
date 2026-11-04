@@ -24,522 +24,668 @@ from common import constants as constant
 from common.Exceptions import *
 from DBImportOperation import export_operations
 
+
 def printHelp():
-	print ("Options:")
-	print ("  --help             Show this help message and exit")
-	print ("  -v, --debug        Turn on extensive debug output. This will print passwords in cleartext, so use with caution")
-	print ("  -V, --version      Displays the version of DBImport")
-	print ("  --ignoreTime       Ignores the start and stop time for the table. Will run outside that window regardless")
-	print ("  --resetStage       Starts from the beginning regardless of previous problems")
-	print ("  -a [Connection]    The alias of the JDBC connection")
-	print ("  -S [Schema]        Schema name of the table to export")
-	print ("  -T [Table]         Table to export")
-	print ("  -f [Function], --function=[Function]")
-	print ("                     Only run the specified function. This is used for debugging and when migrating from")
-	print ("                     bash based DBImport scripts. Using a function ignore what ever stage the export is in.")
-	print ("                     Use with caution!")
-	print ("                     Valid function options are:")
-	print ("                     - getHiveTableSchema")
-	print ("                     - createExportTempTable")
-	print ("                     - truncateExportTempTable")
-	print ("                     - insertDataIntoExportTempTable")
-	print ("                     - createTargetTable")
-	print ("                     - truncateJDBCTable")
-	print ("                     - exportData")
-	print ("                     - validate")
-	print ("                     - createStatistics")
-	print ("                     - updateAtlas")
+    print("Options:")
+    print("  --help             Show this help message and exit")
+    print(
+        "  -v, --debug        Turn on extensive debug output. This will print passwords in cleartext, so use with caution"
+    )
+    print("  -V, --version      Displays the version of DBImport")
+    print(
+        "  --ignoreTime       Ignores the start and stop time for the table. Will run outside that window regardless"
+    )
+    print(
+        "  --resetStage       Starts from the beginning regardless of previous problems"
+    )
+    print("  -a [Connection]    The alias of the JDBC connection")
+    print("  -S [Schema]        Schema name of the table to export")
+    print("  -T [Table]         Table to export")
+    print("  -f [Function], --function=[Function]")
+    print(
+        "                     Only run the specified function. This is used for debugging and when migrating from"
+    )
+    print(
+        "                     bash based DBImport scripts. Using a function ignore what ever stage the export is in."
+    )
+    print("                     Use with caution!")
+    print("                     Valid function options are:")
+    print("                     - getHiveTableSchema")
+    print("                     - createExportTempTable")
+    print("                     - truncateExportTempTable")
+    print("                     - insertDataIntoExportTempTable")
+    print("                     - createTargetTable")
+    print("                     - truncateJDBCTable")
+    print("                     - exportData")
+    print("                     - validate")
+    print("                     - createStatistics")
+    print("                     - updateAtlas")
+
+    sys.exit(1)
 
 
-	sys.exit(1)
-	
 def main(argv):
 
-	try:
-		opts, args = getopt.getopt(argv, "vf:a:S:T:", ["help", "version", "debug", "function", "ignoreTime", "resetStage"])
-	except getopt.GetoptError:
-		printHelp()
-
-	fullExecutedCommand = "%s %s"%(os.path.basename(__file__), " ".join(argv))
-	connectionAlias = None
-	targetSchema = None
-	targetTable = None
-	runOnlyFunction = None
-	loggingLevel = logging.INFO
-	displayVersion = False
-	ignoreTime = False
-	resetStage = False
-
-	if  len(opts) == 0:
-		printHelp()
-
-	for opt, arg in opts:
-		if opt in ("-v", "--debug"):
-			loggingLevel = logging.DEBUG
-		elif opt == "--help":
-			printHelp()
-		elif opt in ("-f", "--function"):
-			runOnlyFunction = arg
-		elif opt in ("-V", "--version"):
-			displayVersion = True
-		elif opt == "-a":
-			connectionAlias = arg
-		elif opt == "-S":
-			targetSchema = arg
-		elif opt == "-T":
-			targetTable = arg
-		elif opt == "--resetStage":
-			resetStage = True
-		elif opt == "--ignoreTime":
-			ignoreTime = True
-
-	if runOnlyFunction != None:
-		if runOnlyFunction not in ("getHiveTableSchema", "createExportTempTable", "truncateExportTempTable", "insertDataIntoExportTempTable", "createTargetTable", "truncateJDBCTable", "exportData", "validate", "createStatistics", "updateAtlas"):
-			printHelp()
-
-	if displayVersion == True:
-		print("DBImport version: %s"%(constant.VERSION))
-		sys.exit(0)
-
-	# Font created at http://patorjk.com/software/taag/#p=display&f=Big&t=DBImport%20-%20Export
-	sys.stdout.write(u"\u001b[35m")  # Magenta
-	sys.stdout.flush()
-	print("")
-	print(" _____  ____ _____                            _              ______                       _   ") 
-	print("|  __ \|  _ \_   _|                          | |            |  ____|                     | |  ")
-	print("| |  | | |_) || |  _ __ ___  _ __   ___  _ __| |_   ______  | |__  __  ___ __   ___  _ __| |_ ")
-	print("| |  | |  _ < | | | '_ ` _ \| '_ \ / _ \| '__| __| |______| |  __| \ \/ / '_ \ / _ \| '__| __|")
-	print("| |__| | |_) || |_| | | | | | |_) | (_) | |  | |_           | |____ >  <| |_) | (_) | |  | |_ ")
-	print("|_____/|____/_____|_| |_| |_| .__/ \___/|_|   \__|          |______/_/\_\ .__/ \___/|_|   \__|")
-	print("                             | |                                         | |                  ")
-	print("                             |_|                                         |_|                  ")
-	sys.stdout.write(u"\u001b[0m")  # Reset
-	sys.stdout.flush()
-	print("")
-	print("Version: %s"%(constant.VERSION))
-	print("")
-	print("")
-
-	# Initiate the logging functions with the correct level
-	if loggingLevel == logging.DEBUG:
-		logging.basicConfig(stream=sys.stdout, format='%(levelname)s %(funcName)s - %(message)s', level=loggingLevel)
-	else:
-		logging.basicConfig(stream=sys.stdout, format='%(levelname)s - %(message)s', level=loggingLevel)
-
-	if connectionAlias == None or targetSchema == None or targetTable == None:
-		printHelp()
-
-	# Initiate the master class for all export operations
-	export_operation = export_operations.operation(connectionAlias=connectionAlias, targetSchema=targetSchema, targetTable=targetTable)
-
-	# Save data down to export_operation
-	export_operation.export_config.fullExecutedCommand = fullExecutedCommand
-
-	exportPhase = export_operation.export_config.exportPhase
-	exportPhaseDescription = export_operation.export_config.exportPhaseDescription
-
-
-	print("The following table will be exported")
-	print("______________________________________________________________________________")
-	print("")
-	print("Export Phase:             %s"%(exportPhaseDescription))
-	print("Export Tool:              %s"%(export_operation.export_config.exportTool))
-	if export_operation.export_config.common_config.db_awss3 == True:
-		print("Connection name:          %s"%(export_operation.export_config.common_config.dbAlias))
-	else:
-		print("JDBC Connection name:     %s"%(export_operation.export_config.common_config.dbAlias))
-	print("Hive database:            %s"%(export_operation.export_config.hiveDB))
-	print("Hive table:               %s"%(export_operation.export_config.hiveTable))
-	if export_operation.export_config.common_config.db_awss3 == True:
-		print("AWS Assume Role:          %s"%(export_operation.export_config.common_config.awsS3assumeRole))
-		print("AWS Bucket and folder:    %s"%(export_operation.export_config.awsS3bucketPath))
-		print("AWS Fileformat:           %s"%(export_operation.export_config.common_config.awsS3fileFormat))
-	else:
-		print("Target hostname:          %s"%(export_operation.export_config.common_config.jdbc_hostname))
-		print("Target database type:     %s"%(export_operation.export_config.common_config.jdbc_servertype))
-		print("Target database:          %s"%(export_operation.export_config.common_config.jdbc_database))
-		if export_operation.export_config.targetSchema != "-":
-			print("Target schema:            %s"%(export_operation.export_config.targetSchema))
-		print("Target table:             %s"%(export_operation.export_config.targetTable))
-	print("______________________________________________________________________________")
-	print("")
-	sys.stdout.flush()
-
-	if ignoreTime == False:
-		# Checking if we are allowed to use the configued JDBC connection at this time
-		export_operation.checkTimeWindow()
-
-	if export_operation.export_config.common_config.checkKerberosTicket() == False:
-		logging.error("There is no valid Kerberos ticket available. Please create one before running this command")
-		export_operation.remove_temporary_files()
-		sys.exit(1)
-
-	if runOnlyFunction != None:
-		print(" _______________________________________________________ ")
-		print("|                                                       |")
-		print("| This is not a full export as a function was specified |")
-		print("|_______________________________________________________|")
-		print("")
-		print("")
-
-		export_operation.setStageOnlyInMemory()
-
-	stage = export_operation.getStage()
-	if resetStage == True:
-		export_operation.setStage(0, force=True)
-		stage = 0
-
-
-	if stage == 0:
-		# This means it's the first attempt (or a reset) of this export. So we can send the start message to Kafka or REST in this case
-		export_operation.sendStartJSON()
-
-
-	if export_operation.export_config.common_config.getConfigValue(key = "export_start_disable") == True:
-		logging.error("Export execution has been disabled from DBImport configuration")
-		export_operation.remove_temporary_files()
-		sys.exit(1)
-
-
-	try:
-		# ******************************************
-		# * EXPORT_PHASE_FULL
-		# ******************************************
-
-		if exportPhase == constant.EXPORT_PHASE_FULL: 
-			if stage > 0:
-				export_operation.saveRetryAttempt(stage)
-
-				newStage = 0
-				if stage == 105: newStage = 104
-				if stage == 108: newStage = 106
-				if stage == 109: newStage = 100
-				if stage == 111: newStage = 100
-				print(" ________________________________________________________ ")
-				print("|                                                        |")
-				print("| WARNING: The previous export failed and this execution |")
-				print("|          is recovering from that failure.              |")
-				print("| Last execution failed on stage %s                     |"%(stage))
-				if newStage != 0:
-					print("| Will restart from stage %s                            |"%(newStage))
-					export_operation.setStage(newStage, force=True)
-				print("|________________________________________________________|")
-				print("")
-				print("")
-				sys.stdout.flush()
-
-
-			if runOnlyFunction == None or runOnlyFunction == "getHiveTableSchema":
-				if export_operation.runStage(100) == True:
-					export_operation.getHiveTableSchema()
-	
-			if runOnlyFunction == None:
-				if export_operation.runStage(101) == True:
-					export_operation.clearValidationData()
-	
-			if runOnlyFunction == None:
-				if export_operation.runStage(102) == True:
-					export_operation.connectToHive()
-#					export_operation.updateStatisticsOnExportedTable()
-	
-			if export_operation.isExportTempTableNeeded() == True:
-				if runOnlyFunction == None or runOnlyFunction == "createExportTempTable":
-					if export_operation.runStage(103) == True:
-						export_operation.connectToHive()
-						export_operation.createExportTempTable()
-						export_operation.updateExportTempTable()
-	
-				if runOnlyFunction == None or runOnlyFunction == "truncateExportTempTable":
-					if export_operation.runStage(104) == True:
-						export_operation.connectToHive()
-						export_operation.removeHiveLocks()
-						export_operation.truncateExportTempTable()
-	
-				if runOnlyFunction == None or runOnlyFunction == "insertDataIntoExportTempTable":
-					if export_operation.runStage(105) == True:
-						export_operation.connectToHive()
-						export_operation.insertDataIntoExportTempTable()
-	
-			if runOnlyFunction == None or runOnlyFunction == "createTargetTable":
-				if export_operation.runStage(106) == True:
-					export_operation.createTargetTable()
-	
-			if runOnlyFunction == None or runOnlyFunction == "truncateJDBCTable" or runOnlyFunction == "exportData":
-				if export_operation.runStage(107) == True:
-					export_operation.truncateJDBCTable()
-	
-			if runOnlyFunction == None or runOnlyFunction == "createTargetTable":
-				if export_operation.runStage(108) == True:
-					export_operation.updateTargetTable()
-	
-			if runOnlyFunction == None or runOnlyFunction == "exportData":
-				if export_operation.export_config.exportTool == "sqoop":
-					if export_operation.runStage(109) == True:
-						export_operation.runSqoopExport()
-	
-				if export_operation.export_config.exportTool == "spark":
-					if export_operation.runStage(110) == True:
-						export_operation.runSparkExport()
-
-			if runOnlyFunction == None or runOnlyFunction == "validate":
-				if export_operation.runStage(111) == True:
-					export_operation.connectToHive()
-					export_operation.getHiveTableValidationData()
-					export_operation.getTargetTableValidationData()
-					export_operation.validateExport()
-
-			if runOnlyFunction == None or runOnlyFunction == "updateAtlas":
-				if export_operation.runStage(950) == True:
-					export_operation.updateAtlasWithExportData()
-
-			if runOnlyFunction == None:
-				export_operation.setStage(999)
-
-			if runOnlyFunction == None or runOnlyFunction == "createStatistics":
-				export_operation.convertStageStatisticsToJSON()
-				export_operation.saveStageStatistics()
-
-
-		# ******************************************
-		# * EXPORT_PHASE_AWSS3_FULL
-		# ******************************************
-
-		if exportPhase == constant.EXPORT_PHASE_AWSS3_FULL: 
-			if stage > 0:
-				export_operation.saveRetryAttempt(stage)
-
-				newStage = 0
-				if stage == 105: newStage = 104
-				if stage == 108: newStage = 106
-				if stage == 109: newStage = 100
-				if stage == 110: newStage = 100
-				print(" ________________________________________________________ ")
-				print("|                                                        |")
-				print("| WARNING: The previous export failed and this execution |")
-				print("|          is recovering from that failure.              |")
-				print("| Last execution failed on stage %s                     |"%(stage))
-				if newStage != 0:
-					print("| Will restart from stage %s                            |"%(newStage))
-					export_operation.setStage(newStage, force=True)
-				print("|________________________________________________________|")
-				print("")
-				print("")
-				sys.stdout.flush()
-
-
-			if runOnlyFunction == None or runOnlyFunction == "getHiveTableSchema":
-				if export_operation.runStage(100) == True:
-					export_operation.getHiveTableSchema()
-	
-			if runOnlyFunction == None:
-				if export_operation.runStage(101) == True:
-					export_operation.clearValidationData()
-	
-			if runOnlyFunction == None:
-				if export_operation.runStage(102) == True:
-					export_operation.connectToHive()
-#					export_operation.updateStatisticsOnExportedTable()
-	
-			if export_operation.isExportTempTableNeeded() == True:
-				if runOnlyFunction == None or runOnlyFunction == "createExportTempTable":
-					if export_operation.runStage(103) == True:
-						export_operation.connectToHive()
-						export_operation.createExportTempTable()
-						export_operation.updateExportTempTable()
-	
-				if runOnlyFunction == None or runOnlyFunction == "truncateExportTempTable":
-					if export_operation.runStage(104) == True:
-						export_operation.connectToHive()
-						export_operation.removeHiveLocks()
-						export_operation.truncateExportTempTable()
-	
-				if runOnlyFunction == None or runOnlyFunction == "insertDataIntoExportTempTable":
-					if export_operation.runStage(105) == True:
-						export_operation.connectToHive()
-						export_operation.insertDataIntoExportTempTable()
-	
-#			if runOnlyFunction == None or runOnlyFunction == "createTargetTable":
-#				if export_operation.runStage(106) == True:
-#					export_operation.createTargetTable()
-#	
-#			if runOnlyFunction == None or runOnlyFunction == "truncateJDBCTable" or runOnlyFunction == "exportData":
-#				if export_operation.runStage(107) == True:
-#					export_operation.truncateJDBCTable()
-#	
-#			if runOnlyFunction == None or runOnlyFunction == "createTargetTable":
-#				if export_operation.runStage(108) == True:
-#					export_operation.updateTargetTable()
-	
-			if runOnlyFunction == None or runOnlyFunction == "exportData":
-#				if export_operation.export_config.exportTool == "sqoop":
-#					if export_operation.runStage(109) == True:
-#						export_operation.runSqoopExport()
-#	
-#				if export_operation.export_config.exportTool == "spark":
-				if export_operation.runStage(110) == True:
-					export_operation.runSparkExport()
-
-#			if runOnlyFunction == None or runOnlyFunction == "validate":
-#				if export_operation.runStage(111) == True:
-#					export_operation.connectToHive()
-#					export_operation.getHiveTableValidationData()
-#					export_operation.getTargetTableValidationData()
-#					export_operation.validateExport()
-#
-#			if runOnlyFunction == None or runOnlyFunction == "updateAtlas":
-#				if export_operation.runStage(950) == True:
-#					export_operation.updateAtlasWithExportData()
-
-			if runOnlyFunction == None:
-				export_operation.setStage(999)
-
-			if runOnlyFunction == None or runOnlyFunction == "createStatistics":
-				export_operation.convertStageStatisticsToJSON()
-				export_operation.saveStageStatistics()
-
-
-		# ******************************************
-		# * EXPORT_PHASE_INCR
-		# ******************************************
-
-		if exportPhase == constant.EXPORT_PHASE_INCR: 
-			if stage > 0:
-				export_operation.saveRetryAttempt(stage)
-
-				newStage = 0
-				if stage == 156: newStage = 154
-				if stage == 159: newStage = 150
-				if stage == 161: newStage = 150
-				print(" ________________________________________________________ ")
-				print("|                                                        |")
-				print("| WARNING: The previous export failed and this execution |")
-				print("|          is recovering from that failure.              |")
-				print("| Last execution failed on stage %s                     |"%(stage))
-				if newStage != 0:
-					print("| Will restart from stage %s                            |"%(newStage))
-					export_operation.setStage(newStage, force=True)
-				print("|________________________________________________________|")
-				print("")
-				print("")
-
-
-			if runOnlyFunction == None or runOnlyFunction == "getHiveTableSchema":
-				if export_operation.runStage(150) == True:
-					export_operation.getHiveTableSchema()
-
-			if runOnlyFunction == None:
-				if export_operation.runStage(151) == True:
-					export_operation.clearValidationData()
-
-			if runOnlyFunction == None:
-				if export_operation.runStage(152) == True:
-					export_operation.connectToHive()
-					export_operation.updateStatisticsOnExportedTable()
-
-			if export_operation.isExportTempTableNeeded() == True:
-				if runOnlyFunction == None or runOnlyFunction == "createExportTempTable":
-					if export_operation.runStage(153) == True:
-						export_operation.connectToHive()
-						export_operation.createExportTempTable()
-						export_operation.updateExportTempTable()
-
-				if runOnlyFunction == None or runOnlyFunction == "truncateExportTempTable":
-					if export_operation.runStage(154) == True:
-						export_operation.connectToHive()
-						export_operation.removeHiveLocks()
-						export_operation.truncateExportTempTable()
-
-			if runOnlyFunction == None:
-				if export_operation.runStage(155) == True:
-					export_operation.connectToHive()
-					export_operation.fetchIncrMinMaxvalue()
-					if export_operation.isThereIncrDataToExport() == False:
-						logging.info("There is no new data to export in the Hive table")
-
-			if export_operation.isExportTempTableNeeded() == True:
-				if runOnlyFunction == None or runOnlyFunction == "insertDataIntoExportTempTable":
-					if export_operation.runStage(156) == True:
-						if export_operation.isThereIncrDataToExport() == True:
-							export_operation.connectToHive()
-							export_operation.insertDataIntoExportTempTable()
-
-			if runOnlyFunction == None or runOnlyFunction == "createTargetTable":
-				if export_operation.runStage(157) == True:
-					export_operation.createTargetTable()
-
-				if export_operation.runStage(158) == True:
-					export_operation.updateTargetTable()
-
-			if runOnlyFunction == None or runOnlyFunction == "exportData":
-				if export_operation.export_config.exportTool == "sqoop": 
-					if export_operation.runStage(159) == True:
-						if export_operation.isThereIncrDataToExport() == True:
-							export_operation.runSqoopExport()
-
-				if export_operation.export_config.exportTool == "spark": 
-					if export_operation.runStage(160) == True:
-						if export_operation.isThereIncrDataToExport() == True:
-							export_operation.runSparkExport()
-
-			if runOnlyFunction == None or runOnlyFunction == "validate":
-				if export_operation.runStage(161) == True:
-					export_operation.connectToHive()
-					export_operation.getHiveTableValidationData()
-					export_operation.getTargetTableValidationData()
-					export_operation.validateExport()
-
-			if runOnlyFunction == None: 
-				if export_operation.runStage(162) == True:
-					export_operation.saveIncrPendingValues()
-
-			if runOnlyFunction == None or runOnlyFunction == "updateAtlas":
-				if export_operation.runStage(950) == True:
-					export_operation.updateAtlasWithExportData()
-
-			if runOnlyFunction == None:
-				export_operation.setStage(999)
-
-			if runOnlyFunction == None or runOnlyFunction == "createStatistics":
-				export_operation.convertStageStatisticsToJSON()
-				export_operation.saveStageStatistics()
-
-		if export_operation.getStage() == 999:
-			if runOnlyFunction == None:
-				print(" _____________________________ ")
-				print("|                             |")
-				print("| Export completed successful |")
-				print("|_____________________________|")
-				print("")
-
-			export_operation.clearStage()
-
-	except SQLerror as errMsg:
-		logging.error(errMsg)
-		export_operation.export_config.remove_temporary_files()
-		sys.exit(1)
-	except validationError as errMsg:
-		logging.error(errMsg)
-		export_operation.export_config.remove_temporary_files()
-		sys.exit(1)
-	except undevelopedFeature as errMsg:
-		logging.error(errMsg)
-		export_operation.export_config.remove_temporary_files()
-		sys.exit(1)
-	except invalidConfiguration as errMsg:
-		logging.error(errMsg)
-		export_operation.export_config.remove_temporary_files()
-		sys.exit(1)
-	except daemonExit as errMsg:
-		logging.error("Program exit because requested to do so by developer. %s"%(errMsg))
-		export_operation.export_config.remove_temporary_files()
-		sys.exit(1)
-	except:
-		export_operation.export_config.remove_temporary_files()
-		raise
-		sys.exit(1)
-
-
-	export_operation.remove_temporary_files()
+    try:
+        opts, args = getopt.getopt(
+            argv,
+            "vf:a:S:T:",
+            ["help", "version", "debug", "function", "ignoreTime", "resetStage"],
+        )
+    except getopt.GetoptError:
+        printHelp()
+
+    fullExecutedCommand = "%s %s" % (os.path.basename(__file__), " ".join(argv))
+    connectionAlias = None
+    targetSchema = None
+    targetTable = None
+    runOnlyFunction = None
+    loggingLevel = logging.INFO
+    displayVersion = False
+    ignoreTime = False
+    resetStage = False
+
+    if len(opts) == 0:
+        printHelp()
+
+    for opt, arg in opts:
+        if opt in ("-v", "--debug"):
+            loggingLevel = logging.DEBUG
+        elif opt == "--help":
+            printHelp()
+        elif opt in ("-f", "--function"):
+            runOnlyFunction = arg
+        elif opt in ("-V", "--version"):
+            displayVersion = True
+        elif opt == "-a":
+            connectionAlias = arg
+        elif opt == "-S":
+            targetSchema = arg
+        elif opt == "-T":
+            targetTable = arg
+        elif opt == "--resetStage":
+            resetStage = True
+        elif opt == "--ignoreTime":
+            ignoreTime = True
+
+    if runOnlyFunction != None:
+        if runOnlyFunction not in (
+            "getHiveTableSchema",
+            "createExportTempTable",
+            "truncateExportTempTable",
+            "insertDataIntoExportTempTable",
+            "createTargetTable",
+            "truncateJDBCTable",
+            "exportData",
+            "validate",
+            "createStatistics",
+            "updateAtlas",
+        ):
+            printHelp()
+
+    if displayVersion == True:
+        print("DBImport version: %s" % (constant.VERSION))
+        sys.exit(0)
+
+    # Font created at http://patorjk.com/software/taag/#p=display&f=Big&t=DBImport%20-%20Export
+    sys.stdout.write("\u001b[35m")  # Magenta
+    sys.stdout.flush()
+    print("")
+    print(
+        " _____  ____ _____                            _              ______                       _   "
+    )
+    print(
+        "|  __ \|  _ \_   _|                          | |            |  ____|                     | |  "
+    )
+    print(
+        "| |  | | |_) || |  _ __ ___  _ __   ___  _ __| |_   ______  | |__  __  ___ __   ___  _ __| |_ "
+    )
+    print(
+        "| |  | |  _ < | | | '_ ` _ \| '_ \ / _ \| '__| __| |______| |  __| \ \/ / '_ \ / _ \| '__| __|"
+    )
+    print(
+        "| |__| | |_) || |_| | | | | | |_) | (_) | |  | |_           | |____ >  <| |_) | (_) | |  | |_ "
+    )
+    print(
+        "|_____/|____/_____|_| |_| |_| .__/ \___/|_|   \__|          |______/_/\_\ .__/ \___/|_|   \__|"
+    )
+    print(
+        "                             | |                                         | |                  "
+    )
+    print(
+        "                             |_|                                         |_|                  "
+    )
+    sys.stdout.write("\u001b[0m")  # Reset
+    sys.stdout.flush()
+    print("")
+    print("Version: %s" % (constant.VERSION))
+    print("")
+    print("")
+
+    # Initiate the logging functions with the correct level
+    if loggingLevel == logging.DEBUG:
+        logging.basicConfig(
+            stream=sys.stdout,
+            format="%(levelname)s %(funcName)s - %(message)s",
+            level=loggingLevel,
+        )
+    else:
+        logging.basicConfig(
+            stream=sys.stdout, format="%(levelname)s - %(message)s", level=loggingLevel
+        )
+
+    if connectionAlias == None or targetSchema == None or targetTable == None:
+        printHelp()
+
+    # Initiate the master class for all export operations
+    export_operation = export_operations.operation(
+        connectionAlias=connectionAlias,
+        targetSchema=targetSchema,
+        targetTable=targetTable,
+    )
+
+    # Save data down to export_operation
+    export_operation.export_config.fullExecutedCommand = fullExecutedCommand
+
+    exportPhase = export_operation.export_config.exportPhase
+    exportPhaseDescription = export_operation.export_config.exportPhaseDescription
+
+    print("The following table will be exported")
+    print(
+        "______________________________________________________________________________"
+    )
+    print("")
+    print("Export Phase:             %s" % (exportPhaseDescription))
+    print("Export Tool:              %s" % (export_operation.export_config.exportTool))
+    if export_operation.export_config.common_config.db_awss3 == True:
+        print(
+            "Connection name:          %s"
+            % (export_operation.export_config.common_config.dbAlias)
+        )
+    else:
+        print(
+            "JDBC Connection name:     %s"
+            % (export_operation.export_config.common_config.dbAlias)
+        )
+    print("Hive database:            %s" % (export_operation.export_config.hiveDB))
+    print("Hive table:               %s" % (export_operation.export_config.hiveTable))
+    if export_operation.export_config.common_config.db_awss3 == True:
+        print(
+            "AWS Assume Role:          %s"
+            % (export_operation.export_config.common_config.awsS3assumeRole)
+        )
+        print(
+            "AWS Bucket and folder:    %s"
+            % (export_operation.export_config.awsS3bucketPath)
+        )
+        print(
+            "AWS Fileformat:           %s"
+            % (export_operation.export_config.common_config.awsS3fileFormat)
+        )
+    else:
+        print(
+            "Target hostname:          %s"
+            % (export_operation.export_config.common_config.jdbc_hostname)
+        )
+        print(
+            "Target database type:     %s"
+            % (export_operation.export_config.common_config.jdbc_servertype)
+        )
+        print(
+            "Target database:          %s"
+            % (export_operation.export_config.common_config.jdbc_database)
+        )
+        if export_operation.export_config.targetSchema != "-":
+            print(
+                "Target schema:            %s"
+                % (export_operation.export_config.targetSchema)
+            )
+        print(
+            "Target table:             %s"
+            % (export_operation.export_config.targetTable)
+        )
+    print(
+        "______________________________________________________________________________"
+    )
+    print("")
+    sys.stdout.flush()
+
+    if ignoreTime == False:
+        # Checking if we are allowed to use the configued JDBC connection at this time
+        export_operation.checkTimeWindow()
+
+    if export_operation.export_config.common_config.checkKerberosTicket() == False:
+        logging.error(
+            "There is no valid Kerberos ticket available. Please create one before running this command"
+        )
+        export_operation.remove_temporary_files()
+        sys.exit(1)
+
+    if runOnlyFunction != None:
+        print(" _______________________________________________________ ")
+        print("|                                                       |")
+        print("| This is not a full export as a function was specified |")
+        print("|_______________________________________________________|")
+        print("")
+        print("")
+
+        export_operation.setStageOnlyInMemory()
+
+    stage = export_operation.getStage()
+    if resetStage == True:
+        export_operation.setStage(0, force=True)
+        stage = 0
+
+    if stage == 0:
+        # This means it's the first attempt (or a reset) of this export. So we can send the start message to Kafka or REST in this case
+        export_operation.sendStartJSON()
+
+    if (
+        export_operation.export_config.common_config.getConfigValue(
+            key="export_start_disable"
+        )
+        == True
+    ):
+        logging.error("Export execution has been disabled from DBImport configuration")
+        export_operation.remove_temporary_files()
+        sys.exit(1)
+
+    try:
+        # ******************************************
+        # * EXPORT_PHASE_FULL
+        # ******************************************
+
+        if exportPhase == constant.EXPORT_PHASE_FULL:
+            if stage > 0:
+                export_operation.saveRetryAttempt(stage)
+
+                newStage = 0
+                if stage == 105:
+                    newStage = 104
+                if stage == 108:
+                    newStage = 106
+                if stage == 109:
+                    newStage = 100
+                if stage == 111:
+                    newStage = 100
+                print(" ________________________________________________________ ")
+                print("|                                                        |")
+                print("| WARNING: The previous export failed and this execution |")
+                print("|          is recovering from that failure.              |")
+                print(
+                    "| Last execution failed on stage %s                     |"
+                    % (stage)
+                )
+                if newStage != 0:
+                    print(
+                        "| Will restart from stage %s                            |"
+                        % (newStage)
+                    )
+                    export_operation.setStage(newStage, force=True)
+                print("|________________________________________________________|")
+                print("")
+                print("")
+                sys.stdout.flush()
+
+            if runOnlyFunction == None or runOnlyFunction == "getHiveTableSchema":
+                if export_operation.runStage(100) == True:
+                    export_operation.getHiveTableSchema()
+
+            if runOnlyFunction == None:
+                if export_operation.runStage(101) == True:
+                    export_operation.clearValidationData()
+
+            if runOnlyFunction == None:
+                if export_operation.runStage(102) == True:
+                    export_operation.connectToHive()
+            # 					export_operation.updateStatisticsOnExportedTable()
+
+            if export_operation.isExportTempTableNeeded() == True:
+                if (
+                    runOnlyFunction == None
+                    or runOnlyFunction == "createExportTempTable"
+                ):
+                    if export_operation.runStage(103) == True:
+                        export_operation.connectToHive()
+                        export_operation.createExportTempTable()
+                        export_operation.updateExportTempTable()
+
+                if (
+                    runOnlyFunction == None
+                    or runOnlyFunction == "truncateExportTempTable"
+                ):
+                    if export_operation.runStage(104) == True:
+                        export_operation.connectToHive()
+                        export_operation.removeHiveLocks()
+                        export_operation.truncateExportTempTable()
+
+                if (
+                    runOnlyFunction == None
+                    or runOnlyFunction == "insertDataIntoExportTempTable"
+                ):
+                    if export_operation.runStage(105) == True:
+                        export_operation.connectToHive()
+                        export_operation.insertDataIntoExportTempTable()
+
+            if runOnlyFunction == None or runOnlyFunction == "createTargetTable":
+                if export_operation.runStage(106) == True:
+                    export_operation.createTargetTable()
+
+            if (
+                runOnlyFunction == None
+                or runOnlyFunction == "truncateJDBCTable"
+                or runOnlyFunction == "exportData"
+            ):
+                if export_operation.runStage(107) == True:
+                    export_operation.truncateJDBCTable()
+
+            if runOnlyFunction == None or runOnlyFunction == "createTargetTable":
+                if export_operation.runStage(108) == True:
+                    export_operation.updateTargetTable()
+
+            if runOnlyFunction == None or runOnlyFunction == "exportData":
+                if export_operation.export_config.exportTool == "sqoop":
+                    if export_operation.runStage(109) == True:
+                        export_operation.runSqoopExport()
+
+                if export_operation.export_config.exportTool == "spark":
+                    if export_operation.runStage(110) == True:
+                        export_operation.runSparkExport()
+
+            if runOnlyFunction == None or runOnlyFunction == "validate":
+                if export_operation.runStage(111) == True:
+                    export_operation.connectToHive()
+                    export_operation.getHiveTableValidationData()
+                    export_operation.getTargetTableValidationData()
+                    export_operation.validateExport()
+
+            if runOnlyFunction == None or runOnlyFunction == "updateAtlas":
+                if export_operation.runStage(950) == True:
+                    export_operation.updateAtlasWithExportData()
+
+            if runOnlyFunction == None:
+                export_operation.setStage(999)
+
+            if runOnlyFunction == None or runOnlyFunction == "createStatistics":
+                export_operation.convertStageStatisticsToJSON()
+                export_operation.saveStageStatistics()
+
+        # ******************************************
+        # * EXPORT_PHASE_AWSS3_FULL
+        # ******************************************
+
+        if exportPhase == constant.EXPORT_PHASE_AWSS3_FULL:
+            if stage > 0:
+                export_operation.saveRetryAttempt(stage)
+
+                newStage = 0
+                if stage == 105:
+                    newStage = 104
+                if stage == 108:
+                    newStage = 106
+                if stage == 109:
+                    newStage = 100
+                if stage == 110:
+                    newStage = 100
+                print(" ________________________________________________________ ")
+                print("|                                                        |")
+                print("| WARNING: The previous export failed and this execution |")
+                print("|          is recovering from that failure.              |")
+                print(
+                    "| Last execution failed on stage %s                     |"
+                    % (stage)
+                )
+                if newStage != 0:
+                    print(
+                        "| Will restart from stage %s                            |"
+                        % (newStage)
+                    )
+                    export_operation.setStage(newStage, force=True)
+                print("|________________________________________________________|")
+                print("")
+                print("")
+                sys.stdout.flush()
+
+            if runOnlyFunction == None or runOnlyFunction == "getHiveTableSchema":
+                if export_operation.runStage(100) == True:
+                    export_operation.getHiveTableSchema()
+
+            if runOnlyFunction == None:
+                if export_operation.runStage(101) == True:
+                    export_operation.clearValidationData()
+
+            if runOnlyFunction == None:
+                if export_operation.runStage(102) == True:
+                    export_operation.connectToHive()
+            # 					export_operation.updateStatisticsOnExportedTable()
+
+            if export_operation.isExportTempTableNeeded() == True:
+                if (
+                    runOnlyFunction == None
+                    or runOnlyFunction == "createExportTempTable"
+                ):
+                    if export_operation.runStage(103) == True:
+                        export_operation.connectToHive()
+                        export_operation.createExportTempTable()
+                        export_operation.updateExportTempTable()
+
+                if (
+                    runOnlyFunction == None
+                    or runOnlyFunction == "truncateExportTempTable"
+                ):
+                    if export_operation.runStage(104) == True:
+                        export_operation.connectToHive()
+                        export_operation.removeHiveLocks()
+                        export_operation.truncateExportTempTable()
+
+                if (
+                    runOnlyFunction == None
+                    or runOnlyFunction == "insertDataIntoExportTempTable"
+                ):
+                    if export_operation.runStage(105) == True:
+                        export_operation.connectToHive()
+                        export_operation.insertDataIntoExportTempTable()
+
+            # 			if runOnlyFunction == None or runOnlyFunction == "createTargetTable":
+            # 				if export_operation.runStage(106) == True:
+            # 					export_operation.createTargetTable()
+            #
+            # 			if runOnlyFunction == None or runOnlyFunction == "truncateJDBCTable" or runOnlyFunction == "exportData":
+            # 				if export_operation.runStage(107) == True:
+            # 					export_operation.truncateJDBCTable()
+            #
+            # 			if runOnlyFunction == None or runOnlyFunction == "createTargetTable":
+            # 				if export_operation.runStage(108) == True:
+            # 					export_operation.updateTargetTable()
+
+            if runOnlyFunction == None or runOnlyFunction == "exportData":
+                # 				if export_operation.export_config.exportTool == "sqoop":
+                # 					if export_operation.runStage(109) == True:
+                # 						export_operation.runSqoopExport()
+                #
+                # 				if export_operation.export_config.exportTool == "spark":
+                if export_operation.runStage(110) == True:
+                    export_operation.runSparkExport()
+
+            # 			if runOnlyFunction == None or runOnlyFunction == "validate":
+            # 				if export_operation.runStage(111) == True:
+            # 					export_operation.connectToHive()
+            # 					export_operation.getHiveTableValidationData()
+            # 					export_operation.getTargetTableValidationData()
+            # 					export_operation.validateExport()
+            #
+            # 			if runOnlyFunction == None or runOnlyFunction == "updateAtlas":
+            # 				if export_operation.runStage(950) == True:
+            # 					export_operation.updateAtlasWithExportData()
+
+            if runOnlyFunction == None:
+                export_operation.setStage(999)
+
+            if runOnlyFunction == None or runOnlyFunction == "createStatistics":
+                export_operation.convertStageStatisticsToJSON()
+                export_operation.saveStageStatistics()
+
+        # ******************************************
+        # * EXPORT_PHASE_INCR
+        # ******************************************
+
+        if exportPhase == constant.EXPORT_PHASE_INCR:
+            if stage > 0:
+                export_operation.saveRetryAttempt(stage)
+
+                newStage = 0
+                if stage == 156:
+                    newStage = 154
+                if stage == 159:
+                    newStage = 150
+                if stage == 161:
+                    newStage = 150
+                print(" ________________________________________________________ ")
+                print("|                                                        |")
+                print("| WARNING: The previous export failed and this execution |")
+                print("|          is recovering from that failure.              |")
+                print(
+                    "| Last execution failed on stage %s                     |"
+                    % (stage)
+                )
+                if newStage != 0:
+                    print(
+                        "| Will restart from stage %s                            |"
+                        % (newStage)
+                    )
+                    export_operation.setStage(newStage, force=True)
+                print("|________________________________________________________|")
+                print("")
+                print("")
+
+            if runOnlyFunction == None or runOnlyFunction == "getHiveTableSchema":
+                if export_operation.runStage(150) == True:
+                    export_operation.getHiveTableSchema()
+
+            if runOnlyFunction == None:
+                if export_operation.runStage(151) == True:
+                    export_operation.clearValidationData()
+
+            if runOnlyFunction == None:
+                if export_operation.runStage(152) == True:
+                    export_operation.connectToHive()
+                    export_operation.updateStatisticsOnExportedTable()
+
+            if export_operation.isExportTempTableNeeded() == True:
+                if (
+                    runOnlyFunction == None
+                    or runOnlyFunction == "createExportTempTable"
+                ):
+                    if export_operation.runStage(153) == True:
+                        export_operation.connectToHive()
+                        export_operation.createExportTempTable()
+                        export_operation.updateExportTempTable()
+
+                if (
+                    runOnlyFunction == None
+                    or runOnlyFunction == "truncateExportTempTable"
+                ):
+                    if export_operation.runStage(154) == True:
+                        export_operation.connectToHive()
+                        export_operation.removeHiveLocks()
+                        export_operation.truncateExportTempTable()
+
+            if runOnlyFunction == None:
+                if export_operation.runStage(155) == True:
+                    export_operation.connectToHive()
+                    export_operation.fetchIncrMinMaxvalue()
+                    if export_operation.isThereIncrDataToExport() == False:
+                        logging.info("There is no new data to export in the Hive table")
+
+            if export_operation.isExportTempTableNeeded() == True:
+                if (
+                    runOnlyFunction == None
+                    or runOnlyFunction == "insertDataIntoExportTempTable"
+                ):
+                    if export_operation.runStage(156) == True:
+                        if export_operation.isThereIncrDataToExport() == True:
+                            export_operation.connectToHive()
+                            export_operation.insertDataIntoExportTempTable()
+
+            if runOnlyFunction == None or runOnlyFunction == "createTargetTable":
+                if export_operation.runStage(157) == True:
+                    export_operation.createTargetTable()
+
+                if export_operation.runStage(158) == True:
+                    export_operation.updateTargetTable()
+
+            if runOnlyFunction == None or runOnlyFunction == "exportData":
+                if export_operation.export_config.exportTool == "sqoop":
+                    if export_operation.runStage(159) == True:
+                        if export_operation.isThereIncrDataToExport() == True:
+                            export_operation.runSqoopExport()
+
+                if export_operation.export_config.exportTool == "spark":
+                    if export_operation.runStage(160) == True:
+                        if export_operation.isThereIncrDataToExport() == True:
+                            export_operation.runSparkExport()
+
+            if runOnlyFunction == None or runOnlyFunction == "validate":
+                if export_operation.runStage(161) == True:
+                    export_operation.connectToHive()
+                    export_operation.getHiveTableValidationData()
+                    export_operation.getTargetTableValidationData()
+                    export_operation.validateExport()
+
+            if runOnlyFunction == None:
+                if export_operation.runStage(162) == True:
+                    export_operation.saveIncrPendingValues()
+
+            if runOnlyFunction == None or runOnlyFunction == "updateAtlas":
+                if export_operation.runStage(950) == True:
+                    export_operation.updateAtlasWithExportData()
+
+            if runOnlyFunction == None:
+                export_operation.setStage(999)
+
+            if runOnlyFunction == None or runOnlyFunction == "createStatistics":
+                export_operation.convertStageStatisticsToJSON()
+                export_operation.saveStageStatistics()
+
+        if export_operation.getStage() == 999:
+            if runOnlyFunction == None:
+                print(" _____________________________ ")
+                print("|                             |")
+                print("| Export completed successful |")
+                print("|_____________________________|")
+                print("")
+
+            export_operation.clearStage()
+
+    except SQLerror as errMsg:
+        logging.error(errMsg)
+        export_operation.export_config.remove_temporary_files()
+        sys.exit(1)
+    except validationError as errMsg:
+        logging.error(errMsg)
+        export_operation.export_config.remove_temporary_files()
+        sys.exit(1)
+    except undevelopedFeature as errMsg:
+        logging.error(errMsg)
+        export_operation.export_config.remove_temporary_files()
+        sys.exit(1)
+    except invalidConfiguration as errMsg:
+        logging.error(errMsg)
+        export_operation.export_config.remove_temporary_files()
+        sys.exit(1)
+    except daemonExit as errMsg:
+        logging.error(
+            "Program exit because requested to do so by developer. %s" % (errMsg)
+        )
+        export_operation.export_config.remove_temporary_files()
+        sys.exit(1)
+    except:
+        export_operation.export_config.remove_temporary_files()
+        raise
+        sys.exit(1)
+
+    export_operation.remove_temporary_files()
+
 
 if __name__ == "__main__":
-	main(sys.argv[1:])
+    main(sys.argv[1:])

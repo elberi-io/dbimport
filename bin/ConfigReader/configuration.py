@@ -20,31 +20,39 @@ import sys
 import configparser
 from common.Exceptions import *
 
+
 def get(section, key, exitOnError=True):
-	try:
-		return config[section][key]
-	except KeyError:
-		if exitOnError == True:
-			print("[%s] '%s' Key was not found in configuration file. Please check settings"%(section,key))
-			sys.exit(1)
-		else:
-			raise invalidConfiguration("[%s] '%s' Key was not found in configuration file. Please check settings"%(section,key))
+    try:
+        return config[section][key]
+    except KeyError:
+        if exitOnError == True:
+            print(
+                "[%s] '%s' Key was not found in configuration file. Please check settings"
+                % (section, key)
+            )
+            sys.exit(1)
+        else:
+            raise invalidConfiguration(
+                "[%s] '%s' Key was not found in configuration file. Please check settings"
+                % (section, key)
+            )
+
 
 try:
-	DBImport_Home = os.environ['DBIMPORT_HOME']
-	configFile = DBImport_Home + '/conf/dbimport.cfg.dist'
+    DBImport_Home = os.environ["DBIMPORT_HOME"]
+    configFile = DBImport_Home + "/conf/dbimport.cfg.dist"
 except KeyError:
-	print("Error: System Environment Variable DBIMPORT_HOME is not set")
-	sys.exit(1)
- 
+    print("Error: System Environment Variable DBIMPORT_HOME is not set")
+    sys.exit(1)
+
 try:
-	configFile = os.environ['DBIMPORT_CONFIGFILE']
+    configFile = os.environ["DBIMPORT_CONFIGFILE"]
 except KeyError:
-	pass
- 
+    pass
+
 if os.path.exists(configFile) == False:
-	print("Error: Configuration file can't be found on '%s'"%(configFile))
-	sys.exit(1)
+    print("Error: Configuration file can't be found on '%s'" % (configFile))
+    sys.exit(1)
 
 config = configparser.ConfigParser()
 config.read(configFile)
