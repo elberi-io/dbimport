@@ -27,7 +27,7 @@ import binascii
 from subprocess import Popen, PIPE
 from ConfigReader import configuration
 from common.Singleton import Singleton
-from common.Exceptions import *
+from common.Exceptions import invalidConfiguration
 import mysql.connector
 from mysql.connector import errorcode
 from common.Singleton import Singleton
@@ -593,7 +593,7 @@ class operation(object, metaclass=Singleton):
 
             if (
                 self.import_config.import_is_incremental == True
-                and includeIncrImports == False
+                and includeIncrImports == False  # noqa: F821  # TODO(#163): not a parameter of this method
             ):
                 logging.warning(
                     "Asynchronous copy for incremental table %s.%s skipped"

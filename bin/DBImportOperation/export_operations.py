@@ -27,7 +27,7 @@ import mysql.connector
 from mysql.connector import errorcode
 from common.Singleton import Singleton
 from common import constants as constant
-from common.Exceptions import *
+from common.Exceptions import SQLerror, databaseNotFound, invalidConfiguration
 from DBImportConfig import export_config
 from DBImportOperation import common_operations
 from DBImportOperation import atlas_operations

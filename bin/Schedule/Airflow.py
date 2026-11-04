@@ -33,7 +33,7 @@ from urllib.parse import quote
 from datetime import date, datetime, time, timedelta
 import pandas as pd
 from common import constants as constant
-from common.Exceptions import *
+from common.Exceptions import SQLerror, invalidConfiguration
 from Schedule import airflowSchema
 from DBImportConfig import configSchema
 from DBImportConfig import common_config

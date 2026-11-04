@@ -29,7 +29,7 @@ import random
 from pyhive import hive
 from pyhive import exc
 from common.Singleton import Singleton
-from common.Exceptions import *
+from common.Exceptions import SQLerror, invalidConfiguration
 import common.Exceptions
 from common import constants as constant
 from TCLIService.ttypes import TOperationState

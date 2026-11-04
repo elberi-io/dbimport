@@ -26,7 +26,12 @@ from ConfigReader import configuration
 import mysql.connector
 from mysql.connector import errorcode
 from common.Singleton import Singleton
-from common.Exceptions import *
+from common.Exceptions import (
+    SQLerror,
+    databaseNotFound,
+    invalidConfiguration,
+    undevelopedFeature,
+)
 from common import constants as constant
 from common import sparkUDF as sparkUDF
 from DBImportConfig import import_config
@@ -1868,11 +1873,11 @@ class operation(object, metaclass=Singleton):
                 sys.stdout.flush()
 
                 if cFunction == "Hash":
-                    df = df.withColumn(cName, udfHashColumn(cName))
+                    df = df.withColumn(cName, udfHashColumn(cName))  # noqa: F821  # TODO(#162): UDF is an attribute, needs self.
                 elif cFunction == "Replace with star":
-                    df = df.withColumn(cName, udfReplaceCharWithStar(cName))
+                    df = df.withColumn(cName, udfReplaceCharWithStar(cName))  # noqa: F821  # TODO(#162): UDF is an attribute, needs self.
                 elif cFunction == "Show first 4 chars":
-                    df = df.withColumn(cName, udfShowFirstFourCharacters(cName))
+                    df = df.withColumn(cName, udfShowFirstFourCharacters(cName))  # noqa: F821  # TODO(#162): UDF is an attribute, needs self.
 
             # Write ORC files
             sys.stdout.flush()

@@ -21,7 +21,13 @@ import sys
 import getopt
 import logging
 from common import constants as constant
-from common.Exceptions import *
+from common.Exceptions import (
+    SQLerror,
+    catalogError,
+    daemonExit,
+    invalidConfiguration,
+    validationError,
+)
 from DBImportOperation import import_operations
 from DBImportOperation import copy_operations
 from DBImportOperation import etl_operations

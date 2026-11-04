@@ -39,7 +39,14 @@ import mysql.connector
 
 # from mysql.connector import errorcode
 # from common.Singleton import Singleton
-from common.Exceptions import *
+from common.Exceptions import (
+    SQLerror,
+    atlasError,
+    connectionError,
+    foreignKeyError,
+    invalidConfiguration,
+    schemaError,
+)
 from common import constants as constant
 from sourceSchemaReader import schemaReader
 from DBImportConfig import configSchema
@@ -1150,7 +1157,7 @@ class atlasOperation(object):
             log.warning(
                 "Could not check for deleted tables in Atlas as the name specifications in DBImport was not created correctly"
             )
-            raise valueError
+            raise valueError  # noqa: F821  # TODO(#165): should be ValueError
         dbUri = atlasNameDict["dbUri"]
 
         # if there are no tables in the database, we need to create it in Atlas manually

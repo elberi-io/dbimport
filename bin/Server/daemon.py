@@ -38,7 +38,7 @@ from daemons.prefab import run
 from ConfigReader import configuration
 from datetime import date, datetime, timedelta
 from common import constants as constant
-from common.Exceptions import *
+from common.Exceptions import SQLerror
 from DBImportConfig import configSchema
 from DBImportConfig import common_config
 import sqlalchemy as sa

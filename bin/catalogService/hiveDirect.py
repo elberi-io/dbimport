@@ -21,7 +21,7 @@ import sys
 import logging
 import time
 from common.Singleton import Singleton
-from common.Exceptions import *
+from common.Exceptions import databaseNotFound, rowNotFound
 import common.Exceptions
 from ConfigReader import configuration
 from datetime import date, datetime, timedelta

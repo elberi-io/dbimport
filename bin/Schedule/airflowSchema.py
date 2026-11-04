@@ -1,5 +1,5 @@
 # coding: utf-8
-from sqlalchemy import *
+from sqlalchemy import Column, Integer, String, Text
 from sqlalchemy.dialects.mysql import BIGINT, INTEGER, TINYINT, SMALLINT
 from sqlalchemy.orm import relationship, aliased
 from sqlalchemy.sql import alias, select, func

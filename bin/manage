@@ -21,7 +21,7 @@ import getopt
 import logging
 import json
 from common import constants as constant
-from common.Exceptions import *
+from common.Exceptions import SQLerror, daemonExit, invalidConfiguration
 from DBImportConfig import common_config
 from DBImportConfig import import_config
 

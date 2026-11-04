@@ -18,7 +18,7 @@ from Server import restServerCalls
 from Server import dataModels
 from Schedule import Airflow
 from common import constants as constant
-from common.Exceptions import *
+from common.Exceptions import invalidConfiguration
 from DBImportConfig import common_config
 from ConfigReader import configuration
 

@@ -22,7 +22,7 @@ import logging
 import time
 import json
 from common.Singleton import Singleton
-from common.Exceptions import *
+from common.Exceptions import catalogError, databaseNotFound, undevelopedFeature
 import common.Exceptions
 from ConfigReader import configuration
 from datetime import date, datetime, timedelta

@@ -25,7 +25,7 @@ from ConfigReader import configuration
 import mysql.connector
 from common.Singleton import Singleton
 from common import constants as constant
-from common.Exceptions import *
+from common.Exceptions import invalidConfiguration, undevelopedFeature, validationError
 from DBImportConfig import common_config
 
 # from DBImportConfig import rest

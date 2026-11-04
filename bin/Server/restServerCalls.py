@@ -40,7 +40,7 @@ from ConfigReader import configuration
 from datetime import date, datetime, timedelta
 from Server import dataModels
 from common import constants as constant
-from common.Exceptions import *
+from common.Exceptions import SQLerror, invalidConfiguration
 from DBImportConfig import configSchema
 from DBImportConfig import common_config
 import sqlalchemy as sa
@@ -1124,7 +1124,7 @@ class dbCalls:
             session.commit()
         except SQLerror as err:
             log.error(str(err))
-            log.error(column)
+            log.error(column)  # noqa: F821  # TODO(#164): column is undefined here
 
             result = str(err)
             returnCode = 500
@@ -2176,7 +2176,7 @@ class dbCalls:
             session.commit()
         except SQLerror as err:
             log.error(str(err))
-            log.error(column)
+            log.error(column)  # noqa: F821  # TODO(#164): column is undefined here
 
             result = str(err)
             returnCode = 500
@@ -3372,7 +3372,7 @@ class dbCalls:
             session.commit()
         except SQLerror as err:
             log.error(str(err))
-            log.error(column)
+            log.error(column)  # noqa: F821  # TODO(#164): column is undefined here
 
             result = str(err)
             returnCode = 500
@@ -4037,7 +4037,7 @@ class dbCalls:
             session.commit()
         except SQLerror as err:
             log.error(str(err))
-            log.error(column)
+            log.error(column)  # noqa: F821  # TODO(#164): column is undefined here
 
             # session.close()
             session.remove()
@@ -4563,7 +4563,7 @@ class dbCalls:
             session.commit()
         except SQLerror as err:
             log.error(str(err))
-            log.error(column)
+            log.error(column)  # noqa: F821  # TODO(#164): column is undefined here
 
             result = str(err)
             returnCode = 500
@@ -4845,7 +4845,7 @@ class dbCalls:
             session.commit()
         except SQLerror as err:
             log.error(str(err))
-            log.error(column)
+            log.error(column)  # noqa: F821  # TODO(#164): column is undefined here
 
             result = str(err)
             returnCode = 500
@@ -5119,7 +5119,7 @@ class dbCalls:
             session.commit()
         except SQLerror as err:
             log.error(str(err))
-            log.error(column)
+            log.error(column)  # noqa: F821  # TODO(#164): column is undefined here
 
             result = str(err)
             returnCode = 500
