@@ -24,8 +24,6 @@ from queue import Empty, Queue
 
 import jpype
 import pandas as pd
-
-# from sourceSchemaReader import schemaReader
 import sqlalchemy as sa
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import aliased, sessionmaker

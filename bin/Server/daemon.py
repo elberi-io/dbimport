@@ -19,8 +19,6 @@ import binascii
 import logging
 import subprocess
 import sys
-
-# import Queue
 import threading
 import time
 from datetime import datetime, timedelta

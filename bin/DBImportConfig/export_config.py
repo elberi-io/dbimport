@@ -27,8 +27,6 @@ import pandas as pd
 from common import constants as constant
 from common.Exceptions import invalidConfiguration, undevelopedFeature, validationError
 from common.Singleton import Singleton
-
-# from DBImportConfig import rest
 from DBImportConfig import common_config, export_stage, sendStatistics
 
 

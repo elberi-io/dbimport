@@ -22,9 +22,6 @@ from datetime import datetime
 
 from DBImportConfig import common_config, sendStatistics
 
-# import kafka
-# import ssl
-
 
 class stage(object):
     def __init__(self, mysql_conn, Hive_DB, Hive_Table):

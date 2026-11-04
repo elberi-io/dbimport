@@ -20,7 +20,6 @@ import logging
 import time
 from datetime import datetime
 
-# from DBImportConfig import rest
 from DBImportConfig import common_config, sendStatistics
 
 

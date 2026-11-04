@@ -20,22 +20,7 @@ import os
 import subprocess
 import sys
 
-# import jaydebeapi
-# from urllib.parse import quote
-# import mysql.connector
-# from mysql.connector import errorcode
-# import pandas as pd
 from DBImportConfig import common_config
-
-# import sqlalchemy as sa
-# from sqlalchemy.orm import Session, sessionmaker
-# from sqlalchemy.ext.automap import automap_base
-# from sqlalchemy_utils import create_view
-# from sqlalchemy_views import CreateView, DropView
-# from sqlalchemy.sql import text
-# from sqlalchemy.orm import aliased, sessionmaker, Query
-# from alembic.config import Config
-# from alembic import command as alembicCommand
 
 
 class webServerOperations(object):

@@ -30,8 +30,6 @@ import botocore
 import pandas as pd
 import pendulum
 import sqlalchemy as sa
-
-# from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.orm import Query, aliased, scoped_session, sessionmaker
 
 from common.Exceptions import SQLerror, invalidConfiguration

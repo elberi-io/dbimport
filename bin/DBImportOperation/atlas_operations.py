@@ -16,26 +16,16 @@
 # under the License.
 
 import getpass
-
-# import shlex
-# from subprocess import Popen, PIPE
 import json
 import logging
 import re
 import sys
 
-# import subprocess
 import jaydebeapi
 import jpype
 import numpy as np
-
-# from common import sparkUDF as sparkUDF
-# from DBImportConfig import import_config
-# from DBImportOperation import common_operations
 import pandas as pd
 import requests
-
-# import base64
 import sqlalchemy as sa
 from requests.auth import HTTPBasicAuth
 from requests_kerberos import HTTPKerberosAuth
@@ -43,9 +33,6 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import aliased, sessionmaker
 
 from common import constants as constant
-
-# from mysql.connector import errorcode
-# from common.Singleton import Singleton
 from common.Exceptions import (
     SQLerror,
     atlasError,

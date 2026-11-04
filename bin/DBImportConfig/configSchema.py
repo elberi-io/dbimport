@@ -1,5 +1,4 @@
 # coding: utf-8
-# from sqlalchemy import CHAR, Column, DateTime, Enum, ForeignKey, ForeignKeyConstraint, Index, String, Table, Text, Time, text
 from sqlalchemy import (
     Column,
     DateTime,

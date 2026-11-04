@@ -19,17 +19,11 @@ import json
 import logging
 
 import boto3
-
-# from sqlalchemy.sql import alias, select
-# from sqlalchemy.orm import aliased, sessionmaker
-# from sqlalchemy.pool import QueuePool
 import botocore
 import pandas as pd
 
 from common.Exceptions import catalogError, databaseNotFound, undevelopedFeature
 from common.Singleton import Singleton
-
-# import sqlalchemy as sa
 from DBImportConfig import common_config
 
 

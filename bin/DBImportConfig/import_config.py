@@ -21,7 +21,6 @@ import math
 import re
 from datetime import datetime
 
-# import urllib
 import mysql.connector
 import numpy as np
 import pandas as pd

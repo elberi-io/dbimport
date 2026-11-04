@@ -24,8 +24,6 @@ import sys
 from common import constants as constant
 from common.Exceptions import SQLerror, daemonExit, invalidConfiguration
 from DBImportConfig import common_config, import_config
-
-# from DBImportConfig import rest
 from DBImportOperation import (
     atlas_operations,
     common_operations,

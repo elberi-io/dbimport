@@ -40,8 +40,6 @@ from ConfigReader import configuration
 from DBImportConfig import common_config, configSchema
 from Server import dataModels
 
-# from rich import print
-
 
 class dbCalls:
     def __init__(self):
