@@ -14,8 +14,7 @@ import pytest
 import sqlalchemy as sa
 from ConfigReader import configuration
 from Schedule import Airflow
-
-pytestmark = pytest.mark.integration
+from tests.configdb import insert_row, set_mysql_driver_path
 
 EXPECTED_DIR = Path(__file__).resolve().parents[1] / "fixtures" / "dags"
 UPDATE_EXPECTED = os.environ.get("DBIMPORT_UPDATE_EXPECTED_DAGS") == "1"
@@ -24,25 +23,13 @@ DAG_NAME = "DBImport_test"
 Setup = Callable[[sa.Connection], None]
 
 
-def _insert(conn: sa.Connection, table: str, **values: object) -> None:
-    columns = ", ".join(values)
-    params = ", ".join(f":{name}" for name in values)
-    conn.execute(sa.text(f"INSERT INTO {table} ({columns}) VALUES ({params})"), values)
-
-
 def _add_connection(conn: sa.Connection) -> None:
     """JDBC connection test_mysql with a configured driver path.
 
     DAG generation leaves out tables whose connection cannot be looked up.
     """
-    conn.execute(
-        sa.text(
-            "UPDATE jdbc_connections_drivers SET classpath = :path "
-            "WHERE database_type = 'MySQL' AND version = 'default'"
-        ),
-        {"path": "/opt/jdbc/mysql-connector-j.jar"},
-    )
-    _insert(
+    set_mysql_driver_path(conn)
+    insert_row(
         conn,
         "jdbc_connections",
         dbalias="test_mysql",
@@ -55,7 +42,7 @@ def _add_tables(conn: sa.Connection, with_connection: bool = True) -> None:
     if with_connection:
         _add_connection(conn)
     common = {"hive_db": "testdb", "dbalias": "test_mysql", "source_schema": "src"}
-    _insert(
+    insert_row(
         conn,
         "import_tables",
         hive_table="orders",
@@ -64,7 +51,7 @@ def _add_tables(conn: sa.Connection, with_connection: bool = True) -> None:
         etl_phase_type="truncate_insert",
         **common,
     )
-    _insert(
+    insert_row(
         conn,
         "import_tables",
         hive_table="events",
@@ -78,7 +65,7 @@ def _add_tables(conn: sa.Connection, with_connection: bool = True) -> None:
 
 
 def _add_dag(conn: sa.Connection, **extra: object) -> None:
-    _insert(
+    insert_row(
         conn,
         "airflow_import_dags",
         dag_name=DAG_NAME,
@@ -105,7 +92,7 @@ def _finish_all_stage1_first(conn: sa.Connection) -> None:
 
 def _custom_tasks(conn: sa.Connection) -> None:
     _default_dag(conn)
-    _insert(
+    insert_row(
         conn,
         "airflow_tasks",
         dag_name=DAG_NAME,
@@ -114,7 +101,7 @@ def _custom_tasks(conn: sa.Connection) -> None:
         placement="before main",
         task_config="/usr/bin/sleep 1",
     )
-    _insert(
+    insert_row(
         conn,
         "airflow_tasks",
         dag_name=DAG_NAME,
@@ -125,7 +112,7 @@ def _custom_tasks(conn: sa.Connection) -> None:
         task_dependency_upstream="orders",
         task_config="select 1",
     )
-    _insert(
+    insert_row(
         conn,
         "airflow_tasks",
         dag_name=DAG_NAME,

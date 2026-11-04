@@ -15,6 +15,7 @@ from pathlib import Path
 
 import pytest
 from Crypto.PublicKey import RSA
+from tests.configdb import close_dbimport_connections
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 TEST_CONFIG_TEMPLATE = REPO_ROOT / "tests" / "fixtures" / "dbimport.test.cfg"
@@ -67,22 +68,6 @@ def pytest_unconfigure(config: pytest.Config) -> None:
         shutil.rmtree(workdir, ignore_errors=True)
     # common_config creates this directory for every process that uses it.
     shutil.rmtree(f"/tmp/dbimport.{os.getpid()}.tmp", ignore_errors=True)
-
-
-def close_dbimport_connections(obj: object) -> None:
-    """Close the configuration database connections a DBImport object holds.
-
-    A DBImport command runs in its own process, so its connections end
-    with the process. Tests share one process: an open transaction left
-    behind by one test would block the next test's TRUNCATE on a
-    metadata lock.
-    """
-    conn = getattr(obj, "mysql_conn", None)
-    if conn is not None:
-        conn.close()
-    engine = getattr(obj, "configDB", None)
-    if engine is not None:
-        engine.dispose()
 
 
 @pytest.fixture(autouse=True)

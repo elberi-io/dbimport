@@ -2,8 +2,6 @@ import pytest
 import sqlalchemy as sa
 from DBImportConfig import common_config
 
-pytestmark = pytest.mark.integration
-
 
 def _set_config_row(conn: sa.Connection, key: str, column: str, value: object) -> None:
     conn.execute(

@@ -1,5 +1,7 @@
 """Basic behaviour of the REST API in Server.restServer."""
 
+import importlib
+import sys
 from collections.abc import Iterator
 from types import ModuleType
 
@@ -7,8 +9,7 @@ import pytest
 import sqlalchemy as sa
 from common import constants
 from fastapi.testclient import TestClient
-
-pytestmark = pytest.mark.integration
+from tests.configdb import insert_row
 
 USERNAME = "tester"
 PASSWORD = "secret"
@@ -17,10 +18,13 @@ PASSWORD = "secret"
 @pytest.fixture
 def rest_server(clean_config_db: None) -> ModuleType:
     # Imported here, not at module level: Server.restServer connects to the
-    # configuration database when it is imported.
-    from Server import restServer
-
-    return restServer
+    # configuration database when it is imported. Reloaded for every later
+    # test, because its module-level objects keep the DBImport singletons
+    # that are closed after each test.
+    module = sys.modules.get("Server.restServer")
+    if module is None:
+        return importlib.import_module("Server.restServer")
+    return importlib.reload(module)
 
 
 @pytest.fixture
@@ -46,14 +50,16 @@ def auth_headers(client: TestClient, user: None) -> dict[str, str]:
 
 
 def _add_import_table(conn: sa.Connection, hive_db: str, dbalias: str) -> None:
-    conn.execute(
-        sa.text(
-            "INSERT INTO import_tables "
-            "(hive_db, hive_table, dbalias, source_schema, source_table, "
-            "import_phase_type, etl_phase_type) "
-            "VALUES (:db, 'orders', :alias, 'src', 'orders', 'full', 'truncate_insert')"
-        ),
-        {"db": hive_db, "alias": dbalias},
+    insert_row(
+        conn,
+        "import_tables",
+        hive_db=hive_db,
+        hive_table="orders",
+        dbalias=dbalias,
+        source_schema="src",
+        source_table="orders",
+        import_phase_type="full",
+        etl_phase_type="truncate_insert",
     )
 
 

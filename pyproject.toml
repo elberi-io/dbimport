@@ -214,7 +214,8 @@ ignore_imports = [
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-pythonpath = ["bin"]
+# "." makes the shared test helpers importable as tests.configdb.
+pythonpath = ["bin", "."]
 addopts = ["--strict-markers"]
 xfail_strict = true
 markers = [

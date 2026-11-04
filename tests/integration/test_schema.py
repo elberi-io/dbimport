@@ -1,14 +1,11 @@
 from pathlib import Path
 from typing import Any
 
-import pytest
 import sqlalchemy as sa
 from alembic.autogenerate import compare_metadata
 from alembic.migration import MigrationContext
 from alembic.script import ScriptDirectory
 from DBImportConfig import configSchema
-
-pytestmark = pytest.mark.integration
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 SCHEMA_UPGRADE_DIR = REPO_ROOT / "bin" / "SchemaUpgrade"

@@ -8,14 +8,25 @@ against anything but a local test database.
 import configparser
 import os
 from collections.abc import Iterator
-from typing import Any
+from pathlib import Path
 
 import pytest
 import sqlalchemy as sa
+from tests.configdb import close_dbimport_connections
 
+_INTEGRATION_DIR = Path(__file__).parent
 # Hosts the fixtures may reset. DBIMPORT_TEST_DB_HOST adds one explicitly.
 _LOCAL_HOSTS = {"127.0.0.1", "localhost"}
 _TEST_DATABASE = "DBImport"
+
+
+@pytest.hookimpl(tryfirst=True)
+def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
+    # Runs before -m deselects, so every test in this directory is
+    # excluded by `-m "not integration"`, also without a pytestmark line.
+    for item in items:
+        if item.path.is_relative_to(_INTEGRATION_DIR):
+            item.add_marker(pytest.mark.integration)
 
 
 def _engine() -> sa.Engine:
@@ -47,12 +58,6 @@ def _engine() -> sa.Engine:
     )
 
 
-def _close(setup: Any) -> None:
-    """Close the database connections of a setupOperation.database object."""
-    setup.mysql_conn.close()
-    setup.configDB.dispose()
-
-
 def _tables(conn: sa.Connection) -> list[str]:
     query = sa.text("SHOW FULL TABLES WHERE Table_type = 'BASE TABLE'")
     return list(conn.execute(query).scalars())
@@ -82,8 +87,10 @@ def config_db(engine: sa.Engine) -> None:
             conn.execute(sa.text(f"DROP TABLE `{table}`"))
         conn.execute(sa.text("SET FOREIGN_KEY_CHECKS = 1"))
     setup = database.initialize()
-    setup.createDB()
-    _close(setup)
+    try:
+        setup.createDB()
+    finally:
+        close_dbimport_connections(setup)
 
 
 @pytest.fixture
@@ -102,9 +109,11 @@ def clean_config_db(config_db: None, engine: sa.Engine) -> None:
                 conn.execute(sa.text(f"TRUNCATE TABLE `{table}`"))
         conn.execute(sa.text("SET FOREIGN_KEY_CHECKS = 1"))
     setup = database.initialize()
-    setup.createDefaultEnvironmentTypes()
-    setup.updateConfigurationValues()
-    _close(setup)
+    try:
+        setup.createDefaultEnvironmentTypes()
+        setup.updateConfigurationValues()
+    finally:
+        close_dbimport_connections(setup)
 
 
 @pytest.fixture

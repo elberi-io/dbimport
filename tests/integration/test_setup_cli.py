@@ -3,10 +3,6 @@ import subprocess
 import sys
 from pathlib import Path
 
-import pytest
-
-pytestmark = pytest.mark.integration
-
 SETUP = Path(__file__).resolve().parents[2] / "bin" / "setup"
 
 

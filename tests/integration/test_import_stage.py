@@ -2,8 +2,6 @@ import pytest
 import sqlalchemy as sa
 from DBImportConfig import common_config, import_stage
 
-pytestmark = pytest.mark.integration
-
 HIVE_DB = "testdb"
 HIVE_TABLE = "testtable"
 

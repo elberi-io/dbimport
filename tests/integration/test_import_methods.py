@@ -4,8 +4,7 @@ import pytest
 import sqlalchemy as sa
 from common.Exceptions import invalidConfiguration
 from DBImportConfig import common_config, import_config
-
-pytestmark = pytest.mark.integration
+from tests.configdb import insert_row, set_mysql_driver_path
 
 HIVE_DB = "testdb"
 HIVE_TABLE = "testtable"
@@ -14,47 +13,32 @@ DBALIAS = "test_mysql"
 INCREMENTAL = {"incr_column": "id", "incr_mode": "append"}
 
 
-def _configure_mysql_driver(conn: sa.Connection) -> None:
-    """Set an absolute JAR path, as an operator does after installation.
-
-    DBImport only checks that the path is absolute; the file is not read.
-    """
-    conn.execute(
-        sa.text(
-            "UPDATE jdbc_connections_drivers SET classpath = :path "
-            "WHERE database_type = 'MySQL' AND version = 'default'"
-        ),
-        {"path": "/opt/jdbc/mysql-connector-j.jar"},
-    )
-
-
 def _add_connection(
     conn: sa.Connection, username: str, password: str, configure_driver: bool = True
 ) -> None:
     if configure_driver:
-        _configure_mysql_driver(conn)
-    conn.execute(
-        sa.text(
-            "INSERT INTO jdbc_connections (dbalias, jdbc_url) VALUES (:alias, :url)"
-        ),
-        {"alias": DBALIAS, "url": "jdbc:mysql://source.example:3306/sourcedb"},
+        set_mysql_driver_path(conn)
+    insert_row(
+        conn,
+        "jdbc_connections",
+        dbalias=DBALIAS,
+        jdbc_url="jdbc:mysql://source.example:3306/sourcedb",
     )
     common_config.config().encryptUserPassword(DBALIAS, username, password)
 
 
 def _add_import_table(conn: sa.Connection, **settings: str | None) -> None:
-    values = {
-        "hive_db": HIVE_DB,
-        "hive_table": HIVE_TABLE,
-        "dbalias": DBALIAS,
-        "source_schema": "src",
-        "source_table": "orders",
-        **settings,
-    }
-    columns = ", ".join(values)
-    params = ", ".join(f":{name}" for name in values)
-    conn.execute(
-        sa.text(f"INSERT INTO import_tables ({columns}) VALUES ({params})"), values
+    insert_row(
+        conn,
+        "import_tables",
+        **{
+            "hive_db": HIVE_DB,
+            "hive_table": HIVE_TABLE,
+            "dbalias": DBALIAS,
+            "source_schema": "src",
+            "source_table": "orders",
+            **settings,
+        },
     )
 
 
