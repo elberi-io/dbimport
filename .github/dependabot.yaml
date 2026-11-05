@@ -22,6 +22,9 @@ updates:
         update-types:
           - "minor"
           - "patch"
+    ignore:
+      - dependency-name: "httpx"
+        versions: [">=0.28"]
 
   - package-ecosystem: "npm"
     directory: "/bin/Server/html"
@@ -34,3 +37,6 @@ updates:
         update-types:
           - "minor"
           - "patch"
+    ignore:
+      - dependency-name: "@types/node"
+        versions: [">=23"]
