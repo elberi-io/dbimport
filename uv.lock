@@ -339,7 +339,7 @@ requires-dist = [
     { name = "krb5", specifier = "==0.5.1" },
     { name = "mako", specifier = "==1.3.2" },
     { name = "markupsafe", specifier = "==2.1.5" },
-    { name = "mysql-connector-python", specifier = "==8.3.0" },
+    { name = "mysql-connector-python", specifier = "==26.10.0" },
     { name = "numpy", specifier = "==1.26.4" },
     { name = "packaging", specifier = "==23.2" },
     { name = "pandas", specifier = "==2.2.1" },
@@ -733,13 +733,13 @@ wheels = [
 
 [[package]]
 name = "mysql-connector-python"
-version = "8.3.0"
+version = "26.10.0"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/ef/ca/26d5d40d31f0d16b26a8c2a4d1944dc0d05d57f838d00e28de9c779c4d97/mysql-connector-python-8.3.0.tar.gz", hash = "sha256:e4ff23aa8036b4c5b6463fa81398bb5a528a29f99955de6ba937f0bba57a2fe3", size = 432334, upload-time = "2024-01-16T11:41:13.29Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/21/a8/655982dc4208de67801442da33604e0c09ee6997aea27fc1d55a605ba8a0/mysql_connector_python-26.10.0.tar.gz", hash = "sha256:cdc02299905b6bc335de396246e751e7c568c8cf61f3abc38c7fec8b0b0c4580", size = 12258481, upload-time = "2026-10-22T11:40:25.453Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/e7/02/884534d45676cea76036a0bc6d24126d70beb93b4a76269f1ef4d2f82ac2/mysql_connector_python-8.3.0-cp311-cp311-manylinux_2_17_aarch64.whl", hash = "sha256:b2901391b651d60dab3cc8985df94976fc1ea59fa7324c5b19d0a4177914c8dd", size = 21159849, upload-time = "2024-01-16T11:39:38.997Z" },
-    { url = "https://files.pythonhosted.org/packages/e1/e9/4d63f7e0d07a9019e5ce063b8569d4f8c76bf6fd8ff9ebdc9bb53bbad20f/mysql_connector_python-8.3.0-cp311-cp311-manylinux_2_17_x86_64.whl", hash = "sha256:55cb57d8098c721abce20fdef23232663977c0e5c87a4d0f9f73466f32c7d168", size = 21513454, upload-time = "2024-01-16T11:39:47.661Z" },
-    { url = "https://files.pythonhosted.org/packages/53/ed/26a4b8cacb8852c6fd97d2d58a7f2591c41989807ea82bd8d9725a4e6937/mysql_connector_python-8.3.0-py2.py3-none-any.whl", hash = "sha256:e868ccc7ad9fbc242546db04673d89cee87d12b8139affd114524553df4e5d6a", size = 557870, upload-time = "2024-01-16T11:41:10.724Z" },
+    { url = "https://files.pythonhosted.org/packages/d7/ab/c3fbd904f6d2c28e99193aec834590dce4d62bf25615854b351168442350/mysql_connector_python-26.10.0-cp311-cp311-manylinux_2_28_aarch64.whl", hash = "sha256:cec173a1ba34469a9bacc5994c3f8999b8f2990fad916dc1674a3a87c9798edd", size = 21729646, upload-time = "2026-10-22T11:39:05.783Z" },
+    { url = "https://files.pythonhosted.org/packages/53/bd/a399290c3f1e01afe958f39c13b0841619b365fbd14a7b30070fa6bb99a0/mysql_connector_python-26.10.0-cp311-cp311-manylinux_2_28_x86_64.whl", hash = "sha256:d82d235beb404cbc3b32c90ec8d5bb42e734dd84ffc8e15fdacbe141608c7d9e", size = 21541585, upload-time = "2026-10-22T11:39:07.998Z" },
+    { url = "https://files.pythonhosted.org/packages/91/24/7b2f91476ae6c182f69854dd8d12c51c2e11c5b887b8f85b48b1c9394159/mysql_connector_python-26.10.0-py2.py3-none-any.whl", hash = "sha256:85643c8a38b7d089ed30b270d842b96a2529354eebea4aa4d8e4755a630487e8", size = 480854, upload-time = "2026-10-22T11:39:36.248Z" },
 ]
 
 [[package]]
