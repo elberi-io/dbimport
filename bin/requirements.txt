@@ -10,9 +10,9 @@ annotated-types==0.8.0 ; sys_platform == 'linux' \
     # via
     #   dbimport
     #   pydantic
-anyio==4.3.0 ; sys_platform == 'linux' \
-    --hash=sha256:048e05d0f6caeed70d731f3db756d35dcc1f35747c8c403364a8332c630441b8 \
-    --hash=sha256:f75253795a87df48568485fd18cdd2a3fa5c4f7c5be8e5e36637733fce06fed6
+anyio==4.14.2 ; sys_platform == 'linux' \
+    --hash=sha256:9f505dda5ac9f0c8309b5e8bd445a8c2bf7246f3ce950121e45ea15bc41d1494 \
+    --hash=sha256:cfa139f3ed1a23ee8f88a145ddb5ac7605b8bbfd8592baacd7ce3d8bb4313c7f
     # via
     #   dbimport
     #   starlette
