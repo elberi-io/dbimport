@@ -186,15 +186,6 @@ wheels = [
 ]
 
 [[package]]
-name = "configparser"
-version = "6.0.1"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/82/97/930be4777f6b08fc7c248d70c2ea8dfb6a75ab4409f89abc47d6cab37d39/configparser-6.0.1.tar.gz", hash = "sha256:db45513e971e509496b150be31bd67b0e14ab20b78a383b677e4b158e2c682d8", size = 68618, upload-time = "2024-02-24T16:33:27.354Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/bf/c1/c9d33f208bf25164ec315a571a9c0a6b71a5d38f364426db987cec12a152/configparser-6.0.1-py3-none-any.whl", hash = "sha256:5a0da275bea56f871abaa9e0806331791e9d8ae2938e8b8797b99ab3e8e192c4", size = 19335, upload-time = "2024-02-24T16:33:24.96Z" },
-]
-
-[[package]]
 name = "cryptography"
 version = "42.0.5"
 source = { registry = "https://pypi.org/simple" }
@@ -242,7 +233,6 @@ dependencies = [
     { name = "cffi" },
     { name = "charset-normalizer" },
     { name = "click" },
-    { name = "configparser" },
     { name = "cryptography" },
     { name = "daemons" },
     { name = "decorator" },
@@ -268,7 +258,6 @@ dependencies = [
     { name = "packaging" },
     { name = "pandas" },
     { name = "pendulum" },
-    { name = "protobuf" },
     { name = "psutil" },
     { name = "pure-sasl" },
     { name = "pure-transport" },
@@ -330,7 +319,6 @@ requires-dist = [
     { name = "cffi", specifier = "==1.16.0" },
     { name = "charset-normalizer", specifier = "==3.3.2" },
     { name = "click", specifier = "==8.1.7" },
-    { name = "configparser", specifier = "==6.0.1" },
     { name = "cryptography", specifier = "==42.0.5" },
     { name = "daemons", specifier = "==1.3.2" },
     { name = "decorator", specifier = "==5.1.1" },
@@ -356,7 +344,6 @@ requires-dist = [
     { name = "packaging", specifier = "==23.2" },
     { name = "pandas", specifier = "==2.2.1" },
     { name = "pendulum", specifier = "==3.0.0" },
-    { name = "protobuf", specifier = "==4.25.3" },
     { name = "psutil", specifier = "==5.9.8" },
     { name = "pure-sasl", specifier = "==0.6.2" },
     { name = "pure-transport", specifier = "==0.2.0" },
@@ -829,17 +816,6 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/bf/db/7fc19e6f2dc92a966727031389fc2e08b558f0f25eb7403c1119ad4713cd/pluggy-1.7.0.tar.gz", hash = "sha256:d1eaa46ebb595891b860ab086b4d09c8588af65ebd4361b8e8f4bb8920b90ba8", size = 123304, upload-time = "2026-10-15T09:50:58.343Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/40/9e/2b38731e0fc536806f16490e1a12d7f0dc2a1235aa8cc07bcc75416a7daa/pluggy-1.7.0-py3-none-any.whl", hash = "sha256:7dd7b0d8832ba3cb632c306926ded123429211b83641b35dc5c41ad2d34f9bec", size = 27082, upload-time = "2026-10-15T09:50:56.808Z" },
-]
-
-[[package]]
-name = "protobuf"
-version = "4.25.3"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/5e/d8/65adb47d921ce828ba319d6587aa8758da022de509c3862a70177a958844/protobuf-4.25.3.tar.gz", hash = "sha256:25b5d0b42fd000320bd7830b349e3b696435f3b329810427a6bcce6a5492cc5c", size = 380274, upload-time = "2024-02-15T23:44:39.757Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/d8/82/aefe901174b5a618daee511ddd00342193c1b545e3cd6a2cd6df9ba452b5/protobuf-4.25.3-cp37-abi3-manylinux2014_aarch64.whl", hash = "sha256:e7cb0ae90dd83727f0c0718634ed56837bfeeee29a5f82a7514c03ee1364c019", size = 293701, upload-time = "2024-02-15T23:44:23.59Z" },
-    { url = "https://files.pythonhosted.org/packages/15/db/7f731524fe0e56c6b2eb57d05b55d3badd80ef7d1f1ed59db191b2fdd8ab/protobuf-4.25.3-cp37-abi3-manylinux2014_x86_64.whl", hash = "sha256:7c8daa26095f82482307bc717364e7c13f4f1c99659be82890dcfc215194554d", size = 294613, upload-time = "2024-02-15T23:44:25.132Z" },
-    { url = "https://files.pythonhosted.org/packages/f4/d5/db585a5e8d64af6b384c7b3a63da13df2ff86933e486ba78431736c67c25/protobuf-4.25.3-py3-none-any.whl", hash = "sha256:f0700d54bcf45424477e46a9f0944155b46fb0639d69728739c0e47bab83f2b9", size = 156466, upload-time = "2024-02-15T23:44:36.771Z" },
 ]
 
 [[package]]

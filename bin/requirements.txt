@@ -87,10 +87,6 @@ click==8.1.7 ; sys_platform == 'linux' \
     # via
     #   dbimport
     #   uvicorn
-configparser==6.0.1 ; sys_platform == 'linux' \
-    --hash=sha256:5a0da275bea56f871abaa9e0806331791e9d8ae2938e8b8797b99ab3e8e192c4 \
-    --hash=sha256:db45513e971e509496b150be31bd67b0e14ab20b78a383b677e4b158e2c682d8
-    # via dbimport
 cryptography==42.0.5 ; sys_platform == 'linux' \
     --hash=sha256:0270572b8bd2c833c3981724b8ee9747b3ec96f699a9665470018594301439ee \
     --hash=sha256:16a48c23a62a2f4a285699dba2e4ff2d1cff3115b9df052cdd976a18856d8e3d \
@@ -266,12 +262,6 @@ pendulum==3.0.0 ; sys_platform == 'linux' \
     --hash=sha256:99a0f8172e19f3f0c0e4ace0ad1595134d5243cf75985dc2233e8f9e8de263ca \
     --hash=sha256:afde30e8146292b059020fbc8b6f8fd4a60ae7c5e6f0afef937bbb24880bdf01 \
     --hash=sha256:dee9e5a48c6999dc1106eb7eea3e3a50e98a50651b72c08a87ee2154e544b33e
-    # via dbimport
-protobuf==4.25.3 ; sys_platform == 'linux' \
-    --hash=sha256:25b5d0b42fd000320bd7830b349e3b696435f3b329810427a6bcce6a5492cc5c \
-    --hash=sha256:7c8daa26095f82482307bc717364e7c13f4f1c99659be82890dcfc215194554d \
-    --hash=sha256:e7cb0ae90dd83727f0c0718634ed56837bfeeee29a5f82a7514c03ee1364c019 \
-    --hash=sha256:f0700d54bcf45424477e46a9f0944155b46fb0639d69728739c0e47bab83f2b9
     # via dbimport
 psutil==5.9.8 ; sys_platform == 'linux' \
     --hash=sha256:6be126e3225486dff286a8fb9a06246a5253f4c7c53b475ea5f5ac934e64194c \
