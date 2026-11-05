@@ -25,7 +25,7 @@ except KeyError:
     sys.exit(1)
 
 sys.path.append("%s/bin" % (DBImport_Home))
-from DBImportConfig.configSchema import Base
+from DBImportConfig.configSchema import Base  # noqa: E402  # sys.path must point to bin/ first
 
 target_metadata = Base.metadata
 
