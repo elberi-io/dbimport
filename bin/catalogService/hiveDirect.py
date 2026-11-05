@@ -134,7 +134,7 @@ class hiveMetastoreDirect(metaclass=Singleton):
             )
         except sa.orm.exc.NoResultFound:
             raise rowNotFound(
-                "Cant get SDS.LOCATION from Hive Meta Database" % (hiveDB)  # noqa: F507  # TODO(#181): no placeholder for hiveDB
+                f"Cant get SDS.LOCATION from Hive Meta Database for {hiveDB}.{hiveTable}"
             )
 
         logging.debug(
@@ -168,7 +168,7 @@ class hiveMetastoreDirect(metaclass=Singleton):
             )
         except sa.orm.exc.NoResultFound:
             raise rowNotFound(
-                "Cant get SDS.INPUT_FORMAT from Hive Meta Database" % (hiveDB)  # noqa: F507  # TODO(#181): no placeholder for hiveDB
+                f"Cant get SDS.INPUT_FORMAT from Hive Meta Database for {hiveDB}.{hiveTable}"
             )
 
         logging.debug(
@@ -205,7 +205,7 @@ class hiveMetastoreDirect(metaclass=Singleton):
             )
         except sa.orm.exc.NoResultFound:
             raise rowNotFound(
-                "Cant get SDS.INPUT_FORMAT from Hive Meta Database" % (hiveDB)  # noqa: F507  # TODO(#181): no placeholder for hiveDB
+                f"Cant get SDS.INPUT_FORMAT from Hive Meta Database for {hiveDB}.{hiveTable}"
             )
 
         logging.debug(
