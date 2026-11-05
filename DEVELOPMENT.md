@@ -120,15 +120,17 @@ npm run lint
 npm run build
 ```
 
-All Python code is formatted with `ruff format`. Existing code in `bin/`
-is checked for errors that point at real bugs (syntax errors, invalid
-comparisons, undefined names, invalid escape sequences, unused `noqa`),
-for its imports (no star imports, no unused or duplicate imports,
-imports sorted with the packages in `bin/` as first party) and for a
-few rewrites that mean the same in Python 3 (`getattr`/`setattr` with a
-constant name, `class X(object)`, literal calls such as `float()`,
-`open(f, "r")`, two-argument `super`). The tests use the stricter rules in
-`tests/ruff.toml`. import-linter checks the package layering defined in
+All Python code is formatted with `ruff format` and checked with one
+rule set, `select` in `pyproject.toml` (pycodestyle E4, E7 and E9,
+pyflakes, bugbear, pyupgrade, import sorting with the packages in `bin/`
+as first party, invalid escape sequences, unused `noqa`). Existing
+modules that still break some of these rules are listed under
+`per-file-ignores`, each with exactly the rule codes it breaks;
+`tests/unit/test_ruff_ratchet.py` fails when a listed code no longer
+occurs in its module. When you refactor such a module, fix its findings
+and remove its line; new modules must pass the full set. A known bug
+that a rule reports is marked on its line with `noqa` and a `TODO` that
+names the issue. import-linter checks the package layering defined in
 `pyproject.toml`.
 
 The commits that reformatted `bin/` are listed in `.git-blame-ignore-revs`.
