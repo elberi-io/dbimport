@@ -1865,11 +1865,11 @@ class operation(metaclass=Singleton):
                 sys.stdout.flush()
 
                 if cFunction == "Hash":
-                    df = df.withColumn(cName, udfHashColumn(cName))  # noqa: F821  # TODO(#162): UDF is an attribute, needs self.
+                    df = df.withColumn(cName, self.udfHashColumn(cName))
                 elif cFunction == "Replace with star":
-                    df = df.withColumn(cName, udfReplaceCharWithStar(cName))  # noqa: F821  # TODO(#162): UDF is an attribute, needs self.
+                    df = df.withColumn(cName, self.udfReplaceCharWithStar(cName))
                 elif cFunction == "Show first 4 chars":
-                    df = df.withColumn(cName, udfShowFirstFourCharacters(cName))  # noqa: F821  # TODO(#162): UDF is an attribute, needs self.
+                    df = df.withColumn(cName, self.udfShowFirstFourCharacters(cName))
 
             # Write ORC files
             sys.stdout.flush()
