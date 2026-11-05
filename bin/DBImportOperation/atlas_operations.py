@@ -1189,7 +1189,7 @@ class atlasOperation:
                     % (statusCode)
                 )
                 log.warning("%s" % (response["data"]))
-                self.atlasEnabled == False
+                self.atlasEnabled == False  # noqa: B015  # TODO(#182): = was meant
                 raise atlasError
 
         # query the rdbms_db object in Atlas
@@ -1213,7 +1213,7 @@ class atlasOperation:
                 "Request from Atlas when updating source schema was %s." % (statusCode)
             )
             log.warning("%s" % (response["data"]))
-            self.atlasEnabled == False
+            self.atlasEnabled == False  # noqa: B015  # TODO(#182): = was meant
             raise atlasError
 
         # Fetch all tables defined on the rdbms_db object
@@ -1544,7 +1544,7 @@ class atlasOperation:
                 "Request from Atlas when updating source schema was %s." % (statusCode)
             )
             log.warning("%s" % (response["data"]))
-            self.atlasEnabled == False
+            self.atlasEnabled == False  # noqa: B015  # TODO(#182): = was meant
             raise atlasError
 
         # We now have to find columns that exists in DBImport but not in the source anymore.
@@ -1570,7 +1570,7 @@ class atlasOperation:
                 "Request from Atlas when updating source schema was %s." % (statusCode)
             )
             log.warning("%s" % (response["data"]))
-            self.atlasEnabled == False
+            self.atlasEnabled == False  # noqa: B015  # TODO(#182): = was meant
             raise atlasError
 
         for jsonRefEntities in responseData["referredEntities"]:
@@ -1620,7 +1620,7 @@ class atlasOperation:
                             % (statusCode)
                         )
                         log.warning("%s" % (response["data"]))
-                        self.atlasEnabled == False
+                        self.atlasEnabled == False  # noqa: B015  # TODO(#182): = was meant
                         deleteColumnErrorFound = True
 
         # Code to add Foreign Keys to table. This is done in a new JSON as we reference the table we just created. One JSON per FK
@@ -1789,7 +1789,7 @@ class atlasOperation:
                             % (statusCode)
                         )
                         log.warning("%s" % (response["data"]))
-                        self.atlasEnabled == False
+                        self.atlasEnabled == False  # noqa: B015  # TODO(#182): = was meant
                         foreignKeyErrorFound = True
                     else:
                         log.debug(
@@ -2179,7 +2179,7 @@ class atlasOperation:
             log.warning(
                 "Request from Atlas when updating import lineage was %s." % (statusCode)
             )
-            self.atlasEnabled == False
+            self.atlasEnabled == False  # noqa: B015  # TODO(#182): = was meant
 
         log.debug(
             "Executing atlas_operations.updateAtlasWithImportLineage() - Finished"
@@ -2284,7 +2284,7 @@ class atlasOperation:
             log.warning(
                 "Request from Atlas when updating import lineage was %s." % (statusCode)
             )
-            self.atlasEnabled == False
+            self.atlasEnabled == False  # noqa: B015  # TODO(#182): = was meant
 
         log.debug(
             "Executing atlas_operations.updateAtlasWithExportLineage() - Finished"

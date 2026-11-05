@@ -178,7 +178,7 @@ def main(argv):
         if os.path.isfile(pidfile):
             f = open(pidfile)
             pid = int(f.readline().strip())
-            f.close
+            f.close  # noqa: B018  # TODO(#159): close is not called
 
             if psutil.pid_exists(pid):
                 print("DBImport Main Server is running with pid %s" % (pid))

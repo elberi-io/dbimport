@@ -2296,8 +2296,8 @@ class config(metaclass=Singleton):
             and columnType == "timestamp"
             and self.common_config.jdbc_servertype == constant.MYSQL
         ):
-            minValue += "STR_TO_DATE('%s', '%Y-%m-%d %H:%i:%s')" % (minValue)
-            maxValue += "STR_TO_DATE('%s', '%Y-%m-%d %H:%i:%s')" % (maxValue)
+            minValue += "STR_TO_DATE('%s', '%Y-%m-%d %H:%i:%s')" % (minValue)  # noqa: F509  # TODO(#180): %Y needs %%, += should be =
+            maxValue += "STR_TO_DATE('%s', '%Y-%m-%d %H:%i:%s')" % (maxValue)  # noqa: F509  # TODO(#180): %Y needs %%, += should be =
         elif (
             whereForTarget == True
             and columnType == "timestamp"
