@@ -225,11 +225,28 @@ markupsafe==2.1.5 ; sys_platform == 'linux' \
     # via
     #   dbimport
     #   mako
-mysql-connector-python==8.3.0 ; sys_platform == 'linux' \
-    --hash=sha256:55cb57d8098c721abce20fdef23232663977c0e5c87a4d0f9f73466f32c7d168 \
-    --hash=sha256:b2901391b651d60dab3cc8985df94976fc1ea59fa7324c5b19d0a4177914c8dd \
-    --hash=sha256:e4ff23aa8036b4c5b6463fa81398bb5a528a29f99955de6ba937f0bba57a2fe3 \
-    --hash=sha256:e868ccc7ad9fbc242546db04673d89cee87d12b8139affd114524553df4e5d6a
+mysql-connector-python==26.10.0 ; sys_platform == 'linux' \
+    --hash=sha256:2f6d6e37eb1d2d5e47054d84eb5ceeb02d3d960d87fac549acece3dda4caa504 \
+    --hash=sha256:385b7906baec66c0aa4bf2bf2663cd8745f32a7b7878b54fe80bc53784638ca2 \
+    --hash=sha256:40dc3091b1785058be861afdd8860d838bcca8cebfa85ed42de31cc079cab536 \
+    --hash=sha256:4c2cba134b4820a2fe236ae612c09c183ac8a417e423532d97f3d1d13b0eea1a \
+    --hash=sha256:4e586dd1b2906363a490c23c60e95857e0aa075f7b7bf7eed7d92afa7efba122 \
+    --hash=sha256:4fb5bf238a89451a2695bd43fc9db6baaac824c125b0252dc1843edff6fc590e \
+    --hash=sha256:85643c8a38b7d089ed30b270d842b96a2529354eebea4aa4d8e4755a630487e8 \
+    --hash=sha256:89e3a16f644a64666b90f611a94d6764691caa621c30ac553eb3a06e727b5d16 \
+    --hash=sha256:8d196364b8f39076a23b3e6ccf3c33e16b1bc53e028aa64778e5b3a0369f8a0f \
+    --hash=sha256:8e0c27da9159a716232e375e147c80f35e5b993db4d31e657dfa690434637fea \
+    --hash=sha256:97371eb3bd3372c7b658a3a5fb91919d3fab100115ba346ee6708fcf08c1d150 \
+    --hash=sha256:a7c9faae4b05968fa3657c081a9c9e9cbac42b9e24be0864cc0c6d3fc666a7ad \
+    --hash=sha256:af96f4fd35570e804fc896a741ab4645ae1f949173952106fec6b287f9ecb52d \
+    --hash=sha256:b7f5d5b68700d4f7306c13e8a1548c59e65c5cada2f98bdefbbf91a696fcf2c9 \
+    --hash=sha256:c80d447825417010b50c5fa67a9917fc4b2be2a4bc70bfdb052c3459dd0ab3dc \
+    --hash=sha256:cacbbdeb9f159c55621651b0b0468c2a8c627cd4e598fbb012bfacf883bb734b \
+    --hash=sha256:cdc02299905b6bc335de396246e751e7c568c8cf61f3abc38c7fec8b0b0c4580 \
+    --hash=sha256:cec173a1ba34469a9bacc5994c3f8999b8f2990fad916dc1674a3a87c9798edd \
+    --hash=sha256:d21cf597fdf1bfbecf22f10d41d12971aa10e7fda0463ad8f0ffdf9336140432 \
+    --hash=sha256:d82d235beb404cbc3b32c90ec8d5bb42e734dd84ffc8e15fdacbe141608c7d9e \
+    --hash=sha256:d8656aef64f2d1609ef933ec16730c0ef72da9bdfda5a484d50e2fab3ec6ce45
     # via dbimport
 numpy==1.26.4 ; sys_platform == 'linux' \
     --hash=sha256:2a02aba9ed12e4ac4eb3ea9421c420301a0c6460d9830d74a9df87efa4912010 \
