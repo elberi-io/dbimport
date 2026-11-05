@@ -1345,8 +1345,6 @@ class initialize:
         log = logging.getLogger(self.logger)
         try:
             pendulum.timezone(timeZone)
-        except pendulum.tz.zoneinfo.exceptions.InvalidTimezone:
-            return False
         except ValueError:
             return False
         else:

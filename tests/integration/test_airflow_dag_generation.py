@@ -180,6 +180,32 @@ def test_generate_dag_leaves_out_tables_whose_connection_is_missing(
     assert "-t events" not in generated
 
 
+def test_generate_dag_with_valid_time_zone_uses_that_time_zone(
+    clean_config_db: None, db_connection: sa.Connection, tmp_path: Path
+) -> None:
+    _add_tables(db_connection)
+    _add_dag(db_connection, timezone="Asia/Tokyo")
+
+    generated = _generate(tmp_path)
+
+    assert 'local_tz = pendulum.timezone("Asia/Tokyo")' in generated
+
+
+def test_generate_dag_with_invalid_time_zone_warns_and_uses_default_time_zone(
+    clean_config_db: None,
+    db_connection: sa.Connection,
+    tmp_path: Path,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    _add_tables(db_connection)
+    _add_dag(db_connection, timezone="Not/AZone")
+
+    generated = _generate(tmp_path)
+
+    assert "Time zone value specified for DAG is not valid" in caplog.text
+    assert generated == (EXPECTED_DIR / "default_import_dag.py.txt").read_text()
+
+
 def test_generate_dag_in_aws_mwaa_mode_writes_expected_file(
     clean_config_db: None,
     db_connection: sa.Connection,
