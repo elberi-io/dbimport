@@ -15,7 +15,7 @@ import sqlalchemy as sa
 
 from ConfigReader import configuration
 from Schedule import Airflow
-from tests.configdb import insert_row, set_mysql_driver_path
+from tests.configdb import insert_row, set_driver_path
 
 EXPECTED_DIR = Path(__file__).resolve().parents[1] / "fixtures" / "dags"
 UPDATE_EXPECTED = os.environ.get("DBIMPORT_UPDATE_EXPECTED_DAGS") == "1"
@@ -29,7 +29,7 @@ def _add_connection(conn: sa.Connection) -> None:
 
     DAG generation leaves out tables whose connection cannot be looked up.
     """
-    set_mysql_driver_path(conn)
+    set_driver_path(conn, "MySQL")
     insert_row(
         conn,
         "jdbc_connections",

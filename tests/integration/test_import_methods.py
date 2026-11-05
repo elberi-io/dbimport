@@ -5,7 +5,7 @@ import sqlalchemy as sa
 
 from common.Exceptions import invalidConfiguration
 from DBImportConfig import common_config, import_config
-from tests.configdb import insert_row, set_mysql_driver_path
+from tests.configdb import insert_row, set_driver_path
 
 HIVE_DB = "testdb"
 HIVE_TABLE = "testtable"
@@ -18,7 +18,7 @@ def _add_connection(
     conn: sa.Connection, username: str, password: str, configure_driver: bool = True
 ) -> None:
     if configure_driver:
-        set_mysql_driver_path(conn)
+        set_driver_path(conn, "MySQL")
     insert_row(
         conn,
         "jdbc_connections",

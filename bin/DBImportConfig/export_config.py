@@ -2289,15 +2289,15 @@ class config(metaclass=Singleton):
             and columnType == "timestamp"
             and self.common_config.jdbc_servertype == constant.MSSQL
         ):
-            minValue += "CONVERT(datetime, '%s', 121) " % (minValue)
-            maxValue += "CONVERT(datetime, '%s', 121) " % (maxValue)
+            minValue = "CONVERT(datetime, '%s', 121) " % (minValue)
+            maxValue = "CONVERT(datetime, '%s', 121) " % (maxValue)
         elif (
             whereForTarget == True
             and columnType == "timestamp"
             and self.common_config.jdbc_servertype == constant.MYSQL
         ):
-            minValue += "STR_TO_DATE('%s', '%Y-%m-%d %H:%i:%s')" % (minValue)  # noqa: F509  # TODO(#180): %Y needs %%, += should be =
-            maxValue += "STR_TO_DATE('%s', '%Y-%m-%d %H:%i:%s')" % (maxValue)  # noqa: F509  # TODO(#180): %Y needs %%, += should be =
+            minValue = f"STR_TO_DATE('{minValue}', '%Y-%m-%d %H:%i:%s')"
+            maxValue = f"STR_TO_DATE('{maxValue}', '%Y-%m-%d %H:%i:%s')"
         elif (
             whereForTarget == True
             and columnType == "timestamp"

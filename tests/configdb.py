@@ -30,8 +30,8 @@ def insert_row(conn: sa.Connection, table: str, **values: object) -> None:
     conn.execute(sa.text(f"INSERT INTO {table} ({columns}) VALUES ({params})"), values)
 
 
-def set_mysql_driver_path(conn: sa.Connection) -> None:
-    """Give the seeded MySQL JDBC driver an absolute JAR path.
+def set_driver_path(conn: sa.Connection, database_type: str) -> None:
+    """Give the seeded default JDBC driver of database_type an absolute JAR path.
 
     An operator sets this after installation. DBImport only checks that the
     path is absolute; the file is not read.
@@ -39,7 +39,7 @@ def set_mysql_driver_path(conn: sa.Connection) -> None:
     conn.execute(
         sa.text(
             "UPDATE jdbc_connections_drivers SET classpath = :path "
-            "WHERE database_type = 'MySQL' AND version = 'default'"
+            "WHERE database_type = :type AND version = 'default'"
         ),
-        {"path": "/opt/jdbc/mysql-connector-j.jar"},
+        {"path": "/opt/jdbc/driver.jar", "type": database_type},
     )

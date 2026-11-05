@@ -1134,7 +1134,7 @@ class atlasOperation:
             log.warning(
                 "Could not check for deleted tables in Atlas as the name specifications in DBImport was not created correctly"
             )
-            raise valueError  # noqa: F821  # TODO(#165): should be ValueError
+            raise ValueError("Atlas RDBMS names could not be built")
         dbUri = atlasNameDict["dbUri"]
 
         # if there are no tables in the database, we need to create it in Atlas manually
