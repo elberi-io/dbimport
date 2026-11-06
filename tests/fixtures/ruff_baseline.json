@@ -332,13 +332,11 @@
     "E722": 1,
     "N802": 6,
     "N803": 1,
-    "N806": 32,
     "N812": 1,
     "UP031": 12
   },
   "bin/setupOperation/webServerOperations.py": {
-    "N802": 3,
-    "N806": 3
+    "N802": 3
   },
   "bin/sourceSchemaReader/schemaReader.py": {
     "B007": 1,
