@@ -310,60 +310,60 @@ def main(argv):
     except getopt.GetoptError:
         printMainHelp()
 
-    Hive_DB = None
-    Hive_Table = None
-    displayHelp = False
+    hive_db = None
+    hive_table = None
+    display_help = False
     operation = None
-    loggingLevel = logging.INFO
-    autoYesAnswer = False
-    airflowDAG = None
-    copyDestination = None
-    remoteInstance = None
-    quietMode = False
-    includeIncrImports = False
-    concatenateTable = False
-    HDFSpath = None
-    localHDFSpath = None
-    remoteHDFSpath = None
-    copyDAGnoSlave = None
-    setAutoRegenerateDAG = None
+    logging_level = logging.INFO
+    auto_yes_answer = False
+    airflow_dag = None
+    copy_destination = None
+    remote_instance = None
+    quiet_mode = False
+    include_incr_imports = False
+    concatenate_table = False
+    hdfs_path = None
+    local_hdfs_path = None
+    remote_hdfs_path = None
+    copy_dag_no_slave = None
+    set_auto_regenerate_dag = None
 
     if len(opts) == 0:
         printMainHelp()
 
     for opt, arg in opts:
         if opt in ("-?", "--help"):
-            displayHelp = True
+            display_help = True
         elif opt in ("-y", "--yes"):
-            autoYesAnswer = True
+            auto_yes_answer = True
         elif opt in ("-v", "--debug"):
-            loggingLevel = logging.DEBUG
+            logging_level = logging.DEBUG
         elif opt in ("-h", "--hiveDB", "--Hive_DB"):
-            Hive_DB = arg
+            hive_db = arg
         elif opt in ("-t", "--hiveTable", "--Hive_Table"):
-            Hive_Table = arg
+            hive_table = arg
         elif opt == "--quiet":
-            quietMode = True
+            quiet_mode = True
         elif opt == "--includeIncrImports":
-            includeIncrImports = True
+            include_incr_imports = True
         elif opt == "--localHDFSpath":
-            localHDFSpath = str(arg)
+            local_hdfs_path = str(arg)
         elif opt == "--remoteHDFSpath":
-            remoteHDFSpath = str(arg)
+            remote_hdfs_path = str(arg)
         elif opt == "--counterStart":
-            counterStart = str(arg)
+            counter_start = str(arg)
         elif opt == "--destination":
-            copyDestination = str(arg)
+            copy_destination = str(arg)
         elif opt == "--remoteInstance":
-            remoteInstance = str(arg)
+            remote_instance = str(arg)
         elif opt == "--airflowDAG":
-            airflowDAG = str(arg)
+            airflow_dag = str(arg)
         elif opt == "--noSlave":
-            copyDAGnoSlave = True
+            copy_dag_no_slave = True
         elif opt == "--setAutoRegenerateDAG":
-            setAutoRegenerateDAG = True
+            set_auto_regenerate_dag = True
         elif opt == "--concatenateTable":
-            concatenateTable = True
+            concatenate_table = True
         elif opt == "--copyAirflowImportDAG":
             operation = "copyAirflowImportDAG"
         elif opt == "--copyAirflowExportDAG":
@@ -385,153 +385,153 @@ def main(argv):
         printMainHelp()
 
     if operation == "copyAirflowImportDAG" and (
-        airflowDAG == None or copyDestination == None or displayHelp == True
+        airflow_dag == None or copy_destination == None or display_help == True
     ):
         print_copyAirflowImportDAG_help()
 
     if operation == "copyAirflowExportDAG" and (
-        airflowDAG == None or copyDestination == None or displayHelp == True
+        airflow_dag == None or copy_destination == None or display_help == True
     ):
         print_copyAirflowExportDAG_help()
 
     if operation == "scheduleDAGasyncCopy" and (
-        airflowDAG == None or copyDestination == None or displayHelp == True
+        airflow_dag == None or copy_destination == None or display_help == True
     ):
         print_scheduleDAGasyncCopy_help()
 
     if operation == "scheduleTableAsyncCopy" and (
-        Hive_DB == None
-        or Hive_Table == None
-        or copyDestination == None
-        or displayHelp == True
+        hive_db == None
+        or hive_table == None
+        or copy_destination == None
+        or display_help == True
     ):
         print_scheduleTableAsyncCopy_help()
 
     if operation == "exportTable" and (
-        localHDFSpath == None
-        or Hive_DB == None
-        or Hive_Table == None
-        or displayHelp == True
+        local_hdfs_path == None
+        or hive_db == None
+        or hive_table == None
+        or display_help == True
     ):
         print_exportTable_help()
 
     if operation == "importTable" and (
-        localHDFSpath == None
-        or Hive_DB == None
-        or Hive_Table == None
-        or displayHelp == True
+        local_hdfs_path == None
+        or hive_db == None
+        or hive_table == None
+        or display_help == True
     ):
         print_importTable_help()
 
     if operation == "copyTableToCluster" and (
-        localHDFSpath == None
-        or remoteHDFSpath == None
-        or remoteInstance == None
-        or displayHelp == True
+        local_hdfs_path == None
+        or remote_hdfs_path == None
+        or remote_instance == None
+        or display_help == True
     ):
         print_copyTableToCluster_help()
 
     if operation == "copyTableFromCluster" and (
-        localHDFSpath == None
-        or remoteHDFSpath == None
-        or remoteInstance == None
-        or displayHelp == True
+        local_hdfs_path == None
+        or remote_hdfs_path == None
+        or remote_instance == None
+        or display_help == True
     ):
         print_copyTableFromCluster_help()
 
-    if quietMode == False:
+    if quiet_mode == False:
         printHeader()
 
     # Initiate the logging functions with the correct level
-    if loggingLevel == logging.DEBUG:
+    if logging_level == logging.DEBUG:
         logging.basicConfig(
             stream=sys.stdout,
             format="%(levelname)s %(funcName)s - %(message)s",
-            level=loggingLevel,
+            level=logging_level,
         )
     else:
         logging.basicConfig(
-            stream=sys.stdout, format="%(levelname)s - %(message)s", level=loggingLevel
+            stream=sys.stdout, format="%(levelname)s - %(message)s", level=logging_level
         )
 
     if operation == "exportTable":
-        copyOperation = copy_operations.operation()
+        copy_operation = copy_operations.operation()
         import_operation = import_operations.operation()
-        if concatenateTable == True:
-            import_operation.concatenateTable(hiveDB=Hive_DB, hiveTable=Hive_Table)
+        if concatenate_table == True:
+            import_operation.concatenateTable(hiveDB=hive_db, hiveTable=hive_table)
 
-        copyOperation.exportTable(
-            hiveDB=Hive_DB, hiveTable=Hive_Table, localHDFSpath=localHDFSpath
+        copy_operation.exportTable(
+            hiveDB=hive_db, hiveTable=hive_table, localHDFSpath=local_hdfs_path
         )
         import_operation.remove_temporary_files()
 
     if operation == "copyTableFromCluster":
-        copyOperation = copy_operations.operation()
-        copyOperation.copyTableToFromCluster(
-            hiveDB=Hive_DB,
-            hiveTable=Hive_Table,
-            remoteInstance=remoteInstance,
-            localHDFSpath=localHDFSpath,
-            remoteHDFSpath=remoteHDFSpath,
+        copy_operation = copy_operations.operation()
+        copy_operation.copyTableToFromCluster(
+            hiveDB=hive_db,
+            hiveTable=hive_table,
+            remoteInstance=remote_instance,
+            localHDFSpath=local_hdfs_path,
+            remoteHDFSpath=remote_hdfs_path,
             fromClusterMode=True,
         )
-        copyOperation.remove_temporary_files()
+        copy_operation.remove_temporary_files()
 
     if operation == "copyTableToCluster":
-        copyOperation = copy_operations.operation()
-        copyOperation.copyTableToFromCluster(
-            hiveDB=Hive_DB,
-            hiveTable=Hive_Table,
-            remoteInstance=remoteInstance,
-            localHDFSpath=localHDFSpath,
-            remoteHDFSpath=remoteHDFSpath,
+        copy_operation = copy_operations.operation()
+        copy_operation.copyTableToFromCluster(
+            hiveDB=hive_db,
+            hiveTable=hive_table,
+            remoteInstance=remote_instance,
+            localHDFSpath=local_hdfs_path,
+            remoteHDFSpath=remote_hdfs_path,
             fromClusterMode=False,
         )
-        copyOperation.remove_temporary_files()
+        copy_operation.remove_temporary_files()
 
     if operation == "importTable":
-        copyOperation = copy_operations.operation()
-        copyOperation.importCopiedTable(
-            hiveDB=Hive_DB, hiveTable=Hive_Table, localHDFSpath=localHDFSpath
+        copy_operation = copy_operations.operation()
+        copy_operation.importCopiedTable(
+            hiveDB=hive_db, hiveTable=hive_table, localHDFSpath=local_hdfs_path
         )
-        copyOperation.remove_temporary_files()
+        copy_operation.remove_temporary_files()
 
     if operation == "scheduleTableAsyncCopy":
-        copyOperation = copy_operations.operation()
-        copyOperation.scheduleTableAsyncCopy(
-            hiveFilterDB=Hive_DB,
-            hiveFilterTable=Hive_Table,
-            copyDestination=copyDestination,
+        copy_operation = copy_operations.operation()
+        copy_operation.scheduleTableAsyncCopy(
+            hiveFilterDB=hive_db,
+            hiveFilterTable=hive_table,
+            copyDestination=copy_destination,
         )
-        copyOperation.remove_temporary_files()
+        copy_operation.remove_temporary_files()
 
     if operation == "scheduleDAGasyncCopy":
-        copyOperation = copy_operations.operation()
-        copyOperation.scheduleDAGasyncCopy(
-            airflowDAGname=airflowDAG,
-            copyDestination=copyDestination,
-            includeIncrImports=includeIncrImports,
+        copy_operation = copy_operations.operation()
+        copy_operation.scheduleDAGasyncCopy(
+            airflowDAGname=airflow_dag,
+            copyDestination=copy_destination,
+            includeIncrImports=include_incr_imports,
         )
-        copyOperation.remove_temporary_files()
+        copy_operation.remove_temporary_files()
 
     if operation == "copyAirflowImportDAG":
-        copyOperation = copy_operations.operation()
-        copyOperation.copyAirflowImportDAG(
-            airflowDAGname=airflowDAG,
-            copyDestination=copyDestination,
-            copyDAGnoSlave=copyDAGnoSlave,
-            setAutoRegenerateDAG=setAutoRegenerateDAG,
+        copy_operation = copy_operations.operation()
+        copy_operation.copyAirflowImportDAG(
+            airflowDAGname=airflow_dag,
+            copyDestination=copy_destination,
+            copyDAGnoSlave=copy_dag_no_slave,
+            setAutoRegenerateDAG=set_auto_regenerate_dag,
         )
-        copyOperation.remove_temporary_files()
+        copy_operation.remove_temporary_files()
 
     if operation == "copyAirflowExportDAG":
-        copyOperation = copy_operations.operation()
-        copyOperation.copyAirflowExportDAG(
-            airflowDAGname=airflowDAG,
-            copyDestination=copyDestination,
-            setAutoRegenerateDAG=setAutoRegenerateDAG,
+        copy_operation = copy_operations.operation()
+        copy_operation.copyAirflowExportDAG(
+            airflowDAGname=airflow_dag,
+            copyDestination=copy_destination,
+            setAutoRegenerateDAG=set_auto_regenerate_dag,
         )
-        copyOperation.remove_temporary_files()
+        copy_operation.remove_temporary_files()
 
 
 if __name__ == "__main__":

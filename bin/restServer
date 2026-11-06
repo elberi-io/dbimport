@@ -70,19 +70,19 @@ def printHelp():
 
 
 def setupLogger(name, logfile, logFormat, loggingLevel, logPropagate=True):
-    newLogger = logging.getLogger(name)
-    newLogger.propagate = logPropagate
-    logHandler = logging.FileHandler(logfile)
-    logHandler.setFormatter(logging.Formatter(logFormat))
-    logHandler.setLevel(loggingLevel)
-    newLogger.addHandler(logHandler)
+    new_logger = logging.getLogger(name)
+    new_logger.propagate = logPropagate
+    log_handler = logging.FileHandler(logfile)
+    log_handler.setFormatter(logging.Formatter(logFormat))
+    log_handler.setLevel(loggingLevel)
+    new_logger.addHandler(log_handler)
 
 
 def main(argv):
 
-    loggingLevel = logging.INFO
-    displayVersion = False
-    daemonMode = False
+    logging_level = logging.INFO
+    display_version = False
+    daemon_mode = False
     action = ""
 
     if argv != []:
@@ -96,93 +96,95 @@ def main(argv):
             if opt in ("-h", "--help"):
                 printHelp()
             elif opt in ("-V", "--version"):
-                displayVersion = True
+                display_version = True
             elif opt in ("-v", "--debug"):
-                loggingLevel = logging.DEBUG
+                logging_level = logging.DEBUG
 
     if action not in ["start", "stop", "restart", "status", "noDaemon"]:
         printHelp()
         sys.exit(0)
 
     if action in ("start", "restart"):
-        daemonMode = True
+        daemon_mode = True
 
-    if displayVersion == True:
+    if display_version == True:
         print("DBImport version: %s" % (constant.VERSION))
         sys.exit(0)
 
     logdir = configuration.get("Server", "logdir")
     pidfile = configuration.get("Server", "pidfile")
-    restServer_address = configuration.get("Server", "restServer_address")
-    restServer_port = configuration.get("Server", "restServer_port")
-    restServer_workers = configuration.get("Server", "restServer_workers")
-    restServer_keyfile = configuration.get("Server", "restServer_keyfile")
-    restServer_certfile = configuration.get("Server", "restServer_certfile")
+    rest_server_address = configuration.get("Server", "restServer_address")
+    rest_server_port = configuration.get("Server", "restServer_port")
+    rest_server_workers = configuration.get("Server", "restServer_workers")
+    rest_server_keyfile = configuration.get("Server", "restServer_keyfile")
+    rest_server_certfile = configuration.get("Server", "restServer_certfile")
 
-    if os.path.isfile(restServer_keyfile) == False:
+    if os.path.isfile(rest_server_keyfile) == False:
         print(
             "The restServer keyfile cant be opened.\n"
             + "Please check the path in the configuration file for settings Server/restServer_keyfile"
         )
         sys.exit(1)
 
-    if os.path.isfile(restServer_certfile) == False:
+    if os.path.isfile(rest_server_certfile) == False:
         print(
             "The restServer certfile cant be opened.\n"
             + "Please check the path in the configuration file for settings Server/restServer_certfile"
         )
         sys.exit(1)
 
-    if loggingLevel == logging.DEBUG:
-        logFormat = "%(asctime)s %(levelname)s %(name)s %(funcName)s - %(message)s"
+    if logging_level == logging.DEBUG:
+        log_format = "%(asctime)s %(levelname)s %(name)s %(funcName)s - %(message)s"
     else:
-        logFormat = "%(asctime)s %(levelname)s - %(message)s"
+        log_format = "%(asctime)s %(levelname)s - %(message)s"
 
-    if daemonMode == False:
-        logging.basicConfig(stream=sys.stdout, format=logFormat, level=loggingLevel)
-        logPropagate = True
+    if daemon_mode == False:
+        logging.basicConfig(stream=sys.stdout, format=log_format, level=logging_level)
+        log_propagate = True
     else:
         # If we run in daemon mode, we log everything from the root logger to /dev/null.
-        logging.basicConfig(filename="/dev/null", format=logFormat, level=loggingLevel)
-        logPropagate = False
+        logging.basicConfig(
+            filename="/dev/null", format=log_format, level=logging_level
+        )
+        log_propagate = False
 
     # Setup the loggers
     setupLogger(
         name="server",
         logfile="%s/restServer.log" % (logdir),
-        logFormat=logFormat,
-        loggingLevel=loggingLevel,
-        logPropagate=logPropagate,
+        logFormat=log_format,
+        loggingLevel=logging_level,
+        logPropagate=log_propagate,
     )
 
     glogging.Logger.datefmt = ""
-    glogging.Logger.error_fmt = logFormat
-    glogging.Logger.access_fmt = logFormat
-    glogging.Logger.syslog_fmt = logFormat
+    glogging.Logger.error_fmt = log_format
+    glogging.Logger.access_fmt = log_format
+    glogging.Logger.syslog_fmt = log_format
 
-    if loggingLevel == logging.DEBUG:
-        gunicornDebugLevel = "debug"
+    if logging_level == logging.DEBUG:
+        gunicorn_debug_level = "debug"
     else:
-        gunicornDebugLevel = "info"
+        gunicorn_debug_level = "info"
 
-    if daemonMode == True:
-        gunicornAccessLog = "%s/restServer_access.log" % (logdir)
-        gunicornErrorLog = "%s/restServer.log" % (logdir)
+    if daemon_mode == True:
+        gunicorn_access_log = "%s/restServer_access.log" % (logdir)
+        gunicorn_error_log = "%s/restServer.log" % (logdir)
     else:
-        gunicornAccessLog = "-"
-        gunicornErrorLog = "-"
+        gunicorn_access_log = "-"
+        gunicorn_error_log = "-"
 
     options = {
-        "bind": "%s:%s" % (restServer_address, restServer_port),
-        "workers": int(restServer_workers),
+        "bind": "%s:%s" % (rest_server_address, rest_server_port),
+        "workers": int(rest_server_workers),
         "worker_class": "uvicorn.workers.UvicornWorker",
-        "loglevel": gunicornDebugLevel,
-        "accesslog": gunicornAccessLog,
-        "errorlog": gunicornErrorLog,
-        "daemon": daemonMode,
+        "loglevel": gunicorn_debug_level,
+        "accesslog": gunicorn_access_log,
+        "errorlog": gunicorn_error_log,
+        "daemon": daemon_mode,
         "threaded": "True",
-        "keyfile": restServer_keyfile,
-        "certfile": restServer_certfile,
+        "keyfile": rest_server_keyfile,
+        "certfile": rest_server_certfile,
     }
 
     if action == "start":
@@ -202,12 +204,12 @@ def main(argv):
 
     elif action == "restart":
         print("Stopping DBImport REST Server")
-        currentPid = os.getpid()
+        current_pid = os.getpid()
         for line in os.popen(
             'ps ax|grep -E "/restServer restart$|/restServer start$|/restServer noDaemon"|grep -v grep'
         ):
             pid = int(line.split()[0])
-            if pid == currentPid:
+            if pid == current_pid:
                 continue
             os.kill(pid, signal.SIGTERM)
 
