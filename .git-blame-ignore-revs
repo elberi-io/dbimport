@@ -1,4 +1,5 @@
-# Commits that only reformatted code (ruff format, #159).
+# Commits that only reformatted code (ruff format, #159) or only renamed
+# identifiers to snake_case (#202).
 # GitHub skips them in the blame view. Locally, run once:
 #   git config blame.ignoreRevsFile .git-blame-ignore-revs
 # Keep the hashes valid: merge with a merge commit, do not rebase or squash.
@@ -35,3 +36,33 @@ ecd3cd0db46a03bc66669ba5d34638a58a222398
 
 # chore: format the launchers in bin/ with ruff format
 ceafde3387a8aff73b5cfc793d67bc16193965d0
+
+# refactor: rename local variables in common to snake_case
+023a34250570da62069b01279d60f259c3c85a0b
+
+# refactor: rename local variables in catalogService to snake_case
+924d58857fd28775ae0826ee62c10d6feb3c8757
+
+# refactor: rename local variables in setupOperation to snake_case
+0b562bdc92bce8448a7a2c83a26b62165dac32fa
+
+# refactor: rename local variables in sourceSchemaReader to snake_case
+65e4fc76d18e39b9458b94bde679941b1537fcd1
+
+# refactor: rename local variables in Schedule to snake_case
+c02d15dc4dd073d0ea4c35f3d8bc04d106ba1a12
+
+# refactor: rename local variables in Server to snake_case
+903b6412ff803ad4b2f21d42226903f5d834f921
+
+# refactor: rename local variables in DBImportConfig to snake_case
+712705007e51d4b9d348c7d172106619c739dfd9
+
+# refactor: rename local variables in DBImportOperation to snake_case
+d7521e82e1185a3e7451926833e04fc0b19d25fd
+
+# refactor: rename local variables in the launchers to snake_case
+33389d7307150b4747ad9dc249866f54d8d144f8
+
+# refactor: rename function arguments to snake_case
+bec0fef642860567abc5c204533779e4190578cf
