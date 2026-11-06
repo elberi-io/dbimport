@@ -47,9 +47,9 @@ botocore==1.34.50 ; sys_platform == 'linux' \
     #   boto3
     #   dbimport
     #   s3transfer
-certifi==2024.2.2 ; sys_platform == 'linux' \
-    --hash=sha256:0569859f95fc761b18b45ef421b1290a0f65f147e92a1e5eb3e635f9a5e4e66f \
-    --hash=sha256:dc383c07b76109f368f6106eee2b593b04a011ea4d55f652c6ca24a754d1cdd1
+certifi==2026.10.18 ; sys_platform == 'linux' \
+    --hash=sha256:73191c47aaa79da394e8fee2dbc2ec827432cab56311122c9e47abf79e390f62 \
+    --hash=sha256:b9995d97b64d0431a5af837d8ca8cd6238104d1f319f04bd93ea43124d6c861e
     # via
     #   dbimport
     #   requests
