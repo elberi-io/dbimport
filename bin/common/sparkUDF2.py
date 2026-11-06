@@ -80,30 +80,30 @@ class sparkUDFClass:
         # 		sha_value = hashlib.sha3_512(str(columnValue).encode()).hexdigest()
         h = hashlib.blake2b(digest_size=32, person=self.seedStringEncoded)
         h.update(str(columnValue).encode())
-        hashedColumnContent = h.hexdigest()
-        return hashedColumnContent
+        hashed_column_content = h.hexdigest()
+        return hashed_column_content
 
-    def replaceCharWithStar(self, columnValue):
-        if columnValue == None:
+    def replaceCharWithStar(self, column_value):
+        if column_value == None:
             return None
 
-        returnString = ""
-        for character in str(columnValue):
+        return_string = ""
+        for character in str(column_value):
             if character == " ":
-                returnString = returnString + " "
+                return_string = return_string + " "
             else:
-                returnString = returnString + "*"
+                return_string = return_string + "*"
 
-        return returnString
+        return return_string
 
-    def showFirstFourCharacters(self, columnValue):
-        if columnValue == None:
+    def showFirstFourCharacters(self, column_value):
+        if column_value == None:
             return None
 
-        returnString = str(columnValue)[:4]
+        return_string = str(column_value)[:4]
 
-        if len(str(columnValue)) > 4:
-            for i in range(len(str(columnValue)) - 4):
-                returnString = returnString + "*"
+        if len(str(column_value)) > 4:
+            for i in range(len(str(column_value)) - 4):
+                return_string = return_string + "*"
 
-        return returnString
+        return return_string

@@ -113,14 +113,14 @@ class glueCatalog(metaclass=Singleton):
     def isTableExternalIcebergFormat(self, hiveDB, hiveTable):
         logging.debug("Executing glueCatalog.isTableExternalIcebergFormat()")
 
-        returnValue = False
+        return_value = False
         try:
             response = self.glueClient.get_table(DatabaseName=hiveDB, Name=hiveTable)
-            tableType = response["Table"]["TableType"]
-            parameterTableType = response["Table"]["Parameters"]["table_type"]
+            table_type = response["Table"]["TableType"]
+            parameter_table_type = response["Table"]["Parameters"]["table_type"]
 
-            if tableType == "EXTERNAL_TABLE" and parameterTableType == "ICEBERG":
-                returnValue = True
+            if table_type == "EXTERNAL_TABLE" and parameter_table_type == "ICEBERG":
+                return_value = True
 
         # 			print(response)
         # 			print("========================================")
@@ -131,18 +131,18 @@ class glueCatalog(metaclass=Singleton):
             raise catalogError("Error when checking table type in Glue Catalog")
 
         logging.debug("Executing glueCatalog.isTableExternalIcebergFormat() - Finished")
-        return returnValue
+        return return_value
 
     def isTableExternal(self, hiveDB, hiveTable):
         logging.debug("Executing glueCatalog.isTableExternal()")
 
-        returnValue = False
+        return_value = False
         try:
             response = self.glueClient.get_table(DatabaseName=hiveDB, Name=hiveTable)
-            tableType = response["Table"]["TableType"]
+            table_type = response["Table"]["TableType"]
 
-            if tableType == "EXTERNAL_TABLE":
-                returnValue = True
+            if table_type == "EXTERNAL_TABLE":
+                return_value = True
 
         # 			print(response)
         # 			print("========================================")
@@ -153,7 +153,7 @@ class glueCatalog(metaclass=Singleton):
             raise catalogError("Error when checking table type in Glue Catalog")
 
         logging.debug("Executing glueCatalog.isTableExternal() - Finished")
-        return returnValue
+        return return_value
 
     def getPK(self, hiveDB, hiveTable, quotedColumns=False):
         """Reads the PK from the Hive Metadatabase and return a comma separated string with the information"""
@@ -336,30 +336,30 @@ class glueCatalog(metaclass=Singleton):
             columns = response["Table"]["StorageDescriptor"]["Columns"]
             # 			print(columns)
 
-            normalizedColumnList = []
-            normalizedColumn = {}
+            normalized_column_list = []
+            normalized_column = {}
             for column in columns:
-                normalizedColumn = {}
-                normalizedColumn["name"] = column["Name"]
-                normalizedColumn["type"] = column["Type"]
+                normalized_column = {}
+                normalized_column["name"] = column["Name"]
+                normalized_column["type"] = column["Type"]
 
                 try:
-                    normalizedColumn["comment"] = json.loads(column["Comment"])[
+                    normalized_column["comment"] = json.loads(column["Comment"])[
                         "name"
                     ].replace("`", "")
                 # 					normalizedColumn["is_pk"] = json.loads(column["Comment"])["is_pk"]
                 except json.decoder.JSONDecodeError:
-                    normalizedColumn["comment"] = column["Comment"]
+                    normalized_column["comment"] = column["Comment"]
                 except KeyError:
-                    normalizedColumn["comment"] = None
+                    normalized_column["comment"] = None
                 # 					normalizedColumn["is_pk"] = False
                 # 				normalizedColumn["Parameters"] = column["Parameters"]
 
-                normalizedColumnList.append(normalizedColumn)
+                normalized_column_list.append(normalized_column)
 
             # 			print(normalizedColumnList)
 
-            result_df = pd.json_normalize(normalizedColumnList)
+            result_df = pd.json_normalize(normalized_column_list)
         # 			print(result_df)
 
         # 			print(response)
@@ -407,9 +407,9 @@ class glueCatalog(metaclass=Singleton):
             "glueCatalog.isTableView() is undeveloped. Please contact the developers of DBImport"
         )
 
-        returnValue = False
+        return_value = False
         logging.debug("Executing glueCatalog.isTableView() - Finished")
-        return returnValue
+        return return_value
 
     def getTables(self, dbFilter=None, tableFilter=None):
         """Return all tables from specific Hive DB"""

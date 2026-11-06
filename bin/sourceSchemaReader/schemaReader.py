@@ -36,13 +36,13 @@ class source:
             return _data
 
     def readTableColumns(
-        self, JDBCCursor, serverType=None, database=None, schema=None, table=None
+        self, jdbc_cursor, server_type=None, database=None, schema=None, table=None
     ):
         logging.debug("Executing schemaReader.readTableColumns()")
         query = None
         result_df = pd.DataFrame()
 
-        if serverType == constant.MSSQL:
+        if server_type == constant.MSSQL:
             query = "select "
             query += "	SchemaName = CAST((TBL.TABLE_SCHEMA) AS NVARCHAR(4000)), "
             query += "	TableName =  CAST((TBL.TABLE_NAME) AS NVARCHAR(4000)), "
@@ -92,7 +92,7 @@ class source:
 
             logging.debug("SQL Statement executed: %s" % (query))
             try:
-                JDBCCursor.execute(query)
+                jdbc_cursor.execute(query)
             except jaydebeapi.DatabaseError as errMsg:
                 logging.error(
                     "Failure when communicating with JDBC database. %s" % (errMsg)
@@ -100,7 +100,7 @@ class source:
                 return result_df
 
             rows_list = []
-            for row in JDBCCursor.fetchall():
+            for row in jdbc_cursor.fetchall():
                 logging.debug(row)
                 line_dict = {}
                 if table == None:
@@ -169,35 +169,35 @@ class source:
                 rows_list.append(line_dict)
             result_df = pd.DataFrame(rows_list)
 
-        if serverType == constant.ORACLE:
+        if server_type == constant.ORACLE:
             # First determine if column ORIGIN_CON_ID exists in ALL_TAB_COMMENTS. If it does, we need to take that into consideration
-            oracle_OriginConId_exists = True
-            oracle_OriginConId = None
+            oracle_origin_con_id_exists = True
+            oracle_origin_con_id = None
             # query = "SELECT ORIGIN_CON_ID FROM ALL_TAB_COMMENTS WHERE 1 = 0"
             query = "SELECT ORIGIN_CON_ID FROM ALL_TAB_COMMENTS "
             query += "WHERE OWNER = '%s' " % (schema)
             if table != None:
                 query += "  AND TABLE_NAME = '%s' " % (table)
             try:
-                JDBCCursor.execute(query)
+                jdbc_cursor.execute(query)
             except jaydebeapi.DatabaseError as errMsg:
                 if "invalid identifier" in str(errMsg):
-                    oracle_OriginConId_exists = False
+                    oracle_origin_con_id_exists = False
                 else:
                     logging.error(
                         "Failure when communicating with JDBC database. %s" % (errMsg)
                     )
                     return result_df
 
-            if oracle_OriginConId_exists == True:
-                rowCount = 0
-                for row in JDBCCursor.fetchall():
-                    oracle_OriginConId = row[0]
-                    rowCount += 1
+            if oracle_origin_con_id_exists == True:
+                row_count = 0
+                for row in jdbc_cursor.fetchall():
+                    oracle_origin_con_id = row[0]
+                    row_count += 1
 
-                if rowCount != 1:
+                if row_count != 1:
                     # If there are more than one originConId, it's impossible to determine what we will use. So then we go to default
-                    oracle_OriginConId = None
+                    oracle_origin_con_id = None
 
             query = "SELECT "
             query += "  ALL_TAB_COLUMNS.OWNER SCHEMA_NAME, "
@@ -217,23 +217,23 @@ class source:
             query += "LEFT JOIN ALL_TAB_COMMENTS ALL_TAB_COMMENTS "
             query += "  ON  ALL_TAB_COLUMNS.OWNER = ALL_TAB_COMMENTS.OWNER "
             query += "  AND ALL_TAB_COLUMNS.TABLE_NAME = ALL_TAB_COMMENTS.TABLE_NAME "
-            if oracle_OriginConId_exists == True:
-                if oracle_OriginConId == None:
+            if oracle_origin_con_id_exists == True:
+                if oracle_origin_con_id == None:
                     query += "  AND ALL_TAB_COMMENTS.ORIGIN_CON_ID <= 1 "
                 else:
                     query += "  AND ALL_TAB_COMMENTS.ORIGIN_CON_ID = %s " % (
-                        oracle_OriginConId
+                        oracle_origin_con_id
                     )
             query += "LEFT JOIN ALL_COL_COMMENTS ALL_COL_COMMENTS "
             query += "  ON  ALL_TAB_COLUMNS.OWNER = ALL_COL_COMMENTS.OWNER "
             query += "  AND ALL_TAB_COLUMNS.TABLE_NAME = ALL_COL_COMMENTS.TABLE_NAME "
             query += "  AND ALL_TAB_COLUMNS.COLUMN_NAME = ALL_COL_COMMENTS.COLUMN_NAME "
-            if oracle_OriginConId_exists == True:
-                if oracle_OriginConId == None:
+            if oracle_origin_con_id_exists == True:
+                if oracle_origin_con_id == None:
                     query += "  AND ALL_COL_COMMENTS.ORIGIN_CON_ID <= 1 "
                 else:
                     query += "  AND ALL_COL_COMMENTS.ORIGIN_CON_ID = %s " % (
-                        oracle_OriginConId
+                        oracle_origin_con_id
                     )
             query += "LEFT JOIN ALL_OBJECTS ALL_OBJECTS "
             query += "  ON  ALL_TAB_COLUMNS.OWNER = ALL_OBJECTS.OWNER "
@@ -246,7 +246,7 @@ class source:
 
             logging.debug("SQL Statement executed: %s" % (query))
             try:
-                JDBCCursor.execute(query)
+                jdbc_cursor.execute(query)
             except jaydebeapi.DatabaseError as errMsg:
                 logging.error(
                     "Failure when communicating with JDBC database. %s" % (errMsg)
@@ -254,7 +254,7 @@ class source:
                 return result_df
 
             rows_list = []
-            for row in JDBCCursor.fetchall():
+            for row in jdbc_cursor.fetchall():
                 logging.debug(row)
                 line_dict = {}
                 if table == None:
@@ -345,7 +345,7 @@ class source:
                 rows_list.append(line_dict)
             result_df = pd.DataFrame(rows_list)
 
-        if serverType == constant.MYSQL:
+        if server_type == constant.MYSQL:
             query = "select "
             query += "   c.table_schema as table_schema, "
             query += "   c.table_name, "
@@ -371,7 +371,7 @@ class source:
 
             logging.debug("SQL Statement executed: %s" % (query))
             try:
-                JDBCCursor.execute(query)
+                jdbc_cursor.execute(query)
             except jaydebeapi.DatabaseError as errMsg:
                 logging.error(
                     "Failure when communicating with JDBC database. %s" % (errMsg)
@@ -379,7 +379,7 @@ class source:
                 return result_df
 
             rows_list = []
-            for row in JDBCCursor.fetchall():
+            for row in jdbc_cursor.fetchall():
                 logging.debug(row)
                 line_dict = {}
                 if table == None:
@@ -435,7 +435,7 @@ class source:
                 rows_list.append(line_dict)
             result_df = pd.DataFrame(rows_list)
 
-        if serverType == constant.DB2_UDB:
+        if server_type == constant.DB2_UDB:
             query = "SELECT "
             query += "	TRIM(ST.CREATOR) as SCHEMA_NAME, "
             query += "	TRIM(ST.NAME) as TABLE_NAME, "
@@ -460,7 +460,7 @@ class source:
 
             logging.debug("SQL Statement executed: %s" % (query))
             try:
-                JDBCCursor.execute(query)
+                jdbc_cursor.execute(query)
             except jaydebeapi.DatabaseError as errMsg:
                 logging.error(
                     "Failure when communicating with JDBC database. %s" % (errMsg)
@@ -468,7 +468,7 @@ class source:
                 return result_df
 
             rows_list = []
-            for row in JDBCCursor.fetchall():
+            for row in jdbc_cursor.fetchall():
                 logging.debug(row)
                 line_dict = {}
                 if table == None:
@@ -534,7 +534,7 @@ class source:
                 rows_list.append(line_dict)
             result_df = pd.DataFrame(rows_list)
 
-        if serverType == constant.DB2_AS400:
+        if server_type == constant.DB2_AS400:
             query = "SELECT "
             query += "	TRIM(ST.TABLE_SCHEMA) as SCHEMA_NAME, "
             query += "	TRIM(ST.TABLE_NAME) as TABLE_NAME, "
@@ -561,7 +561,7 @@ class source:
 
             logging.debug("SQL Statement executed: %s" % (query))
             try:
-                JDBCCursor.execute(query)
+                jdbc_cursor.execute(query)
             except jaydebeapi.DatabaseError as errMsg:
                 logging.error(
                     "Failure when communicating with JDBC database. %s" % (errMsg)
@@ -569,7 +569,7 @@ class source:
                 return result_df
 
             rows_list = []
-            for row in JDBCCursor.fetchall():
+            for row in jdbc_cursor.fetchall():
                 logging.debug(row)
                 line_dict = {}
                 if table == None:
@@ -636,7 +636,7 @@ class source:
                 rows_list.append(line_dict)
             result_df = pd.DataFrame(rows_list)
 
-        if serverType == constant.POSTGRESQL:
+        if server_type == constant.POSTGRESQL:
             query = "SELECT "
             query += "	tab_columns.table_schema, "
             query += "	tab_columns.table_name, "
@@ -664,7 +664,7 @@ class source:
 
             logging.debug("SQL Statement executed: %s" % (query))
             try:
-                JDBCCursor.execute(query)
+                jdbc_cursor.execute(query)
             except jaydebeapi.DatabaseError as errMsg:
                 logging.error(
                     "Failure when communicating with JDBC database. %s" % (errMsg)
@@ -672,7 +672,7 @@ class source:
                 return result_df
 
             rows_list = []
-            for row in JDBCCursor.fetchall():
+            for row in jdbc_cursor.fetchall():
                 logging.debug(row)
                 line_dict = {}
                 if table == None:
@@ -722,7 +722,7 @@ class source:
                 rows_list.append(line_dict)
             result_df = pd.DataFrame(rows_list)
 
-        if serverType == constant.PROGRESS:
+        if server_type == constant.PROGRESS:
             query = "SELECT "
             query += "	tab_tables.OWNER, "
             query += "	tab_tables.TBL, "
@@ -746,7 +746,7 @@ class source:
 
             logging.debug("SQL Statement executed: %s" % (query))
             try:
-                JDBCCursor.execute(query)
+                jdbc_cursor.execute(query)
             except jaydebeapi.DatabaseError as errMsg:
                 logging.error(
                     "Failure when communicating with JDBC database. %s" % (errMsg)
@@ -754,7 +754,7 @@ class source:
                 return result_df
 
             rows_list = []
-            for row in JDBCCursor.fetchall():
+            for row in jdbc_cursor.fetchall():
                 logging.debug(row)
                 line_dict = {}
                 if table == None:
@@ -808,7 +808,7 @@ class source:
                 rows_list.append(line_dict)
             result_df = pd.DataFrame(rows_list)
 
-        if serverType == constant.SNOWFLAKE:
+        if server_type == constant.SNOWFLAKE:
             query = "SELECT "
             query += "	COL.TABLE_SCHEMA, "
             query += "	COL.TABLE_NAME, "
@@ -834,7 +834,7 @@ class source:
 
             logging.debug("SQL Statement executed: %s" % (query))
             try:
-                JDBCCursor.execute(query)
+                jdbc_cursor.execute(query)
             except jaydebeapi.DatabaseError as errMsg:
                 logging.error(
                     "Failure when communicating with JDBC database. %s" % (errMsg)
@@ -842,7 +842,7 @@ class source:
                 return result_df
 
             rows_list = []
-            for row in JDBCCursor.fetchall():
+            for row in jdbc_cursor.fetchall():
                 logging.debug(row)
                 line_dict = {}
                 if table == None:
@@ -886,7 +886,7 @@ class source:
                 rows_list.append(line_dict)
             result_df = pd.DataFrame(rows_list)
 
-        if serverType == constant.INFORMIX:
+        if server_type == constant.INFORMIX:
             query = "select "
             query += "trim(st.owner) as schema_name, "
             query += "trim(st.tabname) as table_name, "
@@ -910,7 +910,7 @@ class source:
 
             logging.debug("SQL Statement executed: %s" % (query))
             try:
-                JDBCCursor.execute(query)
+                jdbc_cursor.execute(query)
             except jaydebeapi.DatabaseError as errMsg:
                 logging.error(
                     "Failure when communicating with JDBC database. %s" % (errMsg)
@@ -918,7 +918,7 @@ class source:
                 return result_df
 
             rows_list = []
-            for row in JDBCCursor.fetchall():
+            for row in jdbc_cursor.fetchall():
                 logging.debug(row)
                 line_dict = {}
                 if table == None:
@@ -936,77 +936,77 @@ class source:
 
                 # Column type column includes not only the column type, but also values like if it allows null or not
                 # More info can be found on https://www.ibm.com/docs/en/informix-servers/12.10?topic=tables-syscolumns
-                columnTypeMaskedValue = row[4] & 0x00FF  #
+                column_type_masked_value = row[4] & 0x00FF  #
 
-                if columnTypeMaskedValue == 0:
+                if column_type_masked_value == 0:
                     line_dict["SOURCE_COLUMN_TYPE"] = "CHAR(%s)" % (row[5])
-                elif columnTypeMaskedValue == 1:
+                elif column_type_masked_value == 1:
                     line_dict["SOURCE_COLUMN_TYPE"] = "SMALLINT"
-                elif columnTypeMaskedValue == 2:
+                elif column_type_masked_value == 2:
                     line_dict["SOURCE_COLUMN_TYPE"] = "INTEGER"
-                elif columnTypeMaskedValue == 2:
+                elif column_type_masked_value == 2:
                     line_dict["SOURCE_COLUMN_TYPE"] = "INTEGER"
-                elif columnTypeMaskedValue == 3:
+                elif column_type_masked_value == 3:
                     line_dict["SOURCE_COLUMN_TYPE"] = "FLOAT(%s)" % (row[5])
-                elif columnTypeMaskedValue == 4:
+                elif column_type_masked_value == 4:
                     line_dict["SOURCE_COLUMN_TYPE"] = "SMALLFLOAT(%s)" % (row[5])
                 # elif columnTypeMaskedValue == 5:	line_dict["SOURCE_COLUMN_TYPE"] = "DECIMAL(%s)"%(row[5])
-                elif columnTypeMaskedValue == 6:
+                elif column_type_masked_value == 6:
                     line_dict["SOURCE_COLUMN_TYPE"] = "SERIAL"
-                elif columnTypeMaskedValue == 7:
+                elif column_type_masked_value == 7:
                     line_dict["SOURCE_COLUMN_TYPE"] = "DATE"
                 # elif columnTypeMaskedValue == 8:	line_dict["SOURCE_COLUMN_TYPE"] = "MONEY(%s)"%(row[5])
-                elif columnTypeMaskedValue == 9:
+                elif column_type_masked_value == 9:
                     line_dict["SOURCE_COLUMN_TYPE"] = "NULL"
-                elif columnTypeMaskedValue == 10:
+                elif column_type_masked_value == 10:
                     line_dict["SOURCE_COLUMN_TYPE"] = "DATETIME"
-                elif columnTypeMaskedValue == 11:
+                elif column_type_masked_value == 11:
                     line_dict["SOURCE_COLUMN_TYPE"] = "BYTE(%s)" % (row[5])
-                elif columnTypeMaskedValue == 12:
+                elif column_type_masked_value == 12:
                     line_dict["SOURCE_COLUMN_TYPE"] = "TEXT(%s)" % (row[5])
-                elif columnTypeMaskedValue == 13:
+                elif column_type_masked_value == 13:
                     line_dict["SOURCE_COLUMN_TYPE"] = "VARCHAR(%s)" % (row[5])
-                elif columnTypeMaskedValue == 14:
+                elif column_type_masked_value == 14:
                     line_dict["SOURCE_COLUMN_TYPE"] = "INTERVAL"
-                elif columnTypeMaskedValue == 15:
+                elif column_type_masked_value == 15:
                     line_dict["SOURCE_COLUMN_TYPE"] = "NCHAR(%s)" % (row[5])
-                elif columnTypeMaskedValue == 16:
+                elif column_type_masked_value == 16:
                     line_dict["SOURCE_COLUMN_TYPE"] = "NVARCHAR(%s)" % (row[5])
-                elif columnTypeMaskedValue == 17:
+                elif column_type_masked_value == 17:
                     line_dict["SOURCE_COLUMN_TYPE"] = "INT8"
-                elif columnTypeMaskedValue == 18:
+                elif column_type_masked_value == 18:
                     line_dict["SOURCE_COLUMN_TYPE"] = "SERIAL8"
-                elif columnTypeMaskedValue == 19:
+                elif column_type_masked_value == 19:
                     line_dict["SOURCE_COLUMN_TYPE"] = "SET"
-                elif columnTypeMaskedValue == 20:
+                elif column_type_masked_value == 20:
                     line_dict["SOURCE_COLUMN_TYPE"] = "MULTISET"
-                elif columnTypeMaskedValue == 21:
+                elif column_type_masked_value == 21:
                     line_dict["SOURCE_COLUMN_TYPE"] = "LIST"
-                elif columnTypeMaskedValue == 22:
+                elif column_type_masked_value == 22:
                     line_dict["SOURCE_COLUMN_TYPE"] = "ROW"
-                elif columnTypeMaskedValue == 23:
+                elif column_type_masked_value == 23:
                     line_dict["SOURCE_COLUMN_TYPE"] = "COLLECTION"
-                elif columnTypeMaskedValue == 40:
+                elif column_type_masked_value == 40:
                     line_dict["SOURCE_COLUMN_TYPE"] = "LVARCHAR(%s)" % (row[5])
-                elif columnTypeMaskedValue == 41:
+                elif column_type_masked_value == 41:
                     line_dict["SOURCE_COLUMN_TYPE"] = "CLOB"
-                elif columnTypeMaskedValue == 43:
+                elif column_type_masked_value == 43:
                     line_dict["SOURCE_COLUMN_TYPE"] = "LVARCHAR(%s)" % (row[5])
-                elif columnTypeMaskedValue == 45:
+                elif column_type_masked_value == 45:
                     line_dict["SOURCE_COLUMN_TYPE"] = "BOOLEAN"
-                elif columnTypeMaskedValue == 52:
+                elif column_type_masked_value == 52:
                     line_dict["SOURCE_COLUMN_TYPE"] = "BIGINT"
-                elif columnTypeMaskedValue == 53:
+                elif column_type_masked_value == 53:
                     line_dict["SOURCE_COLUMN_TYPE"] = "BIGSERIAL"
 
-                if columnTypeMaskedValue == 5:
+                if column_type_masked_value == 5:
                     precision, scale = divmod(row[5], 256)
                     line_dict["SOURCE_COLUMN_TYPE"] = "DECIMAL(%s,%s)" % (
                         precision,
                         scale,
                     )
 
-                if columnTypeMaskedValue == 8:
+                if column_type_masked_value == 8:
                     precision, scale = divmod(row[5], 256)
                     line_dict["SOURCE_COLUMN_TYPE"] = "MONEY(%s,%s)" % (
                         precision,
@@ -1043,7 +1043,7 @@ class source:
                 rows_list.append(line_dict)
             result_df = pd.DataFrame(rows_list)
 
-        if serverType == constant.SQLANYWHERE:
+        if server_type == constant.SQLANYWHERE:
             query = "select "
             query += "   db.dbspace_name as table_schema, "
             query += "   t.table_name, "
@@ -1074,7 +1074,7 @@ class source:
 
             logging.debug("SQL Statement executed: %s" % (query))
             try:
-                JDBCCursor.execute(query)
+                jdbc_cursor.execute(query)
             except jaydebeapi.DatabaseError as errMsg:
                 logging.error(
                     "Failure when communicating with JDBC database. %s" % (errMsg)
@@ -1082,7 +1082,7 @@ class source:
                 return result_df
 
             rows_list = []
-            for row in JDBCCursor.fetchall():
+            for row in jdbc_cursor.fetchall():
                 line_dict = {}
                 if table == None:
                     line_dict["SCHEMA_NAME"] = self.removeNewLine(row[0])
@@ -1135,13 +1135,13 @@ class source:
         return result_df
 
     def readTableKeys(
-        self, JDBCCursor, serverType=None, database=None, schema=None, table=None
+        self, jdbc_cursor, server_type=None, database=None, schema=None, table=None
     ):
         logging.debug("Executing schemaReader.readTableKeys()")
         query = None
         result_df = pd.DataFrame()
 
-        if serverType == constant.MSSQL:
+        if server_type == constant.MSSQL:
             query = "SELECT "
             # 			query += "	CAST(oParentColDtl.TABLE_SCHEMA AS VARCHAR(4000)) as SCHEMA_NAME, "
             query += "	SCHEMA_NAME(PK_Table.schema_id) as SCHEMA_NAME, "
@@ -1233,7 +1233,7 @@ class source:
 
             logging.debug("SQL Statement executed: %s" % (query))
             try:
-                JDBCCursor.execute(query)
+                jdbc_cursor.execute(query)
             except jaydebeapi.DatabaseError as errMsg:
                 logging.error(
                     "Failure when communicating with JDBC database. %s" % (errMsg)
@@ -1244,7 +1244,7 @@ class source:
             # 			print(stageDurationStop - stageDurationStart)
 
             rows_list = []
-            for row in JDBCCursor.fetchall():
+            for row in jdbc_cursor.fetchall():
                 logging.debug(row)
                 line_dict = {}
                 if table == None:
@@ -1263,7 +1263,7 @@ class source:
         # 			print(result_df)
         # 			sys.exit(2)
 
-        if serverType == constant.ORACLE:
+        if server_type == constant.ORACLE:
             query = "SELECT "
             query += "  DISTINCT  CAST (acc.OWNER AS VARCHAR(4000)) AS SCHEMA_NAME, "
             query += "  CAST (acc.TABLE_NAME AS VARCHAR(4000)) AS  TABLE_NAME, "
@@ -1325,7 +1325,7 @@ class source:
 
             logging.debug("SQL Statement executed: %s" % (query))
             try:
-                JDBCCursor.execute(query)
+                jdbc_cursor.execute(query)
             except jaydebeapi.DatabaseError as errMsg:
                 logging.error(
                     "Failure when communicating with JDBC database. %s" % (errMsg)
@@ -1333,7 +1333,7 @@ class source:
                 return result_df
 
             rows_list = []
-            for row in JDBCCursor.fetchall():
+            for row in jdbc_cursor.fetchall():
                 logging.debug(row)
                 line_dict = {}
                 if table == None:
@@ -1350,7 +1350,7 @@ class source:
                 rows_list.append(line_dict)
             result_df = pd.DataFrame(rows_list)
 
-        if serverType == constant.MYSQL:
+        if server_type == constant.MYSQL:
             query = "SELECT kcu.CONSTRAINT_SCHEMA AS SCHEMA_NAME, "
             query += "	kcu.table_name AS TABLE_NAME, "
             query += "	kcu.constraint_name AS CONSTRAINT_NAME, "
@@ -1400,7 +1400,7 @@ class source:
 
             logging.debug("SQL Statement executed: %s" % (query))
             try:
-                JDBCCursor.execute(query)
+                jdbc_cursor.execute(query)
             except jaydebeapi.DatabaseError as errMsg:
                 logging.error(
                     "Failure when communicating with JDBC database. %s" % (errMsg)
@@ -1408,7 +1408,7 @@ class source:
                 return result_df
 
             rows_list = []
-            for row in JDBCCursor.fetchall():
+            for row in jdbc_cursor.fetchall():
                 logging.debug(row)
                 line_dict = {}
                 if table == None:
@@ -1425,7 +1425,7 @@ class source:
                 rows_list.append(line_dict)
             result_df = pd.DataFrame(rows_list)
 
-        if serverType == constant.DB2_UDB:
+        if server_type == constant.DB2_UDB:
             query = "select "
             query += "	TRIM(SI.TBCREATOR) as SCHEMA_NAME, "
             query += "	TRIM(SI.TBNAME) as TABLE_NAME, "
@@ -1485,7 +1485,7 @@ class source:
 
             logging.debug("SQL Statement executed: %s" % (query))
             try:
-                JDBCCursor.execute(query)
+                jdbc_cursor.execute(query)
             except jaydebeapi.DatabaseError as errMsg:
                 logging.error(
                     "Failure when communicating with JDBC database. %s" % (errMsg)
@@ -1493,7 +1493,7 @@ class source:
                 return result_df
 
             rows_list = []
-            for row in JDBCCursor.fetchall():
+            for row in jdbc_cursor.fetchall():
                 logging.debug(row)
                 line_dict = {}
                 if table == None:
@@ -1510,7 +1510,7 @@ class source:
                 rows_list.append(line_dict)
             result_df = pd.DataFrame(rows_list)
 
-        if serverType == constant.DB2_AS400:
+        if server_type == constant.DB2_AS400:
             query = "SELECT "
             query += "	TRIM(SPK.TABLE_SCHEM) as SCHEMA_NAME, "
             query += "	TRIM(SPK.TABLE_NAME) as TABLE_NAME, "
@@ -1566,7 +1566,7 @@ class source:
 
             logging.debug("SQL Statement executed: %s" % (query))
             try:
-                JDBCCursor.execute(query)
+                jdbc_cursor.execute(query)
             except jaydebeapi.DatabaseError as errMsg:
                 logging.error(
                     "Failure when communicating with JDBC database. %s" % (errMsg)
@@ -1574,7 +1574,7 @@ class source:
                 return result_df
 
             rows_list = []
-            for row in JDBCCursor.fetchall():
+            for row in jdbc_cursor.fetchall():
                 logging.debug(row)
                 line_dict = {}
                 if table == None:
@@ -1591,7 +1591,7 @@ class source:
                 rows_list.append(line_dict)
             result_df = pd.DataFrame(rows_list)
 
-        if serverType == constant.POSTGRESQL:
+        if server_type == constant.POSTGRESQL:
             query = "SELECT "
             query += "	distinct kcu.constraint_schema AS SCHEMA_NAME, "
             query += "	kcu.table_name AS TABLE_NAME, "
@@ -1651,7 +1651,7 @@ class source:
 
             logging.debug("SQL Statement executed: %s" % (query))
             try:
-                JDBCCursor.execute(query)
+                jdbc_cursor.execute(query)
             except jaydebeapi.DatabaseError as errMsg:
                 logging.error(
                     "Failure when communicating with JDBC database. %s" % (errMsg)
@@ -1659,50 +1659,50 @@ class source:
                 return result_df
 
             rows_list = []
-            for row in JDBCCursor.fetchall():
+            for row in jdbc_cursor.fetchall():
                 logging.debug(row)
                 line_dict = {}
-                schemaName = row[0]
-                tableName = row[1]
-                constraintName = row[2]
-                constraintType = row[3]
-                colName = row[4].strip('"')
-                refSchemaName = row[5]
-                refTableName = row[6].strip('"')
-                refColName = row[7].strip('"')
-                colKeyPosition = 1
+                schema_name = row[0]
+                table_name = row[1]
+                constraint_name = row[2]
+                constraint_type = row[3]
+                col_name = row[4].strip('"')
+                ref_schema_name = row[5]
+                ref_table_name = row[6].strip('"')
+                ref_col_name = row[7].strip('"')
+                col_key_position = 1
 
-                if constraintType == constant.FOREIGN_KEY:
-                    if refSchemaName == "" and "." in refTableName:
-                        refArray = refTableName.split(".")
-                        refSchemaName = refArray[0]
-                        refTableName = refArray[1]
+                if constraint_type == constant.FOREIGN_KEY:
+                    if ref_schema_name == "" and "." in ref_table_name:
+                        ref_array = ref_table_name.split(".")
+                        ref_schema_name = ref_array[0]
+                        ref_table_name = ref_array[1]
 
-                    if refSchemaName == "":
-                        refSchemaName = "public"
+                    if ref_schema_name == "":
+                        ref_schema_name = "public"
 
-                colNameList = colName.split(",")
-                refColNameList = refColName.split(",")
+                col_name_list = col_name.split(",")
+                ref_col_name_list = ref_col_name.split(",")
 
-                for i, column in enumerate(colNameList):
-                    colName = colNameList[i]
-                    refColName = refColNameList[i]
+                for i, column in enumerate(col_name_list):
+                    col_name = col_name_list[i]
+                    ref_col_name = ref_col_name_list[i]
 
                     if table == None:
-                        line_dict["SCHEMA_NAME"] = schemaName
-                        line_dict["TABLE_NAME"] = tableName
-                    line_dict["CONSTRAINT_NAME"] = constraintName
-                    line_dict["CONSTRAINT_TYPE"] = constraintType
-                    line_dict["COL_NAME"] = colName
+                        line_dict["SCHEMA_NAME"] = schema_name
+                        line_dict["TABLE_NAME"] = table_name
+                    line_dict["CONSTRAINT_NAME"] = constraint_name
+                    line_dict["CONSTRAINT_TYPE"] = constraint_type
+                    line_dict["COL_NAME"] = col_name
                     # 					line_dict["COL_DATA_TYPE"] = line.split('|')[5]
-                    line_dict["REFERENCE_SCHEMA_NAME"] = refSchemaName
-                    line_dict["REFERENCE_TABLE_NAME"] = refTableName
-                    line_dict["REFERENCE_COL_NAME"] = refColName
-                    line_dict["COL_KEY_POSITION"] = colKeyPosition
+                    line_dict["REFERENCE_SCHEMA_NAME"] = ref_schema_name
+                    line_dict["REFERENCE_TABLE_NAME"] = ref_table_name
+                    line_dict["REFERENCE_COL_NAME"] = ref_col_name
+                    line_dict["COL_KEY_POSITION"] = col_key_position
                     rows_list.append(line_dict)
             result_df = pd.DataFrame(rows_list)
 
-        if serverType == constant.SNOWFLAKE:
+        if server_type == constant.SNOWFLAKE:
             if table != None:
                 query = 'SHOW PRIMARY KEYS IN TABLE "%s"."%s"."%s"' % (
                     database,
@@ -1714,7 +1714,7 @@ class source:
 
             logging.debug("SQL Statement executed: %s" % (query))
             try:
-                JDBCCursor.execute(query)
+                jdbc_cursor.execute(query)
             except jaydebeapi.DatabaseError as errMsg:
                 logging.error(
                     "Failure when communicating with JDBC database. %s" % (errMsg)
@@ -1722,7 +1722,7 @@ class source:
                 return result_df
 
             rows_list = []
-            for row in JDBCCursor.fetchall():
+            for row in jdbc_cursor.fetchall():
                 # As snowflake only gives PK's in a show function, we are forced to beleive that the order of the columns will always be the same
                 # If that changes, we need to update this code as well
                 # Example
@@ -1742,7 +1742,7 @@ class source:
                 rows_list.append(line_dict)
             result_df = pd.DataFrame(rows_list)
 
-        if serverType == constant.INFORMIX:
+        if server_type == constant.INFORMIX:
             query = "select trim(st.owner), "
             query += "trim(st.tabname), "
             query += "trim(si.idxname), "
@@ -1776,7 +1776,7 @@ class source:
 
             logging.debug("SQL Statement executed: %s" % (query))
             try:
-                JDBCCursor.execute(query)
+                jdbc_cursor.execute(query)
             except jaydebeapi.DatabaseError as errMsg:
                 logging.error(
                     "Failure when communicating with JDBC database. %s" % (errMsg)
@@ -1784,40 +1784,40 @@ class source:
                 return result_df
 
             rows_list = []
-            for row in JDBCCursor.fetchall():
+            for row in jdbc_cursor.fetchall():
                 logging.debug(row)
-                schemaName = row[0]
-                tableName = row[1]
-                constraintName = row[2]
-                constraintType = row[3]
-                colKeyPosition = 1
-                colIndex = 3  # 3 + lowest value of colKeyPosition will be the first column in the PK
+                schema_name = row[0]
+                table_name = row[1]
+                constraint_name = row[2]
+                constraint_type = row[3]
+                col_key_position = 1
+                col_index = 3  # 3 + lowest value of colKeyPosition will be the first column in the PK
 
                 # Informix will only give one row for the PrimaryKey, but 16 columns with columnnames of what columns that is part of the PK.
-                while colKeyPosition <= 16:
-                    if row[colIndex + colKeyPosition] == None:
+                while col_key_position <= 16:
+                    if row[col_index + col_key_position] == None:
                         break
 
                     line_dict = {}
                     if table == None:
-                        line_dict["SCHEMA_NAME"] = schemaName
-                        line_dict["TABLE_NAME"] = tableName
-                    line_dict["CONSTRAINT_NAME"] = constraintName
+                        line_dict["SCHEMA_NAME"] = schema_name
+                        line_dict["TABLE_NAME"] = table_name
+                    line_dict["CONSTRAINT_NAME"] = constraint_name
                     line_dict["CONSTRAINT_TYPE"] = constant.PRIMARY_KEY
-                    line_dict["COL_NAME"] = row[colIndex + colKeyPosition]
+                    line_dict["COL_NAME"] = row[col_index + col_key_position]
                     line_dict["REFERENCE_SCHEMA_NAME"] = None
                     line_dict["REFERENCE_TABLE_NAME"] = None
                     line_dict["REFERENCE_COL_NAME"] = None
-                    line_dict["COL_KEY_POSITION"] = colKeyPosition
+                    line_dict["COL_KEY_POSITION"] = col_key_position
 
-                    colKeyPosition = colKeyPosition + 1
+                    col_key_position = col_key_position + 1
                     rows_list.append(line_dict)
 
             # 				print(rows_list)
 
             result_df = pd.DataFrame(rows_list)
 
-        if serverType == constant.SQLANYWHERE:
+        if server_type == constant.SQLANYWHERE:
             # 			query  = "SELECT "
             # 			query += "	distinct kcu.constraint_schema AS SCHEMA_NAME, "
             # 			query += "	kcu.table_name AS TABLE_NAME, "
@@ -1876,7 +1876,7 @@ class source:
 
             logging.debug("SQL Statement executed: %s" % (query))
             try:
-                JDBCCursor.execute(query)
+                jdbc_cursor.execute(query)
             except jaydebeapi.DatabaseError as errMsg:
                 logging.error(
                     "Failure when communicating with JDBC database. %s" % (errMsg)
@@ -1884,7 +1884,7 @@ class source:
                 return result_df
 
             rows_list = []
-            for row in JDBCCursor.fetchall():
+            for row in jdbc_cursor.fetchall():
                 logging.debug(row)
                 line_dict = {}
                 if table == None:
@@ -1905,29 +1905,29 @@ class source:
 
             logging.debug("SQL Statement executed: %s" % (query))
             try:
-                JDBCCursor.execute(query)
+                jdbc_cursor.execute(query)
             except jaydebeapi.DatabaseError as errMsg:
                 logging.error(
                     "Failure when communicating with JDBC database. %s" % (errMsg)
                 )
                 return result_df
 
-            for row in JDBCCursor.fetchall():
+            for row in jdbc_cursor.fetchall():
                 logging.debug(row)
-                columnCounter = 0
-                for columnKey in row[5].split(","):
+                column_counter = 0
+                for column_key in row[5].split(","):
                     line_dict = {}
                     if table == None:
                         line_dict["SCHEMA_NAME"] = row[0]
                         line_dict["TABLE_NAME"] = row[1]
                     line_dict["CONSTRAINT_NAME"] = row[4]
                     line_dict["CONSTRAINT_TYPE"] = constant.FOREIGN_KEY
-                    line_dict["COL_NAME"] = columnKey.split(" IS ")[0]
+                    line_dict["COL_NAME"] = column_key.split(" IS ")[0]
                     line_dict["REFERENCE_SCHEMA_NAME"] = row[2]
                     line_dict["REFERENCE_TABLE_NAME"] = row[3]
-                    line_dict["REFERENCE_COL_NAME"] = columnKey.split(" IS ")[1]
-                    line_dict["COL_KEY_POSITION"] = columnCounter
-                    columnCounter += 1
+                    line_dict["REFERENCE_COL_NAME"] = column_key.split(" IS ")[1]
+                    line_dict["COL_KEY_POSITION"] = column_counter
+                    column_counter += 1
                     rows_list.append(line_dict)
 
             result_df = pd.DataFrame(rows_list)
@@ -1940,13 +1940,13 @@ class source:
         return result_df
 
     def readTableIndex(
-        self, JDBCCursor, serverType=None, database=None, schema=None, table=None
+        self, jdbc_cursor, server_type=None, database=None, schema=None, table=None
     ):
         logging.debug("Executing schemaReader.readTableColumns()")
         query = None
         result_df = pd.DataFrame()
 
-        if serverType == constant.MSSQL:
+        if server_type == constant.MSSQL:
             query = ""
             query += "select i.name,"
             query += "    i.type, "
@@ -1969,15 +1969,15 @@ class source:
 
             logging.debug("SQL Statement executed: %s" % (query))
             try:
-                JDBCCursor.execute(query)
+                jdbc_cursor.execute(query)
             except jaydebeapi.DatabaseError as errMsg:
                 logging.error(
                     "Failure when communicating with JDBC database. %s" % (errMsg)
                 )
                 return result_df
 
-            uniqueDict = {0: "Not unique", 1: "Unique"}
-            indexTypeDict = {
+            unique_dict = {0: "Not unique", 1: "Unique"}
+            index_type_dict = {
                 1: "Clustered index",
                 2: "Nonclustered unique index",
                 3: "XML index",
@@ -1988,19 +1988,19 @@ class source:
             }
 
             rows_list = []
-            for row in JDBCCursor.fetchall():
+            for row in jdbc_cursor.fetchall():
                 logging.debug(row)
                 line_dict = {}
                 line_dict["Name"] = row[0]
-                line_dict["Type"] = indexTypeDict.get(row[1], row[1])
-                line_dict["Unique"] = uniqueDict.get(int(row[2]), int(row[2]))
+                line_dict["Type"] = index_type_dict.get(row[1], row[1])
+                line_dict["Unique"] = unique_dict.get(int(row[2]), int(row[2]))
                 line_dict["Column"] = row[3]
                 line_dict["ColumnOrder"] = row[4]
                 line_dict["IsNullable"] = row[5]
                 rows_list.append(line_dict)
             result_df = pd.DataFrame(rows_list)
 
-        if serverType == constant.ORACLE:
+        if server_type == constant.ORACLE:
             query = ""
             query += "SELECT "
             query += "   ai.index_name, "
@@ -2023,7 +2023,7 @@ class source:
 
             logging.debug("SQL Statement executed: %s" % (query))
             try:
-                JDBCCursor.execute(query)
+                jdbc_cursor.execute(query)
             except jaydebeapi.DatabaseError as errMsg:
                 logging.error(
                     "Failure when communicating with JDBC database. %s" % (errMsg)
@@ -2031,7 +2031,7 @@ class source:
                 return result_df
 
             rows_list = []
-            for row in JDBCCursor.fetchall():
+            for row in jdbc_cursor.fetchall():
                 logging.debug(row)
                 line_dict = {}
                 line_dict["Name"] = row[0]
@@ -2049,12 +2049,12 @@ class source:
                 rows_list.append(line_dict)
             result_df = pd.DataFrame(rows_list)
 
-        if serverType == constant.MYSQL:
+        if server_type == constant.MYSQL:
             query = "SHOW INDEX FROM `%s`.`%s`" % (database, table)
 
             logging.debug("SQL Statement executed: %s" % (query))
             try:
-                JDBCCursor.execute(query)
+                jdbc_cursor.execute(query)
             except jaydebeapi.DatabaseError as errMsg:
                 logging.error(
                     "Failure when communicating with JDBC database. %s" % (errMsg)
@@ -2062,7 +2062,7 @@ class source:
                 return result_df
 
             rows_list = []
-            for row in JDBCCursor.fetchall():
+            for row in jdbc_cursor.fetchall():
                 logging.debug(row)
                 line_dict = {}
                 # Order of columns from "SHOW INDEX" is fixed. If mysql change the standard, we need to change here aswell
@@ -2081,7 +2081,7 @@ class source:
                 rows_list.append(line_dict)
             result_df = pd.DataFrame(rows_list)
 
-        if serverType == constant.DB2_UDB:
+        if server_type == constant.DB2_UDB:
             query = "select I.INDNAME, I.INDEXTYPE, I.UNIQUERULE, IC.COLNAME, IC.COLSEQ, C.NULLS "
             query += "from SYSCAT.INDEXES I "
             query += "left join SYSCAT.INDEXCOLUSE IC "
@@ -2096,15 +2096,15 @@ class source:
 
             logging.debug("SQL Statement executed: %s" % (query))
             try:
-                JDBCCursor.execute(query)
+                jdbc_cursor.execute(query)
             except jaydebeapi.DatabaseError as errMsg:
                 logging.error(
                     "Failure when communicating with JDBC database. %s" % (errMsg)
                 )
                 return result_df
 
-            uniqueDict = {"D": "Not unique", "U": "Unique", "P": "Unique - PrimaryKey"}
-            indexTypeDict = {
+            unique_dict = {"D": "Not unique", "U": "Unique", "P": "Unique - PrimaryKey"}
+            index_type_dict = {
                 "BLOK": "Block index",
                 "CLUS": "Clustering index",
                 "DIM": "Dimension block index",
@@ -2116,12 +2116,12 @@ class source:
             }
 
             rows_list = []
-            for row in JDBCCursor.fetchall():
+            for row in jdbc_cursor.fetchall():
                 logging.debug(row)
                 line_dict = {}
                 line_dict["Name"] = row[0]
-                line_dict["Type"] = indexTypeDict.get(row[1].strip(), row[1].strip())
-                line_dict["Unique"] = uniqueDict.get(row[2].strip(), row[2].strip())
+                line_dict["Type"] = index_type_dict.get(row[1].strip(), row[1].strip())
+                line_dict["Unique"] = unique_dict.get(row[2].strip(), row[2].strip())
                 line_dict["Column"] = row[3]
                 line_dict["ColumnOrder"] = row[4]
                 if row[5] == "N":
@@ -2131,7 +2131,7 @@ class source:
                 rows_list.append(line_dict)
             result_df = pd.DataFrame(rows_list)
 
-        if serverType == constant.INFORMIX:
+        if server_type == constant.INFORMIX:
             query = "select trim(si.idxname), "
             query += "si.idxtype, "
             query += "si.clustered, "
@@ -2159,15 +2159,15 @@ class source:
 
             logging.debug("SQL Statement executed: %s" % (query))
             try:
-                JDBCCursor.execute(query)
+                jdbc_cursor.execute(query)
             except jaydebeapi.DatabaseError as errMsg:
                 logging.error(
                     "Failure when communicating with JDBC database. %s" % (errMsg)
                 )
                 return result_df
 
-            indexTypeDict = {" ": "No Clustering index", "C": "Clustering index"}
-            uniqueDict = {
+            index_type_dict = {" ": "No Clustering index", "C": "Clustering index"}
+            unique_dict = {
                 "U": "Not unique",
                 "D": "Unique",
                 "G": "Unknown",
@@ -2177,44 +2177,44 @@ class source:
             }
 
             rows_list = []
-            for row in JDBCCursor.fetchall():
+            for row in jdbc_cursor.fetchall():
                 logging.debug(row)
-                indexName = row[0]
-                indexUnique = uniqueDict.get(row[1], row[1])
-                indexType = indexTypeDict.get(row[2], row[2])
-                colKeyPosition = 1
-                colIndex = 2  # 2 + lowest value of colKeyPosition will be the first column in the PK
+                index_name = row[0]
+                index_unique = unique_dict.get(row[1], row[1])
+                index_type = index_type_dict.get(row[2], row[2])
+                col_key_position = 1
+                col_index = 2  # 2 + lowest value of colKeyPosition will be the first column in the PK
 
                 # Informix will only give one row for the PrimaryKey, but 16 columns with columnnames of what columns that is part of the PK.
-                while colKeyPosition <= 16:
-                    if row[colIndex + colKeyPosition] == None:
+                while col_key_position <= 16:
+                    if row[col_index + col_key_position] == None:
                         break
 
                     line_dict = {}
-                    line_dict["Name"] = indexName
-                    line_dict["Type"] = indexType
-                    line_dict["Unique"] = indexUnique
-                    line_dict["Column"] = row[colIndex + colKeyPosition]
-                    line_dict["ColumnOrder"] = colKeyPosition
+                    line_dict["Name"] = index_name
+                    line_dict["Type"] = index_type
+                    line_dict["Unique"] = index_unique
+                    line_dict["Column"] = row[col_index + col_key_position]
+                    line_dict["ColumnOrder"] = col_key_position
                     # We cant determine if the column allows null or not. So we set it to -1 = Unknown
                     line_dict["isNullable"] = -1
 
-                    colKeyPosition = colKeyPosition + 1
+                    col_key_position = col_key_position + 1
                     rows_list.append(line_dict)
 
             result_df = pd.DataFrame(rows_list)
 
-        if serverType == constant.DB2_AS400:
+        if server_type == constant.DB2_AS400:
             logging.warning(
                 "Reading Index information from DB2AS400 connections is not supported. Please contact developer if this is required"
             )
 
-        if serverType == constant.POSTGRESQL:
+        if server_type == constant.POSTGRESQL:
             logging.warning(
                 "Reading Index information from PostgreSQL connections is not supported. Please contact developer if this is required"
             )
 
-        if serverType == constant.SNOWFLAKE:
+        if server_type == constant.SNOWFLAKE:
             logging.warning(
                 "Reading Index information from Snowflake connections is not supported. Please contact developer if this is required"
             )
@@ -2365,58 +2365,58 @@ class source:
         logging.debug("Executing schemaReader.getJDBCtablesAndViews() - Finished")
         return result_df
 
-    def getJdbcTableType(self, serverType, tableTypeFromSource):
+    def getJdbcTableType(self, server_type, table_type_from_source):
         """Returns the table type of the table"""
         logging.debug("Executing schemaReader.getJdbcTableType()")
 
         # 		if self.source_columns_df.empty == True:
-        if tableTypeFromSource == None:
+        if table_type_from_source == None:
             logging.warning("No metadata for tableType sent to getJdbcTableType()")
             return None
 
         # 		tableTypeFromSource = self.source_columns_df.iloc[0]["TABLE_TYPE"]
-        tableType = None
+        table_type = None
 
-        if serverType == constant.MSSQL:
+        if server_type == constant.MSSQL:
             # BASE TABLE, VIEW
-            if tableTypeFromSource == "VIEW":
-                tableType = "view"
+            if table_type_from_source == "VIEW":
+                table_type = "view"
             else:
-                tableType = "table"
+                table_type = "table"
 
-        elif serverType == constant.ORACLE:
+        elif server_type == constant.ORACLE:
             # TABLE, VIEW
-            if tableTypeFromSource == "VIEW":
-                tableType = "view"
+            if table_type_from_source == "VIEW":
+                table_type = "view"
             else:
-                tableType = "table"
+                table_type = "table"
 
-        elif serverType == constant.MYSQL:
+        elif server_type == constant.MYSQL:
             # BASE TABLE, VIEW, SYSTEM VIEW (for an INFORMATION_SCHEMA table)
-            if tableTypeFromSource == "VIEW":
-                tableType = "view"
+            if table_type_from_source == "VIEW":
+                table_type = "view"
             else:
-                tableType = "table"
+                table_type = "table"
 
-        elif serverType == constant.POSTGRESQL:
+        elif server_type == constant.POSTGRESQL:
             # BASE TABLE, VIEW, FOREIGN TABLE, LOCAL TEMPORARY
-            if tableTypeFromSource == "VIEW":
-                tableType = "view"
-            if tableTypeFromSource == "LOCAL TEMPORARY":
-                tableType = "temporary"
+            if table_type_from_source == "VIEW":
+                table_type = "view"
+            if table_type_from_source == "LOCAL TEMPORARY":
+                table_type = "temporary"
             else:
-                tableType = "table"
+                table_type = "table"
 
-        elif serverType == constant.PROGRESS:
+        elif server_type == constant.PROGRESS:
             # Unsure. Cant find documentation.
             # Verified	T=Table
             # We assume	V=View
-            if tableTypeFromSource == "V":
-                tableType = "view"
+            if table_type_from_source == "V":
+                table_type = "view"
             else:
-                tableType = "table"
+                table_type = "table"
 
-        elif serverType == constant.DB2_UDB or serverType == constant.DB2_AS400:
+        elif server_type == constant.DB2_UDB or server_type == constant.DB2_AS400:
             # A = Alias
             # C = Clone Table
             # D = Accelerator-only table
@@ -2428,44 +2428,44 @@ class source:
             # T = Table
             # V = View
             # X = Auxiliary table
-            if tableTypeFromSource == "A":
-                tableType = "view"
-            elif tableTypeFromSource == "V":
-                tableType = "view"
+            if table_type_from_source == "A":
+                table_type = "view"
+            elif table_type_from_source == "V":
+                table_type = "view"
             else:
-                tableType = "table"
+                table_type = "table"
 
-        elif serverType == constant.INFORMIX:
+        elif server_type == constant.INFORMIX:
             # https://www.ibm.com/docs/en/informix-servers/12.10?topic=tables-systables
-            if tableTypeFromSource == "T":
-                tableType = "table"
-            elif tableTypeFromSource == "E":
-                tableType = "external table"
-            elif tableTypeFromSource == "V":
-                tableType = "view"
-            elif tableTypeFromSource == "Q":
-                tableType = "sequence"
-            elif tableTypeFromSource == "P":
-                tableType = "private synonym"
-            elif tableTypeFromSource == "S":
-                tableType = "public synonym"
+            if table_type_from_source == "T":
+                table_type = "table"
+            elif table_type_from_source == "E":
+                table_type = "external table"
+            elif table_type_from_source == "V":
+                table_type = "view"
+            elif table_type_from_source == "Q":
+                table_type = "sequence"
+            elif table_type_from_source == "P":
+                table_type = "private synonym"
+            elif table_type_from_source == "S":
+                table_type = "public synonym"
 
-        elif serverType == constant.SQLANYWHERE:
+        elif server_type == constant.SQLANYWHERE:
             # https://infocenter.sybase.com/help/index.jsp?topic=/com.sybase.help.sqlanywhere.12.0.1/dbreference/systabcol-system-view.html
-            if tableTypeFromSource == "1":
-                tableType = "table"
-            elif tableTypeFromSource == "2":
-                tableType = "Materialized view"
-            elif tableTypeFromSource == "3":
-                tableType = "Global temporary table"
-            elif tableTypeFromSource == "4":
-                tableType = "Local temporary table"
-            elif tableTypeFromSource == "5":
-                tableType = "Text index base table"
-            elif tableTypeFromSource == "6":
-                tableType = "Text index global temporary table"
-            elif tableTypeFromSource == "21":
-                tableType = "view"
+            if table_type_from_source == "1":
+                table_type = "table"
+            elif table_type_from_source == "2":
+                table_type = "Materialized view"
+            elif table_type_from_source == "3":
+                table_type = "Global temporary table"
+            elif table_type_from_source == "4":
+                table_type = "Local temporary table"
+            elif table_type_from_source == "5":
+                table_type = "Text index base table"
+            elif table_type_from_source == "6":
+                table_type = "Text index global temporary table"
+            elif table_type_from_source == "21":
+                table_type = "view"
 
         logging.debug("Executing schemaReader.getJdbcTableType() - Finished")
-        return tableType
+        return table_type

@@ -51,21 +51,21 @@ class distCP(threading.Thread):
         log = logging.getLogger(self.loggerName)
         log.info("distCP %s started" % (self.name))
 
-        yarnQueue = configuration.get("Server", "distCP_yarnqueue")
+        yarn_queue = configuration.get("Server", "distCP_yarnqueue")
 
         while not self.threadStopEvent.isSet():
-            distCPrequest = self.distCPreqQueue.get()
-            if distCPrequest is None:
+            dist_cp_request = self.distCPreqQueue.get()
+            if dist_cp_request is None:
                 time.sleep(1)
                 break
 
-            tableID = distCPrequest.get("tableID")
-            hiveDB = distCPrequest.get("hiveDB")
-            hiveTable = distCPrequest.get("hiveTable")
-            destination = distCPrequest.get("destination")
-            failures = distCPrequest.get("failures")
-            HDFSsourcePath = distCPrequest.get("HDFSsourcePath")
-            HDFStargetPath = distCPrequest.get("HDFStargetPath")
+            table_id = dist_cp_request.get("tableID")
+            hive_db = dist_cp_request.get("hiveDB")
+            hive_table = dist_cp_request.get("hiveTable")
+            destination = dist_cp_request.get("destination")
+            failures = dist_cp_request.get("failures")
+            hdfs_source_path = dist_cp_request.get("HDFSsourcePath")
+            hdfs_target_path = dist_cp_request.get("HDFStargetPath")
 
             log.info(
                 "Thread %s: Starting a new distCP copy with the following paramaters"
@@ -75,28 +75,28 @@ class distCP(threading.Thread):
                 "Thread %s: --------------------------------------------------------"
                 % (self.name)
             )
-            log.info("Thread %s: tableID = %s" % (self.name, tableID))
-            log.info("Thread %s: hiveDB = %s" % (self.name, hiveDB))
-            log.info("Thread %s: hiveTable = %s" % (self.name, hiveTable))
+            log.info("Thread %s: tableID = %s" % (self.name, table_id))
+            log.info("Thread %s: hiveDB = %s" % (self.name, hive_db))
+            log.info("Thread %s: hiveTable = %s" % (self.name, hive_table))
             log.info("Thread %s: destination = %s" % (self.name, destination))
-            log.info("Thread %s: HDFSsourcePath = %s" % (self.name, HDFSsourcePath))
-            log.info("Thread %s: HDFStargetPath = %s" % (self.name, HDFStargetPath))
+            log.info("Thread %s: HDFSsourcePath = %s" % (self.name, hdfs_source_path))
+            log.info("Thread %s: HDFStargetPath = %s" % (self.name, hdfs_target_path))
             log.info(
                 "Thread %s: --------------------------------------------------------"
                 % (self.name)
             )
 
-            distcpCommand = [
+            distcp_command = [
                 "hadoop",
                 "distcp",
                 "-D",
                 "yarn.timeline-service.enabled=false",
                 "-D",
-                "mapreduce.job.queuename=%s" % (yarnQueue),
+                "mapreduce.job.queuename=%s" % (yarn_queue),
                 "-overwrite",
                 "-delete",
-                "%s" % (HDFSsourcePath),
-                "%s" % (HDFStargetPath),
+                "%s" % (hdfs_source_path),
+                "%s" % (hdfs_target_path),
             ]
 
             log.info("Thread %s:  ______________________ " % (self.name))
@@ -107,16 +107,16 @@ class distCP(threading.Thread):
 
             # Start distcp
             sh_session = subprocess.Popen(
-                distcpCommand, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
+                distcp_command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
             )
-            distCPoutput = ""
+            dist_cp_output = ""
 
             # Print Stdout and stderr while distcp is running
             while sh_session.poll() == None:
                 row = sh_session.stdout.readline().decode("utf-8").rstrip()
                 if row != "":
                     log.info("Thread %s: %s" % (self.name, row))
-                    distCPoutput += row + "\n"
+                    dist_cp_output += row + "\n"
                     sys.stdout.flush()
 
             # Print what is left in output after distcp is finished
@@ -124,7 +124,7 @@ class distCP(threading.Thread):
                 row = row.decode("utf-8").rstrip()
                 if row != "":
                     log.info("Thread %s: %s" % (self.name, row))
-                    distCPoutput += row + "\n"
+                    dist_cp_output += row + "\n"
                     sys.stdout.flush()
 
             log.info("Thread %s:  _________________________ " % (self.name))
@@ -133,12 +133,12 @@ class distCP(threading.Thread):
             log.info("Thread %s: |_________________________|" % (self.name))
             log.info("Thread %s: " % (self.name))
 
-            disCPresult = False
-            if " ERROR " in distCPoutput:
+            dis_cp_result = False
+            if " ERROR " in dist_cp_output:
                 log.error("Thread %s: ERROR detected during distCP copy." % (self.name))
                 failures = failures + 1
-            elif " completed successfully" in distCPoutput:
-                disCPresult = True
+            elif " completed successfully" in dist_cp_output:
+                dis_cp_result = True
                 failures = 0
             else:
                 log.error(
@@ -147,23 +147,23 @@ class distCP(threading.Thread):
                 )
                 failures = failures + 1
 
-            distCPresponse = {}
-            distCPresponse["tableID"] = tableID
-            distCPresponse["hiveDB"] = hiveDB
-            distCPresponse["hiveTable"] = hiveTable
-            distCPresponse["destination"] = destination
-            distCPresponse["result"] = disCPresult
-            distCPresponse["failures"] = failures
+            dist_cp_response = {}
+            dist_cp_response["tableID"] = table_id
+            dist_cp_response["hiveDB"] = hive_db
+            dist_cp_response["hiveTable"] = hive_table
+            dist_cp_response["destination"] = destination
+            dist_cp_response["result"] = dis_cp_result
+            dist_cp_response["failures"] = failures
 
-            self.distCPresQueue.put(distCPresponse)
+            self.distCPresQueue.put(dist_cp_response)
 
         log.info("distCP %s stopped" % (self.name))
 
 
 class serverDaemon(run.RunDaemon):
-    def setConfig(self, action, logFormat):
+    def setConfig(self, action, log_format):
         self.action = action
-        self.logFormat = logFormat
+        self.logFormat = log_format
 
     def run(self):
         # This is the main event loop where the 'real' daemonwork happens
@@ -203,33 +203,33 @@ class serverDaemon(run.RunDaemon):
 
         # Start the distCP threads
         if configuration.get("Server", "distCP_separate_logs").lower() == "true":
-            distCP_separate_logs = True
+            dist_cp_separate_logs = True
         else:
-            distCP_separate_logs = False
+            dist_cp_separate_logs = False
 
-        distCPobjects = []
-        distCPthreads = int(configuration.get("Server", "distCP_threads"))
-        if distCPthreads == 0:
+        dist_cp_objects = []
+        dist_cp_threads = int(configuration.get("Server", "distCP_threads"))
+        if dist_cp_threads == 0:
             log.info("Distcp disabled as the number of threads is set to 0")
         else:
-            log.info("Starting %s distCp threads" % (distCPthreads))
+            log.info("Starting %s distCp threads" % (dist_cp_threads))
 
-        for threadID in range(0, distCPthreads):
-            if distCP_separate_logs == False:
-                distCPlogName = "distCP"
+        for thread_id in range(0, dist_cp_threads):
+            if dist_cp_separate_logs == False:
+                dist_cp_log_name = "distCP"
             else:
-                distCPlogName = "distCP-thread%s" % (str(threadID))
+                dist_cp_log_name = "distCP-thread%s" % (str(thread_id))
 
             thread = distCP(
-                name=str(threadID),
+                name=str(thread_id),
                 distCPreqQueue=self.distCPreqQueue,
                 distCPresQueue=self.distCPresQueue,
                 threadStopEvent=self.threadStopEvent,
-                loggerName=distCPlogName,
+                loggerName=dist_cp_log_name,
             )
             thread.daemon = True
             thread.start()
-            distCPobjects.append(thread)
+            dist_cp_objects.append(thread)
 
         # Fetch configuration about MySQL database and how to connect to it
         self.configHostname = configuration.get("Database", "mysql_hostname")
@@ -240,20 +240,20 @@ class serverDaemon(run.RunDaemon):
 
         # Set all rows that have copy_status = 1 to 0. This is needed in the startup as if they are 1 in this stage, it means that a previous
         # server marked it as 1 but didnt finish the copy. We need to retry that copy here and now
-        if distCPthreads > 0:
+        if dist_cp_threads > 0:
             try:
-                updateDict = {}
-                updateDict["last_status_update"] = str(
+                update_dict = {}
+                update_dict["last_status_update"] = str(
                     datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
                 )
-                updateDict["copy_status"] = 0
+                update_dict["copy_status"] = 0
 
                 session = self.getDBImportSession()
 
                 (
                     session.query(configSchema.copyASyncStatus)
                     .filter(configSchema.copyASyncStatus.copy_status == 1)
-                    .update(updateDict)
+                    .update(update_dict)
                 )
                 session.commit()
                 session.close()
@@ -277,16 +277,16 @@ class serverDaemon(run.RunDaemon):
                 self.common_config.remove_temporary_files()
                 sys.exit(1)
 
-        importTables = aliased(configSchema.importTables)
-        dbimportInstances = aliased(configSchema.dbimportInstances)
-        copyASyncStatus = aliased(configSchema.copyASyncStatus)
+        import_tables = aliased(configSchema.importTables)
+        dbimport_instances = aliased(configSchema.dbimportInstances)
+        copy_async_status = aliased(configSchema.copyASyncStatus)
 
         while True:
             # ***********************************
             # Main Loop for server
             # ***********************************
 
-            if distCPthreads > 0:
+            if dist_cp_threads > 0:
                 try:
                     session = self.getDBImportSession()
 
@@ -300,76 +300,76 @@ class serverDaemon(run.RunDaemon):
                     # ------------------------------------------
 
                     # TODO: make the 1 min interval a configured param
-                    status2checkTimestamp = (
+                    status2check_timestamp = (
                         datetime.now() - timedelta(minutes=1)
                     ).strftime("%Y-%m-%d %H:%M:%S.%f")
 
-                    aSyncRow = pd.DataFrame(
+                    async_row = pd.DataFrame(
                         session.query(
-                            copyASyncStatus.table_id,
-                            copyASyncStatus.hive_db,
-                            copyASyncStatus.hive_table,
-                            copyASyncStatus.destination,
-                            copyASyncStatus.failures,
-                            copyASyncStatus.hdfs_source_path,
-                            copyASyncStatus.hdfs_target_path,
+                            copy_async_status.table_id,
+                            copy_async_status.hive_db,
+                            copy_async_status.hive_table,
+                            copy_async_status.destination,
+                            copy_async_status.failures,
+                            copy_async_status.hdfs_source_path,
+                            copy_async_status.hdfs_target_path,
                         )
-                        .select_from(copyASyncStatus)
+                        .select_from(copy_async_status)
                         .filter(
-                            (copyASyncStatus.copy_status == 0)
+                            (copy_async_status.copy_status == 0)
                             | (
-                                (copyASyncStatus.copy_status == 2)
+                                (copy_async_status.copy_status == 2)
                                 & (
-                                    copyASyncStatus.last_status_update
-                                    <= status2checkTimestamp
+                                    copy_async_status.last_status_update
+                                    <= status2check_timestamp
                                 )
                             )
                         )
                         .all()
                     )
 
-                    for index, row in aSyncRow.iterrows():
-                        tableID = row["table_id"]
+                    for index, row in async_row.iterrows():
+                        table_id = row["table_id"]
                         destination = row["destination"]
-                        hiveDB = row["hive_db"]
-                        hiveTable = row["hive_table"]
+                        hive_db = row["hive_db"]
+                        hive_table = row["hive_table"]
                         failures = row["failures"]
-                        HDFSsourcePath = row["hdfs_source_path"]
-                        HDFStargetPath = row["hdfs_target_path"]
+                        hdfs_source_path = row["hdfs_source_path"]
+                        hdfs_target_path = row["hdfs_target_path"]
 
                         log.info(
-                            "New sync request for table %s.%s" % (hiveDB, hiveTable)
+                            "New sync request for table %s.%s" % (hive_db, hive_table)
                         )
 
-                        updateDict = {}
-                        updateDict["copy_status"] = 1
-                        updateDict["last_status_update"] = str(
+                        update_dict = {}
+                        update_dict["copy_status"] = 1
+                        update_dict["last_status_update"] = str(
                             datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
                         )
 
                         (
                             session.query(configSchema.copyASyncStatus)
-                            .filter(configSchema.copyASyncStatus.table_id == tableID)
+                            .filter(configSchema.copyASyncStatus.table_id == table_id)
                             .filter(
                                 configSchema.copyASyncStatus.destination == destination
                             )
-                            .update(updateDict)
+                            .update(update_dict)
                         )
                         session.commit()
 
-                        distCPrequest = {}
-                        distCPrequest["tableID"] = tableID
-                        distCPrequest["hiveDB"] = hiveDB
-                        distCPrequest["hiveTable"] = hiveTable
-                        distCPrequest["destination"] = destination
-                        distCPrequest["failures"] = failures
-                        distCPrequest["HDFSsourcePath"] = HDFSsourcePath
-                        distCPrequest["HDFStargetPath"] = HDFStargetPath
-                        self.distCPreqQueue.put(distCPrequest)
+                        dist_cp_request = {}
+                        dist_cp_request["tableID"] = table_id
+                        dist_cp_request["hiveDB"] = hive_db
+                        dist_cp_request["hiveTable"] = hive_table
+                        dist_cp_request["destination"] = destination
+                        dist_cp_request["failures"] = failures
+                        dist_cp_request["HDFSsourcePath"] = hdfs_source_path
+                        dist_cp_request["HDFStargetPath"] = hdfs_target_path
+                        self.distCPreqQueue.put(dist_cp_request)
 
                         log.debug(
                             "Status changed to 1 for table %s.%s and sent to distCP threads"
-                            % (hiveDB, hiveTable)
+                            % (hive_db, hive_table)
                         )
 
                     session.close()
@@ -386,21 +386,21 @@ class serverDaemon(run.RunDaemon):
                 # Read the response from the distCP threads
                 # ------------------------------------------
                 try:
-                    distCPresponse = self.distCPresQueue.get(block=False)
+                    dist_cp_response = self.distCPresQueue.get(block=False)
                 except Empty:
                     pass
                 else:
-                    updateDict = {}
-                    updateDict["last_status_update"] = str(
+                    update_dict = {}
+                    update_dict["last_status_update"] = str(
                         datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
                     )
-                    updateDict["failures"] = distCPresponse.get("failures")
+                    update_dict["failures"] = dist_cp_response.get("failures")
 
-                    distCPresult = distCPresponse.get("result")
-                    if distCPresult == True:
-                        updateDict["copy_status"] = 3
+                    dist_cp_result = dist_cp_response.get("result")
+                    if dist_cp_result == True:
+                        update_dict["copy_status"] = 3
                     else:
-                        updateDict["copy_status"] = 2
+                        update_dict["copy_status"] = 2
 
                     try:
                         session = self.getDBImportSession()
@@ -408,13 +408,13 @@ class serverDaemon(run.RunDaemon):
                             session.query(configSchema.copyASyncStatus)
                             .filter(
                                 configSchema.copyASyncStatus.table_id
-                                == distCPresponse.get("tableID")
+                                == dist_cp_response.get("tableID")
                             )
                             .filter(
                                 configSchema.copyASyncStatus.destination
-                                == distCPresponse.get("destination")
+                                == dist_cp_response.get("destination")
                             )
-                            .update(updateDict)
+                            .update(update_dict)
                         )
                         session.commit()
                         session.close()
@@ -434,18 +434,18 @@ class serverDaemon(run.RunDaemon):
 
                 try:
                     session = self.getDBImportSession()
-                    aSyncRow = pd.DataFrame(
+                    async_row = pd.DataFrame(
                         session.query(
-                            copyASyncStatus.table_id,
-                            copyASyncStatus.hive_db,
-                            copyASyncStatus.hive_table,
-                            copyASyncStatus.destination,
-                            copyASyncStatus.failures,
-                            copyASyncStatus.hdfs_source_path,
-                            copyASyncStatus.hdfs_target_path,
+                            copy_async_status.table_id,
+                            copy_async_status.hive_db,
+                            copy_async_status.hive_table,
+                            copy_async_status.destination,
+                            copy_async_status.failures,
+                            copy_async_status.hdfs_source_path,
+                            copy_async_status.hdfs_target_path,
                         )
-                        .select_from(copyASyncStatus)
-                        .filter(copyASyncStatus.copy_status == 3)
+                        .select_from(copy_async_status)
+                        .filter(copy_async_status.copy_status == 3)
                         .all()
                     )
                     session.close()
@@ -459,54 +459,55 @@ class serverDaemon(run.RunDaemon):
                     self.disconnectDBImportDB()
 
                 else:
-                    for index, row in aSyncRow.iterrows():
-                        tableID = row["table_id"]
+                    for index, row in async_row.iterrows():
+                        table_id = row["table_id"]
                         destination = row["destination"]
-                        hiveDB = row["hive_db"]
-                        hiveTable = row["hive_table"]
+                        hive_db = row["hive_db"]
+                        hive_table = row["hive_table"]
                         failures = row["failures"]
-                        HDFSsourcePath = row["hdfs_source_path"]
-                        HDFStargetPath = row["hdfs_target_path"]
+                        hdfs_source_path = row["hdfs_source_path"]
+                        hdfs_target_path = row["hdfs_target_path"]
 
                         # Get the remote sessions. if sessions is not available, we just continue to the next item in the database
-                        _remoteSession = self.getDBImportRemoteSession(destination)
-                        if _remoteSession == None:
+                        _remote_session = self.getDBImportRemoteSession(destination)
+                        if _remote_session == None:
                             continue
 
                         try:
-                            remoteSession = _remoteSession()
+                            remote_session = _remote_session()
 
                             # Get the table_id from the table at the remote instance
-                            remoteImportTableID = (
-                                remoteSession.query(importTables.table_id)
-                                .select_from(importTables)
-                                .filter(importTables.hive_db == hiveDB)
-                                .filter(importTables.hive_table == hiveTable)
+                            remote_import_table_id = (
+                                remote_session.query(import_tables.table_id)
+                                .select_from(import_tables)
+                                .filter(import_tables.hive_db == hive_db)
+                                .filter(import_tables.hive_table == hive_table)
                                 .one()
                             )
 
-                            remoteTableID = remoteImportTableID[0]
+                            remote_table_id = remote_import_table_id[0]
 
-                            updateDict = {}
-                            updateDict["copy_finished"] = str(
+                            update_dict = {}
+                            update_dict["copy_finished"] = str(
                                 datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
                             )
 
                             # Update the values in import_table on the remote instance
                             (
-                                remoteSession.query(configSchema.importTables)
+                                remote_session.query(configSchema.importTables)
                                 .filter(
-                                    configSchema.importTables.table_id == remoteTableID
+                                    configSchema.importTables.table_id
+                                    == remote_table_id
                                 )
-                                .update(updateDict)
+                                .update(update_dict)
                             )
-                            remoteSession.commit()
+                            remote_session.commit()
 
-                            remoteSession.close()
+                            remote_session.close()
 
                         except SQLAlchemyError as e:
                             log.error(str(e.__dict__["orig"]))
-                            remoteSession.rollback()
+                            remote_session.rollback()
                             self.disconnectRemoteSession(destination)
 
                         else:
@@ -516,7 +517,8 @@ class serverDaemon(run.RunDaemon):
                                 (
                                     session.query(configSchema.copyASyncStatus)
                                     .filter(
-                                        configSchema.copyASyncStatus.table_id == tableID
+                                        configSchema.copyASyncStatus.table_id
+                                        == table_id
                                     )
                                     .filter(
                                         configSchema.copyASyncStatus.destination
@@ -538,7 +540,7 @@ class serverDaemon(run.RunDaemon):
                             else:
                                 log.info(
                                     "Table %s.%s copied successfully to '%s'"
-                                    % (hiveDB, hiveTable, destination)
+                                    % (hive_db, hive_table, destination)
                                 )
 
                 session.close()
@@ -637,7 +639,7 @@ class serverDaemon(run.RunDaemon):
 
         log.info("Connecting to remote DBImport database for '%s'" % (instance))
 
-        connectStatus = True
+        connect_status = True
 
         try:
             session = self.getDBImportSession()
@@ -645,16 +647,16 @@ class serverDaemon(run.RunDaemon):
             self.disconnectDBImportDB()
             return None
 
-        dbimportInstances = aliased(configSchema.dbimportInstances)
+        dbimport_instances = aliased(configSchema.dbimportInstances)
 
         row = (
             session.query(
-                dbimportInstances.db_hostname,
-                dbimportInstances.db_port,
-                dbimportInstances.db_database,
-                dbimportInstances.db_credentials,
+                dbimport_instances.db_hostname,
+                dbimport_instances.db_port,
+                dbimport_instances.db_database,
+                dbimport_instances.db_credentials,
             )
-            .filter(dbimportInstances.name == instance)
+            .filter(dbimport_instances.name == instance)
             .one()
         )
 
@@ -688,7 +690,7 @@ class serverDaemon(run.RunDaemon):
         username = db_credentials.split(" ")[0]
         password = db_credentials.split(" ")[1]
 
-        instanceConnectStr = "mysql+pymysql://%s:%s@%s:%s/%s" % (
+        instance_connect_str = "mysql+pymysql://%s:%s@%s:%s/%s" % (
             username,
             password,
             row[0],
@@ -697,12 +699,12 @@ class serverDaemon(run.RunDaemon):
         )
 
         try:
-            remoteInstanceConfigDBEngine = sa.create_engine(
-                instanceConnectStr, echo=self.debugLogLevel
+            remote_instance_config_db_engine = sa.create_engine(
+                instance_connect_str, echo=self.debugLogLevel
             )
-            remoteInstanceConfigDBEngine.connect()
-            remoteInstanceConfigDBSession = sessionmaker(
-                bind=remoteInstanceConfigDBEngine
+            remote_instance_config_db_engine.connect()
+            remote_instance_config_db_session = sessionmaker(
+                bind=remote_instance_config_db_engine
             )
 
         except sa.exc.OperationalError as err:
@@ -713,6 +715,6 @@ class serverDaemon(run.RunDaemon):
             log.error(sys.exc_info())
             return None
 
-        self.remoteDBImportEngines[instance] = remoteInstanceConfigDBEngine
-        self.remoteDBImportSessions[instance] = remoteInstanceConfigDBSession
-        return remoteInstanceConfigDBSession
+        self.remoteDBImportEngines[instance] = remote_instance_config_db_engine
+        self.remoteDBImportSessions[instance] = remote_instance_config_db_session
+        return remote_instance_config_db_session

@@ -76,10 +76,10 @@ class hiveMetastoreDirect(metaclass=Singleton):
             self.connectToHiveMetastoreDB()
 
         session = self.hiveMetaSession()
-        DBS = hiveSchema.DBS
+        dbs = hiveSchema.DBS
 
         try:
-            row = session.query(DBS.NAME).filter(DBS.NAME == hiveDB).one()
+            row = session.query(dbs.NAME).filter(dbs.NAME == hiveDB).one()
         except sa.orm.exc.NoResultFound:
             raise databaseNotFound("Can't find database '%s' in Hive" % (hiveDB))
 
@@ -92,17 +92,17 @@ class hiveMetastoreDirect(metaclass=Singleton):
             self.connectToHiveMetastoreDB()
 
         session = self.hiveMetaSession()
-        TBLS = aliased(hiveSchema.TBLS, name="T")
-        DBS = aliased(hiveSchema.DBS, name="D")
+        tbls = aliased(hiveSchema.TBLS, name="T")
+        dbs = aliased(hiveSchema.DBS, name="D")
 
         result = True
         try:
             row = (
-                session.query(TBLS.TBL_NAME, TBLS.TBL_TYPE, DBS.NAME)
-                .select_from(TBLS)
-                .join(DBS, TBLS.DBS)
-                .filter(TBLS.TBL_NAME == hiveTable.lower())
-                .filter(DBS.NAME == hiveDB.lower())
+                session.query(tbls.TBL_NAME, tbls.TBL_TYPE, dbs.NAME)
+                .select_from(tbls)
+                .join(dbs, tbls.DBS)
+                .filter(tbls.TBL_NAME == hiveTable.lower())
+                .filter(dbs.NAME == hiveDB.lower())
                 .one()
             )
         except sa.orm.exc.NoResultFound:
@@ -118,18 +118,18 @@ class hiveMetastoreDirect(metaclass=Singleton):
             self.connectToHiveMetastoreDB()
 
         session = self.hiveMetaSession()
-        TBLS = aliased(hiveSchema.TBLS, name="T")
-        DBS = aliased(hiveSchema.DBS, name="D")
-        SDS = aliased(hiveSchema.SDS, name="S")
+        tbls = aliased(hiveSchema.TBLS, name="T")
+        dbs = aliased(hiveSchema.DBS, name="D")
+        sds = aliased(hiveSchema.SDS, name="S")
 
         try:
             row = (
-                session.query(SDS.LOCATION)
-                .select_from(TBLS)
-                .join(SDS)
-                .join(DBS)
-                .filter(TBLS.TBL_NAME == hiveTable.lower())
-                .filter(DBS.NAME == hiveDB.lower())
+                session.query(sds.LOCATION)
+                .select_from(tbls)
+                .join(sds)
+                .join(dbs)
+                .filter(tbls.TBL_NAME == hiveTable.lower())
+                .filter(dbs.NAME == hiveDB.lower())
                 .one()
             )
         except sa.orm.exc.NoResultFound:
@@ -152,18 +152,18 @@ class hiveMetastoreDirect(metaclass=Singleton):
             return False
 
         session = self.hiveMetaSession()
-        TBLS = aliased(hiveSchema.TBLS, name="T")
-        DBS = aliased(hiveSchema.DBS, name="D")
-        SDS = aliased(hiveSchema.SDS, name="S")
+        tbls = aliased(hiveSchema.TBLS, name="T")
+        dbs = aliased(hiveSchema.DBS, name="D")
+        sds = aliased(hiveSchema.SDS, name="S")
 
         try:
             row = (
-                session.query(SDS.INPUT_FORMAT)
-                .select_from(TBLS)
-                .join(SDS)
-                .join(DBS)
-                .filter(TBLS.TBL_NAME == hiveTable.lower())
-                .filter(DBS.NAME == hiveDB.lower())
+                session.query(sds.INPUT_FORMAT)
+                .select_from(tbls)
+                .join(sds)
+                .join(dbs)
+                .filter(tbls.TBL_NAME == hiveTable.lower())
+                .filter(dbs.NAME == hiveDB.lower())
                 .one()
             )
         except sa.orm.exc.NoResultFound:
@@ -189,18 +189,18 @@ class hiveMetastoreDirect(metaclass=Singleton):
             return False
 
         session = self.hiveMetaSession()
-        TBLS = aliased(hiveSchema.TBLS, name="T")
-        DBS = aliased(hiveSchema.DBS, name="D")
-        SDS = aliased(hiveSchema.SDS, name="S")
+        tbls = aliased(hiveSchema.TBLS, name="T")
+        dbs = aliased(hiveSchema.DBS, name="D")
+        sds = aliased(hiveSchema.SDS, name="S")
 
         try:
             row = (
-                session.query(SDS.INPUT_FORMAT)
-                .select_from(TBLS)
-                .join(SDS)
-                .join(DBS)
-                .filter(TBLS.TBL_NAME == hiveTable.lower())
-                .filter(DBS.NAME == hiveDB.lower())
+                session.query(sds.INPUT_FORMAT)
+                .select_from(tbls)
+                .join(sds)
+                .join(dbs)
+                .filter(tbls.TBL_NAME == hiveTable.lower())
+                .filter(dbs.NAME == hiveDB.lower())
                 .one()
             )
         except sa.orm.exc.NoResultFound:
@@ -226,20 +226,20 @@ class hiveMetastoreDirect(metaclass=Singleton):
             return False
 
         session = self.hiveMetaSession()
-        TBLS = aliased(hiveSchema.TBLS, name="T")
-        TABLE_PARAMS = aliased(hiveSchema.TABLE_PARAMS, name="TP")
-        DBS = aliased(hiveSchema.DBS, name="D")
-        SDS = aliased(hiveSchema.SDS, name="S")
+        tbls = aliased(hiveSchema.TBLS, name="T")
+        table_params = aliased(hiveSchema.TABLE_PARAMS, name="TP")
+        dbs = aliased(hiveSchema.DBS, name="D")
+        sds = aliased(hiveSchema.SDS, name="S")
 
         try:
             row = (
-                session.query(TABLE_PARAMS.PARAM_VALUE)
-                .select_from(TBLS)
-                .join(DBS)
-                .join(TABLE_PARAMS)
-                .filter(TBLS.TBL_NAME == hiveTable.lower())
-                .filter(DBS.NAME == hiveDB.lower())
-                .filter(TABLE_PARAMS.PARAM_KEY == "table_type")
+                session.query(table_params.PARAM_VALUE)
+                .select_from(tbls)
+                .join(dbs)
+                .join(table_params)
+                .filter(tbls.TBL_NAME == hiveTable.lower())
+                .filter(dbs.NAME == hiveDB.lower())
+                .filter(table_params.PARAM_KEY == "table_type")
                 .one()
             )
         except sa.orm.exc.NoResultFound:
@@ -260,16 +260,16 @@ class hiveMetastoreDirect(metaclass=Singleton):
             self.connectToHiveMetastoreDB()
 
         session = self.hiveMetaSession()
-        TBLS = aliased(hiveSchema.TBLS, name="T")
-        DBS = aliased(hiveSchema.DBS, name="D")
+        tbls = aliased(hiveSchema.TBLS, name="T")
+        dbs = aliased(hiveSchema.DBS, name="D")
 
         try:
             row = (
-                session.query(TBLS.TBL_TYPE)
-                .select_from(TBLS)
-                .join(DBS)
-                .filter(TBLS.TBL_NAME == hiveTable.lower())
-                .filter(DBS.NAME == hiveDB.lower())
+                session.query(tbls.TBL_TYPE)
+                .select_from(tbls)
+                .join(dbs)
+                .filter(tbls.TBL_NAME == hiveTable.lower())
+                .filter(dbs.NAME == hiveDB.lower())
                 .one()
             )
         except sa.orm.exc.NoResultFound:
@@ -289,41 +289,41 @@ class hiveMetastoreDirect(metaclass=Singleton):
 
         result = ""
 
-        PKerrorFound = False
+        pk_error_found = False
 
         session = self.hiveMetaSession()
-        KEY_CONSTRAINTS = aliased(hiveSchema.KEY_CONSTRAINTS, name="K")
-        TBLS = aliased(hiveSchema.TBLS, name="T")
-        COLUMNS_V2 = aliased(hiveSchema.COLUMNS_V2, name="C")
-        DBS = aliased(hiveSchema.DBS, name="D")
+        key_constraints = aliased(hiveSchema.KEY_CONSTRAINTS, name="K")
+        tbls = aliased(hiveSchema.TBLS, name="T")
+        columns_v2 = aliased(hiveSchema.COLUMNS_V2, name="C")
+        dbs = aliased(hiveSchema.DBS, name="D")
 
         for row in (
-            session.query(COLUMNS_V2.COLUMN_NAME)
-            .select_from(KEY_CONSTRAINTS)
-            .join(TBLS, KEY_CONSTRAINTS.TBLS_PARENT)
+            session.query(columns_v2.COLUMN_NAME)
+            .select_from(key_constraints)
+            .join(tbls, key_constraints.TBLS_PARENT)
             .join(
-                COLUMNS_V2,
-                (COLUMNS_V2.CD_ID == KEY_CONSTRAINTS.PARENT_CD_ID)
-                & (COLUMNS_V2.INTEGER_IDX == KEY_CONSTRAINTS.PARENT_INTEGER_IDX),
+                columns_v2,
+                (columns_v2.CD_ID == key_constraints.PARENT_CD_ID)
+                & (columns_v2.INTEGER_IDX == key_constraints.PARENT_INTEGER_IDX),
             )
-            .join(DBS)
-            .filter(KEY_CONSTRAINTS.CONSTRAINT_TYPE == 0)
-            .filter(TBLS.TBL_NAME == hiveTable.lower())
-            .filter(DBS.NAME == hiveDB.lower())
-            .order_by(KEY_CONSTRAINTS.POSITION)
+            .join(dbs)
+            .filter(key_constraints.CONSTRAINT_TYPE == 0)
+            .filter(tbls.TBL_NAME == hiveTable.lower())
+            .filter(dbs.NAME == hiveDB.lower())
+            .order_by(key_constraints.POSITION)
             .all()
         ):
             if result != "":
                 result += ","
             if row[0] == None:
-                PKerrorFound = True
+                pk_error_found = True
                 break
             if quotedColumns == False:
                 result += row[0]
             else:
                 result += "`%s`" % (row[0])
 
-        if PKerrorFound == True:
+        if pk_error_found == True:
             result = ""
 
         logging.debug("Primary Key columns: %s" % (result))
@@ -338,20 +338,20 @@ class hiveMetastoreDirect(metaclass=Singleton):
             self.connectToHiveMetastoreDB()
 
         session = self.hiveMetaSession()
-        KEY = aliased(hiveSchema.KEY_CONSTRAINTS, name="K")
-        TBLS = aliased(hiveSchema.TBLS, name="T")
-        DBS = aliased(hiveSchema.DBS, name="D")
+        key = aliased(hiveSchema.KEY_CONSTRAINTS, name="K")
+        tbls = aliased(hiveSchema.TBLS, name="T")
+        dbs = aliased(hiveSchema.DBS, name="D")
 
         try:
             row = (
-                session.query(KEY.CONSTRAINT_NAME)
-                .select_from(KEY)
-                .join(TBLS, KEY.TBLS_PARENT)
-                .join(DBS)
-                .filter(KEY.CONSTRAINT_TYPE == 0)
-                .filter(TBLS.TBL_NAME == hiveTable.lower())
-                .filter(DBS.NAME == hiveDB.lower())
-                .group_by(KEY.CONSTRAINT_NAME)
+                session.query(key.CONSTRAINT_NAME)
+                .select_from(key)
+                .join(tbls, key.TBLS_PARENT)
+                .join(dbs)
+                .filter(key.CONSTRAINT_TYPE == 0)
+                .filter(tbls.TBL_NAME == hiveTable.lower())
+                .filter(dbs.NAME == hiveDB.lower())
+                .group_by(key.CONSTRAINT_NAME)
                 .one()
             )
         except sa.orm.exc.NoResultFound:
@@ -373,46 +373,46 @@ class hiveMetastoreDirect(metaclass=Singleton):
         result_df = None
 
         session = self.hiveMetaSession()
-        KEY = aliased(hiveSchema.KEY_CONSTRAINTS, name="K")
-        TBLS_TP = aliased(hiveSchema.TBLS, name="TP")
-        TBLS_TC = aliased(hiveSchema.TBLS, name="TC")
-        COLUMNS_CP = aliased(hiveSchema.COLUMNS_V2, name="CP")
-        COLUMNS_CC = aliased(hiveSchema.COLUMNS_V2, name="CC")
-        DBS_DP = aliased(hiveSchema.DBS, name="DP")
-        DBS_DC = aliased(hiveSchema.DBS, name="DC")
+        key = aliased(hiveSchema.KEY_CONSTRAINTS, name="K")
+        tbls_tp = aliased(hiveSchema.TBLS, name="TP")
+        tbls_tc = aliased(hiveSchema.TBLS, name="TC")
+        columns_cp = aliased(hiveSchema.COLUMNS_V2, name="CP")
+        columns_cc = aliased(hiveSchema.COLUMNS_V2, name="CC")
+        dbs_dp = aliased(hiveSchema.DBS, name="DP")
+        dbs_dc = aliased(hiveSchema.DBS, name="DC")
 
         result_df = pd.DataFrame(
             session.query(
-                KEY.POSITION.label("fk_index"),
-                DBS_DC.NAME.label("source_hive_db"),
-                TBLS_TC.TBL_NAME.label("source_hive_table"),
-                DBS_DP.NAME.label("ref_hive_db"),
-                TBLS_TP.TBL_NAME.label("ref_hive_table"),
-                COLUMNS_CC.COLUMN_NAME.label("source_column_name"),
-                COLUMNS_CP.COLUMN_NAME.label("ref_column_name"),
-                KEY.CONSTRAINT_NAME.label("fk_name"),
+                key.POSITION.label("fk_index"),
+                dbs_dc.NAME.label("source_hive_db"),
+                tbls_tc.TBL_NAME.label("source_hive_table"),
+                dbs_dp.NAME.label("ref_hive_db"),
+                tbls_tp.TBL_NAME.label("ref_hive_table"),
+                columns_cc.COLUMN_NAME.label("source_column_name"),
+                columns_cp.COLUMN_NAME.label("ref_column_name"),
+                key.CONSTRAINT_NAME.label("fk_name"),
             )
-            .select_from(KEY)
-            .join(TBLS_TC, KEY.TBLS_CHILD, isouter=True)
-            .join(TBLS_TP, KEY.TBLS_PARENT, isouter=True)
+            .select_from(key)
+            .join(tbls_tc, key.TBLS_CHILD, isouter=True)
+            .join(tbls_tp, key.TBLS_PARENT, isouter=True)
             .join(
-                COLUMNS_CP,
-                (COLUMNS_CP.CD_ID == KEY.PARENT_CD_ID)
-                & (COLUMNS_CP.INTEGER_IDX == KEY.PARENT_INTEGER_IDX),
+                columns_cp,
+                (columns_cp.CD_ID == key.PARENT_CD_ID)
+                & (columns_cp.INTEGER_IDX == key.PARENT_INTEGER_IDX),
                 isouter=True,
             )
             .join(
-                COLUMNS_CC,
-                (COLUMNS_CC.CD_ID == KEY.CHILD_CD_ID)
-                & (COLUMNS_CC.INTEGER_IDX == KEY.CHILD_INTEGER_IDX),
+                columns_cc,
+                (columns_cc.CD_ID == key.CHILD_CD_ID)
+                & (columns_cc.INTEGER_IDX == key.CHILD_INTEGER_IDX),
                 isouter=True,
             )
-            .join(DBS_DC, isouter=True)
-            .join(DBS_DP, isouter=True)
-            .filter(KEY.CONSTRAINT_TYPE == 1)
-            .filter(DBS_DC.NAME == hiveDB)
-            .filter(TBLS_TC.TBL_NAME == hiveTable)
-            .order_by(KEY.POSITION)
+            .join(dbs_dc, isouter=True)
+            .join(dbs_dp, isouter=True)
+            .filter(key.CONSTRAINT_TYPE == 1)
+            .filter(dbs_dc.NAME == hiveDB)
+            .filter(tbls_tc.TBL_NAME == hiveTable)
+            .order_by(key.POSITION)
             .all()
         ).fillna("")
 
@@ -460,23 +460,23 @@ class hiveMetastoreDirect(metaclass=Singleton):
 
         session = self.hiveMetaSession()
 
-        lockCount = (
+        lock_count = (
             session.query(hiveSchema.HIVE_LOCKS)
             .filter(hiveSchema.HIVE_LOCKS.HL_DB == hiveDB)
             .filter(hiveSchema.HIVE_LOCKS.HL_TABLE == hiveTable)
             .count()
         )
 
-        if lockCount > 0:
+        if lock_count > 0:
             logging.warning(
                 "Removing %s locks from table %s.%s by force"
-                % (lockCount, hiveDB, hiveTable)
+                % (lock_count, hiveDB, hiveTable)
             )
             self.common_config.logImportFailure(
-                hiveDB=hiveDB,
-                hiveTable=hiveTable,
+                hive_db=hiveDB,
+                hive_table=hiveTable,
                 severity="Warning",
-                errorText="%s locks removed by force" % (lockCount),
+                error_text="%s locks removed by force" % (lock_count),
             )
 
         (
@@ -506,27 +506,27 @@ class hiveMetastoreDirect(metaclass=Singleton):
             self.connectToHiveMetastoreDB()
 
         session = self.hiveMetaSession()
-        TBLS = aliased(hiveSchema.TBLS, name="T")
-        COLUMNS = aliased(hiveSchema.COLUMNS_V2, name="C")
-        DBS = aliased(hiveSchema.DBS, name="D")
-        SDS = aliased(hiveSchema.SDS, name="S")
-        CDS = aliased(hiveSchema.CDS)
+        tbls = aliased(hiveSchema.TBLS, name="T")
+        columns = aliased(hiveSchema.COLUMNS_V2, name="C")
+        dbs = aliased(hiveSchema.DBS, name="D")
+        sds = aliased(hiveSchema.SDS, name="S")
+        cds = aliased(hiveSchema.CDS)
 
         result_df = pd.DataFrame(
             session.query(
-                COLUMNS.COLUMN_NAME.label("name"),
-                COLUMNS.TYPE_NAME.label("type"),
-                COLUMNS.COMMENT.label("comment"),
-                COLUMNS.INTEGER_IDX.label("idx"),
+                columns.COLUMN_NAME.label("name"),
+                columns.TYPE_NAME.label("type"),
+                columns.COMMENT.label("comment"),
+                columns.INTEGER_IDX.label("idx"),
             )
-            .select_from(CDS)
-            .join(SDS)
-            .join(COLUMNS)
-            .join(TBLS)
-            .join(DBS)
-            .filter(TBLS.TBL_NAME == hiveTable)
-            .filter(DBS.NAME == hiveDB)
-            .order_by(COLUMNS.INTEGER_IDX)
+            .select_from(cds)
+            .join(sds)
+            .join(columns)
+            .join(tbls)
+            .join(dbs)
+            .filter(tbls.TBL_NAME == hiveTable)
+            .filter(dbs.NAME == hiveDB)
+            .order_by(columns.INTEGER_IDX)
             .all()
         )
 
@@ -564,29 +564,29 @@ class hiveMetastoreDirect(metaclass=Singleton):
             self.connectToHiveMetastoreDB()
 
         session = self.hiveMetaSession()
-        TABLE_PARAMS = aliased(hiveSchema.TABLE_PARAMS, name="TP")
-        TBLS = aliased(hiveSchema.TBLS, name="T")
-        DBS = aliased(hiveSchema.DBS, name="D")
+        table_params = aliased(hiveSchema.TABLE_PARAMS, name="TP")
+        tbls = aliased(hiveSchema.TBLS, name="T")
+        dbs = aliased(hiveSchema.DBS, name="D")
 
         row = (
-            session.query(TABLE_PARAMS.PARAM_VALUE.label("param_value"))
-            .select_from(TABLE_PARAMS)
-            .join(TBLS)
-            .join(DBS)
-            .filter(TBLS.TBL_NAME == hiveTable)
-            .filter(DBS.NAME == hiveDB)
-            .filter(TABLE_PARAMS.PARAM_KEY == "transactional")
+            session.query(table_params.PARAM_VALUE.label("param_value"))
+            .select_from(table_params)
+            .join(tbls)
+            .join(dbs)
+            .filter(tbls.TBL_NAME == hiveTable)
+            .filter(dbs.NAME == hiveDB)
+            .filter(table_params.PARAM_KEY == "transactional")
             .one_or_none()
         )
 
-        returnValue = False
+        return_value = False
         if row != None:
             if row[0].lower() == "true":
-                returnValue = True
+                return_value = True
 
-        logging.debug("isTableTransactional = %s" % (returnValue))
+        logging.debug("isTableTransactional = %s" % (return_value))
         logging.debug("Executing hiveMetastoreDirect.isTableTransactional() - Finished")
-        return returnValue
+        return return_value
 
     def isTableView(self, hiveDB, hiveTable):
         logging.debug("Executing hiveMetastoreDirect.isTableView()")
@@ -595,26 +595,26 @@ class hiveMetastoreDirect(metaclass=Singleton):
             self.connectToHiveMetastoreDB()
 
         session = self.hiveMetaSession()
-        TBLS = aliased(hiveSchema.TBLS, name="T")
-        DBS = aliased(hiveSchema.DBS, name="D")
+        tbls = aliased(hiveSchema.TBLS, name="T")
+        dbs = aliased(hiveSchema.DBS, name="D")
 
         row = (
-            session.query(TBLS.TBL_TYPE)
-            .select_from(TBLS)
-            .join(DBS)
-            .filter(TBLS.TBL_NAME == hiveTable)
-            .filter(DBS.NAME == hiveDB)
+            session.query(tbls.TBL_TYPE)
+            .select_from(tbls)
+            .join(dbs)
+            .filter(tbls.TBL_NAME == hiveTable)
+            .filter(dbs.NAME == hiveDB)
             .one_or_none()
         )
 
-        returnValue = False
+        return_value = False
 
         if row[0] == "VIRTUAL_VIEW":
-            returnValue = True
+            return_value = True
 
-        logging.debug("isTableView = %s" % (returnValue))
+        logging.debug("isTableView = %s" % (return_value))
         logging.debug("Executing hiveMetastoreDirect.isTableView() - Finished")
-        return returnValue
+        return return_value
 
     def getTables(self, dbFilter=None, tableFilter=None):
         """Return all tables from specific Hive DB"""
@@ -636,16 +636,16 @@ class hiveMetastoreDirect(metaclass=Singleton):
             tableFilter = "%"
 
         session = self.hiveMetaSession()
-        TBLS = aliased(hiveSchema.TBLS, name="T")
-        DBS = aliased(hiveSchema.DBS, name="D")
+        tbls = aliased(hiveSchema.TBLS, name="T")
+        dbs = aliased(hiveSchema.DBS, name="D")
 
         result_df = pd.DataFrame(
-            session.query(DBS.NAME.label("hiveDB"), TBLS.TBL_NAME.label("hiveTable"))
-            .select_from(TBLS)
-            .join(DBS)
-            .filter(TBLS.TBL_NAME.like(tableFilter))
-            .filter(DBS.NAME.like(dbFilter))
-            .order_by(DBS.NAME, TBLS.TBL_NAME)
+            session.query(dbs.NAME.label("hiveDB"), tbls.TBL_NAME.label("hiveTable"))
+            .select_from(tbls)
+            .join(dbs)
+            .filter(tbls.TBL_NAME.like(tableFilter))
+            .filter(dbs.NAME.like(dbFilter))
+            .order_by(dbs.NAME, tbls.TBL_NAME)
             .all()
         )
 

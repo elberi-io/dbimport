@@ -36,8 +36,8 @@ class crypto:
         self.privateKey = None
         self.publicKey = None
 
-    def setPrivateKeyFile(self, privateKeyFile):
-        self.privateKeyFile = privateKeyFile
+    def setPrivateKeyFile(self, private_key_file):
+        self.privateKeyFile = private_key_file
 
         if self.privateKeyFile.startswith("/") == False:
             self.privateKeyFile = (
@@ -53,8 +53,8 @@ class crypto:
         self.privateKeyString = open(self.privateKeyFile).read()
         self.privateKey = RSA.importKey(self.privateKeyString)
 
-    def setPublicKeyFile(self, publicKeyFile):
-        self.publicKeyFile = publicKeyFile
+    def setPublicKeyFile(self, public_key_file):
+        self.publicKeyFile = public_key_file
 
         if self.publicKeyFile.startswith("/") == False:
             self.publicKeyFile = os.environ["DBIMPORT_HOME"] + "/" + self.publicKeyFile
@@ -68,25 +68,25 @@ class crypto:
         self.publicKeyString = open(self.publicKeyFile).read()
         self.publicKey = RSA.importKey(self.publicKeyString)
 
-    def decrypt(self, strToDecrypt):
+    def decrypt(self, str_to_decrypt):
 
-        if strToDecrypt == None:
+        if str_to_decrypt == None:
             return None
 
         sentinel = get_random_bytes(16)
 
         cipher = PKCS1_v1_5.new(self.privateKey)
-        strDecrypted = cipher.decrypt(base64.b64decode(strToDecrypt), sentinel)
+        str_decrypted = cipher.decrypt(base64.b64decode(str_to_decrypt), sentinel)
         # strDecrypted = self.privateKey.decrypt(base64.b64decode(strToDecrypt))
 
         try:
-            if len(strDecrypted) > 0 and bytes(strDecrypted[:1]) == b"\x02":
-                pos = strDecrypted.index(b"\x00")
-                strDecrypted = strDecrypted[pos + 1 :].decode().strip()
-                return strDecrypted
-            elif len(strDecrypted) > 0 and type(strDecrypted) is bytes:
-                strDecrypted = strDecrypted.decode().strip()
-                return strDecrypted
+            if len(str_decrypted) > 0 and bytes(str_decrypted[:1]) == b"\x02":
+                pos = str_decrypted.index(b"\x00")
+                str_decrypted = str_decrypted[pos + 1 :].decode().strip()
+                return str_decrypted
+            elif len(str_decrypted) > 0 and type(str_decrypted) is bytes:
+                str_decrypted = str_decrypted.decode().strip()
+                return str_decrypted
             else:
                 return None
         except UnicodeDecodeError:
@@ -94,11 +94,11 @@ class crypto:
                 "Unable to decrypt using private/public keys. Are the keys setup correct?"
             )
 
-    def encrypt(self, strToEncrypt):
+    def encrypt(self, str_to_encrypt):
 
         cipher = PKCS1_v1_5.new(self.publicKey)
 
-        strEncrypted = cipher.encrypt(strToEncrypt.encode())
-        strEncrypted = base64.b64encode(strEncrypted).decode()
+        str_encrypted = cipher.encrypt(str_to_encrypt.encode())
+        str_encrypted = base64.b64encode(str_encrypted).decode()
 
-        return strEncrypted
+        return str_encrypted

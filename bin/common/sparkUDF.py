@@ -90,7 +90,7 @@ def hashColumn(columnValue):
     # 	SeedString = 'testSeed'
     h = hashlib.blake2b(digest_size=32, person=seedString.encode())
     h.update(columnValue.encode())
-    hashedColumnContent = h.hexdigest()
+    hashed_column_content = h.hexdigest()
     # 	sha_value = hashlib.blake2b(columnValue.encode()).hexdigest()
     # 	return sha_value
     return this.seedString

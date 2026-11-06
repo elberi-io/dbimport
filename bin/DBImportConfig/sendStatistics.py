@@ -66,40 +66,40 @@ class sendStatistics:
             )
             sys.exit(1)
 
-    def sendRESTdata(self, jsonData):
+    def sendRESTdata(self, json_data):
         """Sending data to REST endpoint"""
         logging.debug("Executing sendStatistics.sendRESTdata")
 
         logging.info("Sending data to REST interface")
         logging.debug(
             "Sending the following JSON to REST: %s"
-            % (json.dumps(jsonData, sort_keys=True, indent=4))
+            % (json.dumps(json_data, sort_keys=True, indent=4))
         )
 
         response_code = -1
 
         try:
-            restProtocol = self.RESTendpoint.split(":")[0].lower()
+            rest_protocol = self.RESTendpoint.split(":")[0].lower()
 
-            if restProtocol == "http":
+            if rest_protocol == "http":
                 response = requests.post(
                     self.RESTendpoint,
-                    data=jsonData,
+                    data=json_data,
                     headers=self.RESTheaders,
                     timeout=self.RESTtimeout,
                 )
             else:
                 if self.RESTverifySSL == True:
-                    restVerify = self.RESTtrustCAfile
+                    rest_verify = self.RESTtrustCAfile
                 else:
-                    restVerify = False
+                    rest_verify = False
 
                 response = requests.post(
                     self.RESTendpoint,
-                    data=jsonData,
+                    data=json_data,
                     headers=self.RESTheaders,
                     timeout=self.RESTtimeout,
-                    verify=restVerify,
+                    verify=rest_verify,
                 )
 
             response_code = response.status_code
@@ -112,16 +112,16 @@ class sendStatistics:
         logging.debug("Executing sendStatistics.sendRESTdata - Finished")
         return response_code
 
-    def publishKafkaData(self, jsonData):
+    def publishKafkaData(self, json_data):
         """Publish data to Kafka topic"""
         logging.debug("Executing sendStatistics.publishKafkaData")
 
         logging.info("Sending statistics data to Kafka topic")
-        logging.debug("Sending the following JSON to Kafka: %s" % (jsonData))
-        kafkaLogger = logging.getLogger("kafka")
-        kafkaLogger.setLevel(logging.ERROR)
+        logging.debug("Sending the following JSON to Kafka: %s" % (json_data))
+        kafka_logger = logging.getLogger("kafka")
+        kafka_logger.setLevel(logging.ERROR)
 
-        kafkaError = False
+        kafka_error = False
         result = True
         # 		logging.error("SEND TO KAFKA DISABLED")
         # 		return result
@@ -146,42 +146,42 @@ class sendStatistics:
                     bootstrap_servers=self.kafkaBrokers, ssl_context=ssl_context
                 )
 
-            producer.send(topic=self.kafkaTopic, value=jsonData.encode("utf-8"))
+            producer.send(topic=self.kafkaTopic, value=json_data.encode("utf-8"))
 
         except AssertionError as e:
             logging.error("Kafka Error: %s" % e)
-            kafkaError = True
+            kafka_error = True
 
         except kafka.errors.NoBrokersAvailable:
             logging.error("None of the Kafka brokers configured are available")
-            kafkaError = True
+            kafka_error = True
 
         except kafka.errors.UnrecognizedBrokerVersion:
             logging.error(
                 "Unrecognized broker version. Are you connecting to a secure Kafka broker without the correct security protocols?"
             )
-            kafkaError = True
+            kafka_error = True
 
         except kafka.errors.KafkaTimeoutError:
             logging.error("Timeout error when trying to send statistics to Kafka")
-            kafkaError = True
+            kafka_error = True
 
         except ssl.SSLCertVerificationError:
             logging.error("SSL Certificate error when communicating with Kafka")
-            kafkaError = True
+            kafka_error = True
 
-        if kafkaError == True:
+        if kafka_error == True:
             result = False
 
         logging.debug("Executing sendStatistics.publishKafkaData - Finished")
         return result
 
-    def sendAWSSNSdata(self, jsonData):
+    def sendAWSSNSdata(self, json_data):
         """Publish data to AWS SNS topic"""
         logging.debug("Executing sendStatistics.sendAWSSNSdata")
 
         logging.info("Sending statistics data to AWS SNS topic")
-        logging.debug("Sending the following JSON to AWS SNS: %s" % (jsonData))
+        logging.debug("Sending the following JSON to AWS SNS: %s" % (json_data))
 
         result = True
 
@@ -196,7 +196,7 @@ class sendStatistics:
 
         try:
             publish_sns_response = client.publish(
-                TopicArn=self.awsSNStopic, Message=jsonData
+                TopicArn=self.awsSNStopic, Message=json_data
             )
         except ClientError as e:  # For a list of exceptions thrown, see
             # https://docs.aws.amazon.com/secretsmanager/latest/apireference/API_GetSecretValue.html

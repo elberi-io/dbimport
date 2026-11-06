@@ -145,7 +145,12 @@ class atlasOperation:
     # 				sys.exit(1)
 
     def getAtlasRdbmsReferredEntities(
-        self, schemaName, tableName, refSchemaName="", refTableName="", hdfsPath=""
+        self,
+        schema_name,
+        table_name,
+        ref_schema_name="",
+        ref_table_name="",
+        hdfs_path="",
     ):
         """Returns a dict that contains the referredEntities part for the RDBMS update rest call"""
         logging.debug("Executing atlas_operations.getAtlasReferredEntities()")
@@ -153,147 +158,155 @@ class atlasOperation:
         if self.atlasEnabled == False:
             return None
 
-        returnDict = self.getAtlasRdbmsNames(schemaName=schemaName, tableName=tableName)
-        if returnDict == None:
+        return_dict = self.getAtlasRdbmsNames(
+            schema_name=schema_name, table_name=table_name
+        )
+        if return_dict == None:
             return
 
-        tableUri = returnDict["tableUri"]
-        dbUri = returnDict["dbUri"]
-        dbName = returnDict["dbName"]
-        instanceUri = returnDict["instanceUri"]
-        instanceName = returnDict["instanceName"]
-        instanceType = returnDict["instanceType"]
-        environmentType = returnDict["environmentType"]
+        table_uri = return_dict["tableUri"]
+        db_uri = return_dict["dbUri"]
+        db_name = return_dict["dbName"]
+        instance_uri = return_dict["instanceUri"]
+        instance_name = return_dict["instanceName"]
+        instance_type = return_dict["instanceType"]
+        environment_type = return_dict["environmentType"]
 
-        if refSchemaName != "" and refTableName != "":
-            returnDict = self.getAtlasRdbmsNames(
-                schemaName=refSchemaName, tableName=refTableName
+        if ref_schema_name != "" and ref_table_name != "":
+            return_dict = self.getAtlasRdbmsNames(
+                schema_name=ref_schema_name, table_name=ref_table_name
             )
-            if returnDict == None:
+            if return_dict == None:
                 return
 
-            refTableUri = returnDict["tableUri"]
+            ref_table_uri = return_dict["tableUri"]
 
         # TODO: Get the following information from dbimport and source system
         # Index
 
-        jsonData = {}
-        jsonData["referredEntities"] = {}
+        json_data = {}
+        json_data["referredEntities"] = {}
 
         if len(self.source_columns_df) > 0:
-            tableCreateTime = self.source_columns_df.iloc[0]["TABLE_CREATE_TIME"]
-            tableComment = self.source_columns_df.iloc[0]["TABLE_COMMENT"]
+            table_create_time = self.source_columns_df.iloc[0]["TABLE_CREATE_TIME"]
+            table_comment = self.source_columns_df.iloc[0]["TABLE_COMMENT"]
             # 			tableType = self.getJdbcTableType()
 
-            jsonData["referredEntities"]["-100"] = {}
-            jsonData["referredEntities"]["-100"]["guid"] = "-100"
-            jsonData["referredEntities"]["-100"]["typeName"] = "rdbms_table"
-            jsonData["referredEntities"]["-100"]["attributes"] = {}
-            jsonData["referredEntities"]["-100"]["attributes"]["qualifiedName"] = (
-                tableUri
+            json_data["referredEntities"]["-100"] = {}
+            json_data["referredEntities"]["-100"]["guid"] = "-100"
+            json_data["referredEntities"]["-100"]["typeName"] = "rdbms_table"
+            json_data["referredEntities"]["-100"]["attributes"] = {}
+            json_data["referredEntities"]["-100"]["attributes"]["qualifiedName"] = (
+                table_uri
             )
-            jsonData["referredEntities"]["-100"]["attributes"]["name"] = tableName
-            if schemaName == "-":
-                jsonData["referredEntities"]["-100"]["attributes"]["name_path"] = None
+            json_data["referredEntities"]["-100"]["attributes"]["name"] = table_name
+            if schema_name == "-":
+                json_data["referredEntities"]["-100"]["attributes"]["name_path"] = None
             else:
-                jsonData["referredEntities"]["-100"]["attributes"]["name_path"] = (
-                    schemaName
+                json_data["referredEntities"]["-100"]["attributes"]["name_path"] = (
+                    schema_name
                 )
-            jsonData["referredEntities"]["-100"]["attributes"]["contact_info"] = (
+            json_data["referredEntities"]["-100"]["attributes"]["contact_info"] = (
                 self.contactInfo
             )
-            jsonData["referredEntities"]["-100"]["attributes"]["owner"] = self.owner
-            jsonData["referredEntities"]["-100"]["attributes"]["comment"] = tableComment
-            jsonData["referredEntities"]["-100"]["attributes"]["type"] = self.tableType
-            if tableCreateTime != None:
+            json_data["referredEntities"]["-100"]["attributes"]["owner"] = self.owner
+            json_data["referredEntities"]["-100"]["attributes"]["comment"] = (
+                table_comment
+            )
+            json_data["referredEntities"]["-100"]["attributes"]["type"] = self.tableType
+            if table_create_time != None:
                 # Atlas only support fractions of a second with 3 digits. So we remove the last 3 as python %f gives 6 digits
                 # This datetime object from the source database needs to be in UTC. We might have to convert it
-                jsonData["referredEntities"]["-100"]["attributes"]["createTime"] = (
-                    tableCreateTime.strftime("%Y-%m-%dT%H:%M:%S.%f")[0:-3] + "Z"
+                json_data["referredEntities"]["-100"]["attributes"]["createTime"] = (
+                    table_create_time.strftime("%Y-%m-%dT%H:%M:%S.%f")[0:-3] + "Z"
                 )
-            jsonData["referredEntities"]["-100"]["attributes"]["db"] = {
+            json_data["referredEntities"]["-100"]["attributes"]["db"] = {
                 "guid": "-300",
                 "typeName": "rdbms_db",
             }
 
-            if refSchemaName != "" and refTableName != "":
-                jsonData["referredEntities"]["-101"] = {}
-                jsonData["referredEntities"]["-101"]["guid"] = "-101"
-                jsonData["referredEntities"]["-101"]["typeName"] = "rdbms_table"
-                jsonData["referredEntities"]["-101"]["attributes"] = {}
-                jsonData["referredEntities"]["-101"]["attributes"]["qualifiedName"] = (
-                    refTableUri
+            if ref_schema_name != "" and ref_table_name != "":
+                json_data["referredEntities"]["-101"] = {}
+                json_data["referredEntities"]["-101"]["guid"] = "-101"
+                json_data["referredEntities"]["-101"]["typeName"] = "rdbms_table"
+                json_data["referredEntities"]["-101"]["attributes"] = {}
+                json_data["referredEntities"]["-101"]["attributes"]["qualifiedName"] = (
+                    ref_table_uri
                 )
-                jsonData["referredEntities"]["-101"]["attributes"]["name"] = (
-                    refTableName
+                json_data["referredEntities"]["-101"]["attributes"]["name"] = (
+                    ref_table_name
                 )
-                jsonData["referredEntities"]["-101"]["attributes"]["db"] = {
+                json_data["referredEntities"]["-101"]["attributes"]["db"] = {
                     "guid": "-300",
                     "typeName": "rdbms_db",
                 }
 
-            if hdfsPath != "":
+            if hdfs_path != "":
                 # 				hdfsAddress = self.getConfigValue(key = "hdfs_address")
                 # 				clusterName = self.getConfigValue(key = "cluster_name")
-                hdfsUri = "%s%s@%s" % (self.hdfsAddress, hdfsPath, self.clusterName)
-                hdfsFullPath = "%s%s" % (self.hdfsAddress, hdfsPath)
+                hdfs_uri = "%s%s@%s" % (self.hdfsAddress, hdfs_path, self.clusterName)
+                hdfs_full_path = "%s%s" % (self.hdfsAddress, hdfs_path)
 
-                jsonData["referredEntities"]["-200"] = {}
-                jsonData["referredEntities"]["-200"]["guid"] = "-200"
-                jsonData["referredEntities"]["-200"]["typeName"] = "hdfs_path"
-                jsonData["referredEntities"]["-200"]["attributes"] = {}
-                jsonData["referredEntities"]["-200"]["attributes"]["qualifiedName"] = (
-                    hdfsUri
+                json_data["referredEntities"]["-200"] = {}
+                json_data["referredEntities"]["-200"]["guid"] = "-200"
+                json_data["referredEntities"]["-200"]["typeName"] = "hdfs_path"
+                json_data["referredEntities"]["-200"]["attributes"] = {}
+                json_data["referredEntities"]["-200"]["attributes"]["qualifiedName"] = (
+                    hdfs_uri
                 )
-                jsonData["referredEntities"]["-200"]["attributes"]["name"] = hdfsPath
-                jsonData["referredEntities"]["-200"]["attributes"]["path"] = (
-                    hdfsFullPath
+                json_data["referredEntities"]["-200"]["attributes"]["name"] = hdfs_path
+                json_data["referredEntities"]["-200"]["attributes"]["path"] = (
+                    hdfs_full_path
                 )
-                jsonData["referredEntities"]["-200"]["attributes"]["clusterName"] = (
+                json_data["referredEntities"]["-200"]["attributes"]["clusterName"] = (
                     self.clusterName
                 )
-                jsonData["referredEntities"]["-200"]["attributes"]["nameServiceId"] = (
+                json_data["referredEntities"]["-200"]["attributes"]["nameServiceId"] = (
                     self.clusterName
                 )
 
-            jsonData["referredEntities"]["-300"] = {}
-            jsonData["referredEntities"]["-300"]["guid"] = "-300"
-            jsonData["referredEntities"]["-300"]["typeName"] = "rdbms_db"
-            jsonData["referredEntities"]["-300"]["attributes"] = {}
-            jsonData["referredEntities"]["-300"]["attributes"]["qualifiedName"] = dbUri
-            jsonData["referredEntities"]["-300"]["attributes"]["name"] = dbName
-            jsonData["referredEntities"]["-300"]["attributes"]["contact_info"] = (
+            json_data["referredEntities"]["-300"] = {}
+            json_data["referredEntities"]["-300"]["guid"] = "-300"
+            json_data["referredEntities"]["-300"]["typeName"] = "rdbms_db"
+            json_data["referredEntities"]["-300"]["attributes"] = {}
+            json_data["referredEntities"]["-300"]["attributes"]["qualifiedName"] = (
+                db_uri
+            )
+            json_data["referredEntities"]["-300"]["attributes"]["name"] = db_name
+            json_data["referredEntities"]["-300"]["attributes"]["contact_info"] = (
                 self.contactInfo
             )
-            jsonData["referredEntities"]["-300"]["attributes"]["owner"] = self.owner
-            jsonData["referredEntities"]["-300"]["attributes"]["description"] = (
+            json_data["referredEntities"]["-300"]["attributes"]["owner"] = self.owner
+            json_data["referredEntities"]["-300"]["attributes"]["description"] = (
                 self.description
             )
-            jsonData["referredEntities"]["-300"]["attributes"]["prodOrOther"] = (
-                environmentType
+            json_data["referredEntities"]["-300"]["attributes"]["prodOrOther"] = (
+                environment_type
             )
-            jsonData["referredEntities"]["-300"]["attributes"]["instance"] = {
+            json_data["referredEntities"]["-300"]["attributes"]["instance"] = {
                 "guid": "-400",
                 "typeName": "rdbms_instance",
             }
 
-        jsonData["referredEntities"]["-400"] = {}
-        jsonData["referredEntities"]["-400"]["guid"] = "-400"
-        jsonData["referredEntities"]["-400"]["typeName"] = "rdbms_instance"
-        jsonData["referredEntities"]["-400"]["attributes"] = {}
-        jsonData["referredEntities"]["-400"]["attributes"]["qualifiedName"] = (
-            instanceUri
+        json_data["referredEntities"]["-400"] = {}
+        json_data["referredEntities"]["-400"]["guid"] = "-400"
+        json_data["referredEntities"]["-400"]["typeName"] = "rdbms_instance"
+        json_data["referredEntities"]["-400"]["attributes"] = {}
+        json_data["referredEntities"]["-400"]["attributes"]["qualifiedName"] = (
+            instance_uri
         )
-        jsonData["referredEntities"]["-400"]["attributes"]["name"] = instanceName
-        jsonData["referredEntities"]["-400"]["attributes"]["rdbms_type"] = instanceType
-        jsonData["referredEntities"]["-400"]["attributes"]["hostname"] = (
+        json_data["referredEntities"]["-400"]["attributes"]["name"] = instance_name
+        json_data["referredEntities"]["-400"]["attributes"]["rdbms_type"] = (
+            instance_type
+        )
+        json_data["referredEntities"]["-400"]["attributes"]["hostname"] = (
             self.jdbc_hostname
         )
-        jsonData["referredEntities"]["-400"]["attributes"]["port"] = self.jdbc_port
-        jsonData["referredEntities"]["-400"]["attributes"]["platform"] = ""
-        jsonData["referredEntities"]["-400"]["attributes"]["protocol"] = "jdbc"
+        json_data["referredEntities"]["-400"]["attributes"]["port"] = self.jdbc_port
+        json_data["referredEntities"]["-400"]["attributes"]["platform"] = ""
+        json_data["referredEntities"]["-400"]["attributes"]["protocol"] = "jdbc"
 
-        return jsonData
+        return json_data
 
         logging.debug(
             "Executing atlas_operations.getAtlasReferredEntities() - Finished"
@@ -311,16 +324,16 @@ class atlasOperation:
         if self.atlasEnabled == True:
             log.info("Checking Atlas connection")
             response = self.atlasGetData(
-                URL=self.atlasRestTypeDefDBImportProcess, logger=logger
+                url=self.atlasRestTypeDefDBImportProcess, logger=logger
             )
             if response == None:
-                statusCode = "-1"
+                status_code = "-1"
             else:
-                statusCode = response["statusCode"]
+                status_code = response["statusCode"]
                 try:
-                    responseData = json.loads(response["data"])
+                    response_data = json.loads(response["data"])
                 except json.decoder.JSONDecodeError as errMsg:
-                    responseData = None
+                    response_data = None
                     log.error(
                         "Atlas schema check for DBIMportProcess TypeDef did not return a valid JSON. Data returned:\n%s"
                         % (response["data"])
@@ -329,24 +342,24 @@ class atlasOperation:
                     log.warning("Disable Atlas integration")
                     self.atlasEnabled = False
 
-        if self.atlasEnabled == True and statusCode == 404:
+        if self.atlasEnabled == True and status_code == 404:
             # The TypeDef was not found
             log.warning(
                 "The Atlas typeDef 'DBImport_Process' was not found. Did you run the Atlas setup for DBImport?"
             )
             self.atlasEnabled = False
 
-        elif self.atlasEnabled == True and statusCode != 200:
-            log.warning("Atlas communication failed with response %s" % (statusCode))
+        elif self.atlasEnabled == True and status_code != 200:
+            log.warning("Atlas communication failed with response %s" % (status_code))
             self.atlasEnabled = False
 
         if self.atlasEnabled == True:
             # if self.atlasEnabled = True at this stage, it means that we have a valid json response in DBImportProcessJSON
-            typeDefVersion = responseData["typeVersion"]
-            if typeDefVersion != "1.2":
+            type_def_version = response_data["typeVersion"]
+            if type_def_version != "1.2":
                 log.warning(
                     "The version for Atlas typeDef 'DBImport_Process' is not correct. Version required is 1.2 and version found is %s"
-                    % (typeDefVersion)
+                    % (type_def_version)
                 )
                 log.warning("Atlas integration is Disabled")
                 self.atlasEnabled = False
@@ -357,33 +370,33 @@ class atlasOperation:
 
         logging.debug("Executing atlas_operations.checkAtlasSchema() - Finished")
 
-    def atlasGetData(self, URL, logger=""):
+    def atlasGetData(self, url, logger=""):
         log = logging.getLogger(logger)
         log.debug("Executing atlas_operations.atlasGetData()")
-        return self.atlasCommunicate(URL=URL, requestType="GET", logger=logger)
+        return self.atlasCommunicate(url=url, request_type="GET", logger=logger)
 
-    def atlasPostData(self, URL, data, logger=""):
+    def atlasPostData(self, url, data, logger=""):
         log = logging.getLogger(logger)
         log.debug("Executing atlas_operations.atlasPostData()")
         return self.atlasCommunicate(
-            URL=URL, requestType="POST", data=data, logger=logger
+            url=url, request_type="POST", data=data, logger=logger
         )
 
-    def atlasDeleteData(self, URL, logger=""):
+    def atlasDeleteData(self, url, logger=""):
         log = logging.getLogger(logger)
         log.debug("Executing atlas_operations.atlasDeleteData()")
-        return self.atlasCommunicate(URL=URL, requestType="DELETE", logger=logger)
+        return self.atlasCommunicate(url=url, request_type="DELETE", logger=logger)
 
-    def atlasCommunicate(self, URL, requestType, data=None, logger=""):
+    def atlasCommunicate(self, url, request_type, data=None, logger=""):
         log = logging.getLogger(logger)
         log.debug("Executing atlas_operations.atlasCommunicate()")
 
-        returnValue = None
+        return_value = None
         if self.atlasEnabled == True:
             try:
-                if requestType == "POST":
+                if request_type == "POST":
                     response = requests.post(
-                        URL,
+                        url,
                         headers=self.atlasHeaders,
                         data=data,
                         timeout=self.atlasTimeout,
@@ -391,18 +404,18 @@ class atlasOperation:
                         verify=self.atlasSSLverify,
                     )
 
-                elif requestType == "GET":
+                elif request_type == "GET":
                     response = requests.get(
-                        URL,
+                        url,
                         headers=self.atlasHeaders,
                         timeout=self.atlasTimeout,
                         auth=self.atlasAuthentication,
                         verify=self.atlasSSLverify,
                     )
 
-                elif requestType == "DELETE":
+                elif request_type == "DELETE":
                     response = requests.delete(
-                        URL,
+                        url,
                         headers=self.atlasHeaders,
                         timeout=self.atlasTimeout,
                         auth=self.atlasAuthentication,
@@ -412,7 +425,7 @@ class atlasOperation:
                 else:
                     raise ValueError
 
-                returnValue = {
+                return_value = {
                     "statusCode": response.status_code,
                     "data": response.text,
                 }
@@ -426,44 +439,44 @@ class atlasOperation:
                 )
                 log.warning("Atlas integration is Disabled")
                 log.debug("Atlas data: %s" % (data))
-                log.debug("Atlas requestType: %s" % (requestType))
+                log.debug("Atlas requestType: %s" % (request_type))
                 self.atlasEnabled = False
             except requests.exceptions.HTTPError:
-                log.error("HTTP error when communicating with Atlas on %s" % (URL))
+                log.error("HTTP error when communicating with Atlas on %s" % (url))
                 log.warning("Atlas integration is Disabled")
                 log.debug("Atlas data: %s" % (data))
-                log.debug("Atlas requestType: %s" % (requestType))
+                log.debug("Atlas requestType: %s" % (request_type))
                 self.atlasEnabled = False
             except requests.exceptions.RequestException:
                 log.error(
-                    "RequestException error when communicating with Atlas on %s" % (URL)
+                    "RequestException error when communicating with Atlas on %s" % (url)
                 )
                 log.warning("Atlas integration is Disabled")
                 log.debug("Atlas data: %s" % (data))
-                log.debug("Atlas requestType: %s" % (requestType))
+                log.debug("Atlas requestType: %s" % (request_type))
                 self.atlasEnabled = False
             except requests.exceptions.ConnectionError:
                 log.error(
-                    "Connection error when communicating with Atlas on %s" % (URL)
+                    "Connection error when communicating with Atlas on %s" % (url)
                 )
                 log.warning("Atlas integration is Disabled")
                 log.debug("Atlas data: %s" % (data))
-                log.debug("Atlas requestType: %s" % (requestType))
+                log.debug("Atlas requestType: %s" % (request_type))
                 self.atlasEnabled = False
             except ValueError:
                 log.error(
                     "The used requstType (%s) for atlasCommunicate() is not supported"
-                    % (requestType)
+                    % (request_type)
                 )
                 log.warning("Atlas integration is Disabled")
                 log.debug("Atlas data: %s" % (data))
-                log.debug("Atlas requestType: %s" % (requestType))
+                log.debug("Atlas requestType: %s" % (request_type))
                 self.atlasEnabled = False
 
         log.debug("Executing atlas_operations.atlasCommunicate() - Finished")
-        return returnValue
+        return return_value
 
-    def setConfiguration(self, configDict, mutex=None):
+    def setConfiguration(self, config_dict, mutex=None):
         """
         configDict must includes the following settings
                 dbAlias
@@ -488,26 +501,26 @@ class atlasOperation:
         log = logging.getLogger(self.loggerName)
         log.debug("Executing atlas_operations.setConfiguration()")
 
-        self.dbAlias = configDict.get("dbAlias")
-        self.contactInfo = configDict.get("contactInfo")
-        self.description = configDict.get("description")
-        self.owner = configDict.get("owner")
-        self.atlasIncludeFilter = configDict.get("atlasIncludeFilter")
-        self.atlasExcludeFilter = configDict.get("atlasExcludeFilter")
-        self.jdbc_hostname = configDict.get("jdbc_hostname")
-        self.jdbc_port = configDict.get("jdbc_port")
-        self.jdbc_servertype = configDict.get("jdbc_servertype")
-        self.jdbc_database = configDict.get("jdbc_database")
-        self.jdbc_oracle_servicename = configDict.get("jdbc_oracle_servicename")
-        self.jdbc_oracle_sid = configDict.get("jdbc_oracle_sid")
-        self.jdbc_username = configDict.get("jdbc_username")
-        self.jdbc_password = configDict.get("jdbc_password")
-        self.jdbc_driver = configDict.get("jdbc_driver")
-        self.jdbc_url = configDict.get("jdbc_url")
-        self.jdbc_classpath_for_python = configDict.get("jdbc_classpath_for_python")
-        self.jdbc_environment = configDict.get("jdbc_environment")
-        self.hdfsAddress = configDict.get("hdfs_address")
-        self.clusterName = configDict.get("cluster_name")
+        self.dbAlias = config_dict.get("dbAlias")
+        self.contactInfo = config_dict.get("contactInfo")
+        self.description = config_dict.get("description")
+        self.owner = config_dict.get("owner")
+        self.atlasIncludeFilter = config_dict.get("atlasIncludeFilter")
+        self.atlasExcludeFilter = config_dict.get("atlasExcludeFilter")
+        self.jdbc_hostname = config_dict.get("jdbc_hostname")
+        self.jdbc_port = config_dict.get("jdbc_port")
+        self.jdbc_servertype = config_dict.get("jdbc_servertype")
+        self.jdbc_database = config_dict.get("jdbc_database")
+        self.jdbc_oracle_servicename = config_dict.get("jdbc_oracle_servicename")
+        self.jdbc_oracle_sid = config_dict.get("jdbc_oracle_sid")
+        self.jdbc_username = config_dict.get("jdbc_username")
+        self.jdbc_password = config_dict.get("jdbc_password")
+        self.jdbc_driver = config_dict.get("jdbc_driver")
+        self.jdbc_url = config_dict.get("jdbc_url")
+        self.jdbc_classpath_for_python = config_dict.get("jdbc_classpath_for_python")
+        self.jdbc_environment = config_dict.get("jdbc_environment")
+        self.hdfsAddress = config_dict.get("hdfs_address")
+        self.clusterName = config_dict.get("cluster_name")
 
         self.jdbcConnectionMutex = mutex
 
@@ -549,7 +562,7 @@ class atlasOperation:
 
         try:
             # Get a list of all schemas and tables that can be found on the database connection
-            tablesAndViewsDF = self.sourceSchema.getJDBCtablesAndViews(
+            tables_and_views_df = self.sourceSchema.getJDBCtablesAndViews(
                 self.JDBCCursor, self.jdbc_servertype, database=self.jdbc_database
             )
 
@@ -568,35 +581,35 @@ class atlasOperation:
             self.jdbcConnectionMutex.release()
             log.debug("JDBC connection Mutex released")
 
-        if len(tablesAndViewsDF) == 0:
-            createEmptyDatabaseInAtlas = True
+        if len(tables_and_views_df) == 0:
+            create_empty_database_in_atlas = True
         else:
-            createEmptyDatabaseInAtlas = False
+            create_empty_database_in_atlas = False
 
         if self.atlasIncludeFilter == None or self.atlasIncludeFilter == "":
             # Set default to include the table to True if there is no include filter
-            tablesAndViewsDF.insert(2, "include", True)
+            tables_and_views_df.insert(2, "include", True)
         else:
             # Set default to include the table to False if there is an include filter
-            tablesAndViewsDF.insert(2, "include", False)
+            tables_and_views_df.insert(2, "include", False)
 
         # Iterate over DF to determine what tables we should discover and what to not discover based on include/exclude filter
         # This will add a new column to the DF with True/False values depending on if we are going to discover it or not
 
-        for index, row in tablesAndViewsDF.iterrows():
-            updateAtlasWithTable = False
+        for index, row in tables_and_views_df.iterrows():
+            update_atlas_with_table = False
             schema = row["schema"].lower()
             table = row["table"].lower()
 
             # Filter the schema.table so that only the included tables gets processed
             for include in self.atlasIncludeFilter.split(";"):
                 try:
-                    includeSchema = include.split(".")[0].replace("*", ".*").lower()
-                    includeTable = include.split(".")[1].replace("*", ".*").lower()
+                    include_schema = include.split(".")[0].replace("*", ".*").lower()
+                    include_table = include.split(".")[1].replace("*", ".*").lower()
                     if re.search(
-                        "^" + includeSchema + "$", schema.strip()
-                    ) and re.search("^" + includeTable + "$", table.strip()):
-                        tablesAndViewsDF.at[index, "include"] = True
+                        "^" + include_schema + "$", schema.strip()
+                    ) and re.search("^" + include_table + "$", table.strip()):
+                        tables_and_views_df.at[index, "include"] = True
                         break
                 except IndexError:
                     pass
@@ -604,31 +617,32 @@ class atlasOperation:
             # Filter the schema.table so we remove the excluded items
             for exclude in self.atlasExcludeFilter.split(";"):
                 try:
-                    excludeSchema = exclude.split(".")[0].replace("*", ".*").lower()
-                    excludeTable = exclude.split(".")[1].replace("*", ".*").lower()
+                    exclude_schema = exclude.split(".")[0].replace("*", ".*").lower()
+                    exclude_table = exclude.split(".")[1].replace("*", ".*").lower()
                     if re.search(
-                        "^" + excludeSchema + "$", schema.strip()
-                    ) and re.search("^" + excludeTable + "$", table.strip()):
-                        tablesAndViewsDF.at[index, "include"] = False
+                        "^" + exclude_schema + "$", schema.strip()
+                    ) and re.search("^" + exclude_table + "$", table.strip()):
+                        tables_and_views_df.at[index, "include"] = False
                         break
                 except IndexError:
                     pass
 
         # Remove all rows from dataframe where include = False.
-        tablesAndViewsDF.drop(
-            tablesAndViewsDF[tablesAndViewsDF.include == False].index, inplace=True
+        tables_and_views_df.drop(
+            tables_and_views_df[tables_and_views_df.include == False].index,
+            inplace=True,
         )
 
-        atlasColumnCache = aliased(configSchema.atlasColumnCache)
-        atlasKeyCache = aliased(configSchema.atlasKeyCache)
+        atlas_column_cache = aliased(configSchema.atlasColumnCache)
+        atlas_key_cache = aliased(configSchema.atlasKeyCache)
         self.source_columns_df = pd.DataFrame()
         self.source_keys_df = pd.DataFrame()
 
-        atlasForeignKeyErrorDetected = False
-        atlasErrorDetected = False
+        atlas_foreign_key_error_detected = False
+        atlas_error_detected = False
 
         # Iterate over the schemas that we have tables to process in
-        for schema in tablesAndViewsDF.schema.unique():
+        for schema in tables_and_views_df.schema.unique():
             schema = re.sub("\\r", "", schema)
             schema = re.sub("\\n", "", schema)
 
@@ -657,16 +671,16 @@ class atlasOperation:
                 self.connectToJDBC()
                 # TODO: Handle failures of the connection
 
-                fullSchemaColumnDF = self.sourceSchema.readTableColumns(
+                full_schema_column_df = self.sourceSchema.readTableColumns(
                     self.JDBCCursor,
-                    serverType=self.jdbc_servertype,
+                    server_type=self.jdbc_servertype,
                     database=self.jdbc_database,
                     schema=schema,
                 )
 
-                fullSchemaKeyDF = self.sourceSchema.readTableKeys(
+                full_schema_key_df = self.sourceSchema.readTableKeys(
                     self.JDBCCursor,
-                    serverType=self.jdbc_servertype,
+                    server_type=self.jdbc_servertype,
                     database=self.jdbc_database,
                     schema=schema,
                 )
@@ -693,7 +707,7 @@ class atlasOperation:
 
             if self.jdbc_servertype == constant.MYSQL:
                 # In MySQL the schema is the database
-                fullSchemaColumnDF["SCHEMA_NAME"] = "-"
+                full_schema_column_df["SCHEMA_NAME"] = "-"
                 schema = "-"
 
             log.debug(
@@ -703,28 +717,28 @@ class atlasOperation:
             try:
                 session = self.getDBImportSession()
 
-                fullCacheSourceColumnDF = pd.DataFrame(
+                full_cache_source_column_df = pd.DataFrame(
                     session.query(
-                        atlasColumnCache.hostname,
-                        atlasColumnCache.port,
-                        atlasColumnCache.database_name,
-                        atlasColumnCache.schema_name,
-                        atlasColumnCache.table_name,
-                        atlasColumnCache.table_comment,
-                        atlasColumnCache.column_name,
-                        atlasColumnCache.column_type,
-                        atlasColumnCache.column_length,
-                        atlasColumnCache.column_comment,
-                        atlasColumnCache.column_is_nullable,
-                        atlasColumnCache.table_type,
-                        atlasColumnCache.table_create_time,
-                        atlasColumnCache.default_value,
+                        atlas_column_cache.hostname,
+                        atlas_column_cache.port,
+                        atlas_column_cache.database_name,
+                        atlas_column_cache.schema_name,
+                        atlas_column_cache.table_name,
+                        atlas_column_cache.table_comment,
+                        atlas_column_cache.column_name,
+                        atlas_column_cache.column_type,
+                        atlas_column_cache.column_length,
+                        atlas_column_cache.column_comment,
+                        atlas_column_cache.column_is_nullable,
+                        atlas_column_cache.table_type,
+                        atlas_column_cache.table_create_time,
+                        atlas_column_cache.default_value,
                     )
-                    .select_from(atlasColumnCache)
-                    .filter(atlasColumnCache.hostname == self.jdbc_hostname)
-                    .filter(atlasColumnCache.port == self.jdbc_port)
-                    .filter(atlasColumnCache.database_name == self.jdbc_database)
-                    .filter(atlasColumnCache.schema_name == schema.strip())
+                    .select_from(atlas_column_cache)
+                    .filter(atlas_column_cache.hostname == self.jdbc_hostname)
+                    .filter(atlas_column_cache.port == self.jdbc_port)
+                    .filter(atlas_column_cache.database_name == self.jdbc_database)
+                    .filter(atlas_column_cache.schema_name == schema.strip())
                     .all()
                 )
 
@@ -736,11 +750,13 @@ class atlasOperation:
                 self.disconnectDBImportDB()
                 raise SQLerror
 
-            if len(fullCacheSourceColumnDF) > 0:
+            if len(full_cache_source_column_df) > 0:
                 # Set oldes timestamp to 1970-01-01 00:00:00.000
-                fullCacheSourceColumnDF["table_create_time"] = fullCacheSourceColumnDF[
-                    "table_create_time"
-                ].clip(lower=pd.Timestamp("1970-01-01 00:00:00.000"))
+                full_cache_source_column_df["table_create_time"] = (
+                    full_cache_source_column_df["table_create_time"].clip(
+                        lower=pd.Timestamp("1970-01-01 00:00:00.000")
+                    )
+                )
 
             log.debug(
                 "Column cache for schema '%s' was received from the database" % (schema)
@@ -749,26 +765,26 @@ class atlasOperation:
             try:
                 session = self.getDBImportSession()
 
-                fullCacheSourceKeyDF = pd.DataFrame(
+                full_cache_source_key_df = pd.DataFrame(
                     session.query(
-                        atlasKeyCache.hostname,
-                        atlasKeyCache.port,
-                        atlasKeyCache.database_name,
-                        atlasKeyCache.schema_name,
-                        atlasKeyCache.table_name,
-                        atlasKeyCache.constraint_name,
-                        atlasKeyCache.constraint_type,
-                        atlasKeyCache.column_name,
-                        atlasKeyCache.reference_schema_name,
-                        atlasKeyCache.reference_table_name,
-                        atlasKeyCache.reference_column_name,
-                        atlasKeyCache.col_key_position,
+                        atlas_key_cache.hostname,
+                        atlas_key_cache.port,
+                        atlas_key_cache.database_name,
+                        atlas_key_cache.schema_name,
+                        atlas_key_cache.table_name,
+                        atlas_key_cache.constraint_name,
+                        atlas_key_cache.constraint_type,
+                        atlas_key_cache.column_name,
+                        atlas_key_cache.reference_schema_name,
+                        atlas_key_cache.reference_table_name,
+                        atlas_key_cache.reference_column_name,
+                        atlas_key_cache.col_key_position,
                     )
-                    .select_from(atlasKeyCache)
-                    .filter(atlasKeyCache.hostname == self.jdbc_hostname)
-                    .filter(atlasKeyCache.port == self.jdbc_port)
-                    .filter(atlasKeyCache.database_name == self.jdbc_database)
-                    .filter(atlasKeyCache.schema_name == schema.strip())
+                    .select_from(atlas_key_cache)
+                    .filter(atlas_key_cache.hostname == self.jdbc_hostname)
+                    .filter(atlas_key_cache.port == self.jdbc_port)
+                    .filter(atlas_key_cache.database_name == self.jdbc_database)
+                    .filter(atlas_key_cache.schema_name == schema.strip())
                     .all()
                 )
 
@@ -785,23 +801,23 @@ class atlasOperation:
             )
 
             # If the database is empty, we need this objects later when we search for tables to delete
-            if len(tablesAndViewsDF) == 0:
-                sourceColumnDF = pd.DataFrame()
-                sourceKeyDF = pd.DataFrame()
+            if len(tables_and_views_df) == 0:
+                source_column_df = pd.DataFrame()
+                source_key_df = pd.DataFrame()
                 self.source_columns_df = pd.DataFrame()
                 self.source_keys_df = pd.DataFrame()
 
             # Loop through all tables and find if there is a difference between values from database and values in cache
             # If there is a difference, we update atlas and update the cache tables
-            for index, row in tablesAndViewsDF[
-                tablesAndViewsDF["schema"] == schema
+            for index, row in tables_and_views_df[
+                tables_and_views_df["schema"] == schema
             ].iterrows():
                 schema = row["schema"]
                 table = row["table"]
 
-                self.source_columns_df = fullSchemaColumnDF[
-                    (fullSchemaColumnDF["SCHEMA_NAME"] == schema.strip())
-                    & (fullSchemaColumnDF["TABLE_NAME"] == table.strip())
+                self.source_columns_df = full_schema_column_df[
+                    (full_schema_column_df["SCHEMA_NAME"] == schema.strip())
+                    & (full_schema_column_df["TABLE_NAME"] == table.strip())
                 ].copy()
                 self.source_columns_df.drop(
                     columns=["SCHEMA_NAME", "TABLE_NAME"], inplace=True
@@ -814,14 +830,14 @@ class atlasOperation:
                         self.source_columns_df.iloc[0]["TABLE_TYPE"],
                     )
 
-                    sourceColumnDF = self.source_columns_df.copy()
-                    sourceColumnDF = sourceColumnDF.replace({np.nan: None})
-                    sourceColumnDF.insert(0, "hostname", self.jdbc_hostname.lower())
-                    sourceColumnDF.insert(1, "port", self.jdbc_port)
-                    sourceColumnDF.insert(2, "database_name", self.jdbc_database)
-                    sourceColumnDF.insert(3, "schema_name", schema)
-                    sourceColumnDF.insert(4, "table_name", table)
-                    sourceColumnDF.rename(
+                    source_column_df = self.source_columns_df.copy()
+                    source_column_df = source_column_df.replace({np.nan: None})
+                    source_column_df.insert(0, "hostname", self.jdbc_hostname.lower())
+                    source_column_df.insert(1, "port", self.jdbc_port)
+                    source_column_df.insert(2, "database_name", self.jdbc_database)
+                    source_column_df.insert(3, "schema_name", schema)
+                    source_column_df.insert(4, "table_name", table)
+                    source_column_df.rename(
                         columns={
                             "TABLE_COMMENT": "table_comment",
                             "SOURCE_COLUMN_NAME": "column_name",
@@ -835,20 +851,20 @@ class atlasOperation:
                         },
                         inplace=True,
                     )
-                    sourceColumnDF["table_create_time"] = sourceColumnDF[
+                    source_column_df["table_create_time"] = source_column_df[
                         "table_create_time"
                     ].astype("datetime64[s]")
-                    sourceColumnDF.replace({pd.NaT: None}, inplace=True)
-                    sourceColumnDF.replace(
+                    source_column_df.replace({pd.NaT: None}, inplace=True)
+                    source_column_df.replace(
                         to_replace=[r"\\t|\\n|\\r", "\t|\n|\r"],
                         value="",
                         regex=True,
                         inplace=True,
                     )
-                    sourceColumnDF["column_length"] = sourceColumnDF[
+                    source_column_df["column_length"] = source_column_df[
                         "column_length"
                     ].astype("str")
-                    sourceColumnDF.sort_values(
+                    source_column_df.sort_values(
                         by="column_name",
                         ignore_index=True,
                         inplace=True,
@@ -856,12 +872,12 @@ class atlasOperation:
                     )
 
                 else:
-                    sourceColumnDF = pd.DataFrame()
+                    source_column_df = pd.DataFrame()
 
-                if len(fullSchemaKeyDF) > 0:
-                    self.source_keys_df = fullSchemaKeyDF[
-                        (fullSchemaKeyDF["SCHEMA_NAME"] == schema.strip())
-                        & (fullSchemaKeyDF["TABLE_NAME"] == table.strip())
+                if len(full_schema_key_df) > 0:
+                    self.source_keys_df = full_schema_key_df[
+                        (full_schema_key_df["SCHEMA_NAME"] == schema.strip())
+                        & (full_schema_key_df["TABLE_NAME"] == table.strip())
                     ].copy()
                     self.source_keys_df.drop(
                         columns=["SCHEMA_NAME", "TABLE_NAME"], inplace=True
@@ -870,14 +886,14 @@ class atlasOperation:
                     self.source_keys_df = pd.DataFrame()
 
                 if len(self.source_keys_df) > 0:
-                    sourceKeyDF = self.source_keys_df.copy()
-                    sourceKeyDF = sourceKeyDF.replace({np.nan: None})
-                    sourceKeyDF.insert(0, "hostname", self.jdbc_hostname.lower())
-                    sourceKeyDF.insert(1, "port", self.jdbc_port)
-                    sourceKeyDF.insert(2, "database_name", self.jdbc_database)
-                    sourceKeyDF.insert(3, "schema_name", schema)
-                    sourceKeyDF.insert(4, "table_name", table)
-                    sourceKeyDF.rename(
+                    source_key_df = self.source_keys_df.copy()
+                    source_key_df = source_key_df.replace({np.nan: None})
+                    source_key_df.insert(0, "hostname", self.jdbc_hostname.lower())
+                    source_key_df.insert(1, "port", self.jdbc_port)
+                    source_key_df.insert(2, "database_name", self.jdbc_database)
+                    source_key_df.insert(3, "schema_name", schema)
+                    source_key_df.insert(4, "table_name", table)
+                    source_key_df.rename(
                         columns={
                             "CONSTRAINT_NAME": "constraint_name",
                             "CONSTRAINT_TYPE": "constraint_type",
@@ -889,92 +905,92 @@ class atlasOperation:
                         },
                         inplace=True,
                     )
-                    sourceKeyDF.sort_values(
+                    source_key_df.sort_values(
                         by=["constraint_name", "column_name"],
                         ignore_index=True,
                         inplace=True,
                         key=lambda col: col.str.lower(),
                     )
-                    sourceKeyDF.replace(
+                    source_key_df.replace(
                         to_replace=[r"\\t|\\n|\\r", "\t|\n|\r"],
                         value="",
                         regex=True,
                         inplace=True,
                     )
                 else:
-                    sourceKeyDF = pd.DataFrame()
+                    source_key_df = pd.DataFrame()
 
-                if len(fullCacheSourceColumnDF) > 0:
-                    cacheSourceColumnDF = fullCacheSourceColumnDF[
-                        fullCacheSourceColumnDF["table_name"] == table
+                if len(full_cache_source_column_df) > 0:
+                    cache_source_column_df = full_cache_source_column_df[
+                        full_cache_source_column_df["table_name"] == table
                     ].copy()
-                    if len(cacheSourceColumnDF) > 0:
-                        cacheSourceColumnDF.replace({pd.NaT: None}, inplace=True)
+                    if len(cache_source_column_df) > 0:
+                        cache_source_column_df.replace({pd.NaT: None}, inplace=True)
                         # Sort by column name in lowercase
-                        cacheSourceColumnDF.sort_values(
+                        cache_source_column_df.sort_values(
                             by="column_name",
                             ignore_index=True,
                             inplace=True,
                             key=lambda col: col.str.lower(),
                         )
                     else:
-                        cacheSourceColumnDF = pd.DataFrame()
+                        cache_source_column_df = pd.DataFrame()
                 else:
-                    cacheSourceColumnDF = pd.DataFrame()
+                    cache_source_column_df = pd.DataFrame()
 
-                if len(fullCacheSourceKeyDF) > 0:
-                    cacheSourceKeyDF = fullCacheSourceKeyDF[
-                        fullCacheSourceKeyDF["table_name"] == table
+                if len(full_cache_source_key_df) > 0:
+                    cache_source_key_df = full_cache_source_key_df[
+                        full_cache_source_key_df["table_name"] == table
                     ].copy()
-                    if len(cacheSourceKeyDF) > 0:
+                    if len(cache_source_key_df) > 0:
                         # Sort by column name in lowercase
-                        cacheSourceKeyDF.sort_values(
+                        cache_source_key_df.sort_values(
                             by=["constraint_name", "column_name"],
                             ignore_index=True,
                             inplace=True,
                             key=lambda col: col.str.lower(),
                         )
                     else:
-                        cacheSourceKeyDF = pd.DataFrame()
+                        cache_source_key_df = pd.DataFrame()
                 else:
-                    cacheSourceKeyDF = pd.DataFrame()
+                    cache_source_key_df = pd.DataFrame()
 
                 schema = row["schema"].strip()
                 table = row["table"].strip()
 
                 if 0 == 1:
                     # Used for debugging
-                    if cacheSourceColumnDF.equals(sourceColumnDF):
+                    if cache_source_column_df.equals(source_column_df):
                         print("columns equal")
-                    if cacheSourceKeyDF.equals(sourceKeyDF):
+                    if cache_source_key_df.equals(source_key_df):
                         print("keys equal")
                     pd.set_option("display.max_columns", None)
                     pd.set_option("display.max_rows", None)
 
-                    print(sourceColumnDF)
+                    print(source_column_df)
                     print(
                         "**********************************************************************"
                     )
-                    print(cacheSourceColumnDF)
+                    print(cache_source_column_df)
                     print(
                         "**********************************************************************"
                     )
-                    print(sourceKeyDF)
+                    print(source_key_df)
                     print(
                         "**********************************************************************"
                     )
-                    print(cacheSourceKeyDF)
+                    print(cache_source_key_df)
 
-                cacheOperation = None
-                if len(sourceColumnDF) > 0:
-                    if len(cacheSourceColumnDF) == 0:
-                        cacheOperation = "insert"
+                cache_operation = None
+                if len(source_column_df) > 0:
+                    if len(cache_source_column_df) == 0:
+                        cache_operation = "insert"
                     else:
-                        cacheOperation = "update"
+                        cache_operation = "update"
 
-                        if cacheSourceColumnDF.equals(
-                            sourceColumnDF
-                        ) and cacheSourceKeyDF.equals(sourceKeyDF):
+                        if cache_source_column_df.equals(
+                            source_column_df
+                        ) and cache_source_key_df.equals(source_key_df):
                             if row["schema"] != "-":
                                 log.debug(
                                     "Atlas table schema for %s.%s on dbalias %s match cached values. No update required"
@@ -1002,44 +1018,44 @@ class atlasOperation:
 
                 if 0 == 1:
                     # Used for debugging
-                    if cacheSourceColumnDF.equals(sourceColumnDF):
+                    if cache_source_column_df.equals(source_column_df):
                         print("columns equal")
-                    if cacheSourceKeyDF.equals(sourceKeyDF):
+                    if cache_source_key_df.equals(source_key_df):
                         print("keys equal")
                     pd.set_option("display.max_columns", None)
                     pd.set_option("display.max_rows", None)
 
-                    print(sourceColumnDF)
+                    print(source_column_df)
                     print(
                         "**********************************************************************"
                     )
-                    print(cacheSourceColumnDF)
+                    print(cache_source_column_df)
                     print(
                         "**********************************************************************"
                     )
-                    print(sourceKeyDF)
+                    print(source_key_df)
                     print(
                         "**********************************************************************"
                     )
-                    print(cacheSourceKeyDF)
+                    print(cache_source_key_df)
 
                 # We need to save if there is an error and raise them after all tables are processed. If not, tables with foreign keys that dont have
                 # the refered table in Atlas will never be able to be created correctly
                 try:
                     self.updateAtlasWithRDBMSdata(
-                        schemaName=schema,
-                        tableName=table,
-                        printInfo=False,
-                        errorOnWarning=True,
+                        schema_name=schema,
+                        table_name=table,
+                        print_info=False,
+                        error_on_warning=True,
                     )
                 except atlasError:
-                    atlasErrorDetected = True
+                    atlas_error_detected = True
                     continue
                 except foreignKeyError:
-                    atlasForeignKeyErrorDetected = False
+                    atlas_foreign_key_error_detected = False
                     continue
                 except invalidConfiguration:
-                    atlasErrorDetected = True
+                    atlas_error_detected = True
                     continue
                 # 				result = self.updateAtlasWithRDBMSdata(schemaName = schema, tableName = table, printInfo = False, errorOnWarning=True)
                 # 				if result == False:
@@ -1047,7 +1063,7 @@ class atlasOperation:
 
                 log.debug("Atlas call completed")
 
-                if cacheOperation == "update":
+                if cache_operation == "update":
                     try:
                         session = self.getDBImportSession()
 
@@ -1099,16 +1115,16 @@ class atlasOperation:
                         self.disconnectDBImportDB()
                         raise SQLerror
 
-                if cacheOperation == "insert" or cacheOperation == "update":
+                if cache_operation == "insert" or cache_operation == "update":
                     try:
                         session = self.getDBImportSession()
-                        sourceColumnDF.to_sql(
+                        source_column_df.to_sql(
                             "atlas_column_cache",
                             self.configDBEngine,
                             index=False,
                             if_exists="append",
                         )
-                        sourceKeyDF.to_sql(
+                        source_key_df.to_sql(
                             "atlas_key_cache",
                             self.configDBEngine,
                             index=False,
@@ -1129,44 +1145,46 @@ class atlasOperation:
 
         # Remove tables that exists in Atlas that we didnt find
         # Get the unique names for the rdbms_db. No need for schema or table as we are only intressted in the dbUri result
-        atlasNameDict = self.getAtlasRdbmsNames(schemaName="", tableName="")
-        if atlasNameDict == None:
+        atlas_name_dict = self.getAtlasRdbmsNames(schema_name="", table_name="")
+        if atlas_name_dict == None:
             log.warning(
                 "Could not check for deleted tables in Atlas as the name specifications in DBImport was not created correctly"
             )
             raise ValueError("Atlas RDBMS names could not be built")
-        dbUri = atlasNameDict["dbUri"]
+        db_uri = atlas_name_dict["dbUri"]
 
         # if there are no tables in the database, we need to create it in Atlas manually
-        if createEmptyDatabaseInAtlas == True:
-            tableUri = atlasNameDict["tableUri"]
-            dbName = atlasNameDict["dbName"]
-            instanceUri = atlasNameDict["instanceUri"]
-            instanceName = atlasNameDict["instanceName"]
-            instanceType = atlasNameDict["instanceType"]
-            environmentType = atlasNameDict["environmentType"]
+        if create_empty_database_in_atlas == True:
+            table_uri = atlas_name_dict["tableUri"]
+            db_name = atlas_name_dict["dbName"]
+            instance_uri = atlas_name_dict["instanceUri"]
+            instance_name = atlas_name_dict["instanceName"]
+            instance_type = atlas_name_dict["instanceType"]
+            environment_type = atlas_name_dict["environmentType"]
 
-            jsonData = self.getAtlasRdbmsReferredEntities(schemaName="", tableName="")
+            json_data = self.getAtlasRdbmsReferredEntities(
+                schema_name="", table_name=""
+            )
 
-            jsonData["entities"] = []
-            dbData = {}
-            dbData["typeName"] = "rdbms_db"
-            dbData["createdBy"] = "DBImport"
-            dbData["attributes"] = {}
+            json_data["entities"] = []
+            db_data = {}
+            db_data["typeName"] = "rdbms_db"
+            db_data["createdBy"] = "DBImport"
+            db_data["attributes"] = {}
 
-            dbData["attributes"] = {}
-            dbData["attributes"]["qualifiedName"] = dbUri
-            dbData["attributes"]["name"] = dbName
-            dbData["attributes"]["contact_info"] = self.contactInfo
-            dbData["attributes"]["owner"] = self.owner
-            dbData["attributes"]["description"] = self.description
-            dbData["attributes"]["prodOrOther"] = environmentType
-            dbData["attributes"]["instance"] = {
+            db_data["attributes"] = {}
+            db_data["attributes"]["qualifiedName"] = db_uri
+            db_data["attributes"]["name"] = db_name
+            db_data["attributes"]["contact_info"] = self.contactInfo
+            db_data["attributes"]["owner"] = self.owner
+            db_data["attributes"]["description"] = self.description
+            db_data["attributes"]["prodOrOther"] = environment_type
+            db_data["attributes"]["instance"] = {
                 "guid": "-400",
                 "typeName": "rdbms_instance",
             }
 
-            jsonData["entities"].append(dbData)
+            json_data["entities"].append(db_data)
 
             # 			log.info("======================================")
             # 			log.info("JSON to send to Atlas!")
@@ -1174,7 +1192,7 @@ class atlasOperation:
             # 			log.info("======================================")
 
             response = self.atlasPostData(
-                URL=self.atlasRestEntities, data=json.dumps(jsonData)
+                url=self.atlasRestEntities, data=json.dumps(json_data)
             )
             if response == None:
                 log.warning(
@@ -1182,22 +1200,22 @@ class atlasOperation:
                 )
                 raise atlasError
 
-            statusCode = response["statusCode"]
-            if statusCode != 200:
+            status_code = response["statusCode"]
+            if status_code != 200:
                 log.warning(
                     "Request from Atlas when updating database schema was %s."
-                    % (statusCode)
+                    % (status_code)
                 )
                 log.warning("%s" % (response["data"]))
                 self.atlasEnabled == False  # noqa: B015  # TODO(#182): = was meant
                 raise atlasError
 
         # query the rdbms_db object in Atlas
-        atlasRestURL = "%s/rdbms_db?minExtInfo=true&attr:qualifiedName=%s" % (
+        atlas_rest_url = "%s/rdbms_db?minExtInfo=true&attr:qualifiedName=%s" % (
             self.atlasRestUniqueAttributeType,
-            dbUri,
+            db_uri,
         )
-        response = self.atlasGetData(URL=atlasRestURL)
+        response = self.atlasGetData(url=atlas_rest_url)
         if response == None:
             # If there is an error in self.atlasGetData(), we need to stop here as the response is None
             log.warning(
@@ -1205,49 +1223,49 @@ class atlasOperation:
             )
             raise atlasError
 
-        statusCode = response["statusCode"]
-        responseData = json.loads(response["data"])
+        status_code = response["statusCode"]
+        response_data = json.loads(response["data"])
 
-        if statusCode != 200:
+        if status_code != 200:
             log.warning(
-                "Request from Atlas when updating source schema was %s." % (statusCode)
+                "Request from Atlas when updating source schema was %s." % (status_code)
             )
             log.warning("%s" % (response["data"]))
             self.atlasEnabled == False  # noqa: B015  # TODO(#182): = was meant
             raise atlasError
 
         # Fetch all tables defined on the rdbms_db object
-        tablesFoundInDBList = []
-        for tables in responseData["entity"]["attributes"]["tables"]:
+        tables_found_in_db_list = []
+        for tables in response_data["entity"]["attributes"]["tables"]:
             guid = tables["guid"]
-            qualifiedName = responseData["referredEntities"][guid]["attributes"][
+            qualified_name = response_data["referredEntities"][guid]["attributes"][
                 "qualifiedName"
             ]
 
-            if responseData["referredEntities"][guid]["status"] != "ACTIVE":
+            if response_data["referredEntities"][guid]["status"] != "ACTIVE":
                 continue
 
             if self.jdbc_servertype == constant.MYSQL:
-                table = qualifiedName.split("@")[0].split(".")[-1]
+                table = qualified_name.split("@")[0].split(".")[-1]
                 schema = "-"
             else:
-                table = qualifiedName.split("@")[0].split(".")[-1]
-                schema = qualifiedName.split("@")[0].split(".")[-2]
+                table = qualified_name.split("@")[0].split(".")[-1]
+                schema = qualified_name.split("@")[0].split(".")[-2]
 
             if self.atlasIncludeFilter == None or self.atlasIncludeFilter == "":
-                processTableForDelete = True
+                process_table_for_delete = True
             else:
-                processTableForDelete = False
+                process_table_for_delete = False
 
             # Filter the schema.table so that only the included tables gets processed
             for include in self.atlasIncludeFilter.split(";"):
                 try:
-                    includeSchema = include.split(".")[0].replace("*", ".*").lower()
-                    includeTable = include.split(".")[1].replace("*", ".*").lower()
+                    include_schema = include.split(".")[0].replace("*", ".*").lower()
+                    include_table = include.split(".")[1].replace("*", ".*").lower()
                     if re.search(
-                        "^" + includeSchema + "$", schema.lower().strip()
-                    ) and re.search("^" + includeTable + "$", table.lower().strip()):
-                        processTableForDelete = True
+                        "^" + include_schema + "$", schema.lower().strip()
+                    ) and re.search("^" + include_table + "$", table.lower().strip()):
+                        process_table_for_delete = True
                         break
                 except IndexError:
                     pass
@@ -1255,37 +1273,41 @@ class atlasOperation:
             # Filter the schema.table so we remove the excluded items
             for exclude in self.atlasExcludeFilter.split(";"):
                 try:
-                    excludeSchema = exclude.split(".")[0].replace("*", ".*").lower()
-                    excludeTable = exclude.split(".")[1].replace("*", ".*").lower()
+                    exclude_schema = exclude.split(".")[0].replace("*", ".*").lower()
+                    exclude_table = exclude.split(".")[1].replace("*", ".*").lower()
                     if re.search(
-                        "^" + excludeSchema + "$", schema.lower().strip()
-                    ) and re.search("^" + excludeTable + "$", table.lower().strip()):
-                        processTableForDelete = False
+                        "^" + exclude_schema + "$", schema.lower().strip()
+                    ) and re.search("^" + exclude_table + "$", table.lower().strip()):
+                        process_table_for_delete = False
                         break
                 except IndexError:
                     pass
 
-            if processTableForDelete == False:
+            if process_table_for_delete == False:
                 continue
 
-            tablesFoundInDBDict = {}
-            tablesFoundInDBDict["schema"] = schema.strip()
-            tablesFoundInDBDict["table"] = table.strip()
-            tablesFoundInDBDict["qualifiedName"] = qualifiedName
-            tablesFoundInDBList.append(tablesFoundInDBDict)
+            tables_found_in_db_dict = {}
+            tables_found_in_db_dict["schema"] = schema.strip()
+            tables_found_in_db_dict["table"] = table.strip()
+            tables_found_in_db_dict["qualifiedName"] = qualified_name
+            tables_found_in_db_list.append(tables_found_in_db_dict)
 
-        tablesAndViewsDF.drop(columns="include", inplace=True)
-        tablesAndViewsDF["schema"] = tablesAndViewsDF["schema"].str.strip()
-        tablesAndViewsDF["table"] = tablesAndViewsDF["table"].str.strip()
+        tables_and_views_df.drop(columns="include", inplace=True)
+        tables_and_views_df["schema"] = tables_and_views_df["schema"].str.strip()
+        tables_and_views_df["table"] = tables_and_views_df["table"].str.strip()
 
-        tablesFoundInDB = pd.DataFrame(tablesFoundInDBList)
-        if tablesFoundInDB.empty:
-            tablesFoundInDB = pd.DataFrame(columns=["schema", "table"])
+        tables_found_in_db = pd.DataFrame(tables_found_in_db_list)
+        if tables_found_in_db.empty:
+            tables_found_in_db = pd.DataFrame(columns=["schema", "table"])
 
-        mergeDF = pd.merge(
-            tablesAndViewsDF, tablesFoundInDB, on=None, how="outer", indicator="Exist"
+        merge_df = pd.merge(
+            tables_and_views_df,
+            tables_found_in_db,
+            on=None,
+            how="outer",
+            indicator="Exist",
         )
-        for index, row in mergeDF.loc[mergeDF["Exist"] == "right_only"].iterrows():
+        for index, row in merge_df.loc[merge_df["Exist"] == "right_only"].iterrows():
             if row["schema"] != "-":
                 log.info(
                     "Deleting Atlas table for %s.%s on dbalias %s"
@@ -1297,28 +1319,28 @@ class atlasOperation:
                     % (row["table"], self.dbAlias)
                 )
 
-            atlasRestURL = "%s/rdbms_table?attr:qualifiedName=%s" % (
+            atlas_rest_url = "%s/rdbms_table?attr:qualifiedName=%s" % (
                 self.atlasRestUniqueAttributeType,
                 row["qualifiedName"],
             )
-            response = self.atlasDeleteData(URL=atlasRestURL)
+            response = self.atlasDeleteData(url=atlas_rest_url)
             if response == None:
                 log.warning(
                     "No response from DELETE rest call to Atlas when deleting table object"
                 )
                 raise atlasError
 
-            statusCode = response["statusCode"]
-            if statusCode != 200:
+            status_code = response["statusCode"]
+            if status_code != 200:
                 log.warning(
-                    "Request from Atlas when deleting table was %s." % (statusCode)
+                    "Request from Atlas when deleting table was %s." % (status_code)
                 )
                 log.warning(response["data"])
                 raise atlasError
 
-        if atlasErrorDetected == True:
+        if atlas_error_detected == True:
             raise atlasError
-        if atlasForeignKeyErrorDetected == True:
+        if atlas_foreign_key_error_detected == True:
             raise foreignKeyError
 
         log.info("Finished Atlas discovery on connection '%s'" % (self.dbAlias))
@@ -1363,12 +1385,12 @@ class atlasOperation:
                 % (self.jdbc_classpath_for_python)
             )
 
-            JDBCCredentials = [self.jdbc_username, self.jdbc_password]
+            jdbc_credentials = [self.jdbc_username, self.jdbc_password]
             try:
                 self.JDBCConn = jaydebeapi.connect(
                     self.jdbc_driver,
                     self.jdbc_url,
-                    JDBCCredentials,
+                    jdbc_credentials,
                     self.jdbc_classpath_for_python,
                 )
                 self.JDBCCursor = self.JDBCConn.cursor()
@@ -1421,7 +1443,7 @@ class atlasOperation:
         self.configDBSession = None
 
     def updateAtlasWithRDBMSdata(
-        self, schemaName, tableName, printInfo=True, errorOnWarning=False
+        self, schema_name, table_name, print_info=True, error_on_warning=False
     ):
         """This will update Atlas metadata with the information about the remote table schema"""
         log = logging.getLogger(self.loggerName)
@@ -1430,8 +1452,8 @@ class atlasOperation:
         if self.atlasEnabled == False:
             return False
 
-        deleteColumnErrorFound = False
-        foreignKeyErrorFound = False
+        delete_column_error_found = False
+        foreign_key_error_found = False
 
         if self.source_columns_df.empty == True:
             self.atlasEnabled = False
@@ -1441,7 +1463,7 @@ class atlasOperation:
             log.warning("No columns could be found on the source system.")
             raise invalidConfiguration
 
-        if printInfo == True:
+        if print_info == True:
             log.info("Updating Atlas with remote database schema")
 
         self.tableType = self.sourceSchema.getJdbcTableType(
@@ -1449,88 +1471,90 @@ class atlasOperation:
         )
 
         # Get the referredEntities part of the JSON. This is common for both import and export as the rdbms_* in Atlas is the same
-        jsonData = self.getAtlasRdbmsReferredEntities(
-            schemaName=schemaName, tableName=tableName
+        json_data = self.getAtlasRdbmsReferredEntities(
+            schema_name=schema_name, table_name=table_name
         )
 
         # Get the unique names for the rdbms_* entities. This is common for both import and export as the rdbms_* in Atlas is the same
-        returnDict = self.getAtlasRdbmsNames(schemaName=schemaName, tableName=tableName)
-        if returnDict == None:
+        return_dict = self.getAtlasRdbmsNames(
+            schema_name=schema_name, table_name=table_name
+        )
+        if return_dict == None:
             log.warning(
                 "Invalid configuration/data when calculating Atlas names for Rdbms table"
             )
             raise invalidConfiguration
 
-        tableUri = returnDict["tableUri"]
-        dbUri = returnDict["dbUri"]
-        dbName = returnDict["dbName"]
-        instanceUri = returnDict["instanceUri"]
-        instanceName = returnDict["instanceName"]
-        instanceType = returnDict["instanceType"]
+        table_uri = return_dict["tableUri"]
+        db_uri = return_dict["dbUri"]
+        db_name = return_dict["dbName"]
+        instance_uri = return_dict["instanceUri"]
+        instance_name = return_dict["instanceName"]
+        instance_type = return_dict["instanceType"]
 
-        jsonData["entities"] = []
+        json_data["entities"] = []
 
         # Loop through the columns and add them to the JSON
         for index, row in self.source_columns_df.iterrows():
-            columnData = {}
-            columnData["typeName"] = "rdbms_column"
-            columnData["createdBy"] = "DBImport"
-            columnData["attributes"] = {}
+            column_data = {}
+            column_data["typeName"] = "rdbms_column"
+            column_data["createdBy"] = "DBImport"
+            column_data["attributes"] = {}
 
-            columnName = row["SOURCE_COLUMN_NAME"]
-            columnUri = self.getAtlasRdbmsColumnURI(
-                schemaName=schemaName, tableName=tableName, columnName=columnName
+            column_name = row["SOURCE_COLUMN_NAME"]
+            column_uri = self.getAtlasRdbmsColumnURI(
+                schema_name=schema_name, table_name=table_name, column_name=column_name
             )
             if row["IS_NULLABLE"] == "YES":
-                columnNullable = True
+                column_nullable = True
             else:
-                columnNullable = False
+                column_nullable = False
 
-            columnIsPrimaryKey = False
-            for keysIndex, keysRow in self.source_keys_df.iterrows():
+            column_is_primary_key = False
+            for keys_index, keys_row in self.source_keys_df.iterrows():
                 if (
-                    keysRow["COL_NAME"] == columnName
-                    and keysRow["CONSTRAINT_TYPE"] == constant.PRIMARY_KEY
+                    keys_row["COL_NAME"] == column_name
+                    and keys_row["CONSTRAINT_TYPE"] == constant.PRIMARY_KEY
                 ):
-                    columnIsPrimaryKey = True
+                    column_is_primary_key = True
 
-            columnData["attributes"]["qualifiedName"] = columnUri
-            columnData["attributes"]["owner"] = self.owner
+            column_data["attributes"]["qualifiedName"] = column_uri
+            column_data["attributes"]["owner"] = self.owner
 
             if (
                 row["SOURCE_COLUMN_COMMENT"] != None
                 and row["SOURCE_COLUMN_COMMENT"].strip() != ""
             ):
-                columnData["attributes"]["comment"] = row["SOURCE_COLUMN_COMMENT"]
+                column_data["attributes"]["comment"] = row["SOURCE_COLUMN_COMMENT"]
 
             try:
-                columnLength = int(
+                column_length = int(
                     str(row["SOURCE_COLUMN_LENGTH"]).split(".")[0].split(":")[0]
                 )
             except ValueError:
-                columnLength = None
+                column_length = None
 
-            if columnLength != None:
-                columnData["attributes"]["length"] = str(columnLength)
+            if column_length != None:
+                column_data["attributes"]["length"] = str(column_length)
 
-            columnData["attributes"]["name"] = columnName
-            columnData["attributes"]["data_type"] = row["SOURCE_COLUMN_TYPE"]
-            columnData["attributes"]["isNullable"] = columnNullable
-            columnData["attributes"]["isPrimaryKey"] = columnIsPrimaryKey
-            columnData["attributes"]["table"] = {
+            column_data["attributes"]["name"] = column_name
+            column_data["attributes"]["data_type"] = row["SOURCE_COLUMN_TYPE"]
+            column_data["attributes"]["isNullable"] = column_nullable
+            column_data["attributes"]["isPrimaryKey"] = column_is_primary_key
+            column_data["attributes"]["table"] = {
                 "guid": "-100",
                 "typeName": "rdbms_table",
             }
 
-            jsonData["entities"].append(columnData)
+            json_data["entities"].append(column_data)
 
         log.debug("======================================")
         log.debug("JSON to send to Atlas!")
-        log.debug(json.dumps(jsonData, indent=3))
+        log.debug(json.dumps(json_data, indent=3))
         log.debug("======================================")
 
         response = self.atlasPostData(
-            URL=self.atlasRestEntities, data=json.dumps(jsonData)
+            url=self.atlasRestEntities, data=json.dumps(json_data)
         )
         if response == None:
             log.warning(
@@ -1538,10 +1562,10 @@ class atlasOperation:
             )
             raise atlasError
 
-        statusCode = response["statusCode"]
-        if statusCode != 200:
+        status_code = response["statusCode"]
+        if status_code != 200:
             log.warning(
-                "Request from Atlas when updating source schema was %s." % (statusCode)
+                "Request from Atlas when updating source schema was %s." % (status_code)
             )
             log.warning("%s" % (response["data"]))
             self.atlasEnabled == False  # noqa: B015  # TODO(#182): = was meant
@@ -1551,154 +1575,157 @@ class atlasOperation:
         # These columns need to be deleted from Atlas
 
         # Fetch the table from Atlas so we can check all columns configured on it
-        atlasRestURL = "%s/rdbms_table?attr:qualifiedName=%s" % (
+        atlas_rest_url = "%s/rdbms_table?attr:qualifiedName=%s" % (
             self.atlasRestUniqueAttributeType,
-            tableUri,
+            table_uri,
         )
-        response = self.atlasGetData(URL=atlasRestURL)
+        response = self.atlasGetData(url=atlas_rest_url)
         if response == None:
             log.warning(
                 "No response from GET rest call to Atlas when reading the table"
             )
             raise atlasError
 
-        statusCode = response["statusCode"]
-        responseData = json.loads(response["data"])
+        status_code = response["statusCode"]
+        response_data = json.loads(response["data"])
 
-        if statusCode != 200:
+        if status_code != 200:
             log.warning(
-                "Request from Atlas when updating source schema was %s." % (statusCode)
+                "Request from Atlas when updating source schema was %s." % (status_code)
             )
             log.warning("%s" % (response["data"]))
             self.atlasEnabled == False  # noqa: B015  # TODO(#182): = was meant
             raise atlasError
 
-        for jsonRefEntities in responseData["referredEntities"]:
-            jsonRefEntity = responseData["referredEntities"][jsonRefEntities]
-            if jsonRefEntity["typeName"] == "rdbms_column":
+        for json_ref_entities in response_data["referredEntities"]:
+            json_ref_entity = response_data["referredEntities"][json_ref_entities]
+            if json_ref_entity["typeName"] == "rdbms_column":
                 # We found on column in the ""referredEntities" part. We will now check the column we found
-                columnQualifiedName = jsonRefEntity["attributes"]["qualifiedName"]
-                columnName = jsonRefEntity["attributes"]["name"]
+                column_qualified_name = json_ref_entity["attributes"]["qualifiedName"]
+                column_name = json_ref_entity["attributes"]["name"]
 
                 # Loop through the source columns to see if it exists in there
-                foundSourceColumn = False
+                found_source_column = False
                 for index, row in self.source_columns_df.iterrows():
-                    sourceColumnName = row["SOURCE_COLUMN_NAME"]
-                    sourceColumnUri = self.getAtlasRdbmsColumnURI(
-                        schemaName=schemaName,
-                        tableName=tableName,
-                        columnName=sourceColumnName,
+                    source_column_name = row["SOURCE_COLUMN_NAME"]
+                    source_column_uri = self.getAtlasRdbmsColumnURI(
+                        schema_name=schema_name,
+                        table_name=table_name,
+                        column_name=source_column_name,
                     )
                     if (
-                        sourceColumnName == columnName
-                        and sourceColumnUri == columnQualifiedName
+                        source_column_name == column_name
+                        and source_column_uri == column_qualified_name
                     ):
-                        foundSourceColumn = True
+                        found_source_column = True
 
-                if foundSourceColumn == False and jsonRefEntity["status"] == "ACTIVE":
+                if (
+                    found_source_column == False
+                    and json_ref_entity["status"] == "ACTIVE"
+                ):
                     # The column defined in Atlas cant be found on the source, and it's still marked as ACTIVE. Lets delete it!
                     log.debug(
                         "Deleting Atlas column with qualifiedName = '%s'"
-                        % (columnQualifiedName)
+                        % (column_qualified_name)
                     )
 
-                    atlasRestURL = "%s/rdbms_column?attr:qualifiedName=%s" % (
+                    atlas_rest_url = "%s/rdbms_column?attr:qualifiedName=%s" % (
                         self.atlasRestUniqueAttributeType,
-                        columnQualifiedName,
+                        column_qualified_name,
                     )
-                    response = self.atlasDeleteData(URL=atlasRestURL)
+                    response = self.atlasDeleteData(url=atlas_rest_url)
                     if response == None:
                         log.warning(
                             "No response from DELETE rest call to Atlas when deleting non-existing columns"
                         )
                         raise atlasError
 
-                    statusCode = response["statusCode"]
-                    if statusCode != 200:
+                    status_code = response["statusCode"]
+                    if status_code != 200:
                         log.warning(
                             "Request from Atlas when deleting old columns was %s."
-                            % (statusCode)
+                            % (status_code)
                         )
                         log.warning("%s" % (response["data"]))
                         self.atlasEnabled == False  # noqa: B015  # TODO(#182): = was meant
-                        deleteColumnErrorFound = True
+                        delete_column_error_found = True
 
         # Code to add Foreign Keys to table. This is done in a new JSON as we reference the table we just created. One JSON per FK
 
         if self.source_keys_df.empty == False:
             # Select only rows where CONSTRAINT_TYPE = FK and the slice so that we only see the CONSTRAINT_NAME and make it unique
-            textPrinted = False
-            for fkName in self.source_keys_df.loc[
+            text_printed = False
+            for fk_name in self.source_keys_df.loc[
                 self.source_keys_df["CONSTRAINT_TYPE"] == constant.FOREIGN_KEY
             ][["CONSTRAINT_NAME"]].CONSTRAINT_NAME.unique():
-                if textPrinted == False:
-                    if printInfo == True:
+                if text_printed == False:
+                    if print_info == True:
                         log.info("Updating Atlas with remote database foreign keys")
-                    textPrinted = True
+                    text_printed = True
 
-                jsonData = None
-                columnCount = 0
+                json_data = None
+                column_count = 0
 
                 for index, row in self.source_keys_df.loc[
-                    self.source_keys_df["CONSTRAINT_NAME"] == fkName
+                    self.source_keys_df["CONSTRAINT_NAME"] == fk_name
                 ].iterrows():
                     # Each 'row' now contains information about the column in the FK
-                    if jsonData == None:
+                    if json_data == None:
                         # The refered table must exists, or we will get a 404 error from Atlas.
                         # We do the check here and exit later depending on status of refTableExists
-                        refSchemaName = row["REFERENCE_SCHEMA_NAME"].strip()
-                        refTableName = row["REFERENCE_TABLE_NAME"].strip()
-                        returnDict = self.getAtlasRdbmsNames(
-                            schemaName=refSchemaName, tableName=refTableName
+                        ref_schema_name = row["REFERENCE_SCHEMA_NAME"].strip()
+                        ref_table_name = row["REFERENCE_TABLE_NAME"].strip()
+                        return_dict = self.getAtlasRdbmsNames(
+                            schema_name=ref_schema_name, table_name=ref_table_name
                         )
-                        refTableUri = returnDict["tableUri"]
+                        ref_table_uri = return_dict["tableUri"]
 
-                        atlasRestURL = "%s/rdbms_table?attr:qualifiedName=%s" % (
+                        atlas_rest_url = "%s/rdbms_table?attr:qualifiedName=%s" % (
                             self.atlasRestUniqueAttributeType,
-                            refTableUri,
+                            ref_table_uri,
                         )
-                        response = self.atlasGetData(URL=atlasRestURL)
+                        response = self.atlasGetData(url=atlas_rest_url)
                         if response == None:
                             log.warning(
                                 "No response from GET rest call to Atlas when checking if table that is used for ForeignKeys exists in Atlas"
                             )
                             raise atlasError
 
-                        statusCode = response["statusCode"]
-                        if statusCode == 200:
-                            refTableExists = True
+                        status_code = response["statusCode"]
+                        if status_code == 200:
+                            ref_table_exists = True
                         else:
-                            refTableExists = False
+                            ref_table_exists = False
 
                         # First time we loop through the columns and jsonData is empty. Lets create the base for the json
-                        jsonData = self.getAtlasRdbmsReferredEntities(
-                            schemaName=schemaName,
-                            tableName=tableName,
-                            refSchemaName=row["REFERENCE_SCHEMA_NAME"],
-                            refTableName=row["REFERENCE_TABLE_NAME"],
+                        json_data = self.getAtlasRdbmsReferredEntities(
+                            schema_name=schema_name,
+                            table_name=table_name,
+                            ref_schema_name=row["REFERENCE_SCHEMA_NAME"],
+                            ref_table_name=row["REFERENCE_TABLE_NAME"],
                         )
 
-                        entitiesData = {}
-                        entitiesData["typeName"] = "rdbms_foreign_key"
-                        entitiesData["createdBy"] = "DBImport"
-                        entitiesData["attributes"] = {}
-                        entitiesData["attributes"]["qualifiedName"] = "%s.%s" % (
-                            fkName,
-                            tableUri,
+                        entities_data = {}
+                        entities_data["typeName"] = "rdbms_foreign_key"
+                        entities_data["createdBy"] = "DBImport"
+                        entities_data["attributes"] = {}
+                        entities_data["attributes"]["qualifiedName"] = "%s.%s" % (
+                            fk_name,
+                            table_uri,
                         )
-                        entitiesData["attributes"]["name"] = fkName
-                        entitiesData["relationshipAttributes"] = {}
-                        entitiesData["relationshipAttributes"]["table"] = {
+                        entities_data["attributes"]["name"] = fk_name
+                        entities_data["relationshipAttributes"] = {}
+                        entities_data["relationshipAttributes"]["table"] = {
                             "guid": "-100",
                             "typeName": "rdbms_table",
                         }
-                        entitiesData["relationshipAttributes"]["references_table"] = {
+                        entities_data["relationshipAttributes"]["references_table"] = {
                             "guid": "-101",
                             "typeName": "rdbms_table",
                         }
 
-                        entitiesData["relationshipAttributes"]["key_columns"] = []
-                        entitiesData["relationshipAttributes"][
+                        entities_data["relationshipAttributes"]["key_columns"] = []
+                        entities_data["relationshipAttributes"][
                             "references_columns"
                         ] = []
 
@@ -1706,75 +1733,75 @@ class atlasOperation:
                     # Lets add the columns
 
                     # Reference to the table column
-                    sourceColumnUri = self.getAtlasRdbmsColumnURI(
-                        schemaName=schemaName,
-                        tableName=tableName,
-                        columnName=row["COL_NAME"],
+                    source_column_uri = self.getAtlasRdbmsColumnURI(
+                        schema_name=schema_name,
+                        table_name=table_name,
+                        column_name=row["COL_NAME"],
                     )
 
-                    uuidRef = str(1000 + columnCount)
-                    jsonData["referredEntities"][uuidRef] = {}
-                    jsonData["referredEntities"][uuidRef]["guid"] = uuidRef
-                    jsonData["referredEntities"][uuidRef]["typeName"] = "rdbms_column"
-                    jsonData["referredEntities"][uuidRef]["attributes"] = {}
-                    jsonData["referredEntities"][uuidRef]["attributes"][
+                    uuid_ref = str(1000 + column_count)
+                    json_data["referredEntities"][uuid_ref] = {}
+                    json_data["referredEntities"][uuid_ref]["guid"] = uuid_ref
+                    json_data["referredEntities"][uuid_ref]["typeName"] = "rdbms_column"
+                    json_data["referredEntities"][uuid_ref]["attributes"] = {}
+                    json_data["referredEntities"][uuid_ref]["attributes"][
                         "qualifiedName"
-                    ] = sourceColumnUri
-                    jsonData["referredEntities"][uuidRef]["attributes"]["name"] = row[
+                    ] = source_column_uri
+                    json_data["referredEntities"][uuid_ref]["attributes"]["name"] = row[
                         "COL_NAME"
                     ]
-                    jsonData["referredEntities"][uuidRef]["attributes"]["table"] = {
+                    json_data["referredEntities"][uuid_ref]["attributes"]["table"] = {
                         "guid": "-100",
                         "typeName": "rdbms_table",
                     }
-                    columnCount = columnCount + 1
+                    column_count = column_count + 1
 
-                    keyColumnsData = {}
-                    keyColumnsData["guid"] = uuidRef
-                    keyColumnsData["typeName"] = "rdbms_column"
-                    entitiesData["relationshipAttributes"]["key_columns"].append(
-                        keyColumnsData
+                    key_columns_data = {}
+                    key_columns_data["guid"] = uuid_ref
+                    key_columns_data["typeName"] = "rdbms_column"
+                    entities_data["relationshipAttributes"]["key_columns"].append(
+                        key_columns_data
                     )
 
                     # Reference to the refTable column
-                    refColumnUri = self.getAtlasRdbmsColumnURI(
-                        schemaName=row["REFERENCE_SCHEMA_NAME"],
-                        tableName=row["REFERENCE_TABLE_NAME"],
-                        columnName=row["REFERENCE_COL_NAME"],
+                    ref_column_uri = self.getAtlasRdbmsColumnURI(
+                        schema_name=row["REFERENCE_SCHEMA_NAME"],
+                        table_name=row["REFERENCE_TABLE_NAME"],
+                        column_name=row["REFERENCE_COL_NAME"],
                     )
 
-                    uuidRef = str(1000 + columnCount)
-                    jsonData["referredEntities"][uuidRef] = {}
-                    jsonData["referredEntities"][uuidRef]["guid"] = uuidRef
-                    jsonData["referredEntities"][uuidRef]["typeName"] = "rdbms_column"
-                    jsonData["referredEntities"][uuidRef]["attributes"] = {}
-                    jsonData["referredEntities"][uuidRef]["attributes"][
+                    uuid_ref = str(1000 + column_count)
+                    json_data["referredEntities"][uuid_ref] = {}
+                    json_data["referredEntities"][uuid_ref]["guid"] = uuid_ref
+                    json_data["referredEntities"][uuid_ref]["typeName"] = "rdbms_column"
+                    json_data["referredEntities"][uuid_ref]["attributes"] = {}
+                    json_data["referredEntities"][uuid_ref]["attributes"][
                         "qualifiedName"
-                    ] = refColumnUri
-                    jsonData["referredEntities"][uuidRef]["attributes"]["name"] = row[
+                    ] = ref_column_uri
+                    json_data["referredEntities"][uuid_ref]["attributes"]["name"] = row[
                         "REFERENCE_COL_NAME"
                     ]
-                    jsonData["referredEntities"][uuidRef]["attributes"]["table"] = {
+                    json_data["referredEntities"][uuid_ref]["attributes"]["table"] = {
                         "guid": "-101",
                         "typeName": "rdbms_table",
                     }
-                    columnCount = columnCount + 1
+                    column_count = column_count + 1
 
-                    refColumnsData = {}
-                    refColumnsData["guid"] = uuidRef
-                    refColumnsData["typeName"] = "rdbms_column"
-                    entitiesData["relationshipAttributes"]["references_columns"].append(
-                        refColumnsData
-                    )
+                    ref_columns_data = {}
+                    ref_columns_data["guid"] = uuid_ref
+                    ref_columns_data["typeName"] = "rdbms_column"
+                    entities_data["relationshipAttributes"][
+                        "references_columns"
+                    ].append(ref_columns_data)
 
-                jsonData["entities"] = []
-                jsonData["entities"].append(entitiesData)
+                json_data["entities"] = []
+                json_data["entities"].append(entities_data)
 
-                if refTableExists == True:
-                    log.debug(json.dumps(jsonData, indent=3))
+                if ref_table_exists == True:
+                    log.debug(json.dumps(json_data, indent=3))
 
                     response = self.atlasPostData(
-                        URL=self.atlasRestEntities, data=json.dumps(jsonData)
+                        url=self.atlasRestEntities, data=json.dumps(json_data)
                     )
                     if response == None:
                         log.warning(
@@ -1782,36 +1809,36 @@ class atlasOperation:
                         )
                         raise atlasError
 
-                    statusCode = response["statusCode"]
-                    if statusCode != 200:
+                    status_code = response["statusCode"]
+                    if status_code != 200:
                         log.warning(
                             "Request from Atlas when creating Foreign Keys was %s"
-                            % (statusCode)
+                            % (status_code)
                         )
                         log.warning("%s" % (response["data"]))
                         self.atlasEnabled == False  # noqa: B015  # TODO(#182): = was meant
-                        foreignKeyErrorFound = True
+                        foreign_key_error_found = True
                     else:
                         log.debug(
                             "Creating/updating Atlas ForeignKey against %s.%s"
-                            % (refSchemaName, refTableName)
+                            % (ref_schema_name, ref_table_name)
                         )
                 else:
                     log.warning(
                         "Foreign Key cant be created as refered table(%s.%s) does not exists in Atlas"
-                        % (refSchemaName, refTableName)
+                        % (ref_schema_name, ref_table_name)
                     )
-                    foreignKeyErrorFound = True
+                    foreign_key_error_found = True
 
-        if errorOnWarning == True:
-            if foreignKeyErrorFound == True:
+        if error_on_warning == True:
+            if foreign_key_error_found == True:
                 raise foreignKeyError
-            if deleteColumnErrorFound == True:
+            if delete_column_error_found == True:
                 raise atlasError
 
         log.debug("Executing atlas_operations.updateAtlasWithSourceSchema() - Finished")
 
-    def getAtlasRdbmsColumnURI(self, schemaName, tableName, columnName):
+    def getAtlasRdbmsColumnURI(self, schema_name, table_name, column_name):
         """Returns a string with the correct column URI for Atlas"""
         log = logging.getLogger(self.loggerName)
         log.debug("Executing atlas_operations.getAtlasRdbmsColumnURI()")
@@ -1821,86 +1848,86 @@ class atlasOperation:
 
         if self.jdbc_servertype == constant.ORACLE:
             if self.jdbc_oracle_sid != None and self.jdbc_oracle_sid != "None":
-                oracleDB = self.jdbc_oracle_sid
+                oracle_db = self.jdbc_oracle_sid
             if (
                 self.jdbc_oracle_servicename != None
                 and self.jdbc_oracle_servicename != "None"
             ):
-                oracleDB = self.jdbc_oracle_servicename
-            columnUri = "%s.%s.%s.%s@%s:%s" % (
-                oracleDB,
-                schemaName,
-                tableName,
-                columnName,
+                oracle_db = self.jdbc_oracle_servicename
+            column_uri = "%s.%s.%s.%s@%s:%s" % (
+                oracle_db,
+                schema_name,
+                table_name,
+                column_name,
                 self.jdbc_hostname,
                 self.jdbc_port,
             )
 
         elif self.jdbc_servertype == constant.MSSQL:
-            columnUri = "%s.%s.%s.%s@%s:%s" % (
+            column_uri = "%s.%s.%s.%s@%s:%s" % (
                 self.jdbc_database,
-                schemaName,
-                tableName,
-                columnName,
+                schema_name,
+                table_name,
+                column_name,
                 self.jdbc_hostname,
                 self.jdbc_port,
             )
 
         elif self.jdbc_servertype == constant.MYSQL:
-            columnUri = "%s.%s.%s@%s:%s" % (
+            column_uri = "%s.%s.%s@%s:%s" % (
                 self.jdbc_database,
-                tableName,
-                columnName,
+                table_name,
+                column_name,
                 self.jdbc_hostname,
                 self.jdbc_port,
             )
 
         elif self.jdbc_servertype == constant.POSTGRESQL:
-            columnUri = "%s.%s.%s.%s@%s:%s" % (
+            column_uri = "%s.%s.%s.%s@%s:%s" % (
                 self.jdbc_database,
-                schemaName,
-                tableName,
-                columnName,
+                schema_name,
+                table_name,
+                column_name,
                 self.jdbc_hostname,
                 self.jdbc_port,
             )
 
         elif self.jdbc_servertype == constant.PROGRESS:
-            columnUri = "%s.%s.%s.%s@%s:%s" % (
+            column_uri = "%s.%s.%s.%s@%s:%s" % (
                 self.jdbc_database,
-                schemaName,
-                tableName,
-                columnName,
+                schema_name,
+                table_name,
+                column_name,
                 self.jdbc_hostname,
                 self.jdbc_port,
             )
 
         elif self.jdbc_servertype == constant.DB2_UDB:
-            columnUri = "%s.%s.%s.%s@%s:%s" % (
+            column_uri = "%s.%s.%s.%s@%s:%s" % (
                 self.jdbc_database,
-                schemaName,
-                tableName,
-                columnName,
+                schema_name,
+                table_name,
+                column_name,
                 self.jdbc_hostname,
                 self.jdbc_port,
             )
 
         elif self.jdbc_servertype == constant.DB2_AS400:
-            columnUri = "%s.%s.%s.%s@%s:%s" % (
+            column_uri = "%s.%s.%s.%s@%s:%s" % (
                 self.jdbc_database,
-                schemaName,
-                tableName,
-                columnName,
+                schema_name,
+                table_name,
+                column_name,
                 self.jdbc_hostname,
                 self.jdbc_port,
             )
 
         elif self.jdbc_servertype == constant.INFORMIX:
-            columnUri = "%s.%s.%s.%s@%s:%s" % (
+            column_uri = "%s.%s.%s.%s@%s:%s" % (
                 self.jdbc_database,
-                schemaName,
-                tableName,
-                columnName,
+                schema_name,
+                table_name,
+                column_name,
                 self.jdbc_hostname,
                 self.jdbc_port,
             )
@@ -1913,174 +1940,174 @@ class atlasOperation:
             return None
 
         log.debug("Executing atlas_operations.getAtlasRdbmsColumnURI() - Finished")
-        return columnUri
+        return column_uri
 
-    def getAtlasRdbmsNames(self, schemaName, tableName):
+    def getAtlasRdbmsNames(self, schema_name, table_name):
         """Returns a dict with the names needed for the rdbms_* configuration, depending on database type"""
         log = logging.getLogger(self.loggerName)
         log.debug("Executing atlas_operations.getAtlasRdbmsNames()")
 
-        tableUri = None
-        dbUri = None
-        instanceUri = None
-        instanceName = None
-        instanceType = None
-        environmentType = None
+        table_uri = None
+        db_uri = None
+        instance_uri = None
+        instance_name = None
+        instance_type = None
+        environment_type = None
 
         if self.atlasEnabled == False:
             return None
 
         if self.jdbc_environment == None:
-            environmentType = "Unspecified"
+            environment_type = "Unspecified"
         else:
-            environmentType = self.jdbc_environment
+            environment_type = self.jdbc_environment
 
         if self.jdbc_servertype == constant.ORACLE:
             if self.jdbc_oracle_sid != None and self.jdbc_oracle_sid != "None":
-                oracleDB = self.jdbc_oracle_sid
+                oracle_db = self.jdbc_oracle_sid
             if (
                 self.jdbc_oracle_servicename != None
                 and self.jdbc_oracle_servicename != "None"
             ):
-                oracleDB = self.jdbc_oracle_servicename
+                oracle_db = self.jdbc_oracle_servicename
 
-            tableUri = "%s.%s.%s@%s:%s" % (
-                oracleDB,
-                schemaName,
-                tableName,
+            table_uri = "%s.%s.%s@%s:%s" % (
+                oracle_db,
+                schema_name,
+                table_name,
                 self.jdbc_hostname,
                 self.jdbc_port,
             )
-            dbUri = "%s@%s:%s" % (oracleDB, self.jdbc_hostname, self.jdbc_port)
-            dbName = oracleDB
-            instanceUri = "Oracle@%s:%s" % (self.jdbc_hostname, self.jdbc_port)
-            instanceName = "Oracle"
-            instanceType = "Oracle"
+            db_uri = "%s@%s:%s" % (oracle_db, self.jdbc_hostname, self.jdbc_port)
+            db_name = oracle_db
+            instance_uri = "Oracle@%s:%s" % (self.jdbc_hostname, self.jdbc_port)
+            instance_name = "Oracle"
+            instance_type = "Oracle"
 
         elif self.jdbc_servertype == constant.MSSQL:
-            tableUri = "%s.%s.%s@%s:%s" % (
+            table_uri = "%s.%s.%s@%s:%s" % (
                 self.jdbc_database,
-                schemaName,
-                tableName,
+                schema_name,
+                table_name,
                 self.jdbc_hostname,
                 self.jdbc_port,
             )
-            dbUri = "%s@%s:%s" % (
+            db_uri = "%s@%s:%s" % (
                 self.jdbc_database,
                 self.jdbc_hostname,
                 self.jdbc_port,
             )
-            dbName = self.jdbc_database
-            instanceUri = "MSSQL@%s:%s" % (self.jdbc_hostname, self.jdbc_port)
-            instanceName = "MSSQL"
-            instanceType = "MSSQL"
+            db_name = self.jdbc_database
+            instance_uri = "MSSQL@%s:%s" % (self.jdbc_hostname, self.jdbc_port)
+            instance_name = "MSSQL"
+            instance_type = "MSSQL"
 
         elif self.jdbc_servertype == constant.MYSQL:
-            tableUri = "%s.%s@%s:%s" % (
+            table_uri = "%s.%s@%s:%s" % (
                 self.jdbc_database,
-                tableName,
+                table_name,
                 self.jdbc_hostname,
                 self.jdbc_port,
             )
-            dbUri = "%s@%s:%s" % (
+            db_uri = "%s@%s:%s" % (
                 self.jdbc_database,
                 self.jdbc_hostname,
                 self.jdbc_port,
             )
-            dbName = self.jdbc_database
-            instanceUri = "MySQL@%s:%s" % (self.jdbc_hostname, self.jdbc_port)
-            instanceName = "MySQL"
-            instanceType = "MySQL"
+            db_name = self.jdbc_database
+            instance_uri = "MySQL@%s:%s" % (self.jdbc_hostname, self.jdbc_port)
+            instance_name = "MySQL"
+            instance_type = "MySQL"
 
         elif self.jdbc_servertype == constant.POSTGRESQL:
-            tableUri = "%s.%s.%s@%s:%s" % (
+            table_uri = "%s.%s.%s@%s:%s" % (
                 self.jdbc_database,
-                schemaName,
-                tableName,
+                schema_name,
+                table_name,
                 self.jdbc_hostname,
                 self.jdbc_port,
             )
-            dbUri = "%s@%s:%s" % (
+            db_uri = "%s@%s:%s" % (
                 self.jdbc_database,
                 self.jdbc_hostname,
                 self.jdbc_port,
             )
-            dbName = self.jdbc_database
-            instanceUri = "PostgreSQL@%s:%s" % (self.jdbc_hostname, self.jdbc_port)
-            instanceName = "PostgreSQL"
-            instanceType = "PostgreSQL"
+            db_name = self.jdbc_database
+            instance_uri = "PostgreSQL@%s:%s" % (self.jdbc_hostname, self.jdbc_port)
+            instance_name = "PostgreSQL"
+            instance_type = "PostgreSQL"
 
         elif self.jdbc_servertype == constant.PROGRESS:
-            tableUri = "%s.%s.%s@%s:%s" % (
+            table_uri = "%s.%s.%s@%s:%s" % (
                 self.jdbc_database,
-                schemaName,
-                tableName,
+                schema_name,
+                table_name,
                 self.jdbc_hostname,
                 self.jdbc_port,
             )
-            dbUri = "%s@%s:%s" % (
+            db_uri = "%s@%s:%s" % (
                 self.jdbc_database,
                 self.jdbc_hostname,
                 self.jdbc_port,
             )
-            dbName = self.jdbc_database
-            instanceUri = "Progress@%s:%s" % (self.jdbc_hostname, self.jdbc_port)
-            instanceName = "Progress"
-            instanceType = "Progress"
+            db_name = self.jdbc_database
+            instance_uri = "Progress@%s:%s" % (self.jdbc_hostname, self.jdbc_port)
+            instance_name = "Progress"
+            instance_type = "Progress"
 
         elif self.jdbc_servertype == constant.DB2_UDB:
-            tableUri = "%s.%s.%s@%s:%s" % (
+            table_uri = "%s.%s.%s@%s:%s" % (
                 self.jdbc_database,
-                schemaName,
-                tableName,
+                schema_name,
+                table_name,
                 self.jdbc_hostname,
                 self.jdbc_port,
             )
-            dbUri = "%s@%s:%s" % (
+            db_uri = "%s@%s:%s" % (
                 self.jdbc_database,
                 self.jdbc_hostname,
                 self.jdbc_port,
             )
-            dbName = self.jdbc_database
-            instanceUri = "DB2UDB@%s:%s" % (self.jdbc_hostname, self.jdbc_port)
-            instanceName = "DB2"
-            instanceType = "DB2"
+            db_name = self.jdbc_database
+            instance_uri = "DB2UDB@%s:%s" % (self.jdbc_hostname, self.jdbc_port)
+            instance_name = "DB2"
+            instance_type = "DB2"
 
         elif self.jdbc_servertype == constant.DB2_AS400:
-            tableUri = "%s.%s.%s@%s:%s" % (
+            table_uri = "%s.%s.%s@%s:%s" % (
                 self.jdbc_database,
-                schemaName,
-                tableName,
+                schema_name,
+                table_name,
                 self.jdbc_hostname,
                 self.jdbc_port,
             )
-            dbUri = "%s@%s:%s" % (
+            db_uri = "%s@%s:%s" % (
                 self.jdbc_database,
                 self.jdbc_hostname,
                 self.jdbc_port,
             )
-            dbName = self.jdbc_database
-            instanceUri = "DB2AS400@%s:%s" % (self.jdbc_hostname, self.jdbc_port)
-            instanceName = "DB2"
-            instanceType = "DB2"
+            db_name = self.jdbc_database
+            instance_uri = "DB2AS400@%s:%s" % (self.jdbc_hostname, self.jdbc_port)
+            instance_name = "DB2"
+            instance_type = "DB2"
 
         elif self.jdbc_servertype == constant.INFORMIX:
-            tableUri = "%s.%s.%s@%s:%s" % (
+            table_uri = "%s.%s.%s@%s:%s" % (
                 self.jdbc_database,
-                schemaName,
-                tableName,
+                schema_name,
+                table_name,
                 self.jdbc_hostname,
                 self.jdbc_port,
             )
-            dbUri = "%s@%s:%s" % (
+            db_uri = "%s@%s:%s" % (
                 self.jdbc_database,
                 self.jdbc_hostname,
                 self.jdbc_port,
             )
-            dbName = self.jdbc_database
-            instanceUri = "INFORMIX@%s:%s" % (self.jdbc_hostname, self.jdbc_port)
-            instanceName = "INFORMIX"
-            instanceType = "INFORMIX"
+            db_name = self.jdbc_database
+            instance_uri = "INFORMIX@%s:%s" % (self.jdbc_hostname, self.jdbc_port)
+            instance_name = "INFORMIX"
+            instance_type = "INFORMIX"
 
         else:
             logging.warning(
@@ -2089,28 +2116,28 @@ class atlasOperation:
             self.atlasEnabled = False
             return None
 
-        returnDict = {}
-        returnDict["tableUri"] = tableUri
-        returnDict["dbUri"] = dbUri
-        returnDict["dbName"] = dbName
-        returnDict["instanceUri"] = instanceUri
-        returnDict["instanceName"] = instanceName
-        returnDict["instanceType"] = instanceType
-        returnDict["environmentType"] = environmentType
+        return_dict = {}
+        return_dict["tableUri"] = table_uri
+        return_dict["dbUri"] = db_uri
+        return_dict["dbName"] = db_name
+        return_dict["instanceUri"] = instance_uri
+        return_dict["instanceName"] = instance_name
+        return_dict["instanceType"] = instance_type
+        return_dict["environmentType"] = environment_type
 
         log.debug("Executing atlas_operations.getAtlasRdbmsNames() - Finished")
-        return returnDict
+        return return_dict
 
     def updateAtlasWithImportLineage(
         self,
-        Hive_DB,
-        Hive_Table,
-        sourceSchema,
-        sourceTable,
-        sqoopHdfsLocation,
-        startStopDict,
-        fullExecutedCommand,
-        importTool,
+        hive_db,
+        hive_table,
+        source_schema,
+        source_table,
+        sqoop_hdfs_location,
+        start_stop_dict,
+        full_executed_command,
+        import_tool,
     ):
         """This will update Atlas lineage for the import process"""
         log = logging.getLogger(self.loggerName)
@@ -2122,62 +2149,65 @@ class atlasOperation:
         log.info("Updating Atlas with import lineage")
 
         # Get the referredEntities part of the JSON. This is common for both import and export as the rdbms_* in Atlas is the same
-        jsonData = self.getAtlasRdbmsReferredEntities(
-            schemaName=sourceSchema, tableName=sourceTable, hdfsPath=sqoopHdfsLocation
+        json_data = self.getAtlasRdbmsReferredEntities(
+            schema_name=source_schema,
+            table_name=source_table,
+            hdfs_path=sqoop_hdfs_location,
         )
 
         # Get the unique names for the rdbms_* entities. This is common for both import and export as the rdbms_* in Atlas is the same
-        returnDict = self.getAtlasRdbmsNames(
-            schemaName=sourceSchema, tableName=sourceTable
+        return_dict = self.getAtlasRdbmsNames(
+            schema_name=source_schema, table_name=source_table
         )
-        if returnDict == None:
+        if return_dict == None:
             return
 
-        tableUri = returnDict["tableUri"]
-        dbUri = returnDict["dbUri"]
-        dbName = returnDict["dbName"]
-        instanceUri = returnDict["instanceUri"]
-        instanceName = returnDict["instanceName"]
-        instanceType = returnDict["instanceType"]
+        table_uri = return_dict["tableUri"]
+        db_uri = return_dict["dbUri"]
+        db_name = return_dict["dbName"]
+        instance_uri = return_dict["instanceUri"]
+        instance_name = return_dict["instanceName"]
+        instance_type = return_dict["instanceType"]
 
-        processName = "%s.%s@DBimport" % (Hive_DB, Hive_Table)
+        process_name = "%s.%s@DBimport" % (hive_db, hive_table)
 
-        lineageData = {}
-        lineageData["typeName"] = "DBImport_Process"
-        lineageData["createdBy"] = "DBImport"
-        lineageData["attributes"] = {}
-        lineageData["attributes"]["qualifiedName"] = processName
-        lineageData["attributes"]["uri"] = processName
-        lineageData["attributes"]["name"] = processName
-        lineageData["attributes"]["operation"] = "import"
-        lineageData["attributes"]["commandlineOpts"] = fullExecutedCommand
-        lineageData["attributes"]["description"] = "Import of %s.%s" % (
-            Hive_DB,
-            Hive_Table,
+        lineage_data = {}
+        lineage_data["typeName"] = "DBImport_Process"
+        lineage_data["createdBy"] = "DBImport"
+        lineage_data["attributes"] = {}
+        lineage_data["attributes"]["qualifiedName"] = process_name
+        lineage_data["attributes"]["uri"] = process_name
+        lineage_data["attributes"]["name"] = process_name
+        lineage_data["attributes"]["operation"] = "import"
+        lineage_data["attributes"]["commandlineOpts"] = full_executed_command
+        lineage_data["attributes"]["description"] = "Import of %s.%s" % (
+            hive_db,
+            hive_table,
         )
-        lineageData["attributes"]["startTime"] = startStopDict["startTime"]
-        lineageData["attributes"]["endTime"] = startStopDict["stopTime"]
-        lineageData["attributes"]["userName"] = getpass.getuser()
-        lineageData["attributes"]["importTool"] = importTool
-        lineageData["attributes"]["inputs"] = [
+        lineage_data["attributes"]["startTime"] = start_stop_dict["startTime"]
+        lineage_data["attributes"]["endTime"] = start_stop_dict["stopTime"]
+        lineage_data["attributes"]["userName"] = getpass.getuser()
+        lineage_data["attributes"]["importTool"] = import_tool
+        lineage_data["attributes"]["inputs"] = [
             {"guid": "-100", "typeName": "rdbms_table"}
         ]
-        lineageData["attributes"]["outputs"] = [
+        lineage_data["attributes"]["outputs"] = [
             {"guid": "-200", "typeName": "hdfs_path"}
         ]
 
-        jsonData["entities"] = []
-        jsonData["entities"].append(lineageData)
+        json_data["entities"] = []
+        json_data["entities"].append(lineage_data)
 
-        logging.debug(json.dumps(jsonData, indent=3))
+        logging.debug(json.dumps(json_data, indent=3))
 
         response = self.atlasPostData(
-            URL=self.atlasRestEntities, data=json.dumps(jsonData)
+            url=self.atlasRestEntities, data=json.dumps(json_data)
         )
-        statusCode = response["statusCode"]
-        if statusCode != 200:
+        status_code = response["statusCode"]
+        if status_code != 200:
             log.warning(
-                "Request from Atlas when updating import lineage was %s." % (statusCode)
+                "Request from Atlas when updating import lineage was %s."
+                % (status_code)
             )
             self.atlasEnabled == False  # noqa: B015  # TODO(#182): = was meant
 
@@ -2187,16 +2217,16 @@ class atlasOperation:
 
     def updateAtlasWithExportLineage(
         self,
-        hiveDB,
-        hiveTable,
-        hiveExportTempDB,
-        hiveExportTempTable,
-        targetSchema,
-        targetTable,
-        tempTableNeeded,
-        startStopDict,
-        fullExecutedCommand,
-        exportTool,
+        hive_db,
+        hive_table,
+        hive_export_temp_db,
+        hive_export_temp_table,
+        target_schema,
+        target_table,
+        temp_table_needed,
+        start_stop_dict,
+        full_executed_command,
+        export_tool,
     ):
         """This will update Atlas lineage for the export process"""
         log = logging.getLogger(self.loggerName)
@@ -2208,81 +2238,82 @@ class atlasOperation:
         log.info("Updating Atlas with export lineage")
 
         # Get the referredEntities part of the JSON. This is common for both import and export as the rdbms_* in Atlas is the same
-        jsonData = self.getAtlasRdbmsReferredEntities(
-            schemaName=targetSchema,
-            tableName=targetTable,
+        json_data = self.getAtlasRdbmsReferredEntities(
+            schema_name=target_schema,
+            table_name=target_table,
         )
 
         # Get the unique names for the rdbms_* entities. This is common for both import and export as the rdbms_* in Atlas is the same
-        returnDict = self.getAtlasRdbmsNames(
-            schemaName=targetSchema, tableName=targetTable
+        return_dict = self.getAtlasRdbmsNames(
+            schema_name=target_schema, table_name=target_table
         )
-        if returnDict == None:
+        if return_dict == None:
             return
 
-        tableUri = returnDict["tableUri"]
-        dbUri = returnDict["dbUri"]
-        dbName = returnDict["dbName"]
-        instanceUri = returnDict["instanceUri"]
-        instanceName = returnDict["instanceName"]
-        instanceType = returnDict["instanceType"]
+        table_uri = return_dict["tableUri"]
+        db_uri = return_dict["dbUri"]
+        db_name = return_dict["dbName"]
+        instance_uri = return_dict["instanceUri"]
+        instance_name = return_dict["instanceName"]
+        instance_type = return_dict["instanceType"]
 
-        processName = "%s.%s.%s@DBimport" % (self.dbAlias, targetSchema, targetTable)
+        process_name = "%s.%s.%s@DBimport" % (self.dbAlias, target_schema, target_table)
 
-        if tempTableNeeded == True:
-            hiveQualifiedName = "%s.%s@%s" % (
-                hiveExportTempDB,
-                hiveExportTempTable,
+        if temp_table_needed == True:
+            hive_qualified_name = "%s.%s@%s" % (
+                hive_export_temp_db,
+                hive_export_temp_table,
                 self.clusterName,
             )
         else:
-            hiveQualifiedName = "%s.%s@%s" % (hiveDB, hiveTable, self.clusterName)
+            hive_qualified_name = "%s.%s@%s" % (hive_db, hive_table, self.clusterName)
 
-        jsonData["referredEntities"]["-500"] = {}
-        jsonData["referredEntities"]["-500"]["guid"] = "-500"
-        jsonData["referredEntities"]["-500"]["typeName"] = "hive_table"
-        jsonData["referredEntities"]["-500"]["attributes"] = {}
-        jsonData["referredEntities"]["-500"]["attributes"]["qualifiedName"] = (
-            hiveQualifiedName
+        json_data["referredEntities"]["-500"] = {}
+        json_data["referredEntities"]["-500"]["guid"] = "-500"
+        json_data["referredEntities"]["-500"]["typeName"] = "hive_table"
+        json_data["referredEntities"]["-500"]["attributes"] = {}
+        json_data["referredEntities"]["-500"]["attributes"]["qualifiedName"] = (
+            hive_qualified_name
         )
-        jsonData["referredEntities"]["-500"]["attributes"]["name"] = hiveTable
+        json_data["referredEntities"]["-500"]["attributes"]["name"] = hive_table
 
-        lineageData = {}
-        lineageData["typeName"] = "DBImport_Process"
-        lineageData["createdBy"] = "DBImport"
-        lineageData["attributes"] = {}
-        lineageData["attributes"]["qualifiedName"] = processName
-        lineageData["attributes"]["uri"] = processName
-        lineageData["attributes"]["name"] = processName
-        lineageData["attributes"]["operation"] = "export"
-        lineageData["attributes"]["commandlineOpts"] = fullExecutedCommand
-        lineageData["attributes"]["description"] = "Export of %s.%s" % (
-            hiveDB,
-            hiveTable,
+        lineage_data = {}
+        lineage_data["typeName"] = "DBImport_Process"
+        lineage_data["createdBy"] = "DBImport"
+        lineage_data["attributes"] = {}
+        lineage_data["attributes"]["qualifiedName"] = process_name
+        lineage_data["attributes"]["uri"] = process_name
+        lineage_data["attributes"]["name"] = process_name
+        lineage_data["attributes"]["operation"] = "export"
+        lineage_data["attributes"]["commandlineOpts"] = full_executed_command
+        lineage_data["attributes"]["description"] = "Export of %s.%s" % (
+            hive_db,
+            hive_table,
         )
-        lineageData["attributes"]["startTime"] = startStopDict["startTime"]
-        lineageData["attributes"]["endTime"] = startStopDict["stopTime"]
-        lineageData["attributes"]["userName"] = getpass.getuser()
-        lineageData["attributes"]["exportTool"] = exportTool
-        lineageData["attributes"]["inputs"] = [
+        lineage_data["attributes"]["startTime"] = start_stop_dict["startTime"]
+        lineage_data["attributes"]["endTime"] = start_stop_dict["stopTime"]
+        lineage_data["attributes"]["userName"] = getpass.getuser()
+        lineage_data["attributes"]["exportTool"] = export_tool
+        lineage_data["attributes"]["inputs"] = [
             {"guid": "-500", "typeName": "hive_table"}
         ]
-        lineageData["attributes"]["outputs"] = [
+        lineage_data["attributes"]["outputs"] = [
             {"guid": "-100", "typeName": "rdbms_table"}
         ]
 
-        jsonData["entities"] = []
-        jsonData["entities"].append(lineageData)
+        json_data["entities"] = []
+        json_data["entities"].append(lineage_data)
 
-        logging.debug(json.dumps(jsonData, indent=3))
+        logging.debug(json.dumps(json_data, indent=3))
 
         response = self.atlasPostData(
-            URL=self.atlasRestEntities, data=json.dumps(jsonData)
+            url=self.atlasRestEntities, data=json.dumps(json_data)
         )
-        statusCode = response["statusCode"]
-        if statusCode != 200:
+        status_code = response["statusCode"]
+        if status_code != 200:
             log.warning(
-                "Request from Atlas when updating import lineage was %s." % (statusCode)
+                "Request from Atlas when updating import lineage was %s."
+                % (status_code)
             )
             self.atlasEnabled == False  # noqa: B015  # TODO(#182): = was meant
 

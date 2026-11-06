@@ -87,7 +87,7 @@ class webServerOperations:
         logging.debug("Executing webServerOperations.runNPMinstall()")
         logging.info("Installing NPM Packages")
 
-        prefixDir = self.DBImport_Home + "/bin/Server/html"
+        prefix_dir = self.DBImport_Home + "/bin/Server/html"
 
         result = subprocess.run(["npm", "config", "set", "fund", "false"])
         if result.returncode != 0:
@@ -96,7 +96,7 @@ class webServerOperations:
             )
             sys.exit(1)
 
-        result = subprocess.run(["npm", "install", "--prefix", prefixDir])
+        result = subprocess.run(["npm", "install", "--prefix", prefix_dir])
         if result.returncode != 0:
             logging.error(
                 "Unknown error when executing 'npm install' command. Please solve this and rerun setup command"
@@ -109,14 +109,14 @@ class webServerOperations:
         logging.debug("Executing webServerOperations.runNPMbuild()")
         logging.info("Building HTML files")
 
-        prefixDir = self.DBImport_Home + "/bin/Server/html"
-        envFile = prefixDir + "/.env"
+        prefix_dir = self.DBImport_Home + "/bin/Server/html"
+        env_file = prefix_dir + "/.env"
 
-        if not os.path.isfile(envFile):
-            with open(envFile, "w") as file:
+        if not os.path.isfile(env_file):
+            with open(env_file, "w") as file:
                 file.write("VITE_PROXY_TARGET='https://127.0.0.1:5188'\n")
 
-        result = subprocess.run(["npm", "run", "build", "--prefix", prefixDir])
+        result = subprocess.run(["npm", "run", "build", "--prefix", prefix_dir])
         if result.returncode != 0:
             logging.error(
                 "Unknown error when executing 'npm run build' command. Please solve this and rerun setup command"

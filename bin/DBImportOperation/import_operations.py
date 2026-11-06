@@ -120,24 +120,24 @@ class operation(metaclass=Singleton):
         self.Hive_ColumnName_Source = self.import_config.Hive_ColumnName_Source
 
         self.common_operations.setTableAndColumnNames(
-            Hive_Import_DB=self.Hive_Import_DB,
-            Hive_Import_Table=self.Hive_Import_Table,
-            Hive_Import_View=self.Hive_Import_View,
-            Hive_History_DB=self.Hive_History_DB,
-            Hive_History_Table=self.Hive_History_Table,
-            Hive_HistoryTemp_DB=self.Hive_HistoryTemp_DB,
-            Hive_HistoryTemp_Table=self.Hive_HistoryTemp_Table,
-            Hive_Import_PKonly_DB=self.Hive_Import_PKonly_DB,
-            Hive_Import_PKonly_Table=self.Hive_Import_PKonly_Table,
-            Hive_Delete_DB=self.Hive_Delete_DB,
-            Hive_Delete_Table=self.Hive_Delete_Table,
-            Hive_ColumnName_Import=self.Hive_ColumnName_Import,
-            Hive_ColumnName_Insert=self.Hive_ColumnName_Insert,
-            Hive_ColumnName_Update=self.Hive_ColumnName_Update,
-            Hive_ColumnName_Delete=self.Hive_ColumnName_Delete,
-            Hive_ColumnName_IUD=self.Hive_ColumnName_IUD,
-            Hive_ColumnName_HistoryTimestamp=self.Hive_ColumnName_HistoryTimestamp,
-            Hive_ColumnName_Source=self.Hive_ColumnName_Source,
+            hive_import_db=self.Hive_Import_DB,
+            hive_import_table=self.Hive_Import_Table,
+            hive_import_view=self.Hive_Import_View,
+            hive_history_db=self.Hive_History_DB,
+            hive_history_table=self.Hive_History_Table,
+            hive_history_temp_db=self.Hive_HistoryTemp_DB,
+            hive_history_temp_table=self.Hive_HistoryTemp_Table,
+            hive_import_pk_only_db=self.Hive_Import_PKonly_DB,
+            hive_import_pk_only_table=self.Hive_Import_PKonly_Table,
+            hive_delete_db=self.Hive_Delete_DB,
+            hive_delete_table=self.Hive_Delete_Table,
+            hive_column_name_import=self.Hive_ColumnName_Import,
+            hive_column_name_insert=self.Hive_ColumnName_Insert,
+            hive_column_name_update=self.Hive_ColumnName_Update,
+            hive_column_name_delete=self.Hive_ColumnName_Delete,
+            hive_column_name_iud=self.Hive_ColumnName_IUD,
+            hive_column_name_history_timestamp=self.Hive_ColumnName_HistoryTimestamp,
+            hive_column_name_source=self.Hive_ColumnName_Source,
         )
 
         self.import_config.lookupConnectionAlias()
@@ -159,14 +159,14 @@ class operation(metaclass=Singleton):
             self.import_config.remove_temporary_files()
             sys.exit(1)
 
-        tempStage = self.import_config.getStage()
+        temp_stage = self.import_config.getStage()
         if stageMax == None:
-            if tempStage == stage:
+            if temp_stage == stage:
                 return True
             else:
                 return False
         else:
-            if tempStage >= stage and tempStage <= stageMax:
+            if temp_stage >= stage and temp_stage <= stageMax:
                 return True
             else:
                 return False
@@ -206,10 +206,10 @@ class operation(metaclass=Singleton):
 
     def updateAtlasWithImportData(self):
         if self.atlasOperation.checkAtlasSchema() == True:
-            configObject = (
+            config_object = (
                 self.import_config.common_config.getAtlasDiscoverConfigObject()
             )
-            self.atlasOperation.setConfiguration(configObject)
+            self.atlasOperation.setConfiguration(config_object)
 
             if self.import_config.common_config.source_columns_df.empty == True:
                 self.import_config.getJDBCTableDefinition()
@@ -221,25 +221,25 @@ class operation(metaclass=Singleton):
                 self.import_config.common_config.source_keys_df
             )
 
-            startStopDict = self.import_config.stage.getStageStartStop(
+            start_stop_dict = self.import_config.stage.getStageStartStop(
                 stage=self.import_config.importTool
             )
 
             try:
                 self.atlasOperation.updateAtlasWithRDBMSdata(
-                    schemaName=self.import_config.source_schema,
-                    tableName=self.import_config.source_table,
+                    schema_name=self.import_config.source_schema,
+                    table_name=self.import_config.source_table,
                 )
 
                 self.atlasOperation.updateAtlasWithImportLineage(
-                    Hive_DB=self.Hive_DB,
-                    sourceSchema=self.import_config.source_schema,
-                    sourceTable=self.import_config.source_table,
-                    sqoopHdfsLocation=self.import_config.sqoop_hdfs_location,
-                    Hive_Table=self.Hive_Table,
-                    startStopDict=startStopDict,
-                    fullExecutedCommand=self.import_config.fullExecutedCommand,
-                    importTool=self.import_config.importTool,
+                    hive_db=self.Hive_DB,
+                    source_schema=self.import_config.source_schema,
+                    source_table=self.import_config.source_table,
+                    sqoop_hdfs_location=self.import_config.sqoop_hdfs_location,
+                    hive_table=self.Hive_Table,
+                    start_stop_dict=start_stop_dict,
+                    full_executed_command=self.import_config.fullExecutedCommand,
+                    import_tool=self.import_config.importTool,
                 )
             except:
                 pass
@@ -309,9 +309,9 @@ class operation(metaclass=Singleton):
 
         logging.debug("Validation Query on Import table: %s" % (query))
 
-        resultDF = self.common_operations.executeHiveQuery(query)
-        resultJSON = resultDF.to_json(orient="values")
-        self.import_config.validationCustomQueryHiveValue = resultJSON
+        result_df = self.common_operations.executeHiveQuery(query)
+        result_json = result_df.to_json(orient="values")
+        self.import_config.validationCustomQueryHiveValue = result_json
 
         if len(self.import_config.validationCustomQueryHiveValue) > 1024:
             logging.warning(
@@ -322,11 +322,11 @@ class operation(metaclass=Singleton):
                 "The size of the json document on the custom query exceeds 1024 bytes. Change the query to create a result with less than 512 bytes"
             )
 
-        self.import_config.saveCustomSQLValidationHiveValue(jsonValue=resultJSON)
+        self.import_config.saveCustomSQLValidationHiveValue(jsonValue=result_json)
 
         logging.debug("resultDF:")
-        logging.debug(resultDF)
-        logging.debug("resultJSON: %s" % (resultJSON))
+        logging.debug(result_df)
+        logging.debug("resultJSON: %s" % (result_json))
 
         logging.debug(
             "Executing import_operations.runCustomValidationQueryOnImportTable() - Finished"
@@ -345,9 +345,9 @@ class operation(metaclass=Singleton):
 
         logging.debug("Validation Query on Target table: %s" % (query))
 
-        resultDF = self.common_operations.executeHiveQuery(query)
-        resultJSON = resultDF.to_json(orient="values")
-        self.import_config.validationCustomQueryHiveValue = resultJSON
+        result_df = self.common_operations.executeHiveQuery(query)
+        result_json = result_df.to_json(orient="values")
+        self.import_config.validationCustomQueryHiveValue = result_json
 
         if len(self.import_config.validationCustomQueryHiveValue) > 1024:
             logging.warning(
@@ -358,11 +358,11 @@ class operation(metaclass=Singleton):
                 "The size of the json document on the custom query exceeds 1024 bytes. Change the query to create a result with less than 512 bytes"
             )
 
-        self.import_config.saveCustomSQLValidationHiveValue(jsonValue=resultJSON)
+        self.import_config.saveCustomSQLValidationHiveValue(jsonValue=result_json)
 
         logging.debug("resultDF:")
-        logging.debug(resultDF)
-        logging.debug("resultJSON: %s" % (resultJSON))
+        logging.debug(result_df)
+        logging.debug("resultJSON: %s" % (result_json))
 
         logging.debug(
             "Executing import_operations.runCustomValidationQueryOnTargetTable() - Finished"
@@ -385,114 +385,114 @@ class operation(metaclass=Singleton):
             sys.exit(1)
 
     def getImportViewRowCountAsSource(self, incr=False):
-        whereStatement = None
+        where_statement = None
         if self.import_config.importPhase == constant.IMPORT_PHASE_ORACLE_FLASHBACK:
             # Needed otherwise we will count rows that will be deleted and that will cause the validation to fail
-            whereStatement = "datalake_flashback_operation != 'D' or datalake_flashback_operation is null"
+            where_statement = "datalake_flashback_operation != 'D' or datalake_flashback_operation is null"
 
         try:
-            importViewRowCount = self.common_operations.getHiveTableRowCount(
+            import_view_row_count = self.common_operations.getHiveTableRowCount(
                 self.import_config.Hive_Import_DB,
                 self.import_config.Hive_Import_Table,
-                whereStatement=whereStatement,
+                whereStatement=where_statement,
             )
-            self.import_config.saveSourceTableRowCount(importViewRowCount, incr=incr)
+            self.import_config.saveSourceTableRowCount(import_view_row_count, incr=incr)
         except:
             logging.exception("Fatal error when reading Hive view row count")
             self.import_config.remove_temporary_files()
             sys.exit(1)
 
-    def getImportTableRowCount(self, excludeOracleFlashbackDeletes=False):
+    def getImportTableRowCount(self, exclude_oracle_flashback_deletes=False):
 
-        whereStatement = None
+        where_statement = None
 
-        if excludeOracleFlashbackDeletes == True:
+        if exclude_oracle_flashback_deletes == True:
             # Needed otherwise we will count rows that will be deleted and that will cause the validation to fail
-            whereStatement = "datalake_flashback_operation != 'D' or datalake_flashback_operation is null"
+            where_statement = "datalake_flashback_operation != 'D' or datalake_flashback_operation is null"
 
         try:
-            importTableRowCount = self.common_operations.getHiveTableRowCount(
+            import_table_row_count = self.common_operations.getHiveTableRowCount(
                 self.import_config.Hive_Import_DB,
                 self.import_config.Hive_Import_Table,
-                whereStatement=whereStatement,
+                whereStatement=where_statement,
             )
-            self.import_config.saveHiveTableRowCount(importTableRowCount)
+            self.import_config.saveHiveTableRowCount(import_table_row_count)
         except:
             logging.exception("Fatal error when reading Hive table row count")
             self.import_config.remove_temporary_files()
             sys.exit(1)
 
-    def getSparkTableRowCount(self, hiveDB, hiveTable, whereStatement=None):
+    def getSparkTableRowCount(self, hive_db, hive_table, where_statement=None):
         logging.debug("Executing import_operations.getSparkTableRowCount()")
-        logging.info("Reading the number of rows from %s.%s" % (hiveDB, hiveTable))
-        rowCount = 0
+        logging.info("Reading the number of rows from %s.%s" % (hive_db, hive_table))
+        row_count = 0
 
         query = "select count(1) as rowcount from %s.`%s`.`%s` " % (
             self.common_operations.sparkCatalogName,
-            hiveDB,
-            hiveTable,
+            hive_db,
+            hive_table,
         )
-        if whereStatement != None:
-            query += "where " + whereStatement
+        if where_statement != None:
+            query += "where " + where_statement
         else:
             query += "limit 1"
 
         self.startSpark()
         logging.info(query)
-        tableSizeResult = self.spark.sql(query)
-        rowCount = int(tableSizeResult.first()["rowcount"])
+        table_size_result = self.spark.sql(query)
+        row_count = int(table_size_result.first()["rowcount"])
 
-        logging.debug("Rowcount from %s.%s: %s" % (hiveDB, hiveTable, rowCount))
+        logging.debug("Rowcount from %s.%s: %s" % (hive_db, hive_table, row_count))
         logging.debug("Executing import_operations.getSparkTableRowCount() - Finished")
-        return rowCount
+        return row_count
 
     def getTargetTableRowCount(self, incrementalMax=None):
         try:
-            whereStatement = self.import_config.getIncrWhereStatement(
+            where_statement = self.import_config.getIncrWhereStatement(
                 ignoreIfOnlyIncrMax=True,
                 ignoreSQLwhereAddition=True,
                 incrementalMax=incrementalMax,
             )
 
             if (
-                whereStatement == None
+                where_statement == None
                 and self.import_config.import_with_merge == True
                 and self.import_config.soft_delete_during_merge == True
             ):
                 # whereStatement = "datalake_iud != 'D' or datalake_iud is null"
-                whereStatement = "%s != 'D' or %s is null" % (
+                where_statement = "%s != 'D' or %s is null" % (
                     self.Hive_ColumnName_IUD,
                     self.Hive_ColumnName_IUD,
                 )
 
             if (
-                whereStatement == None
+                where_statement == None
                 and self.import_config.importPhase == constant.IMPORT_PHASE_FULL
                 and self.import_config.etlPhase == constant.ETL_PHASE_INSERT
             ):
                 # whereStatement = "datalake_import == '%s'"%(self.import_config.sqoop_last_execution_timestamp)
-                whereStatement = "%s == '%s'" % (
+                where_statement = "%s == '%s'" % (
                     self.Hive_ColumnName_Import,
                     self.import_config.sqoop_last_execution_timestamp,
                 )
 
-            logging.debug("whereStatement: %s" % (whereStatement))
+            logging.debug("whereStatement: %s" % (where_statement))
 
             if self.import_config.etlEngine == constant.ETL_ENGINE_HIVE:
-                targetTableRowCount = self.common_operations.getHiveTableRowCount(
+                target_table_row_count = self.common_operations.getHiveTableRowCount(
                     self.import_config.Hive_DB,
                     self.import_config.Hive_Table,
-                    whereStatement=whereStatement,
+                    whereStatement=where_statement,
                 )
 
             if self.import_config.etlEngine == constant.ETL_ENGINE_SPARK:
-                targetTableRowCount = self.getSparkTableRowCount(
+                target_table_row_count = self.getSparkTableRowCount(
                     self.import_config.Hive_DB,
                     self.import_config.Hive_Table,
-                    whereStatement=whereStatement,
+                    where_statement=where_statement,
                 )
 
-            self.import_config.saveHiveTableRowCount(targetTableRowCount)
+            self.import_config.saveHiveTableRowCount(target_table_row_count)
 
         except:
             logging.exception("Fatal error when reading Hive table row count")
@@ -537,7 +537,7 @@ class operation(metaclass=Singleton):
     def validateRowCount(self):
         logging.debug("Executing import_operations.validateRowCount()")
         try:
-            validateResult = self.import_config.validateRowCount(
+            validate_result = self.import_config.validateRowCount(
                 validateSqoop=False, incremental=False
             )
         except:
@@ -545,14 +545,14 @@ class operation(metaclass=Singleton):
             self.import_config.remove_temporary_files()
             sys.exit(1)
 
-        if validateResult == False:
+        if validate_result == False:
             self.import_config.remove_temporary_files()
             sys.exit(1)
 
     def validateImportRowCount(self):
         logging.debug("Executing import_operations.validateImportRowCount()")
         try:
-            validateResult = self.import_config.validateRowCount(
+            validate_result = self.import_config.validateRowCount(
                 validateSqoop=True, incremental=False
             )
         except:
@@ -560,14 +560,14 @@ class operation(metaclass=Singleton):
             self.import_config.remove_temporary_files()
             sys.exit(1)
 
-        if validateResult == False:
+        if validate_result == False:
             self.import_config.remove_temporary_files()
             sys.exit(1)
 
     def validateIncrRowCount(self):
         logging.debug("Executing import_operations.validateIncrRowCount()")
         try:
-            validateResult = self.import_config.validateRowCount(
+            validate_result = self.import_config.validateRowCount(
                 validateSqoop=False, incremental=True
             )
         except:
@@ -575,7 +575,7 @@ class operation(metaclass=Singleton):
             self.import_config.remove_temporary_files()
             sys.exit(1)
 
-        if validateResult == False:
+        if validate_result == False:
             self.import_config.remove_temporary_files()
             sys.exit(1)
 
@@ -609,100 +609,102 @@ class operation(metaclass=Singleton):
     def discoverAndAddTablesFromSource(
         self,
         dbalias,
-        hiveDB,
-        schemaFilter=None,
-        tableFilter=None,
-        addSchemaToTable=False,
-        addCustomText=None,
-        addCounterToTable=False,
-        counterStart=None,
-        onlyJsonOutput=False,
+        hive_db,
+        schema_filter=None,
+        table_filter=None,
+        add_schema_to_table=False,
+        add_custom_text=None,
+        add_counter_to_table=False,
+        counter_start=None,
+        only_json_output=False,
     ):
         """This is the main function to search for tables/view on source database and add them to import_tables"""
         logging.debug("Executing import_operations.discoverAndAddTablesFromSource()")
-        errorDuringAdd = False
+        error_during_add = False
         self.import_config.lookupConnectionAlias(connection_alias=dbalias)
 
         if self.import_config.mongoImport == False:
-            sourceDF = self.import_config.common_config.getJDBCtablesAndViews(
-                schemaFilter=schemaFilter, tableFilter=tableFilter
+            source_df = self.import_config.common_config.getJDBCtablesAndViews(
+                schemaFilter=schema_filter, tableFilter=table_filter
             )
         else:
-            sourceDF = self.import_config.common_config.getMongoCollections(
-                collectionFilter=tableFilter
+            source_df = self.import_config.common_config.getMongoCollections(
+                collection_filter=table_filter
             )
 
-        if len(sourceDF) == 0:
+        if len(source_df) == 0:
             print(
                 "There are no tables in the source database that we dont already have in DBImport"
             )
             self.import_config.remove_temporary_files()
             sys.exit(0)
 
-        importDF = self.import_config.getImportTables(hiveDB=hiveDB)
-        importDF = importDF.loc[importDF["dbalias"] == dbalias].filter(
+        import_df = self.import_config.getImportTables(hive_db=hive_db)
+        import_df = import_df.loc[import_df["dbalias"] == dbalias].filter(
             ["source_schema", "source_table"]
         )
-        importDF.rename(
+        import_df.rename(
             columns={"source_schema": "schema", "source_table": "table"}, inplace=True
         )
 
-        mergeDF = pd.merge(sourceDF, importDF, on=None, how="outer", indicator="Exist")
-        mergeDF["hiveTable"] = mergeDF["table"]
-        discoveredTables = len(mergeDF.loc[mergeDF["Exist"] == "left_only"])
+        merge_df = pd.merge(
+            source_df, import_df, on=None, how="outer", indicator="Exist"
+        )
+        merge_df["hiveTable"] = merge_df["table"]
+        discovered_tables = len(merge_df.loc[merge_df["Exist"] == "left_only"])
 
         if (
-            addCounterToTable == True
-            or addSchemaToTable == True
-            or addCustomText != None
+            add_counter_to_table == True
+            or add_schema_to_table == True
+            or add_custom_text != None
         ):
-            for index, row in mergeDF.iterrows():
-                if mergeDF.loc[index, "Exist"] == "left_only":
-                    mergeDF.loc[index, "hiveTable"] = "_%s" % (
-                        mergeDF.loc[index, "hiveTable"].strip()
+            for index, row in merge_df.iterrows():
+                if merge_df.loc[index, "Exist"] == "left_only":
+                    merge_df.loc[index, "hiveTable"] = "_%s" % (
+                        merge_df.loc[index, "hiveTable"].strip()
                     )
 
-        if addCounterToTable == True:
-            if counterStart == None:
-                counterStart = "1"
-            numberLength = len(counterStart)
+        if add_counter_to_table == True:
+            if counter_start == None:
+                counter_start = "1"
+            number_length = len(counter_start)
             try:
-                startValue = int(counterStart)
+                start_value = int(counter_start)
             except ValueError:
                 logging.error("The value specified for --counterStart must be a number")
                 self.import_config.remove_temporary_files()
                 sys.exit(1)
 
-            for index, row in mergeDF.iterrows():
-                if mergeDF.loc[index, "Exist"] == "left_only":
-                    zeroToAdd = ""
-                    while len(zeroToAdd) < (numberLength - len(str(startValue))):
-                        zeroToAdd += "0"
+            for index, row in merge_df.iterrows():
+                if merge_df.loc[index, "Exist"] == "left_only":
+                    zero_to_add = ""
+                    while len(zero_to_add) < (number_length - len(str(start_value))):
+                        zero_to_add += "0"
 
-                    mergeDF.loc[index, "hiveTable"] = "%s%s%s" % (
-                        zeroToAdd,
-                        startValue,
-                        mergeDF.loc[index, "hiveTable"],
+                    merge_df.loc[index, "hiveTable"] = "%s%s%s" % (
+                        zero_to_add,
+                        start_value,
+                        merge_df.loc[index, "hiveTable"],
                     )
-                    startValue += 1
+                    start_value += 1
 
-        if addSchemaToTable == True:
-            for index, row in mergeDF.iterrows():
-                if mergeDF.loc[index, "Exist"] == "left_only":
-                    mergeDF.loc[index, "hiveTable"] = "%s%s" % (
-                        mergeDF.loc[index, "schema"].lower().strip(),
-                        mergeDF.loc[index, "hiveTable"],
-                    )
-
-        if addCustomText != None:
-            for index, row in mergeDF.iterrows():
-                if mergeDF.loc[index, "Exist"] == "left_only":
-                    mergeDF.loc[index, "hiveTable"] = "%s%s" % (
-                        addCustomText.lower().strip(),
-                        mergeDF.loc[index, "hiveTable"],
+        if add_schema_to_table == True:
+            for index, row in merge_df.iterrows():
+                if merge_df.loc[index, "Exist"] == "left_only":
+                    merge_df.loc[index, "hiveTable"] = "%s%s" % (
+                        merge_df.loc[index, "schema"].lower().strip(),
+                        merge_df.loc[index, "hiveTable"],
                     )
 
-        if discoveredTables == 0:
+        if add_custom_text != None:
+            for index, row in merge_df.iterrows():
+                if merge_df.loc[index, "Exist"] == "left_only":
+                    merge_df.loc[index, "hiveTable"] = "%s%s" % (
+                        add_custom_text.lower().strip(),
+                        merge_df.loc[index, "hiveTable"],
+                    )
+
+        if discovered_tables == 0:
             print(
                 "There are no tables in the source database that we dont already have in DBImport"
             )
@@ -711,7 +713,7 @@ class operation(metaclass=Singleton):
 
         # At this stage, we have discovered tables in the source system that we dont know about in DBImport
 
-        if onlyJsonOutput == False:
+        if only_json_output == False:
             print(
                 "The following tables and/or views have been discovered in the source database and not found in DBImport"
             )
@@ -724,11 +726,11 @@ class operation(metaclass=Singleton):
                 "============================================================================================================================="
             )
 
-            for index, row in mergeDF.loc[mergeDF["Exist"] == "left_only"].iterrows():
+            for index, row in merge_df.loc[merge_df["Exist"] == "left_only"].iterrows():
                 print(
                     "%-20s%-40s%-30s%-20s%s"
                     % (
-                        hiveDB,
+                        hive_db,
                         row["hiveTable"].lower(),
                         dbalias,
                         row["schema"],
@@ -740,16 +742,16 @@ class operation(metaclass=Singleton):
             # 			answer = "N"
             if answer == "y":
                 print("")
-                for index, row in mergeDF.loc[
-                    mergeDF["Exist"] == "left_only"
+                for index, row in merge_df.loc[
+                    merge_df["Exist"] == "left_only"
                 ].iterrows():
                     if (
                         self.common_operations.metastore_type
                         == constant.CATALOG_HIVE_DIRECT
                     ):
-                        addResult = self.import_config.addImportTable(
-                            hiveDB=hiveDB,
-                            hiveTable=row["hiveTable"].lower(),
+                        add_result = self.import_config.addImportTable(
+                            hive_db=hive_db,
+                            hive_table=row["hiveTable"].lower(),
                             dbalias=dbalias,
                             schema=row["schema"].strip(),
                             table=row["table"].strip(),
@@ -757,19 +759,19 @@ class operation(metaclass=Singleton):
                         )
 
                     elif self.common_operations.metastore_type == constant.CATALOG_GLUE:
-                        addResult = self.import_config.addImportTable(
-                            hiveDB=hiveDB,
-                            hiveTable=row["hiveTable"].lower(),
+                        add_result = self.import_config.addImportTable(
+                            hive_db=hive_db,
+                            hive_table=row["hiveTable"].lower(),
                             dbalias=dbalias,
                             schema=row["schema"].strip(),
                             table=row["table"].strip(),
                             catalog=constant.CATALOG_GLUE,
                         )
 
-                    if addResult == False:
-                        errorDuringAdd = True
+                    if add_result == False:
+                        error_during_add = True
 
-                if errorDuringAdd == False:
+                if error_during_add == False:
                     print("All tables saved successfully in DBImport")
                 else:
                     print("")
@@ -784,18 +786,18 @@ class operation(metaclass=Singleton):
             # Only output the json file
             # This is used by the rest interface to return a list of tables to the webUI
 
-            tableList = []
-            for index, row in mergeDF.loc[mergeDF["Exist"] == "left_only"].iterrows():
-                resultDict = {}
-                resultDict["database"] = hiveDB
-                resultDict["table"] = row["hiveTable"].lower()
-                resultDict["connection"] = dbalias
-                resultDict["sourceSchema"] = row["schema"]
-                resultDict["sourceTable"] = row["table"]
-                tableList.append(resultDict)
+            table_list = []
+            for index, row in merge_df.loc[merge_df["Exist"] == "left_only"].iterrows():
+                result_dict = {}
+                result_dict["database"] = hive_db
+                result_dict["table"] = row["hiveTable"].lower()
+                result_dict["connection"] = dbalias
+                result_dict["sourceSchema"] = row["schema"]
+                result_dict["sourceTable"] = row["table"]
+                table_list.append(result_dict)
 
-            jsonResult = json.dumps(tableList)
-            print(jsonResult)
+            json_result = json.dumps(table_list)
+            print(json_result)
 
         logging.debug(
             "Executing import_operations.discoverAndAddTablesFromSource() - Finished"
@@ -804,21 +806,21 @@ class operation(metaclass=Singleton):
     def checkOracleFlashbackSCNnumber(self):
         """Checks if the Oracle Flashback SCN number used in the previous import is valid. If not, we force a full import"""
 
-        incrWhereStatement = self.import_config.getIncrWhereStatement(
+        incr_where_statement = self.import_config.getIncrWhereStatement(
             whereForSqoop=True
         ).replace('"', "'")
         query = "%s %s AND 1 = 0" % (
             self.import_config.sqlGeneratedSqoopQuery,
-            incrWhereStatement,
+            incr_where_statement,
         )
 
         try:
             self.import_config.common_config.executeJDBCquery(query)
         except SQLerror as e:
-            errorMsg = str(e)
+            error_msg = str(e)
             if (
-                "java.sql.SQLException: ORA-08181:" in errorMsg
-                or "java.sql.SQLException: ORA-30052" in errorMsg
+                "java.sql.SQLException: ORA-08181:" in error_msg
+                or "java.sql.SQLException: ORA-30052" in error_msg
             ):
                 logging.warning(
                     "The last import with Oracle Flashback is to far into the past. In order to continue, we will be forced to do a new initial load"
@@ -831,7 +833,7 @@ class operation(metaclass=Singleton):
                 self.import_config.sqoopIncrMaxvaluePending = None
                 self.import_config.incr_maxvalue = None
 
-            elif "java.sql.SQLException: ORA-01466:" in errorMsg:
+            elif "java.sql.SQLException: ORA-01466:" in error_msg:
                 logging.warning(
                     "Table definition have changed. One reason when this happens is when the source table is loaded or truncated. In order to continue, we will be forced to do a new initial load"
                 )
@@ -847,7 +849,7 @@ class operation(metaclass=Singleton):
                 logging.error(
                     "Unknown Oracle Flashback error when checking for valid SCN number"
                 )
-                print(errorMsg)
+                print(error_msg)
                 self.import_config.remove_temporary_files()
                 sys.exit(1)
 
@@ -872,26 +874,29 @@ class operation(metaclass=Singleton):
             return pyspark.sql.types.StringType()
         return schema
 
-    def convertSparkSchema(self, schema, forceDateAsString=False):
+    def convertSparkSchema(self, schema, force_date_as_string=False):
         import pyspark.sql
 
         if schema.__class__ == pyspark.sql.types.StructType:
             return pyspark.sql.types.StructType(
-                [self.convertSparkSchema(f, forceDateAsString) for f in schema.fields]
+                [
+                    self.convertSparkSchema(f, force_date_as_string)
+                    for f in schema.fields
+                ]
             )
         if schema.__class__ == pyspark.sql.types.StructField:
             return pyspark.sql.types.StructField(
                 schema.name,
-                self.convertSparkSchema(schema.dataType, forceDateAsString),
+                self.convertSparkSchema(schema.dataType, force_date_as_string),
                 schema.nullable,
             )
         if schema.__class__ == pyspark.sql.types.ArrayType:
             return pyspark.sql.types.ArrayType(
-                self.convertSparkSchema(schema.elementType, forceDateAsString)
+                self.convertSparkSchema(schema.elementType, force_date_as_string)
             )
         if schema.__class__ == pyspark.sql.types.NullType:
             return pyspark.sql.types.StringType()
-        if forceDateAsString:
+        if force_date_as_string:
             if schema.__class__ in [
                 pyspark.sql.types.DateType,
                 pyspark.sql.types.TimestampType,
@@ -904,7 +909,7 @@ class operation(metaclass=Singleton):
 
         self.sparkStartTimestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
         self.sparkStartUTS = int(time.time())
-        sparkQuery = ""
+        spark_query = ""
 
         # Fetch the number of executors that should be used.
         # This is already handled in self.import_config.calculateJobMappers, so we use that
@@ -941,37 +946,37 @@ class operation(metaclass=Singleton):
         )
 
         # Create a valid PYSPARK_SUBMIT_ARGS string
-        sparkPysparkSubmitArgs = "--jars "
-        sparkJars = ""
+        spark_pyspark_submit_args = "--jars "
+        spark_jars = ""
 
-        firstLoop = True
+        first_loop = True
         if self.import_config.common_config.sparkJarFiles.strip() != "":
-            for jarFile in self.import_config.common_config.sparkJarFiles.split(","):
-                if firstLoop == False:
-                    sparkPysparkSubmitArgs += ","
-                    sparkJars += ","
-                sparkPysparkSubmitArgs += jarFile.strip()
-                sparkJars += jarFile.strip()
-                firstLoop = False
+            for jar_file in self.import_config.common_config.sparkJarFiles.split(","):
+                if first_loop == False:
+                    spark_pyspark_submit_args += ","
+                    spark_jars += ","
+                spark_pyspark_submit_args += jar_file.strip()
+                spark_jars += jar_file.strip()
+                first_loop = False
 
-        for jarFile in self.import_config.common_config.jdbc_classpath.split(":"):
-            if firstLoop == False:
-                sparkPysparkSubmitArgs += ","
-                sparkJars += ","
-            sparkPysparkSubmitArgs += jarFile.strip()
-            sparkJars += jarFile.strip()
-            firstLoop = False
+        for jar_file in self.import_config.common_config.jdbc_classpath.split(":"):
+            if first_loop == False:
+                spark_pyspark_submit_args += ","
+                spark_jars += ","
+            spark_pyspark_submit_args += jar_file.strip()
+            spark_jars += jar_file.strip()
+            first_loop = False
 
         if self.import_config.common_config.sparkPyFiles.strip() != "":
-            sparkPysparkSubmitArgs += " --py-files "
-            firstLoop = True
-            for pyFile in self.import_config.common_config.sparkPyFiles.split(","):
-                if firstLoop == False:
-                    sparkPysparkSubmitArgs += ","
-                sparkPysparkSubmitArgs += pyFile.strip()
-                firstLoop = False
+            spark_pyspark_submit_args += " --py-files "
+            first_loop = True
+            for py_file in self.import_config.common_config.sparkPyFiles.split(","):
+                if first_loop == False:
+                    spark_pyspark_submit_args += ","
+                spark_pyspark_submit_args += py_file.strip()
+                first_loop = False
 
-        sparkPysparkSubmitArgs += " pyspark-shell"
+        spark_pyspark_submit_args += " pyspark-shell"
 
         # Setup the additional path required to find the libraries/modules
         for path in self.import_config.common_config.sparkPathAppend.split(","):
@@ -979,7 +984,7 @@ class operation(metaclass=Singleton):
 
         # Set required OS parameters
         # os.environ['HDP_VERSION'] = self.import_config.common_config.sparkHDPversion
-        os.environ["PYSPARK_SUBMIT_ARGS"] = sparkPysparkSubmitArgs
+        os.environ["PYSPARK_SUBMIT_ARGS"] = spark_pyspark_submit_args
 
         print(" _____________________ ")
         print("|                     |")
@@ -987,7 +992,7 @@ class operation(metaclass=Singleton):
         print("|_____________________|")
         print("")
 
-        mongoUri = "mongodb://%s:%s@%s:%s/%s.%s" % (
+        mongo_uri = "mongodb://%s:%s@%s:%s/%s.%s" % (
             self.import_config.common_config.jdbc_username,
             self.import_config.common_config.jdbc_password,
             self.import_config.common_config.jdbc_hostname,
@@ -997,8 +1002,8 @@ class operation(metaclass=Singleton):
         )
 
         if self.import_config.common_config.mongoAuthSource != None:
-            mongoUri = (
-                mongoUri
+            mongo_uri = (
+                mongo_uri
                 + "?authSource="
                 + self.import_config.common_config.mongoAuthSource
             )
@@ -1012,12 +1017,12 @@ class operation(metaclass=Singleton):
 
         conf = SparkConf()
         conf.setMaster(self.import_config.common_config.sparkMaster)
-        conf.set("spark.mongodb.input.uri", mongoUri)
+        conf.set("spark.mongodb.input.uri", mongo_uri)
         conf.set(
             "spark.submit.deployMode", self.import_config.common_config.sparkDeployMode
         )
         conf.setAppName("DBImport Import - %s.%s" % (self.Hive_DB, self.Hive_Table))
-        conf.set("spark.jars", sparkJars)
+        conf.set("spark.jars", spark_jars)
         conf.set(
             "spark.executor.memory",
             self.import_config.common_config.sparkExecutorMemory,
@@ -1089,91 +1094,95 @@ class operation(metaclass=Singleton):
 
         print("Loading Schema from Mongo")
         sys.stdout.flush()
-        sparkSchema = self.convertSparkSchema(df.schema, forceDateAsString=False)
-        sparkSchemaString = self.convertSparkSchema(df.schema, forceDateAsString=True)
-        df = spark.read.format("mongo").schema(sparkSchema).load()
-        dfString = spark.read.format("mongo").schema(sparkSchemaString).load()
+        spark_schema = self.convertSparkSchema(df.schema, force_date_as_string=False)
+        spark_schema_string = self.convertSparkSchema(
+            df.schema, force_date_as_string=True
+        )
+        df = spark.read.format("mongo").schema(spark_schema).load()
+        df_string = spark.read.format("mongo").schema(spark_schema_string).load()
         sys.stdout.flush()
 
         # Save the datatypes. Will later be used to update import_columns table
         print("Getting column types")
         sys.stdout.flush()
-        dataTypes = dict(df.dtypes)
-        dataTypesString = dict(dfString.dtypes)
+        data_types = dict(df.dtypes)
+        data_types_string = dict(df_string.dtypes)
 
         # Find what columns are timestamp or date columns
-        dateColumns = {}
-        for column, columnType in dataTypes.items():
-            if columnType.lower() in ["timestamp", "date"]:
-                dateColumns[column] = columnType
+        date_columns = {}
+        for column, column_type in data_types.items():
+            if column_type.lower() in ["timestamp", "date"]:
+                date_columns[column] = column_type
 
         # Test the columns we just found to verify if it actually is a timestamp or not
-        dfString.createOrReplaceTempView("find_timestamp")
+        df_string.createOrReplaceTempView("find_timestamp")
         sys.stdout.flush()
 
-        incorrectDateColumns = []
-        correctDateColumns = {}
-        for column, columnType in dateColumns.items():
+        incorrect_date_columns = []
+        correct_date_columns = {}
+        for column, column_type in date_columns.items():
             print(
                 "Checking if column '%s' really is a timestamp column and compatible with Hive"
                 % (column)
             )
             sys.stdout.flush()
 
-            dfDate = spark.sql(
+            df_date = spark.sql(
                 "SELECT %s FROM find_timestamp where %s is not null and CAST(%s as timestamp) is not null"
                 % (column, column, column)
             )
-            if len(dfDate.head(1)) != 0:
-                incorrectDateColumns.append(column)
+            if len(df_date.head(1)) != 0:
+                incorrect_date_columns.append(column)
             else:
-                correctDateColumns[column] = columnType
+                correct_date_columns[column] = column_type
 
         # Convert the column in the DF based on the fact that it can be converted or not to a timestamp
-        udfParseStructDate = udf(parseStructDate, pyspark.sql.types.StringType())
+        udf_parse_struct_date = udf(parseStructDate, pyspark.sql.types.StringType())
 
-        for column in incorrectDateColumns:
+        for column in incorrect_date_columns:
             print("Converting date/timestamp column '%s'" % (column))
             sys.stdout.flush()
-            dfString = dfString.withColumn(column, udfParseStructDate(column))
+            df_string = df_string.withColumn(column, udf_parse_struct_date(column))
 
-        for column, columnType in correctDateColumns.items():
+        for column, column_type in correct_date_columns.items():
             print("Converting date/timestamp column '%s'" % (column))
             sys.stdout.flush()
-            dfString = dfString.withColumn(column, udfParseStructDate(column))
-            dfString = dfString.withColumn(column, dfString[column].cast(columnType))
+            df_string = df_string.withColumn(column, udf_parse_struct_date(column))
+            df_string = df_string.withColumn(
+                column, df_string[column].cast(column_type)
+            )
 
         sys.stdout.flush()
 
         # Find and convert binary fields into a Base64 encoded binary field
         print("Finding binary columns")
         sys.stdout.flush()
-        columns = dfString.columns
-        types = [f.dataType for f in dfString.schema.fields]
-        columnsAndTypes = list(zip(columns, types))
+        columns = df_string.columns
+        types = [f.dataType for f in df_string.schema.fields]
+        columns_and_types = list(zip(columns, types))
 
-        columnTypesBinary = {}
-        for column, columnType in columnsAndTypes:
-            if "struct<subType:tinyint,data:binary>" in dataTypes[column]:
-                columnTypesBinary[column] = self.convertSparkTypeToBinary(columnType)
+        column_types_binary = {}
+        for column, column_type in columns_and_types:
+            if "struct<subType:tinyint,data:binary>" in data_types[column]:
+                column_types_binary[column] = self.convertSparkTypeToBinary(column_type)
 
-        for column, columnType in columnTypesBinary.items():
+        for column, column_type in column_types_binary.items():
             print("Converting binary column '%s'" % (column))
             sys.stdout.flush()
-            udfBase64EncodeArray = udf(base64EncodeArray, columnType)
-            dfString = dfString.withColumn(column, udfBase64EncodeArray(column))
+            udf_base64_encode_array = udf(base64EncodeArray, column_type)
+            df_string = df_string.withColumn(column, udf_base64_encode_array(column))
 
         sys.stdout.flush()
 
         # Get new dataTypes as we have updated and converted from binary to string
         print("Getting updated column types after column changes")
         sys.stdout.flush()
-        dataTypes = dict(dfString.dtypes)
+        data_types = dict(df_string.dtypes)
         sys.stdout.flush()
 
         print("Writing data to HDFS as ORC")
         sys.stdout.flush()
-        dfString.write.mode("overwrite").format("orc").save(
+        df_string.write.mode("overwrite").format("orc").save(
             self.import_config.sqoop_hdfs_location
         )
         sys.stdout.flush()
@@ -1181,31 +1190,33 @@ class operation(metaclass=Singleton):
         # Get the number of rows from the ORC files
         print("Reading ORC files from HDFS to verify size and rows")
         sys.stdout.flush()
-        hdfsDataDf = spark.read.format("orc").load(
+        hdfs_data_df = spark.read.format("orc").load(
             self.import_config.sqoop_hdfs_location
         )
-        rowsWrittenBySpark = hdfsDataDf.count()
+        rows_written_by_spark = hdfs_data_df.count()
         sys.stdout.flush()
-        logging.info("Number of rows written by spark = %s" % (rowsWrittenBySpark))
+        logging.info("Number of rows written by spark = %s" % (rows_written_by_spark))
         sys.stdout.flush()
 
         # Get size of all files on HDFS that spark wrote
-        hdfsCommandList = [
+        hdfs_command_list = [
             "hdfs",
             "dfs",
             "-du",
             "-s",
             self.import_config.sqoop_hdfs_location,
         ]
-        hdfsProc = subprocess.Popen(
-            hdfsCommandList, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        hdfs_proc = subprocess.Popen(
+            hdfs_command_list, stdout=subprocess.PIPE, stderr=subprocess.PIPE
         )
-        stdOut, stdErr = hdfsProc.communicate()
-        stdOut = stdOut.decode("utf-8").rstrip()
-        stdErr = stdErr.decode("utf-8").rstrip()
+        std_out, std_err = hdfs_proc.communicate()
+        std_out = std_out.decode("utf-8").rstrip()
+        std_err = std_err.decode("utf-8").rstrip()
 
-        sizeWrittenBySpark = stdOut.split()[0]
-        logging.info("Size of data written by spark = %s bytes" % (sizeWrittenBySpark))
+        size_written_by_spark = std_out.split()[0]
+        logging.info(
+            "Size of data written by spark = %s bytes" % (size_written_by_spark)
+        )
         sys.stdout.flush()
 
         sc.stop()
@@ -1220,31 +1231,31 @@ class operation(metaclass=Singleton):
         # As the import can take a very long time on a large table, we need to verify that the MySQL connection against the configuration database is still valid
         self.import_config.reconnectConfigDatabase()
 
-        columnDict = {}
-        for column in dataTypes:
-            columnType = dataTypes[column]
+        column_dict = {}
+        for column in data_types:
+            column_type = data_types[column]
 
-            for list1 in columnType.split("<"):
+            for list1 in column_type.split("<"):
                 for list2 in list1.split(">"):
                     for list3 in list2.split(","):
                         if len(list3.split(":")) == 2:
-                            columnType = re.sub(
+                            column_type = re.sub(
                                 r"([<>,])" + list3 + "([<>,])",
                                 r"\1`%s`:%s\2"
                                 % (list3.split(":")[0], list3.split(":")[1]),
-                                columnType,
+                                column_type,
                             )
-            columnDict[column] = columnType
+            column_dict[column] = column_type
 
-        dataTypes = columnDict
+        data_types = column_dict
 
         # Create the colum pandasDF as we cant get that from the source as we do on normal JDBC sources
         rows_list = []
-        for column in dataTypes:
+        for column in data_types:
             line_dict = {}
             line_dict["TABLE_COMMENT"] = None
             line_dict["SOURCE_COLUMN_NAME"] = column
-            line_dict["SOURCE_COLUMN_TYPE"] = dataTypes[column]
+            line_dict["SOURCE_COLUMN_TYPE"] = data_types[column]
             line_dict["SOURCE_COLUMN_LENGTH"] = None
             line_dict["SOURCE_COLUMN_COMMENT"] = None
             line_dict["IS_NULLABLE"] = None
@@ -1261,9 +1272,9 @@ class operation(metaclass=Singleton):
         try:
             self.import_config.saveImportStatistics(
                 self.sparkStartUTS,
-                sqoopSize=sizeWrittenBySpark,
-                sqoopRows=rowsWrittenBySpark,
-                sqoopMappers=self.import_config.sqlSessions,
+                sqoop_size=size_written_by_spark,
+                sqoop_rows=rows_written_by_spark,
+                sqoop_mappers=self.import_config.sqlSessions,
             )
         except:
             logging.exception("Fatal error when saving spark statistics")
@@ -1314,37 +1325,37 @@ class operation(metaclass=Singleton):
         )
 
         # Create a valid PYSPARK_SUBMIT_ARGS string
-        sparkPysparkSubmitArgs = "--jars "
-        sparkJars = ""
+        spark_pyspark_submit_args = "--jars "
+        spark_jars = ""
 
-        firstLoop = True
+        first_loop = True
         if self.import_config.common_config.sparkJarFiles.strip() != "":
-            for jarFile in self.import_config.common_config.sparkJarFiles.split(","):
-                if firstLoop == False:
-                    sparkPysparkSubmitArgs += ","
-                    sparkJars += ","
-                sparkPysparkSubmitArgs += jarFile.strip()
-                sparkJars += jarFile.strip()
-                firstLoop = False
+            for jar_file in self.import_config.common_config.sparkJarFiles.split(","):
+                if first_loop == False:
+                    spark_pyspark_submit_args += ","
+                    spark_jars += ","
+                spark_pyspark_submit_args += jar_file.strip()
+                spark_jars += jar_file.strip()
+                first_loop = False
 
-        for jarFile in self.import_config.common_config.jdbc_classpath.split(":"):
-            if firstLoop == False:
-                sparkPysparkSubmitArgs += ","
-                sparkJars += ","
-            sparkPysparkSubmitArgs += jarFile.strip()
-            sparkJars += jarFile.strip()
-            firstLoop = False
+        for jar_file in self.import_config.common_config.jdbc_classpath.split(":"):
+            if first_loop == False:
+                spark_pyspark_submit_args += ","
+                spark_jars += ","
+            spark_pyspark_submit_args += jar_file.strip()
+            spark_jars += jar_file.strip()
+            first_loop = False
 
         if self.import_config.common_config.sparkPyFiles.strip() != "":
-            sparkPysparkSubmitArgs += " --py-files "
-            firstLoop = True
-            for pyFile in self.import_config.common_config.sparkPyFiles.split(","):
-                if firstLoop == False:
-                    sparkPysparkSubmitArgs += ","
-                sparkPysparkSubmitArgs += pyFile.strip()
-                firstLoop = False
+            spark_pyspark_submit_args += " --py-files "
+            first_loop = True
+            for py_file in self.import_config.common_config.sparkPyFiles.split(","):
+                if first_loop == False:
+                    spark_pyspark_submit_args += ","
+                spark_pyspark_submit_args += py_file.strip()
+                first_loop = False
 
-        sparkPysparkSubmitArgs += " pyspark-shell"
+        spark_pyspark_submit_args += " pyspark-shell"
 
         # Setup the additional path required to find the libraries/modules
         for path in self.import_config.common_config.sparkPathAppend.split(","):
@@ -1352,7 +1363,7 @@ class operation(metaclass=Singleton):
 
         # Set required OS parameters
         # os.environ['HDP_VERSION'] = self.import_config.common_config.sparkHDPversion
-        os.environ["PYSPARK_SUBMIT_ARGS"] = sparkPysparkSubmitArgs
+        os.environ["PYSPARK_SUBMIT_ARGS"] = spark_pyspark_submit_args
         # print(sparkPysparkSubmitArgs)
 
         if self.import_config.etlEngine == constant.ETL_ENGINE_HIVE:
@@ -1370,7 +1381,7 @@ class operation(metaclass=Singleton):
             "spark.submit.deployMode", self.import_config.common_config.sparkDeployMode
         )
         conf.setAppName("DBImport Import - %s.%s" % (self.Hive_DB, self.Hive_Table))
-        conf.set("spark.jars", sparkJars)
+        conf.set("spark.jars", spark_jars)
         if (
             self.import_config.common_config.sparkPackages != None
             and self.import_config.common_config.sparkPackages != ""
@@ -1535,25 +1546,25 @@ class operation(metaclass=Singleton):
         self.spark = pyspark.sql.SparkSession(self.sparkContext)
         sys.stdout.flush()
 
-        sparkVersionSplit = self.spark.version.split(".")
-        sparkMajorVersion = int(sparkVersionSplit[0])
-        sparkMinorVersion = int(sparkVersionSplit[1])
-        sparkVersion = "%s.%s.%s" % (
-            sparkVersionSplit[0],
-            sparkVersionSplit[1],
-            sparkVersionSplit[2],
+        spark_version_split = self.spark.version.split(".")
+        spark_major_version = int(spark_version_split[0])
+        spark_minor_version = int(spark_version_split[1])
+        spark_version = "%s.%s.%s" % (
+            spark_version_split[0],
+            spark_version_split[1],
+            spark_version_split[2],
         )
-        logging.info("Running with Spark Version %s" % (sparkVersion))
+        logging.info("Running with Spark Version %s" % (spark_version))
 
         if (
-            sparkMajorVersion == 2
+            spark_major_version == 2
             and self.import_config.etlEngine == constant.ETL_ENGINE_SPARK
         ):
             self.stopSpark()
             raise invalidConfiguration(
                 "Using Spark as the ETL engine is only supported in Spark3."
             )
-        elif sparkMajorVersion == 3 and sparkMinorVersion != 4:
+        elif spark_major_version == 3 and spark_minor_version != 4:
             if (
                 self.import_config.common_config.getConfigValue(
                     key="timestamp_with_timezone"
@@ -1573,32 +1584,32 @@ class operation(metaclass=Singleton):
         )
         import sparkUDF2
 
-        sparkUDF = sparkUDF2.sparkUDFClass()
+        spark_udf = sparkUDF2.sparkUDFClass()
 
         # Anonymization of data in columns
-        sparkUDF.setSeedString(self.import_config.common_config.getAnonymizationSeed())
+        spark_udf.setSeedString(self.import_config.common_config.getAnonymizationSeed())
 
-        if sparkMajorVersion == 2:
+        if spark_major_version == 2:
             from pyspark.sql.functions import udf
 
             self.udfHashColumn = udf(
-                sparkUDF.hashColumn, pyspark.sql.types.StringType()
+                spark_udf.hashColumn, pyspark.sql.types.StringType()
             )
             self.udfReplaceCharWithStar = udf(
-                sparkUDF.replaceCharWithStar, pyspark.sql.types.StringType()
+                spark_udf.replaceCharWithStar, pyspark.sql.types.StringType()
             )
             self.udfShowFirstFourCharacters = udf(
-                sparkUDF.showFirstFourCharacters, pyspark.sql.types.StringType()
+                spark_udf.showFirstFourCharacters, pyspark.sql.types.StringType()
             )
         else:
             self.udfHashColumn = pyspark.sql.functions.udf(
-                sparkUDF.hashColumn, pyspark.sql.types.StringType()
+                spark_udf.hashColumn, pyspark.sql.types.StringType()
             )
             self.udfReplaceCharWithStar = pyspark.sql.functions.udf(
-                sparkUDF.replaceCharWithStar, pyspark.sql.types.StringType()
+                spark_udf.replaceCharWithStar, pyspark.sql.types.StringType()
             )
             self.udfShowFirstFourCharacters = pyspark.sql.functions.udf(
-                sparkUDF.showFirstFourCharacters, pyspark.sql.types.StringType()
+                spark_udf.showFirstFourCharacters, pyspark.sql.types.StringType()
             )
 
         # get Yarn info
@@ -1621,28 +1632,28 @@ class operation(metaclass=Singleton):
             return
 
         # Connect to the Spark UI and request the API to get the total number of Executors used. This will be saved in the 'yarn_statistics' table
-        sparkURL = "%s/api/v1/applications/%s/allexecutors" % (
+        spark_url = "%s/api/v1/applications/%s/allexecutors" % (
             self.sparkContext.uiWebUrl,
             self.yarnApplicationID,
         )
         self.kerberosPrincipal = configuration.get("Kerberos", "principal")
-        sparkAuth = HTTPKerberosAuth(
+        spark_auth = HTTPKerberosAuth(
             force_preemptive=True,
             principal=self.kerberosPrincipal,
             mutual_authentication=OPTIONAL,
         )
 
         requests.packages.urllib3.disable_warnings()  # Disable SSL/Cert warnings for Spark application API call
-        response = requests.get(sparkURL, auth=sparkAuth, verify=False)
-        responseJson = response.json()
+        response = requests.get(spark_url, auth=spark_auth, verify=False)
+        response_json = response.json()
 
-        sparkExecutorCount = 0
-        for i in responseJson:
+        spark_executor_count = 0
+        for i in response_json:
             if i["id"] != "driver":
-                sparkExecutorCount += 1
+                spark_executor_count += 1
 
         self.import_config.common_config.updateYarnStatistics(
-            self.yarnApplicationID, "spark", yarnContainersTotal=sparkExecutorCount
+            self.yarnApplicationID, "spark", yarn_containers_total=spark_executor_count
         )
 
         logging.info("Stopping Spark context")
@@ -1650,52 +1661,55 @@ class operation(metaclass=Singleton):
         self.sparkContext = None
         self.spark = None
 
-    def runSparkImport(self, PKOnlyImport, incrementalMax=None):
+    def runSparkImport(self, pk_only_import, incremental_max=None):
         logging.debug("Executing import_operations.runSparkImport()")
 
         self.sparkStartTimestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
         self.sparkStartUTS = int(time.time())
-        sparkQuery = ""
+        spark_query = ""
 
         # Fetch the number of executors and sql splits that should be used
         self.import_config.calculateJobMappers()
 
-        rowCount = 0
-        incrWhereStatement = ""
+        row_count = 0
+        incr_where_statement = ""
         if (
             self.import_config.import_is_incremental == True
-            and PKOnlyImport == False
+            and pk_only_import == False
             and self.import_config.importPhase
             != constant.IMPORT_PHASE_MSSQL_CHANGE_TRACKING
         ):
             if self.import_config.common_config.jdbc_servertype == constant.SNOWFLAKE:
-                incrWhereStatement = self.import_config.getIncrWhereStatement(
-                    whereForSqoop=True, incrementalMax=incrementalMax
+                incr_where_statement = self.import_config.getIncrWhereStatement(
+                    whereForSqoop=True, incrementalMax=incremental_max
                 )
             else:
-                incrWhereStatement = self.import_config.getIncrWhereStatement(
-                    whereForSqoop=True, incrementalMax=incrementalMax
+                incr_where_statement = self.import_config.getIncrWhereStatement(
+                    whereForSqoop=True, incrementalMax=incremental_max
                 ).replace('"', "'")
 
-            if incrWhereStatement == "":
+            if incr_where_statement == "":
                 # DBImport is unable to find the max value for the configured incremental column. Is the table empty?
-                rowCount = self.import_config.common_config.getJDBCTableRowCount(
+                row_count = self.import_config.common_config.getJDBCTableRowCount(
                     self.import_config.source_schema, self.import_config.source_table
                 )
-                if rowCount == 0:
+                if row_count == 0:
                     self.sqoopIncrNoNewRows = True
                     try:
                         logging.warning(
                             "There are no rows in the source table. As this is an incremental import, spark will not run"
                         )
                         self.import_config.saveImportStatistics(
-                            self.sqoopStartUTS, sqoopSize=0, sqoopRows=0, sqoopMappers=0
+                            self.sqoopStartUTS,
+                            sqoop_size=0,
+                            sqoop_rows=0,
+                            sqoop_mappers=0,
                         )
                         self.import_config.saveSourceTableRowCount(
-                            rowCount=0, incr=False
+                            row_count=0, incr=False
                         )
                         self.import_config.saveSourceTableRowCount(
-                            rowCount=0, incr=True, printInfo=False
+                            row_count=0, incr=True, print_info=False
                         )
                         self.deleteSqoopHdfsLocation()
                     except:
@@ -1723,47 +1737,47 @@ class operation(metaclass=Singleton):
                     self.import_config.sqoopIncrMinvaluePending != None
                     and self.import_config.sqoopIncrMaxvaluePending != None
                 ):
-                    minMaxDict = {}
-                    minMaxDict["min"] = self.import_config.sqoopIncrMinvaluePending
-                    minMaxDict["max"] = self.import_config.sqoopIncrMaxvaluePending
-                elif incrementalMax != None:
-                    minMaxDict = {}
-                    minMaxDict["min"] = self.import_config.sqoopIncrMinvaluePending
-                    minMaxDict["max"] = incrementalMax
+                    min_max_dict = {}
+                    min_max_dict["min"] = self.import_config.sqoopIncrMinvaluePending
+                    min_max_dict["max"] = self.import_config.sqoopIncrMaxvaluePending
+                elif incremental_max != None:
+                    min_max_dict = {}
+                    min_max_dict["min"] = self.import_config.sqoopIncrMinvaluePending
+                    min_max_dict["max"] = incremental_max
                 else:
                     # Generate the SQL that fetch the min and max values from the column that is defined in self.import_config.splitByColumn
-                    minMaxDict = self.import_config.getMinMaxBoundaryValues()
+                    min_max_dict = self.import_config.getMinMaxBoundaryValues()
             else:
                 # Generate the SQL that fetch the min and max values from the column that is defined in self.import_config.splitByColumn
-                minMaxDict = self.import_config.getMinMaxBoundaryValues()
+                min_max_dict = self.import_config.getMinMaxBoundaryValues()
         else:
-            minMaxDict = {}
-            minMaxDict["min"] = "Unknown"
-            minMaxDict["max"] = "Unknown"
+            min_max_dict = {}
+            min_max_dict["min"] = "Unknown"
+            min_max_dict["max"] = "Unknown"
 
         # Create the SQL that will be used to fetch the data. This will be used on a "from" statement
         if (
             self.import_config.importPhase
             == constant.IMPORT_PHASE_MSSQL_CHANGE_TRACKING
         ):
-            sparkQuery = "(%s) %s" % (
+            spark_query = "(%s) %s" % (
                 self.import_config.getSQLtoReadFromSourceWithMSSQLChangeTracking(),
                 self.Hive_Table,
             )
-        elif incrWhereStatement != "":
-            sparkQuery = "(%s where %s) %s" % (
+        elif incr_where_statement != "":
+            spark_query = "(%s where %s) %s" % (
                 self.import_config.getSQLtoReadFromSource(),
-                incrWhereStatement,
+                incr_where_statement,
                 self.Hive_Table,
             )
         elif self.import_config.getSQLWhereAddition() != None:
-            sparkQuery = "(%s where %s) %s" % (
+            spark_query = "(%s where %s) %s" % (
                 self.import_config.getSQLtoReadFromSource(),
                 self.import_config.getSQLWhereAddition(),
                 self.Hive_Table,
             )
         else:
-            sparkQuery = "(%s) %s" % (
+            spark_query = "(%s) %s" % (
                 self.import_config.getSQLtoReadFromSource(),
                 self.Hive_Table,
             )
@@ -1779,30 +1793,30 @@ class operation(metaclass=Singleton):
         self.startSpark()
         import pyspark
 
-        quoteAroundColumn = self.import_config.common_config.getQuoteAroundColumn()
-        partitionColumn = "%s%s%s" % (
-            quoteAroundColumn,
+        quote_around_column = self.import_config.common_config.getQuoteAroundColumn()
+        partition_column = "%s%s%s" % (
+            quote_around_column,
             str(self.import_config.splitByColumn).lower(),
-            quoteAroundColumn,
+            quote_around_column,
         )
 
         if self.import_config.etlEngine == constant.ETL_ENGINE_SPARK:
-            icebergStagingTable = "%s.%s.%s" % (
+            iceberg_staging_table = "%s.%s.%s" % (
                 self.common_operations.sparkCatalogName,
                 self.import_config.Hive_Import_DB,
                 self.import_config.Hive_Import_Table,
             )
-            icebergPKOnlyDeletedTable = "%s.%s.%s__pkonly__deleted" % (
+            iceberg_pk_only_deleted_table = "%s.%s.%s__pkonly__deleted" % (
                 self.common_operations.sparkCatalogName,
                 self.import_config.Hive_Import_DB,
                 self.import_config.Hive_Import_Table,
             )
-            icebergTargetTable = "%s.%s.%s" % (
+            iceberg_target_table = "%s.%s.%s" % (
                 self.common_operations.sparkCatalogName,
                 self.import_config.Hive_DB,
                 self.import_config.Hive_Table,
             )
-            icebergHistoryTable = "%s.%s.%s_history" % (
+            iceberg_history_table = "%s.%s.%s_history" % (
                 self.common_operations.sparkCatalogName,
                 self.import_config.Hive_DB,
                 self.import_config.Hive_Table,
@@ -1829,7 +1843,7 @@ class operation(metaclass=Singleton):
                     self.spark.read.format("jdbc")
                     .option("driver", self.import_config.common_config.jdbc_driver)
                     .option("url", self.import_config.common_config.jdbc_url)
-                    .option("dbtable", sparkQuery)
+                    .option("dbtable", spark_query)
                     .option("user", self.import_config.common_config.jdbc_username)
                     .option("password", self.import_config.common_config.jdbc_password)
                     .option("fetchsize", "10000")
@@ -1840,36 +1854,36 @@ class operation(metaclass=Singleton):
                     self.spark.read.format("jdbc")
                     .option("driver", self.import_config.common_config.jdbc_driver)
                     .option("url", self.import_config.common_config.jdbc_url)
-                    .option("dbtable", sparkQuery)
+                    .option("dbtable", spark_query)
                     .option("user", self.import_config.common_config.jdbc_username)
                     .option("password", self.import_config.common_config.jdbc_password)
                     .option("fetchsize", "10000")
-                    .option("partitionColumn", partitionColumn)
-                    .option("lowerBound", minMaxDict["min"])
-                    .option("upperBound", minMaxDict["max"])
+                    .option("partitionColumn", partition_column)
+                    .option("lowerBound", min_max_dict["min"])
+                    .option("upperBound", min_max_dict["max"])
                     .option("numPartitions", self.import_config.sqlSessions)
                     .load()
                 )
 
             # Get a Pandas DF with columnames and anonymization function
-            anonymizationFunction = self.import_config.getAnonymizationFunction()
+            anonymization_function = self.import_config.getAnonymizationFunction()
 
-            for index, row in anonymizationFunction.iterrows():
-                cName = row["source_column_name"]
-                cFunction = row["anonymization_function"]
+            for index, row in anonymization_function.iterrows():
+                c_name = row["source_column_name"]
+                c_function = row["anonymization_function"]
 
                 logging.info(
                     "Anonymizing data in column '%s' with function '%s'"
-                    % (cName, cFunction)
+                    % (c_name, c_function)
                 )
                 sys.stdout.flush()
 
-                if cFunction == "Hash":
-                    df = df.withColumn(cName, self.udfHashColumn(cName))
-                elif cFunction == "Replace with star":
-                    df = df.withColumn(cName, self.udfReplaceCharWithStar(cName))
-                elif cFunction == "Show first 4 chars":
-                    df = df.withColumn(cName, self.udfShowFirstFourCharacters(cName))
+                if c_function == "Hash":
+                    df = df.withColumn(c_name, self.udfHashColumn(c_name))
+                elif c_function == "Replace with star":
+                    df = df.withColumn(c_name, self.udfReplaceCharWithStar(c_name))
+                elif c_function == "Show first 4 chars":
+                    df = df.withColumn(c_name, self.udfShowFirstFourCharacters(c_name))
 
             # Write ORC files
             sys.stdout.flush()
@@ -1882,10 +1896,10 @@ class operation(metaclass=Singleton):
                 logging.info("Import data saved to Import tables")
                 sys.stdout.flush()
 
-                hdfsDataDf = self.spark.read.format("orc").load(
+                hdfs_data_df = self.spark.read.format("orc").load(
                     self.import_config.sqoop_hdfs_location
                 )
-                rowsWrittenBySpark = hdfsDataDf.count()
+                rows_written_by_spark = hdfs_data_df.count()
 
             if self.import_config.etlEngine == constant.ETL_ENGINE_SPARK:
                 # ETL Engine is Spark, that means IceBerg tables
@@ -1918,7 +1932,7 @@ class operation(metaclass=Singleton):
                 logging.info("Dropping old Iceberg Import table")
                 sys.stdout.flush()
                 try:
-                    query = "drop table if exists %s purge" % (icebergStagingTable)
+                    query = "drop table if exists %s purge" % (iceberg_staging_table)
                     logging.info(query)
                     self.spark.sql(query)
                 except pyspark.sql.utils.AnalysisException as e:
@@ -1932,24 +1946,24 @@ class operation(metaclass=Singleton):
                     "Creating Iceberg Import table and writing data from source database into it. This is the main loading step of data from source database"
                 )
                 sys.stdout.flush()
-                df.writeTo(icebergStagingTable).create()
+                df.writeTo(iceberg_staging_table).create()
 
                 logging.info("Data saved to Import table")
                 logging.info("Fetching number of rows written from Import table")
                 sys.stdout.flush()
 
-                hdfsDataDf = self.spark.table(icebergStagingTable)
-                rowsWrittenBySpark = hdfsDataDf.count()
+                hdfs_data_df = self.spark.table(iceberg_staging_table)
+                rows_written_by_spark = hdfs_data_df.count()
 
             sys.stdout.flush()
             if self.import_config.etlEngine == constant.ETL_ENGINE_SPARK:
                 logging.info(
                     "Number of rows written by spark to import location = %s"
-                    % (rowsWrittenBySpark)
+                    % (rows_written_by_spark)
                 )
             else:
                 logging.info(
-                    "Number of rows written by spark = %s" % (rowsWrittenBySpark)
+                    "Number of rows written by spark = %s" % (rows_written_by_spark)
                 )
             sys.stdout.flush()
 
@@ -1957,69 +1971,69 @@ class operation(metaclass=Singleton):
                 self.import_config.importPhase
                 == constant.IMPORT_PHASE_MSSQL_CHANGE_TRACKING
             ):
-                if rowsWrittenBySpark == 0:
+                if rows_written_by_spark == 0:
                     # If there is no new rows, we cant get the MaxValue from the output.
                     # So we need to set it to the previous value
-                    incrMaxvaluePending = self.import_config.incr_maxvalue
+                    incr_maxvalue_pending = self.import_config.incr_maxvalue
                     logging.warning("There are no new rows in the source table.")
                 else:
                     # We need to read the max version number and use that as the min value on next import
-                    incrMaxvaluePending = (
-                        hdfsDataDf.groupBy()
+                    incr_maxvalue_pending = (
+                        hdfs_data_df.groupBy()
                         .max("datalake_mssql_changetrack_version")
                         .first()[0]
                     )
                     logging.info(
                         "Max Version number for MSSQL Change Tracking that was fetched = %s"
-                        % (incrMaxvaluePending)
+                        % (incr_maxvalue_pending)
                     )
             else:
-                incrMaxvaluePending = None
+                incr_maxvalue_pending = None
 
             # Get the size of the table on disk
             if self.import_config.etlEngine == constant.ETL_ENGINE_SPARK:
-                stagingTableSize = self.spark.sql(
+                staging_table_size = self.spark.sql(
                     "select sum(file_size_in_bytes) as size from %s.all_data_files"
-                    % (icebergStagingTable)
+                    % (iceberg_staging_table)
                 )
-                sizeWrittenBySpark = stagingTableSize.first()["size"]
+                size_written_by_spark = staging_table_size.first()["size"]
             else:
                 # Get size of all files on HDFS that spark wrote
-                hdfsCommandList = [
+                hdfs_command_list = [
                     "hdfs",
                     "dfs",
                     "-du",
                     "-s",
                     self.import_config.sqoop_hdfs_location,
                 ]
-                hdfsProc = subprocess.Popen(
-                    hdfsCommandList, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+                hdfs_proc = subprocess.Popen(
+                    hdfs_command_list, stdout=subprocess.PIPE, stderr=subprocess.PIPE
                 )
-                stdOut, stdErr = hdfsProc.communicate()
-                stdOut = stdOut.decode("utf-8").rstrip()
-                stdErr = stdErr.decode("utf-8").rstrip()
+                std_out, std_err = hdfs_proc.communicate()
+                std_out = std_out.decode("utf-8").rstrip()
+                std_err = std_err.decode("utf-8").rstrip()
 
                 try:
-                    sizeWrittenBySpark = stdOut.split()[0]
+                    size_written_by_spark = std_out.split()[0]
                 except IndexError:
-                    sizeWrittenBySpark = -1
+                    size_written_by_spark = -1
 
             logging.info(
-                "Size of data written by spark = %s bytes" % (sizeWrittenBySpark)
+                "Size of data written by spark = %s bytes" % (size_written_by_spark)
             )
             sys.stdout.flush()
 
             # As the import can take a very long time on a large table, we need to verify that the MySQL connection against the configuration database is still valid
             self.import_config.reconnectConfigDatabase()
 
-            if PKOnlyImport == False:
+            if pk_only_import == False:
                 try:
                     self.import_config.saveImportStatistics(
                         self.sparkStartUTS,
-                        sqoopSize=sizeWrittenBySpark,
-                        sqoopRows=rowsWrittenBySpark,
-                        sqoopMappers=self.import_config.sqlSessions,
-                        sqoopIncrMaxvaluePending=incrMaxvaluePending,
+                        sqoop_size=size_written_by_spark,
+                        sqoop_rows=rows_written_by_spark,
+                        sqoop_mappers=self.import_config.sqlSessions,
+                        sqoop_incr_maxvalue_pending=incr_maxvalue_pending,
                     )
                 except:
                     logging.exception("Fatal error when saving spark statistics")
@@ -2031,7 +2045,7 @@ class operation(metaclass=Singleton):
                     == constant.IMPORT_PHASE_MSSQL_CHANGE_TRACKING
                 ):
                     self.import_config.saveSourceTableRowCount(
-                        rowCount=rowsWrittenBySpark, incr=True, printInfo=True
+                        row_count=rows_written_by_spark, incr=True, print_info=True
                     )
 
         if self.import_config.etlEngine == constant.ETL_ENGINE_HIVE:
@@ -2054,13 +2068,13 @@ class operation(metaclass=Singleton):
         if self.import_config.etlEngine == constant.ETL_ENGINE_HIVE:
             return
 
-        icebergTargetTable = "%s.%s" % (
+        iceberg_target_table = "%s.%s" % (
             self.import_config.Hive_DB,
             self.import_config.Hive_Table,
         )
 
-        deleteOlderThanRef = datetime.utcnow() - timedelta(hours=24)
-        deleteOlderThan = deleteOlderThanRef.strftime("%Y-%m-%d %H:%M:%S.000")
+        delete_older_than_ref = datetime.utcnow() - timedelta(hours=24)
+        delete_older_than = delete_older_than_ref.strftime("%Y-%m-%d %H:%M:%S.000")
 
         self.startSpark()
         logging.info("Expire older Iceberg snapshots on Target table")
@@ -2069,8 +2083,8 @@ class operation(metaclass=Singleton):
             "CALL %s.system.expire_snapshots(table => '%s', older_than => TIMESTAMP '%s', retain_last => 1, stream_results => true)"
             % (
                 self.common_operations.sparkCatalogName,
-                icebergTargetTable,
-                deleteOlderThan,
+                iceberg_target_table,
+                delete_older_than,
             )
         )
 
@@ -2080,8 +2094,8 @@ class operation(metaclass=Singleton):
             "CALL %s.system.remove_orphan_files(table => '%s', older_than => TIMESTAMP '%s')"
             % (
                 self.common_operations.sparkCatalogName,
-                icebergTargetTable,
-                deleteOlderThan,
+                iceberg_target_table,
+                delete_older_than,
             )
         )
 
@@ -2095,7 +2109,7 @@ class operation(metaclass=Singleton):
             "Deleting old imported data from previous DBImport executions on HDFS"
         )
 
-        hdfsCommandList = [
+        hdfs_command_list = [
             "hdfs",
             "dfs",
             "-rm",
@@ -2103,27 +2117,27 @@ class operation(metaclass=Singleton):
             "-skipTrash",
             self.import_config.sqoop_hdfs_location,
         ]
-        hdfsProc = subprocess.Popen(
-            hdfsCommandList, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        hdfs_proc = subprocess.Popen(
+            hdfs_command_list, stdout=subprocess.PIPE, stderr=subprocess.PIPE
         )
-        stdOut, stdErr = hdfsProc.communicate()
+        std_out, std_err = hdfs_proc.communicate()
 
-        hdfsCommandList = [
+        hdfs_command_list = [
             "hdfs",
             "dfs",
             "-mkdir",
             self.import_config.sqoop_hdfs_location,
         ]
-        hdfsProc = subprocess.Popen(
-            hdfsCommandList, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        hdfs_proc = subprocess.Popen(
+            hdfs_command_list, stdout=subprocess.PIPE, stderr=subprocess.PIPE
         )
-        stdOut, stdErr = hdfsProc.communicate()
+        std_out, std_err = hdfs_proc.communicate()
 
         logging.debug(
             "Executing import_operations.deleteSqoopHdfsLocation() - Finished"
         )
 
-    def runSqoopImport(self, PKOnlyImport, incrementalMax=None):
+    def runSqoopImport(self, pk_only_import, incremental_max=None):
         logging.debug("Executing import_operations.runSqoopImport()")
 
         self.sqoopStartTimestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
@@ -2148,64 +2162,64 @@ class operation(metaclass=Singleton):
         self.sqoopKilledReduceTasks = None
 
         # Sets the correct sqoop table and schema that will be used if a custom SQL is not used
-        sqoopQuery = ""
-        sqoopSourceSchema = []
-        sqoopSourceTable = ""
-        sqoopDirectOption = ""
+        sqoop_query = ""
+        sqoop_source_schema = []
+        sqoop_source_table = ""
+        sqoop_direct_option = ""
         if self.import_config.common_config.db_mssql == True:
-            sqoopSourceSchema = ["--", "--schema", self.import_config.source_schema]
-            sqoopSourceTable = self.import_config.source_table
+            sqoop_source_schema = ["--", "--schema", self.import_config.source_schema]
+            sqoop_source_table = self.import_config.source_table
         if self.import_config.common_config.db_oracle == True:
-            sqoopSourceTable = "%s.%s" % (
+            sqoop_source_table = "%s.%s" % (
                 self.import_config.source_schema.upper(),
                 self.import_config.source_table.upper(),
             )
             # sqoopDirectOption = "--direct"
         if self.import_config.common_config.db_postgresql == True:
-            sqoopSourceSchema = ["--", "--schema", self.import_config.source_schema]
-            sqoopSourceTable = self.import_config.source_table
+            sqoop_source_schema = ["--", "--schema", self.import_config.source_schema]
+            sqoop_source_table = self.import_config.source_table
         if self.import_config.common_config.db_progress == True:
-            sqoopSourceTable = "%s.%s" % (
+            sqoop_source_table = "%s.%s" % (
                 self.import_config.source_schema,
                 self.import_config.source_table,
             )
             # sqoopDirectOption = "--direct"
         if self.import_config.common_config.db_mysql == True:
-            sqoopSourceTable = self.import_config.source_table
+            sqoop_source_table = self.import_config.source_table
         if self.import_config.common_config.db_db2udb == True:
-            sqoopSourceTable = "%s.%s" % (
+            sqoop_source_table = "%s.%s" % (
                 self.import_config.source_schema,
                 self.import_config.source_table.upper(),
             )
         if self.import_config.common_config.db_db2as400 == True:
-            sqoopSourceTable = "%s.%s" % (
+            sqoop_source_table = "%s.%s" % (
                 self.import_config.source_schema,
                 self.import_config.source_table.upper(),
             )
             # sqoopDirectOption = "--direct"
         if self.import_config.common_config.db_informix == True:
-            sqoopSourceTable = self.import_config.source_table
+            sqoop_source_table = self.import_config.source_table
             # sqoopSourceTable = "%s.%s"%(self.import_config.source_schema, self.import_config.source_table)
 
         if (
             self.import_config.sqoop_use_generated_sql == True
             and self.import_config.sqoop_query == None
         ):
-            sqoopQuery = self.import_config.sqlGeneratedSqoopQuery
+            sqoop_query = self.import_config.sqlGeneratedSqoopQuery
 
         if self.import_config.importPhase == constant.IMPORT_PHASE_ORACLE_FLASHBACK:
             # Add the specific Oracle FlashBack columns that we need to import
-            sqoopQuery = re.sub(
+            sqoop_query = re.sub(
                 "^select",
                 'select "VERSIONS_OPERATION" as "datalake_flashback_operation", "VERSIONS_STARTSCN" as "datalake_flashback_startscn",',
                 self.import_config.sqlGeneratedSqoopQuery,
             )
 
         if self.import_config.sqoop_query != None:
-            sqoopQuery = self.import_config.sqoop_query
+            sqoop_query = self.import_config.sqoop_query
 
         # Handle mappers, split-by with custom query
-        if sqoopQuery != "":
+        if sqoop_query != "":
             if "split-by" not in self.import_config.sqoop_options.lower():
                 self.import_config.generateSqoopSplitBy()
 
@@ -2222,31 +2236,31 @@ class operation(metaclass=Singleton):
             self.import_config.sqlSessions = 1
 
         # From here and forward we are building the sqoop command with all options
-        sqoopCommand = []
-        sqoopCommand.extend(
+        sqoop_command = []
+        sqoop_command.extend(
             ["sqoop", "import", "-D", "mapreduce.job.user.classpath.first=true"]
         )
-        sqoopCommand.extend(
+        sqoop_command.extend(
             [
                 "-D",
                 "mapreduce.job.queuename=%s"
                 % (configuration.get("Sqoop", "yarnqueue")),
             ]
         )
-        sqoopCommand.extend(["-D", "oraoop.disabled=true"])
-        sqoopCommand.extend(["-D", "yarn.timeline-service.enabled=false"])
-        sqoopCommand.extend(
+        sqoop_command.extend(["-D", "oraoop.disabled=true"])
+        sqoop_command.extend(["-D", "yarn.timeline-service.enabled=false"])
+        sqoop_command.extend(
             [
                 "-D",
                 "org.apache.sqoop.splitter.allow_text_splitter=%s"
                 % (self.import_config.sqoop_allow_text_splitter),
             ]
         )
-        sqoopCommand.extend(["-D", "sqoop.parquet.logical_types.decimal.enable=false"])
-        sqoopCommand.extend(["-D", "sqoop.avro.logical_types.decimal.enable=false"])
+        sqoop_command.extend(["-D", "sqoop.parquet.logical_types.decimal.enable=false"])
+        sqoop_command.extend(["-D", "sqoop.avro.logical_types.decimal.enable=false"])
 
         if "split-by" not in self.import_config.sqoop_options.lower():
-            sqoopCommand.append("--autoreset-to-one-mapper")
+            sqoop_command.append("--autoreset-to-one-mapper")
 
         # Progress and DB2 AS400 imports needs to know the class name for the JDBC driver.
         if (
@@ -2255,101 +2269,104 @@ class operation(metaclass=Singleton):
             or self.import_config.common_config.db_informix == True
             or self.import_config.common_config.db_sqlanywhere == True
         ):
-            sqoopCommand.extend(
+            sqoop_command.extend(
                 ["--driver", self.import_config.common_config.jdbc_driver]
             )
 
-        sqoopCommand.extend(["--class-name", "dbimport"])
-        sqoopCommand.append("--fetch-size=10000")
+        sqoop_command.extend(["--class-name", "dbimport"])
+        sqoop_command.append("--fetch-size=10000")
 
-        sqoopCommand.append("--as-parquetfile")
-        sqoopCommand.append("--compress")
-        sqoopCommand.extend(["--compression-codec", "snappy"])
+        sqoop_command.append("--as-parquetfile")
+        sqoop_command.append("--compress")
+        sqoop_command.extend(["--compression-codec", "snappy"])
 
-        if PKOnlyImport == True:
-            sqoopCommand.extend(
+        if pk_only_import == True:
+            sqoop_command.extend(
                 ["--target-dir", self.import_config.sqoop_hdfs_location_pkonly]
             )
         else:
-            sqoopCommand.extend(
+            sqoop_command.extend(
                 ["--target-dir", self.import_config.sqoop_hdfs_location]
             )
 
-        sqoopCommand.extend(["--outdir", self.import_config.common_config.tempdir])
-        sqoopCommand.extend(
+        sqoop_command.extend(["--outdir", self.import_config.common_config.tempdir])
+        sqoop_command.extend(
             ["--connect", '"%s"' % (self.import_config.common_config.jdbc_url)]
         )
-        sqoopCommand.extend(
+        sqoop_command.extend(
             ["--username", self.import_config.common_config.jdbc_username]
         )
-        sqoopCommand.extend(
+        sqoop_command.extend(
             [
                 "--password-file",
                 "file://%s" % (self.import_config.common_config.jdbc_password_file),
             ]
         )
-        if sqoopDirectOption != "":
-            sqoopCommand.append(sqoopDirectOption)
+        if sqoop_direct_option != "":
+            sqoop_command.append(sqoop_direct_option)
 
-        sqoopCommand.extend(["--num-mappers", str(self.import_config.sqlSessions)])
+        sqoop_command.extend(["--num-mappers", str(self.import_config.sqlSessions)])
 
         # If we dont have a SQL query to use for sqoop, then we need to specify the table instead
         if (
-            sqoopQuery == ""
+            sqoop_query == ""
             and self.import_config.importPhase != constant.IMPORT_PHASE_ORACLE_FLASHBACK
         ):
-            sqoopCommand.extend(["--table", sqoopSourceTable])
+            sqoop_command.extend(["--table", sqoop_source_table])
 
-        sqoopCommand.append("--delete-target-dir")
+        sqoop_command.append("--delete-target-dir")
 
         if (
             self.import_config.generatedSqoopOptions != ""
             and self.import_config.generatedSqoopOptions != None
         ):
-            sqoopCommand.extend(shlex.split(self.import_config.generatedSqoopOptions))
+            sqoop_command.extend(shlex.split(self.import_config.generatedSqoopOptions))
 
         if (
             self.import_config.sqoop_options.strip() != ""
             and self.import_config.sqoop_options != None
         ):
             if self.import_config.common_config.jdbc_force_column_lowercase == True:
-                sqoopCommand.extend(
+                sqoop_command.extend(
                     shlex.split(self.import_config.sqoop_options.lower())
                 )
             else:
-                sqoopCommand.extend(shlex.split(self.import_config.sqoop_options))
+                sqoop_command.extend(shlex.split(self.import_config.sqoop_options))
 
         if (
             self.import_config.sqoopBoundaryQuery.strip() != ""
             and self.import_config.sqlSessions > 1
         ):
-            sqoopCommand.extend(
+            sqoop_command.extend(
                 ["--boundary-query", self.import_config.sqoopBoundaryQuery]
             )
 
-        if self.import_config.import_is_incremental == True and PKOnlyImport == False:
-            incrWhereStatement = self.import_config.getIncrWhereStatement(
-                whereForSqoop=True, incrementalMax=incrementalMax
+        if self.import_config.import_is_incremental == True and pk_only_import == False:
+            incr_where_statement = self.import_config.getIncrWhereStatement(
+                whereForSqoop=True, incrementalMax=incremental_max
             ).replace('"', "'")
-            if incrWhereStatement == "":
+            if incr_where_statement == "":
                 # DBImport is unable to find the max value for the configured incremental column. Is the table empty?
-                rowCount = self.import_config.common_config.getJDBCTableRowCount(
+                row_count = self.import_config.common_config.getJDBCTableRowCount(
                     self.import_config.source_schema, self.import_config.source_table
                 )
-                if rowCount == 0:
+                if row_count == 0:
                     self.sqoopIncrNoNewRows = True
                     try:
                         logging.warning(
                             "There are no rows in the source table. As this is an incremental import, sqoop will not run"
                         )
                         self.import_config.saveImportStatistics(
-                            self.sqoopStartUTS, sqoopSize=0, sqoopRows=0, sqoopMappers=0
+                            self.sqoopStartUTS,
+                            sqoop_size=0,
+                            sqoop_rows=0,
+                            sqoop_mappers=0,
                         )
                         self.import_config.saveSourceTableRowCount(
-                            rowCount=0, incr=False
+                            row_count=0, incr=False
                         )
                         self.import_config.saveSourceTableRowCount(
-                            rowCount=0, incr=True, printInfo=False
+                            row_count=0, incr=True, print_info=False
                         )
                         self.deleteSqoopHdfsLocation()
                     except:
@@ -2365,61 +2382,64 @@ class operation(metaclass=Singleton):
                     sys.exit(1)
 
         if self.import_config.importPhase == constant.IMPORT_PHASE_ORACLE_FLASHBACK:
-            sqoopCommand.extend(
-                ["--query", "%s %s AND $CONDITIONS " % (sqoopQuery, incrWhereStatement)]
+            sqoop_command.extend(
+                [
+                    "--query",
+                    "%s %s AND $CONDITIONS " % (sqoop_query, incr_where_statement),
+                ]
             )
-        elif sqoopQuery == "":
+        elif sqoop_query == "":
             if (
                 self.import_config.import_is_incremental == True
-                and PKOnlyImport == False
+                and pk_only_import == False
             ):
                 if self.import_config.getSQLWhereAddition() != None:
-                    sqoopCommand.extend(
+                    sqoop_command.extend(
                         [
                             "--where",
                             "%s and %s"
                             % (
-                                incrWhereStatement,
+                                incr_where_statement,
                                 self.import_config.getSQLWhereAddition(),
                             ),
                         ]
                     )
                 else:
-                    sqoopCommand.extend(["--where", incrWhereStatement])
+                    sqoop_command.extend(["--where", incr_where_statement])
             else:
                 if self.import_config.getSQLWhereAddition() != None:
-                    sqoopCommand.extend(
+                    sqoop_command.extend(
                         ["--where", self.import_config.getSQLWhereAddition()]
                     )
-            sqoopCommand.extend(sqoopSourceSchema)
+            sqoop_command.extend(sqoop_source_schema)
         else:
             if (
                 self.import_config.import_is_incremental == True
-                and PKOnlyImport == False
+                and pk_only_import == False
             ):
-                sqoopCommand.extend(
+                sqoop_command.extend(
                     [
                         "--query",
                         "%s where $CONDITIONS and %s"
-                        % (sqoopQuery, incrWhereStatement),
+                        % (sqoop_query, incr_where_statement),
                     ]
                 )
             else:
                 if self.import_config.getSQLWhereAddition() != None:
-                    sqoopCommand.extend(
+                    sqoop_command.extend(
                         [
                             "--query",
                             "%s where $CONDITIONS and %s"
-                            % (sqoopQuery, self.import_config.getSQLWhereAddition()),
+                            % (sqoop_query, self.import_config.getSQLWhereAddition()),
                         ]
                     )
                 else:
-                    sqoopCommand.extend(
-                        ["--query", "%s where $CONDITIONS" % (sqoopQuery)]
+                    sqoop_command.extend(
+                        ["--query", "%s where $CONDITIONS" % (sqoop_query)]
                     )
 
-        logging.info("Starting sqoop with the following command: %s" % (sqoopCommand))
-        sqoopOutput = ""
+        logging.info("Starting sqoop with the following command: %s" % (sqoop_command))
+        sqoop_output = ""
 
         print(" _____________________ ")
         print("|                     |")
@@ -2429,7 +2449,7 @@ class operation(metaclass=Singleton):
 
         # Start Sqoop
         sh_session = subprocess.Popen(
-            sqoopCommand, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
+            sqoop_command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
         )
 
         # Print Stdout and stderr while sqoop is running
@@ -2438,7 +2458,7 @@ class operation(metaclass=Singleton):
             if row != "":
                 print(row)
                 sys.stdout.flush()
-                sqoopOutput += row + "\n"
+                sqoop_output += row + "\n"
                 self.parseSqoopOutput(row)
 
         # Print what is left in output after sqoop finished
@@ -2447,7 +2467,7 @@ class operation(metaclass=Singleton):
             if row != "":
                 print(row)
                 sys.stdout.flush()
-                sqoopOutput += row + "\n"
+                sqoop_output += row + "\n"
                 self.parseSqoopOutput(row)
 
         print(" ________________________ ")
@@ -2466,35 +2486,35 @@ class operation(metaclass=Singleton):
             self.sqoopRows = 0
 
         # Update table 'yarn_statistics'
-        yarnContainersTotal = 0
-        yarnContainersFailed = 0
-        yarnContainersKilled = 0
+        yarn_containers_total = 0
+        yarn_containers_failed = 0
+        yarn_containers_killed = 0
         if self.sqoopLaunchedMapTasks != None:
-            yarnContainersTotal += self.sqoopLaunchedMapTasks
+            yarn_containers_total += self.sqoopLaunchedMapTasks
         if self.sqoopLaunchedReduceTasks != None:
-            yarnContainersTotal += self.sqoopLaunchedReduceTasks
+            yarn_containers_total += self.sqoopLaunchedReduceTasks
         if self.sqoopFailedMapTasks != None:
-            yarnContainersFailed += self.sqoopFailedMapTasks
+            yarn_containers_failed += self.sqoopFailedMapTasks
         if self.sqoopFailedReduceTasks != None:
-            yarnContainersFailed += self.sqoopFailedReduceTasks
+            yarn_containers_failed += self.sqoopFailedReduceTasks
         if self.sqoopKilledMapTasks != None:
-            yarnContainersKilled += self.sqoopKilledMapTasks
+            yarn_containers_killed += self.sqoopKilledMapTasks
         if self.sqoopKilledReduceTasks != None:
-            yarnContainersKilled += self.sqoopKilledReduceTasks
+            yarn_containers_killed += self.sqoopKilledReduceTasks
 
         self.import_config.common_config.updateYarnStatistics(
             self.yarnApplicationID,
             "sqoop",
-            yarnContainersTotal=yarnContainersTotal,
-            yarnContainersFailed=yarnContainersFailed,
-            yarnContainersKilled=yarnContainersKilled,
+            yarn_containers_total=yarn_containers_total,
+            yarn_containers_failed=yarn_containers_failed,
+            yarn_containers_killed=yarn_containers_killed,
         )
 
         # Check for errors in output
-        sqoopWarning = False
+        sqoop_warning = False
 
-        if " ERROR " in sqoopOutput:
-            for row in sqoopOutput.split("\n"):
+        if " ERROR " in sqoop_output:
+            for row in sqoop_output.split("\n"):
                 if (
                     "Arithmetic overflow error converting expression to data type int"
                     in row
@@ -2503,21 +2523,21 @@ class operation(metaclass=Singleton):
                     logging.warning(
                         "Unable to verify the import due to errors from MsSQL server. Will continue regardless of this"
                     )
-                    sqoopWarning = True
+                    sqoop_warning = True
 
                 if "Not authorized to access topics: [" in row:
                     # This is not really an error, but we cant verify the table.
                     logging.warning("Problem sending data to Atlas")
-                    sqoopWarning = True
+                    sqoop_warning = True
 
                 if "ERROR hook.AtlasHook" in row:
                     # This is not really an error, but we cant send to Atlas
                     logging.warning("Problem sending data to Atlas")
-                    sqoopWarning = True
+                    sqoop_warning = True
 
                 if "clients.NetworkClient: [Producer clientId" in row:
                     # Unknown Kafka error
-                    sqoopWarning = True
+                    sqoop_warning = True
 
                 if "java.sql.SQLException: ORA-30052:" in row:
                     # java.sql.SQLException: ORA-30052: invalid lower limit snapshot expression
@@ -2532,12 +2552,12 @@ class operation(metaclass=Singleton):
 
                 # The following two tests is just to ensure that we dont mark the import as failed just because there is a column called error
                 if " ERROR " in row and "Precision" in row and "Scale" in row:
-                    sqoopWarning = True
+                    sqoop_warning = True
 
                 if " ERROR " in row and "The HCatalog field" in row:
-                    sqoopWarning = True
+                    sqoop_warning = True
 
-            if sqoopWarning == False:
+            if sqoop_warning == False:
                 # We detected the string ERROR in the output but we havent found a vaild reason for it in the IF statements above.
                 # We need to mark the sqoop command as error and exit the program
                 logging.error(
@@ -2557,13 +2577,13 @@ class operation(metaclass=Singleton):
             self.sqoopRows = 0
             logging.warning("There are no new rows in the source table.")
 
-        if PKOnlyImport == False:
+        if pk_only_import == False:
             try:
                 self.import_config.saveImportStatistics(
                     self.sqoopStartUTS,
-                    sqoopSize=self.sqoopSize,
-                    sqoopRows=self.sqoopRows,
-                    sqoopMappers=self.import_config.sqlSessions,
+                    sqoop_size=self.sqoopSize,
+                    sqoop_rows=self.sqoopRows,
+                    sqoop_mappers=self.import_config.sqlSessions,
                 )
             except:
                 logging.exception("Fatal error when saving sqoop statistics")
@@ -2676,21 +2696,23 @@ class operation(metaclass=Singleton):
         logging.debug("Executing import_operations.updateExternalImportView()")
 
         if self.import_config.isExternalViewRequired() == True:
-            columnsConfig = self.import_config.getColumnsFromConfigDatabase(
+            columns_config = self.import_config.getColumnsFromConfigDatabase(
                 sourceIsParquetFile=True, includeAllColumns=False
             )
 
-            hiveDB = self.import_config.Hive_Import_DB
-            hiveView = self.import_config.Hive_Import_View
-            columnsHive = self.common_operations.getColumns(
-                hiveDB, hiveView, includeType=True, excludeDataLakeColumns=True
+            hive_db = self.import_config.Hive_Import_DB
+            hive_view = self.import_config.Hive_Import_View
+            columns_hive = self.common_operations.getColumns(
+                hive_db, hive_view, includeType=True, excludeDataLakeColumns=True
             )
-            columnsMerge = pd.merge(
-                columnsConfig, columnsHive, on=None, how="outer", indicator="Exist"
+            columns_merge = pd.merge(
+                columns_config, columns_hive, on=None, how="outer", indicator="Exist"
             )
-            columnsDiffCount = len(columnsMerge.loc[columnsMerge["Exist"] != "both"])
+            columns_diff_count = len(
+                columns_merge.loc[columns_merge["Exist"] != "both"]
+            )
 
-            if columnsDiffCount > 0:
+            if columns_diff_count > 0:
                 # There is a diff between the configuration and the view. Lets update it
                 logging.info(
                     "Updating Import View as columns in Hive is not the same as in the configuration"
@@ -2710,83 +2732,83 @@ class operation(metaclass=Singleton):
 
     def createExternalImportTable(self):
         if self.import_config.etlEngine == constant.ETL_ENGINE_HIVE:
-            self.createExternalTable(tableType="import")
+            self.createExternalTable(table_type="import")
 
     def createExternalTargetTable(self):
         if self.import_config.etlEngine == constant.ETL_ENGINE_HIVE:
-            self.createExternalTable(tableType="target")
+            self.createExternalTable(table_type="target")
 
-    def createExternalTable(self, tableType=""):
+    def createExternalTable(self, table_type=""):
         logging.debug("Executing import_operations.createExternalImportTable()")
 
-        if tableType == "import":
-            hiveDB = self.import_config.Hive_Import_DB
-            hiveTable = self.import_config.Hive_Import_Table
-            hdfsLocation = self.import_config.sqoop_hdfs_location
+        if table_type == "import":
+            hive_db = self.import_config.Hive_Import_DB
+            hive_table = self.import_config.Hive_Import_Table
+            hdfs_location = self.import_config.sqoop_hdfs_location
 
-        if tableType == "target":
-            hiveDB = self.Hive_DB
-            hiveTable = self.Hive_Table
-            hdfsLocation = self.import_config.sqoop_hdfs_location_sparkETL
+        if table_type == "target":
+            hive_db = self.Hive_DB
+            hive_table = self.Hive_Table
+            hdfs_location = self.import_config.sqoop_hdfs_location_sparkETL
 
-        if self.common_operations.checkTable(hiveDB, hiveTable) == True:
+        if self.common_operations.checkTable(hive_db, hive_table) == True:
             # Table exist, so we need to make sure that it's a managed table and not an external table
             if (
-                self.common_operations.isTableExternalParquetFormat(hiveDB, hiveTable)
+                self.common_operations.isTableExternalParquetFormat(hive_db, hive_table)
                 == False
                 and self.import_config.importTool == "sqoop"
             ):
                 logging.info(
                     "Dropping %s table as it's not an external table based on parquet"
-                    % (tableType)
+                    % (table_type)
                 )
-                self.common_operations.dropHiveTable(hiveDB, hiveTable)
+                self.common_operations.dropHiveTable(hive_db, hive_table)
                 self.common_operations.reconnectHiveMetaStore()
 
             if self.common_operations.isTableExternalOrcFormat(
-                hiveDB, hiveTable
+                hive_db, hive_table
             ) == False and self.import_config.importTool in ("spark", "local"):
                 logging.info(
                     "Dropping %s table as it's not an external table based on ORC"
-                    % (tableType)
+                    % (table_type)
                 )
-                self.common_operations.dropHiveTable(hiveDB, hiveTable)
+                self.common_operations.dropHiveTable(hive_db, hive_table)
                 self.common_operations.reconnectHiveMetaStore()
 
-        if self.common_operations.checkTable(hiveDB, hiveTable) == False:
+        if self.common_operations.checkTable(hive_db, hive_table) == False:
             # Import table does not exist. We just create it in that case
-            logging.info("Creating External %s Table" % (tableType))
+            logging.info("Creating External %s Table" % (table_type))
 
-            query = "create external table `%s`.`%s` (" % (hiveDB, hiveTable)
-            columnsDF = self.import_config.getColumnsFromConfigDatabase(
+            query = "create external table `%s`.`%s` (" % (hive_db, hive_table)
+            columns_df = self.import_config.getColumnsFromConfigDatabase(
                 includeAllColumns=False
             )
 
             if self.import_config.importTool == "sqoop":
-                columnsDF = self.updateColumnsForImportTable(columnsDF)
+                columns_df = self.updateColumnsForImportTable(columns_df)
             # 			elif self.import_config.importTool == "spark":
             # 				columnsDF = self.updateColumnsForImportTable(columnsDF, replaceNameOnly=True)
 
-            firstLoop = True
+            first_loop = True
 
             if (
                 self.import_config.importPhase
                 == constant.IMPORT_PHASE_MSSQL_CHANGE_TRACKING
             ):
                 # Add the specific MSSQL Change Tracking columns that we need to import
-                firstLoop = False
+                first_loop = False
                 query += "`datalake_mssql_changetrack_version` bigint"
                 query += ", `datalake_mssql_changetrack_operation` varchar(2)"
 
-            for index, row in columnsDF.iterrows():
-                if firstLoop == False:
+            for index, row in columns_df.iterrows():
+                if first_loop == False:
                     query += ", "
 
                 query += "`%s` %s" % (row["name"], row["type"])
 
                 if row["comment"] != None:
                     query += ' COMMENT "%s"' % (row["comment"])
-                firstLoop = False
+                first_loop = False
 
             if self.import_config.importPhase == constant.IMPORT_PHASE_ORACLE_FLASHBACK:
                 # Add the specific Oracle FlashBack columns that we need to import
@@ -2795,22 +2817,22 @@ class operation(metaclass=Singleton):
 
             query += ") "
 
-            tableComment = self.import_config.getHiveTableComment()
-            if tableComment != None:
-                query += 'COMMENT "%s" ' % (tableComment)
+            table_comment = self.import_config.getHiveTableComment()
+            if table_comment != None:
+                query += 'COMMENT "%s" ' % (table_comment)
 
             if self.import_config.importTool == "sqoop":
                 query += "stored as parquet "
                 query += "LOCATION '%s%s/' " % (
                     self.common_operations.hdfs_address,
-                    hdfsLocation,
+                    hdfs_location,
                 )
                 query += "TBLPROPERTIES ('parquet.compress' = 'SNAPPY') "
             elif self.import_config.importTool in ("spark", "local"):
                 query += "stored as ORC "
                 query += "LOCATION '%s%s/' " % (
                     self.common_operations.hdfs_address,
-                    hdfsLocation,
+                    hdfs_location,
                 )
 
             self.common_operations.executeHiveQuery(query)
@@ -2845,12 +2867,12 @@ class operation(metaclass=Singleton):
         # self.Hive_ColumnName_IUD = self.import_config.Hive_ColumnName_IUD
         # self.Hive_ColumnName_HistoryTimestamp = self.import_config.Hive_ColumnName_HistoryTimestamp
 
-        Hive_History_DB = self.import_config.Hive_History_DB
-        Hive_History_Table = self.import_config.Hive_History_Table
+        hive_history_db = self.import_config.Hive_History_DB
+        hive_history_table = self.import_config.Hive_History_Table
 
         columns = self.common_operations.getColumns(
-            hiveDB=Hive_History_DB,
-            hiveTable=Hive_History_Table,
+            hiveDB=hive_history_db,
+            hiveTable=hive_history_table,
             includeType=False,
             includeComment=False,
         )
@@ -2861,8 +2883,8 @@ class operation(metaclass=Singleton):
         ):
             if self.import_config.etlEngine == constant.ETL_ENGINE_HIVE:
                 query = "alter table `%s`.`%s` add columns ( %s varchar(256) )" % (
-                    Hive_History_DB,
-                    Hive_History_Table,
+                    hive_history_db,
+                    hive_history_table,
                     self.Hive_ColumnName_Source,
                 )
                 self.common_operations.executeHiveQuery(query)
@@ -2870,8 +2892,8 @@ class operation(metaclass=Singleton):
             elif self.import_config.etlEngine == constant.ETL_ENGINE_SPARK:
                 query = "alter table `%s`.`%s`.`%s` add columns ( %s string )" % (
                     self.common_operations.sparkCatalogName,
-                    Hive_History_DB,
-                    Hive_History_Table,
+                    hive_history_db,
+                    hive_history_table,
                     self.Hive_ColumnName_Source,
                 )
                 logging.info(query)
@@ -2884,7 +2906,7 @@ class operation(metaclass=Singleton):
             if self.import_config.etlEngine == constant.ETL_ENGINE_HIVE:
                 query = (
                     'alter table `%s`.`%s` add columns ( %s char(1) COMMENT "Last operation of this record was I=Insert, U=Update or D=Delete")'
-                    % (Hive_History_DB, Hive_History_Table, self.Hive_ColumnName_IUD)
+                    % (hive_history_db, hive_history_table, self.Hive_ColumnName_IUD)
                 )
                 self.common_operations.executeHiveQuery(query)
 
@@ -2893,8 +2915,8 @@ class operation(metaclass=Singleton):
                     'alter table `%s`.`%s`.`%s` add columns ( %s string COMMENT "Last operation of this record was I=Insert, U=Update or D=Delete")'
                     % (
                         self.common_operations.sparkCatalogName,
-                        Hive_History_DB,
-                        Hive_History_Table,
+                        hive_history_db,
+                        hive_history_table,
                         self.Hive_ColumnName_IUD,
                     )
                 )
@@ -2912,8 +2934,8 @@ class operation(metaclass=Singleton):
                 query = (
                     'alter table `%s`.`%s` add columns ( %s timestamp COMMENT "Timestamp for insert in Datalake")'
                     % (
-                        Hive_History_DB,
-                        Hive_History_Table,
+                        hive_history_db,
+                        hive_history_table,
                         self.Hive_ColumnName_HistoryTimestamp,
                     )
                 )
@@ -2924,8 +2946,8 @@ class operation(metaclass=Singleton):
                     'alter table `%s`.`%s`.`%s` add columns ( %s timestamp COMMENT "Timestamp for insert in Datalake" )'
                     % (
                         self.common_operations.sparkCatalogName,
-                        Hive_History_DB,
-                        Hive_History_Table,
+                        hive_history_db,
+                        hive_history_table,
                         self.Hive_ColumnName_HistoryTimestamp,
                     )
                 )
@@ -2935,7 +2957,7 @@ class operation(metaclass=Singleton):
             if self.common_operations.metastore_type == constant.CATALOG_HIVE_DIRECT:
                 self.common_operations.reconnectHiveMetaStore()
 
-    def addHiveDBImportColumns(self, mergeOperation):
+    def addHiveDBImportColumns(self, merge_operation):
         """Will add the required DBImport columns in the Hive table"""
         logging.debug("Executing import_operations.createHiveMergeColumns()")
 
@@ -2974,7 +2996,7 @@ class operation(metaclass=Singleton):
             if self.common_operations.metastore_type == constant.CATALOG_HIVE_DIRECT:
                 self.common_operations.reconnectHiveMetaStore()
 
-        if mergeOperation == False:
+        if merge_operation == False:
             if self.import_config.create_datalake_import_column == True:
                 # if columns[columns['name'] == 'datalake_insert'].empty == False and columns[columns['name'] == 'datalake_import'].empty == True:
                 if (
@@ -3216,61 +3238,61 @@ class operation(metaclass=Singleton):
 
     def generateCreateTargetTableSQL(
         self,
-        hiveDB,
-        hiveTable,
-        acidTable=False,
+        hive_db,
+        hive_table,
+        acid_table=False,
         buckets=4,
-        restrictColumns=None,
-        acidInsertOnly=False,
-        icebergTable=False,
+        restrict_columns=None,
+        acid_insert_only=False,
+        iceberg_table=False,
     ):
         """Will generate the common create table for the target table as a list."""
         logging.debug("Executing import_operations.generateCreateTargetTableSQL()")
 
-        queryList = []
-        if icebergTable == True:
+        query_list = []
+        if iceberg_table == True:
             query = "create table %s.`%s`.`%s` (" % (
                 self.common_operations.sparkCatalogName,
-                hiveDB,
-                hiveTable,
+                hive_db,
+                hive_table,
             )
         else:
-            query = "create table `%s`.`%s` (" % (hiveDB, hiveTable)
-        columnsDF = self.import_config.getColumnsFromConfigDatabase(
+            query = "create table `%s`.`%s` (" % (hive_db, hive_table)
+        columns_df = self.import_config.getColumnsFromConfigDatabase(
             includeAllColumns=False
         )
 
-        restrictColumnsList = []
-        if restrictColumns != None:
-            restrictColumnsList = restrictColumns.split(",")
+        restrict_columns_list = []
+        if restrict_columns != None:
+            restrict_columns_list = restrict_columns.split(",")
 
-        firstLoop = True
-        for index, row in columnsDF.iterrows():
-            if restrictColumnsList != []:
-                if row["name"] not in restrictColumnsList:
+        first_loop = True
+        for index, row in columns_df.iterrows():
+            if restrict_columns_list != []:
+                if row["name"] not in restrict_columns_list:
                     continue
-            if firstLoop == False:
+            if first_loop == False:
                 query += ", "
             query += "`%s` %s" % (row["name"], row["type"])
             if row["comment"] != None:
                 query += ' COMMENT "%s"' % (row["comment"])
-            firstLoop = False
-        queryList.append(query)
+            first_loop = False
+        query_list.append(query)
 
         query = ") "
-        tableComment = self.import_config.getHiveTableComment()
+        table_comment = self.import_config.getHiveTableComment()
 
-        if icebergTable == True:
+        if iceberg_table == True:
             # Generate a create table statment that will be executed through Spark
             query += "USING iceberg "
 
-            if tableComment != None:
-                query += 'COMMENT "%s" ' % (tableComment)
+            if table_comment != None:
+                query += 'COMMENT "%s" ' % (table_comment)
         else:
-            if tableComment != None:
-                query += 'COMMENT "%s" ' % (tableComment)
+            if table_comment != None:
+                query += 'COMMENT "%s" ' % (table_comment)
 
-            if acidTable == False:
+            if acid_table == False:
                 query += "STORED AS ORC TBLPROPERTIES ('orc.compress'='ZLIB') "
             else:
                 if (
@@ -3280,10 +3302,10 @@ class operation(metaclass=Singleton):
                     == True
                 ):
                     query += "CLUSTERED BY ("
-                    firstColumn = True
+                    first_column = True
 
                     if (
-                        self.import_config.getPKcolumns(PKforMerge=True) == None
+                        self.import_config.getPKcolumns(pk_for_merge=True) == None
                     ):  # To look at both pk_column_override and pk_override_merge_only
                         logging.error(
                             "There is no Primary Key for this table. Please add one in source system or in 'pk_column_override'"
@@ -3292,42 +3314,42 @@ class operation(metaclass=Singleton):
                         sys.exit(1)
 
                     for column in self.import_config.getPKcolumns(
-                        PKforMerge=True
+                        pk_for_merge=True
                     ).split(","):
-                        if firstColumn == False:
+                        if first_column == False:
                             query += ", "
                         query += "`" + column + "`"
-                        firstColumn = False
+                        first_column = False
                     # TODO: Smarter calculation of the number of buckets
                     query += ") into %s buckets " % (buckets)
 
-                if acidInsertOnly == False:
+                if acid_insert_only == False:
                     query += "STORED AS ORC TBLPROPERTIES ('orc.compress'='ZLIB', 'transactional'='true') "
                 else:
                     query += "STORED AS ORC TBLPROPERTIES ('orc.compress'='ZLIB', 'transactional'='true', 'transactional_properties'='insert_only') "
 
-        queryList.append(query)
+        query_list.append(query)
 
         logging.debug(
             "Executing import_operations.generateCreateTargetTableSQL() - Finished"
         )
-        return queryList
+        return query_list
 
     def createDeleteTable(self):
         logging.debug("Executing import_operations.createDeleteTable()")
 
-        Hive_Delete_DB = self.import_config.Hive_Delete_DB
-        Hive_Delete_Table = self.import_config.Hive_Delete_Table
+        hive_delete_db = self.import_config.Hive_Delete_DB
+        hive_delete_table = self.import_config.Hive_Delete_Table
 
         if self.import_config.etlEngine == constant.ETL_ENGINE_HIVE:
             if (
-                self.common_operations.checkTable(Hive_Delete_DB, Hive_Delete_Table)
+                self.common_operations.checkTable(hive_delete_db, hive_delete_table)
                 == False
             ):
                 # Target table does not exist. We just create it in that case
                 logging.info(
                     "Creating Delete table %s.%s in Hive"
-                    % (Hive_Delete_DB, Hive_Delete_Table)
+                    % (hive_delete_db, hive_delete_table)
                 )
                 if (
                     self.import_config.common_config.getConfigValue(
@@ -3335,41 +3357,41 @@ class operation(metaclass=Singleton):
                     )
                     == True
                 ):
-                    queryList = self.generateCreateTargetTableSQL(
-                        hiveDB=Hive_Delete_DB,
-                        hiveTable=Hive_Delete_Table,
-                        acidTable=True,
-                        acidInsertOnly=True,
-                        restrictColumns=self.import_config.getPKcolumns(
-                            PKforMerge=True
+                    query_list = self.generateCreateTargetTableSQL(
+                        hive_db=hive_delete_db,
+                        hive_table=hive_delete_table,
+                        acid_table=True,
+                        acid_insert_only=True,
+                        restrict_columns=self.import_config.getPKcolumns(
+                            pk_for_merge=True
                         ),
                     )
                 else:
-                    queryList = self.generateCreateTargetTableSQL(
-                        hiveDB=Hive_Delete_DB,
-                        hiveTable=Hive_Delete_Table,
-                        acidTable=False,
-                        acidInsertOnly=False,
-                        restrictColumns=self.import_config.getPKcolumns(
-                            PKforMerge=True
+                    query_list = self.generateCreateTargetTableSQL(
+                        hive_db=hive_delete_db,
+                        hive_table=hive_delete_table,
+                        acid_table=False,
+                        acid_insert_only=False,
+                        restrict_columns=self.import_config.getPKcolumns(
+                            pk_for_merge=True
                         ),
                     )
 
-                query = "".join(queryList)
+                query = "".join(query_list)
 
                 self.common_operations.executeHiveQuery(query)
                 self.common_operations.reconnectHiveMetaStore()
 
         if self.import_config.etlEngine == constant.ETL_ENGINE_SPARK:
             if (
-                self.common_operations.checkTable(Hive_Delete_DB, Hive_Delete_Table)
+                self.common_operations.checkTable(hive_delete_db, hive_delete_table)
                 == True
             ):
                 # Table exist, so we need to make sure that it's an Iceberg table and not something else
 
                 if (
                     self.common_operations.isTableExternalIcebergFormat(
-                        Hive_Delete_DB, Hive_Delete_Table
+                        hive_delete_db, hive_delete_table
                     )
                     == False
                 ):
@@ -3377,28 +3399,28 @@ class operation(metaclass=Singleton):
                         "Delete table is not a Iceberg table. Dropping and recreating the Delete table"
                     )
                     self.common_operations.dropHiveTable(
-                        Hive_Delete_DB, Hive_Delete_Table
+                        hive_delete_db, hive_delete_table
                     )
 
             # We need to check again as the table might just been droped because it was an external table to begin with
             if (
-                self.common_operations.checkTable(Hive_Delete_DB, Hive_Delete_Table)
+                self.common_operations.checkTable(hive_delete_db, hive_delete_table)
                 == False
             ):
                 logging.info(
                     "Creating Delete table %s.%s in Spark"
-                    % (Hive_Delete_DB, Hive_Delete_Table)
+                    % (hive_delete_db, hive_delete_table)
                 )
 
                 # Create the Iceberg table
-                queryList = self.generateCreateTargetTableSQL(
-                    hiveDB=Hive_Delete_DB,
-                    hiveTable=Hive_Delete_Table,
-                    restrictColumns=self.import_config.getPKcolumns(PKforMerge=True),
-                    icebergTable=True,
+                query_list = self.generateCreateTargetTableSQL(
+                    hive_db=hive_delete_db,
+                    hive_table=hive_delete_table,
+                    restrict_columns=self.import_config.getPKcolumns(pk_for_merge=True),
+                    iceberg_table=True,
                 )
 
-                query = "".join(queryList)
+                query = "".join(query_list)
 
                 self.startSpark()
                 logging.info(query)
@@ -3410,18 +3432,18 @@ class operation(metaclass=Singleton):
     def createHistoryTable(self):
         logging.debug("Executing import_operations.createHistoryTable()")
 
-        Hive_History_DB = self.import_config.Hive_History_DB
-        Hive_History_Table = self.import_config.Hive_History_Table
+        hive_history_db = self.import_config.Hive_History_DB
+        hive_history_table = self.import_config.Hive_History_Table
 
         if self.import_config.etlEngine == constant.ETL_ENGINE_HIVE:
             if (
-                self.common_operations.checkTable(Hive_History_DB, Hive_History_Table)
+                self.common_operations.checkTable(hive_history_db, hive_history_table)
                 == False
             ):
                 # Target table does not exist. We just create it in that case
                 logging.info(
                     "Creating History table %s.%s in Hive"
-                    % (Hive_History_DB, Hive_History_Table)
+                    % (hive_history_db, hive_history_table)
                 )
                 if (
                     self.import_config.common_config.getConfigValue(
@@ -3429,21 +3451,21 @@ class operation(metaclass=Singleton):
                     )
                     == True
                 ):
-                    queryList = self.generateCreateTargetTableSQL(
-                        hiveDB=Hive_History_DB,
-                        hiveTable=Hive_History_Table,
-                        acidTable=True,
-                        acidInsertOnly=True,
+                    query_list = self.generateCreateTargetTableSQL(
+                        hive_db=hive_history_db,
+                        hive_table=hive_history_table,
+                        acid_table=True,
+                        acid_insert_only=True,
                     )
                 else:
-                    queryList = self.generateCreateTargetTableSQL(
-                        hiveDB=Hive_History_DB,
-                        hiveTable=Hive_History_Table,
-                        acidTable=False,
-                        acidInsertOnly=False,
+                    query_list = self.generateCreateTargetTableSQL(
+                        hive_db=hive_history_db,
+                        hive_table=hive_history_table,
+                        acid_table=False,
+                        acid_insert_only=False,
                     )
 
-                query = queryList[0]
+                query = query_list[0]
 
                 if self.import_config.datalake_source != None:
                     # query += ", datalake_source varchar(256)"
@@ -3459,21 +3481,21 @@ class operation(metaclass=Singleton):
                     ', %s timestamp COMMENT "Timestamp for SQL operation in Datalake"'
                     % (self.Hive_ColumnName_HistoryTimestamp)
                 )
-                query += queryList[1]
+                query += query_list[1]
 
                 self.common_operations.executeHiveQuery(query)
                 self.common_operations.reconnectHiveMetaStore()
 
         if self.import_config.etlEngine == constant.ETL_ENGINE_SPARK:
             if (
-                self.common_operations.checkTable(Hive_History_DB, Hive_History_Table)
+                self.common_operations.checkTable(hive_history_db, hive_history_table)
                 == True
             ):
                 # Table exist, so we need to make sure that it's an Iceberg table and not something else
 
                 if (
                     self.common_operations.isTableExternalIcebergFormat(
-                        Hive_History_DB, Hive_History_Table
+                        hive_history_db, hive_history_table
                     )
                     == False
                 ):
@@ -3486,17 +3508,17 @@ class operation(metaclass=Singleton):
             else:
                 logging.info(
                     "Creating History table %s.%s in Spark"
-                    % (Hive_History_DB, Hive_History_Table)
+                    % (hive_history_db, hive_history_table)
                 )
 
                 # Create the Iceberg table
-                queryList = self.generateCreateTargetTableSQL(
-                    hiveDB=Hive_History_DB,
-                    hiveTable=Hive_History_Table,
-                    icebergTable=True,
+                query_list = self.generateCreateTargetTableSQL(
+                    hive_db=hive_history_db,
+                    hive_table=hive_history_table,
+                    iceberg_table=True,
                 )
 
-                query = queryList[0]
+                query = query_list[0]
 
                 if self.import_config.datalake_source != None:
                     # query += ", datalake_source varchar(256)"
@@ -3512,7 +3534,7 @@ class operation(metaclass=Singleton):
                     ', %s timestamp COMMENT "Timestamp for SQL operation in Datalake"'
                     % (self.Hive_ColumnName_HistoryTimestamp)
                 )
-                query += queryList[1]
+                query += query_list[1]
 
                 self.startSpark()
                 logging.info(query)
@@ -3550,14 +3572,14 @@ class operation(metaclass=Singleton):
                     % (self.Hive_DB, self.Hive_Table)
                 )
 
-                queryList = self.generateCreateTargetTableSQL(
-                    hiveDB=self.Hive_DB,
-                    hiveTable=self.Hive_Table,
-                    acidTable=self.import_config.create_table_with_acid,
-                    acidInsertOnly=self.import_config.create_table_with_acid_insert_only,
+                query_list = self.generateCreateTargetTableSQL(
+                    hive_db=self.Hive_DB,
+                    hive_table=self.Hive_Table,
+                    acid_table=self.import_config.create_table_with_acid,
+                    acid_insert_only=self.import_config.create_table_with_acid_insert_only,
                 )
 
-                query = queryList[0]
+                query = query_list[0]
 
                 if self.import_config.datalake_source != None:
                     # query += ", datalake_source varchar(256)"
@@ -3594,7 +3616,7 @@ class operation(metaclass=Singleton):
                             % (self.Hive_ColumnName_Delete)
                         )
 
-                query += queryList[1]
+                query += query_list[1]
 
                 self.common_operations.executeHiveQuery(query)
                 self.common_operations.reconnectHiveMetaStore()
@@ -3633,11 +3655,11 @@ class operation(metaclass=Singleton):
                 )
 
                 # Create the Iceberg table
-                queryList = self.generateCreateTargetTableSQL(
-                    hiveDB=self.Hive_DB, hiveTable=self.Hive_Table, icebergTable=True
+                query_list = self.generateCreateTargetTableSQL(
+                    hive_db=self.Hive_DB, hive_table=self.Hive_Table, iceberg_table=True
                 )
 
-                query = queryList[0]
+                query = query_list[0]
 
                 if self.import_config.datalake_source != None:
                     # query += ", datalake_source varchar(256)"
@@ -3674,7 +3696,7 @@ class operation(metaclass=Singleton):
                             % (self.Hive_ColumnName_Delete)
                         )
 
-                query += queryList[1]
+                query += query_list[1]
 
                 self.startSpark()
                 logging.info(query)
@@ -3743,7 +3765,7 @@ class operation(metaclass=Singleton):
             self.updateHiveTable(
                 self.import_config.Hive_Delete_DB,
                 self.import_config.Hive_Delete_Table,
-                restrictColumns=self.import_config.getPKcolumns(PKforMerge=True),
+                restrict_columns=self.import_config.getPKcolumns(pk_for_merge=True),
             )
 
         if self.import_config.etlEngine == constant.ETL_ENGINE_SPARK:
@@ -3751,7 +3773,7 @@ class operation(metaclass=Singleton):
             self.updateHiveTable(
                 self.import_config.Hive_Delete_DB,
                 self.import_config.Hive_Delete_Table,
-                restrictColumns=self.import_config.getPKcolumns(PKforMerge=True),
+                restrict_columns=self.import_config.getPKcolumns(pk_for_merge=True),
             )
 
     def updateExternalImportTable(self):
@@ -3761,29 +3783,29 @@ class operation(metaclass=Singleton):
                 self.updateHiveTable(
                     self.import_config.Hive_Import_DB,
                     self.import_config.Hive_Import_Table,
-                    sourceIsParquetFile=True,
+                    source_is_parquet_file=True,
                 )
             elif self.import_config.importTool in ("spark", "local"):
                 self.updateHiveTable(
                     self.import_config.Hive_Import_DB,
                     self.import_config.Hive_Import_Table,
-                    sourceIsParquetFile=False,
+                    source_is_parquet_file=False,
                 )
 
-            tableLocation = self.common_operations.getTableLocation(
+            table_location = self.common_operations.getTableLocation(
                 self.import_config.Hive_Import_DB, self.import_config.Hive_Import_Table
             )
-            configuredLocation = "%s%s" % (
+            configured_location = "%s%s" % (
                 self.common_operations.hdfs_address,
                 self.import_config.sqoop_hdfs_location,
             )
 
-            if tableLocation != configuredLocation:
+            if table_location != configured_location:
                 logging.info(
                     "The configured location for the external table have changed. Updating the external table"
                 )
-                logging.debug("tableLocation:      %s" % (tableLocation))
-                logging.debug("configuredLocation: %s" % (configuredLocation))
+                logging.debug("tableLocation:      %s" % (table_location))
+                logging.debug("configuredLocation: %s" % (configured_location))
 
                 query = 'alter table `%s`.`%s` set location "%s"' % (
                     self.import_config.Hive_Import_DB,
@@ -3792,48 +3814,48 @@ class operation(metaclass=Singleton):
                 )
                 self.common_operations.executeHiveQuery(query)
 
-    def updateColumnsForImportTable(self, columnsDF, replaceNameOnly=False):
+    def updateColumnsForImportTable(self, columns_df, replace_name_only=False):
         """Parquet import format from sqoop cant handle all datatypes correctly. So for the column definition, we need to change some. We also replace <SPACE> with underscore in the column name"""
-        if replaceNameOnly == False:
-            columnsDF["type"].replace(["date"], "string", inplace=True)
-            columnsDF["type"].replace(["timestamp"], "string", inplace=True)
-            columnsDF["type"].replace(
+        if replace_name_only == False:
+            columns_df["type"].replace(["date"], "string", inplace=True)
+            columns_df["type"].replace(["timestamp"], "string", inplace=True)
+            columns_df["type"].replace(
                 ["decimal(.*)"], "string", regex=True, inplace=True
             )
-            columnsDF["type"].replace(["bigint"], "string", regex=True, inplace=True)
+            columns_df["type"].replace(["bigint"], "string", regex=True, inplace=True)
 
         # If you change any of the name replace rows, you also need to change the same data in function self.copyHiveTable() and import_definitions.saveColumnData()
-        columnsDF["name"].replace([" "], "_", regex=True, inplace=True)
-        columnsDF["name"].replace(["%"], "pct", regex=True, inplace=True)
-        columnsDF["name"].replace([r"\("], "_", regex=True, inplace=True)
-        columnsDF["name"].replace([r"\)"], "_", regex=True, inplace=True)
-        columnsDF["name"].replace(["ü"], "u", regex=True, inplace=True)
-        columnsDF["name"].replace(["å"], "a", regex=True, inplace=True)
-        columnsDF["name"].replace(["ä"], "a", regex=True, inplace=True)
-        columnsDF["name"].replace(["ö"], "o", regex=True, inplace=True)
+        columns_df["name"].replace([" "], "_", regex=True, inplace=True)
+        columns_df["name"].replace(["%"], "pct", regex=True, inplace=True)
+        columns_df["name"].replace([r"\("], "_", regex=True, inplace=True)
+        columns_df["name"].replace([r"\)"], "_", regex=True, inplace=True)
+        columns_df["name"].replace(["ü"], "u", regex=True, inplace=True)
+        columns_df["name"].replace(["å"], "a", regex=True, inplace=True)
+        columns_df["name"].replace(["ä"], "a", regex=True, inplace=True)
+        columns_df["name"].replace(["ö"], "o", regex=True, inplace=True)
 
-        return columnsDF
+        return columns_df
 
-    def updateColumnsForMongoTables(self, columnsDF):
+    def updateColumnsForMongoTables(self, columns_df):
         """Mongo Imports have both structs and arrays as columntypes. For this, the columnames needs a ` around them inside
         the struct or array. If this is included in the columnType when doing a compare with Hive, there will be an alter table
         at every import as the columntype is never the same"""
 
-        columnsDF["type"].replace(["`"], "", regex=True, inplace=True)
-        return columnsDF
+        columns_df["type"].replace(["`"], "", regex=True, inplace=True)
+        return columns_df
 
     def updateHiveTable(
-        self, hiveDB, hiveTable, restrictColumns=None, sourceIsParquetFile=False
+        self, hive_db, hive_table, restrict_columns=None, source_is_parquet_file=False
     ):
         """Update the target table based on the column information in the configuration database"""
         logging.debug("Executing import_operations.updateHiveTable()")
-        columnsConfig = self.import_config.getColumnsFromConfigDatabase(
-            restrictColumns=restrictColumns,
-            sourceIsParquetFile=sourceIsParquetFile,
+        columns_config = self.import_config.getColumnsFromConfigDatabase(
+            restrictColumns=restrict_columns,
+            sourceIsParquetFile=source_is_parquet_file,
             includeAllColumns=False,
         )
-        columnsHive = self.common_operations.getColumns(
-            hiveDB, hiveTable, includeType=True, excludeDataLakeColumns=True
+        columns_hive = self.common_operations.getColumns(
+            hive_db, hive_table, includeType=True, excludeDataLakeColumns=True
         )
 
         if self.import_config.etlEngine == constant.ETL_ENGINE_SPARK:
@@ -3850,94 +3872,99 @@ class operation(metaclass=Singleton):
         # If we are working on the import table, we need to change some column types to handle Parquet files
         if self.import_config.importTool == "sqoop":
             if (
-                hiveDB == self.import_config.Hive_Import_DB
-                and hiveTable == self.import_config.Hive_Import_Table
+                hive_db == self.import_config.Hive_Import_DB
+                and hive_table == self.import_config.Hive_Import_Table
             ):
-                columnsConfig = self.updateColumnsForImportTable(columnsConfig)
+                columns_config = self.updateColumnsForImportTable(columns_config)
 
         # There is a difference between comparing column types and then updating Hive with that columntype. For example. Mongo import
         # requires that ` is around the columns inside the structs and arrays. But Hive doesnt store that. So doing a compare will
         # always fail due to that. So we need to compare without the ` around the column names. But  if there is a difference, we need to
         # run the alter command WITH the `, otherwise the Hive query will fail. columnTypesChanged is used to identify that
-        columnTypesChanged = False
-        columnsConfigSaved = columnsConfig.copy()
+        column_types_changed = False
+        columns_config_saved = columns_config.copy()
 
         # Update the column types if the import is a Mongo import
         if self.import_config.mongoImport == True:
-            columnsConfig = self.updateColumnsForMongoTables(columnsConfig)
-            columnTypesChanged = True
+            columns_config = self.updateColumnsForMongoTables(columns_config)
+            column_types_changed = True
 
         # Check for missing columns
-        columnsConfigOnlyName = columnsConfig.filter(["name"])
-        columnsHiveOnlyName = columnsHive.filter(["name"])
-        columnsMergeOnlyName = pd.merge(
-            columnsConfigOnlyName,
-            columnsHiveOnlyName,
+        columns_config_only_name = columns_config.filter(["name"])
+        columns_hive_only_name = columns_hive.filter(["name"])
+        columns_merge_only_name = pd.merge(
+            columns_config_only_name,
+            columns_hive_only_name,
             on=None,
             how="outer",
             indicator="Exist",
         )
 
-        columnsConfigCount = len(columnsConfigOnlyName)
-        columnsHiveCount = len(columnsHiveOnlyName)
-        columnsMergeLeftOnlyCount = len(
-            columnsMergeOnlyName.loc[columnsMergeOnlyName["Exist"] == "left_only"]
+        columns_config_count = len(columns_config_only_name)
+        columns_hive_count = len(columns_hive_only_name)
+        columns_merge_left_only_count = len(
+            columns_merge_only_name.loc[columns_merge_only_name["Exist"] == "left_only"]
         )
-        columnsMergeRightOnlyCount = len(
-            columnsMergeOnlyName.loc[columnsMergeOnlyName["Exist"] == "right_only"]
+        columns_merge_right_only_count = len(
+            columns_merge_only_name.loc[
+                columns_merge_only_name["Exist"] == "right_only"
+            ]
         )
 
         if self.import_config.importTool in ("spark", "local"):
             # Orc files needs the column to be in the right order. This can only be fixed with a drop/create
             # And it's only needed for the external tables
             if (
-                hiveDB == self.import_config.Hive_Import_DB
-                and hiveTable == self.import_config.Hive_Import_Table
+                hive_db == self.import_config.Hive_Import_DB
+                and hive_table == self.import_config.Hive_Import_Table
             ):
-                foundColumnError = False
-                for hiveIndex, hiveRow in columnsHiveOnlyName.iterrows():
-                    hiveName = hiveRow["name"]
-                    indexInConfig = -1
+                found_column_error = False
+                for hive_index, hive_row in columns_hive_only_name.iterrows():
+                    hive_name = hive_row["name"]
+                    index_in_config = -1
                     if (
                         len(
-                            columnsConfigOnlyName.loc[
-                                columnsConfigOnlyName["name"] == hiveName
+                            columns_config_only_name.loc[
+                                columns_config_only_name["name"] == hive_name
                             ]
                         )
                         > 0
                     ):
                         # Row in Hive exists in Config aswell. Need to check position
-                        indexInConfig = columnsConfigOnlyName.loc[
-                            columnsConfigOnlyName["name"] == hiveName
+                        index_in_config = columns_config_only_name.loc[
+                            columns_config_only_name["name"] == hive_name
                         ].index.tolist()[0]
-                        if hiveIndex != indexInConfig:
-                            foundColumnError = True
+                        if hive_index != index_in_config:
+                            found_column_error = True
 
-                if foundColumnError == True:
+                if found_column_error == True:
                     # There was an error with the column order. We need to drop and recreate
                     logging.warning(
                         "The column order was not correct in the External Import Table. As this is a ORC table, we will have to drop and recreate it. This is needed because Hive tables based on ORC files does not support reordering of columns"
                     )
-                    self.common_operations.dropHiveTable(hiveDB, hiveTable)
+                    self.common_operations.dropHiveTable(hive_db, hive_table)
                     self.createExternalImportTable()
                     self.common_operations.reconnectHiveMetaStore()
 
         # pd.set_option('display.max_rows', None)
         logging.debug("columnsConfigOnlyName")
-        logging.debug(columnsConfigOnlyName)
+        logging.debug(columns_config_only_name)
         logging.debug(
             "================================================================"
         )
         logging.debug("columnsHiveOnlyName")
-        logging.debug(columnsHiveOnlyName)
+        logging.debug(columns_hive_only_name)
         logging.debug(
             "================================================================"
         )
         logging.debug("columnsMergeOnlyName")
-        logging.debug(columnsMergeOnlyName)
+        logging.debug(columns_merge_only_name)
         logging.debug("")
 
-        if columnsConfigCount == columnsHiveCount and columnsMergeLeftOnlyCount > 0:
+        if (
+            columns_config_count == columns_hive_count
+            and columns_merge_left_only_count > 0
+        ):
             # The number of columns in config and Hive is the same, but there is a difference in name. This is most likely because of a rename of one or more of the columns
             # To handle this, we try a rename. This might fail if the column types are also changed to an incompatable type
             # The logic here is to
@@ -3945,43 +3972,43 @@ class operation(metaclass=Singleton):
             # 2. Get the position in configDF with that column name
             # 3. Get the column in the same position from HiveDF
             # 4. Check if that column name exists in the mergeDF with Right_Only. If it does, the column was just renamed
-            for index, row in columnsMergeOnlyName.loc[
-                columnsMergeOnlyName["Exist"] == "left_only"
+            for index, row in columns_merge_only_name.loc[
+                columns_merge_only_name["Exist"] == "left_only"
             ].iterrows():
-                rowInConfig = columnsConfig.loc[
-                    columnsConfig["name"] == row["name"]
+                row_in_config = columns_config.loc[
+                    columns_config["name"] == row["name"]
                 ].iloc[0]
-                indexInConfig = columnsConfig.loc[
-                    columnsConfig["name"] == row["name"]
+                index_in_config = columns_config.loc[
+                    columns_config["name"] == row["name"]
                 ].index.item()
-                rowInHive = columnsHive.iloc[indexInConfig]
+                row_in_hive = columns_hive.iloc[index_in_config]
 
                 if (
                     len(
-                        columnsMergeOnlyName.loc[
-                            (columnsMergeOnlyName["Exist"] == "right_only")
-                            & (columnsMergeOnlyName["name"] == rowInHive["name"])
+                        columns_merge_only_name.loc[
+                            (columns_merge_only_name["Exist"] == "right_only")
+                            & (columns_merge_only_name["name"] == row_in_hive["name"])
                         ]
                     )
                     > 0
                 ):
                     # This is executed if the column is renamed and exists in the same position
-                    logging.debug("Name in config:  %s" % (rowInConfig["name"]))
-                    logging.debug("Type in config:  %s" % (rowInConfig["type"]))
-                    logging.debug("Index in config: %s" % (indexInConfig))
+                    logging.debug("Name in config:  %s" % (row_in_config["name"]))
+                    logging.debug("Type in config:  %s" % (row_in_config["type"]))
+                    logging.debug("Index in config: %s" % (index_in_config))
                     logging.debug("--------------------")
-                    logging.debug("Name in Hive: %s" % (rowInHive["name"]))
-                    logging.debug("Type in Hive: %s" % (rowInHive["type"]))
+                    logging.debug("Name in Hive: %s" % (row_in_hive["name"]))
+                    logging.debug("Type in Hive: %s" % (row_in_hive["type"]))
                     logging.debug("======================================")
                     logging.debug("")
 
                     if self.import_config.etlEngine == constant.ETL_ENGINE_HIVE:
                         query = "alter table `%s`.`%s` change column `%s` `%s` %s" % (
-                            hiveDB,
-                            hiveTable,
-                            rowInHive["name"],
-                            rowInConfig["name"],
-                            rowInConfig["type"],
+                            hive_db,
+                            hive_table,
+                            row_in_hive["name"],
+                            row_in_config["name"],
+                            row_in_config["type"],
                         )
                         self.common_operations.executeHiveQuery(query)
 
@@ -3990,62 +4017,62 @@ class operation(metaclass=Singleton):
                             "alter table `%s`.`%s`.`%s` rename column `%s` to %s"
                             % (
                                 self.common_operations.sparkCatalogName,
-                                hiveDB,
-                                hiveTable,
-                                rowInHive["name"],
-                                rowInConfig["name"],
+                                hive_db,
+                                hive_table,
+                                row_in_hive["name"],
+                                row_in_config["name"],
                             )
                         )
                         logging.info(query)
                         self.spark.sql(query)
 
                     self.import_config.logHiveColumnRename(
-                        rowInConfig["name"],
-                        rowInHive["name"],
-                        hiveDB=hiveDB,
-                        hiveTable=hiveTable,
+                        row_in_config["name"],
+                        row_in_hive["name"],
+                        hiveDB=hive_db,
+                        hiveTable=hive_table,
                     )
-                    if rowInConfig["type"] != rowInHive["type"]:
+                    if row_in_config["type"] != row_in_hive["type"]:
                         self.import_config.logHiveColumnTypeChange(
-                            rowInConfig["name"],
-                            rowInConfig["type"],
-                            previous_columnType=rowInHive["type"],
-                            hiveDB=hiveDB,
-                            hiveTable=hiveTable,
+                            row_in_config["name"],
+                            row_in_config["type"],
+                            previous_columnType=row_in_hive["type"],
+                            hiveDB=hive_db,
+                            hiveTable=hive_table,
                         )
                 else:
                     if (
-                        columnsMergeLeftOnlyCount == 1
-                        and columnsMergeRightOnlyCount == 1
+                        columns_merge_left_only_count == 1
+                        and columns_merge_right_only_count == 1
                     ):
                         # So the columns are not in the same position, but it's only one column that changed. In that case, we just rename that one column
-                        rowInMergeLeft = columnsMergeOnlyName.loc[
-                            columnsMergeOnlyName["Exist"] == "left_only"
+                        row_in_merge_left = columns_merge_only_name.loc[
+                            columns_merge_only_name["Exist"] == "left_only"
                         ].iloc[0]
-                        rowInMergeRight = columnsMergeOnlyName.loc[
-                            columnsMergeOnlyName["Exist"] == "right_only"
+                        row_in_merge_right = columns_merge_only_name.loc[
+                            columns_merge_only_name["Exist"] == "right_only"
                         ].iloc[0]
-                        rowInConfig = columnsConfig.loc[
-                            columnsConfig["name"] == rowInMergeLeft["name"]
+                        row_in_config = columns_config.loc[
+                            columns_config["name"] == row_in_merge_left["name"]
                         ].iloc[0]
-                        rowInHive = columnsHive.loc[
-                            columnsHive["name"] == rowInMergeRight["name"]
+                        row_in_hive = columns_hive.loc[
+                            columns_hive["name"] == row_in_merge_right["name"]
                         ].iloc[0]
-                        logging.debug(rowInConfig["name"])
-                        logging.debug(rowInConfig["type"])
+                        logging.debug(row_in_config["name"])
+                        logging.debug(row_in_config["type"])
                         logging.debug("--------------------")
-                        logging.debug(rowInHive["name"])
-                        logging.debug(rowInHive["type"])
+                        logging.debug(row_in_hive["name"])
+                        logging.debug(row_in_hive["type"])
 
                         if self.import_config.etlEngine == constant.ETL_ENGINE_HIVE:
                             query = (
                                 "alter table `%s`.`%s` change column `%s` `%s` %s"
                                 % (
-                                    hiveDB,
-                                    hiveTable,
-                                    rowInHive["name"],
-                                    rowInConfig["name"],
-                                    rowInHive["type"],
+                                    hive_db,
+                                    hive_table,
+                                    row_in_hive["name"],
+                                    row_in_config["name"],
+                                    row_in_hive["type"],
                                 )
                             )
                             self.common_operations.executeHiveQuery(query)
@@ -4055,64 +4082,64 @@ class operation(metaclass=Singleton):
                                 "alter table `%s`.`%s`.`%s` rename column `%s` to %s"
                                 % (
                                     self.common_operations.sparkCatalogName,
-                                    hiveDB,
-                                    hiveTable,
-                                    rowInHive["name"],
-                                    rowInConfig["name"],
+                                    hive_db,
+                                    hive_table,
+                                    row_in_hive["name"],
+                                    row_in_config["name"],
                                 )
                             )
                             logging.info(query)
                             self.spark.sql(query)
 
                         self.import_config.logHiveColumnRename(
-                            rowInConfig["name"],
-                            rowInHive["name"],
-                            hiveDB=hiveDB,
-                            hiveTable=hiveTable,
+                            row_in_config["name"],
+                            row_in_hive["name"],
+                            hiveDB=hive_db,
+                            hiveTable=hive_table,
                         )
-                        if rowInConfig["type"] != rowInHive["type"]:
+                        if row_in_config["type"] != row_in_hive["type"]:
                             self.import_config.logHiveColumnTypeChange(
-                                rowInConfig["name"],
-                                rowInConfig["type"],
-                                previous_columnType=rowInHive["type"],
-                                hiveDB=hiveDB,
-                                hiveTable=hiveTable,
+                                row_in_config["name"],
+                                row_in_config["type"],
+                                previous_columnType=row_in_hive["type"],
+                                hiveDB=hive_db,
+                                hiveTable=hive_table,
                             )
 
             if self.common_operations.metastore_type == constant.CATALOG_HIVE_DIRECT:
                 self.common_operations.reconnectHiveMetaStore()
 
-            columnsHive = self.common_operations.getColumns(
-                hiveDB,
-                hiveTable,
+            columns_hive = self.common_operations.getColumns(
+                hive_db,
+                hive_table,
                 includeType=True,
                 includeComment=True,
                 excludeDataLakeColumns=True,
             )
-            columnsHiveOnlyName = columnsHive.filter(["name"])
-            columnsMergeOnlyName = pd.merge(
-                columnsConfigOnlyName,
-                columnsHiveOnlyName,
+            columns_hive_only_name = columns_hive.filter(["name"])
+            columns_merge_only_name = pd.merge(
+                columns_config_only_name,
+                columns_hive_only_name,
                 on=None,
                 how="outer",
                 indicator="Exist",
             )
 
-        for index, row in columnsMergeOnlyName.loc[
-            columnsMergeOnlyName["Exist"] == "left_only"
+        for index, row in columns_merge_only_name.loc[
+            columns_merge_only_name["Exist"] == "left_only"
         ].iterrows():
             # This will iterate over columns that only exists in the config and not in Hive. We add these to Hive
-            fullRow = columnsConfig.loc[columnsConfig["name"] == row["name"]].iloc[0]
+            full_row = columns_config.loc[columns_config["name"] == row["name"]].iloc[0]
 
             if self.import_config.etlEngine == constant.ETL_ENGINE_HIVE:
                 query = "alter table `%s`.`%s` add columns (`%s` %s" % (
-                    hiveDB,
-                    hiveTable,
-                    fullRow["name"],
-                    fullRow["type"],
+                    hive_db,
+                    hive_table,
+                    full_row["name"],
+                    full_row["type"],
                 )
-                if fullRow["comment"] != None:
-                    query += ' COMMENT "%s"' % (fullRow["comment"])
+                if full_row["comment"] != None:
+                    query += ' COMMENT "%s"' % (full_row["comment"])
                 query += ")"
 
                 self.common_operations.executeHiveQuery(query)
@@ -4120,42 +4147,42 @@ class operation(metaclass=Singleton):
             elif self.import_config.etlEngine == constant.ETL_ENGINE_SPARK:
                 query = "alter table `%s`.`%s`.`%s` add columns (`%s` %s" % (
                     self.common_operations.sparkCatalogName,
-                    hiveDB,
-                    hiveTable,
-                    fullRow["name"],
-                    fullRow["type"],
+                    hive_db,
+                    hive_table,
+                    full_row["name"],
+                    full_row["type"],
                 )
-                if fullRow["comment"] != None:
-                    query += ' comment "%s"' % (fullRow["comment"])
+                if full_row["comment"] != None:
+                    query += ' comment "%s"' % (full_row["comment"])
                 query += ")"
 
                 logging.info(query)
                 self.spark.sql(query)
 
             self.import_config.logHiveColumnAdd(
-                fullRow["name"],
-                columnType=fullRow["type"],
-                hiveDB=hiveDB,
-                hiveTable=hiveTable,
+                full_row["name"],
+                columnType=full_row["type"],
+                hiveDB=hive_db,
+                hiveTable=hive_table,
             )
 
         # Check for changed column types
         if self.common_operations.metastore_type == constant.CATALOG_HIVE_DIRECT:
             self.common_operations.reconnectHiveMetaStore()
 
-        columnsHive = self.common_operations.getColumns(
-            hiveDB, hiveTable, includeType=True, excludeDataLakeColumns=True
+        columns_hive = self.common_operations.getColumns(
+            hive_db, hive_table, includeType=True, excludeDataLakeColumns=True
         )
 
-        columnsConfigOnlyNameType = columnsConfig.filter(["name", "type"]).sort_values(
+        columns_config_only_name_type = columns_config.filter(
+            ["name", "type"]
+        ).sort_values(by=["name"], ascending=True)
+        columns_hive_only_name_type = columns_hive.filter(["name", "type"]).sort_values(
             by=["name"], ascending=True
         )
-        columnsHiveOnlyNameType = columnsHive.filter(["name", "type"]).sort_values(
-            by=["name"], ascending=True
-        )
-        columnsMergeOnlyNameType = pd.merge(
-            columnsConfigOnlyNameType,
-            columnsHiveOnlyNameType,
+        columns_merge_only_name_type = pd.merge(
+            columns_config_only_name_type,
+            columns_hive_only_name_type,
             on=None,
             how="outer",
             indicator="Exist",
@@ -4163,17 +4190,17 @@ class operation(metaclass=Singleton):
 
         # pd.set_option('display.max_rows', None)
         logging.debug("columnsConfigOnlyNameType")
-        logging.debug(columnsConfigOnlyNameType)
+        logging.debug(columns_config_only_name_type)
         logging.debug(
             "================================================================"
         )
         logging.debug("columnsHiveOnlyNameType")
-        logging.debug(columnsHiveOnlyNameType)
+        logging.debug(columns_hive_only_name_type)
         logging.debug(
             "================================================================"
         )
         logging.debug("columnsMergeOnlyNameType")
-        logging.debug(columnsMergeOnlyNameType)
+        logging.debug(columns_merge_only_name_type)
         logging.debug("")
 
         # 		for index, row in columnsMergeOnlyNameType.loc[columnsMergeOnlyNameType['Exist'] == 'right_only'].iterrows():
@@ -4194,36 +4221,36 @@ class operation(metaclass=Singleton):
         # 					except pyspark.sql.utils.AnalysisException as e:
         # 						raise SQLerror(str(e))
 
-        for index, row in columnsMergeOnlyNameType.loc[
-            columnsMergeOnlyNameType["Exist"] == "left_only"
+        for index, row in columns_merge_only_name_type.loc[
+            columns_merge_only_name_type["Exist"] == "left_only"
         ].iterrows():
             # This will iterate over columns that had the type changed from the source
-            columnName = row["name"]
-            columnType = row["type"]
+            column_name = row["name"]
+            column_type = row["type"]
 
-            if columnTypesChanged == True:
+            if column_types_changed == True:
                 # This means that we compare with another value than will be used in the alter. We need to get the correct alter column type
-                columnType = columnsConfigSaved.loc[
-                    columnsConfigSaved["name"] == columnName
+                column_type = columns_config_saved.loc[
+                    columns_config_saved["name"] == column_name
                 ]["type"].iloc[0]
 
             if self.import_config.etlEngine == constant.ETL_ENGINE_HIVE:
                 query = "alter table `%s`.`%s` change column `%s` `%s` %s" % (
-                    hiveDB,
-                    hiveTable,
-                    columnName,
-                    columnName,
-                    columnType,
+                    hive_db,
+                    hive_table,
+                    column_name,
+                    column_name,
+                    column_type,
                 )
                 self.common_operations.executeHiveQuery(query)
 
             elif self.import_config.etlEngine == constant.ETL_ENGINE_SPARK:
                 query = "alter table `%s`.`%s`.`%s` alter column `%s` type %s" % (
                     self.common_operations.sparkCatalogName,
-                    hiveDB,
-                    hiveTable,
-                    columnName,
-                    columnType,
+                    hive_db,
+                    hive_table,
+                    column_name,
+                    column_type,
                 )
                 try:
                     logging.info(query)
@@ -4243,9 +4270,9 @@ class operation(metaclass=Singleton):
                                     "alter table `%s`.`%s`.`%s` drop column `%s` "
                                     % (
                                         self.common_operations.sparkCatalogName,
-                                        hiveDB,
-                                        hiveTable,
-                                        columnName,
+                                        hive_db,
+                                        hive_table,
+                                        column_name,
                                     )
                                 )
                                 logging.info(query)
@@ -4255,10 +4282,10 @@ class operation(metaclass=Singleton):
                                     "alter table `%s`.`%s`.`%s` add columns (`%s` %s) "
                                     % (
                                         self.common_operations.sparkCatalogName,
-                                        hiveDB,
-                                        hiveTable,
-                                        columnName,
-                                        columnType,
+                                        hive_db,
+                                        hive_table,
+                                        column_name,
+                                        column_type,
                                     )
                                 )
                                 logging.info(query)
@@ -4281,11 +4308,11 @@ class operation(metaclass=Singleton):
                         raise SQLerror(str(e))
 
             # Get the previous column type from the Pandas DF with right_only in Exist column
-            previous_columnType = (
+            previous_column_type = (
                 (
-                    columnsMergeOnlyNameType.loc[
-                        (columnsMergeOnlyNameType["name"] == row["name"])
-                        & (columnsMergeOnlyNameType["Exist"] == "right_only")
+                    columns_merge_only_name_type.loc[
+                        (columns_merge_only_name_type["name"] == row["name"])
+                        & (columns_merge_only_name_type["Exist"] == "right_only")
                     ]
                 )
                 .reset_index()
@@ -4295,61 +4322,61 @@ class operation(metaclass=Singleton):
             self.import_config.logHiveColumnTypeChange(
                 row["name"],
                 columnType=row["type"],
-                previous_columnType=previous_columnType,
-                hiveDB=hiveDB,
-                hiveTable=hiveTable,
+                previous_columnType=previous_column_type,
+                hiveDB=hive_db,
+                hiveTable=hive_table,
             )
 
         # Check for change column comments
         if self.common_operations.metastore_type == constant.CATALOG_HIVE_DIRECT:
             self.common_operations.reconnectHiveMetaStore()
 
-        columnsHive = self.common_operations.getColumns(
-            hiveDB,
-            hiveTable,
+        columns_hive = self.common_operations.getColumns(
+            hive_db,
+            hive_table,
             includeType=True,
             includeComment=True,
             excludeDataLakeColumns=True,
         )
 
         try:
-            columnsHive["comment"] = columnsHive["comment"].replace(
+            columns_hive["comment"] = columns_hive["comment"].replace(
                 ["^$"], [None], regex=True
             )  # Replace blank column comments with None as it would otherwise trigger an alter table on every run
         except ValueError:
             # This exception will happen if all columns are None.
             pass
 
-        columnsMerge = pd.merge(
-            columnsConfig, columnsHive, on=None, how="outer", indicator="Exist"
+        columns_merge = pd.merge(
+            columns_config, columns_hive, on=None, how="outer", indicator="Exist"
         )
 
-        for index, row in columnsMerge.loc[
-            columnsMerge["Exist"] == "left_only"
+        for index, row in columns_merge.loc[
+            columns_merge["Exist"] == "left_only"
         ].iterrows():
             if row["comment"] == None:
                 row["comment"] = ""
 
-            columnName = row["name"]
-            columnType = row["type"]
-            columnComment = row["comment"]
+            column_name = row["name"]
+            column_type = row["type"]
+            column_comment = row["comment"]
 
-            if columnTypesChanged == True:
+            if column_types_changed == True:
                 # This means that we compare with another value than will be used in the alter. We need to get the correct alter column type
-                columnType = columnsConfigSaved.loc[
-                    columnsConfigSaved["name"] == columnName
+                column_type = columns_config_saved.loc[
+                    columns_config_saved["name"] == column_name
                 ]["type"].iloc[0]
 
             if self.import_config.etlEngine == constant.ETL_ENGINE_HIVE:
                 query = (
                     'alter table `%s`.`%s` change column `%s` `%s` %s comment "%s"'
                     % (
-                        hiveDB,
-                        hiveTable,
-                        columnName,
-                        columnName,
-                        columnType,
-                        columnComment,
+                        hive_db,
+                        hive_table,
+                        column_name,
+                        column_name,
+                        column_type,
+                        column_comment,
                     )
                 )
                 self.common_operations.executeHiveQuery(query)
@@ -4357,10 +4384,10 @@ class operation(metaclass=Singleton):
             elif self.import_config.etlEngine == constant.ETL_ENGINE_SPARK:
                 query = 'alter table `%s`.`%s`.`%s` alter column `%s` comment "%s"' % (
                     self.common_operations.sparkCatalogName,
-                    hiveDB,
-                    hiveTable,
-                    columnName,
-                    columnComment,
+                    hive_db,
+                    hive_table,
+                    column_name,
+                    column_comment,
                 )
                 logging.info(query)
                 self.spark.sql(query)
@@ -4381,38 +4408,38 @@ class operation(metaclass=Singleton):
 
         logging.debug("Executing import_operations.updatePKonTargetTable() - Finished")
 
-    def updatePKonTable(self, hiveDB, hiveTable):
+    def updatePKonTable(self, hive_db, hive_table):
         """Update the PrimaryKey definition on a Hive Table"""
         logging.debug("Executing import_operations.updatePKonTable()")
         if self.import_config.getPKcolumns() == None:
             logging.info("No Primary Key informaton exists for this table.")
         else:
             logging.info("Creating Primary Key on table.")
-            PKonHiveTable = self.common_operations.getPK(hiveDB, hiveTable)
-            PKinConfigDB = self.import_config.getPKcolumns()
+            pk_on_hive_table = self.common_operations.getPK(hive_db, hive_table)
+            pk_in_config_db = self.import_config.getPKcolumns()
             self.common_operations.reconnectHiveMetaStore()
 
-            if PKonHiveTable != PKinConfigDB:
+            if pk_on_hive_table != pk_in_config_db:
                 # The PK information is not correct. We need to figure out what the problem is and alter the table to fix it
-                logging.debug("PK in Hive:   %s" % (PKonHiveTable))
-                logging.debug("PK in Config: %s" % (PKinConfigDB))
+                logging.debug("PK in Hive:   %s" % (pk_on_hive_table))
+                logging.debug("PK in Config: %s" % (pk_in_config_db))
                 logging.info(
                     "PrimaryKey definition is not correct. If it exists, we will drop it and recreate"
                 )
-                logging.info("PrimaryKey on Hive table:     %s" % (PKonHiveTable))
-                logging.info("PrimaryKey from source table: %s" % (PKinConfigDB))
+                logging.info("PrimaryKey on Hive table:     %s" % (pk_on_hive_table))
+                logging.info("PrimaryKey from source table: %s" % (pk_in_config_db))
 
-                currentPKname = self.common_operations.getPKname(hiveDB, hiveTable)
-                if currentPKname != None:
+                current_pk_name = self.common_operations.getPKname(hive_db, hive_table)
+                if current_pk_name != None:
                     query = "alter table `%s`.`%s` " % (
                         self.import_config.Hive_DB,
                         self.import_config.Hive_Table,
                     )
-                    query += "drop constraint %s" % (currentPKname)
+                    query += "drop constraint %s" % (current_pk_name)
                     self.common_operations.executeHiveQuery(query)
 
                 # There are now no PK on the table. So it's safe to create one
-                PKname = "%s__%s__PK" % (
+                pk_name = "%s__%s__PK" % (
                     self.import_config.Hive_DB,
                     self.import_config.Hive_Table,
                 )
@@ -4420,14 +4447,14 @@ class operation(metaclass=Singleton):
                     self.import_config.Hive_DB,
                     self.import_config.Hive_Table,
                 )
-                query += "add constraint %s primary key (" % (PKname)
+                query += "add constraint %s primary key (" % (pk_name)
 
-                firstColumn = True
+                first_column = True
                 for column in self.import_config.getPKcolumns().split(","):
-                    if firstColumn == False:
+                    if first_column == False:
                         query += ", "
                     query += "`" + column + "`"
-                    firstColumn = False
+                    first_column = False
 
                 query += ") DISABLE NOVALIDATE"
                 self.common_operations.executeHiveQuery(query)
@@ -4452,7 +4479,7 @@ class operation(metaclass=Singleton):
 
         logging.debug("Executing import_operations.updatePKonTargetTable() - Finished")
 
-    def updateFKonTable(self, hiveDB, hiveTable):
+    def updateFKonTable(self, hive_db, hive_table):
         """Update the ForeignKeys definition on a Hive Table"""
         logging.debug("Executing import_operations.updateFKonTable()")
 
@@ -4462,30 +4489,33 @@ class operation(metaclass=Singleton):
             )
             return
 
-        foreignKeysFromConfig = self.import_config.getForeignKeysFromConfig()
-        foreignKeysFromHive = self.common_operations.getFKs(hiveDB, hiveTable)
+        foreign_keys_from_config = self.import_config.getForeignKeysFromConfig()
+        foreign_keys_from_hive = self.common_operations.getFKs(hive_db, hive_table)
 
-        if foreignKeysFromConfig.empty == True and foreignKeysFromHive.empty == True:
+        if (
+            foreign_keys_from_config.empty == True
+            and foreign_keys_from_hive.empty == True
+        ):
             logging.info("No Foreign Keys informaton exists for this table")
             return
 
-        if foreignKeysFromConfig.equals(foreignKeysFromHive) == True:
+        if foreign_keys_from_config.equals(foreign_keys_from_hive) == True:
             logging.info("ForeignKey definitions is correct. No change required.")
         else:
             logging.info(
                 "ForeignKey definitions is not correct. Will check what exists and create/drop required foreign keys."
             )
 
-            foreignKeysDiff = pd.merge(
-                foreignKeysFromConfig,
-                foreignKeysFromHive,
+            foreign_keys_diff = pd.merge(
+                foreign_keys_from_config,
+                foreign_keys_from_hive,
                 on=None,
                 how="outer",
                 indicator="Exist",
             )
 
-            for index, row in foreignKeysDiff.loc[
-                foreignKeysDiff["Exist"] == "right_only"
+            for index, row in foreign_keys_diff.loc[
+                foreign_keys_diff["Exist"] == "right_only"
             ].iterrows():
                 # This will iterate over ForeignKeys that only exists in Hive
                 # If it only exists in Hive, we delete it!
@@ -4494,8 +4524,8 @@ class operation(metaclass=Singleton):
                     "Dropping FK in Hive as it doesnt match the FK's in DBImport config database"
                 )
                 query = "alter table `%s`.`%s` drop constraint %s" % (
-                    hiveDB,
-                    hiveTable,
+                    hive_db,
+                    hive_table,
                     row["fk_name"],
                 )
                 try:
@@ -4507,8 +4537,8 @@ class operation(metaclass=Singleton):
                     )
                     break
 
-            for index, row in foreignKeysDiff.loc[
-                foreignKeysDiff["Exist"] == "left_only"
+            for index, row in foreign_keys_diff.loc[
+                foreign_keys_diff["Exist"] == "left_only"
             ].iterrows():
                 # This will iterate over ForeignKeys that only exists in the DBImport configuration database
                 # If it doesnt exist in Hive, we create it
@@ -4521,27 +4551,27 @@ class operation(metaclass=Singleton):
                     == True
                 ):
                     query = "alter table `%s`.`%s` add constraint %s foreign key (" % (
-                        hiveDB,
-                        hiveTable,
+                        hive_db,
+                        hive_table,
                         row["fk_name"],
                     )
-                    firstLoop = True
+                    first_loop = True
                     for column in row["source_column_name"].split(","):
-                        if firstLoop == False:
+                        if first_loop == False:
                             query += ", "
                         query += "`%s`" % (column)
-                        firstLoop = False
+                        first_loop = False
 
                     query += ") REFERENCES `%s`.`%s` (" % (
                         row["ref_hive_db"],
                         row["ref_hive_table"],
                     )
-                    firstLoop = True
+                    first_loop = True
                     for column in row["ref_column_name"].split(","):
-                        if firstLoop == False:
+                        if first_loop == False:
                             query += ", "
                         query += "`%s`" % (column)
-                        firstLoop = False
+                        first_loop = False
                     query += ") DISABLE NOVALIDATE RELY"
 
                     logging.info("Creating FK in Hive as it doesnt exist")
@@ -4603,9 +4633,9 @@ class operation(metaclass=Singleton):
         """Force a compaction on a Hive table. The type of compaction is configured per table or a major as default"""
         logging.debug("Executing import_operations.runHiveCompaction()")
 
-        compactionMethod = "none"
-        andWait = False
-        compactionDescription = ""
+        compaction_method = "none"
+        and_wait = False
+        compaction_description = ""
 
         if self.import_config.etlEngine == constant.ETL_ENGINE_SPARK:
             return
@@ -4617,36 +4647,36 @@ class operation(metaclass=Singleton):
                 )
                 == True
             ):
-                compactionMethod = "major"
-                compactionDescription = compactionMethod
+                compaction_method = "major"
+                compaction_description = compaction_method
         else:
             if self.import_config.mergeCompactionMethod == "minor_and_wait":
-                compactionMethod = "minor"
-                andWait = True
-                compactionDescription = "minor and wait"
+                compaction_method = "minor"
+                and_wait = True
+                compaction_description = "minor and wait"
             elif self.import_config.mergeCompactionMethod == "major_and_wait":
-                compactionMethod = "major"
-                andWait = True
-                compactionDescription = "major and wait"
+                compaction_method = "major"
+                and_wait = True
+                compaction_description = "major and wait"
             else:
-                compactionMethod = self.import_config.mergeCompactionMethod
-                compactionDescription = compactionMethod
+                compaction_method = self.import_config.mergeCompactionMethod
+                compaction_description = compaction_method
 
-        if compactionMethod != "none":
+        if compaction_method != "none":
             logging.info(
-                "Running a '%s' compaction on Hive table" % (compactionDescription)
+                "Running a '%s' compaction on Hive table" % (compaction_description)
             )
 
             try:
-                if andWait == False:
+                if and_wait == False:
                     self.common_operations.executeHiveQuery(
                         "alter table `%s`.`%s` compact '%s' "
-                        % (self.Hive_DB, self.Hive_Table, compactionMethod)
+                        % (self.Hive_DB, self.Hive_Table, compaction_method)
                     )
                 else:
                     self.common_operations.executeHiveQuery(
                         "alter table `%s`.`%s` compact '%s' and wait "
-                        % (self.Hive_DB, self.Hive_Table, compactionMethod)
+                        % (self.Hive_DB, self.Hive_Table, compaction_method)
                     )
             except:
                 logging.error(
@@ -4692,14 +4722,14 @@ class operation(metaclass=Singleton):
         self,
     ):
         logging.info("Loading data from import table to target table")
-        importTableExists = self.common_operations.checkTable(
+        import_table_exists = self.common_operations.checkTable(
             self.import_config.Hive_Import_DB, self.import_config.Hive_Import_Table
         )
-        targetTableExists = self.common_operations.checkTable(
+        target_table_exists = self.common_operations.checkTable(
             self.Hive_DB, self.Hive_Table
         )
 
-        if importTableExists == False:
+        if import_table_exists == False:
             logging.error(
                 "The import table %s.%s does not exist"
                 % (
@@ -4710,7 +4740,7 @@ class operation(metaclass=Singleton):
             self.import_config.remove_temporary_files()
             sys.exit(1)
 
-        if targetTableExists == False:
+        if target_table_exists == False:
             logging.error(
                 "The target table %s.%s does not exist"
                 % (self.Hive_DB, self.Hive_Table)
@@ -4735,41 +4765,41 @@ class operation(metaclass=Singleton):
             )
 
     def generateCopyTableStatement(
-        self, sourceDB, sourceTable, targetDB, targetTable, icebergTable=False
+        self, source_db, source_table, target_db, target_table, iceberg_table=False
     ):
         """Generate the SQL statement that is required for inserting all rows from one table to another were column match"""
         logging.debug("Executing import_operations.generateCopyTableStatement()")
-        columnMerge = self.common_operations.getHiveColumnNameDiff(
-            sourceDB=sourceDB,
-            sourceTable=sourceTable,
-            targetDB=targetDB,
-            targetTable=targetTable,
-            importTool=self.import_config.importTool,
-            sourceIsImportTable=True,
+        column_merge = self.common_operations.getHiveColumnNameDiff(
+            source_db=source_db,
+            source_table=source_table,
+            target_db=target_db,
+            target_table=target_table,
+            import_tool=self.import_config.importTool,
+            source_is_import_table=True,
         )
 
-        firstLoop = True
-        columnDefinitionSource = ""
-        columnDefinitionTarget = ""
-        for index, row in columnMerge.loc[columnMerge["Exist"] == "both"].iterrows():
-            if firstLoop == False:
-                columnDefinitionSource += ", "
-            if firstLoop == False:
-                columnDefinitionTarget += ", "
-            columnDefinitionSource += "`%s`" % (row["sourceName"])
-            columnDefinitionTarget += "`%s`" % (row["targetName"])
-            firstLoop = False
+        first_loop = True
+        column_definition_source = ""
+        column_definition_target = ""
+        for index, row in column_merge.loc[column_merge["Exist"] == "both"].iterrows():
+            if first_loop == False:
+                column_definition_source += ", "
+            if first_loop == False:
+                column_definition_target += ", "
+            column_definition_source += "`%s`" % (row["sourceName"])
+            column_definition_target += "`%s`" % (row["targetName"])
+            first_loop = False
 
-        if icebergTable == False:
-            query = "insert into `%s`.`%s` (" % (targetDB, targetTable)
+        if iceberg_table == False:
+            query = "insert into `%s`.`%s` (" % (target_db, target_table)
         else:
             query = "insert into %s.`%s`.`%s` (" % (
                 self.common_operations.sparkCatalogName,
-                targetDB,
-                targetTable,
+                target_db,
+                target_table,
             )
 
-        query += columnDefinitionTarget
+        query += column_definition_target
         if self.import_config.datalake_source != None:
             # query += ", datalake_source"
             query += ", %s" % (self.Hive_ColumnName_Source)
@@ -4778,24 +4808,24 @@ class operation(metaclass=Singleton):
             query += ", %s" % (self.Hive_ColumnName_Import)
 
         query += ") select "
-        query += columnDefinitionSource
+        query += column_definition_source
         if self.import_config.datalake_source != None:
             query += ", '%s'" % (self.import_config.datalake_source)
         if self.import_config.create_datalake_import_column == True:
-            if icebergTable == False:
+            if iceberg_table == False:
                 query += ", '%s'" % (self.import_config.sqoop_last_execution_timestamp)
             else:
                 query += ", TIMESTAMP('%s')" % (
                     self.import_config.sqoop_last_execution_timestamp
                 )
 
-        if icebergTable == False:
-            query += " from `%s`.`%s` " % (sourceDB, sourceTable)
+        if iceberg_table == False:
+            query += " from `%s`.`%s` " % (source_db, source_table)
         else:
             query += " from %s.`%s`.`%s` " % (
                 self.common_operations.sparkCatalogName,
-                sourceDB,
-                sourceTable,
+                source_db,
+                source_table,
             )
 
         if self.import_config.nomerge_ingestion_sql_addition != None:
@@ -4806,23 +4836,23 @@ class operation(metaclass=Singleton):
         )
         return query
 
-    def copyHiveTable(self, sourceDB, sourceTable, targetDB, targetTable):
+    def copyHiveTable(self, source_db, source_table, target_db, target_table):
         """Copy one Hive table into another for the columns that have the same name"""
         logging.debug("Executing import_operations.copyHiveTable()")
 
         query = self.generateCopyTableStatement(
-            sourceDB, sourceTable, targetDB, targetTable, icebergTable=False
+            source_db, source_table, target_db, target_table, iceberg_table=False
         )
         self.common_operations.executeHiveQuery(query)
 
         logging.debug("Executing import_operations.copyHiveTable() - Finished")
 
-    def copySparkTable(self, sourceDB, sourceTable, targetDB, targetTable):
+    def copySparkTable(self, source_db, source_table, target_db, target_table):
         """Copy one Hive table into another for the columns that have the same name"""
         logging.debug("Executing import_operations.copyHiveTable()")
 
         query = self.generateCopyTableStatement(
-            sourceDB, sourceTable, targetDB, targetTable, icebergTable=True
+            source_db, source_table, target_db, target_table, iceberg_table=True
         )
         self.startSpark()
         logging.info(query)
@@ -4833,14 +4863,14 @@ class operation(metaclass=Singleton):
     def resetIncrMinMaxValues(self, maxValue):
         self.import_config.resetIncrMinMaxValues(maxValue=maxValue)
 
-    def resetIncrMaxValue(self, hiveDB=None, hiveTable=None):
+    def resetIncrMaxValue(self, hive_db=None, hive_table=None):
         """Will read the Max value from the Hive table and save that into the incr_maxvalue column"""
         logging.debug("Executing import_operations.resetIncrMaxValue()")
 
-        if hiveDB == None:
-            hiveDB = self.Hive_DB
-        if hiveTable == None:
-            hiveTable = self.Hive_Table
+        if hive_db == None:
+            hive_db = self.Hive_DB
+        if hive_table == None:
+            hive_table = self.Hive_Table
 
         if self.import_config.importPhase == constant.IMPORT_PHASE_ORACLE_FLASHBACK:
             logging.error(
@@ -4853,23 +4883,23 @@ class operation(metaclass=Singleton):
             self.sqoopIncrNoNewRows = False
             query = "select max(`%s`) from `%s`.`%s` " % (
                 self.import_config.sqoop_incr_column,
-                hiveDB,
-                hiveTable,
+                hive_db,
+                hive_table,
             )
 
             self.common_operations.connectToHive(forceSkipTest=True)
             result_df = self.common_operations.executeHiveQuery(query)
-            maxValue = result_df.loc[0][0]
+            max_value = result_df.loc[0][0]
 
-            if type(maxValue) == pd._libs.tslibs.timestamps.Timestamp:
-                (dt, micro) = maxValue.strftime("%Y-%m-%d %H:%M:%S.%f").split(".")
-                maxValue = "%s.%03d" % (dt, int(micro) / 1000)
+            if type(max_value) == pd._libs.tslibs.timestamps.Timestamp:
+                (dt, micro) = max_value.strftime("%Y-%m-%d %H:%M:%S.%f").split(".")
+                max_value = "%s.%03d" % (dt, int(micro) / 1000)
             else:
-                if maxValue != None:
-                    maxValue = int(maxValue)
+                if max_value != None:
+                    max_value = int(max_value)
 
-            if maxValue != None:
-                self.import_config.resetSqoopStatistics(maxValue)
+            if max_value != None:
+                self.import_config.resetSqoopStatistics(max_value)
                 self.import_config.clearStage()
         else:
             logging.error("This is not an incremental import. Nothing to repair.")
@@ -4882,19 +4912,19 @@ class operation(metaclass=Singleton):
         logging.debug("Executing import_operations.repairAllIncrementalImports()")
         result_df = self.import_config.getAllActiveIncrImports()
 
-        tablesRepaired = False
+        tables_repaired = False
         for index, row in result_df.iterrows():
-            tablesRepaired = True
-            hiveDB = row[0]
-            hiveTable = row[1]
+            tables_repaired = True
+            hive_db = row[0]
+            hive_table = row[1]
             logging.info(
-                "Repairing table \u001b[33m%s.%s\u001b[0m" % (hiveDB, hiveTable)
+                "Repairing table \u001b[33m%s.%s\u001b[0m" % (hive_db, hive_table)
             )
-            self.setHiveTable(hiveDB, hiveTable)
-            self.resetIncrMaxValue(hiveDB, hiveTable)
+            self.setHiveTable(hive_db, hive_table)
+            self.resetIncrMaxValue(hive_db, hive_table)
             logging.info("")
 
-        if tablesRepaired == False:
+        if tables_repaired == False:
             logging.info(
                 "\n\u001b[32mNo incremental tables found that could be repaired\u001b[0m\n"
             )
@@ -4903,24 +4933,26 @@ class operation(metaclass=Singleton):
             "Executing import_operations.repairAllIncrementalImports() - Finished"
         )
 
-    def concatenateTable(self, hiveDB=None, hiveTable=None):
+    def concatenateTable(self, hive_db=None, hive_table=None):
         """Execute a concatenate table on the specified table, or what is already set in the class"""
         logging.debug("Executing import_operations.concatenateTable()")
 
         self.connectToHive(forceSkipTest=True)
 
-        if hiveDB == None:
-            hiveDB = self.Hive_DB
-        if hiveTable == None:
-            hiveTable = self.Hive_Table
+        if hive_db == None:
+            hive_db = self.Hive_DB
+        if hive_table == None:
+            hive_table = self.Hive_Table
 
-        hdfsBlocksize = int(
+        hdfs_blocksize = int(
             self.import_config.common_config.getConfigValue(key="hdfs_blocksize")
         )
-        query = "set mapreduce.input.fileinputformat.split.minsize=%s" % (hdfsBlocksize)
+        query = "set mapreduce.input.fileinputformat.split.minsize=%s" % (
+            hdfs_blocksize
+        )
         self.common_operations.executeHiveQuery(query)
 
-        query = "alter table `%s`.`%s` concatenate" % (hiveDB, hiveTable)
+        query = "alter table `%s`.`%s` concatenate" % (hive_db, hive_table)
         self.common_operations.executeHiveQuery(query)
 
         logging.debug("Executing import_operations.concatenateTable() - Finished")

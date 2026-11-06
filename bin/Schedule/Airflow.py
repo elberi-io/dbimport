@@ -96,7 +96,7 @@ class initialize:
 
         try:
             self.airflowMode = configuration.get(
-                "Airflow", "airflow_mode", exitOnError=False
+                "Airflow", "airflow_mode", exit_on_error=False
             )
             if self.airflowMode != "default" and self.airflowMode != "aws_mwaa":
                 raise invalidConfiguration(
@@ -111,10 +111,10 @@ class initialize:
 
         if self.airflowMode == "default" and self.createPoolsWithTasks == False:
             # Establish a SQLAlchemy connection to the Airflow database
-            airflowConnectStr = configuration.get("Airflow", "airflow_alchemy_conn")
+            airflow_connect_str = configuration.get("Airflow", "airflow_alchemy_conn")
             try:
                 self.airflowDB = sa.create_engine(
-                    airflowConnectStr, echo=self.debugLogLevel
+                    airflow_connect_str, echo=self.debugLogLevel
                 )
                 self.airflowDB.connect()
                 self.airflowDBSession = sessionmaker(bind=self.airflowDB)
@@ -153,14 +153,14 @@ class initialize:
             # return self.configDBSession()
             return scoped_session(self.configDBSession)
 
-        mysqlCredentials = self.common_config.getMysqlCredentials()
+        mysql_credentials = self.common_config.getMysqlCredentials()
 
         self.connectStr = "mysql+pymysql://%s:%s@%s:%s/%s" % (
-            mysqlCredentials["mysql_username"],
-            quote(mysqlCredentials["mysql_password"], safe=" +"),
-            mysqlCredentials["mysql_hostname"],
-            mysqlCredentials["mysql_port"],
-            mysqlCredentials["mysql_database"],
+            mysql_credentials["mysql_username"],
+            quote(mysql_credentials["mysql_password"], safe=" +"),
+            mysql_credentials["mysql_hostname"],
+            mysql_credentials["mysql_port"],
+            mysql_credentials["mysql_database"],
         )
 
         try:
@@ -191,10 +191,10 @@ class initialize:
         """Returns a value from the configuration table based on the supplied key. Value returned can be Int, Str or DateTime"""
         log = logging.getLogger(self.logger)
 
-        returnValue = None
-        boolValue = False
+        return_value = None
+        bool_value = False
 
-        valueColumn, boolValue = self.common_config.getConfigValueColumn(key)
+        value_column, bool_value = self.common_config.getConfigValueColumn(key)
 
         try:
             session = self.getDBImportSession()
@@ -202,61 +202,61 @@ class initialize:
             self.disconnectDBImportDB()
             return None
 
-        configurationTable = aliased(configSchema.configuration)
+        configuration_table = aliased(configSchema.configuration)
 
         configuration = (
             session.query(
-                configurationTable.configKey,
-                configurationTable.valueInt,
-                configurationTable.valueStr,
-                configurationTable.valueDate,
+                configuration_table.configKey,
+                configuration_table.valueInt,
+                configuration_table.valueStr,
+                configuration_table.valueDate,
             )
-            .select_from(configurationTable)
-            .filter(configurationTable.configKey == key)
+            .select_from(configuration_table)
+            .filter(configuration_table.configKey == key)
             .one()
         )
 
         session.remove()
-        returnValue = None
+        return_value = None
 
         try:
-            if valueColumn == "valueInt":
-                returnValue = int(configuration[1])
+            if value_column == "valueInt":
+                return_value = int(configuration[1])
 
-            if valueColumn == "valueStr":
-                returnValue = configuration[2]
-                if returnValue == None or returnValue.strip() == "":
+            if value_column == "valueStr":
+                return_value = configuration[2]
+                if return_value == None or return_value.strip() == "":
                     log.error(
                         "Configuration Key '%s' must have a value in '%s'"
-                        % (key, valueColumn)
+                        % (key, value_column)
                     )
-                    returnValue = None
+                    return_value = None
 
-            if boolValue == True:
-                if returnValue == 1:
-                    returnValue = True
-                elif returnValue == 0:
-                    returnValue = False
+            if bool_value == True:
+                if return_value == 1:
+                    return_value = True
+                elif return_value == 0:
+                    return_value = False
                 else:
                     log.error(
                         "Configuration Key '%s' can only have 0 or 1 in column '%s'"
-                        % (key, valueColumn)
+                        % (key, value_column)
                     )
-                    returnValue = None
+                    return_value = None
         except TypeError:
             log.error(
                 "Configuration key '%s' cant be found. Have you upgraded the database schema to the latest version?"
                 % (key)
             )
-            returnValue = None
+            return_value = None
 
-        return returnValue
+        return return_value
 
     def checkExecution(self):
         """Checks the 'airflow_disable' settings and exit with 0 or 1 depending on that"""
 
-        airflowExecutionDisabled = self.getConfigValue("airflow_disable")
-        if airflowExecutionDisabled == False:
+        airflow_execution_disabled = self.getConfigValue("airflow_disable")
+        if airflow_execution_disabled == False:
             print("Airflow execution is enabled")
             self.common_config.remove_temporary_files()
             sys.exit(0)
@@ -265,173 +265,175 @@ class initialize:
             self.common_config.remove_temporary_files()
             sys.exit(1)
 
-    def getDBImportCommandPath(self, sudoUser=""):
+    def getDBImportCommandPath(self, sudo_user=""):
 
-        if sudoUser == None or sudoUser == "":
-            sudoUser = self.defaultSudoUser
+        if sudo_user == None or sudo_user == "":
+            sudo_user = self.defaultSudoUser
 
-        return self.dbimportCommandPath.replace("${SUDO_USER}", sudoUser)
+        return self.dbimportCommandPath.replace("${SUDO_USER}", sudo_user)
 
-    def generateDAGfromREST(self, name, currentUser):
+    def generateDAGfromREST(self, name, current_user):
         log = logging.getLogger(self.logger)
 
         try:
-            self.generateDAG(name=name, writeDAG=True)
+            self.generateDAG(name=name, write_dag=True)
         except (invalidConfiguration, SQLerror, RuntimeError) as errMsg:
             result = str(errMsg)
-            returnCode = 500
+            return_code = 500
         except:
             log.error(sys.exc_info())
             result = str(sys.exc_info())
-            returnCode = 500
+            return_code = 500
         else:
             result = "Airflow DAG generated"
-            returnCode = 200
+            return_code = 200
 
-        return (result, returnCode)
+        return (result, return_code)
 
-    def generateDAG(self, name=None, writeDAG=False, autoDAGonly=False, DAGFolder=None):
+    def generateDAG(
+        self, name=None, write_dag=False, auto_dag_only=False, dag_folder=None
+    ):
         log = logging.getLogger(self.logger)
 
-        self.writeDAG = writeDAG
-        self.DAGFolder = DAGFolder
+        self.writeDAG = write_dag
+        self.DAGFolder = dag_folder
 
         # session = self.configDBSession()
         session = self.getDBImportSession()
-        airflowCustomDags = aliased(configSchema.airflowCustomDags)
-        airflowExportDags = aliased(configSchema.airflowExportDags)
-        airflowImportDags = aliased(configSchema.airflowImportDags)
-        airflowEtlDags = aliased(configSchema.airflowEtlDags)
+        airflow_custom_dags = aliased(configSchema.airflowCustomDags)
+        airflow_export_dags = aliased(configSchema.airflowExportDags)
+        airflow_import_dags = aliased(configSchema.airflowImportDags)
+        airflow_etl_dags = aliased(configSchema.airflowEtlDags)
 
-        exportDAG = pd.DataFrame(
+        export_dag = pd.DataFrame(
             session.query(
-                airflowExportDags.dag_name,
-                airflowExportDags.schedule_interval,
-                airflowExportDags.filter_dbalias,
-                airflowExportDags.filter_target_schema,
-                airflowExportDags.filter_target_table,
-                airflowExportDags.retries,
-                airflowExportDags.auto_regenerate_dag,
-                airflowExportDags.sudo_user,
-                airflowExportDags.timezone,
-                airflowExportDags.email,
-                airflowExportDags.email_on_failure,
-                airflowExportDags.email_on_retries,
-                airflowExportDags.tags,
-                airflowExportDags.sla_warning_time,
-                airflowExportDags.retry_exponential_backoff,
-                airflowExportDags.concurrency,
+                airflow_export_dags.dag_name,
+                airflow_export_dags.schedule_interval,
+                airflow_export_dags.filter_dbalias,
+                airflow_export_dags.filter_target_schema,
+                airflow_export_dags.filter_target_table,
+                airflow_export_dags.retries,
+                airflow_export_dags.auto_regenerate_dag,
+                airflow_export_dags.sudo_user,
+                airflow_export_dags.timezone,
+                airflow_export_dags.email,
+                airflow_export_dags.email_on_failure,
+                airflow_export_dags.email_on_retries,
+                airflow_export_dags.tags,
+                airflow_export_dags.sla_warning_time,
+                airflow_export_dags.retry_exponential_backoff,
+                airflow_export_dags.concurrency,
             )
-            .select_from(airflowExportDags)
+            .select_from(airflow_export_dags)
             .all()
         ).fillna("")
 
-        importDAG = pd.DataFrame(
+        import_dag = pd.DataFrame(
             session.query(
-                airflowImportDags.dag_name,
-                airflowImportDags.schedule_interval,
-                airflowImportDags.filter_hive,
-                airflowImportDags.retries,
-                airflowImportDags.retries_stage1,
-                airflowImportDags.retries_stage2,
-                airflowImportDags.pool_stage1,
-                airflowImportDags.pool_stage2,
-                airflowImportDags.run_import_and_etl_separate,
-                airflowImportDags.finish_all_stage1_first,
-                airflowImportDags.auto_regenerate_dag,
-                airflowImportDags.sudo_user,
-                airflowImportDags.metadata_import,
-                airflowImportDags.timezone,
-                airflowImportDags.email,
-                airflowImportDags.email_on_failure,
-                airflowImportDags.email_on_retries,
-                airflowImportDags.tags,
-                airflowImportDags.sla_warning_time,
-                airflowImportDags.retry_exponential_backoff,
-                airflowImportDags.concurrency,
+                airflow_import_dags.dag_name,
+                airflow_import_dags.schedule_interval,
+                airflow_import_dags.filter_hive,
+                airflow_import_dags.retries,
+                airflow_import_dags.retries_stage1,
+                airflow_import_dags.retries_stage2,
+                airflow_import_dags.pool_stage1,
+                airflow_import_dags.pool_stage2,
+                airflow_import_dags.run_import_and_etl_separate,
+                airflow_import_dags.finish_all_stage1_first,
+                airflow_import_dags.auto_regenerate_dag,
+                airflow_import_dags.sudo_user,
+                airflow_import_dags.metadata_import,
+                airflow_import_dags.timezone,
+                airflow_import_dags.email,
+                airflow_import_dags.email_on_failure,
+                airflow_import_dags.email_on_retries,
+                airflow_import_dags.tags,
+                airflow_import_dags.sla_warning_time,
+                airflow_import_dags.retry_exponential_backoff,
+                airflow_import_dags.concurrency,
             )
-            .select_from(airflowImportDags)
+            .select_from(airflow_import_dags)
             .all()
         ).fillna("")
 
-        etlDAG = pd.DataFrame(
+        etl_dag = pd.DataFrame(
             session.query(
-                airflowEtlDags.dag_name,
-                airflowEtlDags.schedule_interval,
-                airflowEtlDags.filter_job,
-                airflowEtlDags.filter_task,
-                airflowEtlDags.filter_source_db,
-                airflowEtlDags.filter_target_db,
-                airflowEtlDags.retries,
-                airflowEtlDags.auto_regenerate_dag,
-                airflowEtlDags.sudo_user,
-                airflowEtlDags.timezone,
-                airflowEtlDags.email,
-                airflowEtlDags.email_on_failure,
-                airflowEtlDags.email_on_retries,
-                airflowEtlDags.tags,
-                airflowEtlDags.sla_warning_time,
-                airflowEtlDags.retry_exponential_backoff,
-                airflowEtlDags.concurrency,
+                airflow_etl_dags.dag_name,
+                airflow_etl_dags.schedule_interval,
+                airflow_etl_dags.filter_job,
+                airflow_etl_dags.filter_task,
+                airflow_etl_dags.filter_source_db,
+                airflow_etl_dags.filter_target_db,
+                airflow_etl_dags.retries,
+                airflow_etl_dags.auto_regenerate_dag,
+                airflow_etl_dags.sudo_user,
+                airflow_etl_dags.timezone,
+                airflow_etl_dags.email,
+                airflow_etl_dags.email_on_failure,
+                airflow_etl_dags.email_on_retries,
+                airflow_etl_dags.tags,
+                airflow_etl_dags.sla_warning_time,
+                airflow_etl_dags.retry_exponential_backoff,
+                airflow_etl_dags.concurrency,
             )
-            .select_from(airflowEtlDags)
+            .select_from(airflow_etl_dags)
             .all()
         ).fillna("")
 
-        customDAG = pd.DataFrame(
+        custom_dag = pd.DataFrame(
             session.query(
-                airflowCustomDags.dag_name,
-                airflowCustomDags.schedule_interval,
-                airflowCustomDags.retries,
-                airflowCustomDags.auto_regenerate_dag,
-                airflowCustomDags.sudo_user,
-                airflowCustomDags.timezone,
-                airflowCustomDags.email,
-                airflowCustomDags.email_on_failure,
-                airflowCustomDags.email_on_retries,
-                airflowCustomDags.tags,
-                airflowCustomDags.sla_warning_time,
-                airflowCustomDags.retry_exponential_backoff,
-                airflowCustomDags.concurrency,
+                airflow_custom_dags.dag_name,
+                airflow_custom_dags.schedule_interval,
+                airflow_custom_dags.retries,
+                airflow_custom_dags.auto_regenerate_dag,
+                airflow_custom_dags.sudo_user,
+                airflow_custom_dags.timezone,
+                airflow_custom_dags.email,
+                airflow_custom_dags.email_on_failure,
+                airflow_custom_dags.email_on_retries,
+                airflow_custom_dags.tags,
+                airflow_custom_dags.sla_warning_time,
+                airflow_custom_dags.retry_exponential_backoff,
+                airflow_custom_dags.concurrency,
             )
-            .select_from(airflowCustomDags)
+            .select_from(airflow_custom_dags)
             .all()
         ).fillna("")
 
         if name != None:
-            if importDAG.empty == False:
-                importDAG = importDAG.loc[importDAG["dag_name"] == name]
-            if exportDAG.empty == False:
-                exportDAG = exportDAG.loc[exportDAG["dag_name"] == name]
-            if customDAG.empty == False:
-                customDAG = customDAG.loc[customDAG["dag_name"] == name]
+            if import_dag.empty == False:
+                import_dag = import_dag.loc[import_dag["dag_name"] == name]
+            if export_dag.empty == False:
+                export_dag = export_dag.loc[export_dag["dag_name"] == name]
+            if custom_dag.empty == False:
+                custom_dag = custom_dag.loc[custom_dag["dag_name"] == name]
 
-        if autoDAGonly == True:
-            if importDAG.empty == False:
-                importDAG = importDAG.loc[importDAG["auto_regenerate_dag"] == 1]
-            if exportDAG.empty == False:
-                exportDAG = exportDAG.loc[exportDAG["auto_regenerate_dag"] == 1]
-            if customDAG.empty == False:
-                customDAG = customDAG.loc[customDAG["auto_regenerate_dag"] == 1]
+        if auto_dag_only == True:
+            if import_dag.empty == False:
+                import_dag = import_dag.loc[import_dag["auto_regenerate_dag"] == 1]
+            if export_dag.empty == False:
+                export_dag = export_dag.loc[export_dag["auto_regenerate_dag"] == 1]
+            if custom_dag.empty == False:
+                custom_dag = custom_dag.loc[custom_dag["auto_regenerate_dag"] == 1]
 
-        dagFound = False
+        dag_found = False
 
-        if name == None or len(importDAG) > 0:
-            dagFound = True
-            for index, row in importDAG.iterrows():
-                self.generateImportDAG(DAG=row)
+        if name == None or len(import_dag) > 0:
+            dag_found = True
+            for index, row in import_dag.iterrows():
+                self.generateImportDAG(dag=row)
 
-        if name == None or len(exportDAG) > 0:
-            dagFound = True
-            for index, row in exportDAG.iterrows():
-                self.generateExportDAG(DAG=row)
+        if name == None or len(export_dag) > 0:
+            dag_found = True
+            for index, row in export_dag.iterrows():
+                self.generateExportDAG(dag=row)
 
-        if name == None or len(customDAG) > 0:
-            dagFound = True
-            for index, row in customDAG.iterrows():
-                self.generateCustomDAG(DAG=row)
+        if name == None or len(custom_dag) > 0:
+            dag_found = True
+            for index, row in custom_dag.iterrows():
+                self.generateCustomDAG(dag=row)
 
-        if dagFound == False and name != None:
+        if dag_found == False and name != None:
             raise invalidConfiguration("Can't find DAG with that name")
         # 			log.error("Can't find DAG with that name")
         # 			self.common_config.remove_temporary_files()
@@ -444,7 +446,7 @@ class initialize:
 
         if self.airflowMode == "aws_mwaa" and self.airflowAWSpoolToInstanceId == True:
             # We can choice to override the poolname and set it to the instance ID if we are running on AWS
-            poolName = self.airflowAWSinstanceIds
+            pool_name = self.airflowAWSinstanceIds
         else:
             try:
                 hostname = (
@@ -452,88 +454,88 @@ class initialize:
                     .split("/")[0]
                     .split("\\")[0]
                 )
-                poolName = "DBImport_server_%s" % (hostname)
+                pool_name = "DBImport_server_%s" % (hostname)
             except (TypeError, AttributeError):
                 log.warning(
                     "Cant find hostname in jdbc_connections table. Setting pool to 'default'"
                 )
-                poolName = "default"
+                pool_name = "default"
 
-        return poolName[0:50]
+        return pool_name[0:50]
 
     def AWSappendInstanceIDasPools(self):
         # This will split the instanceID configration setting based on , and append them all as pool names
         log = logging.getLogger(self.logger)
 
-        usedPools = []
+        used_pools = []
 
-        for AWSpool in self.airflowAWSinstanceIds.split(","):
-            usedPools.append(AWSpool.strip())
+        for aws_pool in self.airflowAWSinstanceIds.split(","):
+            used_pools.append(aws_pool.strip())
 
-        self.createAirflowPools(pools=usedPools)
+        self.createAirflowPools(pools=used_pools)
 
-    def getAWSInstanceID(self, configObject):
+    def getAWSInstanceID(self, config_object):
         # Return one instanceID from a comma seperated list.
         log = logging.getLogger(self.logger)
 
-        if configObject in self.AWSinstanceIdAssignedPools:
-            return self.AWSinstanceIdAssignedPools[configObject]
+        if config_object in self.AWSinstanceIdAssignedPools:
+            return self.AWSinstanceIdAssignedPools[config_object]
         else:
-            randomInstanceID = random.choice(
+            random_instance_id = random.choice(
                 self.airflowAWSinstanceIds.strip().split(",")
             )
-            self.AWSinstanceIdAssignedPools[configObject] = randomInstanceID
-            return randomInstanceID
+            self.AWSinstanceIdAssignedPools[config_object] = random_instance_id
+            return random_instance_id
 
         # return random.choice(self.airflowAWSinstanceIds.strip().split(','))
 
-    def generateExportDAG(self, DAG):
+    def generateExportDAG(self, dag):
         """Generates a Import DAG"""
         log = logging.getLogger(self.logger)
 
-        usedPools = []
-        tableFilters = []
-        defaultPool = DAG["dag_name"]
-        sudoUser = DAG["sudo_user"]
-        usedPools.append(defaultPool)
+        used_pools = []
+        table_filters = []
+        default_pool = dag["dag_name"]
+        sudo_user = dag["sudo_user"]
+        used_pools.append(default_pool)
 
-        cronSchedule = self.convertTimeToCron(DAG["schedule_interval"])
+        cron_schedule = self.convertTimeToCron(dag["schedule_interval"])
         self.createDAGfileWithHeader(
-            dagName=DAG["dag_name"],
-            cronSchedule=cronSchedule,
-            defaultPool=defaultPool,
-            sudoUser=sudoUser,
-            dagTimeZone=DAG["timezone"],
-            email=DAG["email"],
-            email_on_failure=DAG["email_on_failure"],
-            email_on_retries=DAG["email_on_retries"],
-            tags=DAG["tags"],
-            slaWarningTime=DAG["sla_warning_time"],
-            retryExponentialBackoff=DAG["retry_exponential_backoff"],
-            concurrency=DAG["concurrency"],
+            dag_name=dag["dag_name"],
+            cron_schedule=cron_schedule,
+            default_pool=default_pool,
+            sudo_user=sudo_user,
+            dag_time_zone=dag["timezone"],
+            email=dag["email"],
+            email_on_failure=dag["email_on_failure"],
+            email_on_retries=dag["email_on_retries"],
+            tags=dag["tags"],
+            sla_warning_time=dag["sla_warning_time"],
+            retry_exponential_backoff=dag["retry_exponential_backoff"],
+            concurrency=dag["concurrency"],
         )
 
         # session = self.configDBSession()
         session = self.getDBImportSession()
-        exportTables = aliased(configSchema.exportTables)
+        export_tables = aliased(configSchema.exportTables)
 
-        exportTablesQuery = Query(
+        export_tables_query = Query(
             [
-                exportTables.target_schema,
-                exportTables.target_table,
-                exportTables.dbalias,
-                exportTables.airflow_priority,
-                exportTables.export_type,
-                exportTables.sqoop_last_mappers,
+                export_tables.target_schema,
+                export_tables.target_table,
+                export_tables.dbalias,
+                export_tables.airflow_priority,
+                export_tables.export_type,
+                export_tables.sqoop_last_mappers,
             ]
         )
-        exportTablesQuery = exportTablesQuery.filter(
-            exportTables.include_in_airflow == 1
+        export_tables_query = export_tables_query.filter(
+            export_tables.include_in_airflow == 1
         )
 
-        filterDBAlias = DAG["filter_dbalias"].strip().replace(r"*", "%")
-        filterTargetSchema = DAG["filter_target_schema"].strip().replace(r"*", "%")
-        filterTargetTable = DAG["filter_target_table"].strip().replace(r"*", "%")
+        filter_db_alias = dag["filter_dbalias"].strip().replace(r"*", "%")
+        filter_target_schema = dag["filter_target_schema"].strip().replace(r"*", "%")
+        filter_target_table = dag["filter_target_table"].strip().replace(r"*", "%")
 
         # 		if filterDBAlias == '':
         # 			log.error("'filter_dbalias' in airflow_export_dags cant be empty")
@@ -541,207 +543,209 @@ class initialize:
         # 			self.common_config.remove_temporary_files()
         # 			sys.exit(1)
 
-        if filterDBAlias != "":
-            exportTablesQuery = exportTablesQuery.filter(
-                exportTables.dbalias.like(filterDBAlias)
+        if filter_db_alias != "":
+            export_tables_query = export_tables_query.filter(
+                export_tables.dbalias.like(filter_db_alias)
             )
-        if filterTargetSchema != "":
-            exportTablesQuery = exportTablesQuery.filter(
-                exportTables.target_schema.like(filterTargetSchema)
+        if filter_target_schema != "":
+            export_tables_query = export_tables_query.filter(
+                export_tables.target_schema.like(filter_target_schema)
             )
-        if filterTargetTable != "":
-            exportTablesQuery = exportTablesQuery.filter(
-                exportTables.target_table.like(filterTargetTable)
+        if filter_target_table != "":
+            export_tables_query = export_tables_query.filter(
+                export_tables.target_table.like(filter_target_table)
             )
-        tables = pd.DataFrame(exportTablesQuery.with_session(session).all()).fillna("")
+        tables = pd.DataFrame(export_tables_query.with_session(session).all()).fillna(
+            ""
+        )
 
-        if DAG["retries"] == None or DAG["retries"] == "":
+        if dag["retries"] == None or dag["retries"] == "":
             retries = 5
         else:
-            retries = int(DAG["retries"])
+            retries = int(dag["retries"])
 
         # in 'tables' we now have all the tables that will be part of the DAG
-        previousConnectionAlias = ""
+        previous_connection_alias = ""
 
         for index, row in tables.iterrows():
-            if row["dbalias"] != previousConnectionAlias:
+            if row["dbalias"] != previous_connection_alias:
                 # We save the previousConnectionAlias just to avoid making lookups for every dbalias even if they are all the same
                 try:
                     self.common_config.lookupConnectionAlias(
                         connection_alias=row["dbalias"], decryptCredentials=False
                     )
-                    previousConnectionAlias = row["dbalias"]
+                    previous_connection_alias = row["dbalias"]
 
                 except invalidConfiguration as errMsg:
                     log.warning(
                         "The connection alias '%s' cant be found in the configuration database"
                         % (row["dbalias"])
                     )
-                    previousConnectionAlias = None
+                    previous_connection_alias = None
                     continue
 
-            exportPool = self.getAirflowHostPoolName()
+            export_pool = self.getAirflowHostPoolName()
 
             # usedPools is later used to check if the pools that we just are available in Airflow
-            if exportPool not in usedPools:
-                usedPools.append(exportPool)
+            if export_pool not in used_pools:
+                used_pools.append(export_pool)
 
-            taskID = row["target_table"].replace(r"/", "_").replace(r".", "_")
-            dbexportCMD = "%sbin/export" % (
-                self.getDBImportCommandPath(sudoUser=sudoUser)
+            task_id = row["target_table"].replace(r"/", "_").replace(r".", "_")
+            dbexport_cmd = "%sbin/export" % (
+                self.getDBImportCommandPath(sudo_user=sudo_user)
             )
-            dbexportClearStageCMD = "%sbin/manage --clearExportStage" % (
-                self.getDBImportCommandPath(sudoUser=sudoUser)
+            dbexport_clear_stage_cmd = "%sbin/manage --clearExportStage" % (
+                self.getDBImportCommandPath(sudo_user=sudo_user)
             )
 
-            airflowPriority = 1  # Default Airflow Priority
+            airflow_priority = 1  # Default Airflow Priority
             if row["airflow_priority"] != None and row["airflow_priority"] != "":
-                airflowPriority = int(row["airflow_priority"])
+                airflow_priority = int(row["airflow_priority"])
             elif row["sqoop_last_mappers"] != None and row["sqoop_last_mappers"] != "":
-                airflowPriority = int(row["sqoop_last_mappers"])
+                airflow_priority = int(row["sqoop_last_mappers"])
 
-            clearStageRequired = False
+            clear_stage_required = False
             if row["export_type"] == "full":
-                clearStageRequired = True
+                clear_stage_required = True
 
-            if clearStageRequired == True:
-                self.DAGfile.write("%s_clearStage = BashOperator(\n" % (taskID))
-                self.DAGfile.write("    task_id='%s_clearStage',\n" % (taskID))
+            if clear_stage_required == True:
+                self.DAGfile.write("%s_clearStage = BashOperator(\n" % (task_id))
+                self.DAGfile.write("    task_id='%s_clearStage',\n" % (task_id))
                 self.DAGfile.write(
                     "    bash_command='%s -a %s -S %s -T %s ',\n"
                     % (
-                        dbexportClearStageCMD,
+                        dbexport_clear_stage_cmd,
                         row["dbalias"],
                         row["target_schema"],
                         row["target_table"],
                     )
                 )
-                self.DAGfile.write("    priority_weight=%s,\n" % (airflowPriority))
+                self.DAGfile.write("    priority_weight=%s,\n" % (airflow_priority))
                 self.DAGfile.write("    weight_rule='absolute',\n")
                 self.DAGfile.write("    retries=%s,\n" % (retries))
                 self.DAGfile.write("    dag=dag)\n")
                 self.DAGfile.write("\n")
 
-            self.DAGfile.write("%s = BashOperator(\n" % (taskID))
-            self.DAGfile.write("    task_id='%s',\n" % (taskID))
+            self.DAGfile.write("%s = BashOperator(\n" % (task_id))
+            self.DAGfile.write("    task_id='%s',\n" % (task_id))
             self.DAGfile.write(
                 "    bash_command='%s -a %s -S %s -T %s ',\n"
                 % (
-                    dbexportCMD,
+                    dbexport_cmd,
                     row["dbalias"],
                     row["target_schema"],
                     row["target_table"],
                 )
             )
-            self.DAGfile.write("    pool='%s',\n" % (exportPool))
-            self.DAGfile.write("    priority_weight=%s,\n" % (airflowPriority))
+            self.DAGfile.write("    pool='%s',\n" % (export_pool))
+            self.DAGfile.write("    priority_weight=%s,\n" % (airflow_priority))
             self.DAGfile.write("    weight_rule='absolute',\n")
             self.DAGfile.write("    retries=%s,\n" % (retries))
             self.DAGfile.write("    dag=dag)\n")
             self.DAGfile.write("\n")
 
-            if clearStageRequired == True:
+            if clear_stage_required == True:
                 self.DAGfile.write(
-                    "%s.set_downstream(%s_clearStage)\n" % (self.mainStartTask, taskID)
+                    "%s.set_downstream(%s_clearStage)\n" % (self.mainStartTask, task_id)
                 )
                 self.DAGfile.write(
-                    "%s_clearStage.set_downstream(%s)\n" % (taskID, taskID)
+                    "%s_clearStage.set_downstream(%s)\n" % (task_id, task_id)
                 )
                 self.DAGfile.write(
-                    "%s.set_downstream(%s)\n" % (taskID, self.mainStopTask)
+                    "%s.set_downstream(%s)\n" % (task_id, self.mainStopTask)
                 )
             else:
                 self.DAGfile.write(
-                    "%s.set_downstream(%s)\n" % (self.mainStartTask, taskID)
+                    "%s.set_downstream(%s)\n" % (self.mainStartTask, task_id)
                 )
                 self.DAGfile.write(
-                    "%s.set_downstream(%s)\n" % (taskID, self.mainStopTask)
+                    "%s.set_downstream(%s)\n" % (task_id, self.mainStopTask)
                 )
             self.DAGfile.write("\n")
 
         self.addTasksToDAGfile(
-            dagName=DAG["dag_name"],
-            mainDagSchedule=DAG["schedule_interval"],
-            defaultRetries=retries,
-            defaultSudoUser=sudoUser,
+            dag_name=dag["dag_name"],
+            main_dag_schedule=dag["schedule_interval"],
+            default_retries=retries,
+            default_sudo_user=sudo_user,
         )
         self.addSensorsToDAGfile(
-            dagName=DAG["dag_name"], mainDagSchedule=DAG["schedule_interval"]
+            dag_name=dag["dag_name"], main_dag_schedule=dag["schedule_interval"]
         )
-        self.createAirflowPools(pools=usedPools)
+        self.createAirflowPools(pools=used_pools)
         self.closeDAGfile()
         session.close()
 
-    def generateImportDAG(self, DAG):
+    def generateImportDAG(self, dag):
         """Generates a Import DAG"""
         log = logging.getLogger(self.logger)
 
-        importPhaseFinishFirst = False
-        if DAG["finish_all_stage1_first"] == 1:
-            importPhaseFinishFirst = True
+        import_phase_finish_first = False
+        if dag["finish_all_stage1_first"] == 1:
+            import_phase_finish_first = True
 
-        runImportAndEtlSeparate = False
-        if DAG["run_import_and_etl_separate"] == 1:
-            runImportAndEtlSeparate = True
+        run_import_and_etl_separate = False
+        if dag["run_import_and_etl_separate"] == 1:
+            run_import_and_etl_separate = True
 
-        usedPools = []
-        tableFilters = []
-        defaultPool = DAG["dag_name"]
-        sudoUser = DAG["sudo_user"]
-        usedPools.append(defaultPool)
+        used_pools = []
+        table_filters = []
+        default_pool = dag["dag_name"]
+        sudo_user = dag["sudo_user"]
+        used_pools.append(default_pool)
 
-        if DAG["metadata_import"] == 1:
-            metaDataImportOption = "-m"
+        if dag["metadata_import"] == 1:
+            meta_data_import_option = "-m"
         else:
-            metaDataImportOption = ""
+            meta_data_import_option = ""
 
-        cronSchedule = self.convertTimeToCron(DAG["schedule_interval"])
+        cron_schedule = self.convertTimeToCron(dag["schedule_interval"])
         self.createDAGfileWithHeader(
-            dagName=DAG["dag_name"],
-            cronSchedule=cronSchedule,
-            importPhaseFinishFirst=importPhaseFinishFirst,
-            defaultPool=defaultPool,
-            sudoUser=sudoUser,
-            dagTimeZone=DAG["timezone"],
-            email=DAG["email"],
-            email_on_failure=DAG["email_on_failure"],
-            email_on_retries=DAG["email_on_retries"],
-            tags=DAG["tags"],
-            slaWarningTime=DAG["sla_warning_time"],
-            retryExponentialBackoff=DAG["retry_exponential_backoff"],
-            concurrency=DAG["concurrency"],
+            dag_name=dag["dag_name"],
+            cron_schedule=cron_schedule,
+            import_phase_finish_first=import_phase_finish_first,
+            default_pool=default_pool,
+            sudo_user=sudo_user,
+            dag_time_zone=dag["timezone"],
+            email=dag["email"],
+            email_on_failure=dag["email_on_failure"],
+            email_on_retries=dag["email_on_retries"],
+            tags=dag["tags"],
+            sla_warning_time=dag["sla_warning_time"],
+            retry_exponential_backoff=dag["retry_exponential_backoff"],
+            concurrency=dag["concurrency"],
         )
 
         # session = self.configDBSession()
         session = self.getDBImportSession()
-        importTables = aliased(configSchema.importTables)
+        import_tables = aliased(configSchema.importTables)
 
-        importTablesQuery = Query(
+        import_tables_query = Query(
             [
-                importTables.hive_db,
-                importTables.hive_table,
-                importTables.dbalias,
-                importTables.airflow_priority,
-                importTables.import_type,
-                importTables.import_phase_type,
-                importTables.etl_phase_type,
-                importTables.sqoop_last_mappers,
-                importTables.copy_slave,
+                import_tables.hive_db,
+                import_tables.hive_table,
+                import_tables.dbalias,
+                import_tables.airflow_priority,
+                import_tables.import_type,
+                import_tables.import_phase_type,
+                import_tables.etl_phase_type,
+                import_tables.sqoop_last_mappers,
+                import_tables.copy_slave,
             ]
         )
-        importTablesQuery = importTablesQuery.filter(
-            importTables.include_in_airflow == 1
+        import_tables_query = import_tables_query.filter(
+            import_tables.include_in_airflow == 1
         )
 
-        for hiveTarget in DAG["filter_hive"].split(";"):
+        for hive_target in dag["filter_hive"].split(";"):
             try:
-                hiveDB = hiveTarget.split(".")[0].strip().replace(r"*", "%")
-                hiveTable = hiveTarget.split(".")[1].strip().replace(r"*", "%")
+                hive_db = hive_target.split(".")[0].strip().replace(r"*", "%")
+                hive_table = hive_target.split(".")[1].strip().replace(r"*", "%")
                 if (
-                    hiveDB == None
-                    or hiveTable == None
-                    or hiveDB == ""
-                    or hiveTable == ""
+                    hive_db == None
+                    or hive_table == None
+                    or hive_db == ""
+                    or hive_table == ""
                 ):
                     self.DAGfile.close()
                     raise invalidConfiguration(
@@ -757,85 +761,87 @@ class initialize:
             # 				self.common_config.remove_temporary_files()
             # 				sys.exit(1)
 
-            tableFilters.append(
-                (importTables.hive_db.like(hiveDB))
-                & (importTables.hive_table.like(hiveTable))
+            table_filters.append(
+                (import_tables.hive_db.like(hive_db))
+                & (import_tables.hive_table.like(hive_table))
             )
 
-        importTablesQuery = importTablesQuery.filter(sa.or_(*tableFilters))
-        tables = pd.DataFrame(importTablesQuery.with_session(session).all()).fillna("")
+        import_tables_query = import_tables_query.filter(sa.or_(*table_filters))
+        tables = pd.DataFrame(import_tables_query.with_session(session).all()).fillna(
+            ""
+        )
 
-        retries = int(DAG["retries"])
+        retries = int(dag["retries"])
         try:
-            retriesImportPhase = int(DAG["retries_stage1"])
+            retries_import_phase = int(dag["retries_stage1"])
         except ValueError:
-            retriesImportPhase = retries
+            retries_import_phase = retries
 
         try:
-            retriesEtlPhase = int(DAG["retries_stage2"])
+            retries_etl_phase = int(dag["retries_stage2"])
         except ValueError:
-            retriesEtlPhase = retries
+            retries_etl_phase = retries
 
         # in 'tables' we now have all the tables that will be part of the DAG
-        previousConnectionAlias = ""
+        previous_connection_alias = ""
 
         for index, row in tables.iterrows():
             try:
-                if row["dbalias"] != previousConnectionAlias:
+                if row["dbalias"] != previous_connection_alias:
                     # We save the previousConnectionAlias just to avoid making lookups for every dbalias even if they are all the same
                     self.common_config.lookupConnectionAlias(
                         connection_alias=row["dbalias"], decryptCredentials=False
                     )
-                    previousConnectionAlias = row["dbalias"]
+                    previous_connection_alias = row["dbalias"]
             except:
                 continue
 
             if row["copy_slave"] == 1:
-                importPhaseAsSensor = True
+                import_phase_as_sensor = True
             else:
-                importPhaseAsSensor = False
+                import_phase_as_sensor = False
 
             if (
                 self.airflowMode == "aws_mwaa"
                 and self.airflowAWSpoolToInstanceId == True
             ):
                 # We can choice to override the poolname and set it to the instance ID if we are running on AWS
-                instanceID = self.getAWSInstanceID(row["hive_table"])
-                importPhasePool = instanceID
-                etlPhasePool = instanceID
+                instance_id = self.getAWSInstanceID(row["hive_table"])
+                import_phase_pool = instance_id
+                etl_phase_pool = instance_id
             else:
-                importPhasePool = self.getAirflowHostPoolName()
-                etlPhasePool = DAG["dag_name"][0:50]
+                import_phase_pool = self.getAirflowHostPoolName()
+                etl_phase_pool = dag["dag_name"][0:50]
 
-                if DAG["pool_stage1"] != "":
-                    importPhasePool = DAG["pool_stage1"]
+                if dag["pool_stage1"] != "":
+                    import_phase_pool = dag["pool_stage1"]
 
-                if DAG["pool_stage2"] != "":
-                    etlPhasePool = DAG["pool_stage2"]
+                if dag["pool_stage2"] != "":
+                    etl_phase_pool = dag["pool_stage2"]
 
             # usedPools is later used to check if the pools that we just are available in Airflow
-            if importPhasePool not in usedPools:
-                usedPools.append(importPhasePool)
+            if import_phase_pool not in used_pools:
+                used_pools.append(import_phase_pool)
 
-            if etlPhasePool not in usedPools:
-                usedPools.append(etlPhasePool)
+            if etl_phase_pool not in used_pools:
+                used_pools.append(etl_phase_pool)
 
-            dbimportCMD = "%sbin/import" % (
-                self.getDBImportCommandPath(sudoUser=sudoUser)
+            dbimport_cmd = "%sbin/import" % (
+                self.getDBImportCommandPath(sudo_user=sudo_user)
             )
-            dbimportClearStageCMD = "%sbin/manage --clearImportStage" % (
-                self.getDBImportCommandPath(sudoUser=sudoUser)
+            dbimport_clear_stage_cmd = "%sbin/manage --clearImportStage" % (
+                self.getDBImportCommandPath(sudo_user=sudo_user)
             )
 
-            taskID = row["hive_table"].replace(r"/", "_").replace(r".", "_")
+            task_id = row["hive_table"].replace(r"/", "_").replace(r".", "_")
 
-            airflowPriority = 1  # Default Airflow Priority
+            airflow_priority = 1  # Default Airflow Priority
             if row["airflow_priority"] != None and row["airflow_priority"] != "":
-                airflowPriority = int(row["airflow_priority"])
+                airflow_priority = int(row["airflow_priority"])
             elif row["sqoop_last_mappers"] != None and row["sqoop_last_mappers"] != "":
-                airflowPriority = int(row["sqoop_last_mappers"])
+                airflow_priority = int(row["sqoop_last_mappers"])
 
-            clearStageRequired = False
+            clear_stage_required = False
             if row["import_type"] in (
                 "full_direct",
                 "full",
@@ -845,52 +851,55 @@ class initialize:
                 "full_merge_direct",
                 "full_append",
             ):
-                clearStageRequired = True
+                clear_stage_required = True
 
             if row["import_phase_type"] in (
                 "full",
                 "oracle_flashback",
                 "mssql_change_tracking",
             ):
-                clearStageRequired = True
+                clear_stage_required = True
 
-            if clearStageRequired == True:
+            if clear_stage_required == True:
                 if self.airflowMode == "default":
-                    self.DAGfile.write("%s_clearStage = BashOperator(\n" % (taskID))
-                    self.DAGfile.write("    task_id='%s_clearStage',\n" % (taskID))
+                    self.DAGfile.write("%s_clearStage = BashOperator(\n" % (task_id))
+                    self.DAGfile.write("    task_id='%s_clearStage',\n" % (task_id))
                     self.DAGfile.write(
                         "    bash_command='%s -h %s -t %s ',\n"
-                        % (dbimportClearStageCMD, row["hive_db"], row["hive_table"])
+                        % (dbimport_clear_stage_cmd, row["hive_db"], row["hive_table"])
                     )
-                    self.DAGfile.write("    pool='%s',\n" % (importPhasePool))
-                    self.DAGfile.write("    priority_weight=%s,\n" % (airflowPriority))
+                    self.DAGfile.write("    pool='%s',\n" % (import_phase_pool))
+                    self.DAGfile.write("    priority_weight=%s,\n" % (airflow_priority))
                     self.DAGfile.write("    weight_rule='absolute',\n")
                     self.DAGfile.write("    retries=%s,\n" % (retries))
                     self.DAGfile.write("    dag=dag)\n")
                     self.DAGfile.write("\n")
                 elif self.airflowMode == "aws_mwaa":
-                    instanceID = self.getAWSInstanceID(row["hive_table"])
-                    self.DAGfile.write("%s_clearStage = PythonOperator(\n" % (taskID))
-                    self.DAGfile.write("    task_id='%s_clearStage',\n" % (taskID))
+                    instance_id = self.getAWSInstanceID(row["hive_table"])
+                    self.DAGfile.write("%s_clearStage = PythonOperator(\n" % (task_id))
+                    self.DAGfile.write("    task_id='%s_clearStage',\n" % (task_id))
                     self.DAGfile.write("    python_callable=startDBImportExecution,\n")
                     # self.DAGfile.write("    op_kwargs={\"command\": \"manage --clearImportStage -h %s -t %s\"},\n"%(row['hive_db'], row['hive_table']))
                     self.DAGfile.write(
                         '    op_kwargs={"command": "manage --clearImportStage -h %s -t %s", "instanceID": "%s"},\n'
-                        % (row["hive_db"], row["hive_table"], instanceID)
+                        % (row["hive_db"], row["hive_table"], instance_id)
                     )
-                    self.DAGfile.write("    pool='%s',\n" % (importPhasePool))
+                    self.DAGfile.write("    pool='%s',\n" % (import_phase_pool))
                     # self.DAGfile.write("    pool='%s',\n"%(instanceID))
-                    self.DAGfile.write("    priority_weight=%s,\n" % (airflowPriority))
+                    self.DAGfile.write("    priority_weight=%s,\n" % (airflow_priority))
                     self.DAGfile.write("    weight_rule='absolute',\n")
                     self.DAGfile.write("    retries=%s,\n" % (retries))
                     self.DAGfile.write("    dag=dag)\n")
                     self.DAGfile.write("\n")
 
-            if DAG["finish_all_stage1_first"] == 1 or runImportAndEtlSeparate == True:
-                if importPhaseAsSensor == True:
+            if (
+                dag["finish_all_stage1_first"] == 1
+                or run_import_and_etl_separate == True
+            ):
+                if import_phase_as_sensor == True:
                     # Running Import phase as a sensor
-                    self.DAGfile.write("%s_sensor = SqlSensor(\n" % (taskID))
-                    self.DAGfile.write("    task_id='%s_sensor',\n" % (taskID))
+                    self.DAGfile.write("%s_sensor = SqlSensor(\n" % (task_id))
+                    self.DAGfile.write("    task_id='%s_sensor',\n" % (task_id))
                     self.DAGfile.write("    conn_id='DBImport',\n")
                     self.DAGfile.write(
                         "    sql=\"\"\"select count(*) from import_tables where hive_db = '%s' and hive_table = '%s' and "
@@ -899,8 +908,8 @@ class initialize:
                     self.DAGfile.write(
                         "copy_finished >= '{{ next_execution_date.strftime('%Y-%m-%d %H:%M:%S.%f') }}'\"\"\",\n"
                     )
-                    self.DAGfile.write("    pool='%s',\n" % (importPhasePool))
-                    self.DAGfile.write("    priority_weight=%s,\n" % (airflowPriority))
+                    self.DAGfile.write("    pool='%s',\n" % (import_phase_pool))
+                    self.DAGfile.write("    priority_weight=%s,\n" % (airflow_priority))
                     self.DAGfile.write("    weight_rule='absolute',\n")
                     self.DAGfile.write("    timeout=18000,\n")
                     self.DAGfile.write("    poke_interval=300,\n")
@@ -909,167 +918,168 @@ class initialize:
                     self.DAGfile.write("\n")
 
                 if self.airflowMode == "default":
-                    self.DAGfile.write("%s_import = BashOperator(\n" % (taskID))
-                    self.DAGfile.write("    task_id='%s_import',\n" % (taskID))
+                    self.DAGfile.write("%s_import = BashOperator(\n" % (task_id))
+                    self.DAGfile.write("    task_id='%s_import',\n" % (task_id))
                     self.DAGfile.write(
                         "    bash_command='%s -h %s -t %s -I -C ',\n"
-                        % (dbimportCMD, row["hive_db"], row["hive_table"])
+                        % (dbimport_cmd, row["hive_db"], row["hive_table"])
                     )
-                    self.DAGfile.write("    pool='%s',\n" % (importPhasePool))
-                    self.DAGfile.write("    priority_weight=%s,\n" % (airflowPriority))
+                    self.DAGfile.write("    pool='%s',\n" % (import_phase_pool))
+                    self.DAGfile.write("    priority_weight=%s,\n" % (airflow_priority))
                     self.DAGfile.write("    weight_rule='absolute',\n")
-                    self.DAGfile.write("    retries=%s,\n" % (retriesImportPhase))
+                    self.DAGfile.write("    retries=%s,\n" % (retries_import_phase))
                     self.DAGfile.write("    dag=dag)\n")
                     self.DAGfile.write("\n")
 
-                    self.DAGfile.write("%s_etl = BashOperator(\n" % (taskID))
-                    self.DAGfile.write("    task_id='%s_etl',\n" % (taskID))
+                    self.DAGfile.write("%s_etl = BashOperator(\n" % (task_id))
+                    self.DAGfile.write("    task_id='%s_etl',\n" % (task_id))
                     self.DAGfile.write(
                         "    bash_command='%s -h %s -t %s -E ',\n"
-                        % (dbimportCMD, row["hive_db"], row["hive_table"])
+                        % (dbimport_cmd, row["hive_db"], row["hive_table"])
                     )
-                    self.DAGfile.write("    pool='%s',\n" % (etlPhasePool))
-                    self.DAGfile.write("    priority_weight=%s,\n" % (airflowPriority))
+                    self.DAGfile.write("    pool='%s',\n" % (etl_phase_pool))
+                    self.DAGfile.write("    priority_weight=%s,\n" % (airflow_priority))
                     self.DAGfile.write("    weight_rule='absolute',\n")
-                    self.DAGfile.write("    retries=%s,\n" % (retriesEtlPhase))
+                    self.DAGfile.write("    retries=%s,\n" % (retries_etl_phase))
                     self.DAGfile.write("    dag=dag)\n")
                     self.DAGfile.write("\n")
 
                 elif self.airflowMode == "aws_mwaa":
-                    instanceID = self.getAWSInstanceID(row["hive_table"])
-                    self.DAGfile.write("%s_import = PythonOperator(\n" % (taskID))
-                    self.DAGfile.write("    task_id='%s_import',\n" % (taskID))
+                    instance_id = self.getAWSInstanceID(row["hive_table"])
+                    self.DAGfile.write("%s_import = PythonOperator(\n" % (task_id))
+                    self.DAGfile.write("    task_id='%s_import',\n" % (task_id))
                     self.DAGfile.write("    python_callable=startDBImportExecution,\n")
                     self.DAGfile.write(
                         '    op_kwargs={"command": "import -d %s -t %s -I -C", "instanceID": "%s"},\n'
-                        % (row["hive_db"], row["hive_table"], instanceID)
+                        % (row["hive_db"], row["hive_table"], instance_id)
                     )
-                    self.DAGfile.write("    pool='%s',\n" % (importPhasePool))
-                    self.DAGfile.write("    priority_weight=%s,\n" % (airflowPriority))
+                    self.DAGfile.write("    pool='%s',\n" % (import_phase_pool))
+                    self.DAGfile.write("    priority_weight=%s,\n" % (airflow_priority))
                     self.DAGfile.write("    weight_rule='absolute',\n")
-                    self.DAGfile.write("    retries=%s,\n" % (retriesImportPhase))
+                    self.DAGfile.write("    retries=%s,\n" % (retries_import_phase))
                     self.DAGfile.write("    dag=dag)\n")
                     self.DAGfile.write("\n")
 
-                    self.DAGfile.write("%s_etl = PythonOperator(\n" % (taskID))
-                    self.DAGfile.write("    task_id='%s_etl',\n" % (taskID))
+                    self.DAGfile.write("%s_etl = PythonOperator(\n" % (task_id))
+                    self.DAGfile.write("    task_id='%s_etl',\n" % (task_id))
                     self.DAGfile.write("    python_callable=startDBImportExecution,\n")
                     self.DAGfile.write(
                         '    op_kwargs={"command": "import -d %s -t %s -E", "instanceID": "%s"},\n'
-                        % (row["hive_db"], row["hive_table"], instanceID)
+                        % (row["hive_db"], row["hive_table"], instance_id)
                     )
-                    self.DAGfile.write("    pool='%s',\n" % (etlPhasePool))
-                    self.DAGfile.write("    priority_weight=%s,\n" % (airflowPriority))
+                    self.DAGfile.write("    pool='%s',\n" % (etl_phase_pool))
+                    self.DAGfile.write("    priority_weight=%s,\n" % (airflow_priority))
                     self.DAGfile.write("    weight_rule='absolute',\n")
-                    self.DAGfile.write("    retries=%s,\n" % (retriesEtlPhase))
+                    self.DAGfile.write("    retries=%s,\n" % (retries_etl_phase))
                     self.DAGfile.write("    dag=dag)\n")
                     self.DAGfile.write("\n")
 
-                if clearStageRequired == True and DAG["finish_all_stage1_first"] == 1:
+                if clear_stage_required == True and dag["finish_all_stage1_first"] == 1:
                     self.DAGfile.write(
                         "%s.set_downstream(%s_clearStage)\n"
-                        % (self.mainStartTask, taskID)
+                        % (self.mainStartTask, task_id)
                     )
-                    if importPhaseAsSensor == True:
+                    if import_phase_as_sensor == True:
                         self.DAGfile.write(
                             "%s_clearStage.set_downstream(%s_sensor)\n"
-                            % (taskID, taskID)
+                            % (task_id, task_id)
                         )
                         self.DAGfile.write(
-                            "%s_sensor.set_downstream(%s_import)\n" % (taskID, taskID)
+                            "%s_sensor.set_downstream(%s_import)\n" % (task_id, task_id)
                         )
                     else:
                         self.DAGfile.write(
                             "%s_clearStage.set_downstream(%s_import)\n"
-                            % (taskID, taskID)
+                            % (task_id, task_id)
                         )
                     self.DAGfile.write(
-                        "%s_import.set_downstream(Import_Phase_Finished)\n" % (taskID)
+                        "%s_import.set_downstream(Import_Phase_Finished)\n" % (task_id)
                     )
                     self.DAGfile.write(
-                        "Import_Phase_Finished.set_downstream(%s_etl)\n" % (taskID)
+                        "Import_Phase_Finished.set_downstream(%s_etl)\n" % (task_id)
                     )
                     self.DAGfile.write(
-                        "%s_etl.set_downstream(%s)\n" % (taskID, self.mainStopTask)
+                        "%s_etl.set_downstream(%s)\n" % (task_id, self.mainStopTask)
                     )
                 elif (
-                    clearStageRequired == True and DAG["finish_all_stage1_first"] == 0
+                    clear_stage_required == True and dag["finish_all_stage1_first"] == 0
                 ):  # This means that runImportAndEtlSeparate == True
                     self.DAGfile.write(
                         "%s.set_downstream(%s_clearStage)\n"
-                        % (self.mainStartTask, taskID)
+                        % (self.mainStartTask, task_id)
                     )
-                    if importPhaseAsSensor == True:
+                    if import_phase_as_sensor == True:
                         self.DAGfile.write(
                             "%s_clearStage.set_downstream(%s_sensor)\n"
-                            % (taskID, taskID)
+                            % (task_id, task_id)
                         )
                         self.DAGfile.write(
-                            "%s_sensor.set_downstream(%s_import)\n" % (taskID, taskID)
+                            "%s_sensor.set_downstream(%s_import)\n" % (task_id, task_id)
                         )
                     else:
                         self.DAGfile.write(
                             "%s_clearStage.set_downstream(%s_import)\n"
-                            % (taskID, taskID)
+                            % (task_id, task_id)
                         )
                     self.DAGfile.write(
-                        "%s_import.set_downstream(%s_etl)\n" % (taskID, taskID)
+                        "%s_import.set_downstream(%s_etl)\n" % (task_id, task_id)
                     )
                     self.DAGfile.write(
-                        "%s_etl.set_downstream(%s)\n" % (taskID, self.mainStopTask)
+                        "%s_etl.set_downstream(%s)\n" % (task_id, self.mainStopTask)
                     )
                 elif (
-                    clearStageRequired == False and DAG["finish_all_stage1_first"] == 1
+                    clear_stage_required == False
+                    and dag["finish_all_stage1_first"] == 1
                 ):
-                    if importPhaseAsSensor == True:
+                    if import_phase_as_sensor == True:
                         self.DAGfile.write(
                             "%s.set_downstream(%s_sensor)\n"
-                            % (self.mainStartTask, taskID)
+                            % (self.mainStartTask, task_id)
                         )
                         self.DAGfile.write(
-                            "%s_sensor.set_downstream(%s_import)\n" % (taskID, taskID)
+                            "%s_sensor.set_downstream(%s_import)\n" % (task_id, task_id)
                         )
                     else:
                         self.DAGfile.write(
                             "%s.set_downstream(%s_import)\n"
-                            % (self.mainStartTask, taskID)
+                            % (self.mainStartTask, task_id)
                         )
                     self.DAGfile.write(
-                        "%s_import.set_downstream(Import_Phase_Finished)\n" % (taskID)
+                        "%s_import.set_downstream(Import_Phase_Finished)\n" % (task_id)
                     )
                     self.DAGfile.write(
-                        "Import_Phase_Finished.set_downstream(%s_etl)\n" % (taskID)
+                        "Import_Phase_Finished.set_downstream(%s_etl)\n" % (task_id)
                     )
                     self.DAGfile.write(
-                        "%s_etl.set_downstream(%s)\n" % (taskID, self.mainStopTask)
+                        "%s_etl.set_downstream(%s)\n" % (task_id, self.mainStopTask)
                     )
                 else:
-                    if importPhaseAsSensor == True:
+                    if import_phase_as_sensor == True:
                         self.DAGfile.write(
                             "%s.set_downstream(%s_sensor)\n"
-                            % (self.mainStartTask, taskID)
+                            % (self.mainStartTask, task_id)
                         )
                         self.DAGfile.write(
-                            "%s_sensor.set_downstream(%s_import)\n" % (taskID, taskID)
+                            "%s_sensor.set_downstream(%s_import)\n" % (task_id, task_id)
                         )
                     else:
                         self.DAGfile.write(
                             "%s.set_downstream(%s_import)\n"
-                            % (self.mainStartTask, taskID)
+                            % (self.mainStartTask, task_id)
                         )
                     self.DAGfile.write(
-                        "%s_import.set_downstream(%s_etl)\n" % (taskID, taskID)
+                        "%s_import.set_downstream(%s_etl)\n" % (task_id, task_id)
                     )
                     self.DAGfile.write(
-                        "%s_etl.set_downstream(%s)\n" % (taskID, self.mainStopTask)
+                        "%s_etl.set_downstream(%s)\n" % (task_id, self.mainStopTask)
                     )
                 self.DAGfile.write("\n")
 
             else:
-                if importPhaseAsSensor == True:
+                if import_phase_as_sensor == True:
                     # Running Import phase as a sensor
-                    self.DAGfile.write("%s_sensor = SqlSensor(\n" % (taskID))
-                    self.DAGfile.write("    task_id='%s_sensor',\n" % (taskID))
+                    self.DAGfile.write("%s_sensor = SqlSensor(\n" % (task_id))
+                    self.DAGfile.write("    task_id='%s_sensor',\n" % (task_id))
                     self.DAGfile.write("    conn_id='DBImport',\n")
                     self.DAGfile.write(
                         "    sql=\"\"\"select count(*) from import_tables where hive_db = '%s' and hive_table = '%s' and "
@@ -1078,8 +1088,8 @@ class initialize:
                     self.DAGfile.write(
                         "copy_finished >= '{{ next_execution_date.strftime('%Y-%m-%d %H:%M:%S.%f') }}'\"\"\",\n"
                     )
-                    self.DAGfile.write("    pool='%s',\n" % (importPhasePool))
-                    self.DAGfile.write("    priority_weight=%s,\n" % (airflowPriority))
+                    self.DAGfile.write("    pool='%s',\n" % (import_phase_pool))
+                    self.DAGfile.write("    priority_weight=%s,\n" % (airflow_priority))
                     self.DAGfile.write("    weight_rule='absolute',\n")
                     self.DAGfile.write("    timeout=18000,\n")
                     self.DAGfile.write("    poke_interval=300,\n")
@@ -1088,102 +1098,102 @@ class initialize:
                     self.DAGfile.write("\n")
 
                 if self.airflowMode == "default":
-                    self.DAGfile.write("%s = BashOperator(\n" % (taskID))
-                    self.DAGfile.write("    task_id='%s',\n" % (taskID))
+                    self.DAGfile.write("%s = BashOperator(\n" % (task_id))
+                    self.DAGfile.write("    task_id='%s',\n" % (task_id))
                     self.DAGfile.write(
                         "    bash_command='%s -h %s -t %s %s ',\n"
                         % (
-                            dbimportCMD,
+                            dbimport_cmd,
                             row["hive_db"],
                             row["hive_table"],
-                            metaDataImportOption,
+                            meta_data_import_option,
                         )
                     )
-                    self.DAGfile.write("    pool='%s',\n" % (etlPhasePool))
-                    self.DAGfile.write("    priority_weight=%s,\n" % (airflowPriority))
+                    self.DAGfile.write("    pool='%s',\n" % (etl_phase_pool))
+                    self.DAGfile.write("    priority_weight=%s,\n" % (airflow_priority))
                     self.DAGfile.write("    weight_rule='absolute',\n")
                     self.DAGfile.write("    retries=%s,\n" % (retries))
                     self.DAGfile.write("    dag=dag)\n")
                     self.DAGfile.write("\n")
                 elif self.airflowMode == "aws_mwaa":
-                    instanceID = self.getAWSInstanceID(row["hive_table"])
-                    self.DAGfile.write("%s = PythonOperator(\n" % (taskID))
-                    self.DAGfile.write("    task_id='%s',\n" % (taskID))
+                    instance_id = self.getAWSInstanceID(row["hive_table"])
+                    self.DAGfile.write("%s = PythonOperator(\n" % (task_id))
+                    self.DAGfile.write("    task_id='%s',\n" % (task_id))
                     self.DAGfile.write("    python_callable=startDBImportExecution,\n")
                     self.DAGfile.write(
                         '    op_kwargs={"command": "import -d %s -t %s %s", "instanceID": "%s"},\n'
                         % (
                             row["hive_db"],
                             row["hive_table"],
-                            metaDataImportOption,
-                            instanceID,
+                            meta_data_import_option,
+                            instance_id,
                         )
                     )
-                    self.DAGfile.write("    pool='%s',\n" % (etlPhasePool))
-                    self.DAGfile.write("    priority_weight=%s,\n" % (airflowPriority))
+                    self.DAGfile.write("    pool='%s',\n" % (etl_phase_pool))
+                    self.DAGfile.write("    priority_weight=%s,\n" % (airflow_priority))
                     self.DAGfile.write("    weight_rule='absolute',\n")
                     self.DAGfile.write("    retries=%s,\n" % (retries))
                     self.DAGfile.write("    dag=dag)\n")
                     self.DAGfile.write("\n")
 
-                if clearStageRequired == True:
-                    if importPhaseAsSensor == True:
+                if clear_stage_required == True:
+                    if import_phase_as_sensor == True:
                         self.DAGfile.write(
                             "%s.set_downstream(%s_clearStage)\n"
-                            % (self.mainStartTask, taskID)
+                            % (self.mainStartTask, task_id)
                         )
                         self.DAGfile.write(
                             "%s_clearStage.set_downstream(%s_sensor)\n"
-                            % (taskID, taskID)
+                            % (task_id, task_id)
                         )
                         self.DAGfile.write(
-                            "%s_sensor.set_downstream(%s)\n" % (taskID, taskID)
+                            "%s_sensor.set_downstream(%s)\n" % (task_id, task_id)
                         )
                         self.DAGfile.write(
-                            "%s.set_downstream(%s)\n" % (taskID, self.mainStopTask)
+                            "%s.set_downstream(%s)\n" % (task_id, self.mainStopTask)
                         )
                     else:
                         self.DAGfile.write(
                             "%s.set_downstream(%s_clearStage)\n"
-                            % (self.mainStartTask, taskID)
+                            % (self.mainStartTask, task_id)
                         )
                         self.DAGfile.write(
-                            "%s_clearStage.set_downstream(%s)\n" % (taskID, taskID)
+                            "%s_clearStage.set_downstream(%s)\n" % (task_id, task_id)
                         )
                         self.DAGfile.write(
-                            "%s.set_downstream(%s)\n" % (taskID, self.mainStopTask)
+                            "%s.set_downstream(%s)\n" % (task_id, self.mainStopTask)
                         )
                 else:
-                    if importPhaseAsSensor == True:
+                    if import_phase_as_sensor == True:
                         self.DAGfile.write(
                             "%s.set_downstream(%s_sensor)\n"
-                            % (self.mainStartTask, taskID)
+                            % (self.mainStartTask, task_id)
                         )
                         self.DAGfile.write(
-                            "%s_sensor.set_downstream(%s)\n" % (taskID, taskID)
+                            "%s_sensor.set_downstream(%s)\n" % (task_id, task_id)
                         )
                         self.DAGfile.write(
-                            "%s.set_downstream(%s)\n" % (taskID, self.mainStopTask)
+                            "%s.set_downstream(%s)\n" % (task_id, self.mainStopTask)
                         )
                     else:
                         self.DAGfile.write(
-                            "%s.set_downstream(%s)\n" % (self.mainStartTask, taskID)
+                            "%s.set_downstream(%s)\n" % (self.mainStartTask, task_id)
                         )
                         self.DAGfile.write(
-                            "%s.set_downstream(%s)\n" % (taskID, self.mainStopTask)
+                            "%s.set_downstream(%s)\n" % (task_id, self.mainStopTask)
                         )
                 self.DAGfile.write("\n")
 
         self.addTasksToDAGfile(
-            dagName=DAG["dag_name"],
-            mainDagSchedule=DAG["schedule_interval"],
-            defaultRetries=retries,
-            defaultSudoUser=sudoUser,
+            dag_name=dag["dag_name"],
+            main_dag_schedule=dag["schedule_interval"],
+            default_retries=retries,
+            default_sudo_user=sudo_user,
         )
         self.addSensorsToDAGfile(
-            dagName=DAG["dag_name"], mainDagSchedule=DAG["schedule_interval"]
+            dag_name=dag["dag_name"], main_dag_schedule=dag["schedule_interval"]
         )
-        self.createAirflowPools(pools=usedPools)
+        self.createAirflowPools(pools=used_pools)
         if self.airflowMode == "aws_mwaa" and self.airflowAWSpoolToInstanceId == True:
             self.AWSappendInstanceIDasPools()
         self.closeDAGfile()
@@ -1195,11 +1205,11 @@ class initialize:
 
         if self.airflowMode == "default" and self.createPoolsWithTasks == False:
             session = self.airflowDBSession()
-            slotPool = aliased(airflowSchema.slotPool)
+            slot_pool = aliased(airflowSchema.slotPool)
 
-            airflowPools = pd.DataFrame(
-                session.query(slotPool.pool, slotPool.slots, slotPool.description)
-                .select_from(slotPool)
+            airflow_pools = pd.DataFrame(
+                session.query(slot_pool.pool, slot_pool.slots, slot_pool.description)
+                .select_from(slot_pool)
                 .all()
             )
 
@@ -1211,20 +1221,20 @@ class initialize:
                     self.createdPools.append(pool)
 
                 if (
-                    len(airflowPools) == 0
-                    or len(airflowPools.loc[airflowPools["pool"] == pool]) == 0
+                    len(airflow_pools) == 0
+                    or len(airflow_pools.loc[airflow_pools["pool"] == pool]) == 0
                 ):
                     try:
                         log.info(
                             "Creating the Airflow pool '%s' with %s slots"
                             % (pool, self.airflowDefaultPoolSize)
                         )
-                        newPool = airflowSchema.slotPool(
+                        new_pool = airflowSchema.slotPool(
                             pool=pool,
                             slots=self.airflowDefaultPoolSize,
                             include_deferred=0,
                         )
-                        session.add(newPool)
+                        session.add(new_pool)
                         session.commit()
                     except sa.exc.IntegrityError:
                         log.warning(
@@ -1243,108 +1253,108 @@ class initialize:
                 else:
                     self.createdPools.append(pool)
 
-                taskName = "createPool_%s" % (pool.replace(".", "_").replace("-", "_"))
+                task_name = "createPool_%s" % (pool.replace(".", "_").replace("-", "_"))
                 self.DAGfile.write("\n")
-                self.DAGfile.write("%s = CreatePoolOperator(\n" % (taskName))
+                self.DAGfile.write("%s = CreatePoolOperator(\n" % (task_name))
                 self.DAGfile.write("    name='%s',\n" % (pool))
                 self.DAGfile.write("    slots=%s,\n" % (self.airflowDefaultPoolSize))
-                self.DAGfile.write("    task_id='%s',\n" % (taskName))
+                self.DAGfile.write("    task_id='%s',\n" % (task_name))
                 self.DAGfile.write("    retries=5,\n")
                 self.DAGfile.write("    priority_weight=1,\n")
                 self.DAGfile.write("    weight_rule='absolute',\n")
                 self.DAGfile.write("    pool=None,\n")
                 self.DAGfile.write("    dag=dag)\n")
                 self.DAGfile.write("\n")
-                self.DAGfile.write("start.set_downstream(%s)\n" % (taskName))
+                self.DAGfile.write("start.set_downstream(%s)\n" % (task_name))
                 self.DAGfile.write(
-                    "%s.set_downstream(%s)\n" % (taskName, self.preStopTask)
+                    "%s.set_downstream(%s)\n" % (task_name, self.preStopTask)
                 )
                 self.DAGfile.write("\n")
 
-    def generateCustomDAG(self, DAG):
+    def generateCustomDAG(self, dag):
         """Generates a Custom DAG"""
         log = logging.getLogger(self.logger)
 
         # session = self.configDBSession()
         session = self.getDBImportSession()
-        airflowTasks = aliased(configSchema.airflowTasks)
+        airflow_tasks = aliased(configSchema.airflowTasks)
 
         tasks = (
-            session.query(airflowTasks.task_name)
-            .select_from(airflowTasks)
-            .filter(airflowTasks.dag_name == DAG["dag_name"])
-            .filter(airflowTasks.include_in_airflow == 1)
-            .filter(airflowTasks.placement == "in main")
+            session.query(airflow_tasks.task_name)
+            .select_from(airflow_tasks)
+            .filter(airflow_tasks.dag_name == dag["dag_name"])
+            .filter(airflow_tasks.include_in_airflow == 1)
+            .filter(airflow_tasks.placement == "in main")
             .count()
         )
 
         if tasks == 0:
             log.warning(
                 "There are no tasks defined 'in main' for DAG '%s'. This is required for a custom DAG"
-                % (DAG["dag_name"])
+                % (dag["dag_name"])
             )
             session.close()
             return
 
-        usedPools = []
+        used_pools = []
         # 		if self.airflowMode == "aws_mwaa" and self.airflowAWSpoolToInstanceId == True:
         # 			# We can choice to override the poolname and set it to the instance ID if we are running on AWS
         # 			defaultPool = self.airflowAWSinstanceIds
         # 		else:
         # 			defaultPool = DAG['dag_name']
-        defaultPool = DAG["dag_name"]
-        sudoUser = DAG["sudo_user"]
-        usedPools.append(defaultPool)
+        default_pool = dag["dag_name"]
+        sudo_user = dag["sudo_user"]
+        used_pools.append(default_pool)
 
-        if DAG["retries"] == None or DAG["retries"] == "":
+        if dag["retries"] == None or dag["retries"] == "":
             retries = 0
         else:
-            retries = int(DAG["retries"])
+            retries = int(dag["retries"])
 
-        cronSchedule = self.convertTimeToCron(DAG["schedule_interval"])
+        cron_schedule = self.convertTimeToCron(dag["schedule_interval"])
         self.createDAGfileWithHeader(
-            dagName=DAG["dag_name"],
-            cronSchedule=cronSchedule,
-            defaultPool=defaultPool,
-            sudoUser=sudoUser,
-            dagTimeZone=DAG["timezone"],
-            email=DAG["email"],
-            email_on_failure=DAG["email_on_failure"],
-            email_on_retries=DAG["email_on_retries"],
-            tags=DAG["tags"],
-            slaWarningTime=DAG["sla_warning_time"],
-            retryExponentialBackoff=DAG["retry_exponential_backoff"],
-            concurrency=DAG["concurrency"],
+            dag_name=dag["dag_name"],
+            cron_schedule=cron_schedule,
+            default_pool=default_pool,
+            sudo_user=sudo_user,
+            dag_time_zone=dag["timezone"],
+            email=dag["email"],
+            email_on_failure=dag["email_on_failure"],
+            email_on_retries=dag["email_on_retries"],
+            tags=dag["tags"],
+            sla_warning_time=dag["sla_warning_time"],
+            retry_exponential_backoff=dag["retry_exponential_backoff"],
+            concurrency=dag["concurrency"],
         )
         self.addTasksToDAGfile(
-            dagName=DAG["dag_name"],
-            mainDagSchedule=DAG["schedule_interval"],
-            defaultRetries=retries,
-            defaultSudoUser=sudoUser,
+            dag_name=dag["dag_name"],
+            main_dag_schedule=dag["schedule_interval"],
+            default_retries=retries,
+            default_sudo_user=sudo_user,
         )
         self.addSensorsToDAGfile(
-            dagName=DAG["dag_name"], mainDagSchedule=DAG["schedule_interval"]
+            dag_name=dag["dag_name"], main_dag_schedule=dag["schedule_interval"]
         )
-        self.createAirflowPools(pools=usedPools)
+        self.createAirflowPools(pools=used_pools)
         self.closeDAGfile()
         session.close()
 
     def convertTimeToCron(self, time):
         """Converts a string in format HH:MM to a CRON time string based on 'minute hour day month weekday'"""
         log = logging.getLogger(self.logger)
-        returnValue = time
+        return_value = time
 
         if re.search("^[0-2][0-9]:[0-5][0-9]$", time):
             hour = re.sub(":[0-5][0-9]$", "", time)
             minute = re.sub("^[0-2][0-9]:", "", time)
-            returnValue = "'%s %s * * *'" % (int(minute), int(hour))
+            return_value = "'%s %s * * *'" % (int(minute), int(hour))
 
-        return returnValue
+        return return_value
 
-    def validateTimeZone(self, timeZone):
+    def validateTimeZone(self, time_zone):
         log = logging.getLogger(self.logger)
         try:
-            pendulum.timezone(timeZone)
+            pendulum.timezone(time_zone)
         except ValueError:
             return False
         else:
@@ -1352,18 +1362,18 @@ class initialize:
 
     def createDAGfileWithHeader(
         self,
-        dagName,
-        cronSchedule,
-        defaultPool,
-        importPhaseFinishFirst=False,
-        sudoUser="",
-        dagTimeZone=None,
+        dag_name,
+        cron_schedule,
+        default_pool,
+        import_phase_finish_first=False,
+        sudo_user="",
+        dag_time_zone=None,
         email=None,
         email_on_failure=None,
         email_on_retries=None,
         tags=None,
-        slaWarningTime=None,
-        retryExponentialBackoff=None,
+        sla_warning_time=None,
+        retry_exponential_backoff=None,
         concurrency=None,
     ):
         log = logging.getLogger(self.logger)
@@ -1388,23 +1398,23 @@ class initialize:
         else:
             self.TaskQueueForDummy = None
 
-        tasksBeforeMainExists = False
-        tasksAfterMainExists = False
-        tasksSensorsExists = False
+        tasks_before_main_exists = False
+        tasks_after_main_exists = False
+        tasks_sensors_exists = False
 
         if (
-            dagTimeZone != None
-            and dagTimeZone != ""
-            and self.validateTimeZone(dagTimeZone) == False
+            dag_time_zone != None
+            and dag_time_zone != ""
+            and self.validateTimeZone(dag_time_zone) == False
         ):
             log.warning(
-                "Time zone value specified for DAG is not valid, (%s)" % (dagTimeZone)
+                "Time zone value specified for DAG is not valid, (%s)" % (dag_time_zone)
             )
             log.warning("Using default time zone value instead")
-            dagTimeZone = None
+            dag_time_zone = None
 
         if self.DAGFolder == None:
-            self.DAGfilename = "%s/%s.py" % (self.DAGstagingDirectory, dagName)
+            self.DAGfilename = "%s/%s.py" % (self.DAGstagingDirectory, dag_name)
             if not os.path.exists(self.DAGstagingDirectory):
                 try:
                     log.info(
@@ -1415,10 +1425,10 @@ class initialize:
                 except:
                     pass
         else:
-            self.DAGfilename = "%s/%s.py" % (self.DAGFolder, dagName)
+            self.DAGfilename = "%s/%s.py" % (self.DAGFolder, dag_name)
 
-        self.DAGfilenameInAwsMWAA = "dags/%s.py" % (dagName)
-        self.DAGfilenameInAirflow = "%s/%s.py" % (self.DAGdirectory, dagName)
+        self.DAGfilenameInAwsMWAA = "dags/%s.py" % (dag_name)
+        self.DAGfilenameInAirflow = "%s/%s.py" % (self.DAGdirectory, dag_name)
 
         try:
             self.DAGfile = open(self.DAGfilename, "w")
@@ -1513,13 +1523,13 @@ class initialize:
         self.DAGfile.write("\n")
         self.DAGfile.write("\n")
 
-        if dagTimeZone == None or dagTimeZone == "":
+        if dag_time_zone == None or dag_time_zone == "":
             self.DAGfile.write(
                 'local_tz = pendulum.timezone("%s")\n' % (self.defaultTimeZone)
             )
             self.DAGfile.write("\n")
         else:
-            self.DAGfile.write('local_tz = pendulum.timezone("%s")\n' % (dagTimeZone))
+            self.DAGfile.write('local_tz = pendulum.timezone("%s")\n' % (dag_time_zone))
             self.DAGfile.write("\n")
 
         if self.airflowMode == "aws_mwaa":
@@ -2008,27 +2018,31 @@ class initialize:
         else:
             self.DAGfile.write("    'email_on_retry': False,\n")
 
-        if retryExponentialBackoff == 1:
+        if retry_exponential_backoff == 1:
             self.DAGfile.write("    'retry_exponential_backoff': True,\n")
         else:
             self.DAGfile.write("    'retry_exponential_backoff': False,\n")
 
         self.DAGfile.write("    'retries': 0,\n")
-        self.DAGfile.write("    'pool': '%s',\n" % (defaultPool))
+        self.DAGfile.write("    'pool': '%s',\n" % (default_pool))
         self.DAGfile.write("    'retry_delay': timedelta(minutes=5),\n")
 
-        if slaWarningTime != None and type(slaWarningTime) == time:
+        if sla_warning_time != None and type(sla_warning_time) == time:
             self.DAGfile.write(
                 "    'sla': timedelta(hours=%s, minutes=%s, seconds=%s),\n"
-                % (slaWarningTime.hour, slaWarningTime.minute, slaWarningTime.second)
+                % (
+                    sla_warning_time.hour,
+                    sla_warning_time.minute,
+                    sla_warning_time.second,
+                )
             )
 
         self.DAGfile.write("}\n")
         self.DAGfile.write("\n")
         self.DAGfile.write("dag = DAG(\n")
-        self.DAGfile.write("    '%s',\n" % (dagName))
+        self.DAGfile.write("    '%s',\n" % (dag_name))
         self.DAGfile.write("    default_args=default_args,\n")
-        self.DAGfile.write("    description='%s',\n" % (dagName))
+        self.DAGfile.write("    description='%s',\n" % (dag_name))
         self.DAGfile.write("    catchup=False,\n")
 
         if tags != None and tags.strip() != "":
@@ -2050,7 +2064,7 @@ class initialize:
         except ValueError:
             pass
 
-        self.DAGfile.write("    schedule_interval=%s)\n" % (cronSchedule))
+        self.DAGfile.write("    schedule_interval=%s)\n" % (cron_schedule))
 
         self.DAGfile.write("\n")
         if self.airflowMode == "default":
@@ -2062,7 +2076,7 @@ class initialize:
                 )
             self.DAGfile.write(
                 "    bash_command='%sbin/manage --checkAirflowExecution --airflowDAG=%s',\n"
-                % (self.getDBImportCommandPath(sudoUser=sudoUser), dagName)
+                % (self.getDBImportCommandPath(sudo_user=sudo_user), dag_name)
             )
             self.DAGfile.write("    priority_weight=100,\n")
             self.DAGfile.write("    weight_rule='absolute',\n")
@@ -2078,7 +2092,7 @@ class initialize:
                 )
             self.DAGfile.write(
                 "    bash_command='%sbin/manage --sendAirflowStopMessage --airflowDAG=%s',\n"
-                % (self.getDBImportCommandPath(sudoUser=sudoUser), dagName)
+                % (self.getDBImportCommandPath(sudo_user=sudo_user), dag_name)
             )
             self.DAGfile.write("    priority_weight=100,\n")
             self.DAGfile.write("    weight_rule='absolute',\n")
@@ -2096,7 +2110,7 @@ class initialize:
             self.DAGfile.write("    python_callable=startDBImportExecution,\n")
             self.DAGfile.write(
                 '    op_kwargs={"command": "manage --checkAirflowExecution --airflowDAG=%s", "instanceID": "%s"},\n'
-                % (dagName, self.getAWSInstanceID("start"))
+                % (dag_name, self.getAWSInstanceID("start"))
             )
             self.DAGfile.write("    priority_weight=100,\n")
             self.DAGfile.write("    weight_rule='absolute',\n")
@@ -2113,7 +2127,7 @@ class initialize:
             self.DAGfile.write("    python_callable=startDBImportExecution,\n")
             self.DAGfile.write(
                 '    op_kwargs={"command": "manage --checkAirflowExecution --airflowDAG=%s", "instanceID": "%s"},\n'
-                % (dagName, self.getAWSInstanceID("stop"))
+                % (dag_name, self.getAWSInstanceID("stop"))
             )
             self.DAGfile.write("    priority_weight=100,\n")
             self.DAGfile.write("    weight_rule='absolute',\n")
@@ -2126,7 +2140,7 @@ class initialize:
             self.DAGfile.write("    return dag_run_obj\n")
             self.DAGfile.write("\n")
 
-        if importPhaseFinishFirst == True:
+        if import_phase_finish_first == True:
             self.DAGfile.write("Import_Phase_Finished = DummyOperator(\n")
             self.DAGfile.write("    task_id='Import_Phase_Finished',\n")
             if self.TaskQueueForDummy != None:
@@ -2138,23 +2152,23 @@ class initialize:
             self.DAGfile.write("    dag=dag)\n")
             self.DAGfile.write("\n")
 
-        airflowDAGsensors = aliased(configSchema.airflowDagSensors, name="ads")
+        airflow_dag_sensors = aliased(configSchema.airflowDagSensors, name="ads")
         sensors = (
-            session.query(airflowDAGsensors.dag_name)
-            .select_from(airflowDAGsensors)
-            .filter(airflowDAGsensors.dag_name == dagName)
+            session.query(airflow_dag_sensors.dag_name)
+            .select_from(airflow_dag_sensors)
+            .filter(airflow_dag_sensors.dag_name == dag_name)
             .count()
         )
 
         if sensors > 0:
-            tasksSensorsExists = True
+            tasks_sensors_exists = True
 
-        airflowTasks = aliased(configSchema.airflowTasks)
+        airflow_tasks = aliased(configSchema.airflowTasks)
         tasks = pd.DataFrame(
-            session.query(airflowTasks.dag_name, airflowTasks.placement)
-            .select_from(airflowTasks)
-            .filter(airflowTasks.dag_name == dagName)
-            .filter(airflowTasks.include_in_airflow == 1)
+            session.query(airflow_tasks.dag_name, airflow_tasks.placement)
+            .select_from(airflow_tasks)
+            .filter(airflow_tasks.dag_name == dag_name)
+            .filter(airflow_tasks.include_in_airflow == 1)
             .all()
         )
 
@@ -2165,12 +2179,12 @@ class initialize:
             len(tasks.loc[tasks["placement"] == "before main"]) > 0
             or self.createPoolsWithTasks == True
         ):
-            tasksBeforeMainExists = True
+            tasks_before_main_exists = True
 
         if len(tasks.loc[tasks["placement"] == "after main"]) > 0:
-            tasksAfterMainExists = True
+            tasks_after_main_exists = True
 
-        if tasksBeforeMainExists == True:
+        if tasks_before_main_exists == True:
             self.DAGfile.write("%s = DummyOperator(\n" % (self.preStopTask))
             self.DAGfile.write("    task_id='%s',\n" % (self.preStopTask))
             if self.TaskQueueForDummy != None:
@@ -2182,7 +2196,7 @@ class initialize:
             self.DAGfile.write("    dag=dag)\n")
             self.DAGfile.write("\n")
 
-        if tasksAfterMainExists == True:
+        if tasks_after_main_exists == True:
             self.DAGfile.write("%s = DummyOperator(\n" % (self.postStartTask))
             self.DAGfile.write("    task_id='%s',\n" % (self.postStartTask))
             if self.TaskQueueForDummy != None:
@@ -2194,7 +2208,7 @@ class initialize:
             self.DAGfile.write("    dag=dag)\n")
             self.DAGfile.write("\n")
 
-        if tasksSensorsExists == True:
+        if tasks_sensors_exists == True:
             self.DAGfile.write("%s = DummyOperator(\n" % (self.sensorStopTask))
             self.DAGfile.write("    task_id='%s',\n" % (self.sensorStopTask))
             if self.TaskQueueForDummy != None:
@@ -2206,17 +2220,17 @@ class initialize:
             self.DAGfile.write("    dag=dag)\n")
             self.DAGfile.write("\n")
 
-        if tasksSensorsExists == False and tasksBeforeMainExists == True:
+        if tasks_sensors_exists == False and tasks_before_main_exists == True:
             self.mainStartTask = self.preStopTask
 
-        if tasksSensorsExists == True and tasksBeforeMainExists == False:
+        if tasks_sensors_exists == True and tasks_before_main_exists == False:
             self.mainStartTask = self.sensorStopTask
 
-        if tasksSensorsExists == True and tasksBeforeMainExists == True:
+        if tasks_sensors_exists == True and tasks_before_main_exists == True:
             self.preStartTask = self.sensorStopTask
             self.mainStartTask = self.preStopTask
 
-        if tasksAfterMainExists == True:
+        if tasks_after_main_exists == True:
             self.mainStopTask = self.postStartTask
 
         session.close()
@@ -2287,10 +2301,10 @@ class initialize:
         else:
             print("DAG file written to %s" % (self.DAGfilename))
 
-    def addFailureTask(self, taskName):
+    def addFailureTask(self, task_name):
         log = logging.getLogger(self.logger)
-        self.DAGfile.write("%s = BashOperator(\n" % (taskName))
-        self.DAGfile.write("    task_id='%s',\n" % (taskName))
+        self.DAGfile.write("%s = BashOperator(\n" % (task_name))
+        self.DAGfile.write("    task_id='%s',\n" % (task_name))
         self.DAGfile.write("    bash_command='exit 1 ',\n")
         self.DAGfile.write("    priority_weight=1,\n")
         self.DAGfile.write("    weight_rule='absolute',\n")
@@ -2298,44 +2312,44 @@ class initialize:
         self.DAGfile.write("\n")
 
     def addTasksToDAGfile(
-        self, dagName, mainDagSchedule, defaultRetries=0, defaultSudoUser=""
+        self, dag_name, main_dag_schedule, default_retries=0, default_sudo_user=""
     ):
         log = logging.getLogger(self.logger)
 
         # session = self.configDBSession()
         session = self.getDBImportSession()
 
-        if defaultSudoUser == None:
-            defaultSudoUser = ""
+        if default_sudo_user == None:
+            default_sudo_user = ""
 
-        airflowTasks = aliased(configSchema.airflowTasks)
+        airflow_tasks = aliased(configSchema.airflowTasks)
 
         tasks = pd.DataFrame(
             session.query(
-                airflowTasks.task_name,
-                airflowTasks.task_type,
-                airflowTasks.placement,
-                airflowTasks.airflow_pool,
-                airflowTasks.airflow_priority,
-                airflowTasks.task_dependency_downstream,
-                airflowTasks.task_dependency_upstream,
-                airflowTasks.task_config,
-                airflowTasks.jdbc_dbalias,
-                airflowTasks.hive_db,
-                airflowTasks.sensor_poke_interval,
-                airflowTasks.sensor_timeout_minutes,
-                airflowTasks.sensor_connection,
-                airflowTasks.sensor_soft_fail,
-                airflowTasks.sudo_user,
+                airflow_tasks.task_name,
+                airflow_tasks.task_type,
+                airflow_tasks.placement,
+                airflow_tasks.airflow_pool,
+                airflow_tasks.airflow_priority,
+                airflow_tasks.task_dependency_downstream,
+                airflow_tasks.task_dependency_upstream,
+                airflow_tasks.task_config,
+                airflow_tasks.jdbc_dbalias,
+                airflow_tasks.hive_db,
+                airflow_tasks.sensor_poke_interval,
+                airflow_tasks.sensor_timeout_minutes,
+                airflow_tasks.sensor_connection,
+                airflow_tasks.sensor_soft_fail,
+                airflow_tasks.sudo_user,
             )
-            .select_from(airflowTasks)
-            .filter(airflowTasks.dag_name == dagName)
-            .filter(airflowTasks.include_in_airflow == 1)
+            .select_from(airflow_tasks)
+            .filter(airflow_tasks.dag_name == dag_name)
+            .filter(airflow_tasks.include_in_airflow == 1)
             .all()
         ).fillna("")
 
-        taskDependencies = ""
-        allTaskDependencies = tasks.filter(
+        task_dependencies = ""
+        all_task_dependencies = tasks.filter(
             [
                 "task_name",
                 "task_dependency_upstream",
@@ -2343,79 +2357,79 @@ class initialize:
                 "placement",
             ]
         )
-        allTaskDependenciesUpstream = tasks.filter(["task_dependency_upstream"])
-        allTaskDependenciesDownstream = tasks.filter(["task_dependency_downstream"])
-        taskDependencyWarningPrinted = False
+        all_task_dependencies_upstream = tasks.filter(["task_dependency_upstream"])
+        all_task_dependencies_downstream = tasks.filter(["task_dependency_downstream"])
+        task_dependency_warning_printed = False
 
         # 		print(allTaskDependencies)
         # 		print(type(allTaskDependencies))
 
         for index, row in tasks.iterrows():
-            sensorPokeInterval = row["sensor_poke_interval"]
-            taskName = row["task_name"]
+            sensor_poke_interval = row["sensor_poke_interval"]
+            task_name = row["task_name"]
 
-            sudoUser = row["sudo_user"]
-            if sudoUser == None or sudoUser == "":
-                sudoUser = defaultSudoUser
+            sudo_user = row["sudo_user"]
+            if sudo_user == None or sudo_user == "":
+                sudo_user = default_sudo_user
 
-            if sensorPokeInterval == "":
+            if sensor_poke_interval == "":
                 # Default to 5 minutes
-                sensorPokeInterval = 300
+                sensor_poke_interval = 300
 
-            sensorTimeoutSeconds = row["sensor_timeout_minutes"]
-            if sensorTimeoutSeconds == "":
+            sensor_timeout_seconds = row["sensor_timeout_minutes"]
+            if sensor_timeout_seconds == "":
                 # Default to 5 hours
-                sensorTimeoutSeconds = "18000"
+                sensor_timeout_seconds = "18000"
             else:
-                sensorTimeoutSeconds = sensorTimeoutSeconds * 60
+                sensor_timeout_seconds = sensor_timeout_seconds * 60
 
             if row["task_type"] == "DAG Sensor":
-                addDagSensor = True
-                airflowCustomDags = aliased(configSchema.airflowCustomDags)
-                airflowEtlDags = aliased(configSchema.airflowEtlDags)
-                airflowExportDags = aliased(configSchema.airflowExportDags)
-                airflowImportDags = aliased(configSchema.airflowImportDags)
+                add_dag_sensor = True
+                airflow_custom_dags = aliased(configSchema.airflowCustomDags)
+                airflow_etl_dags = aliased(configSchema.airflowEtlDags)
+                airflow_export_dags = aliased(configSchema.airflowExportDags)
+                airflow_import_dags = aliased(configSchema.airflowImportDags)
 
                 if "." in row["task_config"]:
-                    waitForDag = row["task_config"].split(".")[0]
-                    waitForTask = row["task_config"].split(".")[1]
+                    wait_for_dag = row["task_config"].split(".")[0]
+                    wait_for_task = row["task_config"].split(".")[1]
                 else:
-                    waitForDag = row["task_config"].split(".")[0]
-                    waitForTask = "stop"
+                    wait_for_dag = row["task_config"].split(".")[0]
+                    wait_for_task = "stop"
 
-                importSensorSchedule = (
-                    session.query(airflowImportDags.schedule_interval)
-                    .filter(airflowImportDags.dag_name == waitForDag)
+                import_sensor_schedule = (
+                    session.query(airflow_import_dags.schedule_interval)
+                    .filter(airflow_import_dags.dag_name == wait_for_dag)
                     .one_or_none()
                 )
-                exportSensorSchedule = (
-                    session.query(airflowExportDags.schedule_interval)
-                    .filter(airflowExportDags.dag_name == waitForDag)
+                export_sensor_schedule = (
+                    session.query(airflow_export_dags.schedule_interval)
+                    .filter(airflow_export_dags.dag_name == wait_for_dag)
                     .one_or_none()
                 )
-                customSensorSchedule = (
-                    session.query(airflowCustomDags.schedule_interval)
-                    .filter(airflowCustomDags.dag_name == waitForDag)
+                custom_sensor_schedule = (
+                    session.query(airflow_custom_dags.schedule_interval)
+                    .filter(airflow_custom_dags.dag_name == wait_for_dag)
                     .one_or_none()
                 )
-                etlSensorSchedule = (
-                    session.query(airflowEtlDags.schedule_interval)
-                    .filter(airflowEtlDags.dag_name == waitForDag)
+                etl_sensor_schedule = (
+                    session.query(airflow_etl_dags.schedule_interval)
+                    .filter(airflow_etl_dags.dag_name == wait_for_dag)
                     .one_or_none()
                 )
 
-                waitDagSchedule = ""
-                if importSensorSchedule != None:
-                    waitDagSchedule = importSensorSchedule[0]
-                elif exportSensorSchedule != None:
-                    waitDagSchedule = exportSensorSchedule[0]
-                elif customSensorSchedule != None:
-                    waitDagSchedule = customSensorSchedule[0]
-                elif etlSensorSchedule != None:
-                    waitDagSchedule = etlSensorSchedule[0]
+                wait_dag_schedule = ""
+                if import_sensor_schedule != None:
+                    wait_dag_schedule = import_sensor_schedule[0]
+                elif export_sensor_schedule != None:
+                    wait_dag_schedule = export_sensor_schedule[0]
+                elif custom_sensor_schedule != None:
+                    wait_dag_schedule = custom_sensor_schedule[0]
+                elif etl_sensor_schedule != None:
+                    wait_dag_schedule = etl_sensor_schedule[0]
 
-                if waitDagSchedule == "":
-                    log.warning("Issue on DAG '%s'" % (dagName))
+                if wait_dag_schedule == "":
+                    log.warning("Issue on DAG '%s'" % (dag_name))
                     log.warning("There is no schedule interval for DAG to wait for")
                     log.warning(
                         "The DAG Sensor will not be added to the DAG. Instead, there will be a Task that always failes. The DAG will never execute"
@@ -2423,26 +2437,28 @@ class initialize:
 
                     row["task_name"] = "%s_FAILURE" % (row["task_name"])
                     self.addFailureTask(row["task_name"])
-                    addDagSensor = False
+                    add_dag_sensor = False
                 # 					continue
                 # 					log.error("Cant find schedule interval for DAG to wait for")
                 # 					self.DAGfile.close()
                 # 					self.common_config.remove_temporary_files()
                 # 					sys.exit(1)
 
-                mainDagMatchHourMin = re.search(
-                    "^[0-2][0-9]:[0-5][0-9]$", mainDagSchedule
+                main_dag_match_hour_min = re.search(
+                    "^[0-2][0-9]:[0-5][0-9]$", main_dag_schedule
                 )
-                waitDagMatchHourMin = re.search(
-                    "^[0-2][0-9]:[0-5][0-9]$", waitDagSchedule
+                wait_dag_match_hour_min = re.search(
+                    "^[0-2][0-9]:[0-5][0-9]$", wait_dag_schedule
                 )
 
-                timeDiff = "0"
+                time_diff = "0"
 
-                if (mainDagMatchHourMin == None and waitDagMatchHourMin != None) or (
-                    mainDagMatchHourMin != None and waitDagMatchHourMin == None
+                if (
+                    main_dag_match_hour_min == None and wait_dag_match_hour_min != None
+                ) or (
+                    main_dag_match_hour_min != None and wait_dag_match_hour_min == None
                 ):
-                    log.warning("Issue on DAG '%s'" % (dagName))
+                    log.warning("Issue on DAG '%s'" % (dag_name))
                     log.warning(
                         "Both the current DAG and the DAG the sensor is waiting for must have the same scheduling format (HH:MM or cron)"
                     )
@@ -2451,48 +2467,52 @@ class initialize:
                     )
                     row["task_name"] = "%s_FAILURE" % (row["task_name"])
                     self.addFailureTask(row["task_name"])
-                    addDagSensor = False
+                    add_dag_sensor = False
 
-                if mainDagMatchHourMin != None and addDagSensor == True:
+                if main_dag_match_hour_min != None and add_dag_sensor == True:
                     # Time is in HH:MM format for both DAG's. So now we can calculate the diff in time between them
                     noon = datetime.strptime("12:00", "%H:%M")
-                    mainDagScheduleDateTime = datetime.strptime(
-                        mainDagSchedule, "%H:%M"
+                    main_dag_schedule_date_time = datetime.strptime(
+                        main_dag_schedule, "%H:%M"
                     )
-                    waitDagScheduleDateTime = datetime.strptime(
-                        waitDagSchedule, "%H:%M"
+                    wait_dag_schedule_date_time = datetime.strptime(
+                        wait_dag_schedule, "%H:%M"
                     )
 
                     # Add or remove half a day so we dont calculate over midnight.
-                    if mainDagScheduleDateTime > noon:
-                        mainDagScheduleDateTime = mainDagScheduleDateTime - timedelta(
-                            seconds=43200
+                    if main_dag_schedule_date_time > noon:
+                        main_dag_schedule_date_time = (
+                            main_dag_schedule_date_time - timedelta(seconds=43200)
                         )
                     else:
-                        mainDagScheduleDateTime = mainDagScheduleDateTime + timedelta(
-                            seconds=43200
+                        main_dag_schedule_date_time = (
+                            main_dag_schedule_date_time + timedelta(seconds=43200)
                         )
 
-                    if waitDagScheduleDateTime > noon:
-                        waitDagScheduleDateTime = waitDagScheduleDateTime - timedelta(
-                            seconds=43200
+                    if wait_dag_schedule_date_time > noon:
+                        wait_dag_schedule_date_time = (
+                            wait_dag_schedule_date_time - timedelta(seconds=43200)
                         )
                     else:
-                        waitDagScheduleDateTime = waitDagScheduleDateTime + timedelta(
-                            seconds=43200
+                        wait_dag_schedule_date_time = (
+                            wait_dag_schedule_date_time + timedelta(seconds=43200)
                         )
 
-                    if mainDagScheduleDateTime > waitDagScheduleDateTime:
-                        timeDiff = mainDagScheduleDateTime - waitDagScheduleDateTime
-                        minusText = ""
+                    if main_dag_schedule_date_time > wait_dag_schedule_date_time:
+                        time_diff = (
+                            main_dag_schedule_date_time - wait_dag_schedule_date_time
+                        )
+                        minus_text = ""
                     else:
-                        timeDiff = waitDagScheduleDateTime - mainDagScheduleDateTime
-                        minusText = "-"
+                        time_diff = (
+                            wait_dag_schedule_date_time - main_dag_schedule_date_time
+                        )
+                        minus_text = "-"
 
-                    timeDiff = str(minusText + str(timeDiff.seconds))
-                elif addDagSensor == True:
-                    if mainDagSchedule != waitDagSchedule:
-                        log.warning("Issue on DAG '%s'" % (dagName))
+                    time_diff = str(minus_text + str(time_diff.seconds))
+                elif add_dag_sensor == True:
+                    if main_dag_schedule != wait_dag_schedule:
+                        log.warning("Issue on DAG '%s'" % (dag_name))
                         log.warning(
                             "When using cron or cron alias schedules for DAG sensors, the schedule time in both DAG's must match"
                         )
@@ -2501,18 +2521,18 @@ class initialize:
                         )
                         row["task_name"] = "%s_FAILURE" % (row["task_name"])
                         self.addFailureTask(row["task_name"])
-                        addDagSensor = False
+                        add_dag_sensor = False
 
-                if addDagSensor == True:
+                if add_dag_sensor == True:
                     self.DAGfile.write(
                         "%s = ExternalTaskSensor(\n" % (row["task_name"])
                     )
                     self.DAGfile.write("    task_id='%s',\n" % (row["task_name"]))
-                    self.DAGfile.write("    external_dag_id='%s',\n" % (waitForDag))
-                    self.DAGfile.write("    external_task_id='%s',\n" % (waitForTask))
+                    self.DAGfile.write("    external_dag_id='%s',\n" % (wait_for_dag))
+                    self.DAGfile.write("    external_task_id='%s',\n" % (wait_for_task))
                     self.DAGfile.write("    retries=0,\n")
                     self.DAGfile.write(
-                        "    execution_delta=timedelta(seconds=%s),\n" % (timeDiff)
+                        "    execution_delta=timedelta(seconds=%s),\n" % (time_diff)
                     )
                     if row["airflow_pool"] != "":
                         self.DAGfile.write("    pool='%s',\n" % (row["airflow_pool"]))
@@ -2525,10 +2545,10 @@ class initialize:
                         self.DAGfile.write("    priority_weight=100,\n")
                         self.DAGfile.write("    weight_rule='absolute',\n")
                     self.DAGfile.write(
-                        "    timeout=%s,\n" % (int(sensorTimeoutSeconds))
+                        "    timeout=%s,\n" % (int(sensor_timeout_seconds))
                     )
                     self.DAGfile.write(
-                        "    poke_interval=%s,\n" % (int(sensorPokeInterval))
+                        "    poke_interval=%s,\n" % (int(sensor_poke_interval))
                     )
                     self.DAGfile.write("    mode='reschedule',\n")
                     if (
@@ -2549,10 +2569,10 @@ class initialize:
                     # 					self.common_config.remove_temporary_files()
                     # 					sys.exit(1)
 
-                    sensorPokeInterval = row["sensor_poke_interval"]
-                    if sensorPokeInterval == "":
+                    sensor_poke_interval = row["sensor_poke_interval"]
+                    if sensor_poke_interval == "":
                         # Default to 5 minutes
-                        sensorPokeInterval = 300
+                        sensor_poke_interval = 300
 
                     self.DAGfile.write("%s = SqlSensor(\n" % (row["task_name"]))
                     self.DAGfile.write("    task_id='%s',\n" % (row["task_name"]))
@@ -2571,10 +2591,10 @@ class initialize:
                         self.DAGfile.write("    priority_weight=100,\n")
                         self.DAGfile.write("    weight_rule='absolute',\n")
                     self.DAGfile.write(
-                        "    timeout=%s,\n" % (int(sensorTimeoutSeconds))
+                        "    timeout=%s,\n" % (int(sensor_timeout_seconds))
                     )
                     self.DAGfile.write(
-                        "    poke_interval=%s,\n" % (int(sensorPokeInterval))
+                        "    poke_interval=%s,\n" % (int(sensor_poke_interval))
                     )
                     self.DAGfile.write("    mode='reschedule',\n")
                     if (
@@ -2607,7 +2627,7 @@ class initialize:
             if row["task_type"] == "shell script":
                 self.DAGfile.write("%s = BashOperator(\n" % (row["task_name"]))
                 self.DAGfile.write("    task_id='%s',\n" % (row["task_name"]))
-                self.DAGfile.write("    retries=%s,\n" % (defaultRetries))
+                self.DAGfile.write("    retries=%s,\n" % (default_retries))
                 self.DAGfile.write("    bash_command='%s ',\n" % (row["task_config"]))
                 if row["airflow_pool"] != "":
                     self.DAGfile.write("    pool='%s',\n" % (row["airflow_pool"]))
@@ -2625,13 +2645,13 @@ class initialize:
             if row["task_type"] == "Hive SQL Script":
                 self.DAGfile.write("%s = BashOperator(\n" % (row["task_name"]))
                 self.DAGfile.write("    task_id='%s',\n" % (row["task_name"]))
-                self.DAGfile.write("    retries=%s,\n" % (defaultRetries))
+                self.DAGfile.write("    retries=%s,\n" % (default_retries))
 
                 if row["hive_db"] != None and row["hive_db"].strip() != "":
                     self.DAGfile.write(
                         "    bash_command='%sbin/manage --runHiveScript=%s --hiveDB=%s ',\n"
                         % (
-                            self.getDBImportCommandPath(sudoUser=sudoUser),
+                            self.getDBImportCommandPath(sudo_user=sudo_user),
                             row["task_config"],
                             row["hive_db"],
                         )
@@ -2640,7 +2660,7 @@ class initialize:
                     self.DAGfile.write(
                         "    bash_command='%sbin/manage --runHiveScript=%s ',\n"
                         % (
-                            self.getDBImportCommandPath(sudoUser=sudoUser),
+                            self.getDBImportCommandPath(sudo_user=sudo_user),
                             row["task_config"],
                         )
                     )
@@ -2659,13 +2679,13 @@ class initialize:
                 self.DAGfile.write("\n")
 
             if row["task_type"] == "Hive SQL":
-                jdbcSQL = row["task_config"].replace(r"'", "\\'")
+                jdbc_sql = row["task_config"].replace(r"'", "\\'")
                 self.DAGfile.write("%s = BashOperator(\n" % (row["task_name"]))
                 self.DAGfile.write("    task_id='%s',\n" % (row["task_name"]))
-                self.DAGfile.write("    retries=%s,\n" % (defaultRetries))
+                self.DAGfile.write("    retries=%s,\n" % (default_retries))
                 self.DAGfile.write(
                     "    bash_command='%sbin/manage --runHiveQuery=\"%s\" ',\n"
-                    % (self.getDBImportCommandPath(sudoUser=sudoUser), jdbcSQL)
+                    % (self.getDBImportCommandPath(sudo_user=sudo_user), jdbc_sql)
                 )
                 if row["airflow_pool"] != "":
                     self.DAGfile.write("    pool='%s',\n" % (row["airflow_pool"]))
@@ -2681,16 +2701,16 @@ class initialize:
                 self.DAGfile.write("\n")
 
             if row["task_type"] == "JDBC SQL":
-                jdbcSQL = row["task_config"].replace(r"'", "\\'")
+                jdbc_sql = row["task_config"].replace(r"'", "\\'")
                 self.DAGfile.write("%s = BashOperator(\n" % (row["task_name"]))
                 self.DAGfile.write("    task_id='%s',\n" % (row["task_name"]))
-                self.DAGfile.write("    retries=%s,\n" % (defaultRetries))
+                self.DAGfile.write("    retries=%s,\n" % (default_retries))
                 self.DAGfile.write(
                     "    bash_command='%sbin/manage --dbAlias=%s --runJDBCQuery=\"%s\" ',\n"
                     % (
-                        self.getDBImportCommandPath(sudoUser=sudoUser),
+                        self.getDBImportCommandPath(sudo_user=sudo_user),
                         row["jdbc_dbalias"],
-                        jdbcSQL,
+                        jdbc_sql,
                     )
                 )
                 if row["airflow_pool"] != "":
@@ -2707,16 +2727,16 @@ class initialize:
                 self.DAGfile.write("\n")
 
             if row["task_type"] == "DBImport command":
-                dbimportCommand = row["task_config"].replace(r"'", "\\'")
+                dbimport_command = row["task_config"].replace(r"'", "\\'")
                 if self.airflowMode == "default":
                     self.DAGfile.write("%s = BashOperator(\n" % (row["task_name"]))
                     self.DAGfile.write("    task_id='%s',\n" % (row["task_name"]))
-                    self.DAGfile.write("    retries=%s,\n" % (defaultRetries))
+                    self.DAGfile.write("    retries=%s,\n" % (default_retries))
                     self.DAGfile.write(
                         "    bash_command='%sbin/%s',\n"
                         % (
-                            self.getDBImportCommandPath(sudoUser=sudoUser),
-                            dbimportCommand,
+                            self.getDBImportCommandPath(sudo_user=sudo_user),
+                            dbimport_command,
                         )
                     )
                     if row["airflow_pool"] != "":
@@ -2732,22 +2752,22 @@ class initialize:
                     self.DAGfile.write("    dag=dag)\n")
                     self.DAGfile.write("\n")
                 elif self.airflowMode == "aws_mwaa":
-                    instanceID = self.getAWSInstanceID(row["task_name"])
+                    instance_id = self.getAWSInstanceID(row["task_name"])
                     self.DAGfile.write("%s = PythonOperator(\n" % (row["task_name"]))
                     self.DAGfile.write("    task_id='%s',\n" % (row["task_name"]))
-                    self.DAGfile.write("    retries=%s,\n" % (defaultRetries))
+                    self.DAGfile.write("    retries=%s,\n" % (default_retries))
                     self.DAGfile.write("    python_callable=startDBImportExecution,\n")
                     self.DAGfile.write(
                         '    op_kwargs={"command": "%s", "instanceID": "%s"},\n'
-                        % (dbimportCommand, instanceID)
+                        % (dbimport_command, instance_id)
                     )
                     if row["airflow_pool"] != "":
                         self.DAGfile.write("    pool='%s',\n" % (row["airflow_pool"]))
                     else:
                         if self.airflowAWSpoolToInstanceId == True:
-                            self.DAGfile.write("    pool='%s',\n" % (instanceID))
+                            self.DAGfile.write("    pool='%s',\n" % (instance_id))
                         else:
-                            self.DAGfile.write("    pool='%s',\n" % (dagName))
+                            self.DAGfile.write("    pool='%s',\n" % (dag_name))
                     if row["airflow_priority"] != "":
                         self.DAGfile.write(
                             "    priority_weight=%s,\n" % (int(row["airflow_priority"]))
@@ -2760,28 +2780,28 @@ class initialize:
                     self.DAGfile.write("\n")
 
             if row["placement"] == "before main":
-                tempStartTask = self.preStartTask
-                tempStopTask = self.preStopTask
+                temp_start_task = self.preStartTask
+                temp_stop_task = self.preStopTask
 
             if row["placement"] == "in main":
-                tempStartTask = self.mainStartTask
-                tempStopTask = self.mainStopTask
+                temp_start_task = self.mainStartTask
+                temp_stop_task = self.mainStopTask
 
             if row["placement"] == "after main":
-                tempStartTask = self.postStartTask
-                tempStopTask = self.postStopTask
+                temp_start_task = self.postStartTask
+                temp_stop_task = self.postStopTask
 
-            for depIndex, depRow in allTaskDependencies.iterrows():
+            for dep_index, dep_row in all_task_dependencies.iterrows():
                 if (
-                    row["task_name"] == depRow["task_dependency_upstream"]
-                    or row["task_name"] == depRow["task_dependency_downstream"]
-                ) and row["placement"] != depRow["placement"]:
-                    if taskDependencyWarningPrinted == False:
-                        log.warning("Issue on DAG '%s'" % (dagName))
+                    row["task_name"] == dep_row["task_dependency_upstream"]
+                    or row["task_name"] == dep_row["task_dependency_downstream"]
+                ) and row["placement"] != dep_row["placement"]:
+                    if task_dependency_warning_printed == False:
+                        log.warning("Issue on DAG '%s'" % (dag_name))
                         log.warning(
                             "There are custom tasks that have dependencies between 'in_main' and 'after_main'. This is not supported and the dependencies will be incorrect in Airflow"
                         )
-                        taskDependencyWarningPrinted = True
+                        task_dependency_warning_printed = True
 
             # if row['placement'] == "in main" or row['placement'] == "after main":
             if 1 == 1:
@@ -2797,27 +2817,27 @@ class initialize:
                 #
                 # 						taskDependencies += "%s.set_downstream(%s)\n"%(dep, row['task_name'])
 
-                downStreamFound = False
-                upStreamFound = False
+                down_stream_found = False
+                up_stream_found = False
 
-                for depIndex, depRow in allTaskDependencies.iterrows():
-                    for depOnDep in depRow["task_dependency_downstream"].split(","):
+                for dep_index, dep_row in all_task_dependencies.iterrows():
+                    for dep_on_dep in dep_row["task_dependency_downstream"].split(","):
                         # depOnDep contains that tasks dependencies and we need to check if there is a dependency against the task we are working on
-                        depOnDep = depOnDep.strip()
-                        if depRow["placement"] == row["placement"]:
+                        dep_on_dep = dep_on_dep.strip()
+                        if dep_row["placement"] == row["placement"]:
                             # Only do this if both placements are the same
-                            if row["task_name"] == depOnDep:
+                            if row["task_name"] == dep_on_dep:
                                 # There is a match that means there is a downstrem dependency for another ask agains the current task
-                                upStreamFound = True
+                                up_stream_found = True
 
-                    for depOnDep in depRow["task_dependency_upstream"].split(","):
+                    for dep_on_dep in dep_row["task_dependency_upstream"].split(","):
                         # depOnDep contains that tasks dependencies and we need to check if there is a dependency against the task we are working on
-                        depOnDep = depOnDep.strip()
-                        if depRow["placement"] == row["placement"]:
+                        dep_on_dep = dep_on_dep.strip()
+                        if dep_row["placement"] == row["placement"]:
                             # Only do this if both placements are the same
-                            if row["task_name"] == depOnDep:
+                            if row["task_name"] == dep_on_dep:
                                 # There is a match that means there is a downstrem dependency for another ask agains the current task
-                                downStreamFound = True
+                                down_stream_found = True
 
                 for dep in row["task_dependency_downstream"].split(","):
                     dep = dep.strip()
@@ -2825,18 +2845,18 @@ class initialize:
                         continue
 
                     # Get the task that this have a depenceny against and check if it's in the same placement
-                    depRow = allTaskDependencies.loc[
-                        allTaskDependencies["task_name"] == dep, ["placement"]
+                    dep_row = all_task_dependencies.loc[
+                        all_task_dependencies["task_name"] == dep, ["placement"]
                     ]
-                    if depRow.empty == False:
-                        depRowValue = depRow.values[0][0]
-                        if depRow.values[0][0] == row["placement"]:
+                    if dep_row.empty == False:
+                        dep_row_value = dep_row.values[0][0]
+                        if dep_row.values[0][0] == row["placement"]:
                             # Only do this if both placements are the same
-                            taskDependencies += "%s.set_downstream(%s)\n" % (
+                            task_dependencies += "%s.set_downstream(%s)\n" % (
                                 row["task_name"],
                                 dep,
                             )
-                            downStreamFound = True
+                            down_stream_found = True
                         else:
                             log.warning(
                                 "Downstream dependency against '%s' wont work as it's not in the same placement as '%s'."
@@ -2844,11 +2864,11 @@ class initialize:
                             )
                     else:
                         # The depRow dataframe is empty. So the dependent task is not a customTask, but instead from import_tables or export_tables. So we just add it as a dependency
-                        taskDependencies += "%s.set_downstream(%s)\n" % (
+                        task_dependencies += "%s.set_downstream(%s)\n" % (
                             row["task_name"],
                             dep,
                         )
-                        downStreamFound = True
+                        down_stream_found = True
 
                 for dep in row["task_dependency_upstream"].split(","):
                     dep = dep.strip()
@@ -2856,18 +2876,18 @@ class initialize:
                         continue
 
                     # Get the task that this have a depenceny against and check if it's in the same placement
-                    depRow = allTaskDependencies.loc[
-                        allTaskDependencies["task_name"] == dep, ["placement"]
+                    dep_row = all_task_dependencies.loc[
+                        all_task_dependencies["task_name"] == dep, ["placement"]
                     ]
-                    if depRow.empty == False:
-                        depRowValue = depRow.values[0][0]
-                        if depRow.values[0][0] == row["placement"]:
+                    if dep_row.empty == False:
+                        dep_row_value = dep_row.values[0][0]
+                        if dep_row.values[0][0] == row["placement"]:
                             # Only do this if both placements are the same
-                            taskDependencies += "%s.set_upstream(%s)\n" % (
+                            task_dependencies += "%s.set_upstream(%s)\n" % (
                                 row["task_name"],
                                 dep,
                             )
-                            upStreamFound = True
+                            up_stream_found = True
                         else:
                             log.warning(
                                 "Upstream dependency against '%s' wont work as it's not in the same placement as '%s'."
@@ -2875,22 +2895,22 @@ class initialize:
                             )
                     else:
                         # The depRow dataframe is empty. So the dependent task is not a customTask, but instead from import_tables or export_tables. So we just add it as a dependency
-                        taskDependencies += "%s.set_upstream(%s)\n" % (
+                        task_dependencies += "%s.set_upstream(%s)\n" % (
                             row["task_name"],
                             dep,
                         )
-                        upStreamFound = True
+                        up_stream_found = True
 
-                if upStreamFound == False:
-                    taskDependencies += "%s.set_downstream(%s)\n" % (
-                        tempStartTask,
+                if up_stream_found == False:
+                    task_dependencies += "%s.set_downstream(%s)\n" % (
+                        temp_start_task,
                         row["task_name"],
                     )
 
-                if downStreamFound == False:
-                    taskDependencies += "%s.set_downstream(%s)\n" % (
+                if down_stream_found == False:
+                    task_dependencies += "%s.set_downstream(%s)\n" % (
                         row["task_name"],
-                        tempStopTask,
+                        temp_stop_task,
                     )
 
                 # Check if other tasks have this task as upstream or downstream
@@ -2924,73 +2944,73 @@ class initialize:
                 # 					# taskDependencies += "%s.set_downstream(%s)\n"%(row['task_name'], self.mainStopTask)
                 # 					taskDependencies += "%s.set_downstream(%s)\n"%(row['task_name'], tempStopTask)
 
-                taskDependencies += "\n"
+                task_dependencies += "\n"
 
-        self.DAGfile.write(taskDependencies)
+        self.DAGfile.write(task_dependencies)
         session.close()
 
-    def addSensorsToDAGfile(self, dagName, mainDagSchedule):
+    def addSensorsToDAGfile(self, dag_name, main_dag_schedule):
         log = logging.getLogger(self.logger)
         # session = self.configDBSession()
         session = self.getDBImportSession()
 
-        airflowDAGsensors = aliased(configSchema.airflowDagSensors, name="ads")
-        airflowCustomDags = aliased(configSchema.airflowCustomDags, name="acd")
-        airflowEtlDags = aliased(configSchema.airflowEtlDags, name="aetld")
-        airflowExportDags = aliased(configSchema.airflowExportDags, name="aed")
-        airflowImportDags = aliased(configSchema.airflowImportDags, name="aid")
+        airflow_dag_sensors = aliased(configSchema.airflowDagSensors, name="ads")
+        airflow_custom_dags = aliased(configSchema.airflowCustomDags, name="acd")
+        airflow_etl_dags = aliased(configSchema.airflowEtlDags, name="aetld")
+        airflow_export_dags = aliased(configSchema.airflowExportDags, name="aed")
+        airflow_import_dags = aliased(configSchema.airflowImportDags, name="aid")
 
         sensors = pd.DataFrame(
             session.query(
-                airflowDAGsensors.dag_name,
-                airflowDAGsensors.sensor_name,
-                airflowDAGsensors.wait_for_dag,
-                airflowDAGsensors.wait_for_task,
-                airflowDAGsensors.timeout_minutes,
-                airflowDAGsensors.sensor_soft_fail,
-                airflowImportDags.schedule_interval.label("import_schedule"),
-                airflowExportDags.schedule_interval.label("export_schedule"),
-                airflowCustomDags.schedule_interval.label("custom_schedule"),
-                airflowEtlDags.schedule_interval.label("etl_schedule"),
+                airflow_dag_sensors.dag_name,
+                airflow_dag_sensors.sensor_name,
+                airflow_dag_sensors.wait_for_dag,
+                airflow_dag_sensors.wait_for_task,
+                airflow_dag_sensors.timeout_minutes,
+                airflow_dag_sensors.sensor_soft_fail,
+                airflow_import_dags.schedule_interval.label("import_schedule"),
+                airflow_export_dags.schedule_interval.label("export_schedule"),
+                airflow_custom_dags.schedule_interval.label("custom_schedule"),
+                airflow_etl_dags.schedule_interval.label("etl_schedule"),
             )
-            .select_from(airflowDAGsensors)
+            .select_from(airflow_dag_sensors)
             .join(
-                airflowImportDags,
-                airflowDAGsensors.wait_for_dag == airflowImportDags.dag_name,
+                airflow_import_dags,
+                airflow_dag_sensors.wait_for_dag == airflow_import_dags.dag_name,
                 isouter=True,
             )
             .join(
-                airflowExportDags,
-                airflowDAGsensors.wait_for_dag == airflowExportDags.dag_name,
+                airflow_export_dags,
+                airflow_dag_sensors.wait_for_dag == airflow_export_dags.dag_name,
                 isouter=True,
             )
             .join(
-                airflowCustomDags,
-                airflowDAGsensors.wait_for_dag == airflowCustomDags.dag_name,
+                airflow_custom_dags,
+                airflow_dag_sensors.wait_for_dag == airflow_custom_dags.dag_name,
                 isouter=True,
             )
             .join(
-                airflowEtlDags,
-                airflowDAGsensors.wait_for_dag == airflowEtlDags.dag_name,
+                airflow_etl_dags,
+                airflow_dag_sensors.wait_for_dag == airflow_etl_dags.dag_name,
                 isouter=True,
             )
-            .filter(airflowDAGsensors.dag_name == dagName)
+            .filter(airflow_dag_sensors.dag_name == dag_name)
             .all()
         ).fillna("")
 
         for index, row in sensors.iterrows():
-            waitDagSchedule = ""
+            wait_dag_schedule = ""
             if row["import_schedule"] != "":
-                waitDagSchedule = row["import_schedule"]
+                wait_dag_schedule = row["import_schedule"]
             elif row["export_schedule"] != "":
-                waitDagSchedule = row["export_schedule"]
+                wait_dag_schedule = row["export_schedule"]
             elif row["custom_schedule"] != "":
-                waitDagSchedule = row["custom_schedule"]
+                wait_dag_schedule = row["custom_schedule"]
             elif row["etl_schedule"] != "":
-                waitDagSchedule = row["etl_schedule"]
+                wait_dag_schedule = row["etl_schedule"]
 
-            if waitDagSchedule == "":
-                log.warning("Issue on DAG '%s'" % (dagName))
+            if wait_dag_schedule == "":
+                log.warning("Issue on DAG '%s'" % (dag_name))
                 log.warning("There is no schedule interval for DAG to wait for")
                 log.warning(
                     "The DAG Sensor will not be added to the DAG. Instead, there will be a Task that always failes. The DAG will never execute"
@@ -3011,31 +3031,35 @@ class initialize:
             # 				self.common_config.remove_temporary_files()
             # 				sys.exit(1)
 
-            waitForTask = row["wait_for_task"]
-            if waitForTask == "":
-                waitForTask = "stop"
+            wait_for_task = row["wait_for_task"]
+            if wait_for_task == "":
+                wait_for_task = "stop"
 
-            timeoutSeconds = row["timeout_minutes"]
-            if timeoutSeconds == "":
+            timeout_seconds = row["timeout_minutes"]
+            if timeout_seconds == "":
                 # Default to 5 hours
-                timeoutSeconds = "18000"
+                timeout_seconds = "18000"
             else:
-                timeoutSeconds = timeoutSeconds * 60
+                timeout_seconds = timeout_seconds * 60
 
-            mainDagMatchHourMin = re.search("^[0-2][0-9]:[0-5][0-9]$", mainDagSchedule)
-            waitDagMatchHourMin = re.search("^[0-2][0-9]:[0-5][0-9]$", waitDagSchedule)
+            main_dag_match_hour_min = re.search(
+                "^[0-2][0-9]:[0-5][0-9]$", main_dag_schedule
+            )
+            wait_dag_match_hour_min = re.search(
+                "^[0-2][0-9]:[0-5][0-9]$", wait_dag_schedule
+            )
 
             # 			print(mainDagSchedule)
             # 			print(waitDagSchedule)
             # 			print(mainDagMatchHourMin)
             # 			print(waitDagMatchHourMin)
 
-            timeDiff = "0"
+            time_diff = "0"
 
-            if (mainDagMatchHourMin == None and waitDagMatchHourMin != None) or (
-                mainDagMatchHourMin != None and waitDagMatchHourMin == None
-            ):
-                log.warning("Issue on DAG '%s'" % (dagName))
+            if (
+                main_dag_match_hour_min == None and wait_dag_match_hour_min != None
+            ) or (main_dag_match_hour_min != None and wait_dag_match_hour_min == None):
+                log.warning("Issue on DAG '%s'" % (dag_name))
                 log.warning(
                     "Both the current DAG and the DAG the sensor is waiting for must have the same scheduling format (HH:MM or cron)"
                 )
@@ -3057,46 +3081,54 @@ class initialize:
             # 				self.common_config.remove_temporary_files()
             # 				sys.exit(1)
 
-            if mainDagMatchHourMin != None:
+            if main_dag_match_hour_min != None:
                 # Time is in HH:MM format for both DAG's. So now we can calculate the diff in time between them
                 noon = datetime.strptime("12:00", "%H:%M")
-                mainDagScheduleDateTime = datetime.strptime(mainDagSchedule, "%H:%M")
-                waitDagScheduleDateTime = datetime.strptime(waitDagSchedule, "%H:%M")
+                main_dag_schedule_date_time = datetime.strptime(
+                    main_dag_schedule, "%H:%M"
+                )
+                wait_dag_schedule_date_time = datetime.strptime(
+                    wait_dag_schedule, "%H:%M"
+                )
 
                 # Add or remove half a day so we dont calculate over midnight.
-                if mainDagScheduleDateTime > noon:
-                    mainDagScheduleDateTime = mainDagScheduleDateTime - timedelta(
-                        seconds=43200
+                if main_dag_schedule_date_time > noon:
+                    main_dag_schedule_date_time = (
+                        main_dag_schedule_date_time - timedelta(seconds=43200)
                     )
                 else:
-                    mainDagScheduleDateTime = mainDagScheduleDateTime + timedelta(
-                        seconds=43200
+                    main_dag_schedule_date_time = (
+                        main_dag_schedule_date_time + timedelta(seconds=43200)
                     )
 
-                if waitDagScheduleDateTime > noon:
-                    waitDagScheduleDateTime = waitDagScheduleDateTime - timedelta(
-                        seconds=43200
+                if wait_dag_schedule_date_time > noon:
+                    wait_dag_schedule_date_time = (
+                        wait_dag_schedule_date_time - timedelta(seconds=43200)
                     )
                 else:
-                    waitDagScheduleDateTime = waitDagScheduleDateTime + timedelta(
-                        seconds=43200
+                    wait_dag_schedule_date_time = (
+                        wait_dag_schedule_date_time + timedelta(seconds=43200)
                     )
 
                 # 				print (mainDagScheduleDateTime)
                 # 				print (waitDagScheduleDateTime)
 
-                if mainDagScheduleDateTime > waitDagScheduleDateTime:
-                    timeDiff = mainDagScheduleDateTime - waitDagScheduleDateTime
-                    minusText = ""
+                if main_dag_schedule_date_time > wait_dag_schedule_date_time:
+                    time_diff = (
+                        main_dag_schedule_date_time - wait_dag_schedule_date_time
+                    )
+                    minus_text = ""
                 else:
-                    timeDiff = waitDagScheduleDateTime - mainDagScheduleDateTime
-                    minusText = "-"
+                    time_diff = (
+                        wait_dag_schedule_date_time - main_dag_schedule_date_time
+                    )
+                    minus_text = "-"
 
-                timeDiff = str(minusText + str(timeDiff.seconds))
+                time_diff = str(minus_text + str(time_diff.seconds))
             # 				print (timeDiff)
             else:
-                if mainDagSchedule != waitDagSchedule:
-                    log.warning("Issue on DAG '%s'" % (dagName))
+                if main_dag_schedule != wait_dag_schedule:
+                    log.warning("Issue on DAG '%s'" % (dag_name))
                     log.warning(
                         "When using cron or cron alias schedules for DAG sensors, the schedule time in both DAG's must match"
                     )
@@ -3121,13 +3153,13 @@ class initialize:
             self.DAGfile.write("%s = ExternalTaskSensor(\n" % (row["sensor_name"]))
             self.DAGfile.write("    task_id='%s',\n" % (row["sensor_name"]))
             self.DAGfile.write("    external_dag_id='%s',\n" % (row["wait_for_dag"]))
-            self.DAGfile.write("    external_task_id='%s',\n" % (waitForTask))
+            self.DAGfile.write("    external_task_id='%s',\n" % (wait_for_task))
             self.DAGfile.write("    retries=0,\n")
             # 			self.DAGfile.write("    execution_timeout=timedelta(seconds=%s),\n"%(timeoutSeconds))
             self.DAGfile.write(
-                "    execution_delta=timedelta(seconds=%s),\n" % (timeDiff)
+                "    execution_delta=timedelta(seconds=%s),\n" % (time_diff)
             )
-            self.DAGfile.write("    timeout=%s,\n" % (int(timeoutSeconds)))
+            self.DAGfile.write("    timeout=%s,\n" % (int(timeout_seconds)))
             self.DAGfile.write("    poke_interval=300,\n")
             self.DAGfile.write("    mode='reschedule',\n")
             if row["sensor_soft_fail"] is not None and row["sensor_soft_fail"] == 1:
@@ -3144,7 +3176,7 @@ class initialize:
 
         session.close()
 
-    def sendJSON(self, airflowDAG, status):
+    def sendJSON(self, airflow_dag, status):
         """Sends a start JSON document to REST and/or Kafka"""
         log = logging.getLogger(self.logger)
         log.debug("Executing Airflow.sendStartJSON()")
@@ -3159,7 +3191,7 @@ class initialize:
 
         # 		self.postDataToREST = True
 
-        if airflowDAG == None:
+        if airflow_dag == None:
             return
 
         if self.postAirflowDAGoperations == False:
@@ -3168,19 +3200,19 @@ class initialize:
             )
             return
 
-        jsonData = {}
-        jsonData["type"] = "airflow_dag"
-        jsonData["status"] = status
-        jsonData["dag"] = airflowDAG
-        jsonData["airflow_timestamp"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
+        json_data = {}
+        json_data["type"] = "airflow_dag"
+        json_data["status"] = status
+        json_data["dag"] = airflow_dag
+        json_data["airflow_timestamp"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
 
         if self.postDataToKafka == True:
-            result = self.sendStatistics.publishKafkaData(json.dumps(jsonData))
+            result = self.sendStatistics.publishKafkaData(json.dumps(json_data))
             if result == False:
                 log.warning("Kafka publish failed! No start message posted")
 
         if self.postDataToREST == True:
-            response = self.sendStatistics.sendRESTdata(json.dumps(jsonData))
+            response = self.sendStatistics.sendRESTdata(json.dumps(json_data))
             if response != 200:
                 log.warn("REST call failed! No start message posted")
 

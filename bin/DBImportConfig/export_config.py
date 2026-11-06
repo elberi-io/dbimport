@@ -151,18 +151,18 @@ class config(metaclass=Singleton):
     def logTargetColumnAdd(
         self,
         column,
-        columnType,
+        column_type,
         description=None,
-        dbAlias=None,
+        db_alias=None,
         database=None,
         schema=None,
         table=None,
     ):
         self.common_config.logJDBCColumnAdd(
             column=column,
-            columnType=columnType,
+            column_type=column_type,
             description=description,
-            dbAlias=dbAlias,
+            db_alias=db_alias,
             database=database,
             schema=schema,
             table=table,
@@ -171,20 +171,20 @@ class config(metaclass=Singleton):
     def logTargetColumnTypeChange(
         self,
         column,
-        columnType,
-        previous_columnType=None,
+        column_type,
+        previous_column_type=None,
         description=None,
-        dbAlias=None,
+        db_alias=None,
         database=None,
         schema=None,
         table=None,
     ):
         self.common_config.logJDBCColumnTypeChange(
             column,
-            columnType,
-            previous_columnType=previous_columnType,
+            column_type,
+            previous_column_type=previous_column_type,
             description=description,
-            dbAlias=dbAlias,
+            db_alias=db_alias,
             database=database,
             schema=schema,
             table=table,
@@ -192,19 +192,19 @@ class config(metaclass=Singleton):
 
     def logTargetColumnRename(
         self,
-        columnName,
-        previous_columnName,
+        column_name,
+        previous_column_name,
         description=None,
-        dbAlias=None,
+        db_alias=None,
         database=None,
         schema=None,
         table=None,
     ):
         self.common_config.logJDBCColumnRename(
-            columnName,
-            previous_columnName,
+            column_name,
+            previous_column_name,
             description=description,
-            dbAlias=dbAlias,
+            db_alias=db_alias,
             database=database,
             schema=schema,
             table=table,
@@ -277,30 +277,30 @@ class config(metaclass=Singleton):
             return
 
         import_stop = None
-        jsonData = {}
-        jsonData["type"] = "export"
-        jsonData["status"] = "started"
-        jsonData["dbalias"] = self.connectionAlias
-        jsonData["target_database"] = self.common_config.jdbc_database
-        jsonData["target_schema"] = self.targetSchema
-        jsonData["target_table"] = self.targetTable
-        jsonData["hive_db"] = self.hiveDB
-        jsonData["hive_table"] = self.hiveTable
-        jsonData["export_phase"] = self.exportPhase
-        jsonData["incremental"] = self.exportIsIncremental
+        json_data = {}
+        json_data["type"] = "export"
+        json_data["status"] = "started"
+        json_data["dbalias"] = self.connectionAlias
+        json_data["target_database"] = self.common_config.jdbc_database
+        json_data["target_schema"] = self.targetSchema
+        json_data["target_table"] = self.targetTable
+        json_data["hive_db"] = self.hiveDB
+        json_data["hive_table"] = self.hiveTable
+        json_data["export_phase"] = self.exportPhase
+        json_data["incremental"] = self.exportIsIncremental
 
         if self.postDataToKafka == True:
-            result = self.sendStatistics.publishKafkaData(json.dumps(jsonData))
+            result = self.sendStatistics.publishKafkaData(json.dumps(json_data))
             if result == False:
                 logging.warning("Kafka publish failed! No start message posted")
 
         if self.postDataToREST == True:
-            response = self.sendStatistics.sendRESTdata(json.dumps(jsonData))
+            response = self.sendStatistics.sendRESTdata(json.dumps(json_data))
             if response != 200:
                 logging.warn("REST call failed! No start message posted")
 
         if self.postDataToAWSSNS == True:
-            result = self.sendStatistics.sendAWSSNSdata(json.dumps(jsonData))
+            result = self.sendStatistics.sendAWSSNSdata(json.dumps(json_data))
             if result == False:
                 logging.warning("AWS SNS publish failed! No start message posted")
 
@@ -593,16 +593,16 @@ class config(metaclass=Singleton):
             "Executing export_config.saveCustomSQLValidationHiveValue() - Finished"
         )
 
-    def saveCustomSQLValidationTargetValue(self, jsonValue, printInfo=True):
+    def saveCustomSQLValidationTargetValue(self, json_value, print_info=True):
         logging.debug("Executing export_config.saveCustomSQLValidationTargetValue()")
-        if printInfo == True:
+        if print_info == True:
             logging.info(
                 "Saving the custom SQL validation data from target table to the configuration database"
             )
 
         query = "update export_tables set validationCustomQueryTargetValue = %s where table_id = %s"
 
-        self.mysql_cursor01.execute(query, (jsonValue, self.tableID))
+        self.mysql_cursor01.execute(query, (json_value, self.tableID))
         self.mysql_conn.commit()
         logging.debug("SQL Statement executed: %s" % (self.mysql_cursor01.statement))
 
@@ -640,24 +640,24 @@ class config(metaclass=Singleton):
         logging.info("Saving column data to MySQL table - export_columns")
 
         for index, row in columnsDF.iterrows():
-            columnName = row["name"]
-            columnType = row["type"]
-            columnComment = self.common_config.stripUnwantedCharComment(row["comment"])
-            columnOrder = row["idx"]
+            column_name = row["name"]
+            column_type = row["type"]
+            column_comment = self.common_config.stripUnwantedCharComment(row["comment"])
+            column_order = row["idx"]
 
             query = "select column_id from export_columns where table_id = %s and column_name = %s "
-            self.mysql_cursor01.execute(query, (self.tableID, columnName))
+            self.mysql_cursor01.execute(query, (self.tableID, column_name))
             logging.debug(
                 "SQL Statement executed: %s" % (self.mysql_cursor01.statement)
             )
 
             row = self.mysql_cursor01.fetchone()
             if row != None:
-                columnID = row[0]
+                column_id = row[0]
             else:
-                columnID = None
+                column_id = None
 
-            if columnID == None:
+            if column_id == None:
                 query = (
                     "insert into export_columns "
                     "( "
@@ -676,13 +676,13 @@ class config(metaclass=Singleton):
                     query,
                     (
                         self.tableID,
-                        columnName,
-                        columnType,
-                        columnOrder,
+                        column_name,
+                        column_type,
+                        column_order,
                         self.hiveDB,
                         self.hiveTable,
                         self.startDate,
-                        columnComment,
+                        column_comment,
                     ),
                 )
             else:
@@ -700,13 +700,13 @@ class config(metaclass=Singleton):
                 self.mysql_cursor01.execute(
                     query,
                     (
-                        columnType,
-                        columnOrder,
+                        column_type,
+                        column_order,
                         self.hiveDB,
                         self.hiveTable,
                         self.startDate,
-                        columnComment,
-                        columnID,
+                        column_comment,
+                        column_id,
                     ),
                 )
 
@@ -768,17 +768,17 @@ class config(metaclass=Singleton):
     def resetMaxValueFromTarget(self):
         logging.debug("Executing export_config.resetMaxValueFromTarget()")
 
-        columQuotation = self.common_config.getQuoteAroundColumn()
+        colum_quotation = self.common_config.getQuoteAroundColumn()
         column = self.incr_column
         if self.common_config.getJDBCUpperCase() == True:
             column = column.upper()
-        query = "select max(%s%s%s) from " % (columQuotation, column, columQuotation)
+        query = "select max(%s%s%s) from " % (colum_quotation, column, colum_quotation)
         query += self.common_config.getJDBCsqlFromTable(
             schema=self.targetSchema, table=self.targetTable
         )
-        resultDF = self.common_config.executeJDBCquery(query)
-        maxValue = maxValue = resultDF.loc[0][0]
-        self.resetIncrMinMaxValues(maxValue=maxValue)
+        result_df = self.common_config.executeJDBCquery(query)
+        max_value = max_value = result_df.loc[0][0]
+        self.resetIncrMinMaxValues(maxValue=max_value)
 
         logging.debug("Executing export_config.resetMaxValueFromTarget() - Finished")
 
@@ -790,7 +790,7 @@ class config(metaclass=Singleton):
     ):
         """Reads the columns from the configuration database and returns the information in a Pandas DF with the columns name, type and comment"""
         logging.debug("Executing export_config.getColumnsFromConfigDatabase()")
-        hiveColumnDefinition = ""
+        hive_column_definition = ""
 
         query = "select "
         if forceColumnUppercase == False:
@@ -829,40 +829,40 @@ class config(metaclass=Singleton):
         )
         return result_df
 
-    def convertColumnTypeForTargetTable(self, columnName, columnType):
+    def convertColumnTypeForTargetTable(self, column_name, column_type):
         """Converts the column type to a type that is supported by the Target database type"""
         logging.debug("Executing export_config.convertColumnTypeForTargetTable()")
 
-        mapColumnJava = None
-        sourceDatabaseType = ""
+        map_column_java = None
+        source_database_type = ""
 
-        sourceDB = self.hiveDB
-        sourceTable = self.hiveTable
-        historyTableExport = False
+        source_db = self.hiveDB
+        source_table = self.hiveTable
+        history_table_export = False
 
-        if sourceTable.endswith("_history"):
+        if source_table.endswith("_history"):
             # First check to see that we dont have a import table that actually is called _history in the end
             query = "select count(hive_table) from import_tables where hive_db = %s and hive_table = %s"
-            self.mysql_cursor01.execute(query, (sourceDB, sourceTable))
+            self.mysql_cursor01.execute(query, (source_db, source_table))
             logging.debug(
                 "SQL Statement executed: %s" % (self.mysql_cursor01.statement)
             )
             row = self.mysql_cursor01.fetchone()
             if row[0] == 0:
                 # No import table exists with this name. Lets try without the _history part
-                sourceTable = re.sub("_history$", "", sourceTable)
-                self.mysql_cursor01.execute(query, (sourceDB, sourceTable))
+                source_table = re.sub("_history$", "", source_table)
+                self.mysql_cursor01.execute(query, (source_db, source_table))
                 logging.debug(
                     "SQL Statement executed: %s" % (self.mysql_cursor01.statement)
                 )
                 row = self.mysql_cursor01.fetchone()
                 if row[0] == 1:
                     # A table without _history exists. So lets use that to determine if we need force_string and such
-                    historyTableExport = True
+                    history_table_export = True
                 else:
-                    sourceTable = self.hiveTable
+                    source_table = self.hiveTable
 
-        if columnType in ("string", "binary"):
+        if column_type in ("string", "binary"):
             # If the columnType is "string", it might be because we are exporting a table that was imported with force_string = 1.
 
             query = "select "
@@ -883,190 +883,190 @@ class config(metaclass=Singleton):
             query += "  and t.hive_table = %s "
 
             self.mysql_cursor01.execute(
-                query, (columnName.lower(), sourceDB, sourceTable)
+                query, (column_name.lower(), source_db, source_table)
             )
             logging.debug(
                 "SQL Statement executed: %s" % (self.mysql_cursor01.statement)
             )
 
-            if columnType == "binary":
+            if column_type == "binary":
                 if self.mysql_cursor01.rowcount == 1:
                     row = self.mysql_cursor01.fetchone()
-                    sourceColumnType = row[3]
-                    sourceDatabaseType = row[4]
-                    columnType = sourceColumnType
+                    source_column_type = row[3]
+                    source_database_type = row[4]
+                    column_type = source_column_type
 
-            if columnType == "string":
-                forceString = False
+            if column_type == "string":
+                force_string = False
                 if self.mysql_cursor01.rowcount == 1:
                     row = self.mysql_cursor01.fetchone()
                     force_string_connection = row[0]
                     force_string_table = row[1]
                     force_string_column = row[2]
-                    sourceColumnType = row[3]
-                    sourceDatabaseType = row[4]
+                    source_column_type = row[3]
+                    source_database_type = row[4]
 
                     if force_string_column == 0:
-                        forceString = False
+                        force_string = False
                     elif force_string_column == 1:
-                        forceString = True
+                        force_string = True
                     elif force_string_table == 0:
-                        forceString = False
+                        force_string = False
                     elif force_string_table == 1:
-                        forceString = True
+                        force_string = True
                     elif force_string_connection == 0:
-                        forceString = False
+                        force_string = False
                     elif force_string_connection == 1:
-                        forceString = True
+                        force_string = True
                     else:
-                        forceString = True
+                        force_string = True
 
-                if forceString == True:
-                    columnType = sourceColumnType
+                if force_string == True:
+                    column_type = source_column_type
 
         if self.common_config.db_mssql == True:
-            columnType = re.sub("^timestamp", "datetime", columnType)
-            columnType = re.sub("^double$", "real", columnType)
-            columnType = re.sub("^string$", "varchar(max)", columnType)
-            columnType = re.sub("^boolean$", "tinyint", columnType)
+            column_type = re.sub("^timestamp", "datetime", column_type)
+            column_type = re.sub("^double$", "real", column_type)
+            column_type = re.sub("^string$", "varchar(max)", column_type)
+            column_type = re.sub("^boolean$", "tinyint", column_type)
 
-            if sourceDatabaseType == constant.ORACLE:
-                columnType = re.sub(r"^varchar2\(", "varchar(", columnType)
+            if source_database_type == constant.ORACLE:
+                column_type = re.sub(r"^varchar2\(", "varchar(", column_type)
 
         if self.common_config.db_oracle == True:
-            columnType = re.sub(r"^varchar\(-1\)$", "string", columnType)
-            columnType = re.sub(r"^nvarchar\(-1\)$", "string", columnType)
-            columnType = re.sub("^tinyint$", "number(3)", columnType)
-            columnType = re.sub("^smallint$", "number(5)", columnType)
-            columnType = re.sub(r"^decimal\(", "number(", columnType)
-            columnType = re.sub("^bigint$", "number(19)", columnType)
-            columnType = re.sub("^double$", "binary_double", columnType)
-            columnType = re.sub("^boolean$", "number(1)", columnType)
-            columnType = re.sub("^uniqueidentifier$", "varchar2(36)", columnType)
-            columnType = re.sub(r"^nvarchar\(", "varchar2(", columnType)
-            columnType = re.sub(r"^varchar\(", "varchar2(", columnType)
-            columnType = re.sub("^timestamp$", "date", columnType)
-            columnType = re.sub("^text$", "string", columnType)
-            columnType = re.sub("^int$", "number", columnType)
+            column_type = re.sub(r"^varchar\(-1\)$", "string", column_type)
+            column_type = re.sub(r"^nvarchar\(-1\)$", "string", column_type)
+            column_type = re.sub("^tinyint$", "number(3)", column_type)
+            column_type = re.sub("^smallint$", "number(5)", column_type)
+            column_type = re.sub(r"^decimal\(", "number(", column_type)
+            column_type = re.sub("^bigint$", "number(19)", column_type)
+            column_type = re.sub("^double$", "binary_double", column_type)
+            column_type = re.sub("^boolean$", "number(1)", column_type)
+            column_type = re.sub("^uniqueidentifier$", "varchar2(36)", column_type)
+            column_type = re.sub(r"^nvarchar\(", "varchar2(", column_type)
+            column_type = re.sub(r"^varchar\(", "varchar2(", column_type)
+            column_type = re.sub("^timestamp$", "date", column_type)
+            column_type = re.sub("^text$", "string", column_type)
+            column_type = re.sub("^int$", "number", column_type)
 
             # If the column is a NUMBER but with decimal 0, it will be read without the decimal.
-            if re.search(r"^number\([0-9]*,0\)$", columnType):
-                columnType = re.sub(r",0\)$", ")", columnType)
+            if re.search(r"^number\([0-9]*,0\)$", column_type):
+                column_type = re.sub(r",0\)$", ")", column_type)
 
             # Oracle only supports varchar up to 4000. After that it have to be a CLOB. This will rewrite the soure tabletype
             # to string and will later be converted to clob.
-            if columnType.startswith("varchar2("):
-                columnType = re.sub(r" char\)$", ")", columnType)
-                columnSize = int(columnType.split("(")[1].split(")")[0])
-                if columnSize > 4000:
-                    columnType = "clob"
+            if column_type.startswith("varchar2("):
+                column_type = re.sub(r" char\)$", ")", column_type)
+                column_size = int(column_type.split("(")[1].split(")")[0])
+                if column_size > 4000:
+                    column_type = "clob"
 
-            if columnType == "string":
+            if column_type == "string":
                 raise invalidConfiguration(
                     "Error: Exports of column '%s' with type 'string' to Oracle is not supported. Please set another columntype in 'target_column_type' or ignore this column in the export."
-                    % (columnName)
+                    % (column_name)
                 )
 
         if self.common_config.db_mysql == True:
-            columnType = re.sub("^string$", "text", columnType)
+            column_type = re.sub("^string$", "text", column_type)
 
         if self.common_config.db_db2udb == True:
-            if columnType == "string":
-                columnType = "clob"
-                mapColumnJava = "String"
-            columnType = re.sub("^timestamp$", "timestmp", columnType)
+            if column_type == "string":
+                column_type = "clob"
+                map_column_java = "String"
+            column_type = re.sub("^timestamp$", "timestmp", column_type)
 
         if self.common_config.db_postgresql == True:
-            if columnType == "string":
-                columnType = "text"
-                mapColumnJava = "String"
-            columnType = re.sub("^tinyint$", "integer", columnType)
-            columnType = re.sub(
-                "^timestamp$", "timestamp without time zone", columnType
+            if column_type == "string":
+                column_type = "text"
+                map_column_java = "String"
+            column_type = re.sub("^tinyint$", "integer", column_type)
+            column_type = re.sub(
+                "^timestamp$", "timestamp without time zone", column_type
             )
-            columnType = re.sub(r"^decimal\(", "numeric(", columnType)
-            columnType = re.sub("^int$", "integer", columnType)
-            columnType = re.sub(r"^char\(", "character(", columnType)
-            columnType = re.sub(r"^varchar\(", "character varying(", columnType)
+            column_type = re.sub(r"^decimal\(", "numeric(", column_type)
+            column_type = re.sub("^int$", "integer", column_type)
+            column_type = re.sub(r"^char\(", "character(", column_type)
+            column_type = re.sub(r"^varchar\(", "character varying(", column_type)
 
         if self.common_config.db_snowflake == True:
-            columnType = re.sub("^timestamp$", "TIMESTAMP_NTZ", columnType)
-            columnType = re.sub(r"^char\(", "TEXT(", columnType)
-            columnType = re.sub(r"^varchar\(", "TEXT(", columnType)
+            column_type = re.sub("^timestamp$", "TIMESTAMP_NTZ", column_type)
+            column_type = re.sub(r"^char\(", "TEXT(", column_type)
+            column_type = re.sub(r"^varchar\(", "TEXT(", column_type)
 
         logging.debug(
             "Executing export_config.convertColumnTypeForTargetTable() - Finished"
         )
-        return columnType, mapColumnJava
+        return column_type, map_column_java
 
     def updateTargetTable(self):
         """Updates the target table with new column definitions"""
         logging.debug("Executing export_config.updateTargetTable()")
         logging.info("Updating the Target Table")
 
-        columnsSource = self.getColumnsFromConfigDatabase(excludeColumns=True)
-        forceUppercase = False
+        columns_source = self.getColumnsFromConfigDatabase(excludeColumns=True)
+        force_uppercase = False
 
-        targetSchema = self.targetSchema
-        targetTable = self.targetTable
+        target_schema = self.targetSchema
+        target_table = self.targetTable
 
         if self.common_config.jdbc_servertype in (constant.ORACLE, constant.DB2_UDB):
-            forceUppercase = True
-            targetSchema = self.targetSchema.upper()
-            targetTable = self.targetTable.upper()
+            force_uppercase = True
+            target_schema = self.targetSchema.upper()
+            target_table = self.targetTable.upper()
 
         elif self.common_config.jdbc_servertype in (constant.POSTGRESQL):
-            targetSchema = self.targetSchema.lower()
-            targetTable = self.targetTable.lower()
+            target_schema = self.targetSchema.lower()
+            target_table = self.targetTable.lower()
 
         elif self.common_config.jdbc_servertype in (constant.SNOWFLAKE):
-            targetSchema = self.targetSchema
-            targetTable = self.targetTable
+            target_schema = self.targetSchema
+            target_table = self.targetTable
 
         self.sqoop_mapcolumnjava = []
-        firstLoop = True
-        alterTableExecuted = False
+        first_loop = True
+        alter_table_executed = False
 
-        for index, row in columnsSource.iterrows():
-            columnType = row["columnType"]
-            columnComment = row["comment"]
-            targetColumnName = row["targetColumnName"]
-            hiveColumnName = row["hiveColumnName"]
-            if targetColumnName != None and targetColumnName.strip() != "":
-                columnName = targetColumnName
+        for index, row in columns_source.iterrows():
+            column_type = row["columnType"]
+            column_comment = row["comment"]
+            target_column_name = row["targetColumnName"]
+            hive_column_name = row["hiveColumnName"]
+            if target_column_name != None and target_column_name.strip() != "":
+                column_name = target_column_name
             else:
-                columnName = hiveColumnName
+                column_name = hive_column_name
 
             # Need to force it to lower so the self.convertColumnTypeForTargetTable works
-            columnType = columnType.lower()
-            columnType, mapcolumnjava = self.convertColumnTypeForTargetTable(
-                hiveColumnName, columnType
+            column_type = column_type.lower()
+            column_type, mapcolumnjava = self.convertColumnTypeForTargetTable(
+                hive_column_name, column_type
             )
 
-            if forceUppercase == True:
-                columnName = columnName.upper()
-                columnType = columnType.upper()
+            if force_uppercase == True:
+                column_name = column_name.upper()
+                column_type = column_type.upper()
 
             if mapcolumnjava != None:
-                self.sqoop_mapcolumnjava.append(columnName + "=" + mapcolumnjava)
+                self.sqoop_mapcolumnjava.append(column_name + "=" + mapcolumnjava)
 
-            columnsSource.iloc[index, columnsSource.columns.get_loc("columnType")] = (
-                columnType
+            columns_source.iloc[index, columns_source.columns.get_loc("columnType")] = (
+                column_type
             )
-            columnsSource.iloc[
-                index, columnsSource.columns.get_loc("targetColumnName")
-            ] = columnName
+            columns_source.iloc[
+                index, columns_source.columns.get_loc("targetColumnName")
+            ] = column_name
 
-        columnsSource.drop("hiveColumnName", axis=1, inplace=True)
-        columnsSource.rename(
+        columns_source.drop("hiveColumnName", axis=1, inplace=True)
+        columns_source.rename(
             columns={"targetColumnName": "name", "columnType": "type"}, inplace=True
         )
 
         self.common_config.getJDBCTableDefinition(
-            source_schema=targetSchema, source_table=targetTable, printInfo=False
+            source_schema=target_schema, source_table=target_table, printInfo=False
         )
-        columnsTarget = self.common_config.source_columns_df
-        columnsTarget.rename(
+        columns_target = self.common_config.source_columns_df
+        columns_target.rename(
             columns={
                 "SOURCE_COLUMN_NAME": "name",
                 "SOURCE_COLUMN_COMMENT": "comment",
@@ -1074,48 +1074,53 @@ class config(metaclass=Singleton):
             },
             inplace=True,
         )
-        columnsTarget.drop("SOURCE_COLUMN_LENGTH", axis=1, inplace=True)
-        columnsTarget.drop("IS_NULLABLE", axis=1, inplace=True)
-        columnsTarget.drop("TABLE_COMMENT", axis=1, inplace=True)
-        columnsTarget.drop("TABLE_TYPE", axis=1, inplace=True)
-        columnsTarget.drop("TABLE_CREATE_TIME", axis=1, inplace=True)
-        columnsTarget.drop("DEFAULT_VALUE", axis=1, inplace=True)
+        columns_target.drop("SOURCE_COLUMN_LENGTH", axis=1, inplace=True)
+        columns_target.drop("IS_NULLABLE", axis=1, inplace=True)
+        columns_target.drop("TABLE_COMMENT", axis=1, inplace=True)
+        columns_target.drop("TABLE_TYPE", axis=1, inplace=True)
+        columns_target.drop("TABLE_CREATE_TIME", axis=1, inplace=True)
+        columns_target.drop("DEFAULT_VALUE", axis=1, inplace=True)
 
         # Check for missing columns
-        columnsSourceOnlyName = columnsSource.filter(["name"])
-        columnsTargetOnlyName = columnsTarget.filter(["name"])
-        columnsMergeOnlyName = pd.merge(
-            columnsSourceOnlyName,
-            columnsTargetOnlyName,
+        columns_source_only_name = columns_source.filter(["name"])
+        columns_target_only_name = columns_target.filter(["name"])
+        columns_merge_only_name = pd.merge(
+            columns_source_only_name,
+            columns_target_only_name,
             on=None,
             how="outer",
             indicator="Exist",
         )
 
-        columnsSourceCount = len(columnsSourceOnlyName)
-        columnsTargetCount = len(columnsTargetOnlyName)
-        columnsMergeLeftOnlyCount = len(
-            columnsMergeOnlyName.loc[columnsMergeOnlyName["Exist"] == "left_only"]
+        columns_source_count = len(columns_source_only_name)
+        columns_target_count = len(columns_target_only_name)
+        columns_merge_left_only_count = len(
+            columns_merge_only_name.loc[columns_merge_only_name["Exist"] == "left_only"]
         )
-        columnsMergeRightOnlyCount = len(
-            columnsMergeOnlyName.loc[columnsMergeOnlyName["Exist"] == "right_only"]
+        columns_merge_right_only_count = len(
+            columns_merge_only_name.loc[
+                columns_merge_only_name["Exist"] == "right_only"
+            ]
         )
 
         logging.debug("columnsSourceOnlyName")
-        logging.debug(columnsSourceOnlyName)
+        logging.debug(columns_source_only_name)
         logging.debug(
             "================================================================"
         )
         logging.debug("columnsTargetOnlyName")
-        logging.debug(columnsTargetOnlyName)
+        logging.debug(columns_target_only_name)
         logging.debug(
             "================================================================"
         )
         logging.debug("columnsMergeOnlyName")
-        logging.debug(columnsMergeOnlyName)
+        logging.debug(columns_merge_only_name)
         logging.debug("")
 
-        if columnsSourceCount == columnsTargetCount and columnsMergeLeftOnlyCount > 0:
+        if (
+            columns_source_count == columns_target_count
+            and columns_merge_left_only_count > 0
+        ):
             # The number of columns in config and Hive is the same, but there is a difference in name.
             # This is most likely because of a rename of one or more of the columns
             # To handle this, we try a rename. This might fail if the column types are also changed to an incompatable type
@@ -1124,240 +1129,240 @@ class config(metaclass=Singleton):
             # 2. Get the position in configDF with that column name
             # 3. Get the column in the same position from HiveDF
             # 4. Check if that column name exists in the mergeDF with Right_Only. If it does, the column was just renamed
-            for index, row in columnsMergeOnlyName.loc[
-                columnsMergeOnlyName["Exist"] == "left_only"
+            for index, row in columns_merge_only_name.loc[
+                columns_merge_only_name["Exist"] == "left_only"
             ].iterrows():
-                rowInSource = columnsSource.loc[
-                    columnsSource["name"] == row["name"]
+                row_in_source = columns_source.loc[
+                    columns_source["name"] == row["name"]
                 ].iloc[0]
-                indexInSource = columnsSource.loc[
-                    columnsSource["name"] == row["name"]
+                index_in_source = columns_source.loc[
+                    columns_source["name"] == row["name"]
                 ].index.item()
-                rowInTarget = columnsTarget.iloc[indexInSource]
+                row_in_target = columns_target.iloc[index_in_source]
 
                 if (
                     len(
-                        columnsMergeOnlyName.loc[
-                            (columnsMergeOnlyName["Exist"] == "right_only")
-                            & (columnsMergeOnlyName["name"] == rowInTarget["name"])
+                        columns_merge_only_name.loc[
+                            (columns_merge_only_name["Exist"] == "right_only")
+                            & (columns_merge_only_name["name"] == row_in_target["name"])
                         ]
                     )
                     > 0
                 ):
                     # This is executed if the column is renamed and exists in the same position
-                    logging.debug("Name in Source:  %s" % (rowInSource["name"]))
-                    logging.debug("Type in Source:  %s" % (rowInSource["type"]))
-                    logging.debug("Index in Source: %s" % (indexInSource))
+                    logging.debug("Name in Source:  %s" % (row_in_source["name"]))
+                    logging.debug("Type in Source:  %s" % (row_in_source["type"]))
+                    logging.debug("Index in Source: %s" % (index_in_source))
                     logging.debug("--------------------")
-                    logging.debug("Name in Target: %s" % (rowInTarget["name"]))
-                    logging.debug("Type in Target: %s" % (rowInTarget["type"]))
+                    logging.debug("Name in Target: %s" % (row_in_target["name"]))
+                    logging.debug("Type in Target: %s" % (row_in_target["type"]))
                     logging.debug("======================================")
                     logging.debug("")
 
                     if self.common_config.jdbc_servertype == constant.MSSQL:
                         query = "EXEC sp_rename '%s.%s.%s', '%s', 'COLUMN'" % (
-                            targetSchema,
-                            targetTable,
-                            rowInTarget["name"],
-                            rowInSource["name"],
+                            target_schema,
+                            target_table,
+                            row_in_target["name"],
+                            row_in_source["name"],
                         )
 
                     if self.common_config.jdbc_servertype == constant.ORACLE:
                         query = 'ALTER TABLE "%s"."%s" RENAME COLUMN "%s" TO "%s"' % (
-                            targetSchema,
-                            targetTable,
-                            rowInTarget["name"],
-                            rowInSource["name"],
+                            target_schema,
+                            target_table,
+                            row_in_target["name"],
+                            row_in_source["name"],
                         )
 
                     if self.common_config.jdbc_servertype == constant.DB2_UDB:
                         query = "ALTER TABLE %s.%s RENAME COLUMN %s TO %s" % (
-                            targetSchema,
-                            targetTable,
-                            rowInTarget["name"],
-                            rowInSource["name"],
+                            target_schema,
+                            target_table,
+                            row_in_target["name"],
+                            row_in_source["name"],
                         )
 
                     if self.common_config.jdbc_servertype == constant.MYSQL:
                         query = "ALTER TABLE %s CHANGE COLUMN %s %s %s" % (
-                            targetTable,
-                            rowInTarget["name"],
-                            rowInSource["name"],
-                            rowInSource["type"],
+                            target_table,
+                            row_in_target["name"],
+                            row_in_source["name"],
+                            row_in_source["type"],
                         )
 
                     if self.common_config.jdbc_servertype == constant.POSTGRESQL:
                         query = "ALTER TABLE %s.%s RENAME COLUMN %s TO %s" % (
-                            targetSchema,
-                            targetTable,
-                            rowInTarget["name"],
-                            rowInSource["name"],
+                            target_schema,
+                            target_table,
+                            row_in_target["name"],
+                            row_in_source["name"],
                         )
 
                     if self.common_config.jdbc_servertype == constant.SNOWFLAKE:
                         query = 'ALTER TABLE "%s"."%s" RENAME COLUMN "%s" TO "%s"' % (
-                            targetSchema,
-                            targetTable,
-                            rowInTarget["name"],
-                            rowInSource["name"],
+                            target_schema,
+                            target_table,
+                            row_in_target["name"],
+                            row_in_source["name"],
                         )
 
                     self.common_config.executeJDBCquery(query)
-                    alterTableExecuted = True
+                    alter_table_executed = True
 
                     logging.info(
                         "Column %s renamed to %s in Target Table"
-                        % (rowInTarget["name"], rowInSource["name"])
+                        % (row_in_target["name"], row_in_source["name"])
                     )
                     self.logTargetColumnRename(
-                        rowInSource["name"],
-                        rowInTarget["name"],
-                        dbAlias=self.connectionAlias,
+                        row_in_source["name"],
+                        row_in_target["name"],
+                        db_alias=self.connectionAlias,
                         database=self.common_config.jdbc_database,
-                        schema=targetSchema,
-                        table=targetTable,
+                        schema=target_schema,
+                        table=target_table,
                     )
 
-                    if rowInSource["type"] != rowInTarget["type"]:
+                    if row_in_source["type"] != row_in_target["type"]:
                         logging.info(
                             "Column %s changed type from %s to %s"
                             % (
-                                rowInSource["name"],
-                                rowInTarget["type"],
-                                rowInSource["type"],
+                                row_in_source["name"],
+                                row_in_target["type"],
+                                row_in_source["type"],
                             )
                         )
                         self.logTargetColumnTypeChange(
-                            rowInSource["name"],
-                            rowInSource["type"],
-                            previous_columnType=rowInTarget["type"],
-                            dbAlias=self.connectionAlias,
+                            row_in_source["name"],
+                            row_in_source["type"],
+                            previous_column_type=row_in_target["type"],
+                            db_alias=self.connectionAlias,
                             database=self.common_config.jdbc_database,
-                            schema=targetSchema,
-                            table=targetTable,
+                            schema=target_schema,
+                            table=target_table,
                         )
                 else:
                     if (
-                        columnsMergeLeftOnlyCount == 1
-                        and columnsMergeRightOnlyCount == 1
+                        columns_merge_left_only_count == 1
+                        and columns_merge_right_only_count == 1
                     ):
                         # So the columns are not in the same position, but it's only one column that changed. In that case, we just rename that one column
-                        rowInMergeLeft = columnsMergeOnlyName.loc[
-                            columnsMergeOnlyName["Exist"] == "left_only"
+                        row_in_merge_left = columns_merge_only_name.loc[
+                            columns_merge_only_name["Exist"] == "left_only"
                         ].iloc[0]
-                        rowInMergeRight = columnsMergeOnlyName.loc[
-                            columnsMergeOnlyName["Exist"] == "right_only"
+                        row_in_merge_right = columns_merge_only_name.loc[
+                            columns_merge_only_name["Exist"] == "right_only"
                         ].iloc[0]
-                        rowInSource = columnsSource.loc[
-                            columnsSource["name"] == rowInMergeLeft["name"]
+                        row_in_source = columns_source.loc[
+                            columns_source["name"] == row_in_merge_left["name"]
                         ].iloc[0]
-                        rowInTarget = columnsTarget.loc[
-                            columnsTarget["name"] == rowInMergeRight["name"]
+                        row_in_target = columns_target.loc[
+                            columns_target["name"] == row_in_merge_right["name"]
                         ].iloc[0]
-                        logging.debug(rowInSource["name"])
-                        logging.debug(rowInSource["type"])
+                        logging.debug(row_in_source["name"])
+                        logging.debug(row_in_source["type"])
                         logging.debug("--------------------")
-                        logging.debug(rowInTarget["name"])
-                        logging.debug(rowInTarget["type"])
+                        logging.debug(row_in_target["name"])
+                        logging.debug(row_in_target["type"])
 
                         if self.common_config.jdbc_servertype == constant.MSSQL:
                             query = "EXEC sp_rename '%s.%s.%s', '%s', 'COLUMN'" % (
-                                targetSchema,
-                                targetTable,
-                                rowInTarget["name"],
-                                rowInSource["name"],
+                                target_schema,
+                                target_table,
+                                row_in_target["name"],
+                                row_in_source["name"],
                             )
 
                         if self.common_config.jdbc_servertype == constant.ORACLE:
                             query = (
                                 'ALTER TABLE "%s"."%s" RENAME COLUMN "%s" TO "%s"'
                                 % (
-                                    targetSchema,
-                                    targetTable,
-                                    rowInTarget["name"],
-                                    rowInSource["name"],
+                                    target_schema,
+                                    target_table,
+                                    row_in_target["name"],
+                                    row_in_source["name"],
                                 )
                             )
 
                         if self.common_config.jdbc_servertype == constant.DB2_UDB:
                             query = "ALTER TABLE %s.%s RENAME COLUMN %s TO %s" % (
-                                targetSchema,
-                                targetTable,
-                                rowInTarget["name"],
-                                rowInSource["name"],
+                                target_schema,
+                                target_table,
+                                row_in_target["name"],
+                                row_in_source["name"],
                             )
 
                         if self.common_config.jdbc_servertype == constant.MYSQL:
                             query = "ALTER TABLE %s CHANGE COLUMN %s %s %s NULL" % (
-                                targetTable,
-                                rowInTarget["name"],
-                                rowInSource["name"],
-                                rowInSource["type"],
+                                target_table,
+                                row_in_target["name"],
+                                row_in_source["name"],
+                                row_in_source["type"],
                             )
 
                         if self.common_config.jdbc_servertype == constant.POSTGRESQL:
                             query = "ALTER TABLE %s.%s RENAME COLUMN %s TO %s" % (
-                                targetSchema,
-                                targetTable,
-                                rowInTarget["name"],
-                                rowInSource["name"],
+                                target_schema,
+                                target_table,
+                                row_in_target["name"],
+                                row_in_source["name"],
                             )
 
                         if self.common_config.jdbc_servertype == constant.SNOWFLAKE:
                             query = (
                                 'ALTER TABLE "%s"."%s" RENAME COLUMN "%s" TO "%s"'
                                 % (
-                                    targetSchema,
-                                    targetTable,
-                                    rowInTarget["name"],
-                                    rowInSource["name"],
+                                    target_schema,
+                                    target_table,
+                                    row_in_target["name"],
+                                    row_in_source["name"],
                                 )
                             )
 
                         self.common_config.executeJDBCquery(query)
                         self.common_config.executeJDBCquery(query)
-                        alterTableExecuted = True
+                        alter_table_executed = True
 
                         logging.info(
                             "Column %s renamed to %s in Target Table"
-                            % (rowInTarget["name"], rowInSource["name"])
+                            % (row_in_target["name"], row_in_source["name"])
                         )
                         self.logTargetColumnRename(
-                            rowInSource["name"],
-                            rowInTarget["name"],
-                            dbAlias=self.connectionAlias,
+                            row_in_source["name"],
+                            row_in_target["name"],
+                            db_alias=self.connectionAlias,
                             database=self.common_config.jdbc_database,
-                            schema=targetSchema,
-                            table=targetTable,
+                            schema=target_schema,
+                            table=target_table,
                         )
 
-                        if rowInSource["type"] != rowInTarget[
+                        if row_in_source["type"] != row_in_target[
                             "type"
                         ] and self.common_config.jdbc_servertype in (constant.MYSQL):
                             logging.info(
                                 "Column %s changed type from %s to %s"
                                 % (
-                                    rowInSource["name"],
-                                    rowInTarget["type"],
-                                    rowInSource["type"],
+                                    row_in_source["name"],
+                                    row_in_target["type"],
+                                    row_in_source["type"],
                                 )
                             )
                             self.logTargetColumnTypeChange(
-                                rowInSource["name"],
-                                rowInSource["type"],
-                                previous_columnType=rowInTarget["type"],
-                                dbAlias=self.connectionAlias,
+                                row_in_source["name"],
+                                row_in_source["type"],
+                                previous_column_type=row_in_target["type"],
+                                db_alias=self.connectionAlias,
                                 database=self.common_config.jdbc_database,
-                                schema=targetSchema,
-                                table=targetTable,
+                                schema=target_schema,
+                                table=target_table,
                             )
 
             # Update the DF because the target table was changed
             self.common_config.getJDBCTableDefinition(
-                source_schema=targetSchema, source_table=targetTable, printInfo=False
+                source_schema=target_schema, source_table=target_table, printInfo=False
             )
-            columnsTarget = self.common_config.source_columns_df
-            columnsTarget.rename(
+            columns_target = self.common_config.source_columns_df
+            columns_target.rename(
                 columns={
                     "SOURCE_COLUMN_NAME": "name",
                     "SOURCE_COLUMN_COMMENT": "comment",
@@ -1365,96 +1370,96 @@ class config(metaclass=Singleton):
                 },
                 inplace=True,
             )
-            columnsTarget.drop("SOURCE_COLUMN_LENGTH", axis=1, inplace=True)
-            columnsTarget.drop("IS_NULLABLE", axis=1, inplace=True)
-            columnsTarget.drop("TABLE_COMMENT", axis=1, inplace=True)
-            columnsTarget.drop("TABLE_TYPE", axis=1, inplace=True)
-            columnsTarget.drop("TABLE_CREATE_TIME", axis=1, inplace=True)
-            columnsTarget.drop("DEFAULT_VALUE", axis=1, inplace=True)
-            columnsTargetOnlyName = columnsTarget.filter(["name"])
-            columnsMergeOnlyName = pd.merge(
-                columnsSourceOnlyName,
-                columnsTargetOnlyName,
+            columns_target.drop("SOURCE_COLUMN_LENGTH", axis=1, inplace=True)
+            columns_target.drop("IS_NULLABLE", axis=1, inplace=True)
+            columns_target.drop("TABLE_COMMENT", axis=1, inplace=True)
+            columns_target.drop("TABLE_TYPE", axis=1, inplace=True)
+            columns_target.drop("TABLE_CREATE_TIME", axis=1, inplace=True)
+            columns_target.drop("DEFAULT_VALUE", axis=1, inplace=True)
+            columns_target_only_name = columns_target.filter(["name"])
+            columns_merge_only_name = pd.merge(
+                columns_source_only_name,
+                columns_target_only_name,
                 on=None,
                 how="outer",
                 indicator="Exist",
             )
 
-        for index, row in columnsMergeOnlyName.loc[
-            columnsMergeOnlyName["Exist"] == "left_only"
+        for index, row in columns_merge_only_name.loc[
+            columns_merge_only_name["Exist"] == "left_only"
         ].iterrows():
             # This will iterate over columns that only exists in the config and not in Target table. We add these to the table
-            fullRow = columnsSource.loc[columnsSource["name"] == row["name"]].iloc[0]
+            full_row = columns_source.loc[columns_source["name"] == row["name"]].iloc[0]
 
             if self.common_config.jdbc_servertype == constant.MSSQL:
                 query = "ALTER TABLE %s.%s ADD %s %s NULL" % (
-                    targetSchema,
-                    targetTable,
-                    fullRow["name"],
-                    fullRow["type"],
+                    target_schema,
+                    target_table,
+                    full_row["name"],
+                    full_row["type"],
                 )
 
             if self.common_config.jdbc_servertype == constant.ORACLE:
                 query = 'ALTER TABLE "%s"."%s" ADD "%s" %s' % (
-                    targetSchema,
-                    targetTable,
-                    fullRow["name"],
-                    fullRow["type"],
+                    target_schema,
+                    target_table,
+                    full_row["name"],
+                    full_row["type"],
                 )
 
             if self.common_config.jdbc_servertype == constant.DB2_UDB:
                 query = "ALTER TABLE %s.%s ADD COLUMN %s %s" % (
-                    targetSchema,
-                    targetTable,
-                    fullRow["name"],
-                    fullRow["type"],
+                    target_schema,
+                    target_table,
+                    full_row["name"],
+                    full_row["type"],
                 )
 
             if self.common_config.jdbc_servertype == constant.MYSQL:
                 query = "ALTER TABLE %s ADD COLUMN %s %s NULL" % (
-                    targetTable,
-                    fullRow["name"],
-                    fullRow["type"],
+                    target_table,
+                    full_row["name"],
+                    full_row["type"],
                 )
 
             if self.common_config.jdbc_servertype == constant.POSTGRESQL:
                 query = "ALTER TABLE %s.%s ADD COLUMN %s %s" % (
-                    targetSchema,
-                    targetTable,
-                    fullRow["name"],
-                    fullRow["type"],
+                    target_schema,
+                    target_table,
+                    full_row["name"],
+                    full_row["type"],
                 )
 
             if self.common_config.jdbc_servertype == constant.SNOWFLAKE:
                 query = 'ALTER TABLE "%s"."%s" ADD COLUMN "%s" %s' % (
-                    targetSchema,
-                    targetTable,
-                    fullRow["name"],
-                    fullRow["type"],
+                    target_schema,
+                    target_table,
+                    full_row["name"],
+                    full_row["type"],
                 )
 
             self.common_config.executeJDBCquery(query)
-            alterTableExecuted = True
+            alter_table_executed = True
 
             logging.info(
                 "Column %s (%s) added to Target Table"
-                % (fullRow["name"], fullRow["type"])
+                % (full_row["name"], full_row["type"])
             )
             self.logTargetColumnAdd(
-                fullRow["name"],
-                columnType=fullRow["type"],
-                dbAlias=self.connectionAlias,
+                full_row["name"],
+                column_type=full_row["type"],
+                db_alias=self.connectionAlias,
                 database=self.common_config.jdbc_database,
-                schema=targetSchema,
-                table=targetTable,
+                schema=target_schema,
+                table=target_table,
             )
 
         # Update the DF because the target table was changed
         self.common_config.getJDBCTableDefinition(
-            source_schema=targetSchema, source_table=targetTable, printInfo=False
+            source_schema=target_schema, source_table=target_table, printInfo=False
         )
-        columnsTarget = self.common_config.source_columns_df
-        columnsTarget.rename(
+        columns_target = self.common_config.source_columns_df
+        columns_target.rename(
             columns={
                 "SOURCE_COLUMN_NAME": "name",
                 "SOURCE_COLUMN_COMMENT": "comment",
@@ -1462,93 +1467,93 @@ class config(metaclass=Singleton):
             },
             inplace=True,
         )
-        columnsTarget.drop("SOURCE_COLUMN_LENGTH", axis=1, inplace=True)
-        columnsTarget.drop("IS_NULLABLE", axis=1, inplace=True)
-        columnsTarget.drop("TABLE_COMMENT", axis=1, inplace=True)
-        columnsTarget.drop("TABLE_TYPE", axis=1, inplace=True)
-        columnsTarget.drop("TABLE_CREATE_TIME", axis=1, inplace=True)
-        columnsTarget.drop("DEFAULT_VALUE", axis=1, inplace=True)
+        columns_target.drop("SOURCE_COLUMN_LENGTH", axis=1, inplace=True)
+        columns_target.drop("IS_NULLABLE", axis=1, inplace=True)
+        columns_target.drop("TABLE_COMMENT", axis=1, inplace=True)
+        columns_target.drop("TABLE_TYPE", axis=1, inplace=True)
+        columns_target.drop("TABLE_CREATE_TIME", axis=1, inplace=True)
+        columns_target.drop("DEFAULT_VALUE", axis=1, inplace=True)
 
         # Check for changed column types
-        columnsSourceOnlyNameType = columnsSource.filter(["name", "type"]).sort_values(
-            by=["name"], ascending=True
-        )
-        columnsTargetOnlyNameType = columnsTarget.filter(["name", "type"]).sort_values(
-            by=["name"], ascending=True
-        )
+        columns_source_only_name_type = columns_source.filter(
+            ["name", "type"]
+        ).sort_values(by=["name"], ascending=True)
+        columns_target_only_name_type = columns_target.filter(
+            ["name", "type"]
+        ).sort_values(by=["name"], ascending=True)
 
         # Some columns types must be changed as the function to read the schema will return a precision, but we
         # dont have that in the configuration. If this is not done, there will be an alter table every time an export
         # is running and it wont really change anything.
-        columnsTargetOnlyNameType["type"] = columnsTargetOnlyNameType[
+        columns_target_only_name_type["type"] = columns_target_only_name_type[
             "type"
         ].str.replace(r"^FLOAT\(.*\)", "FLOAT", regex=True)
-        columnsTargetOnlyNameType["type"] = columnsTargetOnlyNameType[
+        columns_target_only_name_type["type"] = columns_target_only_name_type[
             "type"
         ].str.replace(r"^varchar\(-1\)", "varchar(max)", regex=True)
 
         # Remove newline in columntype
-        columnsSourceOnlyNameType["type"] = columnsSourceOnlyNameType[
+        columns_source_only_name_type["type"] = columns_source_only_name_type[
             "type"
         ].str.replace(r"\n$|\r$", "", regex=True)
-        columnsTargetOnlyNameType["type"] = columnsTargetOnlyNameType[
+        columns_target_only_name_type["type"] = columns_target_only_name_type[
             "type"
         ].str.replace(r"\n$|\r$", "", regex=True)
 
         # Merge and find the difference
-        columnsMergeOnlyNameType = pd.merge(
-            columnsSourceOnlyNameType,
-            columnsTargetOnlyNameType,
+        columns_merge_only_name_type = pd.merge(
+            columns_source_only_name_type,
+            columns_target_only_name_type,
             on=None,
             how="outer",
             indicator="Exist",
         )
 
         logging.debug("columnsSourceOnlyNameType")
-        logging.debug(columnsSourceOnlyNameType)
+        logging.debug(columns_source_only_name_type)
         logging.debug(
             "================================================================"
         )
         logging.debug("columnsTargetOnlyNameType")
-        logging.debug(columnsTargetOnlyNameType)
+        logging.debug(columns_target_only_name_type)
         logging.debug(
             "================================================================"
         )
         logging.debug("columnsMergeOnlyNameType")
-        logging.debug(columnsMergeOnlyNameType)
+        logging.debug(columns_merge_only_name_type)
         logging.debug("")
 
-        for index, row in columnsMergeOnlyNameType.loc[
-            columnsMergeOnlyNameType["Exist"] == "left_only"
+        for index, row in columns_merge_only_name_type.loc[
+            columns_merge_only_name_type["Exist"] == "left_only"
         ].iterrows():
             # This will iterate over columns that had the type changed from the source
             if self.common_config.jdbc_servertype == constant.MSSQL:
                 query = "ALTER TABLE %s.%s ALTER COLUMN %s %s NULL" % (
-                    targetSchema,
-                    targetTable,
+                    target_schema,
+                    target_table,
                     row["name"],
                     row["type"],
                 )
 
             if self.common_config.jdbc_servertype == constant.ORACLE:
                 query = 'ALTER TABLE "%s"."%s" MODIFY ("%s" %s)' % (
-                    targetSchema,
-                    targetTable,
+                    target_schema,
+                    target_table,
                     row["name"],
                     row["type"],
                 )
 
             if self.common_config.jdbc_servertype == constant.DB2_UDB:
                 query = "ALTER TABLE %s.%s ALTER COLUMN %s SET DATA TYPE %s" % (
-                    targetSchema,
-                    targetTable,
+                    target_schema,
+                    target_table,
                     row["name"],
                     row["type"],
                 )
 
             if self.common_config.jdbc_servertype == constant.MYSQL:
                 query = "ALTER TABLE %s CHANGE COLUMN %s %s %s NULL" % (
-                    targetTable,
+                    target_table,
                     row["name"],
                     row["name"],
                     row["type"],
@@ -1556,29 +1561,29 @@ class config(metaclass=Singleton):
 
             if self.common_config.jdbc_servertype == constant.POSTGRESQL:
                 query = "ALTER TABLE %s.%s ALTER COLUMN %s TYPE %s" % (
-                    targetSchema,
-                    targetTable,
+                    target_schema,
+                    target_table,
                     row["name"],
                     row["type"],
                 )
 
             if self.common_config.jdbc_servertype == constant.SNOWFLAKE:
                 query = 'ALTER TABLE "%s"."%s" ALTER COLUMN "%s" TYPE %s' % (
-                    targetSchema,
-                    targetTable,
+                    target_schema,
+                    target_table,
                     row["name"],
                     row["type"],
                 )
 
             self.common_config.executeJDBCquery(query)
-            alterTableExecuted = True
+            alter_table_executed = True
 
             # Get the previous column type from the Pandas DF with right_only in Exist column
-            previous_columnType = (
+            previous_column_type = (
                 (
-                    columnsMergeOnlyNameType.loc[
-                        (columnsMergeOnlyNameType["name"] == row["name"])
-                        & (columnsMergeOnlyNameType["Exist"] == "right_only")
+                    columns_merge_only_name_type.loc[
+                        (columns_merge_only_name_type["name"] == row["name"])
+                        & (columns_merge_only_name_type["Exist"] == "right_only")
                     ]
                 )
                 .reset_index()
@@ -1587,25 +1592,25 @@ class config(metaclass=Singleton):
 
             logging.info(
                 "Column %s changed type from '%s' to '%s'"
-                % (row["name"], previous_columnType, row["type"])
+                % (row["name"], previous_column_type, row["type"])
             )
             self.logTargetColumnTypeChange(
                 row["name"],
-                columnType=row["type"],
-                previous_columnType=previous_columnType,
-                dbAlias=self.connectionAlias,
+                column_type=row["type"],
+                previous_column_type=previous_column_type,
+                db_alias=self.connectionAlias,
                 database=self.common_config.jdbc_database,
-                schema=targetSchema,
-                table=targetTable,
+                schema=target_schema,
+                table=target_table,
             )
 
         # Check for comment changes
         # Update the DF because the target table was changed
         self.common_config.getJDBCTableDefinition(
-            source_schema=targetSchema, source_table=targetTable, printInfo=False
+            source_schema=target_schema, source_table=target_table, printInfo=False
         )
-        columnsTarget = self.common_config.source_columns_df
-        columnsTarget.rename(
+        columns_target = self.common_config.source_columns_df
+        columns_target.rename(
             columns={
                 "SOURCE_COLUMN_NAME": "name",
                 "SOURCE_COLUMN_COMMENT": "comment",
@@ -1613,37 +1618,37 @@ class config(metaclass=Singleton):
             },
             inplace=True,
         )
-        columnsTarget.drop("SOURCE_COLUMN_LENGTH", axis=1, inplace=True)
-        columnsTarget.drop("IS_NULLABLE", axis=1, inplace=True)
-        columnsTarget.drop("TABLE_COMMENT", axis=1, inplace=True)
-        columnsTarget.drop("TABLE_TYPE", axis=1, inplace=True)
-        columnsTarget.drop("TABLE_CREATE_TIME", axis=1, inplace=True)
-        columnsTarget.drop("DEFAULT_VALUE", axis=1, inplace=True)
-        columnsTarget["comment"].replace(
+        columns_target.drop("SOURCE_COLUMN_LENGTH", axis=1, inplace=True)
+        columns_target.drop("IS_NULLABLE", axis=1, inplace=True)
+        columns_target.drop("TABLE_COMMENT", axis=1, inplace=True)
+        columns_target.drop("TABLE_TYPE", axis=1, inplace=True)
+        columns_target.drop("TABLE_CREATE_TIME", axis=1, inplace=True)
+        columns_target.drop("DEFAULT_VALUE", axis=1, inplace=True)
+        columns_target["comment"].replace(
             "", None, inplace=True
         )  # Replace blank column comments with None as it would otherwise trigger an alter table on every run
-        columnsTarget["comment"].replace("nan", None, inplace=True)
+        columns_target["comment"].replace("nan", None, inplace=True)
 
         if (
-            alterTableExecuted == True
+            alter_table_executed == True
             and self.common_config.jdbc_servertype == constant.DB2_UDB
         ):
             # DB2 require a reorg if the table was changed
             logging.info("Running a reorg on the target table")
             query = "call SYSPROC.ADMIN_CMD('REORG TABLE %s.%s')" % (
-                targetSchema,
-                targetTable,
+                target_schema,
+                target_table,
             )
             self.common_config.executeJDBCquery(query)
 
         # print(columnsSource)
         # print(columnsTarget)
-        columnsMerge = pd.merge(
-            columnsSource, columnsTarget, on=None, how="outer", indicator="Exist"
+        columns_merge = pd.merge(
+            columns_source, columns_target, on=None, how="outer", indicator="Exist"
         )
         # print(columnsMerge)
-        for index, row in columnsMerge.loc[
-            columnsMerge["Exist"] == "left_only"
+        for index, row in columns_merge.loc[
+            columns_merge["Exist"] == "left_only"
         ].iterrows():
             if row["comment"] == None:
                 row["comment"] = ""
@@ -1651,43 +1656,43 @@ class config(metaclass=Singleton):
             if self.common_config.jdbc_servertype == constant.MSSQL:
                 query = "IF NOT EXISTS ("
                 query += "SELECT NULL FROM SYS.EXTENDED_PROPERTIES "
-                query += "WHERE [major_id] = OBJECT_ID('%s')" % (targetTable)
+                query += "WHERE [major_id] = OBJECT_ID('%s')" % (target_table)
                 query += "   AND [name] = N'MS_Description' "
                 query += "   AND [minor_id] = ("
                 query += "      SELECT [column_id] FROM SYS.COLUMNS "
                 query += "      WHERE [name] = '%s' " % (row["name"])
-                query += "         AND [object_id] = OBJECT_ID('%s')" % (targetTable)
+                query += "         AND [object_id] = OBJECT_ID('%s')" % (target_table)
                 query += "      )"
                 query += "   )"
                 query += (
                     "EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'%s' , @level0type=N'SCHEMA',@level0name=N'%s', @level1type=N'TABLE',@level1name=N'%s', @level2type=N'COLUMN',@level2name=N'%s' "
-                    % (row["comment"], targetSchema, targetTable, row["name"])
+                    % (row["comment"], target_schema, target_table, row["name"])
                 )
                 query += "ELSE "
                 query += (
                     "EXEC sys.sp_updateextendedproperty  @name=N'MS_Description', @value=N'%s' , @level0type=N'SCHEMA',@level0name=N'%s', @level1type=N'TABLE',@level1name=N'%s', @level2type=N'COLUMN',@level2name=N'%s' "
-                    % (row["comment"], targetSchema, targetTable, row["name"])
+                    % (row["comment"], target_schema, target_table, row["name"])
                 )
 
             if self.common_config.jdbc_servertype == constant.ORACLE:
                 query = 'comment on column "%s"."%s"."%s" is \'%s\'' % (
-                    targetSchema,
-                    targetTable,
+                    target_schema,
+                    target_table,
                     row["name"],
                     row["comment"],
                 )
 
             if self.common_config.jdbc_servertype == constant.DB2_UDB:
                 query = "COMMENT ON COLUMN %s.%s.%s IS '%s'" % (
-                    targetSchema,
-                    targetTable,
+                    target_schema,
+                    target_table,
                     row["name"],
                     row["comment"],
                 )
 
             if self.common_config.jdbc_servertype == constant.MYSQL:
                 query = "ALTER TABLE %s CHANGE COLUMN %s %s %s NULL COMMENT '%s'" % (
-                    targetTable,
+                    target_table,
                     row["name"],
                     row["name"],
                     row["type"],
@@ -1696,22 +1701,22 @@ class config(metaclass=Singleton):
 
             if self.common_config.jdbc_servertype == constant.POSTGRESQL:
                 query = 'comment on column "%s"."%s"."%s" is \'%s\'' % (
-                    targetSchema,
-                    targetTable,
+                    target_schema,
+                    target_table,
                     row["name"],
                     row["comment"],
                 )
 
             if self.common_config.jdbc_servertype == constant.SNOWFLAKE:
                 query = 'ALTER TABLE "%s"."%s" ALTER COLUMN "%s" COMMENT \'%s\'' % (
-                    targetSchema,
-                    targetTable,
+                    target_schema,
+                    target_table,
                     row["name"],
                     row["comment"],
                 )
 
             self.common_config.executeJDBCquery(query)
-            alterTableExecuted = True
+            alter_table_executed = True
 
         logging.debug("Executing export_config.updateTargetTable() - Finished")
 
@@ -1719,30 +1724,30 @@ class config(metaclass=Singleton):
         """Returns the generated mapColumnJava settngs for all columns"""
         logging.debug("Executing export_config.getSqoopMapColumnJava()")
 
-        columnsDF = self.getColumnsFromConfigDatabase(excludeColumns=True)
+        columns_df = self.getColumnsFromConfigDatabase(excludeColumns=True)
         self.sqoop_mapcolumnjava = []
-        forceColumnUppercase = False
+        force_column_uppercase = False
 
         if self.common_config.jdbc_servertype in (constant.ORACLE, constant.DB2_UDB):
-            forceColumnUppercase = True
+            force_column_uppercase = True
 
-        for index, row in columnsDF.iterrows():
-            columnType = row["columnType"]
-            targetColumnName = row["targetColumnName"]
-            hiveColumnName = row["hiveColumnName"]
-            if targetColumnName != None and targetColumnName.strip() != "":
-                columnName = targetColumnName
+        for index, row in columns_df.iterrows():
+            column_type = row["columnType"]
+            target_column_name = row["targetColumnName"]
+            hive_column_name = row["hiveColumnName"]
+            if target_column_name != None and target_column_name.strip() != "":
+                column_name = target_column_name
             else:
-                columnName = hiveColumnName
+                column_name = hive_column_name
 
-            if forceColumnUppercase == True:
-                columnName = columnName.upper()
+            if force_column_uppercase == True:
+                column_name = column_name.upper()
 
-            columnType, mapColumnJava = self.convertColumnTypeForTargetTable(
-                hiveColumnName, columnType
+            column_type, map_column_java = self.convertColumnTypeForTargetTable(
+                hive_column_name, column_type
             )
-            if mapColumnJava != None:
-                self.sqoop_mapcolumnjava.append(columnName + "=" + mapColumnJava)
+            if map_column_java != None:
+                self.sqoop_mapcolumnjava.append(column_name + "=" + map_column_java)
 
         logging.debug("Executing export_config.getSqoopMapColumnJava() - Finished")
         return self.sqoop_mapcolumnjava
@@ -1752,80 +1757,80 @@ class config(metaclass=Singleton):
         logging.debug("Executing export_config.createTargetTable()")
         logging.info("Creating the Target Table")
 
-        columnsDF = self.getColumnsFromConfigDatabase(excludeColumns=True)
-        forceColumnUppercase = False
-        columnQuote = ""
+        columns_df = self.getColumnsFromConfigDatabase(excludeColumns=True)
+        force_column_uppercase = False
+        column_quote = ""
 
         if self.common_config.jdbc_servertype in (constant.ORACLE, constant.DB2_UDB):
-            targetSchema = self.targetSchema.upper()
-            targetTable = self.targetTable.upper()
-            forceColumnUppercase = True
-            columnQuote = '"'
-            query = 'create table "%s"."%s" (' % (targetSchema, targetTable)
+            target_schema = self.targetSchema.upper()
+            target_table = self.targetTable.upper()
+            force_column_uppercase = True
+            column_quote = '"'
+            query = 'create table "%s"."%s" (' % (target_schema, target_table)
 
         elif self.common_config.jdbc_servertype in (constant.POSTGRESQL):
-            targetSchema = self.targetSchema.lower()
-            targetTable = self.targetTable.lower()
-            query = "create table %s.%s (" % (targetSchema, targetTable)
+            target_schema = self.targetSchema.lower()
+            target_table = self.targetTable.lower()
+            query = "create table %s.%s (" % (target_schema, target_table)
 
         elif self.common_config.jdbc_servertype in (constant.SNOWFLAKE):
-            targetSchema = self.targetSchema
-            targetTable = self.targetTable
-            query = 'create table "%s"."%s" (' % (targetSchema, targetTable)
-            columnQuote = '"'
+            target_schema = self.targetSchema
+            target_table = self.targetTable
+            query = 'create table "%s"."%s" (' % (target_schema, target_table)
+            column_quote = '"'
 
         else:
-            targetSchema = self.targetSchema
-            targetTable = self.targetTable
-            if targetSchema == "-":
-                query = "create table %s (" % (targetTable)
+            target_schema = self.targetSchema
+            target_table = self.targetTable
+            if target_schema == "-":
+                query = "create table %s (" % (target_table)
             else:
-                query = "create table %s.%s (" % (targetSchema, targetTable)
+                query = "create table %s.%s (" % (target_schema, target_table)
 
         self.sqoop_mapcolumnjava = []
-        firstLoop = True
+        first_loop = True
 
-        for index, row in columnsDF.iterrows():
-            columnType = row["columnType"]
-            columnComment = row["comment"]
-            targetColumnName = row["targetColumnName"]
-            hiveColumnName = row["hiveColumnName"]
-            if targetColumnName != None and targetColumnName.strip() != "":
-                columnName = targetColumnName
+        for index, row in columns_df.iterrows():
+            column_type = row["columnType"]
+            column_comment = row["comment"]
+            target_column_name = row["targetColumnName"]
+            hive_column_name = row["hiveColumnName"]
+            if target_column_name != None and target_column_name.strip() != "":
+                column_name = target_column_name
             else:
-                columnName = hiveColumnName
+                column_name = hive_column_name
 
-            if forceColumnUppercase == True:
-                columnName = columnName.upper()
+            if force_column_uppercase == True:
+                column_name = column_name.upper()
 
-            if firstLoop == False:
+            if first_loop == False:
                 query += ", "
             else:
-                firstLoop = False
+                first_loop = False
 
-            columnType, mapColumnJava = self.convertColumnTypeForTargetTable(
-                hiveColumnName, columnType
+            column_type, map_column_java = self.convertColumnTypeForTargetTable(
+                hive_column_name, column_type
             )
-            if mapColumnJava != None:
-                self.sqoop_mapcolumnjava.append(columnName + "=" + mapColumnJava)
+            if map_column_java != None:
+                self.sqoop_mapcolumnjava.append(column_name + "=" + map_column_java)
 
             query += "%s%s%s %s NULL " % (
-                columnQuote,
-                columnName,
-                columnQuote,
-                columnType,
+                column_quote,
+                column_name,
+                column_quote,
+                column_type,
             )
 
-            if columnComment != None and columnComment.strip() != "":
+            if column_comment != None and column_comment.strip() != "":
                 if self.common_config.jdbc_servertype in (constant.SNOWFLAKE):
-                    query += "comment '%s'" % (columnComment)
+                    query += "comment '%s'" % (column_comment)
 
                 elif self.common_config.jdbc_servertype not in (
                     constant.ORACLE,
                     constant.MSSQL,
                     constant.POSTGRESQL,
                 ):
-                    query += 'comment "%s"' % (columnComment)
+                    query += 'comment "%s"' % (column_comment)
 
         query += ")"
 
@@ -1835,73 +1840,73 @@ class config(metaclass=Singleton):
 
     def saveExportStatistics(
         self,
-        sqoopStartUTS=None,
-        sqoopSize=None,
-        sqoopRows=None,
-        sqoopIncrMaxvaluePending=None,
-        sqoopMappers=None,
+        sqoop_start_uts=None,
+        sqoop_size=None,
+        sqoop_rows=None,
+        sqoop_incr_maxvalue_pending=None,
+        sqoop_mappers=None,
     ):
         logging.debug("Executing export_config.saveExportStatistics()")
         logging.info("Saving export statistics")
 
-        self.sqoopStartUTS = sqoopStartUTS
+        self.sqoopStartUTS = sqoop_start_uts
         self.sqoop_last_execution_timestamp = datetime.utcfromtimestamp(
-            sqoopStartUTS
+            sqoop_start_uts
         ).strftime("%Y-%m-%d %H:%M:%S.000")
 
-        queryParam = []
+        query_param = []
         query = "update export_tables set "
-        firstSet = True
-        if sqoopStartUTS != None:
-            if firstSet == False:
+        first_set = True
+        if sqoop_start_uts != None:
+            if first_set == False:
                 query += " ,"
-                firstSet = False
+                first_set = False
 
             query += "sqoop_last_execution = %s"
-            queryParam.append(sqoopStartUTS)
+            query_param.append(sqoop_start_uts)
 
-        if sqoopSize != None:
-            if firstSet == False:
+        if sqoop_size != None:
+            if first_set == False:
                 query += " , "
-                firstSet = False
+                first_set = False
 
             query += "sqoop_last_size = %s"
-            self.sqoop_last_size = sqoopSize
-            queryParam.append(sqoopSize)
+            self.sqoop_last_size = sqoop_size
+            query_param.append(sqoop_size)
 
-        if sqoopRows != None:
-            if firstSet == False:
+        if sqoop_rows != None:
+            if first_set == False:
                 query += " , "
-                firstSet = False
+                first_set = False
 
             query += "sqoop_last_rows = %s"
-            self.sqoop_last_rows = sqoopRows
-            queryParam.append(sqoopRows)
+            self.sqoop_last_rows = sqoop_rows
+            query_param.append(sqoop_rows)
 
-        if sqoopIncrMaxvaluePending != None:
-            if firstSet == False:
+        if sqoop_incr_maxvalue_pending != None:
+            if first_set == False:
                 query += " , "
-                firstSet = False
+                first_set = False
 
             query += "incr_maxvalue_pending = %s"
-            self.sqoopIncrMaxvaluePending = sqoopIncrMaxvaluePending
-            queryParam.append(sqoopIncrMaxvaluePending)
+            self.sqoopIncrMaxvaluePending = sqoop_incr_maxvalue_pending
+            query_param.append(sqoop_incr_maxvalue_pending)
 
-        if sqoopMappers != None:
-            if firstSet == False:
+        if sqoop_mappers != None:
+            if first_set == False:
                 query += " , "
-                firstSet = False
+                first_set = False
 
             query += "sqoop_last_mappers = %s"
-            self.sqoop_last_mappers = sqoopMappers
-            queryParam.append(sqoopMappers)
+            self.sqoop_last_mappers = sqoop_mappers
+            query_param.append(sqoop_mappers)
 
-        if firstSet == False:
+        if first_set == False:
             # Only run this if any of the set columns are not None
             query += " where table_id = %s "
-            queryParam.append(self.tableID)
+            query_param.append(self.tableID)
 
-            self.mysql_cursor01.execute(query, queryParam)
+            self.mysql_cursor01.execute(query, query_param)
             logging.debug(
                 "SQL Statement executed: %s" % (self.mysql_cursor01.statement)
             )
@@ -1934,11 +1939,13 @@ class config(metaclass=Singleton):
 
         logging.debug("Validation Query on JDBC table: %s" % (query))
 
-        resultDF = self.common_config.executeJDBCquery(query)
-        resultJSON = resultDF.to_json(orient="values")
-        self.validationCustomQueryTargetValue = resultJSON
+        result_df = self.common_config.executeJDBCquery(query)
+        result_json = result_df.to_json(orient="values")
+        self.validationCustomQueryTargetValue = result_json
 
-        self.saveCustomSQLValidationTargetValue(jsonValue=resultJSON, printInfo=False)
+        self.saveCustomSQLValidationTargetValue(
+            json_value=result_json, print_info=False
+        )
 
         if len(self.validationCustomQueryTargetValue) > 1024:
             logging.warning(
@@ -1949,8 +1956,8 @@ class config(metaclass=Singleton):
             )
 
         logging.debug("resultDF:")
-        logging.debug(resultDF)
-        logging.debug("resultJSON: %s" % (resultJSON))
+        logging.debug(result_df)
+        logging.debug("resultJSON: %s" % (result_json))
 
         logging.debug(
             "Executing export_config.runCustomValidationQueryOnJDBCTable() - Finished"
@@ -1963,18 +1970,18 @@ class config(metaclass=Singleton):
             "Reading and saving number of rows in target table. This will later be used for validating the export"
         )
 
-        JDBCRowsFull = None
-        JDBCRowsFull = self.common_config.getJDBCTableRowCount(
+        jdbc_rows_full = None
+        jdbc_rows_full = self.common_config.getJDBCTableRowCount(
             self.targetSchema, self.targetTable, whereStatement
         )
 
         # Save the value to the database
         query = "update export_tables set "
-        query += "target_rowcount = %s " % (JDBCRowsFull)
+        query += "target_rowcount = %s " % (jdbc_rows_full)
         if self.exportTool == "spark":
             # Need to save the sqoop_last_rows if the export tool is spark, as we dont get this from spark the same way as sqoop gives us
-            self.sqoop_last_rows = JDBCRowsFull
-            query += ",sqoop_last_rows = %s " % (JDBCRowsFull)
+            self.sqoop_last_rows = jdbc_rows_full
+            query += ",sqoop_last_rows = %s " % (jdbc_rows_full)
 
         query += "where table_id = %s" % (self.tableID)
 
@@ -2012,7 +2019,7 @@ class config(metaclass=Singleton):
         # incremental=True is used for normal validations but only on incremented rows, regardless if we are going to validate full or incr.
 
         logging.debug("Executing export_config.validateRowCount()")
-        returnValue = None
+        return_value = None
 
         if self.validateExport == True:
             # Reading the saved number from the configurationdatabase
@@ -2024,14 +2031,14 @@ class config(metaclass=Singleton):
                 ):
                     # Standard full validation
                     query = "select hive_rowcount, target_rowcount from export_tables where table_id = %s "
-                    validateTextTarget = "Target table"
-                    validateTextSource = "Hive table"
-                    validateText = validateTextTarget
+                    validate_text_target = "Target table"
+                    validate_text_source = "Hive table"
+                    validate_text = validate_text_target
                 else:
                     query = "select hive_rowcount, target_rowcount from export_tables where table_id = %s "
-                    validateTextTarget = "Target table (incr)"
-                    validateTextSource = "Hive table (incr)"
-                    validateText = "Target table"
+                    validate_text_target = "Target table (incr)"
+                    validate_text_source = "Hive table (incr)"
+                    validate_text = "Target table"
             else:
                 raise undevelopedFeature("Unsupported validation")
 
@@ -2043,14 +2050,14 @@ class config(metaclass=Singleton):
             row = self.mysql_cursor01.fetchone()
             source_rowcount = row[0]
             target_rowcount = row[1]
-            diffAllowed = 0
+            diff_allowed = 0
             logging.debug("source_rowcount: %s" % (source_rowcount))
             logging.debug("target_rowcount: %s" % (target_rowcount))
 
             if source_rowcount != target_rowcount:
                 logging.error(
                     "Validation failed! The %s exceedes the allowed limit compared to the %s table"
-                    % (validateTextSource, validateTextTarget)
+                    % (validate_text_source, validate_text_target)
                 )
                 if target_rowcount > source_rowcount:
                     logging.info(
@@ -2060,21 +2067,29 @@ class config(metaclass=Singleton):
                     logging.info(
                         "Diff between tables: %s" % (source_rowcount - target_rowcount)
                     )
-                logging.info("%s rowcount: %s" % (validateTextSource, source_rowcount))
-                logging.info("%s rowcount: %s" % (validateTextTarget, target_rowcount))
-                returnValue = False
+                logging.info(
+                    "%s rowcount: %s" % (validate_text_source, source_rowcount)
+                )
+                logging.info(
+                    "%s rowcount: %s" % (validate_text_target, target_rowcount)
+                )
+                return_value = False
             else:
-                logging.info("%s validation successful!" % (validateText))
-                logging.info("%s rowcount: %s" % (validateTextSource, source_rowcount))
-                logging.info("%s rowcount: %s" % (validateTextTarget, target_rowcount))
+                logging.info("%s validation successful!" % (validate_text))
+                logging.info(
+                    "%s rowcount: %s" % (validate_text_source, source_rowcount)
+                )
+                logging.info(
+                    "%s rowcount: %s" % (validate_text_target, target_rowcount)
+                )
                 logging.info("")
-                returnValue = True
+                return_value = True
 
         else:
-            returnValue = True
+            return_value = True
 
         logging.debug("Executing export_config.validateRowCount() - Finished")
-        return returnValue
+        return return_value
 
     def calculateJobMappers(self):
         """Based on previous sqoop size, the number of mappers for sqoop will be calculated. Formula is sqoop_size / 128MB."""
@@ -2084,18 +2099,18 @@ class config(metaclass=Singleton):
             "Calculating the number of SQL sessions in the source system that the export will use"
         )
 
-        sqlSessionsMin = 1
-        sqlSessionsMax = None
+        sql_sessions_min = 1
+        sql_sessions_max = None
 
         # TODO: Add max_export_sessions to jdbc_connections
 
         row = None
 
         if row != None and row[0] > 0:
-            sqlSessionsMax = row[0]
+            sql_sessions_max = row[0]
             logging.info(
                 "\u001b[33mThis connection is limited to a maximum of %s parallel sessions during export\u001b[0m"
-                % (sqlSessionsMax)
+                % (sql_sessions_max)
             )
 
         if row != None and row[0] == 0:
@@ -2103,21 +2118,21 @@ class config(metaclass=Singleton):
                 "Unsupported value of 0 in column 'max_export_sessions' in table 'jdbc_connections'"
             )
 
-        sqlSessionsMaxFromConfig = int(
+        sql_sessions_max_from_config = int(
             self.common_config.getConfigValue(key="export_max_sessions")
         )
-        sqlSessionsDefault = int(
+        sql_sessions_default = int(
             self.common_config.getConfigValue(key="export_default_sessions")
         )
 
-        if sqlSessionsMax == None:
-            sqlSessionsMax = sqlSessionsMaxFromConfig
-        if sqlSessionsMaxFromConfig < sqlSessionsMax:
-            sqlSessionsMax = sqlSessionsMaxFromConfig
-        if sqlSessionsDefault > sqlSessionsMax:
-            sqlSessionsDefault = sqlSessionsMax
+        if sql_sessions_max == None:
+            sql_sessions_max = sql_sessions_max_from_config
+        if sql_sessions_max_from_config < sql_sessions_max:
+            sql_sessions_max = sql_sessions_max_from_config
+        if sql_sessions_default > sql_sessions_max:
+            sql_sessions_default = sql_sessions_max
 
-        self.sparkMaxExecutors = sqlSessionsMax
+        self.sparkMaxExecutors = sql_sessions_max
 
         # Execute SQL query that calculates the value
         query = (
@@ -2142,7 +2157,7 @@ class config(metaclass=Singleton):
             raise Exception
 
         row = self.mysql_cursor01.fetchone()
-        sqlSessionsLast = row[0]
+        sql_sessions_last = row[0]
         self.sqlSessions = row[1]
         self.sqoopMappers = row[2]
 
@@ -2154,14 +2169,14 @@ class config(metaclass=Singleton):
             if self.sqlSessions == None:
                 logging.info(
                     "Cant find the previous number of SQL sessions used. Will default to %s"
-                    % (sqlSessionsDefault)
+                    % (sql_sessions_default)
                 )
-                self.sqlSessions = sqlSessionsDefault
+                self.sqlSessions = sql_sessions_default
             else:
-                if self.sqlSessions < sqlSessionsMin:
-                    self.sqlSessions = sqlSessionsMin
-                elif self.sqlSessions > sqlSessionsMax:
-                    self.sqlSessions = sqlSessionsMax
+                if self.sqlSessions < sql_sessions_min:
+                    self.sqlSessions = sql_sessions_min
+                elif self.sqlSessions > sql_sessions_max:
+                    self.sqlSessions = sql_sessions_max
 
                 logging.info(
                     "The export will use %s parallell SQL sessions in the source system."
@@ -2183,7 +2198,7 @@ class config(metaclass=Singleton):
 
         logging.debug("Executing export_config.calculateJobMappers() - Finished")
 
-    def saveIncrMinMaxValue(self, minValue, maxValue):
+    def saveIncrMinMaxValue(self, min_value, max_value):
         """Save the min value in the pendings column"""
         logging.debug("Executing export_config.saveIncrMinValue()")
 
@@ -2195,8 +2210,8 @@ class config(metaclass=Singleton):
         self.mysql_cursor01.execute(
             query,
             (
-                minValue,
-                maxValue,
+                min_value,
+                max_value,
                 self.tableID,
             ),
         )
@@ -2233,35 +2248,35 @@ class config(metaclass=Singleton):
         """Returns False if minvalue_pending = maxvalue_pending. That means that there is no new data in Hive to export"""
         logging.debug("Executing export_config.isThereIncrDataToExport()")
 
-        dataToExport = True
+        data_to_export = True
 
         query = "select incr_minvalue_pending, incr_maxvalue_pending from export_tables where table_id = %s "
         self.mysql_cursor01.execute(query, (self.tableID,))
         logging.debug("SQL Statement executed: %s" % (self.mysql_cursor01.statement))
         row = self.mysql_cursor01.fetchone()
-        minValue = row[0]
-        maxValue = row[1]
+        min_value = row[0]
+        max_value = row[1]
 
-        if minValue == maxValue:
-            dataToExport = False
+        if min_value == max_value:
+            data_to_export = False
 
-        logging.debug("dataToExport: %s" % (dataToExport))
+        logging.debug("dataToExport: %s" % (data_to_export))
         logging.debug("Executing export_config.isThereIncrDataToExport() - Finished")
-        return dataToExport
+        return data_to_export
 
     def getIncrWhereStatement(self, excludeMinValue=False, whereForTarget=False):
         """Returns the where statement that is needed to only work on the rows that was loaded incr"""
         logging.debug("Executing export_config.getIncrWhereStatement()")
 
-        columnName = self.incr_column
-        columnQuotation = ""
-        whereStatement = ""
+        column_name = self.incr_column
+        column_quotation = ""
+        where_statement = ""
 
         query = "select column_type from export_columns where table_id = %s and column_name = %s "
-        self.mysql_cursor01.execute(query, (self.tableID, columnName))
+        self.mysql_cursor01.execute(query, (self.tableID, column_name))
         logging.debug("SQL Statement executed: %s" % (self.mysql_cursor01.statement))
         row = self.mysql_cursor01.fetchone()
-        columnType = row[0]
+        column_type = row[0]
 
         # COALESCE is needed if you are going to call a function that counts source target rows outside the normal import
         query = "select "
@@ -2271,55 +2286,55 @@ class config(metaclass=Singleton):
         self.mysql_cursor01.execute(query, (self.tableID,))
         logging.debug("SQL Statement executed: %s" % (self.mysql_cursor01.statement))
         row = self.mysql_cursor01.fetchone()
-        minValue = row[0]
-        maxValue = row[1]
+        min_value = row[0]
+        max_value = row[1]
 
         # Regardless of how we translate the minValue in the next couple of rows, if it's NONE here, it will never be included in the where
-        if minValue == None:
+        if min_value == None:
             excludeMinValue = True
 
         if whereForTarget == True and self.common_config.jdbc_servertype in (
             constant.ORACLE,
             constant.DB2_UDB,
         ):
-            columnName = columnName.upper()
+            column_name = column_name.upper()
 
         if (
             whereForTarget == True
-            and columnType == "timestamp"
+            and column_type == "timestamp"
             and self.common_config.jdbc_servertype == constant.MSSQL
         ):
-            minValue = "CONVERT(datetime, '%s', 121) " % (minValue)
-            maxValue = "CONVERT(datetime, '%s', 121) " % (maxValue)
+            min_value = "CONVERT(datetime, '%s', 121) " % (min_value)
+            max_value = "CONVERT(datetime, '%s', 121) " % (max_value)
         elif (
             whereForTarget == True
-            and columnType == "timestamp"
+            and column_type == "timestamp"
             and self.common_config.jdbc_servertype == constant.MYSQL
         ):
-            minValue = f"STR_TO_DATE('{minValue}', '%Y-%m-%d %H:%i:%s')"
-            maxValue = f"STR_TO_DATE('{maxValue}', '%Y-%m-%d %H:%i:%s')"
+            min_value = f"STR_TO_DATE('{min_value}', '%Y-%m-%d %H:%i:%s')"
+            max_value = f"STR_TO_DATE('{max_value}', '%Y-%m-%d %H:%i:%s')"
         elif (
             whereForTarget == True
-            and columnType == "timestamp"
+            and column_type == "timestamp"
             and self.common_config.jdbc_servertype == constant.ORACLE
         ):
-            minValue = "TO_TIMESTAMP('%s', 'YYYY-MM-DD HH24:MI:SS.FF')" % (minValue)
-            maxValue = "TO_TIMESTAMP('%s', 'YYYY-MM-DD HH24:MI:SS.FF')" % (maxValue)
+            min_value = "TO_TIMESTAMP('%s', 'YYYY-MM-DD HH24:MI:SS.FF')" % (min_value)
+            max_value = "TO_TIMESTAMP('%s', 'YYYY-MM-DD HH24:MI:SS.FF')" % (max_value)
         elif (
             whereForTarget == True
-            and columnType == "timestamp"
+            and column_type == "timestamp"
             and self.common_config.jdbc_servertype == constant.SNOWFLAKE
         ):
-            minValue = "TO_TIMESTAMP('%s', 'YYYY-MM-DD HH24:MI:SS.FF6')" % (minValue)
-            maxValue = "TO_TIMESTAMP('%s', 'YYYY-MM-DD HH24:MI:SS.FF6')" % (maxValue)
+            min_value = "TO_TIMESTAMP('%s', 'YYYY-MM-DD HH24:MI:SS.FF6')" % (min_value)
+            max_value = "TO_TIMESTAMP('%s', 'YYYY-MM-DD HH24:MI:SS.FF6')" % (max_value)
         elif (
             whereForTarget == True
-            and columnType == "timestamp"
+            and column_type == "timestamp"
             and self.common_config.jdbc_servertype == constant.POSTGRESQL
         ):
-            minValue = "TO_TIMESTAMP('%s', 'YYYY-MM-DD HH24:MI:SS')" % (minValue)
-            maxValue = "TO_TIMESTAMP('%s', 'YYYY-MM-DD HH24:MI:SS')" % (maxValue)
-        elif columnType not in (
+            min_value = "TO_TIMESTAMP('%s', 'YYYY-MM-DD HH24:MI:SS')" % (min_value)
+            max_value = "TO_TIMESTAMP('%s', 'YYYY-MM-DD HH24:MI:SS')" % (max_value)
+        elif column_type not in (
             "int",
             "integer",
             "bigint",
@@ -2330,43 +2345,43 @@ class config(metaclass=Singleton):
             "float",
             "boolean",
         ):
-            minValue = '"%s"' % (minValue)
-            maxValue = '"%s"' % (maxValue)
+            min_value = '"%s"' % (min_value)
+            max_value = '"%s"' % (max_value)
 
         if (
             whereForTarget == True
             and self.common_config.jdbc_servertype == constant.ORACLE
         ):
-            columnQuotation = '"'
+            column_quotation = '"'
 
         if (
             whereForTarget == True
             and self.common_config.jdbc_servertype == constant.SNOWFLAKE
         ):
-            columnQuotation = '"'
+            column_quotation = '"'
 
         if whereForTarget == False:
-            columnQuotation = "`"
+            column_quotation = "`"
 
-        if minValue != None and excludeMinValue == False:
-            whereStatement += "%s%s%s > %s " % (
-                columnQuotation,
-                columnName,
-                columnQuotation,
-                minValue,
+        if min_value != None and excludeMinValue == False:
+            where_statement += "%s%s%s > %s " % (
+                column_quotation,
+                column_name,
+                column_quotation,
+                min_value,
             )
-            whereStatement += "and "
-        whereStatement += "%s%s%s <= %s " % (
-            columnQuotation,
-            columnName,
-            columnQuotation,
-            maxValue,
+            where_statement += "and "
+        where_statement += "%s%s%s <= %s " % (
+            column_quotation,
+            column_name,
+            column_quotation,
+            max_value,
         )
 
-        print(whereStatement)
+        print(where_statement)
 
         logging.debug("Executing export_config.getIncrWhereStatement() - Finished")
-        return whereStatement
+        return where_statement
 
     def getExportTables(self, dbalias, schema):
         """Return all tables that are exported to a specific connection and schema"""
@@ -2396,10 +2411,10 @@ class config(metaclass=Singleton):
         logging.debug("Executing export_config.getExportTables() - Finished")
         return result_df
 
-    def addExportTable(self, hiveDB, hiveTable, dbalias, schema, table):
+    def addExportTable(self, hive_db, hive_table, dbalias, schema, table):
         """Add source table to export_tables"""
         logging.debug("Executing export_config.addExportTable()")
-        returnValue = True
+        return_value = True
 
         query = (
             "insert into export_tables "
@@ -2412,23 +2427,23 @@ class config(metaclass=Singleton):
             ") values ( %s, %s, %s, %s, %s )"
         )
 
-        logging.debug("hiveDB:    %s" % (hiveDB))
-        logging.debug("hiveTable: %s" % (hiveTable))
+        logging.debug("hiveDB:    %s" % (hive_db))
+        logging.debug("hiveTable: %s" % (hive_table))
         logging.debug("dbalias:   %s" % (dbalias))
         logging.debug("schema:    %s" % (schema))
         logging.debug("table:     %s" % (table))
 
         try:
             self.mysql_cursor01.execute(
-                query, (hiveDB, hiveTable, dbalias, schema, table)
+                query, (hive_db, hive_table, dbalias, schema, table)
             )
             self.mysql_conn.commit()
         except mysql.connector.errors.IntegrityError:
             logging.warning(
                 "Hive table %s.%s cant be added. The Connection name, Schema and Table already exists"
-                % (hiveDB, hiveTable)
+                % (hive_db, hive_table)
             )
-            returnValue = False
+            return_value = False
 
         logging.debug("Executing export_config.addExportTable() - Finished")
-        return returnValue
+        return return_value

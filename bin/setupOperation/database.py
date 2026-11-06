@@ -45,7 +45,7 @@ class initialize:
             self.debugLogLevel = True
 
         try:
-            DBImport_Home = os.environ["DBIMPORT_HOME"]
+            dbimport_home = os.environ["DBIMPORT_HOME"]
         except KeyError:
             print("Error: System Environment Variable DBIMPORT_HOME is not set")
             # 			self.remove_temporary_files()
@@ -86,7 +86,7 @@ class initialize:
             sys.exit(1)
 
         # Setup configuration for Alembic
-        self.alembicSchemaDir = DBImport_Home + "/bin/SchemaUpgrade"
+        self.alembicSchemaDir = dbimport_home + "/bin/SchemaUpgrade"
         self.alembicConfig = Config()
         self.alembicConfig.set_main_option("script_location", self.alembicSchemaDir)
         self.connectStr = self.connectStr.replace("%", "%%")
@@ -136,32 +136,32 @@ class initialize:
         self.mysql_cursor.execute(query)
 
         row = self.mysql_cursor.fetchone()
-        maxColumnLength = row[0]
-        maxDescLength = row[1]
+        max_column_length = row[0]
+        max_desc_length = row[1]
 
-        lineSingle = "+"
-        lineDouble = "+"
-        lineHeaderColumn = "Column"
-        lineHeaderDesc = "Documentation"
+        line_single = "+"
+        line_double = "+"
+        line_header_column = "Column"
+        line_header_desc = "Documentation"
 
-        for i in range(maxColumnLength + 2):
-            lineSingle += "-"
-            lineDouble += "="
-        lineSingle += "+"
-        lineDouble += "+"
-        for i in range(maxDescLength + 2):
-            lineSingle += "-"
-            lineDouble += "="
-        lineSingle += "+"
-        lineDouble += "+"
+        for i in range(max_column_length + 2):
+            line_single += "-"
+            line_double += "="
+        line_single += "+"
+        line_double += "+"
+        for i in range(max_desc_length + 2):
+            line_single += "-"
+            line_double += "="
+        line_single += "+"
+        line_double += "+"
 
-        lineHeader = "| %s" % (lineHeaderColumn)
-        for i in range(maxColumnLength + 1 - len(lineHeaderColumn)):
-            lineHeader += " "
-        lineHeader += "| %s" % (lineHeaderDesc)
-        for i in range(maxDescLength + 1 - len(lineHeaderDesc)):
-            lineHeader += " "
-        lineHeader += "|"
+        line_header = "| %s" % (line_header_column)
+        for i in range(max_column_length + 1 - len(line_header_column)):
+            line_header += " "
+        line_header += "| %s" % (line_header_desc)
+        for i in range(max_desc_length + 1 - len(line_header_desc)):
+            line_header += " "
+        line_header += "|"
 
         print("Database Tables")
         print("===============")
@@ -197,39 +197,39 @@ class initialize:
         logging.debug("SQL Statement executed: %s" % (query))
         self.mysql_cursor.execute(query)
 
-        previousTable = ""
+        previous_table = ""
         for row in self.mysql_cursor.fetchall():
-            tableName = row[0]
-            tableComment = row[1]
-            columnName = row[2]
-            columnComment = row[3]
-            if previousTable != tableName:
-                previousTable = tableName
+            table_name = row[0]
+            table_comment = row[1]
+            column_name = row[2]
+            column_comment = row[3]
+            if previous_table != table_name:
+                previous_table = table_name
                 print(" ")
                 print(" ")
                 print(" ")
-                print("Table - %s" % (tableName))
+                print("Table - %s" % (table_name))
                 line = ""
-                for i in range(len(tableName) + 8):
+                for i in range(len(table_name) + 8):
                     line += "-"
                 print(line)
                 print("")
-                if tableComment != None:
-                    print(tableComment)
+                if table_comment != None:
+                    print(table_comment)
                 print("")
-                print(lineSingle)
-                print(lineHeader)
-                print(lineDouble)
+                print(line_single)
+                print(line_header)
+                print(line_double)
 
-            line = "| %s" % (columnName)
-            for i in range(maxColumnLength + 1 - len(columnName)):
+            line = "| %s" % (column_name)
+            for i in range(max_column_length + 1 - len(column_name)):
                 line += " "
-            line += "| %s" % (columnComment)
-            for i in range(maxDescLength + 1 - len(columnComment)):
+            line += "| %s" % (column_comment)
+            for i in range(max_desc_length + 1 - len(column_comment)):
                 line += " "
             line += "|"
             print(line)
-            print(lineSingle)
+            print(line_single)
 
     def getListOfConfigTables(self):
         logging.debug("Executing common_config.getListOfConfigTables()")
@@ -243,19 +243,19 @@ class initialize:
         logging.debug("SQL Statement executed: %s" % (query))
         self.mysql_cursor.execute(query, (self.configDatabase,))
 
-        tablesDF = pd.DataFrame(self.mysql_cursor.fetchall())
+        tables_df = pd.DataFrame(self.mysql_cursor.fetchall())
 
-        if len(tablesDF) > 0:
-            tablesDF.columns = ["table"]
+        if len(tables_df) > 0:
+            tables_df.columns = ["table"]
 
         logging.debug("Executing common_config.getListOfConfigTables() - Finished")
-        return tablesDF
+        return tables_df
 
-    def createDB(self, createOnlyTable=None):
+    def createDB(self, create_only_table=None):
 
         inspector = sa.inspect(self.configDB)
-        allTables = inspector.get_table_names()
-        if "alembic_version" in allTables:
+        all_tables = inspector.get_table_names()
+        if "alembic_version" in all_tables:
             print(
                 "DBImport configuration database is already created. If you are deploying a new version, please run --upgradeDB"
             )
@@ -277,11 +277,11 @@ class initialize:
     def createDefaultEnvironmentTypes(self):
         session = self.configDBSession()
 
-        numberOfEnvironemntTypes = session.query(
+        number_of_environemnt_types = session.query(
             configSchema.jdbcConnectionsEnvironments.__table__
         ).count()
-        if numberOfEnvironemntTypes == 0:
-            objectsToAdd = [
+        if number_of_environemnt_types == 0:
+            objects_to_add = [
                 configSchema.jdbcConnectionsEnvironments(environment="Production"),
                 configSchema.jdbcConnectionsEnvironments(
                     environment="Integration Test"
@@ -290,7 +290,7 @@ class initialize:
                 configSchema.jdbcConnectionsEnvironments(environment="Development"),
                 configSchema.jdbcConnectionsEnvironments(environment="Sandbox"),
             ]
-            session.add_all(objectsToAdd)
+            session.add_all(objects_to_add)
             session.commit()
 
     def updateConfigurationValues(self):
@@ -303,9 +303,9 @@ class initialize:
             .all()
         )
 
-        listOfDBtypes = []
+        list_of_db_types = []
         for i in result_df:
-            listOfDBtypes.append(i[0])
+            list_of_db_types.append(i[0])
 
         # Create a list of all available configuration keys
         result_df = (
@@ -314,12 +314,12 @@ class initialize:
             .all()
         )
 
-        listOfConfKeys = []
+        list_of_conf_keys = []
         for i in result_df:
-            listOfConfKeys.append(i[0])
+            list_of_conf_keys.append(i[0])
 
         # JDBC Connection Drivers table
-        if "DB2 AS400" not in listOfDBtypes:
+        if "DB2 AS400" not in list_of_db_types:
             query = sa.insert(configSchema.jdbcConnectionsDrivers).values(
                 database_type="DB2 AS400",
                 version="default",
@@ -329,7 +329,7 @@ class initialize:
             session.execute(query)
             session.commit()
 
-        if "DB2 UDB" not in listOfDBtypes:
+        if "DB2 UDB" not in list_of_db_types:
             query = sa.insert(configSchema.jdbcConnectionsDrivers).values(
                 database_type="DB2 UDB",
                 version="default",
@@ -339,7 +339,7 @@ class initialize:
             session.execute(query)
             session.commit()
 
-        if "MySQL" not in listOfDBtypes:
+        if "MySQL" not in list_of_db_types:
             query = sa.insert(configSchema.jdbcConnectionsDrivers).values(
                 database_type="MySQL",
                 version="default",
@@ -349,7 +349,7 @@ class initialize:
             session.execute(query)
             session.commit()
 
-        if "Oracle" not in listOfDBtypes:
+        if "Oracle" not in list_of_db_types:
             query = sa.insert(configSchema.jdbcConnectionsDrivers).values(
                 database_type="Oracle",
                 version="default",
@@ -359,7 +359,7 @@ class initialize:
             session.execute(query)
             session.commit()
 
-        if "PostgreSQL" not in listOfDBtypes:
+        if "PostgreSQL" not in list_of_db_types:
             query = sa.insert(configSchema.jdbcConnectionsDrivers).values(
                 database_type="PostgreSQL",
                 version="default",
@@ -369,7 +369,7 @@ class initialize:
             session.execute(query)
             session.commit()
 
-        if "Progress DB" not in listOfDBtypes:
+        if "Progress DB" not in list_of_db_types:
             query = sa.insert(configSchema.jdbcConnectionsDrivers).values(
                 database_type="Progress DB",
                 version="default",
@@ -379,7 +379,7 @@ class initialize:
             session.execute(query)
             session.commit()
 
-        if "SQL Server" not in listOfDBtypes:
+        if "SQL Server" not in list_of_db_types:
             query = sa.insert(configSchema.jdbcConnectionsDrivers).values(
                 database_type="SQL Server",
                 version="default",
@@ -398,7 +398,7 @@ class initialize:
             session.execute(query)
             session.commit()
 
-        if "CacheDB" not in listOfDBtypes:
+        if "CacheDB" not in list_of_db_types:
             query = sa.insert(configSchema.jdbcConnectionsDrivers).values(
                 database_type="CacheDB",
                 version="default",
@@ -408,7 +408,7 @@ class initialize:
             session.execute(query)
             session.commit()
 
-        if "Snowflake" not in listOfDBtypes:
+        if "Snowflake" not in list_of_db_types:
             query = sa.insert(configSchema.jdbcConnectionsDrivers).values(
                 database_type="Snowflake",
                 version="default",
@@ -418,7 +418,7 @@ class initialize:
             session.execute(query)
             session.commit()
 
-        if "Informix" not in listOfDBtypes:
+        if "Informix" not in list_of_db_types:
             query = sa.insert(configSchema.jdbcConnectionsDrivers).values(
                 database_type="Informix",
                 version="default",
@@ -428,7 +428,7 @@ class initialize:
             session.execute(query)
             session.commit()
 
-        if "SQL Anywhere" not in listOfDBtypes:
+        if "SQL Anywhere" not in list_of_db_types:
             query = sa.insert(configSchema.jdbcConnectionsDrivers).values(
                 database_type="SQL Anywhere",
                 version="default",
@@ -440,7 +440,7 @@ class initialize:
 
         # Configuration table
 
-        if "airflow_disable" not in listOfConfKeys:
+        if "airflow_disable" not in list_of_conf_keys:
             query = sa.insert(configSchema.configuration).values(
                 configKey="airflow_disable",
                 valueInt="0",
@@ -449,7 +449,7 @@ class initialize:
             session.execute(query)
             session.commit()
 
-        if "export_stage_disable" not in listOfConfKeys:
+        if "export_stage_disable" not in list_of_conf_keys:
             query = sa.insert(configSchema.configuration).values(
                 configKey="export_stage_disable",
                 valueInt="0",
@@ -458,7 +458,7 @@ class initialize:
             session.execute(query)
             session.commit()
 
-        if "export_staging_database" not in listOfConfKeys:
+        if "export_staging_database" not in list_of_conf_keys:
             query = sa.insert(configSchema.configuration).values(
                 configKey="export_staging_database",
                 valueStr="etl_export_staging",
@@ -467,7 +467,7 @@ class initialize:
             session.execute(query)
             session.commit()
 
-        if "export_start_disable" not in listOfConfKeys:
+        if "export_start_disable" not in list_of_conf_keys:
             query = sa.insert(configSchema.configuration).values(
                 configKey="export_start_disable",
                 valueInt="0",
@@ -476,7 +476,7 @@ class initialize:
             session.execute(query)
             session.commit()
 
-        if "import_stage_disable" not in listOfConfKeys:
+        if "import_stage_disable" not in list_of_conf_keys:
             query = sa.insert(configSchema.configuration).values(
                 configKey="import_stage_disable",
                 valueInt="0",
@@ -485,7 +485,7 @@ class initialize:
             session.execute(query)
             session.commit()
 
-        if "import_staging_database" not in listOfConfKeys:
+        if "import_staging_database" not in list_of_conf_keys:
             query = sa.insert(configSchema.configuration).values(
                 configKey="import_staging_database",
                 valueStr="etl_import_staging",
@@ -494,7 +494,7 @@ class initialize:
             session.execute(query)
             session.commit()
 
-        if "import_staging_table" not in listOfConfKeys:
+        if "import_staging_table" not in list_of_conf_keys:
             query = sa.insert(configSchema.configuration).values(
                 configKey="import_staging_table",
                 valueStr="{DATABASE}__{TABLE}__staging",
@@ -503,7 +503,7 @@ class initialize:
             session.execute(query)
             session.commit()
 
-        if "import_work_database" not in listOfConfKeys:
+        if "import_work_database" not in list_of_conf_keys:
             query = sa.insert(configSchema.configuration).values(
                 configKey="import_work_database",
                 valueStr="etl_import_staging",
@@ -512,7 +512,7 @@ class initialize:
             session.execute(query)
             session.commit()
 
-        if "import_work_table" not in listOfConfKeys:
+        if "import_work_table" not in list_of_conf_keys:
             query = sa.insert(configSchema.configuration).values(
                 configKey="import_work_table",
                 valueStr="{DATABASE}__{TABLE}__staging",
@@ -521,7 +521,7 @@ class initialize:
             session.execute(query)
             session.commit()
 
-        if "import_history_database" not in listOfConfKeys:
+        if "import_history_database" not in list_of_conf_keys:
             query = sa.insert(configSchema.configuration).values(
                 configKey="import_history_database",
                 valueStr="{DATABASE}",
@@ -530,7 +530,7 @@ class initialize:
             session.execute(query)
             session.commit()
 
-        if "import_history_table" not in listOfConfKeys:
+        if "import_history_table" not in list_of_conf_keys:
             query = sa.insert(configSchema.configuration).values(
                 configKey="import_history_table",
                 valueStr="{TABLE}_history",
@@ -539,7 +539,7 @@ class initialize:
             session.execute(query)
             session.commit()
 
-        if "import_start_disable" not in listOfConfKeys:
+        if "import_start_disable" not in list_of_conf_keys:
             query = sa.insert(configSchema.configuration).values(
                 configKey="import_start_disable",
                 valueInt="0",
@@ -548,7 +548,7 @@ class initialize:
             session.execute(query)
             session.commit()
 
-        if "hive_remove_locks_by_force" not in listOfConfKeys:
+        if "hive_remove_locks_by_force" not in list_of_conf_keys:
             query = sa.insert(configSchema.configuration).values(
                 configKey="hive_remove_locks_by_force",
                 valueInt="0",
@@ -557,7 +557,7 @@ class initialize:
             session.execute(query)
             session.commit()
 
-        if "hive_major_compact_after_merge" not in listOfConfKeys:
+        if "hive_major_compact_after_merge" not in list_of_conf_keys:
             query = sa.insert(configSchema.configuration).values(
                 configKey="hive_major_compact_after_merge",
                 valueInt="0",
@@ -566,7 +566,7 @@ class initialize:
             session.execute(query)
             session.commit()
 
-        if "hive_validate_before_execution" not in listOfConfKeys:
+        if "hive_validate_before_execution" not in list_of_conf_keys:
             query = sa.insert(configSchema.configuration).values(
                 configKey="hive_validate_before_execution",
                 valueInt="1",
@@ -575,7 +575,7 @@ class initialize:
             session.execute(query)
             session.commit()
 
-        if "hive_validate_table" not in listOfConfKeys:
+        if "hive_validate_table" not in list_of_conf_keys:
             query = sa.insert(configSchema.configuration).values(
                 configKey="hive_validate_table",
                 valueStr="dbimport.validate_table",
@@ -584,7 +584,7 @@ class initialize:
             session.execute(query)
             session.commit()
 
-        if "hive_print_messages" not in listOfConfKeys:
+        if "hive_print_messages" not in list_of_conf_keys:
             query = sa.insert(configSchema.configuration).values(
                 configKey="hive_print_messages",
                 valueInt="0",
@@ -593,7 +593,7 @@ class initialize:
             session.execute(query)
             session.commit()
 
-        if "airflow_dbimport_commandpath" not in listOfConfKeys:
+        if "airflow_dbimport_commandpath" not in list_of_conf_keys:
             query = sa.insert(configSchema.configuration).values(
                 configKey="airflow_dbimport_commandpath",
                 valueStr="sudo -iu ${SUDO_USER} /usr/local/dbimport/",
@@ -602,7 +602,7 @@ class initialize:
             session.execute(query)
             session.commit()
 
-        if "airflow_sudo_user" not in listOfConfKeys:
+        if "airflow_sudo_user" not in list_of_conf_keys:
             query = sa.insert(configSchema.configuration).values(
                 configKey="airflow_sudo_user",
                 valueStr="dbimport",
@@ -611,7 +611,7 @@ class initialize:
             session.execute(query)
             session.commit()
 
-        if "airflow_major_version" not in listOfConfKeys:
+        if "airflow_major_version" not in list_of_conf_keys:
             query = sa.insert(configSchema.configuration).values(
                 configKey="airflow_major_version",
                 valueInt="2",
@@ -620,7 +620,7 @@ class initialize:
             session.execute(query)
             session.commit()
 
-        if "airflow_default_pool_size" not in listOfConfKeys:
+        if "airflow_default_pool_size" not in list_of_conf_keys:
             query = sa.insert(configSchema.configuration).values(
                 configKey="airflow_default_pool_size",
                 valueInt="24",
@@ -629,7 +629,7 @@ class initialize:
             session.execute(query)
             session.commit()
 
-        if "airflow_create_pool_with_task" not in listOfConfKeys:
+        if "airflow_create_pool_with_task" not in list_of_conf_keys:
             query = sa.insert(configSchema.configuration).values(
                 configKey="airflow_create_pool_with_task",
                 valueInt="1",
@@ -638,7 +638,7 @@ class initialize:
             session.execute(query)
             session.commit()
 
-        if "airflow_aws_pool_to_instanceid" not in listOfConfKeys:
+        if "airflow_aws_pool_to_instanceid" not in list_of_conf_keys:
             query = sa.insert(configSchema.configuration).values(
                 configKey="airflow_aws_pool_to_instanceid",
                 valueInt="1",
@@ -647,7 +647,7 @@ class initialize:
             session.execute(query)
             session.commit()
 
-        if "airflow_aws_instanceids" not in listOfConfKeys:
+        if "airflow_aws_instanceids" not in list_of_conf_keys:
             query = sa.insert(configSchema.configuration).values(
                 configKey="airflow_aws_instanceids",
                 valueStr="i-xxxxxxxxxxxxxxxxx",
@@ -656,7 +656,7 @@ class initialize:
             session.execute(query)
             session.commit()
 
-        if "airflow_dag_directory" not in listOfConfKeys:
+        if "airflow_dag_directory" not in list_of_conf_keys:
             query = sa.insert(configSchema.configuration).values(
                 configKey="airflow_dag_directory",
                 valueStr="/usr/local/airflow/dags",
@@ -665,7 +665,7 @@ class initialize:
             session.execute(query)
             session.commit()
 
-        if "airflow_dag_staging_directory" not in listOfConfKeys:
+        if "airflow_dag_staging_directory" not in list_of_conf_keys:
             query = sa.insert(configSchema.configuration).values(
                 configKey="airflow_dag_staging_directory",
                 valueStr="/usr/local/airflow/dags_generated_from_dbimport",
@@ -674,7 +674,7 @@ class initialize:
             session.execute(query)
             session.commit()
 
-        if "airflow_dummy_task_queue" not in listOfConfKeys:
+        if "airflow_dummy_task_queue" not in list_of_conf_keys:
             query = sa.insert(configSchema.configuration).values(
                 configKey="airflow_dummy_task_queue",
                 valueStr="default",
@@ -683,7 +683,7 @@ class initialize:
             session.execute(query)
             session.commit()
 
-        if "airflow_dag_file_permission" not in listOfConfKeys:
+        if "airflow_dag_file_permission" not in list_of_conf_keys:
             query = sa.insert(configSchema.configuration).values(
                 configKey="airflow_dag_file_permission",
                 valueStr="660",
@@ -692,7 +692,7 @@ class initialize:
             session.execute(query)
             session.commit()
 
-        if "airflow_dag_file_group" not in listOfConfKeys:
+        if "airflow_dag_file_group" not in list_of_conf_keys:
             query = sa.insert(configSchema.configuration).values(
                 configKey="airflow_dag_file_group",
                 valueStr="airflow",
@@ -701,7 +701,7 @@ class initialize:
             session.execute(query)
             session.commit()
 
-        if "airflow_url" not in listOfConfKeys:
+        if "airflow_url" not in list_of_conf_keys:
             query = sa.insert(configSchema.configuration).values(
                 configKey="airflow_url",
                 valueStr="http://localhost:8080",
@@ -710,7 +710,7 @@ class initialize:
             session.execute(query)
             session.commit()
 
-        if "timezone" not in listOfConfKeys:
+        if "timezone" not in list_of_conf_keys:
             query = sa.insert(configSchema.configuration).values(
                 configKey="timezone",
                 valueStr="UTC",
@@ -719,7 +719,7 @@ class initialize:
             session.execute(query)
             session.commit()
 
-        if "timestamp_with_timezone" not in listOfConfKeys:
+        if "timestamp_with_timezone" not in list_of_conf_keys:
             query = sa.insert(configSchema.configuration).values(
                 configKey="timestamp_with_timezone",
                 valueInt="0",
@@ -728,7 +728,7 @@ class initialize:
             session.execute(query)
             session.commit()
 
-        if "cluster_name" not in listOfConfKeys:
+        if "cluster_name" not in list_of_conf_keys:
             query = sa.insert(configSchema.configuration).values(
                 configKey="cluster_name",
                 valueStr="hadoopcluster",
@@ -737,7 +737,7 @@ class initialize:
             session.execute(query)
             session.commit()
 
-        if "hdfs_address" not in listOfConfKeys:
+        if "hdfs_address" not in list_of_conf_keys:
             query = sa.insert(configSchema.configuration).values(
                 configKey="hdfs_address",
                 valueStr="hdfs://hadoopcluster:8020",
@@ -746,7 +746,7 @@ class initialize:
             session.execute(query)
             session.commit()
 
-        if "hdfs_blocksize" not in listOfConfKeys:
+        if "hdfs_blocksize" not in list_of_conf_keys:
             query = sa.insert(configSchema.configuration).values(
                 configKey="hdfs_blocksize",
                 valueStr="134217728",
@@ -755,7 +755,7 @@ class initialize:
             session.execute(query)
             session.commit()
 
-        if "hdfs_basedir" not in listOfConfKeys:
+        if "hdfs_basedir" not in list_of_conf_keys:
             query = sa.insert(configSchema.configuration).values(
                 configKey="hdfs_basedir",
                 valueStr="/apps/dbimport",
@@ -764,7 +764,7 @@ class initialize:
             session.execute(query)
             session.commit()
 
-        if "export_default_sessions" not in listOfConfKeys:
+        if "export_default_sessions" not in list_of_conf_keys:
             query = sa.insert(configSchema.configuration).values(
                 configKey="export_default_sessions",
                 valueInt="4",
@@ -773,7 +773,7 @@ class initialize:
             session.execute(query)
             session.commit()
 
-        if "export_max_sessions" not in listOfConfKeys:
+        if "export_max_sessions" not in list_of_conf_keys:
             query = sa.insert(configSchema.configuration).values(
                 configKey="export_max_sessions",
                 valueInt="32",
@@ -782,7 +782,7 @@ class initialize:
             session.execute(query)
             session.commit()
 
-        if "import_default_sessions" not in listOfConfKeys:
+        if "import_default_sessions" not in list_of_conf_keys:
             query = sa.insert(configSchema.configuration).values(
                 configKey="import_default_sessions",
                 valueInt="4",
@@ -791,7 +791,7 @@ class initialize:
             session.execute(query)
             session.commit()
 
-        if "import_max_sessions" not in listOfConfKeys:
+        if "import_max_sessions" not in list_of_conf_keys:
             query = sa.insert(configSchema.configuration).values(
                 configKey="import_max_sessions",
                 valueInt="32",
@@ -800,7 +800,7 @@ class initialize:
             session.execute(query)
             session.commit()
 
-        if "spark_max_executors" not in listOfConfKeys:
+        if "spark_max_executors" not in list_of_conf_keys:
             query = sa.insert(configSchema.configuration).values(
                 configKey="spark_max_executors",
                 valueInt="128",
@@ -809,7 +809,7 @@ class initialize:
             session.execute(query)
             session.commit()
 
-        if "atlas_discovery_interval" not in listOfConfKeys:
+        if "atlas_discovery_interval" not in list_of_conf_keys:
             query = sa.insert(configSchema.configuration).values(
                 configKey="atlas_discovery_interval",
                 valueInt="24",
@@ -818,7 +818,7 @@ class initialize:
             session.execute(query)
             session.commit()
 
-        if "import_process_empty" not in listOfConfKeys:
+        if "import_process_empty" not in list_of_conf_keys:
             query = sa.insert(configSchema.configuration).values(
                 configKey="import_process_empty",
                 valueInt="0",
@@ -827,7 +827,7 @@ class initialize:
             session.execute(query)
             session.commit()
 
-        if "hive_insert_only_tables" not in listOfConfKeys:
+        if "hive_insert_only_tables" not in list_of_conf_keys:
             query = sa.insert(configSchema.configuration).values(
                 configKey="hive_insert_only_tables",
                 valueInt="1",
@@ -836,7 +836,7 @@ class initialize:
             session.execute(query)
             session.commit()
 
-        if "hive_acid_with_clusteredby" not in listOfConfKeys:
+        if "hive_acid_with_clusteredby" not in list_of_conf_keys:
             query = sa.insert(configSchema.configuration).values(
                 configKey="hive_acid_with_clusteredby",
                 valueInt="0",
@@ -845,7 +845,7 @@ class initialize:
             session.execute(query)
             session.commit()
 
-        if "post_airflow_dag_operations" not in listOfConfKeys:
+        if "post_airflow_dag_operations" not in list_of_conf_keys:
             query = sa.insert(configSchema.configuration).values(
                 configKey="post_airflow_dag_operations",
                 valueInt="0",
@@ -854,7 +854,7 @@ class initialize:
             session.execute(query)
             session.commit()
 
-        if "post_data_to_rest" not in listOfConfKeys:
+        if "post_data_to_rest" not in list_of_conf_keys:
             query = sa.insert(configSchema.configuration).values(
                 configKey="post_data_to_rest",
                 valueInt="0",
@@ -863,7 +863,7 @@ class initialize:
             session.execute(query)
             session.commit()
 
-        if "post_data_to_rest_extended" not in listOfConfKeys:
+        if "post_data_to_rest_extended" not in list_of_conf_keys:
             query = sa.insert(configSchema.configuration).values(
                 configKey="post_data_to_rest_extended",
                 valueInt="0",
@@ -872,7 +872,7 @@ class initialize:
             session.execute(query)
             session.commit()
 
-        if "post_data_to_awssns" not in listOfConfKeys:
+        if "post_data_to_awssns" not in list_of_conf_keys:
             query = sa.insert(configSchema.configuration).values(
                 configKey="post_data_to_awssns",
                 valueInt="0",
@@ -881,7 +881,7 @@ class initialize:
             session.execute(query)
             session.commit()
 
-        if "post_data_to_awssns_extended" not in listOfConfKeys:
+        if "post_data_to_awssns_extended" not in list_of_conf_keys:
             query = sa.insert(configSchema.configuration).values(
                 configKey="post_data_to_awssns_extended",
                 valueInt="0",
@@ -890,7 +890,7 @@ class initialize:
             session.execute(query)
             session.commit()
 
-        if "post_data_to_awssns_topic" not in listOfConfKeys:
+        if "post_data_to_awssns_topic" not in list_of_conf_keys:
             query = sa.insert(configSchema.configuration).values(
                 configKey="post_data_to_awssns_topic",
                 valueStr="arn:aws:sns:region:account:topic",
@@ -899,7 +899,7 @@ class initialize:
             session.execute(query)
             session.commit()
 
-        if "post_data_to_kafka" not in listOfConfKeys:
+        if "post_data_to_kafka" not in list_of_conf_keys:
             query = sa.insert(configSchema.configuration).values(
                 configKey="post_data_to_kafka",
                 valueInt="0",
@@ -908,7 +908,7 @@ class initialize:
             session.execute(query)
             session.commit()
 
-        if "post_data_to_kafka_extended" not in listOfConfKeys:
+        if "post_data_to_kafka_extended" not in list_of_conf_keys:
             query = sa.insert(configSchema.configuration).values(
                 configKey="post_data_to_kafka_extended",
                 valueInt="0",
@@ -917,7 +917,7 @@ class initialize:
             session.execute(query)
             session.commit()
 
-        if "kafka_brokers" not in listOfConfKeys:
+        if "kafka_brokers" not in list_of_conf_keys:
             query = sa.insert(configSchema.configuration).values(
                 configKey="kafka_brokers",
                 valueStr="localhost:9092",
@@ -926,7 +926,7 @@ class initialize:
             session.execute(query)
             session.commit()
 
-        if "kafka_trustcafile" not in listOfConfKeys:
+        if "kafka_trustcafile" not in list_of_conf_keys:
             query = sa.insert(configSchema.configuration).values(
                 configKey="kafka_trustcafile",
                 valueStr="/etc/pki/tls/certs/ca-bundle.crt",
@@ -935,7 +935,7 @@ class initialize:
             session.execute(query)
             session.commit()
 
-        if "kafka_securityprotocol" not in listOfConfKeys:
+        if "kafka_securityprotocol" not in list_of_conf_keys:
             query = sa.insert(configSchema.configuration).values(
                 configKey="kafka_securityprotocol",
                 valueStr="SASL_SSL",
@@ -944,7 +944,7 @@ class initialize:
             session.execute(query)
             session.commit()
 
-        if "kafka_saslmechanism" not in listOfConfKeys:
+        if "kafka_saslmechanism" not in list_of_conf_keys:
             query = sa.insert(configSchema.configuration).values(
                 configKey="kafka_saslmechanism",
                 valueStr="GSSAPI",
@@ -953,7 +953,7 @@ class initialize:
             session.execute(query)
             session.commit()
 
-        if "kafka_topic" not in listOfConfKeys:
+        if "kafka_topic" not in list_of_conf_keys:
             query = sa.insert(configSchema.configuration).values(
                 configKey="kafka_topic",
                 valueStr="dbimport_topic",
@@ -962,7 +962,7 @@ class initialize:
             session.execute(query)
             session.commit()
 
-        if "rest_url" not in listOfConfKeys:
+        if "rest_url" not in list_of_conf_keys:
             query = sa.insert(configSchema.configuration).values(
                 configKey="rest_url",
                 valueStr="https://localhost:8443/dbimport",
@@ -971,7 +971,7 @@ class initialize:
             session.execute(query)
             session.commit()
 
-        if "rest_timeout" not in listOfConfKeys:
+        if "rest_timeout" not in list_of_conf_keys:
             query = sa.insert(configSchema.configuration).values(
                 configKey="rest_timeout",
                 valueInt="5",
@@ -980,7 +980,7 @@ class initialize:
             session.execute(query)
             session.commit()
 
-        if "rest_verifyssl" not in listOfConfKeys:
+        if "rest_verifyssl" not in list_of_conf_keys:
             query = sa.insert(configSchema.configuration).values(
                 configKey="rest_verifyssl",
                 valueInt="1",
@@ -989,7 +989,7 @@ class initialize:
             session.execute(query)
             session.commit()
 
-        if "rest_trustcafile" not in listOfConfKeys:
+        if "rest_trustcafile" not in list_of_conf_keys:
             query = sa.insert(configSchema.configuration).values(
                 configKey="rest_trustcafile",
                 valueStr="/etc/pki/tls/certs/ca-bundle.crt",
@@ -998,7 +998,7 @@ class initialize:
             session.execute(query)
             session.commit()
 
-        if "impala_invalidate_metadata" not in listOfConfKeys:
+        if "impala_invalidate_metadata" not in list_of_conf_keys:
             query = sa.insert(configSchema.configuration).values(
                 configKey="impala_invalidate_metadata",
                 valueInt="0",
@@ -1007,7 +1007,7 @@ class initialize:
             session.execute(query)
             session.commit()
 
-        if "import_columnname_import" not in listOfConfKeys:
+        if "import_columnname_import" not in list_of_conf_keys:
             query = sa.insert(configSchema.configuration).values(
                 configKey="import_columnname_import",
                 valueStr="datalake_import",
@@ -1016,7 +1016,7 @@ class initialize:
             session.execute(query)
             session.commit()
 
-        if "import_columnname_insert" not in listOfConfKeys:
+        if "import_columnname_insert" not in list_of_conf_keys:
             query = sa.insert(configSchema.configuration).values(
                 configKey="import_columnname_insert",
                 valueStr="datalake_insert",
@@ -1025,7 +1025,7 @@ class initialize:
             session.execute(query)
             session.commit()
 
-        if "import_columnname_update" not in listOfConfKeys:
+        if "import_columnname_update" not in list_of_conf_keys:
             query = sa.insert(configSchema.configuration).values(
                 configKey="import_columnname_update",
                 valueStr="datalake_update",
@@ -1034,7 +1034,7 @@ class initialize:
             session.execute(query)
             session.commit()
 
-        if "import_columnname_delete" not in listOfConfKeys:
+        if "import_columnname_delete" not in list_of_conf_keys:
             query = sa.insert(configSchema.configuration).values(
                 configKey="import_columnname_delete",
                 valueStr="datalake_delete",
@@ -1043,7 +1043,7 @@ class initialize:
             session.execute(query)
             session.commit()
 
-        if "import_columnname_iud" not in listOfConfKeys:
+        if "import_columnname_iud" not in list_of_conf_keys:
             query = sa.insert(configSchema.configuration).values(
                 configKey="import_columnname_iud",
                 valueStr="datalake_iud",
@@ -1052,7 +1052,7 @@ class initialize:
             session.execute(query)
             session.commit()
 
-        if "import_columnname_histtime" not in listOfConfKeys:
+        if "import_columnname_histtime" not in list_of_conf_keys:
             query = sa.insert(configSchema.configuration).values(
                 configKey="import_columnname_histtime",
                 valueStr="datalake_timestamp",
@@ -1061,7 +1061,7 @@ class initialize:
             session.execute(query)
             session.commit()
 
-        if "import_columnname_source" not in listOfConfKeys:
+        if "import_columnname_source" not in list_of_conf_keys:
             query = sa.insert(configSchema.configuration).values(
                 configKey="import_columnname_source",
                 valueStr="dbimport_source",
@@ -1070,7 +1070,7 @@ class initialize:
             session.execute(query)
             session.commit()
 
-        if "restserver_secret_key" not in listOfConfKeys:
+        if "restserver_secret_key" not in list_of_conf_keys:
             query = sa.insert(configSchema.configuration).values(
                 configKey="restserver_secret_key",
                 valueStr="".join(random.choices(string.ascii_letters, k=64)),
@@ -1079,7 +1079,7 @@ class initialize:
             session.execute(query)
             session.commit()
 
-        if "restserver_token_ttl" not in listOfConfKeys:
+        if "restserver_token_ttl" not in list_of_conf_keys:
             query = sa.insert(configSchema.configuration).values(
                 configKey="restserver_token_ttl",
                 valueInt="120",
@@ -1088,7 +1088,7 @@ class initialize:
             session.execute(query)
             session.commit()
 
-        if "restserver_admin_user" not in listOfConfKeys:
+        if "restserver_admin_user" not in list_of_conf_keys:
             query = sa.insert(configSchema.configuration).values(
                 configKey="restserver_admin_user",
                 valueStr="admin",
@@ -1097,7 +1097,7 @@ class initialize:
             session.execute(query)
             session.commit()
 
-        if "restserver_authentication_method" not in listOfConfKeys:
+        if "restserver_authentication_method" not in list_of_conf_keys:
             query = sa.insert(configSchema.configuration).values(
                 configKey="restserver_authentication_method",
                 valueStr="local",

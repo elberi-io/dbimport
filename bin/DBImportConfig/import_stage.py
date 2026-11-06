@@ -57,7 +57,7 @@ class stage:
         self.Hive_Table = Hive_Table.lower()
 
     def getStageDescription(self, stage):
-        stageDescription = ""
+        stage_description = ""
 
         # RULES FOR STAGE NUMBERS
         # 1. Take a series of even 50 numbers to a specific method
@@ -70,467 +70,467 @@ class stage:
 
         # Import_Phase_FULL
         if stage == 1010:
-            stageDescription = "Getting source tableschema"
+            stage_description = "Getting source tableschema"
         elif stage == 1011:
-            stageDescription = "Clear table rowcount"
+            stage_description = "Clear table rowcount"
         elif stage == 1012:
-            stageDescription = "Get source table rowcount"
+            stage_description = "Get source table rowcount"
         elif stage == 1013:
-            stageDescription = "Sqoop import"
+            stage_description = "Sqoop import"
         elif stage == 1014:
-            stageDescription = "Spark import"
+            stage_description = "Spark import"
         elif stage == 1015:
-            stageDescription = "Validate spark import table"
+            stage_description = "Validate spark import table"
         elif stage == 1016:
-            stageDescription = "Spark ETL"
+            stage_description = "Spark ETL"
         elif stage == 1017:
-            stageDescription = "Validate spark target table"
+            stage_description = "Validate spark target table"
         elif stage == 1018:
-            stageDescription = "Spark ETL finished"
+            stage_description = "Spark ETL finished"
         elif stage == 1020:
-            stageDescription = "Validate import"
+            stage_description = "Validate import"
         elif stage == 1045:
-            stageDescription = "Update Atlas"
+            stage_description = "Update Atlas"
         elif stage == 1049:
-            stageDescription = "Import Phase Completed"
+            stage_description = "Import Phase Completed"
 
         # Import_Phase_INCR
         elif stage == 1110:
-            stageDescription = "Getting source tableschema"
+            stage_description = "Getting source tableschema"
         elif stage == 1111:
-            stageDescription = "Clear table rowcount"
+            stage_description = "Clear table rowcount"
         elif stage == 1112:
-            stageDescription = "Sqoop import"
+            stage_description = "Sqoop import"
         elif stage == 1113:
-            stageDescription = "Spark import"
+            stage_description = "Spark import"
         elif stage == 1120:
-            stageDescription = "Get source table rowcount"
+            stage_description = "Get source table rowcount"
         elif stage == 1121:
-            stageDescription = "Validate import"
+            stage_description = "Validate import"
         elif stage == 1145:
-            stageDescription = "Update Atlas"
+            stage_description = "Update Atlas"
         elif stage == 1149:
-            stageDescription = "Import Phase Completed"
+            stage_description = "Import Phase Completed"
 
         # Import_Phase_ORACLE_FLASHBACK
         elif stage == 1210:
-            stageDescription = "Getting source tableschema"
+            stage_description = "Getting source tableschema"
         elif stage == 1211:
-            stageDescription = "Clear table rowcount"
+            stage_description = "Clear table rowcount"
         elif stage == 1212:
-            stageDescription = "Checking SCN number"
+            stage_description = "Checking SCN number"
         elif stage == 1215:
-            stageDescription = "Sqoop import"
+            stage_description = "Sqoop import"
         elif stage == 1216:
-            stageDescription = "Spark import"
+            stage_description = "Spark import"
         elif stage == 1220:
-            stageDescription = "Get source table rowcount"
+            stage_description = "Get source table rowcount"
         elif stage == 1221:
-            stageDescription = "Validate sqoop import"
+            stage_description = "Validate sqoop import"
         elif stage == 1245:
-            stageDescription = "Update Atlas"
+            stage_description = "Update Atlas"
         elif stage == 1249:
-            stageDescription = "Import Phase Completed"
+            stage_description = "Import Phase Completed"
 
         # Import_Phase_MSSQL_CHANGE_TRACKING
         elif stage == 1260:
-            stageDescription = "Getting source tableschema"
+            stage_description = "Getting source tableschema"
         elif stage == 1261:
-            stageDescription = "Clear table rowcount"
+            stage_description = "Clear table rowcount"
         elif stage == 1262:
-            stageDescription = "Checking MSSQL Change Tracking functions"
+            stage_description = "Checking MSSQL Change Tracking functions"
         elif stage == 1264:
-            stageDescription = "Sqoop import"
+            stage_description = "Sqoop import"
         elif stage == 1265:
-            stageDescription = "Spark import"
+            stage_description = "Spark import"
         elif stage == 1270:
-            stageDescription = "Get source table rowcount"
+            stage_description = "Get source table rowcount"
         elif stage == 1271:
-            stageDescription = "Validate sqoop import"
+            stage_description = "Validate sqoop import"
         elif stage == 1295:
-            stageDescription = "Update Atlas"
+            stage_description = "Update Atlas"
         elif stage == 1299:
-            stageDescription = "Import Phase Completed"
+            stage_description = "Import Phase Completed"
 
         # Import_Phase_MONGO_FULL
         elif stage == 1310:
-            stageDescription = "Clear table rowcount"
+            stage_description = "Clear table rowcount"
         elif stage == 1315:
-            stageDescription = "Spark import"
+            stage_description = "Spark import"
         elif stage == 1320:
-            stageDescription = "Get Mongo rowcount"
+            stage_description = "Get Mongo rowcount"
         elif stage == 1325:
-            stageDescription = "Validate Spark rowcount"
+            stage_description = "Validate Spark rowcount"
         elif stage == 1349:
-            stageDescription = "Import Phase Completed"
+            stage_description = "Import Phase Completed"
 
         # Copy Phase
         elif stage == 2000:
-            stageDescription = "Validating schema version on remote DBImport instance"
+            stage_description = "Validating schema version on remote DBImport instance"
         elif stage == 2001:
-            stageDescription = "Copy data to remote DBImport instance"
+            stage_description = "Copy data to remote DBImport instance"
         elif stage == 2002:
-            stageDescription = "Copy schema to remote DBImport instance"
+            stage_description = "Copy schema to remote DBImport instance"
         elif stage == 2099:
-            stageDescription = "Copy Phase Completed"
+            stage_description = "Copy Phase Completed"
 
         # Import_Phase_FULL & ETL_Phase_TRUNCATEINSERT
         elif stage == 3050:
-            stageDescription = "Connecting to Hive"
+            stage_description = "Connecting to Hive"
         elif stage == 3051:
-            stageDescription = "Creating the import table in the staging database"
+            stage_description = "Creating the import table in the staging database"
         elif stage == 3052:
-            stageDescription = "Get Import table rowcount"
+            stage_description = "Get Import table rowcount"
         elif stage == 3053:
-            stageDescription = "Validate import table"
+            stage_description = "Validate import table"
         elif stage == 3054:
-            stageDescription = "Removing Hive locks by force"
+            stage_description = "Removing Hive locks by force"
         elif stage == 3055:
-            stageDescription = "Creating the target table"
+            stage_description = "Creating the target table"
         elif stage == 3056:
-            stageDescription = "Truncate target table"
+            stage_description = "Truncate target table"
         elif stage == 3057:
-            stageDescription = "Copy rows from import to target table"
+            stage_description = "Copy rows from import to target table"
         elif stage == 3058:
-            stageDescription = "Update Hive statistics on target table"
+            stage_description = "Update Hive statistics on target table"
         elif stage == 3059:
-            stageDescription = "Get Target table rowcount"
+            stage_description = "Get Target table rowcount"
         elif stage == 3060:
-            stageDescription = "Validate target table"
+            stage_description = "Validate target table"
         elif stage == 3095:
-            stageDescription = "Invalidate Impala metadata"
+            stage_description = "Invalidate Impala metadata"
 
         # Import_Phase_FULL & ETL_Phase_INSERT
         elif stage == 3100:
-            stageDescription = "Connecting to Hive"
+            stage_description = "Connecting to Hive"
         elif stage == 3101:
-            stageDescription = "Creating the import table in the staging database"
+            stage_description = "Creating the import table in the staging database"
         elif stage == 3102:
-            stageDescription = "Get Import table rowcount"
+            stage_description = "Get Import table rowcount"
         elif stage == 3103:
-            stageDescription = "Validate import table"
+            stage_description = "Validate import table"
         elif stage == 3104:
-            stageDescription = "Removing Hive locks by force"
+            stage_description = "Removing Hive locks by force"
         elif stage == 3105:
-            stageDescription = "Creating the target table"
+            stage_description = "Creating the target table"
         elif stage == 3106:
-            stageDescription = "Copy rows from import to target table"
+            stage_description = "Copy rows from import to target table"
         elif stage == 3107:
-            stageDescription = "Update Hive statistics on target table"
+            stage_description = "Update Hive statistics on target table"
         elif stage == 3108:
-            stageDescription = "Get Target table rowcount"
+            stage_description = "Get Target table rowcount"
         elif stage == 3109:
-            stageDescription = "Validate target table"
+            stage_description = "Validate target table"
         elif stage == 3145:
-            stageDescription = "Invalidate Impala metadata"
+            stage_description = "Invalidate Impala metadata"
 
         # Import_Phase_INCR & ETL_Phase_INSERT
         elif stage == 3150:
-            stageDescription = "Connecting to Hive"
+            stage_description = "Connecting to Hive"
         elif stage == 3151:
-            stageDescription = "Creating the import table in the staging database"
+            stage_description = "Creating the import table in the staging database"
         elif stage == 3152:
-            stageDescription = "Get Import table rowcount"
+            stage_description = "Get Import table rowcount"
         elif stage == 3153:
-            stageDescription = "Validate import table"
+            stage_description = "Validate import table"
         elif stage == 3154:
-            stageDescription = "Removing Hive locks by force"
+            stage_description = "Removing Hive locks by force"
         elif stage == 3155:
-            stageDescription = "Creating the target table"
+            stage_description = "Creating the target table"
         elif stage == 3156:
-            stageDescription = "Copy rows from import to target table"
+            stage_description = "Copy rows from import to target table"
         elif stage == 3157:
-            stageDescription = "Update Hive statistics on target table"
+            stage_description = "Update Hive statistics on target table"
         elif stage == 3158:
-            stageDescription = "Get Target table rowcount"
+            stage_description = "Get Target table rowcount"
         elif stage == 3159:
-            stageDescription = "Validate target table"
+            stage_description = "Validate target table"
         elif stage == 3160:
-            stageDescription = "Saving pending incremental values"
+            stage_description = "Saving pending incremental values"
         elif stage == 3195:
-            stageDescription = "Invalidate Impala metadata"
+            stage_description = "Invalidate Impala metadata"
 
         # Import_Phase_FULL & ETL_Phase_MERGEHISTORYAUDIT
         elif stage == 3200:
-            stageDescription = "Connecting to Hive"
+            stage_description = "Connecting to Hive"
         elif stage == 3201:
-            stageDescription = "Creating the import table in the staging database"
+            stage_description = "Creating the import table in the staging database"
         elif stage == 3202:
-            stageDescription = "Get Import table rowcount"
+            stage_description = "Get Import table rowcount"
         elif stage == 3203:
-            stageDescription = "Validate import table"
+            stage_description = "Validate import table"
         elif stage == 3204:
-            stageDescription = "Removing Hive locks by force"
+            stage_description = "Removing Hive locks by force"
         elif stage == 3205:
-            stageDescription = "Creating the target table"
+            stage_description = "Creating the target table"
         elif stage == 3206:
-            stageDescription = "Creating the history table"
+            stage_description = "Creating the history table"
         elif stage == 3207:
-            stageDescription = "Creating the delete table"
+            stage_description = "Creating the delete table"
         elif stage == 3208:
-            stageDescription = "Merge Import table with Target table"
+            stage_description = "Merge Import table with Target table"
         elif stage == 3209:
-            stageDescription = "Update Hive statistics on target table"
+            stage_description = "Update Hive statistics on target table"
         elif stage == 3210:
-            stageDescription = "Get Target table rowcount"
+            stage_description = "Get Target table rowcount"
         elif stage == 3211:
-            stageDescription = "Validate target table"
+            stage_description = "Validate target table"
         elif stage == 3212:
-            stageDescription = "Running major compaction on Target table"
+            stage_description = "Running major compaction on Target table"
         elif stage == 3245:
-            stageDescription = "Invalidate Impala metadata"
+            stage_description = "Invalidate Impala metadata"
 
         # Import_Phase_FULL & ETL_Phase_MERGEONLY
         elif stage == 3250:
-            stageDescription = "Connecting to Hive"
+            stage_description = "Connecting to Hive"
         elif stage == 3251:
-            stageDescription = "Creating the import table in the staging database"
+            stage_description = "Creating the import table in the staging database"
         elif stage == 3252:
-            stageDescription = "Get Import table rowcount"
+            stage_description = "Get Import table rowcount"
         elif stage == 3253:
-            stageDescription = "Validate import table"
+            stage_description = "Validate import table"
         elif stage == 3254:
-            stageDescription = "Removing Hive locks by force"
+            stage_description = "Removing Hive locks by force"
         elif stage == 3255:
-            stageDescription = "Creating the target table"
+            stage_description = "Creating the target table"
         elif stage == 3256:
-            stageDescription = "Creating the delete table"
+            stage_description = "Creating the delete table"
         elif stage == 3257:
-            stageDescription = "Merge Import table with Target table"
+            stage_description = "Merge Import table with Target table"
         elif stage == 3258:
-            stageDescription = "Update Hive statistics on target table"
+            stage_description = "Update Hive statistics on target table"
         elif stage == 3259:
-            stageDescription = "Get Target table rowcount"
+            stage_description = "Get Target table rowcount"
         elif stage == 3260:
-            stageDescription = "Validate target table"
+            stage_description = "Validate target table"
         elif stage == 3261:
-            stageDescription = "Running major compaction on Target table"
+            stage_description = "Running major compaction on Target table"
         elif stage == 3295:
-            stageDescription = "Invalidate Impala metadata"
+            stage_description = "Invalidate Impala metadata"
 
         # Import_Phase_INCR & ETL_Phase_MERGEONLY
         elif stage == 3300:
-            stageDescription = "Connecting to Hive"
+            stage_description = "Connecting to Hive"
         elif stage == 3301:
-            stageDescription = "Creating the import table in the staging database"
+            stage_description = "Creating the import table in the staging database"
         elif stage == 3302:
-            stageDescription = "Get Import table rowcount"
+            stage_description = "Get Import table rowcount"
         elif stage == 3303:
-            stageDescription = "Validate import table"
+            stage_description = "Validate import table"
         elif stage == 3304:
-            stageDescription = "Removing Hive locks by force"
+            stage_description = "Removing Hive locks by force"
         elif stage == 3305:
-            stageDescription = "Creating the target table"
+            stage_description = "Creating the target table"
         elif stage == 3306:
-            stageDescription = "Merge Import table with Target table"
+            stage_description = "Merge Import table with Target table"
         elif stage == 3307:
-            stageDescription = "Update Hive statistics on target table"
+            stage_description = "Update Hive statistics on target table"
         elif stage == 3308:
-            stageDescription = "Get Target table rowcount"
+            stage_description = "Get Target table rowcount"
         elif stage == 3309:
-            stageDescription = "Validate target table"
+            stage_description = "Validate target table"
         elif stage == 3310:
-            stageDescription = "Saving pending incremental values"
+            stage_description = "Saving pending incremental values"
         elif stage == 3311:
-            stageDescription = "Running major compaction on Target table"
+            stage_description = "Running major compaction on Target table"
         elif stage == 3345:
-            stageDescription = "Invalidate Impala metadata"
+            stage_description = "Invalidate Impala metadata"
 
         # Import_Phase_INCR & ETL_Phase_MERGEHISTORYAUDIT
         elif stage == 3350:
-            stageDescription = "Connecting to Hive"
+            stage_description = "Connecting to Hive"
         elif stage == 3351:
-            stageDescription = "Creating the import table in the staging database"
+            stage_description = "Creating the import table in the staging database"
         elif stage == 3352:
-            stageDescription = "Get Import table rowcount"
+            stage_description = "Get Import table rowcount"
         elif stage == 3353:
-            stageDescription = "Validate import table"
+            stage_description = "Validate import table"
         elif stage == 3354:
-            stageDescription = "Removing Hive locks by force"
+            stage_description = "Removing Hive locks by force"
         elif stage == 3355:
-            stageDescription = "Creating the target table"
+            stage_description = "Creating the target table"
         elif stage == 3356:
-            stageDescription = "Creating the history table"
+            stage_description = "Creating the history table"
         elif stage == 3357:
-            stageDescription = "Merge Import table with Target table"
+            stage_description = "Merge Import table with Target table"
         elif stage == 3358:
-            stageDescription = "Update Hive statistics on target table"
+            stage_description = "Update Hive statistics on target table"
         elif stage == 3359:
-            stageDescription = "Get Target table rowcount"
+            stage_description = "Get Target table rowcount"
         elif stage == 3360:
-            stageDescription = "Validate target table"
+            stage_description = "Validate target table"
         elif stage == 3361:
-            stageDescription = "Saving pending incremental values"
+            stage_description = "Saving pending incremental values"
         elif stage == 3362:
-            stageDescription = "Running major compaction on Target table"
+            stage_description = "Running major compaction on Target table"
         elif stage == 3395:
-            stageDescription = "Invalidate Impala metadata"
+            stage_description = "Invalidate Impala metadata"
 
         # Import_Phase_ORACLE_FLASHBACK & ETL_Phase_MERGEONLY
         elif stage == 3400:
-            stageDescription = "Connecting to Hive"
+            stage_description = "Connecting to Hive"
         elif stage == 3401:
-            stageDescription = "Creating the import table in the staging database"
+            stage_description = "Creating the import table in the staging database"
         elif stage == 3402:
-            stageDescription = "Get Import table rowcount"
+            stage_description = "Get Import table rowcount"
         elif stage == 3403:
-            stageDescription = "Validate import table"
+            stage_description = "Validate import table"
         elif stage == 3404:
-            stageDescription = "Removing Hive locks by force"
+            stage_description = "Removing Hive locks by force"
         elif stage == 3405:
-            stageDescription = "Creating the target table"
+            stage_description = "Creating the target table"
         elif stage == 3406:
-            stageDescription = "Merge Import table with Target table"
+            stage_description = "Merge Import table with Target table"
         elif stage == 3407:
-            stageDescription = "Update Hive statistics on target table"
+            stage_description = "Update Hive statistics on target table"
         elif stage == 3408:
-            stageDescription = "Get Target table rowcount"
+            stage_description = "Get Target table rowcount"
         elif stage == 3409:
-            stageDescription = "Validate target table"
+            stage_description = "Validate target table"
         elif stage == 3410:
-            stageDescription = "Saving pending incremental values"
+            stage_description = "Saving pending incremental values"
         elif stage == 3411:
-            stageDescription = "Running major compaction on Target table"
+            stage_description = "Running major compaction on Target table"
         elif stage == 3445:
-            stageDescription = "Invalidate Impala metadata"
+            stage_description = "Invalidate Impala metadata"
 
         # Import_Phase_FULL & ETL_Phase_NONE
         elif stage == 3450:
-            stageDescription = "Connecting to Hive"
+            stage_description = "Connecting to Hive"
         elif stage == 3451:
-            stageDescription = "Creating the import table in the staging database"
+            stage_description = "Creating the import table in the staging database"
         elif stage == 3452:
-            stageDescription = "Get Import table rowcount"
+            stage_description = "Get Import table rowcount"
         elif stage == 3453:
-            stageDescription = "Validate import table"
+            stage_description = "Validate import table"
         elif stage == 3495:
-            stageDescription = "Invalidate Impala metadata"
+            stage_description = "Invalidate Impala metadata"
 
         # Import_Phase_Mongo_FULL & ETL_Phase_TRUNCATEINSERT
         elif stage == 3500:
-            stageDescription = "Connecting to Hive"
+            stage_description = "Connecting to Hive"
         elif stage == 3501:
-            stageDescription = "Creating the import table in the staging database"
+            stage_description = "Creating the import table in the staging database"
         elif stage == 3502:
-            stageDescription = "Get Import table rowcount"
+            stage_description = "Get Import table rowcount"
         elif stage == 3503:
-            stageDescription = "Validate import table"
+            stage_description = "Validate import table"
         elif stage == 3504:
-            stageDescription = "Removing Hive locks by force"
+            stage_description = "Removing Hive locks by force"
         elif stage == 3505:
-            stageDescription = "Creating the target table"
+            stage_description = "Creating the target table"
         elif stage == 3506:
-            stageDescription = "Truncate target table"
+            stage_description = "Truncate target table"
         elif stage == 3507:
-            stageDescription = "Copy rows from import to target table"
+            stage_description = "Copy rows from import to target table"
         elif stage == 3508:
-            stageDescription = "Update Hive statistics on target table"
+            stage_description = "Update Hive statistics on target table"
         elif stage == 3509:
-            stageDescription = "Get Target table rowcount"
+            stage_description = "Get Target table rowcount"
         elif stage == 3510:
-            stageDescription = "Validate target table"
+            stage_description = "Validate target table"
         elif stage == 3545:
-            stageDescription = "Invalidate Impala metadata"
+            stage_description = "Invalidate Impala metadata"
 
         # Import_Phase_ORACLE_FLASHBACK & ETL_Phase_MERGEHISTORYAUDIT
         elif stage == 3550:
-            stageDescription = "Connecting to Hive"
+            stage_description = "Connecting to Hive"
         elif stage == 3551:
-            stageDescription = "Creating the import table in the staging database"
+            stage_description = "Creating the import table in the staging database"
         elif stage == 3552:
-            stageDescription = "Get Import table rowcount"
+            stage_description = "Get Import table rowcount"
         elif stage == 3553:
-            stageDescription = "Validate import table"
+            stage_description = "Validate import table"
         elif stage == 3554:
-            stageDescription = "Removing Hive locks by force"
+            stage_description = "Removing Hive locks by force"
         elif stage == 3555:
-            stageDescription = "Creating the target table"
+            stage_description = "Creating the target table"
         elif stage == 3556:
-            stageDescription = "Creating the history table"
+            stage_description = "Creating the history table"
         elif stage == 3557:
-            stageDescription = "Merge Import table with Target table"
+            stage_description = "Merge Import table with Target table"
         elif stage == 3558:
-            stageDescription = "Update Hive statistics on target table"
+            stage_description = "Update Hive statistics on target table"
         elif stage == 3559:
-            stageDescription = "Get Target table rowcount"
+            stage_description = "Get Target table rowcount"
         elif stage == 3560:
-            stageDescription = "Validate target table"
+            stage_description = "Validate target table"
         elif stage == 3561:
-            stageDescription = "Saving pending incremental values"
+            stage_description = "Saving pending incremental values"
         elif stage == 3562:
-            stageDescription = "Running major compaction on Target table"
+            stage_description = "Running major compaction on Target table"
         elif stage == 3595:
-            stageDescription = "Invalidate Impala metadata"
+            stage_description = "Invalidate Impala metadata"
 
         # Import_Phase_MSSQL_CHANGE_TRACKING & ETL_Phase_MERGEONLY
         elif stage == 3600:
-            stageDescription = "Connecting to Hive"
+            stage_description = "Connecting to Hive"
         elif stage == 3601:
-            stageDescription = "Creating the import table in the staging database"
+            stage_description = "Creating the import table in the staging database"
         elif stage == 3602:
-            stageDescription = "Get Import table rowcount"
+            stage_description = "Get Import table rowcount"
         elif stage == 3603:
-            stageDescription = "Validate import table"
+            stage_description = "Validate import table"
         elif stage == 3604:
-            stageDescription = "Removing Hive locks by force"
+            stage_description = "Removing Hive locks by force"
         elif stage == 3605:
-            stageDescription = "Creating the target table"
+            stage_description = "Creating the target table"
         elif stage == 3607:
-            stageDescription = "Merge Import table with Target table"
+            stage_description = "Merge Import table with Target table"
         elif stage == 3608:
-            stageDescription = "Update Hive statistics on target table"
+            stage_description = "Update Hive statistics on target table"
         elif stage == 3609:
-            stageDescription = "Get Target table rowcount"
+            stage_description = "Get Target table rowcount"
         elif stage == 3610:
-            stageDescription = "Validate target table"
+            stage_description = "Validate target table"
         elif stage == 3611:
-            stageDescription = "Saving pending incremental values"
+            stage_description = "Saving pending incremental values"
         elif stage == 3612:
-            stageDescription = "Running major compaction on Target table"
+            stage_description = "Running major compaction on Target table"
         elif stage == 3645:
-            stageDescription = "Invalidate Impala metadata"
+            stage_description = "Invalidate Impala metadata"
 
         # Import_Phase_MSSQL_CHANGE_TRACKING & ETL_Phase_MERGEHISTORYAUDIT
         elif stage == 3650:
-            stageDescription = "Connecting to Hive"
+            stage_description = "Connecting to Hive"
         elif stage == 3651:
-            stageDescription = "Creating the import table in the staging database"
+            stage_description = "Creating the import table in the staging database"
         elif stage == 3652:
-            stageDescription = "Get Import table rowcount"
+            stage_description = "Get Import table rowcount"
         elif stage == 3653:
-            stageDescription = "Validate import table"
+            stage_description = "Validate import table"
         elif stage == 3654:
-            stageDescription = "Removing Hive locks by force"
+            stage_description = "Removing Hive locks by force"
         elif stage == 3655:
-            stageDescription = "Creating the target table"
+            stage_description = "Creating the target table"
         elif stage == 3656:
-            stageDescription = "Creating the history table"
+            stage_description = "Creating the history table"
         elif stage == 3657:
-            stageDescription = "Creating the delete table"
+            stage_description = "Creating the delete table"
         elif stage == 3658:
-            stageDescription = "Merge Import table with Target table"
+            stage_description = "Merge Import table with Target table"
         elif stage == 3659:
-            stageDescription = "Update Hive statistics on target table"
+            stage_description = "Update Hive statistics on target table"
         elif stage == 3660:
-            stageDescription = "Get Target table rowcount"
+            stage_description = "Get Target table rowcount"
         elif stage == 3661:
-            stageDescription = "Validate target table"
+            stage_description = "Validate target table"
         elif stage == 3662:
-            stageDescription = "Saving pending incremental values"
+            stage_description = "Saving pending incremental values"
         elif stage == 3663:
-            stageDescription = "Running major compaction on Target table"
+            stage_description = "Running major compaction on Target table"
         elif stage == 3695:
-            stageDescription = "Invalidate Impala metadata"
+            stage_description = "Invalidate Impala metadata"
 
         elif stage == 9999:
-            stageDescription = "DBImport completed successfully"
-        return stageDescription
+            stage_description = "DBImport completed successfully"
+        return stage_description
 
     def getStageShortName(self, stage):
 
-        stageShortName = ""
+        stage_short_name = ""
         if stage == 0:
-            stageShortName = "skip"
+            stage_short_name = "skip"
 
         # RULES FOR STAGE NUMBERS
         # 1. Take a series of even 50 numbers to a specific method
@@ -543,462 +543,462 @@ class stage:
 
         # Import_Phase_FULL
         elif stage == 1010:
-            stageShortName = "get_source_tableschema"
+            stage_short_name = "get_source_tableschema"
         elif stage == 1011:
-            stageShortName = "clear_table_rowcount"
+            stage_short_name = "clear_table_rowcount"
         elif stage == 1012:
-            stageShortName = "get_source_rowcount"
+            stage_short_name = "get_source_rowcount"
         elif stage == 1013:
-            stageShortName = "sqoop"
+            stage_short_name = "sqoop"
         elif stage == 1014:
-            stageShortName = "spark"
+            stage_short_name = "spark"
         elif stage == 1015:
-            stageShortName = "validate_import_table"
+            stage_short_name = "validate_import_table"
         elif stage == 1016:
-            stageShortName = "spark_etl"
+            stage_short_name = "spark_etl"
         elif stage == 1017:
-            stageShortName = "validate_target_table"
+            stage_short_name = "validate_target_table"
         elif stage == 1018:
-            stageShortName = "skip"
+            stage_short_name = "skip"
         elif stage == 1020:
-            stageShortName = "validate_sqoop_import"
+            stage_short_name = "validate_sqoop_import"
         elif stage == 1045:
-            stageShortName = "atlas_schema"
+            stage_short_name = "atlas_schema"
         elif stage == 1049:
-            stageShortName = "skip"
+            stage_short_name = "skip"
 
         # Import_Phase_INCR
         elif stage == 1110:
-            stageShortName = "get_source_tableschema"
+            stage_short_name = "get_source_tableschema"
         elif stage == 1111:
-            stageShortName = "clear_table_rowcount"
+            stage_short_name = "clear_table_rowcount"
         elif stage == 1112:
-            stageShortName = "sqoop"
+            stage_short_name = "sqoop"
         elif stage == 1113:
-            stageShortName = "spark"
+            stage_short_name = "spark"
         elif stage == 1120:
-            stageShortName = "get_source_rowcount"
+            stage_short_name = "get_source_rowcount"
         elif stage == 1121:
-            stageShortName = "validate_sqoop_import"
+            stage_short_name = "validate_sqoop_import"
         elif stage == 1145:
-            stageShortName = "atlas_schema"
+            stage_short_name = "atlas_schema"
         elif stage == 1149:
-            stageShortName = "skip"
+            stage_short_name = "skip"
 
         # Import_Phase_ORACLE_FLASHBACK
         elif stage == 1210:
-            stageShortName = "get_source_tableschema"
+            stage_short_name = "get_source_tableschema"
         elif stage == 1211:
-            stageShortName = "clear_table_rowcount"
+            stage_short_name = "clear_table_rowcount"
         elif stage == 1212:
-            stageShortName = "skip"
+            stage_short_name = "skip"
         elif stage == 1215:
-            stageShortName = "sqoop"
+            stage_short_name = "sqoop"
         elif stage == 1216:
-            stageShortName = "spark"
+            stage_short_name = "spark"
         elif stage == 1220:
-            stageShortName = "get_source_rowcount"
+            stage_short_name = "get_source_rowcount"
         elif stage == 1221:
-            stageShortName = "validate_sqoop_import"
+            stage_short_name = "validate_sqoop_import"
         elif stage == 1245:
-            stageShortName = "atlas_schema"
+            stage_short_name = "atlas_schema"
         elif stage == 1249:
-            stageShortName = "skip"
+            stage_short_name = "skip"
 
         # Import_Phase_MSSQL_CHANGE_TRACKING
         elif stage == 1260:
-            stageShortName = "get_source_tableschema"
+            stage_short_name = "get_source_tableschema"
         elif stage == 1261:
-            stageShortName = "clear_table_rowcount"
+            stage_short_name = "clear_table_rowcount"
         elif stage == 1262:
-            stageShortName = "skip"
+            stage_short_name = "skip"
         elif stage == 1264:
-            stageShortName = "sqoop"
+            stage_short_name = "sqoop"
         elif stage == 1265:
-            stageShortName = "spark"
+            stage_short_name = "spark"
         elif stage == 1270:
-            stageShortName = "get_source_rowcount"
+            stage_short_name = "get_source_rowcount"
         elif stage == 1271:
-            stageShortName = "validate_sqoop_import"
+            stage_short_name = "validate_sqoop_import"
         elif stage == 1295:
-            stageShortName = "atlas_schema"
+            stage_short_name = "atlas_schema"
         elif stage == 1299:
-            stageShortName = "skip"
+            stage_short_name = "skip"
 
         # Import_Phase_MONGO_FULL
         elif stage == 1310:
-            stageShortName = "skip"
+            stage_short_name = "skip"
         elif stage == 1315:
-            stageShortName = "skip"
+            stage_short_name = "skip"
         elif stage == 1320:
-            stageShortName = "skip"
+            stage_short_name = "skip"
         elif stage == 1325:
-            stageShortName = "skip"
+            stage_short_name = "skip"
         elif stage == 1349:
-            stageShortName = "skip"
+            stage_short_name = "skip"
 
         # Copy Phase
         elif stage == 2000:
-            stageShortName = "skip"
+            stage_short_name = "skip"
         elif stage == 2001:
-            stageShortName = "copy_data"
+            stage_short_name = "copy_data"
         elif stage == 2002:
-            stageShortName = "copy_schema"
+            stage_short_name = "copy_schema"
         elif stage == 2099:
-            stageShortName = "skip"
+            stage_short_name = "skip"
 
         # Import_Phase_FULL & ETL_Phase_TRUNCATEINSERT
         elif stage == 3050:
-            stageShortName = "connect_to_hive"
+            stage_short_name = "connect_to_hive"
         elif stage == 3051:
-            stageShortName = "create_import_table"
+            stage_short_name = "create_import_table"
         elif stage == 3052:
-            stageShortName = "get_import_rowcount"
+            stage_short_name = "get_import_rowcount"
         elif stage == 3053:
-            stageShortName = "validate_import_table"
+            stage_short_name = "validate_import_table"
         elif stage == 3054:
-            stageShortName = "clear_hive_locks"
+            stage_short_name = "clear_hive_locks"
         elif stage == 3055:
-            stageShortName = "create_target_table"
+            stage_short_name = "create_target_table"
         elif stage == 3056:
-            stageShortName = "truncate_target_table"
+            stage_short_name = "truncate_target_table"
         elif stage == 3057:
-            stageShortName = "hive_import"
+            stage_short_name = "hive_import"
         elif stage == 3058:
-            stageShortName = "update_statistics"
+            stage_short_name = "update_statistics"
         elif stage == 3059:
-            stageShortName = "get_target_rowcount"
+            stage_short_name = "get_target_rowcount"
         elif stage == 3060:
-            stageShortName = "validate_target_table"
+            stage_short_name = "validate_target_table"
         elif stage == 3095:
-            stageShortName = "skip"
+            stage_short_name = "skip"
 
         # Import_Phase_FULL & ETL_Phase_INSERT
         elif stage == 3100:
-            stageShortName = "connect_to_hive"
+            stage_short_name = "connect_to_hive"
         elif stage == 3101:
-            stageShortName = "create_import_table"
+            stage_short_name = "create_import_table"
         elif stage == 3102:
-            stageShortName = "get_import_rowcount"
+            stage_short_name = "get_import_rowcount"
         elif stage == 3103:
-            stageShortName = "validate_import_table"
+            stage_short_name = "validate_import_table"
         elif stage == 3104:
-            stageShortName = "clear_hive_locks"
+            stage_short_name = "clear_hive_locks"
         elif stage == 3105:
-            stageShortName = "create_target_table"
+            stage_short_name = "create_target_table"
         elif stage == 3106:
-            stageShortName = "hive_import"
+            stage_short_name = "hive_import"
         elif stage == 3107:
-            stageShortName = "update_statistics"
+            stage_short_name = "update_statistics"
         elif stage == 3108:
-            stageShortName = "get_target_rowcount"
+            stage_short_name = "get_target_rowcount"
         elif stage == 3109:
-            stageShortName = "validate_target_table"
+            stage_short_name = "validate_target_table"
         elif stage == 3145:
-            stageShortName = "skip"
+            stage_short_name = "skip"
 
         # Import_Phase_INCR & ETL_Phase_INSERT
         elif stage == 3150:
-            stageShortName = "connect_to_hive"
+            stage_short_name = "connect_to_hive"
         elif stage == 3151:
-            stageShortName = "create_import_table"
+            stage_short_name = "create_import_table"
         elif stage == 3152:
-            stageShortName = "get_import_rowcount"
+            stage_short_name = "get_import_rowcount"
         elif stage == 3153:
-            stageShortName = "validate_import_table"
+            stage_short_name = "validate_import_table"
         elif stage == 3154:
-            stageShortName = "clear_hive_locks"
+            stage_short_name = "clear_hive_locks"
         elif stage == 3155:
-            stageShortName = "create_target_table"
+            stage_short_name = "create_target_table"
         elif stage == 3156:
-            stageShortName = "hive_import"
+            stage_short_name = "hive_import"
         elif stage == 3157:
-            stageShortName = "update_statistics"
+            stage_short_name = "update_statistics"
         elif stage == 3158:
-            stageShortName = "get_target_rowcount"
+            stage_short_name = "get_target_rowcount"
         elif stage == 3159:
-            stageShortName = "validate_target_table"
+            stage_short_name = "validate_target_table"
         elif stage == 3160:
-            stageShortName = "skip"
+            stage_short_name = "skip"
         elif stage == 3195:
-            stageShortName = "skip"
+            stage_short_name = "skip"
 
         # Import_Phase_FULL & ETL_Phase_MERGEHISTORYAUDIT
         elif stage == 3200:
-            stageShortName = "connect_to_hive"
+            stage_short_name = "connect_to_hive"
         elif stage == 3201:
-            stageShortName = "create_import_table"
+            stage_short_name = "create_import_table"
         elif stage == 3202:
-            stageShortName = "get_import_rowcount"
+            stage_short_name = "get_import_rowcount"
         elif stage == 3203:
-            stageShortName = "validate_import_table"
+            stage_short_name = "validate_import_table"
         elif stage == 3204:
-            stageShortName = "clear_hive_locks"
+            stage_short_name = "clear_hive_locks"
         elif stage == 3205:
-            stageShortName = "create_target_table"
+            stage_short_name = "create_target_table"
         elif stage == 3206:
-            stageShortName = "create_history_table"
+            stage_short_name = "create_history_table"
         elif stage == 3207:
-            stageShortName = "create_delete_table"
+            stage_short_name = "create_delete_table"
         elif stage == 3208:
-            stageShortName = "merge_table"
+            stage_short_name = "merge_table"
         elif stage == 3209:
-            stageShortName = "update_statistics"
+            stage_short_name = "update_statistics"
         elif stage == 3210:
-            stageShortName = "get_target_rowcount"
+            stage_short_name = "get_target_rowcount"
         elif stage == 3211:
-            stageShortName = "validate_target_table"
+            stage_short_name = "validate_target_table"
         elif stage == 3212:
-            stageShortName = "skip"
+            stage_short_name = "skip"
         elif stage == 3245:
-            stageShortName = "skip"
+            stage_short_name = "skip"
 
         # Import_Phase_FULL & ETL_Phase_MERGEONLY
         elif stage == 3250:
-            stageShortName = "connect_to_hive"
+            stage_short_name = "connect_to_hive"
         elif stage == 3251:
-            stageShortName = "create_import_table"
+            stage_short_name = "create_import_table"
         elif stage == 3252:
-            stageShortName = "get_import_rowcount"
+            stage_short_name = "get_import_rowcount"
         elif stage == 3253:
-            stageShortName = "validate_import_table"
+            stage_short_name = "validate_import_table"
         elif stage == 3254:
-            stageShortName = "clear_hive_locks"
+            stage_short_name = "clear_hive_locks"
         elif stage == 3255:
-            stageShortName = "create_target_table"
+            stage_short_name = "create_target_table"
         elif stage == 3256:
-            stageShortName = "create_delete_table"
+            stage_short_name = "create_delete_table"
         elif stage == 3257:
-            stageShortName = "merge_table"
+            stage_short_name = "merge_table"
         elif stage == 3258:
-            stageShortName = "update_statistics"
+            stage_short_name = "update_statistics"
         elif stage == 3259:
-            stageShortName = "get_target_rowcount"
+            stage_short_name = "get_target_rowcount"
         elif stage == 3260:
-            stageShortName = "validate_target_table"
+            stage_short_name = "validate_target_table"
         elif stage == 3261:
-            stageShortName = "skip"
+            stage_short_name = "skip"
         elif stage == 3295:
-            stageShortName = "skip"
+            stage_short_name = "skip"
 
         # Import_Phase_INCR & ETL_Phase_MERGEONLY
         elif stage == 3300:
-            stageShortName = "connect_to_hive"
+            stage_short_name = "connect_to_hive"
         elif stage == 3301:
-            stageShortName = "create_import_table"
+            stage_short_name = "create_import_table"
         elif stage == 3302:
-            stageShortName = "get_import_rowcount"
+            stage_short_name = "get_import_rowcount"
         elif stage == 3303:
-            stageShortName = "validate_import_table"
+            stage_short_name = "validate_import_table"
         elif stage == 3304:
-            stageShortName = "clear_hive_locks"
+            stage_short_name = "clear_hive_locks"
         elif stage == 3305:
-            stageShortName = "create_target_table"
+            stage_short_name = "create_target_table"
         elif stage == 3306:
-            stageShortName = "merge_table"
+            stage_short_name = "merge_table"
         elif stage == 3307:
-            stageShortName = "update_statistics"
+            stage_short_name = "update_statistics"
         elif stage == 3308:
-            stageShortName = "get_target_rowcount"
+            stage_short_name = "get_target_rowcount"
         elif stage == 3309:
-            stageShortName = "validate_target_table"
+            stage_short_name = "validate_target_table"
         elif stage == 3310:
-            stageShortName = "skip"
+            stage_short_name = "skip"
         elif stage == 3311:
-            stageShortName = "skip"
+            stage_short_name = "skip"
         elif stage == 3345:
-            stageShortName = "skip"
+            stage_short_name = "skip"
 
         # Import_Phase_INCR & ETL_Phase_MERGEHISTORYAUDIT
         elif stage == 3350:
-            stageShortName = "connect_to_hive"
+            stage_short_name = "connect_to_hive"
         elif stage == 3351:
-            stageShortName = "create_import_table"
+            stage_short_name = "create_import_table"
         elif stage == 3352:
-            stageShortName = "get_import_rowcount"
+            stage_short_name = "get_import_rowcount"
         elif stage == 3353:
-            stageShortName = "validate_import_table"
+            stage_short_name = "validate_import_table"
         elif stage == 3354:
-            stageShortName = "clear_hive_locks"
+            stage_short_name = "clear_hive_locks"
         elif stage == 3355:
-            stageShortName = "create_target_table"
+            stage_short_name = "create_target_table"
         elif stage == 3356:
-            stageShortName = "create_history_table"
+            stage_short_name = "create_history_table"
         elif stage == 3357:
-            stageShortName = "merge_table"
+            stage_short_name = "merge_table"
         elif stage == 3358:
-            stageShortName = "update_statistics"
+            stage_short_name = "update_statistics"
         elif stage == 3359:
-            stageShortName = "get_target_rowcount"
+            stage_short_name = "get_target_rowcount"
         elif stage == 3360:
-            stageShortName = "validate_target_table"
+            stage_short_name = "validate_target_table"
         elif stage == 3361:
-            stageShortName = "skip"
+            stage_short_name = "skip"
         elif stage == 3362:
-            stageShortName = "skip"
+            stage_short_name = "skip"
         elif stage == 3395:
-            stageShortName = "skip"
+            stage_short_name = "skip"
 
         # Import_Phase_ORACLE_FLASHBACK & ETL_Phase_MERGEONLY
         elif stage == 3400:
-            stageShortName = "connect_to_hive"
+            stage_short_name = "connect_to_hive"
         elif stage == 3401:
-            stageShortName = "create_import_table"
+            stage_short_name = "create_import_table"
         elif stage == 3402:
-            stageShortName = "get_import_rowcount"
+            stage_short_name = "get_import_rowcount"
         elif stage == 3403:
-            stageShortName = "validate_import_table"
+            stage_short_name = "validate_import_table"
         elif stage == 3404:
-            stageShortName = "clear_hive_locks"
+            stage_short_name = "clear_hive_locks"
         elif stage == 3405:
-            stageShortName = "create_target_table"
+            stage_short_name = "create_target_table"
         elif stage == 3406:
-            stageShortName = "merge_table"
+            stage_short_name = "merge_table"
         elif stage == 3407:
-            stageShortName = "update_statistics"
+            stage_short_name = "update_statistics"
         elif stage == 3408:
-            stageShortName = "get_target_rowcount"
+            stage_short_name = "get_target_rowcount"
         elif stage == 3409:
-            stageShortName = "validate_target_table"
+            stage_short_name = "validate_target_table"
         elif stage == 3410:
-            stageShortName = "skip"
+            stage_short_name = "skip"
         elif stage == 3411:
-            stageShortName = "skip"
+            stage_short_name = "skip"
         elif stage == 3445:
-            stageShortName = "skip"
+            stage_short_name = "skip"
 
         # Import_Phase_FULL & ETL_Phase_TRUNCATEINSERT
         elif stage == 3450:
-            stageShortName = "connect_to_hive"
+            stage_short_name = "connect_to_hive"
         elif stage == 3451:
-            stageShortName = "create_import_table"
+            stage_short_name = "create_import_table"
         elif stage == 3452:
-            stageShortName = "get_import_rowcount"
+            stage_short_name = "get_import_rowcount"
         elif stage == 3453:
-            stageShortName = "validate_import_table"
+            stage_short_name = "validate_import_table"
         elif stage == 3495:
-            stageShortName = "skip"
+            stage_short_name = "skip"
 
         # Import_Phase_Mongo_FULL & ETL_Phase_TRUNCATEINSERT
         elif stage == 3500:
-            stageShortName = "connect_to_hive"
+            stage_short_name = "connect_to_hive"
         elif stage == 3501:
-            stageShortName = "create_import_table"
+            stage_short_name = "create_import_table"
         elif stage == 3502:
-            stageShortName = "get_import_rowcount"
+            stage_short_name = "get_import_rowcount"
         elif stage == 3503:
-            stageShortName = "validate_import_table"
+            stage_short_name = "validate_import_table"
         elif stage == 3504:
-            stageShortName = "clear_hive_locks"
+            stage_short_name = "clear_hive_locks"
         elif stage == 3505:
-            stageShortName = "create_target_table"
+            stage_short_name = "create_target_table"
         elif stage == 3506:
-            stageShortName = "truncate_target_table"
+            stage_short_name = "truncate_target_table"
         elif stage == 3507:
-            stageShortName = "hive_import"
+            stage_short_name = "hive_import"
         elif stage == 3508:
-            stageShortName = "update_statistics"
+            stage_short_name = "update_statistics"
         elif stage == 3509:
-            stageShortName = "get_target_rowcount"
+            stage_short_name = "get_target_rowcount"
         elif stage == 3510:
-            stageShortName = "validate_target_table"
+            stage_short_name = "validate_target_table"
         elif stage == 3545:
-            stageShortName = "skip"
+            stage_short_name = "skip"
 
         # Import_Phase_ORACLE_FLASHBACK & ETL_Phase_MERGEHISTORYAUDIT
         elif stage == 3550:
-            stageShortName = "connect_to_hive"
+            stage_short_name = "connect_to_hive"
         elif stage == 3551:
-            stageShortName = "create_import_table"
+            stage_short_name = "create_import_table"
         elif stage == 3552:
-            stageShortName = "get_import_rowcount"
+            stage_short_name = "get_import_rowcount"
         elif stage == 3553:
-            stageShortName = "validate_import_table"
+            stage_short_name = "validate_import_table"
         elif stage == 3554:
-            stageShortName = "clear_hive_locks"
+            stage_short_name = "clear_hive_locks"
         elif stage == 3555:
-            stageShortName = "create_target_table"
+            stage_short_name = "create_target_table"
         elif stage == 3556:
-            stageShortName = "create_history_table"
+            stage_short_name = "create_history_table"
         elif stage == 3557:
-            stageShortName = "merge_table"
+            stage_short_name = "merge_table"
         elif stage == 3558:
-            stageShortName = "update_statistics"
+            stage_short_name = "update_statistics"
         elif stage == 3559:
-            stageShortName = "get_target_rowcount"
+            stage_short_name = "get_target_rowcount"
         elif stage == 3560:
-            stageShortName = "validate_target_table"
+            stage_short_name = "validate_target_table"
         elif stage == 3561:
-            stageShortName = "skip"
+            stage_short_name = "skip"
         elif stage == 3562:
-            stageShortName = "skip"
+            stage_short_name = "skip"
         elif stage == 3595:
-            stageShortName = "skip"
+            stage_short_name = "skip"
 
         # Import_Phase_MSSQL_CHANGE_TRACKING & ETL_Phase_MERGEONLY
         elif stage == 3600:
-            stageShortName = "connect_to_hive"
+            stage_short_name = "connect_to_hive"
         elif stage == 3601:
-            stageShortName = "create_import_table"
+            stage_short_name = "create_import_table"
         elif stage == 3602:
-            stageShortName = "get_import_rowcount"
+            stage_short_name = "get_import_rowcount"
         elif stage == 3603:
-            stageShortName = "validate_import_table"
+            stage_short_name = "validate_import_table"
         elif stage == 3604:
-            stageShortName = "clear_hive_locks"
+            stage_short_name = "clear_hive_locks"
         elif stage == 3605:
-            stageShortName = "create_target_table"
+            stage_short_name = "create_target_table"
         elif stage == 3607:
-            stageShortName = "merge_table"
+            stage_short_name = "merge_table"
         elif stage == 3608:
-            stageShortName = "update_statistics"
+            stage_short_name = "update_statistics"
         elif stage == 3609:
-            stageShortName = "get_target_rowcount"
+            stage_short_name = "get_target_rowcount"
         elif stage == 3610:
-            stageShortName = "validate_target_table"
+            stage_short_name = "validate_target_table"
         elif stage == 3611:
-            stageShortName = "skip"
+            stage_short_name = "skip"
         elif stage == 3612:
-            stageShortName = "skip"
+            stage_short_name = "skip"
         elif stage == 3645:
-            stageShortName = "skip"
+            stage_short_name = "skip"
 
         # Import_Phase_MSSQL_CHANGE_TRACKING & ETL_Phase_MERGEHISTORYAUDIT
         elif stage == 3650:
-            stageShortName = "connect_to_hive"
+            stage_short_name = "connect_to_hive"
         elif stage == 3651:
-            stageShortName = "create_import_table"
+            stage_short_name = "create_import_table"
         elif stage == 3652:
-            stageShortName = "get_import_rowcount"
+            stage_short_name = "get_import_rowcount"
         elif stage == 3653:
-            stageShortName = "validate_import_table"
+            stage_short_name = "validate_import_table"
         elif stage == 3654:
-            stageShortName = "clear_hive_locks"
+            stage_short_name = "clear_hive_locks"
         elif stage == 3655:
-            stageShortName = "create_target_table"
+            stage_short_name = "create_target_table"
         elif stage == 3656:
-            stageShortName = "create_history_table"
+            stage_short_name = "create_history_table"
         elif stage == 3657:
-            stageShortName = "create_delete_table"
+            stage_short_name = "create_delete_table"
         elif stage == 3658:
-            stageShortName = "merge_table"
+            stage_short_name = "merge_table"
         elif stage == 3659:
-            stageShortName = "update_statistics"
+            stage_short_name = "update_statistics"
         elif stage == 3660:
-            stageShortName = "get_target_rowcount"
+            stage_short_name = "get_target_rowcount"
         elif stage == 3661:
-            stageShortName = "validate_target_table"
+            stage_short_name = "validate_target_table"
         elif stage == 3662:
-            stageShortName = "skip"
+            stage_short_name = "skip"
         elif stage == 3663:
-            stageShortName = "skip"
+            stage_short_name = "skip"
         elif stage == 3695:
-            stageShortName = "skip"
+            stage_short_name = "skip"
 
         elif stage == 9999:
-            stageShortName = "skip"
+            stage_short_name = "skip"
 
-        return stageShortName
+        return stage_short_name
 
     def convertStageStatisticsToJSON(self, **kwargs):
         """Reads the import_stage_statistics and convert the information to a JSON document"""
@@ -1033,28 +1033,28 @@ class stage:
             return
 
         import_stop = None
-        jsonDataKafka = {}
-        jsonDataKafka["type"] = "import"
-        jsonDataKafka["status"] = "finished"
-        jsonDataREST = jsonDataKafka.copy()
-        jsonDataAWSSNS = jsonDataKafka.copy()
+        json_data_kafka = {}
+        json_data_kafka["type"] = "import"
+        json_data_kafka["status"] = "finished"
+        json_data_rest = json_data_kafka.copy()
+        json_data_aws_sns = json_data_kafka.copy()
 
         for key, value in kwargs.items():
-            jsonDataKafka[key] = value
-            jsonDataREST[key] = value
-            jsonDataAWSSNS[key] = value
+            json_data_kafka[key] = value
+            json_data_rest[key] = value
+            json_data_aws_sns[key] = value
 
         if self.postDataToKafkaExtended == False:
-            jsonDataKafka.pop("sessions")
-            jsonDataKafka.pop("copy_phase")
+            json_data_kafka.pop("sessions")
+            json_data_kafka.pop("copy_phase")
 
         if self.postDataToRESTextended == False:
-            jsonDataREST.pop("sessions")
-            jsonDataREST.pop("copy_phase")
+            json_data_rest.pop("sessions")
+            json_data_rest.pop("copy_phase")
 
         if self.postDataToAWSSNSExtended == False:
-            jsonDataAWSSNS.pop("sessions")
-            jsonDataAWSSNS.pop("copy_phase")
+            json_data_aws_sns.pop("sessions")
+            json_data_aws_sns.pop("copy_phase")
 
         query = "select stage, start, stop, duration from import_stage_statistics where hive_db = %s and hive_table = %s"
         self.mysql_cursor.execute(query, (self.Hive_DB, self.Hive_Table))
@@ -1066,30 +1066,30 @@ class stage:
             stage_stop = row[2]
             stage_duration = row[3]
 
-            stageShortName = self.getStageShortName(stage)
+            stage_short_name = self.getStageShortName(stage)
 
-            if stageShortName == "":
+            if stage_short_name == "":
                 logging.error(
                     "There is no stage description for the JSON data for stage %s"
                     % (stage)
                 )
                 logging.error("Will put the raw stage number into the JSON document")
-                stageShortName = str(stage)
+                stage_short_name = str(stage)
 
-            if stageShortName != "skip" and self.postDataToRESTextended == True:
-                jsonDataREST["%s_start" % (stageShortName)] = str(stage_start)
-                jsonDataREST["%s_stop" % (stageShortName)] = str(stage_stop)
-                jsonDataREST["%s_duration" % (stageShortName)] = stage_duration
+            if stage_short_name != "skip" and self.postDataToRESTextended == True:
+                json_data_rest["%s_start" % (stage_short_name)] = str(stage_start)
+                json_data_rest["%s_stop" % (stage_short_name)] = str(stage_stop)
+                json_data_rest["%s_duration" % (stage_short_name)] = stage_duration
 
-            if stageShortName != "skip" and self.postDataToKafkaExtended == True:
-                jsonDataKafka["%s_start" % (stageShortName)] = str(stage_start)
-                jsonDataKafka["%s_stop" % (stageShortName)] = str(stage_stop)
-                jsonDataKafka["%s_duration" % (stageShortName)] = stage_duration
+            if stage_short_name != "skip" and self.postDataToKafkaExtended == True:
+                json_data_kafka["%s_start" % (stage_short_name)] = str(stage_start)
+                json_data_kafka["%s_stop" % (stage_short_name)] = str(stage_stop)
+                json_data_kafka["%s_duration" % (stage_short_name)] = stage_duration
 
-            if stageShortName != "skip" and self.postDataToAWSSNSExtended == True:
-                jsonDataAWSSNS["%s_start" % (stageShortName)] = str(stage_start)
-                jsonDataAWSSNS["%s_stop" % (stageShortName)] = str(stage_stop)
-                jsonDataAWSSNS["%s_duration" % (stageShortName)] = stage_duration
+            if stage_short_name != "skip" and self.postDataToAWSSNSExtended == True:
+                json_data_aws_sns["%s_start" % (stage_short_name)] = str(stage_start)
+                json_data_aws_sns["%s_stop" % (stage_short_name)] = str(stage_stop)
+                json_data_aws_sns["%s_duration" % (stage_short_name)] = stage_duration
 
             if stage == 0:
                 import_start = stage_start
@@ -1104,43 +1104,43 @@ class stage:
             import_stop = -1
             import_duration = -1
 
-        jsonDataKafka["start"] = str(import_start)
-        jsonDataKafka["stop"] = str(import_stop)
-        jsonDataKafka["duration"] = import_duration
+        json_data_kafka["start"] = str(import_start)
+        json_data_kafka["stop"] = str(import_stop)
+        json_data_kafka["duration"] = import_duration
 
-        jsonDataREST["start"] = str(import_start)
-        jsonDataREST["stop"] = str(import_stop)
-        jsonDataREST["duration"] = import_duration
+        json_data_rest["start"] = str(import_start)
+        json_data_rest["stop"] = str(import_stop)
+        json_data_rest["duration"] = import_duration
 
-        jsonDataAWSSNS["start"] = str(import_start)
-        jsonDataAWSSNS["stop"] = str(import_stop)
-        jsonDataAWSSNS["duration"] = import_duration
+        json_data_aws_sns["start"] = str(import_start)
+        json_data_aws_sns["stop"] = str(import_stop)
+        json_data_aws_sns["duration"] = import_duration
 
         if self.postDataToKafka == True:
-            result = self.sendStatistics.publishKafkaData(json.dumps(jsonDataKafka))
+            result = self.sendStatistics.publishKafkaData(json.dumps(json_data_kafka))
             if result == False:
                 logging.info("Kafka publish failed!")
                 logging.info("Saving the JSON to the json_to_send table instead")
                 self.common_config.saveJsonToDatabase(
-                    "import_statistics", "kafka", json.dumps(jsonDataKafka)
+                    "import_statistics", "kafka", json.dumps(json_data_kafka)
                 )
 
         if self.postDataToREST == True:
-            response = self.sendStatistics.sendRESTdata(json.dumps(jsonDataREST))
+            response = self.sendStatistics.sendRESTdata(json.dumps(json_data_rest))
             if response != 200:
                 logging.info("REST call failed!")
                 logging.info("Saving the JSON to the json_to_send table instead")
                 self.common_config.saveJsonToDatabase(
-                    "import_statistics", "rest", json.dumps(jsonDataREST)
+                    "import_statistics", "rest", json.dumps(json_data_rest)
                 )
 
         if self.postDataToAWSSNS == True:
-            result = self.sendStatistics.sendAWSSNSdata(json.dumps(jsonDataAWSSNS))
+            result = self.sendStatistics.sendAWSSNSdata(json.dumps(json_data_aws_sns))
             if result == False:
                 logging.info("AWS SNS publish failed!")
                 logging.info("Saving the JSON to the json_to_send table instead")
                 self.common_config.saveJsonToDatabase(
-                    "import_statistics", "rest", json.dumps(jsonDataAWSSNS)
+                    "import_statistics", "rest", json.dumps(json_data_aws_sns)
                 )
 
         logging.debug("Executing stage.convertStageStatisticsToJSON() - Finished")
@@ -1149,44 +1149,44 @@ class stage:
         """Reads the import_stage_statistics and insert it to the import_statistics table"""
         logging.debug("Executing stage.saveStageStatistics()")
 
-        columnsPart = []
-        valuesPart = []
+        columns_part = []
+        values_part = []
         import_start = None
         import_stop = None
         import_duration = None
 
         for key, value in kwargs.items():
-            columnsPart.append(key)
+            columns_part.append(key)
             if value == True:
                 value = 1
             if value == False:
                 value = 0
-            valuesPart.append(value)
+            values_part.append(value)
 
         query = "select stage, start, stop, duration from import_stage_statistics where hive_db = %s and hive_table = %s"
         self.mysql_cursor.execute(query, (self.Hive_DB, self.Hive_Table))
         logging.debug("SQL Statement executed: %s" % (self.mysql_cursor.statement))
 
-        duplicateColumns = False
+        duplicate_columns = False
         for row in self.mysql_cursor.fetchall():
             stage = row[0]
             stage_start = row[1]
             stage_stop = row[2]
             stage_duration = row[3]
 
-            stageShortName = self.getStageShortName(stage)
+            stage_short_name = self.getStageShortName(stage)
 
-            if stageShortName != "" and stageShortName != "skip":
-                if "%s_start" % (stageShortName) in columnsPart:
-                    duplicateColumns = True
-                columnsPart.append("%s_start" % (stageShortName))
-                valuesPart.append(str(stage_start))
+            if stage_short_name != "" and stage_short_name != "skip":
+                if "%s_start" % (stage_short_name) in columns_part:
+                    duplicate_columns = True
+                columns_part.append("%s_start" % (stage_short_name))
+                values_part.append(str(stage_start))
 
-                columnsPart.append("%s_stop" % (stageShortName))
-                valuesPart.append(str(stage_stop))
+                columns_part.append("%s_stop" % (stage_short_name))
+                values_part.append(str(stage_stop))
 
-                columnsPart.append("%s_duration" % (stageShortName))
-                valuesPart.append(str(stage_duration))
+                columns_part.append("%s_duration" % (stage_short_name))
+                values_part.append(str(stage_duration))
 
             if stage == 0:
                 import_start = stage_start
@@ -1202,38 +1202,38 @@ class stage:
             )
             import_duration = 0
 
-        columnsPart.append("start")
+        columns_part.append("start")
         if import_start == None:
-            valuesPart.append(import_start)
+            values_part.append(import_start)
         else:
-            valuesPart.append(str(import_start))
+            values_part.append(str(import_start))
 
-        columnsPart.append("stop")
+        columns_part.append("stop")
         if import_stop == None:
-            valuesPart.append(import_stop)
+            values_part.append(import_stop)
         else:
-            valuesPart.append(str(import_stop))
+            values_part.append(str(import_stop))
 
-        columnsPart.append("duration")
-        valuesPart.append(str(import_duration))
+        columns_part.append("duration")
+        values_part.append(str(import_duration))
 
         query = "insert into import_statistics "
         # 		insertQuery = "("
         # 		insertQuery += ", ".join(map(str, columnsPart))
         # 		insertQuery += ") values ("
-        insertQuery = "(`"
-        insertQuery += "`, `".join(map(str, columnsPart))
-        insertQuery += "`) values ("
+        insert_query = "(`"
+        insert_query += "`, `".join(map(str, columns_part))
+        insert_query += "`) values ("
 
-        strInsert = ""
-        for i in valuesPart:
-            if strInsert != "":
-                strInsert += ", "
-            strInsert += "%s"
+        str_insert = ""
+        for i in values_part:
+            if str_insert != "":
+                str_insert += ", "
+            str_insert += "%s"
 
-        insertQuery += strInsert
-        insertQuery += ")"
-        query += insertQuery
+        insert_query += str_insert
+        insert_query += ")"
+        query += insert_query
 
         # 		print(columnsPart)
         # 		print("-------------------------------------------------")
@@ -1241,12 +1241,12 @@ class stage:
         # 		print("-------------------------------------------------")
         # 		print(insertQuery)
 
-        if duplicateColumns == True:
+        if duplicate_columns == True:
             logging.warning(
                 "There are duplicate column in the statistics. This usually happens when changing import_method on a ongoing import without reseting the stage in between. As a result, the statistics wont be saved for this import"
             )
         else:
-            self.mysql_cursor.execute(query, valuesPart)
+            self.mysql_cursor.execute(query, values_part)
             self.mysql_conn.commit()
             logging.debug("SQL Statement executed: %s" % (self.mysql_cursor.statement))
 
@@ -1257,10 +1257,10 @@ class stage:
         self.mysql_conn.commit()
         logging.debug("SQL Statement executed: %s" % (self.mysql_cursor.statement))
 
-        if duplicateColumns == False:
+        if duplicate_columns == False:
             query = "insert into import_statistics_last "
-            query += insertQuery
-            self.mysql_cursor.execute(query, valuesPart)
+            query += insert_query
+            self.mysql_cursor.execute(query, values_part)
             self.mysql_conn.commit()
             logging.debug("SQL Statement executed: %s" % (self.mysql_cursor.statement))
 
@@ -1323,9 +1323,9 @@ class stage:
         self.mysql_cursor.execute(query, (self.Hive_DB, self.Hive_Table))
         logging.debug("SQL Statement executed: %s" % (self.mysql_cursor.statement))
 
-        returnDict = {}
-        returnDict["startTime"] = "1970-01-01T00:00:00.000000Z"
-        returnDict["stopTime"] = "1970-01-01T00:00:00.000000Z"
+        return_dict = {}
+        return_dict["startTime"] = "1970-01-01T00:00:00.000000Z"
+        return_dict["stopTime"] = "1970-01-01T00:00:00.000000Z"
 
         for row in self.mysql_cursor.fetchall():
             stage_id = row[0]
@@ -1333,13 +1333,13 @@ class stage:
             stage_stop = row[2]
             stage_duration = row[3]
 
-            stageShortName = self.getStageShortName(stage_id)
-            if stageShortName == stage:
-                returnDict["startTime"] = stage_start.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
-                returnDict["stopTime"] = stage_stop.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+            stage_short_name = self.getStageShortName(stage_id)
+            if stage_short_name == stage:
+                return_dict["startTime"] = stage_start.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+                return_dict["stopTime"] = stage_stop.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
                 break
 
-        return returnDict
+        return return_dict
 
         logging.debug("Executing stage.getStageStartStop() - Finished")
 
@@ -1381,8 +1381,8 @@ class stage:
         logging.debug("SQL Statement executed: %s" % (self.mysql_cursor.statement))
 
         row = self.mysql_cursor.fetchone()
-        rowCount = row[0]
-        if rowCount == 0:
+        row_count = row[0]
+        if row_count == 0:
             query = "insert into import_stage_statistics "
             query += "( hive_db, hive_table, stage, start, stop, duration )"
             query += "values "
@@ -1408,7 +1408,7 @@ class stage:
         self.mysql_conn.commit()
         logging.debug("SQL Statement executed: %s" % (self.mysql_cursor.statement))
 
-        stageDescription = self.getStageDescription(newStage)
+        stage_description = self.getStageDescription(newStage)
 
         # Save stage information in import_stage
         query = "select count(stage) from import_stage where hive_db = %s and hive_table = %s"
@@ -1416,8 +1416,8 @@ class stage:
         logging.debug("SQL Statement executed: %s" % (self.mysql_cursor.statement))
 
         row = self.mysql_cursor.fetchone()
-        rowCount = row[0]
-        if rowCount == 0:
+        row_count = row[0]
+        if row_count == 0:
             query = "insert into import_stage "
             query += "( "
             query += "	hive_db, "
@@ -1432,14 +1432,14 @@ class stage:
             query += "	'%s', " % (self.Hive_DB)
             query += "	'%s', " % (self.Hive_Table)
             query += "	%s, " % (newStage)
-            query += "	'%s', " % (stageDescription)
+            query += "	'%s', " % (stage_description)
             query += "	'%s' " % (datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f"))
             # 			query += "	0 "
             query += ") "
         else:
             query = "update import_stage set"
             query += "	stage = %s, " % (newStage)
-            query += "	stage_description = '%s', " % (stageDescription)
+            query += "	stage_description = '%s', " % (stage_description)
             query += "	stage_time = '%s' " % (
                 datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
             )
@@ -1467,7 +1467,7 @@ class stage:
         if self.memoryStage == True:
             return
 
-        stageDescription = self.getStageDescription(stage)
+        stage_description = self.getStageDescription(stage)
 
         query = "insert into import_retries_log "
         query += "( "
@@ -1486,7 +1486,7 @@ class stage:
                 self.Hive_Table,
                 datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f"),
                 stage,
-                stageDescription,
+                stage_description,
             ),
         )
         self.mysql_conn.commit()

@@ -154,36 +154,36 @@ def main(argv):
     except getopt.GetoptError:
         printMainHelp()
 
-    Hive_DB = None
-    Hive_Table = None
-    displayHelp = False
+    hive_db = None
+    hive_table = None
+    display_help = False
     operation = None
-    loggingLevel = logging.INFO
-    autoYesAnswer = False
-    airflowDAG = None
-    deployTarget = None
-    quietMode = False
+    logging_level = logging.INFO
+    auto_yes_answer = False
+    airflow_dag = None
+    deploy_target = None
+    quiet_mode = False
 
     if len(opts) == 0:
         printMainHelp()
 
     for opt, arg in opts:
         if opt in ("-?", "--help"):
-            displayHelp = True
+            display_help = True
         elif opt in ("-y", "--yes"):
-            autoYesAnswer = True
+            auto_yes_answer = True
         elif opt in ("-v", "--debug"):
-            loggingLevel = logging.DEBUG
+            logging_level = logging.DEBUG
         elif opt in ("-h", "--hiveDB", "--Hive_DB"):
-            Hive_DB = arg
+            hive_db = arg
         elif opt in ("-t", "--hiveTable", "--Hive_Table"):
-            Hive_Table = arg
+            hive_table = arg
         elif opt == "--quiet":
-            quietMode = True
+            quiet_mode = True
         elif opt == "--deployTarget":
-            deployTarget = str(arg)
+            deploy_target = str(arg)
         elif opt == "--airflowDAG":
-            airflowDAG = str(arg)
+            airflow_dag = str(arg)
         elif opt == "--deployAirflowImportDAG":
             operation = "deployAirflowImportDAG"
         elif opt == "--deployAirflowExportDAG":
@@ -201,45 +201,49 @@ def main(argv):
         printMainHelp()
 
     if operation == "deployAirflowImportDAG" and (
-        airflowDAG == None or deployTarget == None or displayHelp == True
+        airflow_dag == None or deploy_target == None or display_help == True
     ):
         print_deployAirflowImportDAG_help()
 
     if operation == "deployAirflowExportDAG" and (
-        airflowDAG == None or deployTarget == None or displayHelp == True
+        airflow_dag == None or deploy_target == None or display_help == True
     ):
         print_deployAirflowExportDAG_help()
 
-    if quietMode == False:
+    if quiet_mode == False:
         printHeader()
 
     # Initiate the logging functions with the correct level
-    if loggingLevel == logging.DEBUG:
+    if logging_level == logging.DEBUG:
         logging.basicConfig(
             stream=sys.stdout,
             format="%(levelname)s %(funcName)s - %(message)s",
-            level=loggingLevel,
+            level=logging_level,
         )
     else:
         logging.basicConfig(
-            stream=sys.stdout, format="%(levelname)s - %(message)s", level=loggingLevel
+            stream=sys.stdout, format="%(levelname)s - %(message)s", level=logging_level
         )
 
     if operation == "deployAirflowImportDAG":
-        copyOperation = copy_operations.operation()
-        copyOperation.checkRemoteInstanceSchema(remoteInstance=deployTarget)
-        copyOperation.copyAirflowImportDAG(
-            airflowDAGname=airflowDAG, copyDestination=deployTarget, deployMode=True
+        copy_operation = copy_operations.operation()
+        copy_operation.checkRemoteInstanceSchema(remote_instance=deploy_target)
+        copy_operation.copyAirflowImportDAG(
+            airflow_dag_name=airflow_dag,
+            copy_destination=deploy_target,
+            deploy_mode=True,
         )
-        copyOperation.remove_temporary_files()
+        copy_operation.remove_temporary_files()
 
     if operation == "deployAirflowExportDAG":
-        copyOperation = copy_operations.operation()
-        copyOperation.checkRemoteInstanceSchema(remoteInstance=deployTarget)
-        copyOperation.copyAirflowExportDAG(
-            airflowDAGname=airflowDAG, copyDestination=deployTarget, deployMode=True
+        copy_operation = copy_operations.operation()
+        copy_operation.checkRemoteInstanceSchema(remote_instance=deploy_target)
+        copy_operation.copyAirflowExportDAG(
+            airflow_dag_name=airflow_dag,
+            copy_destination=deploy_target,
+            deploy_mode=True,
         )
-        copyOperation.remove_temporary_files()
+        copy_operation.remove_temporary_files()
 
 
 if __name__ == "__main__":
