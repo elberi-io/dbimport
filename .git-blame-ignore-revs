@@ -66,3 +66,9 @@ d7521e82e1185a3e7451926833e04fc0b19d25fd
 
 # refactor: rename function arguments to snake_case
 bec0fef642860567abc5c204533779e4190578cf
+
+# refactor: rename functions and methods to snake_case
+c8467324362089957634ab7baf02628a1654602c
+
+# refactor: rename attributes used only through self to snake_case
+91edbdc442e59d0cd58950a7c7a39ae11ee5c539
