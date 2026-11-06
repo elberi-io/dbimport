@@ -161,16 +161,16 @@ class operation(metaclass=Singleton):
 
         # Loop through all Hive webHCat servers from the configuration and checks if one of them works
         self.hiveMetaStore = None
-        webHCatResponse = None
-        for HiveURL in self.hiveMetaStoreList:
+        web_hcat_response = None
+        for hive_url in self.hiveMetaStoreList:
             try:
-                URL = HiveURL.strip() + "/templeton/v1/status"
-                logging.debug("Testing status for webHCat on URL: %s" % (URL))
-                webHCatResponse = requests.get(URL, auth=self.webHCatAuth)
+                url = hive_url.strip() + "/templeton/v1/status"
+                logging.debug("Testing status for webHCat on URL: %s" % (url))
+                web_hcat_response = requests.get(url, auth=self.webHCatAuth)
             except:
                 continue
-            if webHCatResponse.status_code == 200:
-                self.hiveMetaStore = HiveURL.strip()
+            if web_hcat_response.status_code == 200:
+                self.hiveMetaStore = hive_url.strip()
                 break
 
         if self.hiveMetaStore == None:
@@ -301,10 +301,10 @@ class operation(metaclass=Singleton):
         # Make sure we only connect if we havent done so before. Reason is that this function can be called from many different places
         # due to the retry functionallity
         if self.hive_cursor == None:
-            hiveServerList = self.hive_servers.split(",")
-            random.shuffle(hiveServerList)
+            hive_server_list = self.hive_servers.split(",")
+            random.shuffle(hive_server_list)
 
-            for hive_server in hiveServerList:
+            for hive_server in hive_server_list:
                 hive_hostname = hive_server.split(":")[0]
                 hive_port = hive_server.split(":")[1]
 
@@ -383,11 +383,11 @@ class operation(metaclass=Singleton):
         logging.debug("Executing common_operations.testHiveQueryExecution()")
         logging.info("Checking Hive functionality by querying the reference table")
 
-        hiveTable = self.common_config.getConfigValue(key="hive_validate_table")
+        hive_table = self.common_config.getConfigValue(key="hive_validate_table")
 
         result_df = self.executeHiveQuery(
             "select id, value, count(value) as counter from %s group by id, value order by id"
-            % (hiveTable)
+            % (hive_table)
         )
         reference_df = pd.DataFrame(
             {
@@ -410,25 +410,25 @@ class operation(metaclass=Singleton):
         # This function executes a Hive query and check that the result is correct. It works agains a pre-defined table
 
         # Sets the start time. We use this to determine elapsed time for the query
-        hiveQueryStartTime = time.monotonic()
+        hive_query_start_time = time.monotonic()
 
         # Execute the query in async mode
         try:
             self.hive_cursor.execute(query, async_=True)
         except exc.OperationalError as errMsg:
-            SQLerrorMessagePosition = str(errMsg).find(" errorMessage=")
-            if SQLerrorMessagePosition > 0:
-                SQLerrorMessage = str(errMsg)[SQLerrorMessagePosition:]
-                firstQuotePosition = SQLerrorMessage.find('"')
-                secondQuotePosition = SQLerrorMessage[firstQuotePosition + 1 :].find(
-                    '"'
-                )
-                SQLerrorMessage = SQLerrorMessage[
-                    firstQuotePosition + 1 : firstQuotePosition
-                    + secondQuotePosition
+            sql_error_message_position = str(errMsg).find(" errorMessage=")
+            if sql_error_message_position > 0:
+                sql_error_message = str(errMsg)[sql_error_message_position:]
+                first_quote_position = sql_error_message.find('"')
+                second_quote_position = sql_error_message[
+                    first_quote_position + 1 :
+                ].find('"')
+                sql_error_message = sql_error_message[
+                    first_quote_position + 1 : first_quote_position
+                    + second_quote_position
                     + 1
                 ]
-                raise SQLerror(SQLerrorMessage)
+                raise SQLerror(sql_error_message)
             else:
                 raise SQLerror(errMsg)
 
@@ -437,10 +437,10 @@ class operation(metaclass=Singleton):
 
         # Read and print the output from the async Hive query
         result_df = None
-        firstOutputLine = True
-        errorsFound = False
-        linesToJumpUp = 0
-        yarnApplicationID = None
+        first_output_line = True
+        errors_found = False
+        lines_to_jump_up = 0
+        yarn_application_id = None
         while status in (
             TOperationState.INITIALIZED_STATE,
             TOperationState.RUNNING_STATE,
@@ -453,14 +453,14 @@ class operation(metaclass=Singleton):
                 else:
                     if "Executing on YARN cluster with App id" in message:
                         print(message)
-                        if yarnApplicationID == None:
+                        if yarn_application_id == None:
                             # In rare cases, this happened twice with duplicate key error. With this IF statement, that problem is gone
-                            yarnApplicationID = (
+                            yarn_application_id = (
                                 "application_"
                                 + message.split("application_")[1].split(")")[0]
                             )
                             self.common_config.updateYarnStatistics(
-                                yarnApplicationID, "hive"
+                                yarn_application_id, "hive"
                             )
 
                 if re.search("^ERROR ", message):
@@ -469,13 +469,13 @@ class operation(metaclass=Singleton):
                     self.hive_print_messages = (
                         True  # Turn on logging if there is an error
                     )
-                    errorsFound = True
+                    errors_found = True
 
             # Print the progress of the query
             for row in self.hive_cursor.poll().progressUpdateResponse.rows:
-                if firstOutputLine == True:
+                if first_output_line == True:
                     # If it's the first one, we print the header and read how many vertexes there is
-                    linesToJumpUp = (
+                    lines_to_jump_up = (
                         len(self.hive_cursor.poll().progressUpdateResponse.rows) + 1
                     )
                     print("\u001b[36m")  # Cyan
@@ -498,7 +498,7 @@ class operation(metaclass=Singleton):
                         print(headers)
                     sys.stdout.write("\u001b[0m")  # Reset
                     sys.stdout.flush()
-                    firstOutputLine = False
+                    first_output_line = False
 
                 # Print the actual vertex information of the query
                 try:
@@ -522,24 +522,27 @@ class operation(metaclass=Singleton):
             sys.stdout.write("\u001b[31m")  # Red
             sys.stdout.flush()
             print(
-                "ELAPSED TIME: %.2f seconds" % (time.monotonic() - hiveQueryStartTime)
+                "ELAPSED TIME: %.2f seconds"
+                % (time.monotonic() - hive_query_start_time)
             )
             sys.stdout.write("\u001b[0m")  # Reset
             sys.stdout.flush()
 
-            if firstOutputLine == False:
+            if first_output_line == False:
                 # This means that we printed atleast one chunk of mappers and reducers. Because of that, we will now move the cursor up
                 # This information was found on http://www.lihaoyi.com/post/BuildyourownCommandLinewithANSIescapecodes.html
-                sys.stdout.write("\u001b[" + str(linesToJumpUp) + "A" + "\u001b[1000D")
+                sys.stdout.write(
+                    "\u001b[" + str(lines_to_jump_up) + "A" + "\u001b[1000D"
+                )
                 sys.stdout.flush()
 
             status = self.hive_cursor.poll().operationState
 
         # At this point, the query is not running anymore. We now print the last result of the Vertex informaton
-        rowsPrinted = False
-        yarnContainersTotal = 0
-        yarnContainersFailed = 0
-        yarnContainersKilled = 0
+        rows_printed = False
+        yarn_containers_total = 0
+        yarn_containers_failed = 0
+        yarn_containers_killed = 0
         for row in self.hive_cursor.poll().progressUpdateResponse.rows:
             try:
                 print(
@@ -557,23 +560,23 @@ class operation(metaclass=Singleton):
                     )
                 )
                 if row[2] == "SUCCEEDED":
-                    yarnContainersTotal += int(row[3])
-                    yarnContainersFailed += int(row[7])
-                    yarnContainersKilled += int(row[8])
+                    yarn_containers_total += int(row[3])
+                    yarn_containers_failed += int(row[7])
+                    yarn_containers_killed += int(row[8])
             except IndexError:
                 print(headers)
-            rowsPrinted = True
-        if rowsPrinted == True:
+            rows_printed = True
+        if rows_printed == True:
             print("")  # So we get passed the elapsed time message
         print("")
 
-        if yarnApplicationID != None:
+        if yarn_application_id != None:
             self.common_config.updateYarnStatistics(
-                yarnApplicationID,
+                yarn_application_id,
                 "hive",
-                yarnContainersTotal,
-                yarnContainersFailed,
-                yarnContainersKilled,
+                yarn_containers_total,
+                yarn_containers_failed,
+                yarn_containers_killed,
             )
         # 			print("yarnApplicationID: %s"%yarnApplicationID)
         # 			print("yarnContainersTotal: %s"%yarnContainersTotal)
@@ -590,11 +593,11 @@ class operation(metaclass=Singleton):
         else:
             for message in logs:
                 if message.lower().startswith("error"):
-                    errorsFound = True
-                if errorsFound == True:
+                    errors_found = True
+                if errors_found == True:
                     print(message)
 
-        if errorsFound == True:
+        if errors_found == True:
             raise Exception("Hive Query Error")
 
         result_df = pd.DataFrame()
@@ -629,7 +632,7 @@ class operation(metaclass=Singleton):
         self.disconnectFromHive()
 
         if self.hive_use_ssl == False:
-            beelineConnectStr = "jdbc:hive2://%s:%s/%s;principal=%s/_HOST@%s" % (
+            beeline_connect_str = "jdbc:hive2://%s:%s/%s;principal=%s/_HOST@%s" % (
                 self.hive_hostname,
                 self.hive_port,
                 useDB,
@@ -637,7 +640,7 @@ class operation(metaclass=Singleton):
                 self.hive_kerberos_realm,
             )
         else:
-            beelineConnectStr = (
+            beeline_connect_str = (
                 "jdbc:hive2://%s:%s/%s;ssl=true;principal=%s/_HOST@%s"
                 % (
                     self.hive_hostname,
@@ -648,20 +651,20 @@ class operation(metaclass=Singleton):
                 )
             )
 
-        logging.debug("JDBC Connection String: %s" % (beelineConnectStr))
+        logging.debug("JDBC Connection String: %s" % (beeline_connect_str))
 
-        beelineCommand = [
+        beeline_command = [
             "beeline",
             "--silent=false",
             "-u",
-            beelineConnectStr,
+            beeline_connect_str,
             "-f",
             hiveScriptFile,
         ]
 
         # Start Beeline
         sh_session = subprocess.Popen(
-            beelineCommand, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
+            beeline_command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
         )
 
         # Print Stdout and stderr while beeline is running
@@ -685,7 +688,7 @@ class operation(metaclass=Singleton):
     def getHiveTableRowCount(self, hiveDB, hiveTable, whereStatement=None):
         logging.debug("Executing common_operations.getHiveTableRowCount()")
         logging.info("Reading the number of rows from %s.%s" % (hiveDB, hiveTable))
-        rowCount = 0
+        row_count = 0
 
         query = "select count(1) as rowcount from `%s`.`%s` " % (hiveDB, hiveTable)
         if whereStatement != None:
@@ -694,11 +697,11 @@ class operation(metaclass=Singleton):
             query += "limit 1"
 
         result_df = self.executeHiveQuery(query)
-        rowCount = int(result_df["rowcount"].iloc[0])
-        logging.debug("Rowcount from %s.%s: %s" % (hiveDB, hiveTable, rowCount))
+        row_count = int(result_df["rowcount"].iloc[0])
+        logging.debug("Rowcount from %s.%s: %s" % (hiveDB, hiveTable, row_count))
 
         logging.debug("Executing common_operations.getHiveTableRowCount() - Finished")
-        return rowCount
+        return row_count
 
     def dropHiveTable(self, hiveDB, hiveTable):
         logging.debug("Executing common_operations.dropHiveTable()")
@@ -758,52 +761,54 @@ class operation(metaclass=Singleton):
         logging.info("Converting table to an ACID & Transactional enabled table")
 
         buckets = 1
-        hiveTableBucketed = "%s_hive_bucketed" % (hiveTable)
+        hive_table_bucketed = "%s_hive_bucketed" % (hiveTable)
         logging.info("The new table will use %s buckets" % (buckets))
 
-        if self.checkTable(hiveDB=hiveDB, hiveTable=hiveTableBucketed) == True:
+        if self.checkTable(hiveDB=hiveDB, hiveTable=hive_table_bucketed) == True:
             logging.warning(
                 "Temporary table used during conversion to ACID already exists. We will drop this table and recreate it again"
             )
-            self.executeHiveQuery("drop table `%s`.`%s` " % (hiveDB, hiveTableBucketed))
+            self.executeHiveQuery(
+                "drop table `%s`.`%s` " % (hiveDB, hive_table_bucketed)
+            )
 
-        columnDF = self.getColumns(
+        column_df = self.getColumns(
             hiveDB=hiveDB, hiveTable=hiveTable, includeType=True, includeComment=True
         )
-        hiveColumnsCreate = []
-        hiveColumnsInsert = []
-        hiveColumnsCreateAdding = []
-        hiveColumnsInsertAdding = []
-        datalakeImportExists = False
+        hive_columns_create = []
+        hive_columns_insert = []
+        hive_columns_create_adding = []
+        hive_columns_insert_adding = []
+        datalake_import_exists = False
 
-        PKColumns = self.getPK(hiveDB=hiveDB, hiveTable=hiveTable, quotedColumns=True)
-        if PKColumns == None or PKColumns == "":
+        pk_columns = self.getPK(hiveDB=hiveDB, hiveTable=hiveTable, quotedColumns=True)
+        if pk_columns == None or pk_columns == "":
             logging.error(
                 "There are no PrimaryKey defined on the table. Please create one first before converting to ACID (PK is needed for bucket columns)"
             )
             self.common_config.remove_temporary_files()
             sys.exit(1)
 
-        for index, row in columnDF.iterrows():
-            columnName = row["name"]
-            columnType = row["type"]
-            columnComment = row["comment"]
+        for index, row in column_df.iterrows():
+            column_name = row["name"]
+            column_type = row["type"]
+            column_comment = row["comment"]
 
             # if columnName in ["datalake_import"] and createMergeColumns == True:
             if (
-                columnName in [self.Hive_ColumnName_Import]
+                column_name in [self.Hive_ColumnName_Import]
                 and createMergeColumns == True
             ):
-                datalakeImportExists = True
+                datalake_import_exists = True
                 continue
 
-            if columnComment != None and columnComment != "":
-                hiveColumnsCreate.append(
-                    '%s %s COMMENT "%s"' % (columnName, columnType, columnComment)
+            if column_comment != None and column_comment != "":
+                hive_columns_create.append(
+                    '%s %s COMMENT "%s"' % (column_name, column_type, column_comment)
                 )
             else:
-                hiveColumnsCreate.append("%s %s" % (columnName, columnType))
-            hiveColumnsInsert.append(columnName)
+                hive_columns_create.append("%s %s" % (column_name, column_type))
+            hive_columns_insert.append(column_name)
 
         if createMergeColumns == True:
             # hiveColumnsCreateAdding.append("datalake_iud char(1) COMMENT \"Last operation of this record was I=Insert, U=Update or D=Delete\"")
@@ -812,52 +817,52 @@ class operation(metaclass=Singleton):
             # hiveColumnsInsertAdding.append("datalake_iud")
             # hiveColumnsInsertAdding.append("datalake_insert")
             # hiveColumnsInsertAdding.append("datalake_update")
-            hiveColumnsCreateAdding.append(
+            hive_columns_create_adding.append(
                 '%s char(1) COMMENT "Last operation of this record was I=Insert, U=Update or D=Delete"'
                 % (self.Hive_ColumnName_IUD)
             )
-            hiveColumnsCreateAdding.append(
+            hive_columns_create_adding.append(
                 '%s timestamp COMMENT "Timestamp for insert in Datalake"'
                 % (self.Hive_ColumnName_Insert)
             )
-            hiveColumnsCreateAdding.append(
+            hive_columns_create_adding.append(
                 '%s timestamp COMMENT "Timestamp for last update in Datalake"'
                 % (self.Hive_ColumnName_Update)
             )
-            hiveColumnsInsertAdding.append(self.Hive_ColumnName_IUD)
-            hiveColumnsInsertAdding.append(self.Hive_ColumnName_Insert)
-            hiveColumnsInsertAdding.append(self.Hive_ColumnName_Update)
+            hive_columns_insert_adding.append(self.Hive_ColumnName_IUD)
+            hive_columns_insert_adding.append(self.Hive_ColumnName_Insert)
+            hive_columns_insert_adding.append(self.Hive_ColumnName_Update)
 
             if createDeleteColumn == True:
                 # hiveColumnsCreateAdding.append("datalake_delete timestamp COMMENT \"Timestamp for soft delete in Datalake\"")
                 # hiveColumnsInsertAdding.append("datalake_delete")
-                hiveColumnsCreateAdding.append(
+                hive_columns_create_adding.append(
                     '%s timestamp COMMENT "Timestamp for soft delete in Datalake"'
                     % (self.Hive_ColumnName_Delete)
                 )
-                hiveColumnsInsertAdding.append(self.Hive_ColumnName_Delete)
+                hive_columns_insert_adding.append(self.Hive_ColumnName_Delete)
 
         # Create the Bucketed table
-        query = "create table `%s`.`%s` " % (hiveDB, hiveTableBucketed)
-        query += "( %s" % (", ".join(hiveColumnsCreate))
+        query = "create table `%s`.`%s` " % (hiveDB, hive_table_bucketed)
+        query += "( %s" % (", ".join(hive_columns_create))
         if createMergeColumns == True:
-            query += ", %s" % (", ".join(hiveColumnsCreateAdding))
+            query += ", %s" % (", ".join(hive_columns_create_adding))
         query += (
             ") clustered by (%s) into %s buckets stored as orc tblproperties ('orc.compress'='ZLIB', 'transactional'='true')"
-            % (PKColumns, buckets)
+            % (pk_columns, buckets)
         )
         self.executeHiveQuery(query)
 
         # Insert data into the Bucketed table
-        query = "insert into `%s`.`%s` " % (hiveDB, hiveTableBucketed)
-        query += "( %s" % (", ".join(hiveColumnsInsert))
+        query = "insert into `%s`.`%s` " % (hiveDB, hive_table_bucketed)
+        query += "( %s" % (", ".join(hive_columns_insert))
         if createMergeColumns == True:
-            query += ", %s" % (", ".join(hiveColumnsInsertAdding))
+            query += ", %s" % (", ".join(hive_columns_insert_adding))
         query += ") "
         query += "select "
-        query += "%s" % (", ".join(hiveColumnsInsert))
+        query += "%s" % (", ".join(hive_columns_insert))
         if createMergeColumns == True:
-            if datalakeImportExists == True:
+            if datalake_import_exists == True:
                 # query += ", 'I', datalake_import, datalake_import"
                 query += ", 'I', %s, %s" % (
                     self.Hive_ColumnName_Import,
@@ -878,7 +883,7 @@ class operation(metaclass=Singleton):
         # Rename bucketed table to Target table
         query = "alter table `%s`.`%s` rename to `%s`.`%s`" % (
             hiveDB,
-            hiveTableBucketed,
+            hive_table_bucketed,
             hiveDB,
             hiveTable,
         )
@@ -900,13 +905,13 @@ class operation(metaclass=Singleton):
         """Returns a dataframe that includes the diff between the source and target table. If sourceIsImportTable=True, then there is additional columns that contains the correct name for the import table columns"""
         logging.debug("Executing common_operations.getHiveColumnNameDiff()")
 
-        sourceColumns = self.getColumns(
+        source_columns = self.getColumns(
             hiveDB=sourceDB,
             hiveTable=sourceTable,
             includeType=False,
             includeComment=False,
         )
-        targetColumns = self.getColumns(
+        target_columns = self.getColumns(
             hiveDB=targetDB,
             hiveTable=targetTable,
             includeType=False,
@@ -916,50 +921,50 @@ class operation(metaclass=Singleton):
         if sourceIsImportTable == True:
             # Logic here is to create a new column in both DF and call them sourceName vs targetName. These are the original names. Then we replace the values in targetColumn DF column col
             # with the name that the column should be called in the source system. This is needed to handle characters that is not supported in Parquet files, like SPACE
-            sourceColumns["sourceName"] = sourceColumns["name"]
-            targetColumns["targetName"] = targetColumns["name"]
+            source_columns["sourceName"] = source_columns["name"]
+            target_columns["targetName"] = target_columns["name"]
 
             if importTool != "spark":
                 # If you change any of the name replace operations, you also need to change the same data in functions
                 # import_operations.updateColumnsForImportTable() and import_definitions.saveColumnData()
-                targetColumns["name"] = targetColumns["name"].str.replace(
+                target_columns["name"] = target_columns["name"].str.replace(
                     r" ", "_", regex=True
                 )
-                targetColumns["name"] = targetColumns["name"].str.replace(
+                target_columns["name"] = target_columns["name"].str.replace(
                     r"\%", "pct", regex=True
                 )
-                targetColumns["name"] = targetColumns["name"].str.replace(
+                target_columns["name"] = target_columns["name"].str.replace(
                     r"\(", "_", regex=True
                 )
-                targetColumns["name"] = targetColumns["name"].str.replace(
+                target_columns["name"] = target_columns["name"].str.replace(
                     r"\)", "_", regex=True
                 )
-                targetColumns["name"] = targetColumns["name"].str.replace(
+                target_columns["name"] = target_columns["name"].str.replace(
                     r"/", "", regex=True
                 )
-                targetColumns["name"] = targetColumns["name"].str.replace(
+                target_columns["name"] = target_columns["name"].str.replace(
                     r"ü", "u", regex=True
                 )
-                targetColumns["name"] = targetColumns["name"].str.replace(
+                target_columns["name"] = target_columns["name"].str.replace(
                     r"å", "a", regex=True
                 )
-                targetColumns["name"] = targetColumns["name"].str.replace(
+                target_columns["name"] = target_columns["name"].str.replace(
                     r"ä", "a", regex=True
                 )
-                targetColumns["name"] = targetColumns["name"].str.replace(
+                target_columns["name"] = target_columns["name"].str.replace(
                     r"ö", "o", regex=True
                 )
-                targetColumns["name"] = targetColumns["name"].str.replace(
+                target_columns["name"] = target_columns["name"].str.replace(
                     r"#", "hash", regex=True
                 )
-                targetColumns["name"] = targetColumns["name"].str.replace(
+                target_columns["name"] = target_columns["name"].str.replace(
                     r"^_", "underscore_", regex=True
                 )
 
-        columnMerge = pd.merge(
-            sourceColumns, targetColumns, on=None, how="outer", indicator="Exist"
+        column_merge = pd.merge(
+            source_columns, target_columns, on=None, how="outer", indicator="Exist"
         )
-        logging.debug("\n%s" % (columnMerge))
+        logging.debug("\n%s" % (column_merge))
 
         logging.debug("Executing common_operations.getHiveColumnNameDiff() - Finished")
-        return columnMerge
+        return column_merge

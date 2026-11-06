@@ -84,7 +84,6 @@
     "F841": 23,
     "N802": 18,
     "N803": 39,
-    "N806": 244,
     "UP031": 109
   },
   "bin/DBImportOperation/common_operations.py": {
@@ -95,7 +94,7 @@
     "E722": 4,
     "N802": 31,
     "N803": 81,
-    "N806": 50,
+    "N806": 1,
     "UP031": 44
   },
   "bin/DBImportOperation/copy_operations.py": {
@@ -106,7 +105,7 @@
     "F841": 9,
     "N802": 17,
     "N803": 42,
-    "N806": 215,
+    "N806": 17,
     "UP031": 79
   },
   "bin/DBImportOperation/etl_operations.py": {
@@ -117,7 +116,7 @@
     "F841": 2,
     "N802": 4,
     "N803": 25,
-    "N806": 68,
+    "N806": 1,
     "UP031": 120
   },
   "bin/DBImportOperation/export_operations.py": {
@@ -128,7 +127,7 @@
     "F841": 2,
     "N802": 46,
     "N803": 15,
-    "N806": 203,
+    "N806": 3,
     "UP031": 72
   },
   "bin/DBImportOperation/hiveSchema.py": {
@@ -145,7 +144,7 @@
     "F841": 6,
     "N802": 85,
     "N803": 63,
-    "N806": 367,
+    "N806": 5,
     "UP031": 215
   },
   "bin/Schedule/Airflow.py": {
