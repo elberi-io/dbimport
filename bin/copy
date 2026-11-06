@@ -60,7 +60,7 @@ def printHeader():
     print("")
 
 
-def printMainHelp():
+def print_main_help():
     printHeader()
     print("Options:")
     print(
@@ -96,7 +96,7 @@ def printMainHelp():
     sys.exit(1)
 
 
-def print_copyAirflowImportDAG_help():
+def print_copy_airflow_import_dag_help():
     printHeader()
     print(
         "Copy the DAG definition and all involved databases, tables and connection aliases to a remote DBImport instance"
@@ -125,7 +125,7 @@ def print_copyAirflowImportDAG_help():
     sys.exit(1)
 
 
-def print_copyAirflowExportDAG_help():
+def print_copy_airflow_export_dag_help():
     printHeader()
     print(
         "Copy the DAG definition and all involved databases, tables and connection aliases to a remote DBImport instance"
@@ -151,7 +151,7 @@ def print_copyAirflowExportDAG_help():
     sys.exit(1)
 
 
-def print_scheduleDAGasyncCopy_help():
+def print_schedule_dag_async_copy_help():
     printHeader()
     print(
         "Schedule an asynchronous copy of all tables that is handled by an Airflow DAG to a specific destination."
@@ -174,7 +174,7 @@ def print_scheduleDAGasyncCopy_help():
     sys.exit(1)
 
 
-def print_scheduleTableAsyncCopy_help():
+def print_schedule_table_async_copy_help():
     printHeader()
     print(
         "Schedule an asynchronous copy of one or more Hive tables to a specific destination."
@@ -197,7 +197,7 @@ def print_scheduleTableAsyncCopy_help():
     sys.exit(1)
 
 
-def print_exportTable_help():
+def print_export_table_help():
     printHeader()
     print(
         "Exports a Hive table to HDFS . This can be used regardless if table exists in the DBImport configuration database"
@@ -218,7 +218,7 @@ def print_exportTable_help():
     sys.exit(1)
 
 
-def print_copyTableToCluster_help():
+def print_copy_table_to_cluster_help():
     printHeader()
     print("DistCP files to another cluster")
     print("")
@@ -238,7 +238,7 @@ def print_copyTableToCluster_help():
     sys.exit(1)
 
 
-def print_copyTableFromCluster_help():
+def print_copy_table_from_cluster_help():
     printHeader()
     print("DistCP files from another cluster")
     print("")
@@ -258,7 +258,7 @@ def print_copyTableFromCluster_help():
     sys.exit(1)
 
 
-def print_importTable_help():
+def print_import_table_help():
     printHeader()
     print("Imports a Hive table that was previous exported")
     print("")
@@ -308,7 +308,7 @@ def main(argv):
             ],
         )
     except getopt.GetoptError:
-        printMainHelp()
+        print_main_help()
 
     hive_db = None
     hive_table = None
@@ -329,7 +329,7 @@ def main(argv):
     set_auto_regenerate_dag = None
 
     if len(opts) == 0:
-        printMainHelp()
+        print_main_help()
 
     for opt, arg in opts:
         if opt in ("-?", "--help"):
@@ -382,22 +382,22 @@ def main(argv):
             operation = "copyTableFromCluster"
 
     if operation == None:
-        printMainHelp()
+        print_main_help()
 
     if operation == "copyAirflowImportDAG" and (
         airflow_dag == None or copy_destination == None or display_help == True
     ):
-        print_copyAirflowImportDAG_help()
+        print_copy_airflow_import_dag_help()
 
     if operation == "copyAirflowExportDAG" and (
         airflow_dag == None or copy_destination == None or display_help == True
     ):
-        print_copyAirflowExportDAG_help()
+        print_copy_airflow_export_dag_help()
 
     if operation == "scheduleDAGasyncCopy" and (
         airflow_dag == None or copy_destination == None or display_help == True
     ):
-        print_scheduleDAGasyncCopy_help()
+        print_schedule_dag_async_copy_help()
 
     if operation == "scheduleTableAsyncCopy" and (
         hive_db == None
@@ -405,7 +405,7 @@ def main(argv):
         or copy_destination == None
         or display_help == True
     ):
-        print_scheduleTableAsyncCopy_help()
+        print_schedule_table_async_copy_help()
 
     if operation == "exportTable" and (
         local_hdfs_path == None
@@ -413,7 +413,7 @@ def main(argv):
         or hive_table == None
         or display_help == True
     ):
-        print_exportTable_help()
+        print_export_table_help()
 
     if operation == "importTable" and (
         local_hdfs_path == None
@@ -421,7 +421,7 @@ def main(argv):
         or hive_table == None
         or display_help == True
     ):
-        print_importTable_help()
+        print_import_table_help()
 
     if operation == "copyTableToCluster" and (
         local_hdfs_path == None
@@ -429,7 +429,7 @@ def main(argv):
         or remote_instance == None
         or display_help == True
     ):
-        print_copyTableToCluster_help()
+        print_copy_table_to_cluster_help()
 
     if operation == "copyTableFromCluster" and (
         local_hdfs_path == None
@@ -437,7 +437,7 @@ def main(argv):
         or remote_instance == None
         or display_help == True
     ):
-        print_copyTableFromCluster_help()
+        print_copy_table_from_cluster_help()
 
     if quiet_mode == False:
         printHeader()
@@ -467,7 +467,7 @@ def main(argv):
 
     if operation == "copyTableFromCluster":
         copy_operation = copy_operations.operation()
-        copy_operation.copyTableToFromCluster(
+        copy_operation.copy_table_to_from_cluster(
             hive_db=hive_db,
             hive_table=hive_table,
             remote_instance=remote_instance,
@@ -479,7 +479,7 @@ def main(argv):
 
     if operation == "copyTableToCluster":
         copy_operation = copy_operations.operation()
-        copy_operation.copyTableToFromCluster(
+        copy_operation.copy_table_to_from_cluster(
             hive_db=hive_db,
             hive_table=hive_table,
             remote_instance=remote_instance,
@@ -491,14 +491,14 @@ def main(argv):
 
     if operation == "importTable":
         copy_operation = copy_operations.operation()
-        copy_operation.importCopiedTable(
+        copy_operation.import_copied_table(
             hive_db=hive_db, hive_table=hive_table, local_hdfs_path=local_hdfs_path
         )
         copy_operation.remove_temporary_files()
 
     if operation == "scheduleTableAsyncCopy":
         copy_operation = copy_operations.operation()
-        copy_operation.scheduleTableAsyncCopy(
+        copy_operation.schedule_table_async_copy(
             hive_filter_db=hive_db,
             hive_filter_table=hive_table,
             copy_destination=copy_destination,
@@ -507,7 +507,7 @@ def main(argv):
 
     if operation == "scheduleDAGasyncCopy":
         copy_operation = copy_operations.operation()
-        copy_operation.scheduleDAGasyncCopy(
+        copy_operation.schedule_dag_async_copy(
             airflow_dag_name=airflow_dag,
             copy_destination=copy_destination,
             include_incr_imports=include_incr_imports,
@@ -516,7 +516,7 @@ def main(argv):
 
     if operation == "copyAirflowImportDAG":
         copy_operation = copy_operations.operation()
-        copy_operation.copyAirflowImportDAG(
+        copy_operation.copy_airflow_import_dag(
             airflow_dag_name=airflow_dag,
             copy_destination=copy_destination,
             copy_dag_no_slave=copy_dag_no_slave,
@@ -526,7 +526,7 @@ def main(argv):
 
     if operation == "copyAirflowExportDAG":
         copy_operation = copy_operations.operation()
-        copy_operation.copyAirflowExportDAG(
+        copy_operation.copy_airflow_export_dag(
             airflow_dag_name=airflow_dag,
             copy_destination=copy_destination,
             set_auto_regenerate_dag=set_auto_regenerate_dag,

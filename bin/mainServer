@@ -28,7 +28,7 @@ from ConfigReader import configuration
 from Server import daemon
 
 
-def printHelp():
+def print_help():
     print("Usage: ./mainServer <action> <options>")
     print("Actions:")
     print("  start              Start the DBImport Main server")
@@ -43,7 +43,7 @@ def printHelp():
     sys.exit(1)
 
 
-def setupLogger(name, logfile, logFormat, loggingLevel, logPropagate=True):
+def setup_logger(name, logfile, logFormat, loggingLevel, logPropagate=True):
     new_logger = logging.getLogger(name)
     new_logger.propagate = logPropagate
     log_handler = logging.FileHandler(logfile)
@@ -55,20 +55,20 @@ def setupLogger(name, logfile, logFormat, loggingLevel, logPropagate=True):
 def main(argv):
 
     if argv == []:
-        printHelp()
+        print_help()
 
     try:
         action = sys.argv[1]
         opts, args = getopt.getopt(argv[1:], "vVh", ["version", "help", "debug"])
     except getopt.GetoptError:
-        printHelp()
+        print_help()
 
     logging_level = logging.INFO
     display_version = False
 
     for opt, arg in opts:
         if opt in ("-h", "--help"):
-            printHelp()
+            print_help()
         elif opt in ("-V", "--version"):
             display_version = True
         elif opt in ("-v", "--debug"):
@@ -106,35 +106,35 @@ def main(argv):
         log_propagate = False
 
     # Setup the loggers
-    setupLogger(
+    setup_logger(
         name="server",
         logfile="%s/dbimport_server.log" % (logdir),
         logFormat=log_format,
         loggingLevel=logging_level,
         logPropagate=log_propagate,
     )
-    setupLogger(
+    setup_logger(
         name="atlasDiscovery",
         logfile="%s/atlasDiscovery.log" % (logdir),
         logFormat=log_format,
         loggingLevel=logging_level,
         logPropagate=log_propagate,
     )
-    setupLogger(
+    setup_logger(
         name="restServer",
         logfile="%s/restServer.log" % (logdir),
         logFormat=log_format,
         loggingLevel=logging_level,
         logPropagate=log_propagate,
     )
-    setupLogger(
+    setup_logger(
         name="werkzeug",
         logfile="%s/restServer.log" % (logdir),
         logFormat=log_format,
         loggingLevel=logging_level,
         logPropagate=log_propagate,
     )
-    setupLogger(
+    setup_logger(
         name="waitress",
         logfile="%s/restServer.log" % (logdir),
         logFormat=log_format,
@@ -144,7 +144,7 @@ def main(argv):
 
     if dist_cp_separate_logs == False:
         dist_cp_logfile = "%s/distCP.log" % (logdir)
-        setupLogger(
+        setup_logger(
             name="distCP",
             logfile=dist_cp_logfile,
             logFormat=log_format,
@@ -156,7 +156,7 @@ def main(argv):
         for thread_id in range(0, dist_cp_threads):
             dist_cp_log_name = "distCP-thread%s" % (str(thread_id))
             dist_cp_logfile = "%s/distCP-thread%s.log" % (logdir, str(thread_id))
-            setupLogger(
+            setup_logger(
                 name=dist_cp_log_name,
                 logfile=dist_cp_logfile,
                 logFormat=log_format,
@@ -164,7 +164,7 @@ def main(argv):
             )
 
     d = daemon.serverDaemon(pidfile=pidfile)
-    d.setConfig(action=action, log_format=log_format)
+    d.set_config(action=action, log_format=log_format)
 
     if action == "start":
         print("Starting DBImport Main Server")
@@ -191,11 +191,11 @@ def main(argv):
             print("DBImport Main Server is not running")
             sys.exit(1)
     else:
-        printHelp()
+        print_help()
 
 
 if __name__ == "__main__":
     try:
         main(sys.argv[1:])
     except getopt.GetoptError:
-        printHelp()
+        print_help()

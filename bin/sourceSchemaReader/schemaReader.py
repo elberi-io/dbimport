@@ -29,16 +29,16 @@ class source:
     def __init__(self):
         logging.debug("Initiating schemaReader.source()")
 
-    def removeNewLine(self, _data):
+    def remove_new_line(self, _data):
         if _data == None:
             return None
         else:
             return _data
 
-    def readTableColumns(
+    def read_table_columns(
         self, jdbc_cursor, server_type=None, database=None, schema=None, table=None
     ):
-        logging.debug("Executing schemaReader.readTableColumns()")
+        logging.debug("Executing schemaReader.read_table_columns()")
         query = None
         result_df = pd.DataFrame()
 
@@ -104,17 +104,17 @@ class source:
                 logging.debug(row)
                 line_dict = {}
                 if table == None:
-                    line_dict["SCHEMA_NAME"] = self.removeNewLine(row[0])
-                    line_dict["TABLE_NAME"] = self.removeNewLine(row[1])
+                    line_dict["SCHEMA_NAME"] = self.remove_new_line(row[0])
+                    line_dict["TABLE_NAME"] = self.remove_new_line(row[1])
                 if row[2] == "" or row[2] == None:
                     line_dict["TABLE_COMMENT"] = None
                 else:
                     line_dict["TABLE_COMMENT"] = (
-                        self.removeNewLine(row[2])
+                        self.remove_new_line(row[2])
                         .encode("ascii", "ignore")
                         .decode("unicode_escape", "ignore")
                     )
-                line_dict["SOURCE_COLUMN_NAME"] = self.removeNewLine(row[3])
+                line_dict["SOURCE_COLUMN_NAME"] = self.remove_new_line(row[3])
 
                 if row[4] in ("numeric", "decimal"):
                     if row[5] == None:
@@ -150,7 +150,7 @@ class source:
                     line_dict["SOURCE_COLUMN_COMMENT"] = None
                 else:
                     line_dict["SOURCE_COLUMN_COMMENT"] = (
-                        self.removeNewLine(row[6])
+                        self.remove_new_line(row[6])
                         .encode("ascii", "ignore")
                         .decode("unicode_escape", "ignore")
                     )
@@ -258,17 +258,17 @@ class source:
                 logging.debug(row)
                 line_dict = {}
                 if table == None:
-                    line_dict["SCHEMA_NAME"] = self.removeNewLine(row[0])
-                    line_dict["TABLE_NAME"] = self.removeNewLine(row[1])
+                    line_dict["SCHEMA_NAME"] = self.remove_new_line(row[0])
+                    line_dict["TABLE_NAME"] = self.remove_new_line(row[1])
                 if row[2] == "" or row[2] == None:
                     line_dict["TABLE_COMMENT"] = None
                 else:
                     line_dict["TABLE_COMMENT"] = (
-                        self.removeNewLine(row[2])
+                        self.remove_new_line(row[2])
                         .encode("ascii", "ignore")
                         .decode("unicode_escape", "ignore")
                     )
-                line_dict["SOURCE_COLUMN_NAME"] = self.removeNewLine(row[3])
+                line_dict["SOURCE_COLUMN_NAME"] = self.remove_new_line(row[3])
 
                 if row[5] == None:
                     line_dict["SOURCE_COLUMN_TYPE"] = row[4]
@@ -326,7 +326,7 @@ class source:
                     line_dict["SOURCE_COLUMN_COMMENT"] = None
                 else:
                     line_dict["SOURCE_COLUMN_COMMENT"] = (
-                        self.removeNewLine(row[6])
+                        self.remove_new_line(row[6])
                         .encode("ascii", "ignore")
                         .decode("unicode_escape", "ignore")
                     )
@@ -383,30 +383,30 @@ class source:
                 logging.debug(row)
                 line_dict = {}
                 if table == None:
-                    line_dict["SCHEMA_NAME"] = self.removeNewLine(row[0])
-                    line_dict["TABLE_NAME"] = self.removeNewLine(row[1])
+                    line_dict["SCHEMA_NAME"] = self.remove_new_line(row[0])
+                    line_dict["TABLE_NAME"] = self.remove_new_line(row[1])
 
                 if row[2] == "" or row[2] == None:
                     line_dict["TABLE_COMMENT"] = None
                 else:
                     line_dict["TABLE_COMMENT"] = (
-                        self.removeNewLine(row[2])
+                        self.remove_new_line(row[2])
                         .encode("ascii", "ignore")
                         .decode("unicode_escape", "ignore")
                     )
-                line_dict["SOURCE_COLUMN_NAME"] = self.removeNewLine(row[3])
+                line_dict["SOURCE_COLUMN_NAME"] = self.remove_new_line(row[3])
 
                 if row[4] == "decimal":
                     line_dict["SOURCE_COLUMN_TYPE"] = "%s(%s,%s)" % (
-                        self.removeNewLine(row[4]),
+                        self.remove_new_line(row[4]),
                         row[8],
                         row[9],
                     )
                 elif row[5] == None:
-                    line_dict["SOURCE_COLUMN_TYPE"] = self.removeNewLine(row[4])
+                    line_dict["SOURCE_COLUMN_TYPE"] = self.remove_new_line(row[4])
                 else:
                     line_dict["SOURCE_COLUMN_TYPE"] = "%s(%s)" % (
-                        self.removeNewLine(row[4]),
+                        self.remove_new_line(row[4]),
                         row[5],
                     )
 
@@ -416,7 +416,7 @@ class source:
                     line_dict["SOURCE_COLUMN_COMMENT"] = None
                 else:
                     line_dict["SOURCE_COLUMN_COMMENT"] = (
-                        self.removeNewLine(row[6])
+                        self.remove_new_line(row[6])
                         .encode("ascii", "ignore")
                         .decode("unicode_escape", "ignore")
                     )
@@ -472,17 +472,17 @@ class source:
                 logging.debug(row)
                 line_dict = {}
                 if table == None:
-                    line_dict["SCHEMA_NAME"] = self.removeNewLine(row[0])
-                    line_dict["TABLE_NAME"] = self.removeNewLine(row[1])
+                    line_dict["SCHEMA_NAME"] = self.remove_new_line(row[0])
+                    line_dict["TABLE_NAME"] = self.remove_new_line(row[1])
                 if row[2] == "" or row[2] == None:
                     line_dict["TABLE_COMMENT"] = None
                 else:
                     line_dict["TABLE_COMMENT"] = (
-                        self.removeNewLine(row[2])
+                        self.remove_new_line(row[2])
                         .encode("ascii", "ignore")
                         .decode("unicode_escape", "ignore")
                     )
-                line_dict["SOURCE_COLUMN_NAME"] = self.removeNewLine(row[3])
+                line_dict["SOURCE_COLUMN_NAME"] = self.remove_new_line(row[3])
 
                 if row[4] == "DECIMAL":
                     line_dict["SOURCE_COLUMN_TYPE"] = "%s(%s,%s)" % (
@@ -501,10 +501,10 @@ class source:
                     "BIGINT",
                     "CLOB",
                 ):
-                    line_dict["SOURCE_COLUMN_TYPE"] = self.removeNewLine(row[4])
+                    line_dict["SOURCE_COLUMN_TYPE"] = self.remove_new_line(row[4])
                 else:
                     line_dict["SOURCE_COLUMN_TYPE"] = "%s(%s)" % (
-                        self.removeNewLine(row[4]),
+                        self.remove_new_line(row[4]),
                         row[5],
                     )
 
@@ -514,7 +514,7 @@ class source:
                     line_dict["SOURCE_COLUMN_COMMENT"] = None
                 else:
                     line_dict["SOURCE_COLUMN_COMMENT"] = (
-                        self.removeNewLine(row[7])
+                        self.remove_new_line(row[7])
                         .encode("ascii", "ignore")
                         .decode("unicode_escape", "ignore")
                     )
@@ -573,18 +573,18 @@ class source:
                 logging.debug(row)
                 line_dict = {}
                 if table == None:
-                    line_dict["SCHEMA_NAME"] = self.removeNewLine(row[0])
-                    line_dict["TABLE_NAME"] = self.removeNewLine(row[1])
+                    line_dict["SCHEMA_NAME"] = self.remove_new_line(row[0])
+                    line_dict["TABLE_NAME"] = self.remove_new_line(row[1])
 
                 if row[2] == "" or row[2] == None:
                     line_dict["TABLE_COMMENT"] = None
                 else:
                     line_dict["TABLE_COMMENT"] = (
-                        self.removeNewLine(row[2])
+                        self.remove_new_line(row[2])
                         .encode("ascii", "ignore")
                         .decode("unicode_escape", "ignore")
                     )
-                line_dict["SOURCE_COLUMN_NAME"] = self.removeNewLine(row[3])
+                line_dict["SOURCE_COLUMN_NAME"] = self.remove_new_line(row[3])
 
                 if row[4] == "DECIMAL":
                     line_dict["SOURCE_COLUMN_TYPE"] = "%s(%s,%s)" % (
@@ -603,20 +603,20 @@ class source:
                     "BIGINT",
                     "CLOB",
                 ):
-                    line_dict["SOURCE_COLUMN_TYPE"] = self.removeNewLine(row[4])
+                    line_dict["SOURCE_COLUMN_TYPE"] = self.remove_new_line(row[4])
                 else:
                     line_dict["SOURCE_COLUMN_TYPE"] = "%s(%s)" % (
-                        self.removeNewLine(row[4]),
+                        self.remove_new_line(row[4]),
                         row[5],
                     )
 
                 line_dict["SOURCE_COLUMN_LENGTH"] = row[5]
 
-                if self.removeNewLine(row[7]) == "" or row[7] == None:
+                if self.remove_new_line(row[7]) == "" or row[7] == None:
                     line_dict["SOURCE_COLUMN_COMMENT"] = None
                 else:
                     line_dict["SOURCE_COLUMN_COMMENT"] = (
-                        self.removeNewLine(row[7])
+                        self.remove_new_line(row[7])
                         .encode("ascii", "ignore")
                         .decode("unicode_escape", "ignore")
                     )
@@ -676,30 +676,30 @@ class source:
                 logging.debug(row)
                 line_dict = {}
                 if table == None:
-                    line_dict["SCHEMA_NAME"] = self.removeNewLine(row[0])
-                    line_dict["TABLE_NAME"] = self.removeNewLine(row[1])
+                    line_dict["SCHEMA_NAME"] = self.remove_new_line(row[0])
+                    line_dict["TABLE_NAME"] = self.remove_new_line(row[1])
 
                 if row[2] == "" or row[2] == None:
                     line_dict["TABLE_COMMENT"] = None
                 else:
                     line_dict["TABLE_COMMENT"] = (
-                        self.removeNewLine(row[2])
+                        self.remove_new_line(row[2])
                         .encode("ascii", "ignore")
                         .decode("unicode_escape", "ignore")
                     )
-                line_dict["SOURCE_COLUMN_NAME"] = self.removeNewLine(row[3])
+                line_dict["SOURCE_COLUMN_NAME"] = self.remove_new_line(row[3])
 
                 if row[4] == "numeric":
                     line_dict["SOURCE_COLUMN_TYPE"] = "%s(%s,%s)" % (
-                        self.removeNewLine(row[4]),
+                        self.remove_new_line(row[4]),
                         row[9],
                         row[10],
                     )
                 elif row[5] == None:
-                    line_dict["SOURCE_COLUMN_TYPE"] = self.removeNewLine(row[4])
+                    line_dict["SOURCE_COLUMN_TYPE"] = self.remove_new_line(row[4])
                 else:
                     line_dict["SOURCE_COLUMN_TYPE"] = "%s(%s)" % (
-                        self.removeNewLine(row[4]),
+                        self.remove_new_line(row[4]),
                         row[5],
                     )
 
@@ -709,7 +709,7 @@ class source:
                     line_dict["SOURCE_COLUMN_COMMENT"] = None
                 else:
                     line_dict["SOURCE_COLUMN_COMMENT"] = (
-                        self.removeNewLine(row[6])
+                        self.remove_new_line(row[6])
                         .encode("ascii", "ignore")
                         .decode("unicode_escape", "ignore")
                     )
@@ -758,18 +758,18 @@ class source:
                 logging.debug(row)
                 line_dict = {}
                 if table == None:
-                    line_dict["SCHEMA_NAME"] = self.removeNewLine(row[0])
-                    line_dict["TABLE_NAME"] = self.removeNewLine(row[1])
+                    line_dict["SCHEMA_NAME"] = self.remove_new_line(row[0])
+                    line_dict["TABLE_NAME"] = self.remove_new_line(row[1])
 
                 if row[2] == "" or row[2] == None:
                     line_dict["TABLE_COMMENT"] = None
                 else:
                     line_dict["TABLE_COMMENT"] = (
-                        self.removeNewLine(row[2])
+                        self.remove_new_line(row[2])
                         .encode("ascii", "ignore")
                         .decode("unicode_escape", "ignore")
                     )
-                line_dict["SOURCE_COLUMN_NAME"] = self.removeNewLine(row[3])
+                line_dict["SOURCE_COLUMN_NAME"] = self.remove_new_line(row[3])
 
                 if row[4] in ("decimal", "numeric"):
                     if row[5] == None:
@@ -788,17 +788,19 @@ class source:
 
                 line_dict["SOURCE_COLUMN_LENGTH"] = row[5]
 
-                if self.removeNewLine(row[7]) == "" or row[7] == None:
+                if self.remove_new_line(row[7]) == "" or row[7] == None:
                     line_dict["SOURCE_COLUMN_COMMENT"] = None
                 else:
                     try:
                         line_dict["SOURCE_COLUMN_COMMENT"] = (
-                            self.removeNewLine(row[7])
+                            self.remove_new_line(row[7])
                             .encode("ascii", "ignore")
                             .decode("unicode_escape", "ignore")
                         )
                     except UnicodeDecodeError:
-                        line_dict["SOURCE_COLUMN_COMMENT"] = self.removeNewLine(row[7])
+                        line_dict["SOURCE_COLUMN_COMMENT"] = self.remove_new_line(
+                            row[7]
+                        )
 
                 line_dict["IS_NULLABLE"] = row[8]
 
@@ -846,24 +848,24 @@ class source:
                 logging.debug(row)
                 line_dict = {}
                 if table == None:
-                    line_dict["SCHEMA_NAME"] = self.removeNewLine(row[0])
-                    line_dict["TABLE_NAME"] = self.removeNewLine(row[1])
+                    line_dict["SCHEMA_NAME"] = self.remove_new_line(row[0])
+                    line_dict["TABLE_NAME"] = self.remove_new_line(row[1])
 
                 if row[2] == "" or row[2] == None:
                     line_dict["TABLE_COMMENT"] = None
                 else:
                     line_dict["TABLE_COMMENT"] = (
-                        self.removeNewLine(row[2])
+                        self.remove_new_line(row[2])
                         .encode("ascii", "ignore")
                         .decode("unicode_escape", "ignore")
                     )
-                line_dict["SOURCE_COLUMN_NAME"] = self.removeNewLine(row[3])
+                line_dict["SOURCE_COLUMN_NAME"] = self.remove_new_line(row[3])
 
                 if row[5] == None:
-                    line_dict["SOURCE_COLUMN_TYPE"] = self.removeNewLine(row[4])
+                    line_dict["SOURCE_COLUMN_TYPE"] = self.remove_new_line(row[4])
                 else:
                     line_dict["SOURCE_COLUMN_TYPE"] = "%s(%s)" % (
-                        self.removeNewLine(row[4]),
+                        self.remove_new_line(row[4]),
                         row[5],
                     )
 
@@ -873,7 +875,7 @@ class source:
                     line_dict["SOURCE_COLUMN_COMMENT"] = None
                 else:
                     line_dict["SOURCE_COLUMN_COMMENT"] = (
-                        self.removeNewLine(row[6])
+                        self.remove_new_line(row[6])
                         .encode("ascii", "ignore")
                         .decode("unicode_escape", "ignore")
                     )
@@ -922,17 +924,17 @@ class source:
                 logging.debug(row)
                 line_dict = {}
                 if table == None:
-                    line_dict["SCHEMA_NAME"] = self.removeNewLine(row[0])
-                    line_dict["TABLE_NAME"] = self.removeNewLine(row[1])
+                    line_dict["SCHEMA_NAME"] = self.remove_new_line(row[0])
+                    line_dict["TABLE_NAME"] = self.remove_new_line(row[1])
                 if row[2] == "" or row[2] == None:
                     line_dict["TABLE_COMMENT"] = None
                 else:
                     line_dict["TABLE_COMMENT"] = (
-                        self.removeNewLine(row[2])
+                        self.remove_new_line(row[2])
                         .encode("ascii", "ignore")
                         .decode("unicode_escape", "ignore")
                     )
-                line_dict["SOURCE_COLUMN_NAME"] = self.removeNewLine(row[3])
+                line_dict["SOURCE_COLUMN_NAME"] = self.remove_new_line(row[3])
 
                 # Column type column includes not only the column type, but also values like if it allows null or not
                 # More info can be found on https://www.ibm.com/docs/en/informix-servers/12.10?topic=tables-syscolumns
@@ -1019,7 +1021,7 @@ class source:
                     line_dict["SOURCE_COLUMN_COMMENT"] = None
                 else:
                     line_dict["SOURCE_COLUMN_COMMENT"] = (
-                        self.removeNewLine(row[7])
+                        self.remove_new_line(row[7])
                         .encode("ascii", "ignore")
                         .decode("unicode_escape", "ignore")
                     )
@@ -1085,27 +1087,27 @@ class source:
             for row in jdbc_cursor.fetchall():
                 line_dict = {}
                 if table == None:
-                    line_dict["SCHEMA_NAME"] = self.removeNewLine(row[0])
-                    line_dict["TABLE_NAME"] = self.removeNewLine(row[1])
+                    line_dict["SCHEMA_NAME"] = self.remove_new_line(row[0])
+                    line_dict["TABLE_NAME"] = self.remove_new_line(row[1])
 
                 if row[2] == "" or row[2] == None:
                     line_dict["TABLE_COMMENT"] = None
                 else:
                     line_dict["TABLE_COMMENT"] = (
-                        self.removeNewLine(row[2])
+                        self.remove_new_line(row[2])
                         .encode("ascii", "ignore")
                         .decode("unicode_escape", "ignore")
                     )
 
-                line_dict["SOURCE_COLUMN_NAME"] = self.removeNewLine(row[3])
+                line_dict["SOURCE_COLUMN_NAME"] = self.remove_new_line(row[3])
 
                 # 				if row[4] == "decimal":
-                # 					line_dict["SOURCE_COLUMN_TYPE"] = "%s(%s,%s)"%(self.removeNewLine(row[4]), row[8], row[9])
+                # 					line_dict["SOURCE_COLUMN_TYPE"] = "%s(%s,%s)"%(self.remove_new_line(row[4]), row[8], row[9])
                 # 				elif row[5] == None:
-                # 					line_dict["SOURCE_COLUMN_TYPE"] = self.removeNewLine(row[4])
+                # 					line_dict["SOURCE_COLUMN_TYPE"] = self.remove_new_line(row[4])
                 # 				else:
-                # 					line_dict["SOURCE_COLUMN_TYPE"] = "%s(%s)"%(self.removeNewLine(row[4]), row[5])
-                line_dict["SOURCE_COLUMN_TYPE"] = self.removeNewLine(row[4])
+                # 					line_dict["SOURCE_COLUMN_TYPE"] = "%s(%s)"%(self.remove_new_line(row[4]), row[5])
+                line_dict["SOURCE_COLUMN_TYPE"] = self.remove_new_line(row[4])
 
                 line_dict["SOURCE_COLUMN_LENGTH"] = None
 
@@ -1113,7 +1115,7 @@ class source:
                     line_dict["SOURCE_COLUMN_COMMENT"] = None
                 else:
                     line_dict["SOURCE_COLUMN_COMMENT"] = (
-                        self.removeNewLine(row[5])
+                        self.remove_new_line(row[5])
                         .encode("ascii", "ignore")
                         .decode("unicode_escape", "ignore")
                     )
@@ -1134,10 +1136,10 @@ class source:
         logging.debug("Executing schemaReader.readTable() - Finished")
         return result_df
 
-    def readTableKeys(
+    def read_table_keys(
         self, jdbc_cursor, server_type=None, database=None, schema=None, table=None
     ):
-        logging.debug("Executing schemaReader.readTableKeys()")
+        logging.debug("Executing schemaReader.read_table_keys()")
         query = None
         result_df = pd.DataFrame()
 
@@ -1939,10 +1941,10 @@ class source:
         logging.debug("Executing schemaReader.readKeys() - Finished")
         return result_df
 
-    def readTableIndex(
+    def read_table_index(
         self, jdbc_cursor, server_type=None, database=None, schema=None, table=None
     ):
-        logging.debug("Executing schemaReader.readTableColumns()")
+        logging.debug("Executing schemaReader.read_table_columns()")
         query = None
         result_df = pd.DataFrame()
 
@@ -2221,10 +2223,10 @@ class source:
 
         return result_df
 
-    def getJDBCtablesAndViews(
+    def get_jdbc_tables_and_views(
         self, JDBCCursor, serverType, database=None, schemaFilter=None, tableFilter=None
     ):
-        logging.debug("Executing schemaReader.getJDBCtablesAndViews()")
+        logging.debug("Executing schemaReader.get_jdbc_tables_and_views()")
 
         if schemaFilter != None:
             schemaFilter = schemaFilter.replace("*", "%")
@@ -2362,16 +2364,16 @@ class source:
         else:
             result_df = pd.DataFrame(columns=["schema", "table"])
 
-        logging.debug("Executing schemaReader.getJDBCtablesAndViews() - Finished")
+        logging.debug("Executing schemaReader.get_jdbc_tables_and_views() - Finished")
         return result_df
 
-    def getJdbcTableType(self, server_type, table_type_from_source):
+    def get_jdbc_table_type(self, server_type, table_type_from_source):
         """Returns the table type of the table"""
-        logging.debug("Executing schemaReader.getJdbcTableType()")
+        logging.debug("Executing schemaReader.get_jdbc_table_type()")
 
         # 		if self.source_columns_df.empty == True:
         if table_type_from_source == None:
-            logging.warning("No metadata for tableType sent to getJdbcTableType()")
+            logging.warning("No metadata for tableType sent to get_jdbc_table_type()")
             return None
 
         # 		tableTypeFromSource = self.source_columns_df.iloc[0]["TABLE_TYPE"]
@@ -2467,5 +2469,5 @@ class source:
             elif table_type_from_source == "21":
                 table_type = "view"
 
-        logging.debug("Executing schemaReader.getJdbcTableType() - Finished")
+        logging.debug("Executing schemaReader.get_jdbc_table_type() - Finished")
         return table_type

@@ -53,7 +53,7 @@ class StandaloneApplication(WSGIApplication):
         print("PREHOOK - Server has started")
 
 
-def printHelp():
+def print_help():
     print("Usage: ./server <action> <options>")
     print("Actions:")
     print("  start              Start the DBImport REST server")
@@ -69,7 +69,7 @@ def printHelp():
     sys.exit(1)
 
 
-def setupLogger(name, logfile, logFormat, loggingLevel, logPropagate=True):
+def setup_logger(name, logfile, logFormat, loggingLevel, logPropagate=True):
     new_logger = logging.getLogger(name)
     new_logger.propagate = logPropagate
     log_handler = logging.FileHandler(logfile)
@@ -90,18 +90,18 @@ def main(argv):
             action = sys.argv[1]
             opts, args = getopt.getopt(argv[1:], "vVh", ["version", "help", "debug"])
         except getopt.GetoptError:
-            printHelp()
+            print_help()
 
         for opt, arg in opts:
             if opt in ("-h", "--help"):
-                printHelp()
+                print_help()
             elif opt in ("-V", "--version"):
                 display_version = True
             elif opt in ("-v", "--debug"):
                 logging_level = logging.DEBUG
 
     if action not in ["start", "stop", "restart", "status", "noDaemon"]:
-        printHelp()
+        print_help()
         sys.exit(0)
 
     if action in ("start", "restart"):
@@ -149,7 +149,7 @@ def main(argv):
         log_propagate = False
 
     # Setup the loggers
-    setupLogger(
+    setup_logger(
         name="server",
         logfile="%s/restServer.log" % (logdir),
         logFormat=log_format,
@@ -226,11 +226,11 @@ def main(argv):
             sys.exit(0)
 
     else:
-        printHelp()
+        print_help()
 
 
 if __name__ == "__main__":
     try:
         main(sys.argv[1:])
     except getopt.GetoptError:
-        printHelp()
+        print_help()

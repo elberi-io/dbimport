@@ -36,27 +36,27 @@ def _is_bin(ints):
         return False
 
 
-def base64EncodeArray(s):
+def base64_encode_array(s):
     try:
         s_new = []
         for struct in s:
-            s_new.append(list(map(_base64EncodeBinary, struct)))
+            s_new.append(list(map(_base64_encode_binary, struct)))
         return s_new
 
     except TypeError:
-        return _base64EncodeBinary(s)
+        return _base64_encode_binary(s)
 
 
-def _checkBinary(s):
+def _check_binary(s):
     for b in s:
         if not _is_bin(b):
             return False
     return True
 
 
-def _base64EncodeBinary(s):
+def _base64_encode_binary(s):
     try:
-        if _is_bin(s[0]) and _checkBinary(s[1]):
+        if _is_bin(s[0]) and _check_binary(s[1]):
             base_64 = base64.b64encode(s[1]).decode("UTF-8")
             return [s[0], base_64]
     except:
@@ -65,7 +65,7 @@ def _base64EncodeBinary(s):
     return s
 
 
-def parseStructDate(timestampString):
+def parse_struct_date(timestampString):
     timestampString = str(timestampString)
     m = re.match(r'\{ *"\$date" *: *(-?\d+)\ *}', timestampString)
     if m:
@@ -75,7 +75,7 @@ def parseStructDate(timestampString):
     return timestampString
 
 
-def setSeedString(setValue):
+def set_seed_string(setValue):
     global seedString
     seedString = setValue
     this.seedString = setValue
@@ -83,7 +83,7 @@ def setSeedString(setValue):
     print(this.seedString)
 
 
-def hashColumn(columnValue):
+def hash_column(columnValue):
     global seedString
     sha_value = hashlib.sha3_512(columnValue.encode()).hexdigest()
     # 	SeedString = None

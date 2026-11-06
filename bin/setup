@@ -25,7 +25,7 @@ from setupOperation import database as databaseOperations
 from setupOperation import webServerOperations
 
 
-def printHelp():
+def print_help():
     print("Options:")
     print(
         "  --createDB         Creates the database schema in the DBImport configuration database"
@@ -62,7 +62,7 @@ def main(argv):
             ],
         )
     except getopt.GetoptError:
-        printHelp()
+        print_help()
 
     version = "0.10"
     hive_db = None
@@ -72,13 +72,13 @@ def main(argv):
     print_header = True
 
     if len(opts) == 0:
-        printHelp()
+        print_help()
 
     for opt, arg in opts:
         if opt in ("-v", "--debug"):
             logging_level = logging.DEBUG
         elif opt == "--help":
-            printHelp()
+            print_help()
         elif opt == "--createDB":
             operation = "createDB"
         elif opt == "--upgradeDB":
@@ -92,7 +92,7 @@ def main(argv):
             print_header = False
 
     if operation == None:
-        printHelp()
+        print_help()
 
     if print_header == True:
         # Font created at http://patorjk.com/software/taag/#p=display&f=Big&t=DBImport%20-%20Setup
@@ -144,11 +144,11 @@ def main(argv):
 
     if operation == "createDB":
         db_operations = databaseOperations.initialize()
-        db_operations.createDB()
+        db_operations.create_db()
 
     if operation == "upgradeDB":
         db_operations = databaseOperations.initialize()
-        db_operations.upgradeDB()
+        db_operations.upgrade_db()
 
     if operation == "downgradeDB":
         db_operations = databaseOperations.initialize()
@@ -156,11 +156,11 @@ def main(argv):
 
     if operation == "createSchemaRst":
         db_operations = databaseOperations.initialize()
-        db_operations.generateSchemaRst()
+        db_operations.generate_schema_rst()
 
     if operation == "buildHTML":
         web_operations = webServerOperations.webServerOperations()
-        web_operations.buildHTML()
+        web_operations.build_html()
 
 
 if __name__ == "__main__":

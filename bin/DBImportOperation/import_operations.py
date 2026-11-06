@@ -54,27 +54,27 @@ class operation(metaclass=Singleton):
         self.import_config = None
         self.sqlGeneratedHiveColumnDefinition = None
         self.sqlGeneratedSqoopQuery = None
-        self.sqoopStartTimestamp = None
+        self.sqoop_start_timestamp = None
         self.sqoopStartUTS = None
         self.sqoopSize = None
         self.sqoopRows = None
-        self.sqoopIncrMaxValuePending = None
+        self.sqoop_incr_max_value_pending = None
         self.sqoopIncrNoNewRows = None
-        self.sqoopLaunchedMapTasks = None
-        self.sqoopFailedMapTasks = None
-        self.sqoopKilledMapTasks = None
-        self.sqoopLaunchedReduceTasks = None
-        self.sqoopFailedReduceTasks = None
-        self.sqoopKilledReduceTasks = None
-        self.sparkContext = None
+        self.sqoop_launched_map_tasks = None
+        self.sqoop_failed_map_tasks = None
+        self.sqoop_killed_map_tasks = None
+        self.sqoop_launched_reduce_tasks = None
+        self.sqoop_failed_reduce_tasks = None
+        self.sqoop_killed_reduce_tasks = None
+        self.spark_context = None
         self.spark = None
         self.sparkUDF = None
-        self.udfHashColumn = None
-        self.udfReplaceCharWithStar = None
-        self.udfShowFirstFourCharacters = None
+        self.udf_hash_column = None
+        self.udf_replace_char_with_star = None
+        self.udf_show_first_four_characters = None
         self.yarnApplicationID = None
 
-        self.globalHiveConfigurationSet = False
+        self.global_hive_configuration_set = False
 
         self.import_config = import_config.config(Hive_DB, Hive_Table)
         self.common_operations = common_operations.operation(Hive_DB, Hive_Table)
@@ -83,19 +83,19 @@ class operation(metaclass=Singleton):
         # self.import_config.sparkCatalogName = self.common_operations.sparkCatalogName
 
         if Hive_DB != None and Hive_Table != None:
-            self.setHiveTable(Hive_DB, Hive_Table)
+            self.set_hive_table(Hive_DB, Hive_Table)
 
         logging.debug("Executing import_operations.__init__() - Finished")
 
-    def setHiveTable(self, Hive_DB, Hive_Table):
+    def set_hive_table(self, Hive_DB, Hive_Table):
         """Sets the parameters to work against a new Hive database and table"""
         self.Hive_DB = Hive_DB.lower()
         self.Hive_Table = Hive_Table.lower()
 
-        self.common_operations.setHiveTable(self.Hive_DB, self.Hive_Table)
-        self.import_config.setHiveTable(self.Hive_DB, self.Hive_Table)
+        self.common_operations.set_hive_table(self.Hive_DB, self.Hive_Table)
+        self.import_config.set_hive_table(self.Hive_DB, self.Hive_Table)
 
-        self.import_config.getImportConfig()
+        self.import_config.get_import_config()
         self.startDate = self.import_config.startDate
 
         self.Hive_Import_DB = self.import_config.Hive_Import_DB
@@ -119,7 +119,7 @@ class operation(metaclass=Singleton):
         )
         self.Hive_ColumnName_Source = self.import_config.Hive_ColumnName_Source
 
-        self.common_operations.setTableAndColumnNames(
+        self.common_operations.set_table_and_column_names(
             hive_import_db=self.Hive_Import_DB,
             hive_import_table=self.Hive_Import_Table,
             hive_import_view=self.Hive_Import_View,
@@ -140,26 +140,28 @@ class operation(metaclass=Singleton):
             hive_column_name_source=self.Hive_ColumnName_Source,
         )
 
-        self.import_config.lookupConnectionAlias()
+        self.import_config.lookup_connection_alias()
 
     def remove_temporary_files(self):
         self.import_config.remove_temporary_files()
 
-    def checkTimeWindow(self):
-        self.import_config.checkTimeWindow()
+    def check_time_window(self):
+        self.import_config.check_time_window()
 
-    def runStage(self, stage, stageMax=None):
-        self.import_config.setStage(stage)
+    def run_stage(self, stage, stageMax=None):
+        self.import_config.set_stage(stage)
 
         if (
-            self.import_config.common_config.getConfigValue(key="import_stage_disable")
+            self.import_config.common_config.get_config_value(
+                key="import_stage_disable"
+            )
             == True
         ):
             logging.error("Stage execution disabled from DBImport configuration")
             self.import_config.remove_temporary_files()
             sys.exit(1)
 
-        temp_stage = self.import_config.getStage()
+        temp_stage = self.import_config.get_stage()
         if stageMax == None:
             if temp_stage == stage:
                 return True
@@ -171,48 +173,48 @@ class operation(metaclass=Singleton):
             else:
                 return False
 
-    def setStage(self, stage, force=False):
-        self.import_config.setStage(stage, force=force)
+    def set_stage(self, stage, force=False):
+        self.import_config.set_stage(stage, force=force)
 
-    def getStage(self):
-        return self.import_config.getStage()
+    def get_stage(self):
+        return self.import_config.get_stage()
 
-    def clearStage(self):
-        self.import_config.clearStage()
+    def clear_stage(self):
+        self.import_config.clear_stage()
 
-    def saveRetryAttempt(self, stage):
-        self.import_config.saveRetryAttempt(stage)
+    def save_retry_attempt(self, stage):
+        self.import_config.save_retry_attempt(stage)
 
-    def setStageOnlyInMemory(self):
-        self.import_config.setStageOnlyInMemory()
+    def set_stage_only_in_memory(self):
+        self.import_config.set_stage_only_in_memory()
 
-    def saveIncrPendingValues(self):
-        self.import_config.saveIncrPendingValues()
+    def save_incr_pending_values(self):
+        self.import_config.save_incr_pending_values()
 
-    def saveIncrMinValue(self):
-        self.import_config.saveIncrMinValue()
+    def save_incr_min_value(self):
+        self.import_config.save_incr_min_value()
 
-    def convertStageStatisticsToJSON(self):
-        self.import_config.convertStageStatisticsToJSON()
+    def convert_stage_statistics_to_json(self):
+        self.import_config.convert_stage_statistics_to_json()
 
-    def saveStageStatistics(self):
-        self.import_config.saveStageStatistics()
+    def save_stage_statistics(self):
+        self.import_config.save_stage_statistics()
 
-    def sendStartJSON(self):
-        self.import_config.sendStartJSON()
+    def send_start_json(self):
+        self.import_config.send_start_json()
 
     def invalidateImpala(self):
         self.import_config.invalidateImpala()
 
-    def updateAtlasWithImportData(self):
-        if self.atlasOperation.checkAtlasSchema() == True:
+    def update_atlas_with_import_data(self):
+        if self.atlasOperation.check_atlas_schema() == True:
             config_object = (
-                self.import_config.common_config.getAtlasDiscoverConfigObject()
+                self.import_config.common_config.get_atlas_discover_config_object()
             )
-            self.atlasOperation.setConfiguration(config_object)
+            self.atlasOperation.set_configuration(config_object)
 
             if self.import_config.common_config.source_columns_df.empty == True:
-                self.import_config.getJDBCTableDefinition()
+                self.import_config.get_jdbc_table_definition()
 
             self.atlasOperation.source_columns_df = (
                 self.import_config.common_config.source_columns_df
@@ -221,17 +223,17 @@ class operation(metaclass=Singleton):
                 self.import_config.common_config.source_keys_df
             )
 
-            start_stop_dict = self.import_config.stage.getStageStartStop(
+            start_stop_dict = self.import_config.stage.get_stage_start_stop(
                 stage=self.import_config.importTool
             )
 
             try:
-                self.atlasOperation.updateAtlasWithRDBMSdata(
+                self.atlasOperation.update_atlas_with_rdbms_data(
                     schema_name=self.import_config.source_schema,
                     table_name=self.import_config.source_table,
                 )
 
-                self.atlasOperation.updateAtlasWithImportLineage(
+                self.atlasOperation.update_atlas_with_import_lineage(
                     hive_db=self.Hive_DB,
                     source_schema=self.import_config.source_schema,
                     source_table=self.import_config.source_table,
@@ -246,9 +248,9 @@ class operation(metaclass=Singleton):
 
             logging.info("")  # Just to get a blank row before connecting to Hive
 
-    def checkDB(self, hiveDB):
+    def check_db(self, hiveDB):
         try:
-            self.common_operations.checkDB(hiveDB)
+            self.common_operations.check_db(hiveDB)
         except databaseNotFound as errMsg:
             logging.error(errMsg)
             self.import_config.remove_temporary_files()
@@ -257,13 +259,13 @@ class operation(metaclass=Singleton):
             self.import_config.remove_temporary_files()
             raise
 
-    def getJDBCTableValidationData(self):
+    def get_jdbc_table_validation_data(self):
         if self.import_config.validationMethod == "customQuery":
-            self.import_config.runCustomValidationQueryOnJDBCTable()
+            self.import_config.run_custom_validation_query_on_jdbc_table()
         else:
-            self.getJDBCTableRowCount()
+            self.get_jdbc_table_row_count()
 
-    def validateImportTool(self):
+    def validate_import_tool(self):
         # 		if self.import_config.etlEngine == constant.ETL_ENGINE_HIVE:
         if self.import_config.validationMethod == "customQuery":
             logging.info(
@@ -271,34 +273,34 @@ class operation(metaclass=Singleton):
             )
             pass
         else:
-            self.validateImportRowCount()
+            self.validate_import_row_count()
 
-    def getImportTableValidationData(self):
+    def get_import_table_validation_data(self):
         if self.import_config.etlEngine == constant.ETL_ENGINE_HIVE:
             if self.import_config.validationMethod == "customQuery":
                 if self.import_config.validationCustomQueryValidateImportTable == True:
-                    self.runCustomValidationQueryOnImportTable()
+                    self.run_custom_validation_query_on_import_table()
                 else:
                     logging.info(
                         "No validation of import table as that is disabled in configuration"
                     )
             else:
-                self.getImportTableRowCount()
+                self.get_import_table_row_count()
 
-    def getTargetTableValidationData(self, incrementalMax=None):
+    def get_target_table_validation_data(self, incrementalMax=None):
         if self.import_config.validationMethod == "customQuery":
             if self.import_config.etlEngine == constant.ETL_ENGINE_SPARK:
                 raise invalidConfiguration(
                     "Custom Query validation is not supported with Spark as the ETL engine (yet)"
                 )
             else:
-                self.runCustomValidationQueryOnTargetTable()
+                self.run_custom_validation_query_on_target_table()
         else:
-            self.getTargetTableRowCount(incrementalMax=incrementalMax)
+            self.get_target_table_row_count(incrementalMax=incrementalMax)
 
-    def runCustomValidationQueryOnImportTable(self):
+    def run_custom_validation_query_on_import_table(self):
         logging.debug(
-            "Executing import_operations.runCustomValidationQueryOnImportTable()"
+            "Executing import_operations.run_custom_validation_query_on_import_table()"
         )
 
         logging.info("Executing custom validation query on Import table.")
@@ -309,7 +311,7 @@ class operation(metaclass=Singleton):
 
         logging.debug("Validation Query on Import table: %s" % (query))
 
-        result_df = self.common_operations.executeHiveQuery(query)
+        result_df = self.common_operations.execute_hive_query(query)
         result_json = result_df.to_json(orient="values")
         self.import_config.validationCustomQueryHiveValue = result_json
 
@@ -322,19 +324,19 @@ class operation(metaclass=Singleton):
                 "The size of the json document on the custom query exceeds 1024 bytes. Change the query to create a result with less than 512 bytes"
             )
 
-        self.import_config.saveCustomSQLValidationHiveValue(jsonValue=result_json)
+        self.import_config.save_custom_sql_validation_hive_value(jsonValue=result_json)
 
         logging.debug("resultDF:")
         logging.debug(result_df)
         logging.debug("resultJSON: %s" % (result_json))
 
         logging.debug(
-            "Executing import_operations.runCustomValidationQueryOnImportTable() - Finished"
+            "Executing import_operations.run_custom_validation_query_on_import_table() - Finished"
         )
 
-    def runCustomValidationQueryOnTargetTable(self):
+    def run_custom_validation_query_on_target_table(self):
         logging.debug(
-            "Executing import_operations.runCustomValidationQueryOnTargetTable()"
+            "Executing import_operations.run_custom_validation_query_on_target_table()"
         )
 
         logging.info("Executing custom validation query on Target table.")
@@ -345,7 +347,7 @@ class operation(metaclass=Singleton):
 
         logging.debug("Validation Query on Target table: %s" % (query))
 
-        result_df = self.common_operations.executeHiveQuery(query)
+        result_df = self.common_operations.execute_hive_query(query)
         result_json = result_df.to_json(orient="values")
         self.import_config.validationCustomQueryHiveValue = result_json
 
@@ -358,51 +360,53 @@ class operation(metaclass=Singleton):
                 "The size of the json document on the custom query exceeds 1024 bytes. Change the query to create a result with less than 512 bytes"
             )
 
-        self.import_config.saveCustomSQLValidationHiveValue(jsonValue=result_json)
+        self.import_config.save_custom_sql_validation_hive_value(jsonValue=result_json)
 
         logging.debug("resultDF:")
         logging.debug(result_df)
         logging.debug("resultJSON: %s" % (result_json))
 
         logging.debug(
-            "Executing import_operations.runCustomValidationQueryOnTargetTable() - Finished"
+            "Executing import_operations.run_custom_validation_query_on_target_table() - Finished"
         )
 
-    def getJDBCTableRowCount(self):
+    def get_jdbc_table_row_count(self):
         try:
-            self.import_config.getJDBCTableRowCount()
+            self.import_config.get_jdbc_table_row_count()
         except:
             logging.exception("Fatal error when reading source table row count")
             self.import_config.remove_temporary_files()
             sys.exit(1)
 
-    def getMongoRowCount(self):
+    def get_mongo_row_count(self):
         try:
-            self.import_config.getMongoRowCount()
+            self.import_config.get_mongo_row_count()
         except:
             logging.exception("Fatal error when reading Mongo row count")
             self.import_config.remove_temporary_files()
             sys.exit(1)
 
-    def getImportViewRowCountAsSource(self, incr=False):
+    def get_import_view_row_count_as_source(self, incr=False):
         where_statement = None
         if self.import_config.importPhase == constant.IMPORT_PHASE_ORACLE_FLASHBACK:
             # Needed otherwise we will count rows that will be deleted and that will cause the validation to fail
             where_statement = "datalake_flashback_operation != 'D' or datalake_flashback_operation is null"
 
         try:
-            import_view_row_count = self.common_operations.getHiveTableRowCount(
+            import_view_row_count = self.common_operations.get_hive_table_row_count(
                 self.import_config.Hive_Import_DB,
                 self.import_config.Hive_Import_Table,
                 whereStatement=where_statement,
             )
-            self.import_config.saveSourceTableRowCount(import_view_row_count, incr=incr)
+            self.import_config.save_source_table_row_count(
+                import_view_row_count, incr=incr
+            )
         except:
             logging.exception("Fatal error when reading Hive view row count")
             self.import_config.remove_temporary_files()
             sys.exit(1)
 
-    def getImportTableRowCount(self, exclude_oracle_flashback_deletes=False):
+    def get_import_table_row_count(self, exclude_oracle_flashback_deletes=False):
 
         where_statement = None
 
@@ -411,19 +415,19 @@ class operation(metaclass=Singleton):
             where_statement = "datalake_flashback_operation != 'D' or datalake_flashback_operation is null"
 
         try:
-            import_table_row_count = self.common_operations.getHiveTableRowCount(
+            import_table_row_count = self.common_operations.get_hive_table_row_count(
                 self.import_config.Hive_Import_DB,
                 self.import_config.Hive_Import_Table,
                 whereStatement=where_statement,
             )
-            self.import_config.saveHiveTableRowCount(import_table_row_count)
+            self.import_config.save_hive_table_row_count(import_table_row_count)
         except:
             logging.exception("Fatal error when reading Hive table row count")
             self.import_config.remove_temporary_files()
             sys.exit(1)
 
-    def getSparkTableRowCount(self, hive_db, hive_table, where_statement=None):
-        logging.debug("Executing import_operations.getSparkTableRowCount()")
+    def get_spark_table_row_count(self, hive_db, hive_table, where_statement=None):
+        logging.debug("Executing import_operations.get_spark_table_row_count()")
         logging.info("Reading the number of rows from %s.%s" % (hive_db, hive_table))
         row_count = 0
 
@@ -437,18 +441,20 @@ class operation(metaclass=Singleton):
         else:
             query += "limit 1"
 
-        self.startSpark()
+        self.start_spark()
         logging.info(query)
         table_size_result = self.spark.sql(query)
         row_count = int(table_size_result.first()["rowcount"])
 
         logging.debug("Rowcount from %s.%s: %s" % (hive_db, hive_table, row_count))
-        logging.debug("Executing import_operations.getSparkTableRowCount() - Finished")
+        logging.debug(
+            "Executing import_operations.get_spark_table_row_count() - Finished"
+        )
         return row_count
 
-    def getTargetTableRowCount(self, incrementalMax=None):
+    def get_target_table_row_count(self, incrementalMax=None):
         try:
-            where_statement = self.import_config.getIncrWhereStatement(
+            where_statement = self.import_config.get_incr_where_statement(
                 ignoreIfOnlyIncrMax=True,
                 ignoreSQLwhereAddition=True,
                 incrementalMax=incrementalMax,
@@ -479,29 +485,31 @@ class operation(metaclass=Singleton):
             logging.debug("whereStatement: %s" % (where_statement))
 
             if self.import_config.etlEngine == constant.ETL_ENGINE_HIVE:
-                target_table_row_count = self.common_operations.getHiveTableRowCount(
-                    self.import_config.Hive_DB,
-                    self.import_config.Hive_Table,
-                    whereStatement=where_statement,
+                target_table_row_count = (
+                    self.common_operations.get_hive_table_row_count(
+                        self.import_config.Hive_DB,
+                        self.import_config.Hive_Table,
+                        whereStatement=where_statement,
+                    )
                 )
 
             if self.import_config.etlEngine == constant.ETL_ENGINE_SPARK:
-                target_table_row_count = self.getSparkTableRowCount(
+                target_table_row_count = self.get_spark_table_row_count(
                     self.import_config.Hive_DB,
                     self.import_config.Hive_Table,
                     where_statement=where_statement,
                 )
 
-            self.import_config.saveHiveTableRowCount(target_table_row_count)
+            self.import_config.save_hive_table_row_count(target_table_row_count)
 
         except:
             logging.exception("Fatal error when reading Hive table row count")
             self.import_config.remove_temporary_files()
             sys.exit(1)
 
-    def clearValidationData(self):
+    def clear_validation_data(self):
         try:
-            self.import_config.clearValidationData()
+            self.import_config.clear_validation_data()
         except:
             logging.exception(
                 "Fatal error when clearing validation data from previous imports"
@@ -509,35 +517,35 @@ class operation(metaclass=Singleton):
             self.import_config.remove_temporary_files()
             sys.exit(1)
 
-    def validateImportTable(self):
+    def validate_import_table(self):
         # This is executed as the first step in the ETL stage. If it's not Hive, then we dont need to execute this as the table is already verified by the import tool
         if self.import_config.etlEngine == constant.ETL_ENGINE_HIVE:
             if self.import_config.validationMethod == "customQuery":
                 if self.import_config.validationCustomQueryValidateImportTable == True:
-                    if self.import_config.validateCustomQuery() == True:
+                    if self.import_config.validate_custom_query() == True:
                         logging.info("Import table validation successful!")
             else:
                 if self.import_config.import_is_incremental == False:
-                    self.validateRowCount()
+                    self.validate_row_count()
                 else:
-                    self.validateIncrRowCount()
+                    self.validate_incr_row_count()
 
-    def validateTargetTable(self):
+    def validate_target_table(self):
         if self.import_config.validationMethod == "customQuery":
             if self.import_config.etlEngine == constant.ETL_ENGINE_SPARK:
                 raise invalidConfiguration(
                     "Custom Query validation is not supported with Spark as the ETL engine (yet)"
                 )
 
-            if self.import_config.validateCustomQuery() == True:
+            if self.import_config.validate_custom_query() == True:
                 logging.info("Target table validation successful!")
         else:
-            self.validateRowCount()
+            self.validate_row_count()
 
-    def validateRowCount(self):
-        logging.debug("Executing import_operations.validateRowCount()")
+    def validate_row_count(self):
+        logging.debug("Executing import_operations.validate_row_count()")
         try:
-            validate_result = self.import_config.validateRowCount(
+            validate_result = self.import_config.validate_row_count(
                 validateSqoop=False, incremental=False
             )
         except:
@@ -549,10 +557,10 @@ class operation(metaclass=Singleton):
             self.import_config.remove_temporary_files()
             sys.exit(1)
 
-    def validateImportRowCount(self):
-        logging.debug("Executing import_operations.validateImportRowCount()")
+    def validate_import_row_count(self):
+        logging.debug("Executing import_operations.validate_import_row_count()")
         try:
-            validate_result = self.import_config.validateRowCount(
+            validate_result = self.import_config.validate_row_count(
                 validateSqoop=True, incremental=False
             )
         except:
@@ -564,10 +572,10 @@ class operation(metaclass=Singleton):
             self.import_config.remove_temporary_files()
             sys.exit(1)
 
-    def validateIncrRowCount(self):
-        logging.debug("Executing import_operations.validateIncrRowCount()")
+    def validate_incr_row_count(self):
+        logging.debug("Executing import_operations.validate_incr_row_count()")
         try:
-            validate_result = self.import_config.validateRowCount(
+            validate_result = self.import_config.validate_row_count(
                 validateSqoop=False, incremental=True
             )
         except:
@@ -579,19 +587,19 @@ class operation(metaclass=Singleton):
             self.import_config.remove_temporary_files()
             sys.exit(1)
 
-    def getSourceTableSchema(self):
+    def get_source_table_schema(self):
         try:
             if self.import_config.mongoImport == False:
-                # Mongo gets is TableDefinition from the spark code. We cant use the getJDBCTableDefinition() for Mongo
-                self.import_config.getJDBCTableDefinition()
+                # Mongo gets is TableDefinition from the spark code. We cant use the get_jdbc_table_definition() for Mongo
+                self.import_config.get_jdbc_table_definition()
 
-            self.import_config.updateLastUpdateFromSource()
-            self.import_config.removeFKforTable()
-            self.import_config.saveColumnData()
-            self.import_config.setPrimaryKeyColumn()
-            self.import_config.saveKeyData()
-            self.import_config.saveIndexData()
-            self.import_config.saveGeneratedData()
+            self.import_config.update_last_update_from_source()
+            self.import_config.remove_fk_for_table()
+            self.import_config.save_column_data()
+            self.import_config.set_primary_key_column()
+            self.import_config.save_key_data()
+            self.import_config.save_index_data()
+            self.import_config.save_generated_data()
         except invalidConfiguration as errMsg:
             logging.error(errMsg)
             self.import_config.remove_temporary_files()
@@ -606,7 +614,7 @@ class operation(metaclass=Singleton):
             self.import_config.remove_temporary_files()
             sys.exit(1)
 
-    def discoverAndAddTablesFromSource(
+    def discover_and_add_tables_from_source(
         self,
         dbalias,
         hive_db,
@@ -619,16 +627,18 @@ class operation(metaclass=Singleton):
         only_json_output=False,
     ):
         """This is the main function to search for tables/view on source database and add them to import_tables"""
-        logging.debug("Executing import_operations.discoverAndAddTablesFromSource()")
+        logging.debug(
+            "Executing import_operations.discover_and_add_tables_from_source()"
+        )
         error_during_add = False
-        self.import_config.lookupConnectionAlias(connection_alias=dbalias)
+        self.import_config.lookup_connection_alias(connection_alias=dbalias)
 
         if self.import_config.mongoImport == False:
-            source_df = self.import_config.common_config.getJDBCtablesAndViews(
+            source_df = self.import_config.common_config.get_jdbc_tables_and_views(
                 schemaFilter=schema_filter, tableFilter=table_filter
             )
         else:
-            source_df = self.import_config.common_config.getMongoCollections(
+            source_df = self.import_config.common_config.get_mongo_collections(
                 collection_filter=table_filter
             )
 
@@ -639,7 +649,7 @@ class operation(metaclass=Singleton):
             self.import_config.remove_temporary_files()
             sys.exit(0)
 
-        import_df = self.import_config.getImportTables(hive_db=hive_db)
+        import_df = self.import_config.get_import_tables(hive_db=hive_db)
         import_df = import_df.loc[import_df["dbalias"] == dbalias].filter(
             ["source_schema", "source_table"]
         )
@@ -749,7 +759,7 @@ class operation(metaclass=Singleton):
                         self.common_operations.metastore_type
                         == constant.CATALOG_HIVE_DIRECT
                     ):
-                        add_result = self.import_config.addImportTable(
+                        add_result = self.import_config.add_import_table(
                             hive_db=hive_db,
                             hive_table=row["hiveTable"].lower(),
                             dbalias=dbalias,
@@ -759,7 +769,7 @@ class operation(metaclass=Singleton):
                         )
 
                     elif self.common_operations.metastore_type == constant.CATALOG_GLUE:
-                        add_result = self.import_config.addImportTable(
+                        add_result = self.import_config.add_import_table(
                             hive_db=hive_db,
                             hive_table=row["hiveTable"].lower(),
                             dbalias=dbalias,
@@ -800,13 +810,13 @@ class operation(metaclass=Singleton):
             print(json_result)
 
         logging.debug(
-            "Executing import_operations.discoverAndAddTablesFromSource() - Finished"
+            "Executing import_operations.discover_and_add_tables_from_source() - Finished"
         )
 
-    def checkOracleFlashbackSCNnumber(self):
+    def check_oracle_flashback_scn_number(self):
         """Checks if the Oracle Flashback SCN number used in the previous import is valid. If not, we force a full import"""
 
-        incr_where_statement = self.import_config.getIncrWhereStatement(
+        incr_where_statement = self.import_config.get_incr_where_statement(
             whereForSqoop=True
         ).replace('"', "'")
         query = "%s %s AND 1 = 0" % (
@@ -815,7 +825,7 @@ class operation(metaclass=Singleton):
         )
 
         try:
-            self.import_config.common_config.executeJDBCquery(query)
+            self.import_config.common_config.execute_jdbc_query(query)
         except SQLerror as e:
             error_msg = str(e)
             if (
@@ -827,7 +837,7 @@ class operation(metaclass=Singleton):
                 )
                 logging.warning("Reseting Oracle Flashback versions")
 
-                self.resetIncrMinMaxValues(maxValue=None)
+                self.reset_incr_min_max_values(maxValue=None)
                 self.truncateTargetTable()
                 self.import_config.sqoopIncrMinvaluePending = None
                 self.import_config.sqoopIncrMaxvaluePending = None
@@ -839,7 +849,7 @@ class operation(metaclass=Singleton):
                 )
                 logging.warning("Reseting Oracle Flashback versions")
 
-                self.resetIncrMinMaxValues(maxValue=None)
+                self.reset_incr_min_max_values(maxValue=None)
                 self.truncateTargetTable()
                 self.import_config.sqoopIncrMinvaluePending = None
                 self.import_config.sqoopIncrMaxvaluePending = None
@@ -853,46 +863,46 @@ class operation(metaclass=Singleton):
                 self.import_config.remove_temporary_files()
                 sys.exit(1)
 
-    def convertSparkTypeToBinary(self, schema):
+    def convert_spark_type_to_binary(self, schema):
         import pyspark.sql
 
         if schema.__class__ == pyspark.sql.types.StructType:
             return pyspark.sql.types.StructType(
-                [self.convertSparkTypeToBinary(f) for f in schema.fields]
+                [self.convert_spark_type_to_binary(f) for f in schema.fields]
             )
         if schema.__class__ == pyspark.sql.types.StructField:
             return pyspark.sql.types.StructField(
                 schema.name,
-                self.convertSparkTypeToBinary(schema.dataType),
+                self.convert_spark_type_to_binary(schema.dataType),
                 schema.nullable,
             )
         if schema.__class__ == pyspark.sql.types.ArrayType:
             return pyspark.sql.types.ArrayType(
-                self.convertSparkTypeToBinary(schema.elementType)
+                self.convert_spark_type_to_binary(schema.elementType)
             )
         if schema.__class__ == pyspark.sql.types.BinaryType:
             return pyspark.sql.types.StringType()
         return schema
 
-    def convertSparkSchema(self, schema, force_date_as_string=False):
+    def convert_spark_schema(self, schema, force_date_as_string=False):
         import pyspark.sql
 
         if schema.__class__ == pyspark.sql.types.StructType:
             return pyspark.sql.types.StructType(
                 [
-                    self.convertSparkSchema(f, force_date_as_string)
+                    self.convert_spark_schema(f, force_date_as_string)
                     for f in schema.fields
                 ]
             )
         if schema.__class__ == pyspark.sql.types.StructField:
             return pyspark.sql.types.StructField(
                 schema.name,
-                self.convertSparkSchema(schema.dataType, force_date_as_string),
+                self.convert_spark_schema(schema.dataType, force_date_as_string),
                 schema.nullable,
             )
         if schema.__class__ == pyspark.sql.types.ArrayType:
             return pyspark.sql.types.ArrayType(
-                self.convertSparkSchema(schema.elementType, force_date_as_string)
+                self.convert_spark_schema(schema.elementType, force_date_as_string)
             )
         if schema.__class__ == pyspark.sql.types.NullType:
             return pyspark.sql.types.StringType()
@@ -904,17 +914,17 @@ class operation(metaclass=Singleton):
                 return pyspark.sql.types.StringType()
         return schema
 
-    def runSparkImportForMongo(self):
-        logging.debug("Executing import_operations.runSparkImportForMongo()")
+    def run_spark_import_for_mongo(self):
+        logging.debug("Executing import_operations.run_spark_import_for_mongo()")
 
-        self.sparkStartTimestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
-        self.sparkStartUTS = int(time.time())
+        self.spark_start_timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
+        self.spark_start_uts = int(time.time())
         spark_query = ""
 
         # Fetch the number of executors that should be used.
-        # This is already handled in self.import_config.calculateJobMappers, so we use that
+        # This is already handled in self.import_config.calculate_job_mappers, so we use that
         # function for this even if we dont need the JobMappers
-        self.import_config.calculateJobMappers()
+        self.import_config.calculate_job_mappers()
 
         # Override Spark Executor memory if it's set on the import table configuration
         if (
@@ -1066,7 +1076,7 @@ class operation(metaclass=Singleton):
 
         sc = SparkContext(conf=conf)
         sc.addPyFile("%s/bin/common/sparkUDF.py" % (os.environ["DBIMPORT_HOME"]))
-        from sparkUDF import base64EncodeArray, parseStructDate
+        from sparkUDF import base64_encode_array, parse_struct_date
 
         sys.stdout.flush()
 
@@ -1094,8 +1104,8 @@ class operation(metaclass=Singleton):
 
         print("Loading Schema from Mongo")
         sys.stdout.flush()
-        spark_schema = self.convertSparkSchema(df.schema, force_date_as_string=False)
-        spark_schema_string = self.convertSparkSchema(
+        spark_schema = self.convert_spark_schema(df.schema, force_date_as_string=False)
+        spark_schema_string = self.convert_spark_schema(
             df.schema, force_date_as_string=True
         )
         df = spark.read.format("mongo").schema(spark_schema).load()
@@ -1137,7 +1147,7 @@ class operation(metaclass=Singleton):
                 correct_date_columns[column] = column_type
 
         # Convert the column in the DF based on the fact that it can be converted or not to a timestamp
-        udf_parse_struct_date = udf(parseStructDate, pyspark.sql.types.StringType())
+        udf_parse_struct_date = udf(parse_struct_date, pyspark.sql.types.StringType())
 
         for column in incorrect_date_columns:
             print("Converting date/timestamp column '%s'" % (column))
@@ -1164,12 +1174,14 @@ class operation(metaclass=Singleton):
         column_types_binary = {}
         for column, column_type in columns_and_types:
             if "struct<subType:tinyint,data:binary>" in data_types[column]:
-                column_types_binary[column] = self.convertSparkTypeToBinary(column_type)
+                column_types_binary[column] = self.convert_spark_type_to_binary(
+                    column_type
+                )
 
         for column, column_type in column_types_binary.items():
             print("Converting binary column '%s'" % (column))
             sys.stdout.flush()
-            udf_base64_encode_array = udf(base64EncodeArray, column_type)
+            udf_base64_encode_array = udf(base64_encode_array, column_type)
             df_string = df_string.withColumn(column, udf_base64_encode_array(column))
 
         sys.stdout.flush()
@@ -1229,7 +1241,7 @@ class operation(metaclass=Singleton):
         sys.stdout.flush()
 
         # As the import can take a very long time on a large table, we need to verify that the MySQL connection against the configuration database is still valid
-        self.import_config.reconnectConfigDatabase()
+        self.import_config.reconnect_config_database()
 
         column_dict = {}
         for column in data_types:
@@ -1267,11 +1279,11 @@ class operation(metaclass=Singleton):
         self.import_config.common_config.source_keys_df = result_df = pd.DataFrame()
 
         # Update import_columns with column information
-        self.getSourceTableSchema()
+        self.get_source_table_schema()
 
         try:
-            self.import_config.saveImportStatistics(
-                self.sparkStartUTS,
+            self.import_config.save_import_statistics(
+                self.spark_start_uts,
                 sqoop_size=size_written_by_spark,
                 sqoop_rows=rows_written_by_spark,
                 sqoop_mappers=self.import_config.sqlSessions,
@@ -1281,10 +1293,12 @@ class operation(metaclass=Singleton):
             self.import_config.remove_temporary_files()
             sys.exit(1)
 
-        logging.debug("Executing import_operations.runSparkImportForMongo() - Finished")
+        logging.debug(
+            "Executing import_operations.run_spark_import_for_mongo() - Finished"
+        )
 
-    def startSpark(self):
-        logging.debug("Executing import_operations.startSpark()")
+    def start_spark(self):
+        logging.debug("Executing import_operations.start_spark()")
 
         if self.spark != None:
             # Spark is already running. Skip this
@@ -1531,7 +1545,7 @@ class operation(metaclass=Singleton):
                 )
 
         if (
-            self.import_config.common_config.getConfigValue(
+            self.import_config.common_config.get_config_value(
                 key="timestamp_with_timezone"
             )
             == False
@@ -1541,9 +1555,9 @@ class operation(metaclass=Singleton):
             conf.set("spark.sql.timestampType", "TIMESTAMP_NTZ")
 
         sys.stdout.flush()
-        self.sparkContext = pyspark.context.SparkContext(conf=conf)
+        self.spark_context = pyspark.context.SparkContext(conf=conf)
         sys.stdout.flush()
-        self.spark = pyspark.sql.SparkSession(self.sparkContext)
+        self.spark = pyspark.sql.SparkSession(self.spark_context)
         sys.stdout.flush()
 
         spark_version_split = self.spark.version.split(".")
@@ -1560,13 +1574,13 @@ class operation(metaclass=Singleton):
             spark_major_version == 2
             and self.import_config.etlEngine == constant.ETL_ENGINE_SPARK
         ):
-            self.stopSpark()
+            self.stop_spark()
             raise invalidConfiguration(
                 "Using Spark as the ETL engine is only supported in Spark3."
             )
         elif spark_major_version == 3 and spark_minor_version != 4:
             if (
-                self.import_config.common_config.getConfigValue(
+                self.import_config.common_config.get_config_value(
                     key="timestamp_with_timezone"
                 )
                 == False
@@ -1579,7 +1593,7 @@ class operation(metaclass=Singleton):
                     "true",
                 )
 
-        self.sparkContext.addPyFile(
+        self.spark_context.addPyFile(
             "%s/bin/common/sparkUDF2.py" % (os.environ["DBIMPORT_HOME"])
         )
         import sparkUDF2
@@ -1587,35 +1601,37 @@ class operation(metaclass=Singleton):
         spark_udf = sparkUDF2.sparkUDFClass()
 
         # Anonymization of data in columns
-        spark_udf.setSeedString(self.import_config.common_config.getAnonymizationSeed())
+        spark_udf.set_seed_string(
+            self.import_config.common_config.get_anonymization_seed()
+        )
 
         if spark_major_version == 2:
             from pyspark.sql.functions import udf
 
-            self.udfHashColumn = udf(
-                spark_udf.hashColumn, pyspark.sql.types.StringType()
+            self.udf_hash_column = udf(
+                spark_udf.hash_column, pyspark.sql.types.StringType()
             )
-            self.udfReplaceCharWithStar = udf(
-                spark_udf.replaceCharWithStar, pyspark.sql.types.StringType()
+            self.udf_replace_char_with_star = udf(
+                spark_udf.replace_char_with_star, pyspark.sql.types.StringType()
             )
-            self.udfShowFirstFourCharacters = udf(
-                spark_udf.showFirstFourCharacters, pyspark.sql.types.StringType()
+            self.udf_show_first_four_characters = udf(
+                spark_udf.show_first_four_characters, pyspark.sql.types.StringType()
             )
         else:
-            self.udfHashColumn = pyspark.sql.functions.udf(
-                spark_udf.hashColumn, pyspark.sql.types.StringType()
+            self.udf_hash_column = pyspark.sql.functions.udf(
+                spark_udf.hash_column, pyspark.sql.types.StringType()
             )
-            self.udfReplaceCharWithStar = pyspark.sql.functions.udf(
-                spark_udf.replaceCharWithStar, pyspark.sql.types.StringType()
+            self.udf_replace_char_with_star = pyspark.sql.functions.udf(
+                spark_udf.replace_char_with_star, pyspark.sql.types.StringType()
             )
-            self.udfShowFirstFourCharacters = pyspark.sql.functions.udf(
-                spark_udf.showFirstFourCharacters, pyspark.sql.types.StringType()
+            self.udf_show_first_four_characters = pyspark.sql.functions.udf(
+                spark_udf.show_first_four_characters, pyspark.sql.types.StringType()
             )
 
         # get Yarn info
-        self.yarnApplicationID = self.sparkContext.applicationId
+        self.yarnApplicationID = self.spark_context.applicationId
         logging.info("Yarn application started with id %s" % (self.yarnApplicationID))
-        self.import_config.common_config.updateYarnStatistics(
+        self.import_config.common_config.update_yarn_statistics(
             self.yarnApplicationID, "spark"
         )
 
@@ -1623,17 +1639,17 @@ class operation(metaclass=Singleton):
 
         self.spark.sql("set spark.sql.orc.impl=native")
 
-        logging.debug("Executing import_operations.startSpark()")
+        logging.debug("Executing import_operations.start_spark()")
 
-    def stopSpark(self):
+    def stop_spark(self):
 
         # This might be called multiple times. Just return in case it's already closed
-        if self.sparkContext == None:
+        if self.spark_context == None:
             return
 
         # Connect to the Spark UI and request the API to get the total number of Executors used. This will be saved in the 'yarn_statistics' table
         spark_url = "%s/api/v1/applications/%s/allexecutors" % (
-            self.sparkContext.uiWebUrl,
+            self.spark_context.uiWebUrl,
             self.yarnApplicationID,
         )
         self.kerberosPrincipal = configuration.get("Kerberos", "principal")
@@ -1652,24 +1668,24 @@ class operation(metaclass=Singleton):
             if i["id"] != "driver":
                 spark_executor_count += 1
 
-        self.import_config.common_config.updateYarnStatistics(
+        self.import_config.common_config.update_yarn_statistics(
             self.yarnApplicationID, "spark", yarn_containers_total=spark_executor_count
         )
 
         logging.info("Stopping Spark context")
-        self.sparkContext.stop()
-        self.sparkContext = None
+        self.spark_context.stop()
+        self.spark_context = None
         self.spark = None
 
-    def runSparkImport(self, pk_only_import, incremental_max=None):
-        logging.debug("Executing import_operations.runSparkImport()")
+    def run_spark_import(self, pk_only_import, incremental_max=None):
+        logging.debug("Executing import_operations.run_spark_import()")
 
-        self.sparkStartTimestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
-        self.sparkStartUTS = int(time.time())
+        self.spark_start_timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
+        self.spark_start_uts = int(time.time())
         spark_query = ""
 
         # Fetch the number of executors and sql splits that should be used
-        self.import_config.calculateJobMappers()
+        self.import_config.calculate_job_mappers()
 
         row_count = 0
         incr_where_statement = ""
@@ -1680,17 +1696,17 @@ class operation(metaclass=Singleton):
             != constant.IMPORT_PHASE_MSSQL_CHANGE_TRACKING
         ):
             if self.import_config.common_config.jdbc_servertype == constant.SNOWFLAKE:
-                incr_where_statement = self.import_config.getIncrWhereStatement(
+                incr_where_statement = self.import_config.get_incr_where_statement(
                     whereForSqoop=True, incrementalMax=incremental_max
                 )
             else:
-                incr_where_statement = self.import_config.getIncrWhereStatement(
+                incr_where_statement = self.import_config.get_incr_where_statement(
                     whereForSqoop=True, incrementalMax=incremental_max
                 ).replace('"', "'")
 
             if incr_where_statement == "":
                 # DBImport is unable to find the max value for the configured incremental column. Is the table empty?
-                row_count = self.import_config.common_config.getJDBCTableRowCount(
+                row_count = self.import_config.common_config.get_jdbc_table_row_count(
                     self.import_config.source_schema, self.import_config.source_table
                 )
                 if row_count == 0:
@@ -1699,19 +1715,19 @@ class operation(metaclass=Singleton):
                         logging.warning(
                             "There are no rows in the source table. As this is an incremental import, spark will not run"
                         )
-                        self.import_config.saveImportStatistics(
+                        self.import_config.save_import_statistics(
                             self.sqoopStartUTS,
                             sqoop_size=0,
                             sqoop_rows=0,
                             sqoop_mappers=0,
                         )
-                        self.import_config.saveSourceTableRowCount(
+                        self.import_config.save_source_table_row_count(
                             row_count=0, incr=False
                         )
-                        self.import_config.saveSourceTableRowCount(
+                        self.import_config.save_source_table_row_count(
                             row_count=0, incr=True, print_info=False
                         )
-                        self.deleteSqoopHdfsLocation()
+                        self.delete_sqoop_hdfs_location()
                     except:
                         logging.exception("Fatal error when saving sqoop statistics")
                         self.import_config.remove_temporary_files()
@@ -1726,7 +1742,7 @@ class operation(metaclass=Singleton):
 
         # Fetch Min and Max values for Boundary query
         if self.import_config.sqlSessions > 1:
-            self.import_config.generateSqoopSplitBy()
+            self.import_config.generate_sqoop_split_by()
             if (
                 self.import_config.import_is_incremental == True
                 and self.import_config.splitByColumn
@@ -1746,10 +1762,10 @@ class operation(metaclass=Singleton):
                     min_max_dict["max"] = incremental_max
                 else:
                     # Generate the SQL that fetch the min and max values from the column that is defined in self.import_config.splitByColumn
-                    min_max_dict = self.import_config.getMinMaxBoundaryValues()
+                    min_max_dict = self.import_config.get_min_max_boundary_values()
             else:
                 # Generate the SQL that fetch the min and max values from the column that is defined in self.import_config.splitByColumn
-                min_max_dict = self.import_config.getMinMaxBoundaryValues()
+                min_max_dict = self.import_config.get_min_max_boundary_values()
         else:
             min_max_dict = {}
             min_max_dict["min"] = "Unknown"
@@ -1761,24 +1777,24 @@ class operation(metaclass=Singleton):
             == constant.IMPORT_PHASE_MSSQL_CHANGE_TRACKING
         ):
             spark_query = "(%s) %s" % (
-                self.import_config.getSQLtoReadFromSourceWithMSSQLChangeTracking(),
+                self.import_config.get_sql_to_read_from_source_with_mssql_change_tracking(),
                 self.Hive_Table,
             )
         elif incr_where_statement != "":
             spark_query = "(%s where %s) %s" % (
-                self.import_config.getSQLtoReadFromSource(),
+                self.import_config.get_sql_to_read_from_source(),
                 incr_where_statement,
                 self.Hive_Table,
             )
-        elif self.import_config.getSQLWhereAddition() != None:
+        elif self.import_config.get_sql_where_addition() != None:
             spark_query = "(%s where %s) %s" % (
-                self.import_config.getSQLtoReadFromSource(),
-                self.import_config.getSQLWhereAddition(),
+                self.import_config.get_sql_to_read_from_source(),
+                self.import_config.get_sql_where_addition(),
                 self.Hive_Table,
             )
         else:
             spark_query = "(%s) %s" % (
-                self.import_config.getSQLtoReadFromSource(),
+                self.import_config.get_sql_to_read_from_source(),
                 self.Hive_Table,
             )
 
@@ -1790,10 +1806,10 @@ class operation(metaclass=Singleton):
         # 		sys.exit(1)
 
         # Start the spark session
-        self.startSpark()
+        self.start_spark()
         import pyspark
 
-        quote_around_column = self.import_config.common_config.getQuoteAroundColumn()
+        quote_around_column = self.import_config.common_config.get_quote_around_column()
         partition_column = "%s%s%s" % (
             quote_around_column,
             str(self.import_config.splitByColumn).lower(),
@@ -1831,7 +1847,7 @@ class operation(metaclass=Singleton):
 
         # Only run the import if the stage have a shortname of "spark". This way, we dont have to bother about individual stage numbers
         if (
-            self.import_config.getStageShortName(self.import_config.getStage())
+            self.import_config.get_stage_short_name(self.import_config.get_stage())
             == "spark"
         ):
             print("")
@@ -1866,7 +1882,7 @@ class operation(metaclass=Singleton):
                 )
 
             # Get a Pandas DF with columnames and anonymization function
-            anonymization_function = self.import_config.getAnonymizationFunction()
+            anonymization_function = self.import_config.get_anonymization_function()
 
             for index, row in anonymization_function.iterrows():
                 c_name = row["source_column_name"]
@@ -1879,11 +1895,13 @@ class operation(metaclass=Singleton):
                 sys.stdout.flush()
 
                 if c_function == "Hash":
-                    df = df.withColumn(c_name, self.udfHashColumn(c_name))
+                    df = df.withColumn(c_name, self.udf_hash_column(c_name))
                 elif c_function == "Replace with star":
-                    df = df.withColumn(c_name, self.udfReplaceCharWithStar(c_name))
+                    df = df.withColumn(c_name, self.udf_replace_char_with_star(c_name))
                 elif c_function == "Show first 4 chars":
-                    df = df.withColumn(c_name, self.udfShowFirstFourCharacters(c_name))
+                    df = df.withColumn(
+                        c_name, self.udf_show_first_four_characters(c_name)
+                    )
 
             # Write ORC files
             sys.stdout.flush()
@@ -1905,14 +1923,14 @@ class operation(metaclass=Singleton):
                 # ETL Engine is Spark, that means IceBerg tables
 
                 if (
-                    self.common_operations.checkTable(
+                    self.common_operations.check_table(
                         self.import_config.Hive_Import_DB,
                         self.import_config.Hive_Import_Table,
                     )
                     == True
                 ):
                     if (
-                        self.common_operations.isTableExternalIcebergFormat(
+                        self.common_operations.is_table_external_iceberg_format(
                             self.import_config.Hive_Import_DB,
                             self.import_config.Hive_Import_Table,
                         )
@@ -1922,8 +1940,8 @@ class operation(metaclass=Singleton):
                         logging.warning(
                             "Staging table exists and is not an Iceberg table. Dropping the staging table"
                         )
-                        self.common_operations.connectToHive(forceSkipTest=True)
-                        self.common_operations.dropHiveTable(
+                        self.common_operations.connect_to_hive(forceSkipTest=True)
+                        self.common_operations.drop_hive_table(
                             self.import_config.Hive_Import_DB,
                             self.import_config.Hive_Import_Table,
                         )
@@ -2024,12 +2042,12 @@ class operation(metaclass=Singleton):
             sys.stdout.flush()
 
             # As the import can take a very long time on a large table, we need to verify that the MySQL connection against the configuration database is still valid
-            self.import_config.reconnectConfigDatabase()
+            self.import_config.reconnect_config_database()
 
             if pk_only_import == False:
                 try:
-                    self.import_config.saveImportStatistics(
-                        self.sparkStartUTS,
+                    self.import_config.save_import_statistics(
+                        self.spark_start_uts,
                         sqoop_size=size_written_by_spark,
                         sqoop_rows=rows_written_by_spark,
                         sqoop_mappers=self.import_config.sqlSessions,
@@ -2044,13 +2062,13 @@ class operation(metaclass=Singleton):
                     self.import_config.importPhase
                     == constant.IMPORT_PHASE_MSSQL_CHANGE_TRACKING
                 ):
-                    self.import_config.saveSourceTableRowCount(
+                    self.import_config.save_source_table_row_count(
                         row_count=rows_written_by_spark, incr=True, print_info=True
                     )
 
         if self.import_config.etlEngine == constant.ETL_ENGINE_HIVE:
             # If it's the Spark ETL engine, we need the spark context later in the import
-            self.stopSpark()
+            self.stop_spark()
 
             print(" ________________________ ")
             print("|                        |")
@@ -2059,10 +2077,12 @@ class operation(metaclass=Singleton):
             print("")
             sys.stdout.flush()
 
-        logging.debug("Executing import_operations.runSparkImport() - Finished")
+        logging.debug("Executing import_operations.run_spark_import() - Finished")
 
-    def purgeIcebergVersionsOnTargetTable(self):
-        logging.debug("Executing import_operations.purgeIcebergVersionsOnTargetTable()")
+    def purge_iceberg_versions_on_target_table(self):
+        logging.debug(
+            "Executing import_operations.purge_iceberg_versions_on_target_table()"
+        )
         # Removes old Iceberg snapshot version on the target table
 
         if self.import_config.etlEngine == constant.ETL_ENGINE_HIVE:
@@ -2076,7 +2096,7 @@ class operation(metaclass=Singleton):
         delete_older_than_ref = datetime.utcnow() - timedelta(hours=24)
         delete_older_than = delete_older_than_ref.strftime("%Y-%m-%d %H:%M:%S.000")
 
-        self.startSpark()
+        self.start_spark()
         logging.info("Expire older Iceberg snapshots on Target table")
         # logging.warning("LINE REMARKED - MUST BE FIXED")
         self.spark.sql(
@@ -2100,11 +2120,11 @@ class operation(metaclass=Singleton):
         )
 
         logging.debug(
-            "Executing import_operations.purgeIcebergVersionsOnTargetTable() - Finsihed"
+            "Executing import_operations.purge_iceberg_versions_on_target_table() - Finsihed"
         )
 
-    def deleteSqoopHdfsLocation(self):
-        logging.debug("Executing import_operations.deleteSqoopHdfsLocation()")
+    def delete_sqoop_hdfs_location(self):
+        logging.debug("Executing import_operations.delete_sqoop_hdfs_location()")
         logging.info(
             "Deleting old imported data from previous DBImport executions on HDFS"
         )
@@ -2134,17 +2154,17 @@ class operation(metaclass=Singleton):
         std_out, std_err = hdfs_proc.communicate()
 
         logging.debug(
-            "Executing import_operations.deleteSqoopHdfsLocation() - Finished"
+            "Executing import_operations.delete_sqoop_hdfs_location() - Finished"
         )
 
-    def runSqoopImport(self, pk_only_import, incremental_max=None):
-        logging.debug("Executing import_operations.runSqoopImport()")
+    def run_sqoop_import(self, pk_only_import, incremental_max=None):
+        logging.debug("Executing import_operations.run_sqoop_import()")
 
-        self.sqoopStartTimestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
+        self.sqoop_start_timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
         self.sqoopStartUTS = int(time.time())
 
         # Check if any column is anonymized. If it is, we need to exit as that is only supported with Spark
-        if self.import_config.isAnyColumnAnonymized() == True:
+        if self.import_config.is_any_column_anonymized() == True:
             logging.error(
                 "There are column in this table that is configured for anonymization. Those functions are only supported by spark and not by sqoop."
             )
@@ -2152,14 +2172,14 @@ class operation(metaclass=Singleton):
             sys.exit(1)
 
         # Fetch the number of mappers that should be used
-        self.import_config.calculateJobMappers()
+        self.import_config.calculate_job_mappers()
 
-        self.sqoopLaunchedMapTasks = None
-        self.sqoopFailedMapTasks = None
-        self.sqoopKilledMapTasks = None
-        self.sqoopLaunchedReduceTasks = None
-        self.sqoopFailedReduceTasks = None
-        self.sqoopKilledReduceTasks = None
+        self.sqoop_launched_map_tasks = None
+        self.sqoop_failed_map_tasks = None
+        self.sqoop_killed_map_tasks = None
+        self.sqoop_launched_reduce_tasks = None
+        self.sqoop_failed_reduce_tasks = None
+        self.sqoop_killed_reduce_tasks = None
 
         # Sets the correct sqoop table and schema that will be used if a custom SQL is not used
         sqoop_query = ""
@@ -2221,9 +2241,9 @@ class operation(metaclass=Singleton):
         # Handle mappers, split-by with custom query
         if sqoop_query != "":
             if "split-by" not in self.import_config.sqoop_options.lower():
-                self.import_config.generateSqoopSplitBy()
+                self.import_config.generate_sqoop_split_by()
 
-        self.import_config.generateSqoopBoundaryQuery()
+        self.import_config.generate_sqoop_boundary_query()
 
         # Handle the situation where the source dont have a PK and there is no split-by (force mappers to 1)
         if (
@@ -2342,12 +2362,12 @@ class operation(metaclass=Singleton):
             )
 
         if self.import_config.import_is_incremental == True and pk_only_import == False:
-            incr_where_statement = self.import_config.getIncrWhereStatement(
+            incr_where_statement = self.import_config.get_incr_where_statement(
                 whereForSqoop=True, incrementalMax=incremental_max
             ).replace('"', "'")
             if incr_where_statement == "":
                 # DBImport is unable to find the max value for the configured incremental column. Is the table empty?
-                row_count = self.import_config.common_config.getJDBCTableRowCount(
+                row_count = self.import_config.common_config.get_jdbc_table_row_count(
                     self.import_config.source_schema, self.import_config.source_table
                 )
                 if row_count == 0:
@@ -2356,19 +2376,19 @@ class operation(metaclass=Singleton):
                         logging.warning(
                             "There are no rows in the source table. As this is an incremental import, sqoop will not run"
                         )
-                        self.import_config.saveImportStatistics(
+                        self.import_config.save_import_statistics(
                             self.sqoopStartUTS,
                             sqoop_size=0,
                             sqoop_rows=0,
                             sqoop_mappers=0,
                         )
-                        self.import_config.saveSourceTableRowCount(
+                        self.import_config.save_source_table_row_count(
                             row_count=0, incr=False
                         )
-                        self.import_config.saveSourceTableRowCount(
+                        self.import_config.save_source_table_row_count(
                             row_count=0, incr=True, print_info=False
                         )
-                        self.deleteSqoopHdfsLocation()
+                        self.delete_sqoop_hdfs_location()
                     except:
                         logging.exception("Fatal error when saving sqoop statistics")
                         self.import_config.remove_temporary_files()
@@ -2393,23 +2413,23 @@ class operation(metaclass=Singleton):
                 self.import_config.import_is_incremental == True
                 and pk_only_import == False
             ):
-                if self.import_config.getSQLWhereAddition() != None:
+                if self.import_config.get_sql_where_addition() != None:
                     sqoop_command.extend(
                         [
                             "--where",
                             "%s and %s"
                             % (
                                 incr_where_statement,
-                                self.import_config.getSQLWhereAddition(),
+                                self.import_config.get_sql_where_addition(),
                             ),
                         ]
                     )
                 else:
                     sqoop_command.extend(["--where", incr_where_statement])
             else:
-                if self.import_config.getSQLWhereAddition() != None:
+                if self.import_config.get_sql_where_addition() != None:
                     sqoop_command.extend(
-                        ["--where", self.import_config.getSQLWhereAddition()]
+                        ["--where", self.import_config.get_sql_where_addition()]
                     )
             sqoop_command.extend(sqoop_source_schema)
         else:
@@ -2425,12 +2445,15 @@ class operation(metaclass=Singleton):
                     ]
                 )
             else:
-                if self.import_config.getSQLWhereAddition() != None:
+                if self.import_config.get_sql_where_addition() != None:
                     sqoop_command.extend(
                         [
                             "--query",
                             "%s where $CONDITIONS and %s"
-                            % (sqoop_query, self.import_config.getSQLWhereAddition()),
+                            % (
+                                sqoop_query,
+                                self.import_config.get_sql_where_addition(),
+                            ),
                         ]
                     )
                 else:
@@ -2459,7 +2482,7 @@ class operation(metaclass=Singleton):
                 print(row)
                 sys.stdout.flush()
                 sqoop_output += row + "\n"
-                self.parseSqoopOutput(row)
+                self.parse_sqoop_output(row)
 
         # Print what is left in output after sqoop finished
         for row in sh_session.stdout.readlines():
@@ -2468,7 +2491,7 @@ class operation(metaclass=Singleton):
                 print(row)
                 sys.stdout.flush()
                 sqoop_output += row + "\n"
-                self.parseSqoopOutput(row)
+                self.parse_sqoop_output(row)
 
         print(" ________________________ ")
         print("|                        |")
@@ -2477,7 +2500,7 @@ class operation(metaclass=Singleton):
         print("")
 
         # As the import can take a very long time on a large table, we need to verify that the MySQL connection against the configuration database is still valid
-        self.import_config.reconnectConfigDatabase()
+        self.import_config.reconnect_config_database()
 
         # At this stage, the entire sqoop job is run and we fetched all data from the output. Lets parse and store it
         if self.sqoopSize == None:
@@ -2489,20 +2512,20 @@ class operation(metaclass=Singleton):
         yarn_containers_total = 0
         yarn_containers_failed = 0
         yarn_containers_killed = 0
-        if self.sqoopLaunchedMapTasks != None:
-            yarn_containers_total += self.sqoopLaunchedMapTasks
-        if self.sqoopLaunchedReduceTasks != None:
-            yarn_containers_total += self.sqoopLaunchedReduceTasks
-        if self.sqoopFailedMapTasks != None:
-            yarn_containers_failed += self.sqoopFailedMapTasks
-        if self.sqoopFailedReduceTasks != None:
-            yarn_containers_failed += self.sqoopFailedReduceTasks
-        if self.sqoopKilledMapTasks != None:
-            yarn_containers_killed += self.sqoopKilledMapTasks
-        if self.sqoopKilledReduceTasks != None:
-            yarn_containers_killed += self.sqoopKilledReduceTasks
+        if self.sqoop_launched_map_tasks != None:
+            yarn_containers_total += self.sqoop_launched_map_tasks
+        if self.sqoop_launched_reduce_tasks != None:
+            yarn_containers_total += self.sqoop_launched_reduce_tasks
+        if self.sqoop_failed_map_tasks != None:
+            yarn_containers_failed += self.sqoop_failed_map_tasks
+        if self.sqoop_failed_reduce_tasks != None:
+            yarn_containers_failed += self.sqoop_failed_reduce_tasks
+        if self.sqoop_killed_map_tasks != None:
+            yarn_containers_killed += self.sqoop_killed_map_tasks
+        if self.sqoop_killed_reduce_tasks != None:
+            yarn_containers_killed += self.sqoop_killed_reduce_tasks
 
-        self.import_config.common_config.updateYarnStatistics(
+        self.import_config.common_config.update_yarn_statistics(
             self.yarnApplicationID,
             "sqoop",
             yarn_containers_total=yarn_containers_total,
@@ -2572,14 +2595,14 @@ class operation(metaclass=Singleton):
         if self.sqoopIncrNoNewRows == True:
             # If there is no new rows, we cant get the MaxValue from the output.
             # So we need to set it to what we used to launch sqoop
-            self.sqoopIncrMaxValuePending = self.import_config.sqoop_incr_lastvalue
+            self.sqoop_incr_max_value_pending = self.import_config.sqoop_incr_lastvalue
             self.sqoopSize = 0
             self.sqoopRows = 0
             logging.warning("There are no new rows in the source table.")
 
         if pk_only_import == False:
             try:
-                self.import_config.saveImportStatistics(
+                self.import_config.save_import_statistics(
                     self.sqoopStartUTS,
                     sqoop_size=self.sqoopSize,
                     sqoop_rows=self.sqoopRows,
@@ -2590,9 +2613,9 @@ class operation(metaclass=Singleton):
                 self.import_config.remove_temporary_files()
                 sys.exit(1)
 
-        logging.debug("Executing import_operations.runSqoopImport() - Finished")
+        logging.debug("Executing import_operations.run_sqoop_import() - Finished")
 
-    def parseSqoopOutput(self, row):
+    def parse_sqoop_output(self, row):
         # 19/03/28 05:15:44 HDFS: Number of bytes written=17
         if "HDFS: Number of bytes written" in row:
             self.sqoopSize = int(row.split("=")[1])
@@ -2603,7 +2626,7 @@ class operation(metaclass=Singleton):
 
         # 19/04/23 17:19:58 INFO tool.ImportTool:   --last-value 34
         if "tool.ImportTool:   --last-value" in row:
-            self.sqoopIncrMaxValuePending = row.split("last-value ")[1].strip()
+            self.sqoop_incr_max_value_pending = row.split("last-value ")[1].strip()
 
         # 19/04/24 07:13:00 INFO tool.ImportTool: No new rows detected since last import.
         if "No new rows detected since last import" in row:
@@ -2612,48 +2635,48 @@ class operation(metaclass=Singleton):
         # 23/10/04 04:52:07 INFO impl.YarnClientImpl: Submitted application application_1695989285495_0371
         if "Submitted application application_" in row:
             self.yarnApplicationID = row.split("Submitted application ")[1].strip()
-            self.import_config.common_config.updateYarnStatistics(
+            self.import_config.common_config.update_yarn_statistics(
                 self.yarnApplicationID, "sqoop"
             )
 
         # Used for updating table 'yarn_statistics' after Sqoop is finished
         if "Launched map tasks=" in row:
-            self.sqoopLaunchedMapTasks = int(row.split("=")[1].strip())
+            self.sqoop_launched_map_tasks = int(row.split("=")[1].strip())
         if "Failed map tasks=" in row:
-            self.sqoopFailedMapTasks = int(row.split("=")[1].strip())
+            self.sqoop_failed_map_tasks = int(row.split("=")[1].strip())
         if "Killed map tasks=" in row:
-            self.sqoopKilledMapTasks = int(row.split("=")[1].strip())
+            self.sqoop_killed_map_tasks = int(row.split("=")[1].strip())
         if "Launched reduce tasks=" in row:
-            self.sqoopLaunchedReduceTasks = int(row.split("=")[1].strip())
+            self.sqoop_launched_reduce_tasks = int(row.split("=")[1].strip())
         if "Failed reduce tasks=" in row:
-            self.sqoopFailedReduceTasks = int(row.split("=")[1].strip())
+            self.sqoop_failed_reduce_tasks = int(row.split("=")[1].strip())
         if "Killed reduce tasks=" in row:
-            self.sqoopKilledReduceTasks = int(row.split("=")[1].strip())
+            self.sqoop_killed_reduce_tasks = int(row.split("=")[1].strip())
 
-    def connectToHive(self, forceSkipTest=False):
-        logging.debug("Executing import_operations.connectToHive()")
+    def connect_to_hive(self, forceSkipTest=False):
+        logging.debug("Executing import_operations.connect_to_hive()")
 
         if self.import_config.etlEngine == constant.ETL_ENGINE_SPARK:
             # No need to connect to Hive when ETL engine is Spark
             return
 
         try:
-            self.common_operations.connectToHive(forceSkipTest=forceSkipTest)
+            self.common_operations.connect_to_hive(forceSkipTest=forceSkipTest)
         except Exception as ex:
             logging.error(ex)
             self.import_config.remove_temporary_files()
             sys.exit(1)
 
-        if self.globalHiveConfigurationSet == False:
-            self.globalHiveConfigurationSet = True
+        if self.global_hive_configuration_set == False:
+            self.global_hive_configuration_set = True
             if self.import_config.hiveJavaHeap != None:
                 query = "set hive.tez.container.size=%s" % (
                     self.import_config.hiveJavaHeap
                 )
-                self.common_operations.executeHiveQuery(query)
+                self.common_operations.execute_hive_query(query)
             else:
                 query = "set hive.tez.container.size=3072"
-                self.common_operations.executeHiveQuery(query)
+                self.common_operations.execute_hive_query(query)
 
             if (
                 self.import_config.hiveSplitCount != None
@@ -2662,16 +2685,16 @@ class operation(metaclass=Singleton):
                 query = "set tez.grouping.split-count=%s" % (
                     self.import_config.hiveSplitCount
                 )
-                self.common_operations.executeHiveQuery(query)
+                self.common_operations.execute_hive_query(query)
 
-        logging.debug("Executing import_operations.connectToHive() - Finished")
+        logging.debug("Executing import_operations.connect_to_hive() - Finished")
 
-    def createExternalImportView(self):
-        logging.debug("Executing import_operations.createExternalImportView()")
+    def create_external_import_view(self):
+        logging.debug("Executing import_operations.create_external_import_view()")
 
-        if self.import_config.isExternalViewRequired() == True:
+        if self.import_config.is_external_view_required() == True:
             if (
-                self.common_operations.checkTable(
+                self.common_operations.check_table(
                     self.import_config.Hive_Import_DB,
                     self.import_config.Hive_Import_View,
                 )
@@ -2682,27 +2705,27 @@ class operation(metaclass=Singleton):
                 query = "create view `%s`.`%s` as %s " % (
                     self.import_config.Hive_Import_DB,
                     self.import_config.Hive_Import_View,
-                    self.import_config.getSelectForImportView(),
+                    self.import_config.get_select_for_import_view(),
                 )
 
-                self.common_operations.executeHiveQuery(query)
-                self.common_operations.reconnectHiveMetaStore()
+                self.common_operations.execute_hive_query(query)
+                self.common_operations.reconnect_hive_meta_store()
 
         logging.debug(
-            "Executing import_operations.createExternalImportView() - Finished"
+            "Executing import_operations.create_external_import_view() - Finished"
         )
 
-    def updateExternalImportView(self):
-        logging.debug("Executing import_operations.updateExternalImportView()")
+    def update_external_import_view(self):
+        logging.debug("Executing import_operations.update_external_import_view()")
 
-        if self.import_config.isExternalViewRequired() == True:
-            columns_config = self.import_config.getColumnsFromConfigDatabase(
+        if self.import_config.is_external_view_required() == True:
+            columns_config = self.import_config.get_columns_from_config_database(
                 sourceIsParquetFile=True, includeAllColumns=False
             )
 
             hive_db = self.import_config.Hive_Import_DB
             hive_view = self.import_config.Hive_Import_View
-            columns_hive = self.common_operations.getColumns(
+            columns_hive = self.common_operations.get_columns(
                 hive_db, hive_view, includeType=True, excludeDataLakeColumns=True
             )
             columns_merge = pd.merge(
@@ -2720,26 +2743,26 @@ class operation(metaclass=Singleton):
                 query = "alter view `%s`.`%s` as %s " % (
                     self.import_config.Hive_Import_DB,
                     self.import_config.Hive_Import_View,
-                    self.import_config.getSelectForImportView(),
+                    self.import_config.get_select_for_import_view(),
                 )
 
-                self.common_operations.executeHiveQuery(query)
-                self.common_operations.reconnectHiveMetaStore()
+                self.common_operations.execute_hive_query(query)
+                self.common_operations.reconnect_hive_meta_store()
 
         logging.debug(
-            "Executing import_operations.updateExternalImportView() - Finished"
+            "Executing import_operations.update_external_import_view() - Finished"
         )
 
-    def createExternalImportTable(self):
+    def create_external_import_table(self):
         if self.import_config.etlEngine == constant.ETL_ENGINE_HIVE:
-            self.createExternalTable(table_type="import")
+            self.create_external_table(table_type="import")
 
-    def createExternalTargetTable(self):
+    def create_external_target_table(self):
         if self.import_config.etlEngine == constant.ETL_ENGINE_HIVE:
-            self.createExternalTable(table_type="target")
+            self.create_external_table(table_type="target")
 
-    def createExternalTable(self, table_type=""):
-        logging.debug("Executing import_operations.createExternalImportTable()")
+    def create_external_table(self, table_type=""):
+        logging.debug("Executing import_operations.create_external_import_table()")
 
         if table_type == "import":
             hive_db = self.import_config.Hive_Import_DB
@@ -2751,10 +2774,12 @@ class operation(metaclass=Singleton):
             hive_table = self.Hive_Table
             hdfs_location = self.import_config.sqoop_hdfs_location_sparkETL
 
-        if self.common_operations.checkTable(hive_db, hive_table) == True:
+        if self.common_operations.check_table(hive_db, hive_table) == True:
             # Table exist, so we need to make sure that it's a managed table and not an external table
             if (
-                self.common_operations.isTableExternalParquetFormat(hive_db, hive_table)
+                self.common_operations.is_table_external_parquet_format(
+                    hive_db, hive_table
+                )
                 == False
                 and self.import_config.importTool == "sqoop"
             ):
@@ -2762,32 +2787,32 @@ class operation(metaclass=Singleton):
                     "Dropping %s table as it's not an external table based on parquet"
                     % (table_type)
                 )
-                self.common_operations.dropHiveTable(hive_db, hive_table)
-                self.common_operations.reconnectHiveMetaStore()
+                self.common_operations.drop_hive_table(hive_db, hive_table)
+                self.common_operations.reconnect_hive_meta_store()
 
-            if self.common_operations.isTableExternalOrcFormat(
+            if self.common_operations.is_table_external_orc_format(
                 hive_db, hive_table
             ) == False and self.import_config.importTool in ("spark", "local"):
                 logging.info(
                     "Dropping %s table as it's not an external table based on ORC"
                     % (table_type)
                 )
-                self.common_operations.dropHiveTable(hive_db, hive_table)
-                self.common_operations.reconnectHiveMetaStore()
+                self.common_operations.drop_hive_table(hive_db, hive_table)
+                self.common_operations.reconnect_hive_meta_store()
 
-        if self.common_operations.checkTable(hive_db, hive_table) == False:
+        if self.common_operations.check_table(hive_db, hive_table) == False:
             # Import table does not exist. We just create it in that case
             logging.info("Creating External %s Table" % (table_type))
 
             query = "create external table `%s`.`%s` (" % (hive_db, hive_table)
-            columns_df = self.import_config.getColumnsFromConfigDatabase(
+            columns_df = self.import_config.get_columns_from_config_database(
                 includeAllColumns=False
             )
 
             if self.import_config.importTool == "sqoop":
-                columns_df = self.updateColumnsForImportTable(columns_df)
+                columns_df = self.update_columns_for_import_table(columns_df)
             # 			elif self.import_config.importTool == "spark":
-            # 				columnsDF = self.updateColumnsForImportTable(columnsDF, replaceNameOnly=True)
+            # 				columnsDF = self.update_columns_for_import_table(columnsDF, replaceNameOnly=True)
 
             first_loop = True
 
@@ -2817,7 +2842,7 @@ class operation(metaclass=Singleton):
 
             query += ") "
 
-            table_comment = self.import_config.getHiveTableComment()
+            table_comment = self.import_config.get_hive_table_comment()
             if table_comment != None:
                 query += 'COMMENT "%s" ' % (table_comment)
 
@@ -2835,34 +2860,34 @@ class operation(metaclass=Singleton):
                     hdfs_location,
                 )
 
-            self.common_operations.executeHiveQuery(query)
-            self.common_operations.reconnectHiveMetaStore()
+            self.common_operations.execute_hive_query(query)
+            self.common_operations.reconnect_hive_meta_store()
 
         logging.debug(
-            "Executing import_operations.createExternalImportTable() - Finished"
+            "Executing import_operations.create_external_import_table() - Finished"
         )
 
-    def convertHiveTableToACID(self):
+    def convert_hive_table_to_acid(self):
         if self.import_config.etlEngine == constant.ETL_ENGINE_HIVE:
             if (
-                self.common_operations.isTableTransactional(
+                self.common_operations.is_table_transactional(
                     self.Hive_DB, self.Hive_Table
                 )
                 == False
             ):
-                self.common_operations.convertHiveTableToACID(
+                self.common_operations.convert_hive_table_to_acid(
                     self.Hive_DB,
                     self.Hive_Table,
                     createDeleteColumn=self.import_config.soft_delete_during_merge,
                     createMergeColumns=True,
                 )
 
-    def addHiveDBImportColumnsToHistoryTable(self):
+    def add_hive_dbimport_columns_to_history_table(self):
         """Will add the required DBImport columns in the Hive table"""
         logging.debug("Executing import_operations.createHiveMergeColumns()")
 
         if self.import_config.etlEngine == constant.ETL_ENGINE_SPARK:
-            self.startSpark()
+            self.start_spark()
 
         # self.Hive_ColumnName_IUD = self.import_config.Hive_ColumnName_IUD
         # self.Hive_ColumnName_HistoryTimestamp = self.import_config.Hive_ColumnName_HistoryTimestamp
@@ -2870,7 +2895,7 @@ class operation(metaclass=Singleton):
         hive_history_db = self.import_config.Hive_History_DB
         hive_history_table = self.import_config.Hive_History_Table
 
-        columns = self.common_operations.getColumns(
+        columns = self.common_operations.get_columns(
             hiveDB=hive_history_db,
             hiveTable=hive_history_table,
             includeType=False,
@@ -2887,7 +2912,7 @@ class operation(metaclass=Singleton):
                     hive_history_table,
                     self.Hive_ColumnName_Source,
                 )
-                self.common_operations.executeHiveQuery(query)
+                self.common_operations.execute_hive_query(query)
 
             elif self.import_config.etlEngine == constant.ETL_ENGINE_SPARK:
                 query = "alter table `%s`.`%s`.`%s` add columns ( %s string )" % (
@@ -2900,7 +2925,7 @@ class operation(metaclass=Singleton):
                 self.spark.sql(query)
 
             if self.common_operations.metastore_type == constant.CATALOG_HIVE_DIRECT:
-                self.common_operations.reconnectHiveMetaStore()
+                self.common_operations.reconnect_hive_meta_store()
 
         if columns[columns["name"] == self.Hive_ColumnName_IUD].empty == True:
             if self.import_config.etlEngine == constant.ETL_ENGINE_HIVE:
@@ -2908,7 +2933,7 @@ class operation(metaclass=Singleton):
                     'alter table `%s`.`%s` add columns ( %s char(1) COMMENT "Last operation of this record was I=Insert, U=Update or D=Delete")'
                     % (hive_history_db, hive_history_table, self.Hive_ColumnName_IUD)
                 )
-                self.common_operations.executeHiveQuery(query)
+                self.common_operations.execute_hive_query(query)
 
             elif self.import_config.etlEngine == constant.ETL_ENGINE_SPARK:
                 query = (
@@ -2924,7 +2949,7 @@ class operation(metaclass=Singleton):
                 self.spark.sql(query)
 
             if self.common_operations.metastore_type == constant.CATALOG_HIVE_DIRECT:
-                self.common_operations.reconnectHiveMetaStore()
+                self.common_operations.reconnect_hive_meta_store()
 
         if (
             columns[columns["name"] == self.Hive_ColumnName_HistoryTimestamp].empty
@@ -2939,7 +2964,7 @@ class operation(metaclass=Singleton):
                         self.Hive_ColumnName_HistoryTimestamp,
                     )
                 )
-                self.common_operations.executeHiveQuery(query)
+                self.common_operations.execute_hive_query(query)
 
             elif self.import_config.etlEngine == constant.ETL_ENGINE_SPARK:
                 query = (
@@ -2955,16 +2980,16 @@ class operation(metaclass=Singleton):
                 self.spark.sql(query)
 
             if self.common_operations.metastore_type == constant.CATALOG_HIVE_DIRECT:
-                self.common_operations.reconnectHiveMetaStore()
+                self.common_operations.reconnect_hive_meta_store()
 
-    def addHiveDBImportColumns(self, merge_operation):
+    def add_hive_dbimport_columns(self, merge_operation):
         """Will add the required DBImport columns in the Hive table"""
         logging.debug("Executing import_operations.createHiveMergeColumns()")
 
         if self.import_config.etlEngine == constant.ETL_ENGINE_SPARK:
-            self.startSpark()
+            self.start_spark()
 
-        columns = self.common_operations.getColumns(
+        columns = self.common_operations.get_columns(
             hiveDB=self.Hive_DB,
             hiveTable=self.Hive_Table,
             includeType=False,
@@ -2981,7 +3006,7 @@ class operation(metaclass=Singleton):
                     self.Hive_Table,
                     self.Hive_ColumnName_Source,
                 )
-                self.common_operations.executeHiveQuery(query)
+                self.common_operations.execute_hive_query(query)
 
             elif self.import_config.etlEngine == constant.ETL_ENGINE_SPARK:
                 query = "alter table `%s`.`%s`.`%s` add columns ( %s string )" % (
@@ -2994,7 +3019,7 @@ class operation(metaclass=Singleton):
                 self.spark.sql(query)
 
             if self.common_operations.metastore_type == constant.CATALOG_HIVE_DIRECT:
-                self.common_operations.reconnectHiveMetaStore()
+                self.common_operations.reconnect_hive_meta_store()
 
         if merge_operation == False:
             if self.import_config.create_datalake_import_column == True:
@@ -3016,7 +3041,7 @@ class operation(metaclass=Singleton):
                                 self.Hive_ColumnName_Import,
                             )
                         )
-                        self.common_operations.executeHiveQuery(query)
+                        self.common_operations.execute_hive_query(query)
 
                     elif self.import_config.etlEngine == constant.ETL_ENGINE_SPARK:
                         query = "alter table `%s`.`%s`.`%s` rename column %s to %s" % (
@@ -3034,7 +3059,7 @@ class operation(metaclass=Singleton):
                         self.common_operations.metastore_type
                         == constant.CATALOG_HIVE_DIRECT
                     ):
-                        self.common_operations.reconnectHiveMetaStore()
+                        self.common_operations.reconnect_hive_meta_store()
 
                 # elif columns[columns['name'] == 'datalake_import'].empty == True:
                 elif (
@@ -3051,7 +3076,7 @@ class operation(metaclass=Singleton):
                                 self.Hive_ColumnName_Import,
                             )
                         )
-                        self.common_operations.executeHiveQuery(query)
+                        self.common_operations.execute_hive_query(query)
 
                     elif self.import_config.etlEngine == constant.ETL_ENGINE_SPARK:
                         # query = "alter table `%s`.`%s`.`%s` add columns ( datalake_import timestamp COMMENT \"Import time from source database\" )" \
@@ -3073,7 +3098,7 @@ class operation(metaclass=Singleton):
                         self.common_operations.metastore_type
                         == constant.CATALOG_HIVE_DIRECT
                     ):
-                        self.common_operations.reconnectHiveMetaStore()
+                        self.common_operations.reconnect_hive_meta_store()
 
         else:
             # if columns[columns['name'] == 'datalake_import'].empty == False:
@@ -3091,7 +3116,7 @@ class operation(metaclass=Singleton):
                         self.Hive_ColumnName_Import,
                         self.Hive_ColumnName_Insert,
                     )
-                    self.common_operations.executeHiveQuery(query)
+                    self.common_operations.execute_hive_query(query)
 
                 elif self.import_config.etlEngine == constant.ETL_ENGINE_SPARK:
                     # query = "alter table `%s`.`%s`.`%s` rename column datalake_import to datalake_insert" \
@@ -3111,7 +3136,7 @@ class operation(metaclass=Singleton):
                     self.common_operations.metastore_type
                     == constant.CATALOG_HIVE_DIRECT
                 ):
-                    self.common_operations.reconnectHiveMetaStore()
+                    self.common_operations.reconnect_hive_meta_store()
 
             # elif columns[columns['name'] == 'datalake_insert'].empty == True:
             elif columns[columns["name"] == self.Hive_ColumnName_Insert].empty == True:
@@ -3121,7 +3146,7 @@ class operation(metaclass=Singleton):
                         'alter table `%s`.`%s` add columns ( %s timestamp COMMENT "Timestamp for insert in Datalake")'
                         % (self.Hive_DB, self.Hive_Table, self.Hive_ColumnName_Insert)
                     )
-                    self.common_operations.executeHiveQuery(query)
+                    self.common_operations.execute_hive_query(query)
 
                 elif self.import_config.etlEngine == constant.ETL_ENGINE_SPARK:
                     query = (
@@ -3140,7 +3165,7 @@ class operation(metaclass=Singleton):
                     self.common_operations.metastore_type
                     == constant.CATALOG_HIVE_DIRECT
                 ):
-                    self.common_operations.reconnectHiveMetaStore()
+                    self.common_operations.reconnect_hive_meta_store()
 
             # 			if columns[columns['name'] == 'datalake_iud'].empty == True:
             if columns[columns["name"] == self.Hive_ColumnName_IUD].empty == True:
@@ -3149,7 +3174,7 @@ class operation(metaclass=Singleton):
                         'alter table `%s`.`%s` add columns ( %s char(1) COMMENT "Last operation of this record was I=Insert, U=Update or D=Delete")'
                         % (self.Hive_DB, self.Hive_Table, self.Hive_ColumnName_IUD)
                     )
-                    self.common_operations.executeHiveQuery(query)
+                    self.common_operations.execute_hive_query(query)
 
                 elif self.import_config.etlEngine == constant.ETL_ENGINE_SPARK:
                     query = (
@@ -3168,7 +3193,7 @@ class operation(metaclass=Singleton):
                     self.common_operations.metastore_type
                     == constant.CATALOG_HIVE_DIRECT
                 ):
-                    self.common_operations.reconnectHiveMetaStore()
+                    self.common_operations.reconnect_hive_meta_store()
 
             # if columns[columns['name'] == 'datalake_update'].empty == True:
             if columns[columns["name"] == self.Hive_ColumnName_Update].empty == True:
@@ -3178,7 +3203,7 @@ class operation(metaclass=Singleton):
                         'alter table `%s`.`%s` add columns ( %s timestamp COMMENT "Timestamp for last update in Datalake")'
                         % (self.Hive_DB, self.Hive_Table, self.Hive_ColumnName_Update)
                     )
-                    self.common_operations.executeHiveQuery(query)
+                    self.common_operations.execute_hive_query(query)
 
                 elif self.import_config.etlEngine == constant.ETL_ENGINE_SPARK:
                     # query = "alter table `%s`.`%s`.`%s` add columns ( datalake_update timestamp COMMENT \"Timestamp for last update in Datalake\")" \
@@ -3199,7 +3224,7 @@ class operation(metaclass=Singleton):
                     self.common_operations.metastore_type
                     == constant.CATALOG_HIVE_DIRECT
                 ):
-                    self.common_operations.reconnectHiveMetaStore()
+                    self.common_operations.reconnect_hive_meta_store()
 
             # if columns[columns['name'] == 'datalake_delete'].empty == True and self.import_config.soft_delete_during_merge == True:
             if (
@@ -3212,7 +3237,7 @@ class operation(metaclass=Singleton):
                         'alter table `%s`.`%s` add columns ( %s timestamp COMMENT "Timestamp for soft delete in Datalake")'
                         % (self.Hive_DB, self.Hive_Table, self.Hive_ColumnName_Delete)
                     )
-                    self.common_operations.executeHiveQuery(query)
+                    self.common_operations.execute_hive_query(query)
 
                 elif self.import_config.etlEngine == constant.ETL_ENGINE_SPARK:
                     # query = "alter table `%s`.`%s`.`%s` add columns ( datalake_delete timestamp COMMENT \"Timestamp for soft delete in Datalake\")" \
@@ -3232,11 +3257,11 @@ class operation(metaclass=Singleton):
                     self.common_operations.metastore_type
                     == constant.CATALOG_HIVE_DIRECT
                 ):
-                    self.common_operations.reconnectHiveMetaStore()
+                    self.common_operations.reconnect_hive_meta_store()
 
         logging.debug("Executing import_operations.createHiveMergeColumns() - Finished")
 
-    def generateCreateTargetTableSQL(
+    def generate_create_target_table_sql(
         self,
         hive_db,
         hive_table,
@@ -3247,7 +3272,7 @@ class operation(metaclass=Singleton):
         iceberg_table=False,
     ):
         """Will generate the common create table for the target table as a list."""
-        logging.debug("Executing import_operations.generateCreateTargetTableSQL()")
+        logging.debug("Executing import_operations.generate_create_target_table_sql()")
 
         query_list = []
         if iceberg_table == True:
@@ -3258,7 +3283,7 @@ class operation(metaclass=Singleton):
             )
         else:
             query = "create table `%s`.`%s` (" % (hive_db, hive_table)
-        columns_df = self.import_config.getColumnsFromConfigDatabase(
+        columns_df = self.import_config.get_columns_from_config_database(
             includeAllColumns=False
         )
 
@@ -3280,7 +3305,7 @@ class operation(metaclass=Singleton):
         query_list.append(query)
 
         query = ") "
-        table_comment = self.import_config.getHiveTableComment()
+        table_comment = self.import_config.get_hive_table_comment()
 
         if iceberg_table == True:
             # Generate a create table statment that will be executed through Spark
@@ -3296,7 +3321,7 @@ class operation(metaclass=Singleton):
                 query += "STORED AS ORC TBLPROPERTIES ('orc.compress'='ZLIB') "
             else:
                 if (
-                    self.import_config.common_config.getConfigValue(
+                    self.import_config.common_config.get_config_value(
                         key="hive_acid_with_clusteredby"
                     )
                     == True
@@ -3305,7 +3330,7 @@ class operation(metaclass=Singleton):
                     first_column = True
 
                     if (
-                        self.import_config.getPKcolumns(pk_for_merge=True) == None
+                        self.import_config.get_pk_columns(pk_for_merge=True) == None
                     ):  # To look at both pk_column_override and pk_override_merge_only
                         logging.error(
                             "There is no Primary Key for this table. Please add one in source system or in 'pk_column_override'"
@@ -3313,7 +3338,7 @@ class operation(metaclass=Singleton):
                         self.import_config.remove_temporary_files()
                         sys.exit(1)
 
-                    for column in self.import_config.getPKcolumns(
+                    for column in self.import_config.get_pk_columns(
                         pk_for_merge=True
                     ).split(","):
                         if first_column == False:
@@ -3331,19 +3356,19 @@ class operation(metaclass=Singleton):
         query_list.append(query)
 
         logging.debug(
-            "Executing import_operations.generateCreateTargetTableSQL() - Finished"
+            "Executing import_operations.generate_create_target_table_sql() - Finished"
         )
         return query_list
 
-    def createDeleteTable(self):
-        logging.debug("Executing import_operations.createDeleteTable()")
+    def create_delete_table(self):
+        logging.debug("Executing import_operations.create_delete_table()")
 
         hive_delete_db = self.import_config.Hive_Delete_DB
         hive_delete_table = self.import_config.Hive_Delete_Table
 
         if self.import_config.etlEngine == constant.ETL_ENGINE_HIVE:
             if (
-                self.common_operations.checkTable(hive_delete_db, hive_delete_table)
+                self.common_operations.check_table(hive_delete_db, hive_delete_table)
                 == False
             ):
                 # Target table does not exist. We just create it in that case
@@ -3352,45 +3377,45 @@ class operation(metaclass=Singleton):
                     % (hive_delete_db, hive_delete_table)
                 )
                 if (
-                    self.import_config.common_config.getConfigValue(
+                    self.import_config.common_config.get_config_value(
                         key="hive_insert_only_tables"
                     )
                     == True
                 ):
-                    query_list = self.generateCreateTargetTableSQL(
+                    query_list = self.generate_create_target_table_sql(
                         hive_db=hive_delete_db,
                         hive_table=hive_delete_table,
                         acid_table=True,
                         acid_insert_only=True,
-                        restrict_columns=self.import_config.getPKcolumns(
+                        restrict_columns=self.import_config.get_pk_columns(
                             pk_for_merge=True
                         ),
                     )
                 else:
-                    query_list = self.generateCreateTargetTableSQL(
+                    query_list = self.generate_create_target_table_sql(
                         hive_db=hive_delete_db,
                         hive_table=hive_delete_table,
                         acid_table=False,
                         acid_insert_only=False,
-                        restrict_columns=self.import_config.getPKcolumns(
+                        restrict_columns=self.import_config.get_pk_columns(
                             pk_for_merge=True
                         ),
                     )
 
                 query = "".join(query_list)
 
-                self.common_operations.executeHiveQuery(query)
-                self.common_operations.reconnectHiveMetaStore()
+                self.common_operations.execute_hive_query(query)
+                self.common_operations.reconnect_hive_meta_store()
 
         if self.import_config.etlEngine == constant.ETL_ENGINE_SPARK:
             if (
-                self.common_operations.checkTable(hive_delete_db, hive_delete_table)
+                self.common_operations.check_table(hive_delete_db, hive_delete_table)
                 == True
             ):
                 # Table exist, so we need to make sure that it's an Iceberg table and not something else
 
                 if (
-                    self.common_operations.isTableExternalIcebergFormat(
+                    self.common_operations.is_table_external_iceberg_format(
                         hive_delete_db, hive_delete_table
                     )
                     == False
@@ -3398,13 +3423,13 @@ class operation(metaclass=Singleton):
                     logging.info(
                         "Delete table is not a Iceberg table. Dropping and recreating the Delete table"
                     )
-                    self.common_operations.dropHiveTable(
+                    self.common_operations.drop_hive_table(
                         hive_delete_db, hive_delete_table
                     )
 
             # We need to check again as the table might just been droped because it was an external table to begin with
             if (
-                self.common_operations.checkTable(hive_delete_db, hive_delete_table)
+                self.common_operations.check_table(hive_delete_db, hive_delete_table)
                 == False
             ):
                 logging.info(
@@ -3413,31 +3438,33 @@ class operation(metaclass=Singleton):
                 )
 
                 # Create the Iceberg table
-                query_list = self.generateCreateTargetTableSQL(
+                query_list = self.generate_create_target_table_sql(
                     hive_db=hive_delete_db,
                     hive_table=hive_delete_table,
-                    restrict_columns=self.import_config.getPKcolumns(pk_for_merge=True),
+                    restrict_columns=self.import_config.get_pk_columns(
+                        pk_for_merge=True
+                    ),
                     iceberg_table=True,
                 )
 
                 query = "".join(query_list)
 
-                self.startSpark()
+                self.start_spark()
                 logging.info(query)
                 self.spark.sql(query)
-                self.common_operations.reconnectHiveMetaStore()
+                self.common_operations.reconnect_hive_meta_store()
 
-        logging.debug("Executing import_operations.createDeleteTable() - Finished")
+        logging.debug("Executing import_operations.create_delete_table() - Finished")
 
-    def createHistoryTable(self):
-        logging.debug("Executing import_operations.createHistoryTable()")
+    def create_history_table(self):
+        logging.debug("Executing import_operations.create_history_table()")
 
         hive_history_db = self.import_config.Hive_History_DB
         hive_history_table = self.import_config.Hive_History_Table
 
         if self.import_config.etlEngine == constant.ETL_ENGINE_HIVE:
             if (
-                self.common_operations.checkTable(hive_history_db, hive_history_table)
+                self.common_operations.check_table(hive_history_db, hive_history_table)
                 == False
             ):
                 # Target table does not exist. We just create it in that case
@@ -3446,19 +3473,19 @@ class operation(metaclass=Singleton):
                     % (hive_history_db, hive_history_table)
                 )
                 if (
-                    self.import_config.common_config.getConfigValue(
+                    self.import_config.common_config.get_config_value(
                         key="hive_insert_only_tables"
                     )
                     == True
                 ):
-                    query_list = self.generateCreateTargetTableSQL(
+                    query_list = self.generate_create_target_table_sql(
                         hive_db=hive_history_db,
                         hive_table=hive_history_table,
                         acid_table=True,
                         acid_insert_only=True,
                     )
                 else:
-                    query_list = self.generateCreateTargetTableSQL(
+                    query_list = self.generate_create_target_table_sql(
                         hive_db=hive_history_db,
                         hive_table=hive_history_table,
                         acid_table=False,
@@ -3483,18 +3510,18 @@ class operation(metaclass=Singleton):
                 )
                 query += query_list[1]
 
-                self.common_operations.executeHiveQuery(query)
-                self.common_operations.reconnectHiveMetaStore()
+                self.common_operations.execute_hive_query(query)
+                self.common_operations.reconnect_hive_meta_store()
 
         if self.import_config.etlEngine == constant.ETL_ENGINE_SPARK:
             if (
-                self.common_operations.checkTable(hive_history_db, hive_history_table)
+                self.common_operations.check_table(hive_history_db, hive_history_table)
                 == True
             ):
                 # Table exist, so we need to make sure that it's an Iceberg table and not something else
 
                 if (
-                    self.common_operations.isTableExternalIcebergFormat(
+                    self.common_operations.is_table_external_iceberg_format(
                         hive_history_db, hive_history_table
                     )
                     == False
@@ -3512,7 +3539,7 @@ class operation(metaclass=Singleton):
                 )
 
                 # Create the Iceberg table
-                query_list = self.generateCreateTargetTableSQL(
+                query_list = self.generate_create_target_table_sql(
                     hive_db=hive_history_db,
                     hive_table=hive_history_table,
                     iceberg_table=True,
@@ -3536,34 +3563,37 @@ class operation(metaclass=Singleton):
                 )
                 query += query_list[1]
 
-                self.startSpark()
+                self.start_spark()
                 logging.info(query)
                 self.spark.sql(query)
-                self.common_operations.reconnectHiveMetaStore()
+                self.common_operations.reconnect_hive_meta_store()
 
-        logging.debug("Executing import_operations.createHistoryTable() - Finished")
+        logging.debug("Executing import_operations.create_history_table() - Finished")
 
-    def createTargetTable(self):
-        logging.debug("Executing import_operations.createTargetTable()")
+    def create_target_table(self):
+        logging.debug("Executing import_operations.create_target_table()")
 
         if self.import_config.etlEngine == constant.ETL_ENGINE_HIVE:
-            if self.common_operations.checkTable(self.Hive_DB, self.Hive_Table) == True:
+            if (
+                self.common_operations.check_table(self.Hive_DB, self.Hive_Table)
+                == True
+            ):
                 # Table exist, so we need to make sure that it's a managed table and not an external table
                 if (
-                    self.common_operations.isTableExternal(
+                    self.common_operations.is_table_external(
                         self.Hive_DB, self.Hive_Table
                     )
                     == True
                 ):
                     if self.import_config.importPhase == constant.IMPORT_PHASE_FULL:
                         # If the import stage is full, it's safe to drop the table and recreate it as the import have all the data anyway
-                        self.common_operations.dropHiveTable(
+                        self.common_operations.drop_hive_table(
                             self.Hive_DB, self.Hive_Table
                         )
 
             # We need to check again as the table might just been droped because it was an external table to begin with
             if (
-                self.common_operations.checkTable(self.Hive_DB, self.Hive_Table)
+                self.common_operations.check_table(self.Hive_DB, self.Hive_Table)
                 == False
             ):
                 # Target table does not exist. We just create it in that case
@@ -3572,7 +3602,7 @@ class operation(metaclass=Singleton):
                     % (self.Hive_DB, self.Hive_Table)
                 )
 
-                query_list = self.generateCreateTargetTableSQL(
+                query_list = self.generate_create_target_table_sql(
                     hive_db=self.Hive_DB,
                     hive_table=self.Hive_Table,
                     acid_table=self.import_config.create_table_with_acid,
@@ -3618,15 +3648,18 @@ class operation(metaclass=Singleton):
 
                 query += query_list[1]
 
-                self.common_operations.executeHiveQuery(query)
-                self.common_operations.reconnectHiveMetaStore()
+                self.common_operations.execute_hive_query(query)
+                self.common_operations.reconnect_hive_meta_store()
 
         if self.import_config.etlEngine == constant.ETL_ENGINE_SPARK:
-            if self.common_operations.checkTable(self.Hive_DB, self.Hive_Table) == True:
+            if (
+                self.common_operations.check_table(self.Hive_DB, self.Hive_Table)
+                == True
+            ):
                 # Table exist, so we need to make sure that it's an Iceberg table and not something else
 
                 if (
-                    self.common_operations.isTableExternalIcebergFormat(
+                    self.common_operations.is_table_external_iceberg_format(
                         self.Hive_DB, self.Hive_Table
                     )
                     == False
@@ -3635,7 +3668,7 @@ class operation(metaclass=Singleton):
                     logging.warning("Target table exists and is not an Iceberg table")
                     if self.import_config.importPhase == constant.IMPORT_PHASE_FULL:
                         # If the import stage is full, it's safe to drop the table and recreate it as the import have all the data anyway
-                        self.common_operations.dropHiveTable(
+                        self.common_operations.drop_hive_table(
                             self.Hive_DB, self.Hive_Table
                         )
                     else:
@@ -3645,7 +3678,7 @@ class operation(metaclass=Singleton):
 
             # We need to check again as the table might just been droped because it was an external table to begin with
             if (
-                self.common_operations.checkTable(self.Hive_DB, self.Hive_Table)
+                self.common_operations.check_table(self.Hive_DB, self.Hive_Table)
                 == False
             ):
                 # Target table does not exist. We just create it in that case
@@ -3655,7 +3688,7 @@ class operation(metaclass=Singleton):
                 )
 
                 # Create the Iceberg table
-                query_list = self.generateCreateTargetTableSQL(
+                query_list = self.generate_create_target_table_sql(
                     hive_db=self.Hive_DB, hive_table=self.Hive_Table, iceberg_table=True
                 )
 
@@ -3698,16 +3731,16 @@ class operation(metaclass=Singleton):
 
                 query += query_list[1]
 
-                self.startSpark()
+                self.start_spark()
                 logging.info(query)
                 self.spark.sql(query)
-                self.common_operations.reconnectHiveMetaStore()
+                self.common_operations.reconnect_hive_meta_store()
 
-        logging.debug("Executing import_operations.createTargetTable() - Finished")
+        logging.debug("Executing import_operations.create_target_table() - Finished")
 
     def dropTargetTable(self):
         logging.debug("Executing import_operations.dropTargetTable()")
-        if self.common_operations.checkTable(self.Hive_DB, self.Hive_Table) == True:
+        if self.common_operations.check_table(self.Hive_DB, self.Hive_Table) == True:
             logging.info(
                 "Dropping Target table %s.%s" % (self.Hive_DB, self.Hive_Table)
             )
@@ -3718,11 +3751,11 @@ class operation(metaclass=Singleton):
                     self.Hive_Table,
                 )
 
-                self.common_operations.executeHiveQuery(query)
-                self.common_operations.reconnectHiveMetaStore()
+                self.common_operations.execute_hive_query(query)
+                self.common_operations.reconnect_hive_meta_store()
 
             if self.import_config.etlEngine == constant.ETL_ENGINE_SPARK:
-                self.startSpark()
+                self.start_spark()
 
                 query = "drop table if exists %s.`%s`.`%s`" % (
                     self.common_operations.sparkCatalogName,
@@ -3734,65 +3767,65 @@ class operation(metaclass=Singleton):
 
         logging.debug("Executing import_operations.dropTargetTable() - Finished")
 
-    def updateTargetTable(self):
+    def update_target_table(self):
         if self.import_config.etlEngine == constant.ETL_ENGINE_HIVE:
             logging.info("Updating Target table columns based on source system schema")
-            self.updateHiveTable(self.Hive_DB, self.Hive_Table)
+            self.update_hive_table(self.Hive_DB, self.Hive_Table)
 
         if self.import_config.etlEngine == constant.ETL_ENGINE_SPARK:
             logging.info("Updating Target table columns based on source system schema")
-            self.updateHiveTable(self.Hive_DB, self.Hive_Table)
+            self.update_hive_table(self.Hive_DB, self.Hive_Table)
 
-    def updateHistoryTable(self):
+    def update_history_table(self):
         if self.import_config.etlEngine == constant.ETL_ENGINE_HIVE:
             logging.info("Updating History table columns based on source system schema")
-            self.updateHiveTable(
+            self.update_hive_table(
                 self.import_config.Hive_History_DB,
                 self.import_config.Hive_History_Table,
             )
 
         if self.import_config.etlEngine == constant.ETL_ENGINE_SPARK:
             logging.info("Updating History table columns based on source system schema")
-            self.updateHiveTable(
+            self.update_hive_table(
                 self.import_config.Hive_History_DB,
                 self.import_config.Hive_History_Table,
             )
-            # self.updateHiveTable(self.Hive_DB, self.Hive_Table)
+            # self.update_hive_table(self.Hive_DB, self.Hive_Table)
 
-    def updateDeleteTable(self):
+    def update_delete_table(self):
         if self.import_config.etlEngine == constant.ETL_ENGINE_HIVE:
             logging.info("Updating Delete table columns based on source system schema")
-            self.updateHiveTable(
+            self.update_hive_table(
                 self.import_config.Hive_Delete_DB,
                 self.import_config.Hive_Delete_Table,
-                restrict_columns=self.import_config.getPKcolumns(pk_for_merge=True),
+                restrict_columns=self.import_config.get_pk_columns(pk_for_merge=True),
             )
 
         if self.import_config.etlEngine == constant.ETL_ENGINE_SPARK:
             logging.info("Updating Delete table columns based on source system schema")
-            self.updateHiveTable(
+            self.update_hive_table(
                 self.import_config.Hive_Delete_DB,
                 self.import_config.Hive_Delete_Table,
-                restrict_columns=self.import_config.getPKcolumns(pk_for_merge=True),
+                restrict_columns=self.import_config.get_pk_columns(pk_for_merge=True),
             )
 
-    def updateExternalImportTable(self):
+    def update_external_import_table(self):
         if self.import_config.etlEngine == constant.ETL_ENGINE_HIVE:
             logging.info("Updating Import table columns based on source system schema")
             if self.import_config.importTool == "sqoop":
-                self.updateHiveTable(
+                self.update_hive_table(
                     self.import_config.Hive_Import_DB,
                     self.import_config.Hive_Import_Table,
                     source_is_parquet_file=True,
                 )
             elif self.import_config.importTool in ("spark", "local"):
-                self.updateHiveTable(
+                self.update_hive_table(
                     self.import_config.Hive_Import_DB,
                     self.import_config.Hive_Import_Table,
                     source_is_parquet_file=False,
                 )
 
-            table_location = self.common_operations.getTableLocation(
+            table_location = self.common_operations.get_table_location(
                 self.import_config.Hive_Import_DB, self.import_config.Hive_Import_Table
             )
             configured_location = "%s%s" % (
@@ -3812,9 +3845,9 @@ class operation(metaclass=Singleton):
                     self.import_config.Hive_Import_Table,
                     self.import_config.sqoop_hdfs_location,
                 )
-                self.common_operations.executeHiveQuery(query)
+                self.common_operations.execute_hive_query(query)
 
-    def updateColumnsForImportTable(self, columns_df, replace_name_only=False):
+    def update_columns_for_import_table(self, columns_df, replace_name_only=False):
         """Parquet import format from sqoop cant handle all datatypes correctly. So for the column definition, we need to change some. We also replace <SPACE> with underscore in the column name"""
         if replace_name_only == False:
             columns_df["type"].replace(["date"], "string", inplace=True)
@@ -3824,7 +3857,7 @@ class operation(metaclass=Singleton):
             )
             columns_df["type"].replace(["bigint"], "string", regex=True, inplace=True)
 
-        # If you change any of the name replace rows, you also need to change the same data in function self.copyHiveTable() and import_definitions.saveColumnData()
+        # If you change any of the name replace rows, you also need to change the same data in function self.copy_hive_table() and import_definitions.save_column_data()
         columns_df["name"].replace([" "], "_", regex=True, inplace=True)
         columns_df["name"].replace(["%"], "pct", regex=True, inplace=True)
         columns_df["name"].replace([r"\("], "_", regex=True, inplace=True)
@@ -3836,7 +3869,7 @@ class operation(metaclass=Singleton):
 
         return columns_df
 
-    def updateColumnsForMongoTables(self, columns_df):
+    def update_columns_for_mongo_tables(self, columns_df):
         """Mongo Imports have both structs and arrays as columntypes. For this, the columnames needs a ` around them inside
         the struct or array. If this is included in the columnType when doing a compare with Hive, there will be an alter table
         at every import as the columntype is never the same"""
@@ -3844,22 +3877,22 @@ class operation(metaclass=Singleton):
         columns_df["type"].replace(["`"], "", regex=True, inplace=True)
         return columns_df
 
-    def updateHiveTable(
+    def update_hive_table(
         self, hive_db, hive_table, restrict_columns=None, source_is_parquet_file=False
     ):
         """Update the target table based on the column information in the configuration database"""
-        logging.debug("Executing import_operations.updateHiveTable()")
-        columns_config = self.import_config.getColumnsFromConfigDatabase(
+        logging.debug("Executing import_operations.update_hive_table()")
+        columns_config = self.import_config.get_columns_from_config_database(
             restrictColumns=restrict_columns,
             sourceIsParquetFile=source_is_parquet_file,
             includeAllColumns=False,
         )
-        columns_hive = self.common_operations.getColumns(
+        columns_hive = self.common_operations.get_columns(
             hive_db, hive_table, includeType=True, excludeDataLakeColumns=True
         )
 
         if self.import_config.etlEngine == constant.ETL_ENGINE_SPARK:
-            self.startSpark()
+            self.start_spark()
             import pyspark
 
         # 		pd.set_option('display.max_rows', None)
@@ -3875,7 +3908,7 @@ class operation(metaclass=Singleton):
                 hive_db == self.import_config.Hive_Import_DB
                 and hive_table == self.import_config.Hive_Import_Table
             ):
-                columns_config = self.updateColumnsForImportTable(columns_config)
+                columns_config = self.update_columns_for_import_table(columns_config)
 
         # There is a difference between comparing column types and then updating Hive with that columntype. For example. Mongo import
         # requires that ` is around the columns inside the structs and arrays. But Hive doesnt store that. So doing a compare will
@@ -3886,7 +3919,7 @@ class operation(metaclass=Singleton):
 
         # Update the column types if the import is a Mongo import
         if self.import_config.mongoImport == True:
-            columns_config = self.updateColumnsForMongoTables(columns_config)
+            columns_config = self.update_columns_for_mongo_tables(columns_config)
             column_types_changed = True
 
         # Check for missing columns
@@ -3942,9 +3975,9 @@ class operation(metaclass=Singleton):
                     logging.warning(
                         "The column order was not correct in the External Import Table. As this is a ORC table, we will have to drop and recreate it. This is needed because Hive tables based on ORC files does not support reordering of columns"
                     )
-                    self.common_operations.dropHiveTable(hive_db, hive_table)
-                    self.createExternalImportTable()
-                    self.common_operations.reconnectHiveMetaStore()
+                    self.common_operations.drop_hive_table(hive_db, hive_table)
+                    self.create_external_import_table()
+                    self.common_operations.reconnect_hive_meta_store()
 
         # pd.set_option('display.max_rows', None)
         logging.debug("columnsConfigOnlyName")
@@ -4010,7 +4043,7 @@ class operation(metaclass=Singleton):
                             row_in_config["name"],
                             row_in_config["type"],
                         )
-                        self.common_operations.executeHiveQuery(query)
+                        self.common_operations.execute_hive_query(query)
 
                     elif self.import_config.etlEngine == constant.ETL_ENGINE_SPARK:
                         query = (
@@ -4026,14 +4059,14 @@ class operation(metaclass=Singleton):
                         logging.info(query)
                         self.spark.sql(query)
 
-                    self.import_config.logHiveColumnRename(
+                    self.import_config.log_hive_column_rename(
                         row_in_config["name"],
                         row_in_hive["name"],
                         hiveDB=hive_db,
                         hiveTable=hive_table,
                     )
                     if row_in_config["type"] != row_in_hive["type"]:
-                        self.import_config.logHiveColumnTypeChange(
+                        self.import_config.log_hive_column_type_change(
                             row_in_config["name"],
                             row_in_config["type"],
                             previous_columnType=row_in_hive["type"],
@@ -4075,7 +4108,7 @@ class operation(metaclass=Singleton):
                                     row_in_hive["type"],
                                 )
                             )
-                            self.common_operations.executeHiveQuery(query)
+                            self.common_operations.execute_hive_query(query)
 
                         elif self.import_config.etlEngine == constant.ETL_ENGINE_SPARK:
                             query = (
@@ -4091,14 +4124,14 @@ class operation(metaclass=Singleton):
                             logging.info(query)
                             self.spark.sql(query)
 
-                        self.import_config.logHiveColumnRename(
+                        self.import_config.log_hive_column_rename(
                             row_in_config["name"],
                             row_in_hive["name"],
                             hiveDB=hive_db,
                             hiveTable=hive_table,
                         )
                         if row_in_config["type"] != row_in_hive["type"]:
-                            self.import_config.logHiveColumnTypeChange(
+                            self.import_config.log_hive_column_type_change(
                                 row_in_config["name"],
                                 row_in_config["type"],
                                 previous_columnType=row_in_hive["type"],
@@ -4107,9 +4140,9 @@ class operation(metaclass=Singleton):
                             )
 
             if self.common_operations.metastore_type == constant.CATALOG_HIVE_DIRECT:
-                self.common_operations.reconnectHiveMetaStore()
+                self.common_operations.reconnect_hive_meta_store()
 
-            columns_hive = self.common_operations.getColumns(
+            columns_hive = self.common_operations.get_columns(
                 hive_db,
                 hive_table,
                 includeType=True,
@@ -4142,7 +4175,7 @@ class operation(metaclass=Singleton):
                     query += ' COMMENT "%s"' % (full_row["comment"])
                 query += ")"
 
-                self.common_operations.executeHiveQuery(query)
+                self.common_operations.execute_hive_query(query)
 
             elif self.import_config.etlEngine == constant.ETL_ENGINE_SPARK:
                 query = "alter table `%s`.`%s`.`%s` add columns (`%s` %s" % (
@@ -4159,7 +4192,7 @@ class operation(metaclass=Singleton):
                 logging.info(query)
                 self.spark.sql(query)
 
-            self.import_config.logHiveColumnAdd(
+            self.import_config.log_hive_column_add(
                 full_row["name"],
                 columnType=full_row["type"],
                 hiveDB=hive_db,
@@ -4168,9 +4201,9 @@ class operation(metaclass=Singleton):
 
         # Check for changed column types
         if self.common_operations.metastore_type == constant.CATALOG_HIVE_DIRECT:
-            self.common_operations.reconnectHiveMetaStore()
+            self.common_operations.reconnect_hive_meta_store()
 
-        columns_hive = self.common_operations.getColumns(
+        columns_hive = self.common_operations.get_columns(
             hive_db, hive_table, includeType=True, excludeDataLakeColumns=True
         )
 
@@ -4242,7 +4275,7 @@ class operation(metaclass=Singleton):
                     column_name,
                     column_type,
                 )
-                self.common_operations.executeHiveQuery(query)
+                self.common_operations.execute_hive_query(query)
 
             elif self.import_config.etlEngine == constant.ETL_ENGINE_SPARK:
                 query = "alter table `%s`.`%s`.`%s` alter column `%s` type %s" % (
@@ -4319,7 +4352,7 @@ class operation(metaclass=Singleton):
                 .at[0, "type"]
             )
 
-            self.import_config.logHiveColumnTypeChange(
+            self.import_config.log_hive_column_type_change(
                 row["name"],
                 columnType=row["type"],
                 previous_columnType=previous_column_type,
@@ -4329,9 +4362,9 @@ class operation(metaclass=Singleton):
 
         # Check for change column comments
         if self.common_operations.metastore_type == constant.CATALOG_HIVE_DIRECT:
-            self.common_operations.reconnectHiveMetaStore()
+            self.common_operations.reconnect_hive_meta_store()
 
-        columns_hive = self.common_operations.getColumns(
+        columns_hive = self.common_operations.get_columns(
             hive_db,
             hive_table,
             includeType=True,
@@ -4379,7 +4412,7 @@ class operation(metaclass=Singleton):
                         column_comment,
                     )
                 )
-                self.common_operations.executeHiveQuery(query)
+                self.common_operations.execute_hive_query(query)
 
             elif self.import_config.etlEngine == constant.ETL_ENGINE_SPARK:
                 query = 'alter table `%s`.`%s`.`%s` alter column `%s` comment "%s"' % (
@@ -4392,32 +4425,34 @@ class operation(metaclass=Singleton):
                 logging.info(query)
                 self.spark.sql(query)
 
-        logging.debug("Executing import_operations.updateHiveTable() - Finished")
+        logging.debug("Executing import_operations.update_hive_table() - Finished")
 
-    def updatePKonTargetTable(
+    def update_pk_on_target_table(
         self,
     ):
         """Update the PrimaryKey definition on the Target Hive Table"""
-        logging.debug("Executing import_operations.updatePKonTargetTable()")
+        logging.debug("Executing import_operations.update_pk_on_target_table()")
         if self.import_config.etlEngine == constant.ETL_ENGINE_HIVE:
             # Only required if using Hive as the ETL Engine. Spark Iceberg tables does not support primary keys
 
-            self.updatePKonTable(
+            self.update_pk_on_table(
                 self.import_config.Hive_DB, self.import_config.Hive_Table
             )
 
-        logging.debug("Executing import_operations.updatePKonTargetTable() - Finished")
+        logging.debug(
+            "Executing import_operations.update_pk_on_target_table() - Finished"
+        )
 
-    def updatePKonTable(self, hive_db, hive_table):
+    def update_pk_on_table(self, hive_db, hive_table):
         """Update the PrimaryKey definition on a Hive Table"""
-        logging.debug("Executing import_operations.updatePKonTable()")
-        if self.import_config.getPKcolumns() == None:
+        logging.debug("Executing import_operations.update_pk_on_table()")
+        if self.import_config.get_pk_columns() == None:
             logging.info("No Primary Key informaton exists for this table.")
         else:
             logging.info("Creating Primary Key on table.")
-            pk_on_hive_table = self.common_operations.getPK(hive_db, hive_table)
-            pk_in_config_db = self.import_config.getPKcolumns()
-            self.common_operations.reconnectHiveMetaStore()
+            pk_on_hive_table = self.common_operations.get_pk(hive_db, hive_table)
+            pk_in_config_db = self.import_config.get_pk_columns()
+            self.common_operations.reconnect_hive_meta_store()
 
             if pk_on_hive_table != pk_in_config_db:
                 # The PK information is not correct. We need to figure out what the problem is and alter the table to fix it
@@ -4429,14 +4464,16 @@ class operation(metaclass=Singleton):
                 logging.info("PrimaryKey on Hive table:     %s" % (pk_on_hive_table))
                 logging.info("PrimaryKey from source table: %s" % (pk_in_config_db))
 
-                current_pk_name = self.common_operations.getPKname(hive_db, hive_table)
+                current_pk_name = self.common_operations.get_pk_name(
+                    hive_db, hive_table
+                )
                 if current_pk_name != None:
                     query = "alter table `%s`.`%s` " % (
                         self.import_config.Hive_DB,
                         self.import_config.Hive_Table,
                     )
                     query += "drop constraint %s" % (current_pk_name)
-                    self.common_operations.executeHiveQuery(query)
+                    self.common_operations.execute_hive_query(query)
 
                 # There are now no PK on the table. So it's safe to create one
                 pk_name = "%s__%s__PK" % (
@@ -4450,38 +4487,40 @@ class operation(metaclass=Singleton):
                 query += "add constraint %s primary key (" % (pk_name)
 
                 first_column = True
-                for column in self.import_config.getPKcolumns().split(","):
+                for column in self.import_config.get_pk_columns().split(","):
                     if first_column == False:
                         query += ", "
                     query += "`" + column + "`"
                     first_column = False
 
                 query += ") DISABLE NOVALIDATE"
-                self.common_operations.executeHiveQuery(query)
-                self.common_operations.reconnectHiveMetaStore()
+                self.common_operations.execute_hive_query(query)
+                self.common_operations.reconnect_hive_meta_store()
 
             else:
                 logging.info("PrimaryKey definition is correct. No change required.")
 
-        logging.debug("Executing import_operations.updatePKonTable() - Finished")
+        logging.debug("Executing import_operations.update_pk_on_table() - Finished")
 
-    def updateFKonTargetTable(
+    def update_fk_on_target_table(
         self,
     ):
         """Update the ForeignKeys definition on the Target Hive Table"""
-        logging.debug("Executing import_operations.updatePKonTargetTable()")
+        logging.debug("Executing import_operations.update_pk_on_target_table()")
         if self.import_config.etlEngine == constant.ETL_ENGINE_HIVE:
             # Only required if using Hive as the ETL Engine. Spark Iceberg tables does not support foreign keys
 
-            self.updateFKonTable(
+            self.update_fk_on_table(
                 self.import_config.Hive_DB, self.import_config.Hive_Table
             )
 
-        logging.debug("Executing import_operations.updatePKonTargetTable() - Finished")
+        logging.debug(
+            "Executing import_operations.update_pk_on_target_table() - Finished"
+        )
 
-    def updateFKonTable(self, hive_db, hive_table):
+    def update_fk_on_table(self, hive_db, hive_table):
         """Update the ForeignKeys definition on a Hive Table"""
-        logging.debug("Executing import_operations.updateFKonTable()")
+        logging.debug("Executing import_operations.update_fk_on_table()")
 
         if self.import_config.create_foreign_keys == 0:
             logging.info(
@@ -4489,8 +4528,8 @@ class operation(metaclass=Singleton):
             )
             return
 
-        foreign_keys_from_config = self.import_config.getForeignKeysFromConfig()
-        foreign_keys_from_hive = self.common_operations.getFKs(hive_db, hive_table)
+        foreign_keys_from_config = self.import_config.get_foreign_keys_from_config()
+        foreign_keys_from_hive = self.common_operations.get_fks(hive_db, hive_table)
 
         if (
             foreign_keys_from_config.empty == True
@@ -4529,7 +4568,7 @@ class operation(metaclass=Singleton):
                     row["fk_name"],
                 )
                 try:
-                    self.common_operations.executeHiveQuery(query)
+                    self.common_operations.execute_hive_query(query)
                 except Exception as ex:
                     logging.error(ex)
                     logging.error(
@@ -4544,7 +4583,7 @@ class operation(metaclass=Singleton):
                 # If it doesnt exist in Hive, we create it
 
                 if (
-                    self.common_operations.checkTable(
+                    self.common_operations.check_table(
                         row["ref_hive_db"],
                         row["ref_hive_table"],
                     )
@@ -4577,7 +4616,7 @@ class operation(metaclass=Singleton):
                     logging.info("Creating FK in Hive as it doesnt exist")
 
                     try:
-                        self.common_operations.executeHiveQuery(query)
+                        self.common_operations.execute_hive_query(query)
                     except Exception as ex:
                         logging.error(ex)
                         logging.error(
@@ -4585,53 +4624,55 @@ class operation(metaclass=Singleton):
                         )
                         break
 
-            self.common_operations.reconnectHiveMetaStore()
+            self.common_operations.reconnect_hive_meta_store()
 
-        logging.debug("Executing import_operations.updateFKonTable()  - Finished")
+        logging.debug("Executing import_operations.update_fk_on_table()  - Finished")
 
-    def removeHiveLocks(
+    def remove_hive_locks(
         self,
     ):
         if self.import_config.etlEngine == constant.ETL_ENGINE_HIVE:
             if (
-                self.import_config.common_config.getConfigValue(
+                self.import_config.common_config.get_config_value(
                     key="hive_remove_locks_by_force"
                 )
                 == True
             ):
-                self.common_operations.removeLocksByForce(self.Hive_DB, self.Hive_Table)
-                self.common_operations.removeLocksByForce(
+                self.common_operations.remove_locks_by_force(
+                    self.Hive_DB, self.Hive_Table
+                )
+                self.common_operations.remove_locks_by_force(
                     self.import_config.Hive_Import_DB,
                     self.import_config.Hive_Import_Table,
                 )
-                self.common_operations.removeLocksByForce(
+                self.common_operations.remove_locks_by_force(
                     self.import_config.Hive_Import_DB,
                     self.import_config.Hive_Import_View,
                 )
-                self.common_operations.removeLocksByForce(
+                self.common_operations.remove_locks_by_force(
                     self.import_config.Hive_Import_PKonly_DB,
                     self.import_config.Hive_Import_PKonly_Table,
                 )
-                self.common_operations.removeLocksByForce(
+                self.common_operations.remove_locks_by_force(
                     self.import_config.Hive_Delete_DB,
                     self.import_config.Hive_Delete_Table,
                 )
-                self.common_operations.removeLocksByForce(
+                self.common_operations.remove_locks_by_force(
                     self.import_config.Hive_HistoryTemp_DB,
                     self.import_config.Hive_HistoryTemp_Table,
                 )
 
-    def runHiveMajorCompaction(
+    def run_hive_major_compaction(
         self,
     ):
-        self.common_operations.connectToHive(forceSkipTest=True)
-        self.common_operations.runHiveMajorCompaction(self.Hive_DB, self.Hive_Table)
+        self.common_operations.connect_to_hive(forceSkipTest=True)
+        self.common_operations.run_hive_major_compaction(self.Hive_DB, self.Hive_Table)
 
-    def runHiveCompaction(
+    def run_hive_compaction(
         self,
     ):
         """Force a compaction on a Hive table. The type of compaction is configured per table or a major as default"""
-        logging.debug("Executing import_operations.runHiveCompaction()")
+        logging.debug("Executing import_operations.run_hive_compaction()")
 
         compaction_method = "none"
         and_wait = False
@@ -4642,7 +4683,7 @@ class operation(metaclass=Singleton):
 
         if self.import_config.mergeCompactionMethod == "default":
             if (
-                self.import_config.common_config.getConfigValue(
+                self.import_config.common_config.get_config_value(
                     key="hive_major_compact_after_merge"
                 )
                 == True
@@ -4669,12 +4710,12 @@ class operation(metaclass=Singleton):
 
             try:
                 if and_wait == False:
-                    self.common_operations.executeHiveQuery(
+                    self.common_operations.execute_hive_query(
                         "alter table `%s`.`%s` compact '%s' "
                         % (self.Hive_DB, self.Hive_Table, compaction_method)
                     )
                 else:
-                    self.common_operations.executeHiveQuery(
+                    self.common_operations.execute_hive_query(
                         "alter table `%s`.`%s` compact '%s' and wait "
                         % (self.Hive_DB, self.Hive_Table, compaction_method)
                     )
@@ -4687,19 +4728,19 @@ class operation(metaclass=Singleton):
         else:
             logging.info("Compaction is disabled for this import")
 
-        logging.debug("Executing import_operations.runHiveCompaction() - Finished")
+        logging.debug("Executing import_operations.run_hive_compaction() - Finished")
 
     def truncateTargetTable(
         self,
     ):
         if self.import_config.etlEngine == constant.ETL_ENGINE_HIVE:
             logging.info("Truncating Target table in Hive")
-            self.common_operations.connectToHive(forceSkipTest=True)
+            self.common_operations.connect_to_hive(forceSkipTest=True)
             self.common_operations.truncateHiveTable(self.Hive_DB, self.Hive_Table)
 
         if self.import_config.etlEngine == constant.ETL_ENGINE_SPARK:
             logging.info("Truncating Target table in Spark")
-            self.startSpark()
+            self.start_spark()
 
             query = "truncate table %s.`%s`.`%s`" % (
                 self.common_operations.sparkCatalogName,
@@ -4709,23 +4750,23 @@ class operation(metaclass=Singleton):
             logging.info(query)
             self.spark.sql(query)
 
-    def updateStatisticsOnTargetTable(
+    def update_statistics_on_target_table(
         self,
     ):
         if self.import_config.etlEngine == constant.ETL_ENGINE_HIVE:
             logging.info("Updating the Hive statistics on the target table")
-            self.common_operations.updateHiveTableStatistics(
+            self.common_operations.update_hive_table_statistics(
                 self.Hive_DB, self.Hive_Table
             )
 
-    def loadDataFromImportToTargetTable(
+    def load_data_from_import_to_target_table(
         self,
     ):
         logging.info("Loading data from import table to target table")
-        import_table_exists = self.common_operations.checkTable(
+        import_table_exists = self.common_operations.check_table(
             self.import_config.Hive_Import_DB, self.import_config.Hive_Import_Table
         )
-        target_table_exists = self.common_operations.checkTable(
+        target_table_exists = self.common_operations.check_table(
             self.Hive_DB, self.Hive_Table
         )
 
@@ -4749,7 +4790,7 @@ class operation(metaclass=Singleton):
             sys.exit(1)
 
         if self.import_config.etlEngine == constant.ETL_ENGINE_HIVE:
-            self.copyHiveTable(
+            self.copy_hive_table(
                 self.import_config.Hive_Import_DB,
                 self.import_config.Hive_Import_Table,
                 self.Hive_DB,
@@ -4757,19 +4798,19 @@ class operation(metaclass=Singleton):
             )
 
         if self.import_config.etlEngine == constant.ETL_ENGINE_SPARK:
-            self.copySparkTable(
+            self.copy_spark_table(
                 self.import_config.Hive_Import_DB,
                 self.import_config.Hive_Import_Table,
                 self.Hive_DB,
                 self.Hive_Table,
             )
 
-    def generateCopyTableStatement(
+    def generate_copy_table_statement(
         self, source_db, source_table, target_db, target_table, iceberg_table=False
     ):
         """Generate the SQL statement that is required for inserting all rows from one table to another were column match"""
-        logging.debug("Executing import_operations.generateCopyTableStatement()")
-        column_merge = self.common_operations.getHiveColumnNameDiff(
+        logging.debug("Executing import_operations.generate_copy_table_statement()")
+        column_merge = self.common_operations.get_hive_column_name_diff(
             source_db=source_db,
             source_table=source_table,
             target_db=target_db,
@@ -4832,40 +4873,40 @@ class operation(metaclass=Singleton):
             query += self.import_config.nomerge_ingestion_sql_addition
 
         logging.debug(
-            "Executing import_operations.generateCopyTableStatement() - Finished"
+            "Executing import_operations.generate_copy_table_statement() - Finished"
         )
         return query
 
-    def copyHiveTable(self, source_db, source_table, target_db, target_table):
+    def copy_hive_table(self, source_db, source_table, target_db, target_table):
         """Copy one Hive table into another for the columns that have the same name"""
-        logging.debug("Executing import_operations.copyHiveTable()")
+        logging.debug("Executing import_operations.copy_hive_table()")
 
-        query = self.generateCopyTableStatement(
+        query = self.generate_copy_table_statement(
             source_db, source_table, target_db, target_table, iceberg_table=False
         )
-        self.common_operations.executeHiveQuery(query)
+        self.common_operations.execute_hive_query(query)
 
-        logging.debug("Executing import_operations.copyHiveTable() - Finished")
+        logging.debug("Executing import_operations.copy_hive_table() - Finished")
 
-    def copySparkTable(self, source_db, source_table, target_db, target_table):
+    def copy_spark_table(self, source_db, source_table, target_db, target_table):
         """Copy one Hive table into another for the columns that have the same name"""
-        logging.debug("Executing import_operations.copyHiveTable()")
+        logging.debug("Executing import_operations.copy_hive_table()")
 
-        query = self.generateCopyTableStatement(
+        query = self.generate_copy_table_statement(
             source_db, source_table, target_db, target_table, iceberg_table=True
         )
-        self.startSpark()
+        self.start_spark()
         logging.info(query)
         self.spark.sql(query)
 
-        logging.debug("Executing import_operations.copyHiveTable() - Finished")
+        logging.debug("Executing import_operations.copy_hive_table() - Finished")
 
-    def resetIncrMinMaxValues(self, maxValue):
-        self.import_config.resetIncrMinMaxValues(maxValue=maxValue)
+    def reset_incr_min_max_values(self, maxValue):
+        self.import_config.reset_incr_min_max_values(maxValue=maxValue)
 
-    def resetIncrMaxValue(self, hive_db=None, hive_table=None):
+    def reset_incr_max_value(self, hive_db=None, hive_table=None):
         """Will read the Max value from the Hive table and save that into the incr_maxvalue column"""
-        logging.debug("Executing import_operations.resetIncrMaxValue()")
+        logging.debug("Executing import_operations.reset_incr_max_value()")
 
         if hive_db == None:
             hive_db = self.Hive_DB
@@ -4887,8 +4928,8 @@ class operation(metaclass=Singleton):
                 hive_table,
             )
 
-            self.common_operations.connectToHive(forceSkipTest=True)
-            result_df = self.common_operations.executeHiveQuery(query)
+            self.common_operations.connect_to_hive(forceSkipTest=True)
+            result_df = self.common_operations.execute_hive_query(query)
             max_value = result_df.loc[0][0]
 
             if type(max_value) == pd._libs.tslibs.timestamps.Timestamp:
@@ -4899,18 +4940,18 @@ class operation(metaclass=Singleton):
                     max_value = int(max_value)
 
             if max_value != None:
-                self.import_config.resetSqoopStatistics(max_value)
-                self.import_config.clearStage()
+                self.import_config.reset_sqoop_statistics(max_value)
+                self.import_config.clear_stage()
         else:
             logging.error("This is not an incremental import. Nothing to repair.")
             self.import_config.remove_temporary_files()
             sys.exit(1)
 
-        logging.debug("Executing import_operations.resetIncrMaxValue() - Finished")
+        logging.debug("Executing import_operations.reset_incr_max_value() - Finished")
 
-    def repairAllIncrementalImports(self):
-        logging.debug("Executing import_operations.repairAllIncrementalImports()")
-        result_df = self.import_config.getAllActiveIncrImports()
+    def repair_all_incremental_imports(self):
+        logging.debug("Executing import_operations.repair_all_incremental_imports()")
+        result_df = self.import_config.get_all_active_incr_imports()
 
         tables_repaired = False
         for index, row in result_df.iterrows():
@@ -4920,8 +4961,8 @@ class operation(metaclass=Singleton):
             logging.info(
                 "Repairing table \u001b[33m%s.%s\u001b[0m" % (hive_db, hive_table)
             )
-            self.setHiveTable(hive_db, hive_table)
-            self.resetIncrMaxValue(hive_db, hive_table)
+            self.set_hive_table(hive_db, hive_table)
+            self.reset_incr_max_value(hive_db, hive_table)
             logging.info("")
 
         if tables_repaired == False:
@@ -4930,14 +4971,14 @@ class operation(metaclass=Singleton):
             )
 
         logging.debug(
-            "Executing import_operations.repairAllIncrementalImports() - Finished"
+            "Executing import_operations.repair_all_incremental_imports() - Finished"
         )
 
     def concatenateTable(self, hive_db=None, hive_table=None):
         """Execute a concatenate table on the specified table, or what is already set in the class"""
         logging.debug("Executing import_operations.concatenateTable()")
 
-        self.connectToHive(forceSkipTest=True)
+        self.connect_to_hive(forceSkipTest=True)
 
         if hive_db == None:
             hive_db = self.Hive_DB
@@ -4945,14 +4986,14 @@ class operation(metaclass=Singleton):
             hive_table = self.Hive_Table
 
         hdfs_blocksize = int(
-            self.import_config.common_config.getConfigValue(key="hdfs_blocksize")
+            self.import_config.common_config.get_config_value(key="hdfs_blocksize")
         )
         query = "set mapreduce.input.fileinputformat.split.minsize=%s" % (
             hdfs_blocksize
         )
-        self.common_operations.executeHiveQuery(query)
+        self.common_operations.execute_hive_query(query)
 
         query = "alter table `%s`.`%s` concatenate" % (hive_db, hive_table)
-        self.common_operations.executeHiveQuery(query)
+        self.common_operations.execute_hive_query(query)
 
         logging.debug("Executing import_operations.concatenateTable() - Finished")

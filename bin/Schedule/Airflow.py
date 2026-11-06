@@ -58,26 +58,32 @@ class initialize:
         self.common_config = common_config.config()
         self.sendStatistics = sendStatistics.sendStatistics()
 
-        self.dbimportCommandPath = self.getConfigValue("airflow_dbimport_commandpath")
-        self.defaultSudoUser = self.getConfigValue("airflow_sudo_user")
-        self.DAGdirectory = self.getConfigValue("airflow_dag_directory")
-        self.DAGstagingDirectory = self.getConfigValue("airflow_dag_staging_directory")
-        self.DAGfileGroup = self.getConfigValue("airflow_dag_file_group")
-        self.DAGfilePermission = self.getConfigValue("airflow_dag_file_permission")
-        self.TaskQueueForDummy = self.getConfigValue("airflow_dummy_task_queue")
-        self.airflowMajorVersion = self.getConfigValue("airflow_major_version")
-        self.defaultTimeZone = self.getConfigValue("timezone")
-        self.airflowAWSinstanceIds = self.getConfigValue("airflow_aws_instanceids")
-        self.airflowAWSpoolToInstanceId = self.getConfigValue(
+        self.dbimport_command_path = self.get_config_value(
+            "airflow_dbimport_commandpath"
+        )
+        self.defaultSudoUser = self.get_config_value("airflow_sudo_user")
+        self.dag_directory = self.get_config_value("airflow_dag_directory")
+        self.dag_staging_directory = self.get_config_value(
+            "airflow_dag_staging_directory"
+        )
+        self.dag_file_group = self.get_config_value("airflow_dag_file_group")
+        self.dag_file_permission = self.get_config_value("airflow_dag_file_permission")
+        self.task_queue_for_dummy = self.get_config_value("airflow_dummy_task_queue")
+        self.airflowMajorVersion = self.get_config_value("airflow_major_version")
+        self.default_time_zone = self.get_config_value("timezone")
+        self.airflow_aws_instance_ids = self.get_config_value("airflow_aws_instanceids")
+        self.airflow_aws_pool_to_instance_id = self.get_config_value(
             "airflow_aws_pool_to_instanceid"
         )
-        self.airflowDefaultPoolSize = self.getConfigValue("airflow_default_pool_size")
-        self.createPoolsWithTasks = self.getConfigValue("airflow_create_pool_with_task")
+        self.airflowDefaultPoolSize = self.get_config_value("airflow_default_pool_size")
+        self.create_pools_with_tasks = self.get_config_value(
+            "airflow_create_pool_with_task"
+        )
 
-        self.DAGfile = None
-        self.DAGfilename = None
-        self.DAGfilenameInAirflow = None
-        self.DAGfilenameInAwsMWAA = None
+        self.dag_file = None
+        self.dag_filename = None
+        self.dag_filename_in_airflow = None
+        self.dag_filename_in_aws_mwaa = None
         self.writeDAG = None
 
         self.sensorStartTask = None
@@ -89,16 +95,16 @@ class initialize:
         self.postStartTask = None
         self.postStopTask = None
 
-        self.airflowMode = "default"
+        self.airflow_mode = "default"
 
-        self.createdPools = []
-        self.AWSinstanceIdAssignedPools = {}
+        self.created_pools = []
+        self.aws_instance_id_assigned_pools = {}
 
         try:
-            self.airflowMode = configuration.get(
+            self.airflow_mode = configuration.get(
                 "Airflow", "airflow_mode", exit_on_error=False
             )
-            if self.airflowMode != "default" and self.airflowMode != "aws_mwaa":
+            if self.airflow_mode != "default" and self.airflow_mode != "aws_mwaa":
                 raise invalidConfiguration(
                     "Invalid option specified for [Airflow][airflow_mode] in the configuration file."
                 )
@@ -109,15 +115,15 @@ class initialize:
         except invalidConfiguration:
             pass
 
-        if self.airflowMode == "default" and self.createPoolsWithTasks == False:
+        if self.airflow_mode == "default" and self.create_pools_with_tasks == False:
             # Establish a SQLAlchemy connection to the Airflow database
             airflow_connect_str = configuration.get("Airflow", "airflow_alchemy_conn")
             try:
-                self.airflowDB = sa.create_engine(
+                self.airflow_db = sa.create_engine(
                     airflow_connect_str, echo=self.debugLogLevel
                 )
-                self.airflowDB.connect()
-                self.airflowDBSession = sessionmaker(bind=self.airflowDB)
+                self.airflow_db.connect()
+                self.airflow_db_session = sessionmaker(bind=self.airflow_db)
 
             except sa.exc.OperationalError as err:
                 raise SQLerror(err)
@@ -133,7 +139,7 @@ class initialize:
 
         log.debug("Executing Airflow.__init__() - Finished")
 
-    def disconnectDBImportDB(self):
+    def disconnect_dbimport_db(self):
         """Disconnects from the database and removes all sessions and engine"""
         log = logging.getLogger(self.logger)
 
@@ -144,7 +150,7 @@ class initialize:
 
         self.configDBSession = None
 
-    def getDBImportSession(self):
+    def get_dbimport_session(self):
         """Connects to the configuration database with SQLAlchemy and return a session"""
         log = logging.getLogger(self.logger)
 
@@ -153,9 +159,9 @@ class initialize:
             # return self.configDBSession()
             return scoped_session(self.configDBSession)
 
-        mysql_credentials = self.common_config.getMysqlCredentials()
+        mysql_credentials = self.common_config.get_mysql_credentials()
 
-        self.connectStr = "mysql+pymysql://%s:%s@%s:%s/%s" % (
+        self.connect_str = "mysql+pymysql://%s:%s@%s:%s/%s" % (
             mysql_credentials["mysql_username"],
             quote(mysql_credentials["mysql_password"], safe=" +"),
             mysql_credentials["mysql_hostname"],
@@ -165,7 +171,7 @@ class initialize:
 
         try:
             self.configDB = sa.create_engine(
-                self.connectStr, echo=self.debugLogLevel, pool_pre_ping=True
+                self.connect_str, echo=self.debugLogLevel, pool_pre_ping=True
             )
             self.configDB.connect()
             self.configDBSession = sessionmaker(bind=self.configDB)
@@ -187,19 +193,19 @@ class initialize:
             # return self.configDBSession()
             return scoped_session(self.configDBSession)
 
-    def getConfigValue(self, key):
+    def get_config_value(self, key):
         """Returns a value from the configuration table based on the supplied key. Value returned can be Int, Str or DateTime"""
         log = logging.getLogger(self.logger)
 
         return_value = None
         bool_value = False
 
-        value_column, bool_value = self.common_config.getConfigValueColumn(key)
+        value_column, bool_value = self.common_config.get_config_value_column(key)
 
         try:
-            session = self.getDBImportSession()
+            session = self.get_dbimport_session()
         except SQLerror:
-            self.disconnectDBImportDB()
+            self.disconnect_dbimport_db()
             return None
 
         configuration_table = aliased(configSchema.configuration)
@@ -252,10 +258,10 @@ class initialize:
 
         return return_value
 
-    def checkExecution(self):
+    def check_execution(self):
         """Checks the 'airflow_disable' settings and exit with 0 or 1 depending on that"""
 
-        airflow_execution_disabled = self.getConfigValue("airflow_disable")
+        airflow_execution_disabled = self.get_config_value("airflow_disable")
         if airflow_execution_disabled == False:
             print("Airflow execution is enabled")
             self.common_config.remove_temporary_files()
@@ -265,18 +271,18 @@ class initialize:
             self.common_config.remove_temporary_files()
             sys.exit(1)
 
-    def getDBImportCommandPath(self, sudo_user=""):
+    def get_dbimport_command_path(self, sudo_user=""):
 
         if sudo_user == None or sudo_user == "":
             sudo_user = self.defaultSudoUser
 
-        return self.dbimportCommandPath.replace("${SUDO_USER}", sudo_user)
+        return self.dbimport_command_path.replace("${SUDO_USER}", sudo_user)
 
-    def generateDAGfromREST(self, name, current_user):
+    def generate_dag_from_rest(self, name, current_user):
         log = logging.getLogger(self.logger)
 
         try:
-            self.generateDAG(name=name, write_dag=True)
+            self.generate_dag(name=name, write_dag=True)
         except (invalidConfiguration, SQLerror, RuntimeError) as errMsg:
             result = str(errMsg)
             return_code = 500
@@ -290,7 +296,7 @@ class initialize:
 
         return (result, return_code)
 
-    def generateDAG(
+    def generate_dag(
         self, name=None, write_dag=False, auto_dag_only=False, dag_folder=None
     ):
         log = logging.getLogger(self.logger)
@@ -299,7 +305,7 @@ class initialize:
         self.DAGFolder = dag_folder
 
         # session = self.configDBSession()
-        session = self.getDBImportSession()
+        session = self.get_dbimport_session()
         airflow_custom_dags = aliased(configSchema.airflowCustomDags)
         airflow_export_dags = aliased(configSchema.airflowExportDags)
         airflow_import_dags = aliased(configSchema.airflowImportDags)
@@ -421,17 +427,17 @@ class initialize:
         if name == None or len(import_dag) > 0:
             dag_found = True
             for index, row in import_dag.iterrows():
-                self.generateImportDAG(dag=row)
+                self.generate_import_dag(dag=row)
 
         if name == None or len(export_dag) > 0:
             dag_found = True
             for index, row in export_dag.iterrows():
-                self.generateExportDAG(dag=row)
+                self.generate_export_dag(dag=row)
 
         if name == None or len(custom_dag) > 0:
             dag_found = True
             for index, row in custom_dag.iterrows():
-                self.generateCustomDAG(dag=row)
+                self.generate_custom_dag(dag=row)
 
         if dag_found == False and name != None:
             raise invalidConfiguration("Can't find DAG with that name")
@@ -441,12 +447,15 @@ class initialize:
 
         session.close()
 
-    def getAirflowHostPoolName(self):
+    def get_airflow_host_pool_name(self):
         log = logging.getLogger(self.logger)
 
-        if self.airflowMode == "aws_mwaa" and self.airflowAWSpoolToInstanceId == True:
+        if (
+            self.airflow_mode == "aws_mwaa"
+            and self.airflow_aws_pool_to_instance_id == True
+        ):
             # We can choice to override the poolname and set it to the instance ID if we are running on AWS
-            pool_name = self.airflowAWSinstanceIds
+            pool_name = self.airflow_aws_instance_ids
         else:
             try:
                 hostname = (
@@ -463,33 +472,33 @@ class initialize:
 
         return pool_name[0:50]
 
-    def AWSappendInstanceIDasPools(self):
+    def aws_append_instance_id_as_pools(self):
         # This will split the instanceID configration setting based on , and append them all as pool names
         log = logging.getLogger(self.logger)
 
         used_pools = []
 
-        for aws_pool in self.airflowAWSinstanceIds.split(","):
+        for aws_pool in self.airflow_aws_instance_ids.split(","):
             used_pools.append(aws_pool.strip())
 
-        self.createAirflowPools(pools=used_pools)
+        self.create_airflow_pools(pools=used_pools)
 
-    def getAWSInstanceID(self, config_object):
+    def get_aws_instance_id(self, config_object):
         # Return one instanceID from a comma seperated list.
         log = logging.getLogger(self.logger)
 
-        if config_object in self.AWSinstanceIdAssignedPools:
-            return self.AWSinstanceIdAssignedPools[config_object]
+        if config_object in self.aws_instance_id_assigned_pools:
+            return self.aws_instance_id_assigned_pools[config_object]
         else:
             random_instance_id = random.choice(
-                self.airflowAWSinstanceIds.strip().split(",")
+                self.airflow_aws_instance_ids.strip().split(",")
             )
-            self.AWSinstanceIdAssignedPools[config_object] = random_instance_id
+            self.aws_instance_id_assigned_pools[config_object] = random_instance_id
             return random_instance_id
 
-        # return random.choice(self.airflowAWSinstanceIds.strip().split(','))
+        # return random.choice(self.airflow_aws_instance_ids.strip().split(','))
 
-    def generateExportDAG(self, dag):
+    def generate_export_dag(self, dag):
         """Generates a Import DAG"""
         log = logging.getLogger(self.logger)
 
@@ -499,8 +508,8 @@ class initialize:
         sudo_user = dag["sudo_user"]
         used_pools.append(default_pool)
 
-        cron_schedule = self.convertTimeToCron(dag["schedule_interval"])
-        self.createDAGfileWithHeader(
+        cron_schedule = self.convert_time_to_cron(dag["schedule_interval"])
+        self.create_dag_file_with_header(
             dag_name=dag["dag_name"],
             cron_schedule=cron_schedule,
             default_pool=default_pool,
@@ -516,7 +525,7 @@ class initialize:
         )
 
         # session = self.configDBSession()
-        session = self.getDBImportSession()
+        session = self.get_dbimport_session()
         export_tables = aliased(configSchema.exportTables)
 
         export_tables_query = Query(
@@ -539,7 +548,7 @@ class initialize:
 
         # 		if filterDBAlias == '':
         # 			log.error("'filter_dbalias' in airflow_export_dags cant be empty")
-        # 			self.DAGfile.close()
+        # 			self.dag_file.close()
         # 			self.common_config.remove_temporary_files()
         # 			sys.exit(1)
 
@@ -571,7 +580,7 @@ class initialize:
             if row["dbalias"] != previous_connection_alias:
                 # We save the previousConnectionAlias just to avoid making lookups for every dbalias even if they are all the same
                 try:
-                    self.common_config.lookupConnectionAlias(
+                    self.common_config.lookup_connection_alias(
                         connection_alias=row["dbalias"], decryptCredentials=False
                     )
                     previous_connection_alias = row["dbalias"]
@@ -584,7 +593,7 @@ class initialize:
                     previous_connection_alias = None
                     continue
 
-            export_pool = self.getAirflowHostPoolName()
+            export_pool = self.get_airflow_host_pool_name()
 
             # usedPools is later used to check if the pools that we just are available in Airflow
             if export_pool not in used_pools:
@@ -592,10 +601,10 @@ class initialize:
 
             task_id = row["target_table"].replace(r"/", "_").replace(r".", "_")
             dbexport_cmd = "%sbin/export" % (
-                self.getDBImportCommandPath(sudo_user=sudo_user)
+                self.get_dbimport_command_path(sudo_user=sudo_user)
             )
             dbexport_clear_stage_cmd = "%sbin/manage --clearExportStage" % (
-                self.getDBImportCommandPath(sudo_user=sudo_user)
+                self.get_dbimport_command_path(sudo_user=sudo_user)
             )
 
             airflow_priority = 1  # Default Airflow Priority
@@ -609,9 +618,9 @@ class initialize:
                 clear_stage_required = True
 
             if clear_stage_required == True:
-                self.DAGfile.write("%s_clearStage = BashOperator(\n" % (task_id))
-                self.DAGfile.write("    task_id='%s_clearStage',\n" % (task_id))
-                self.DAGfile.write(
+                self.dag_file.write("%s_clearStage = BashOperator(\n" % (task_id))
+                self.dag_file.write("    task_id='%s_clearStage',\n" % (task_id))
+                self.dag_file.write(
                     "    bash_command='%s -a %s -S %s -T %s ',\n"
                     % (
                         dbexport_clear_stage_cmd,
@@ -620,15 +629,15 @@ class initialize:
                         row["target_table"],
                     )
                 )
-                self.DAGfile.write("    priority_weight=%s,\n" % (airflow_priority))
-                self.DAGfile.write("    weight_rule='absolute',\n")
-                self.DAGfile.write("    retries=%s,\n" % (retries))
-                self.DAGfile.write("    dag=dag)\n")
-                self.DAGfile.write("\n")
+                self.dag_file.write("    priority_weight=%s,\n" % (airflow_priority))
+                self.dag_file.write("    weight_rule='absolute',\n")
+                self.dag_file.write("    retries=%s,\n" % (retries))
+                self.dag_file.write("    dag=dag)\n")
+                self.dag_file.write("\n")
 
-            self.DAGfile.write("%s = BashOperator(\n" % (task_id))
-            self.DAGfile.write("    task_id='%s',\n" % (task_id))
-            self.DAGfile.write(
+            self.dag_file.write("%s = BashOperator(\n" % (task_id))
+            self.dag_file.write("    task_id='%s',\n" % (task_id))
+            self.dag_file.write(
                 "    bash_command='%s -a %s -S %s -T %s ',\n"
                 % (
                     dbexport_cmd,
@@ -637,46 +646,46 @@ class initialize:
                     row["target_table"],
                 )
             )
-            self.DAGfile.write("    pool='%s',\n" % (export_pool))
-            self.DAGfile.write("    priority_weight=%s,\n" % (airflow_priority))
-            self.DAGfile.write("    weight_rule='absolute',\n")
-            self.DAGfile.write("    retries=%s,\n" % (retries))
-            self.DAGfile.write("    dag=dag)\n")
-            self.DAGfile.write("\n")
+            self.dag_file.write("    pool='%s',\n" % (export_pool))
+            self.dag_file.write("    priority_weight=%s,\n" % (airflow_priority))
+            self.dag_file.write("    weight_rule='absolute',\n")
+            self.dag_file.write("    retries=%s,\n" % (retries))
+            self.dag_file.write("    dag=dag)\n")
+            self.dag_file.write("\n")
 
             if clear_stage_required == True:
-                self.DAGfile.write(
+                self.dag_file.write(
                     "%s.set_downstream(%s_clearStage)\n" % (self.mainStartTask, task_id)
                 )
-                self.DAGfile.write(
+                self.dag_file.write(
                     "%s_clearStage.set_downstream(%s)\n" % (task_id, task_id)
                 )
-                self.DAGfile.write(
+                self.dag_file.write(
                     "%s.set_downstream(%s)\n" % (task_id, self.mainStopTask)
                 )
             else:
-                self.DAGfile.write(
+                self.dag_file.write(
                     "%s.set_downstream(%s)\n" % (self.mainStartTask, task_id)
                 )
-                self.DAGfile.write(
+                self.dag_file.write(
                     "%s.set_downstream(%s)\n" % (task_id, self.mainStopTask)
                 )
-            self.DAGfile.write("\n")
+            self.dag_file.write("\n")
 
-        self.addTasksToDAGfile(
+        self.add_tasks_to_dag_file(
             dag_name=dag["dag_name"],
             main_dag_schedule=dag["schedule_interval"],
             default_retries=retries,
             default_sudo_user=sudo_user,
         )
-        self.addSensorsToDAGfile(
+        self.add_sensors_to_dag_file(
             dag_name=dag["dag_name"], main_dag_schedule=dag["schedule_interval"]
         )
-        self.createAirflowPools(pools=used_pools)
-        self.closeDAGfile()
+        self.create_airflow_pools(pools=used_pools)
+        self.close_dag_file()
         session.close()
 
-    def generateImportDAG(self, dag):
+    def generate_import_dag(self, dag):
         """Generates a Import DAG"""
         log = logging.getLogger(self.logger)
 
@@ -699,8 +708,8 @@ class initialize:
         else:
             meta_data_import_option = ""
 
-        cron_schedule = self.convertTimeToCron(dag["schedule_interval"])
-        self.createDAGfileWithHeader(
+        cron_schedule = self.convert_time_to_cron(dag["schedule_interval"])
+        self.create_dag_file_with_header(
             dag_name=dag["dag_name"],
             cron_schedule=cron_schedule,
             import_phase_finish_first=import_phase_finish_first,
@@ -717,7 +726,7 @@ class initialize:
         )
 
         # session = self.configDBSession()
-        session = self.getDBImportSession()
+        session = self.get_dbimport_session()
         import_tables = aliased(configSchema.importTables)
 
         import_tables_query = Query(
@@ -747,17 +756,17 @@ class initialize:
                     or hive_db == ""
                     or hive_table == ""
                 ):
-                    self.DAGfile.close()
+                    self.dag_file.close()
                     raise invalidConfiguration(
                         "Syntax for filter_hive column is <HIVE_DB>.<HIVE_TABLE>;<HIVE_DB>.<HIVE_TABLE>;....."
                     )
             except IndexError:
-                self.DAGfile.close()
+                self.dag_file.close()
                 raise invalidConfiguration(
                     "Syntax for filter_hive column is <HIVE_DB>.<HIVE_TABLE>;<HIVE_DB>.<HIVE_TABLE>;....."
                 )
             # 				log.error("Syntax for filter_hive column is <HIVE_DB>.<HIVE_TABLE>;<HIVE_DB>.<HIVE_TABLE>;.....")
-            # 				self.DAGfile.close()
+            # 				self.dag_file.close()
             # 				self.common_config.remove_temporary_files()
             # 				sys.exit(1)
 
@@ -789,7 +798,7 @@ class initialize:
             try:
                 if row["dbalias"] != previous_connection_alias:
                     # We save the previousConnectionAlias just to avoid making lookups for every dbalias even if they are all the same
-                    self.common_config.lookupConnectionAlias(
+                    self.common_config.lookup_connection_alias(
                         connection_alias=row["dbalias"], decryptCredentials=False
                     )
                     previous_connection_alias = row["dbalias"]
@@ -802,15 +811,15 @@ class initialize:
                 import_phase_as_sensor = False
 
             if (
-                self.airflowMode == "aws_mwaa"
-                and self.airflowAWSpoolToInstanceId == True
+                self.airflow_mode == "aws_mwaa"
+                and self.airflow_aws_pool_to_instance_id == True
             ):
                 # We can choice to override the poolname and set it to the instance ID if we are running on AWS
-                instance_id = self.getAWSInstanceID(row["hive_table"])
+                instance_id = self.get_aws_instance_id(row["hive_table"])
                 import_phase_pool = instance_id
                 etl_phase_pool = instance_id
             else:
-                import_phase_pool = self.getAirflowHostPoolName()
+                import_phase_pool = self.get_airflow_host_pool_name()
                 etl_phase_pool = dag["dag_name"][0:50]
 
                 if dag["pool_stage1"] != "":
@@ -827,10 +836,10 @@ class initialize:
                 used_pools.append(etl_phase_pool)
 
             dbimport_cmd = "%sbin/import" % (
-                self.getDBImportCommandPath(sudo_user=sudo_user)
+                self.get_dbimport_command_path(sudo_user=sudo_user)
             )
             dbimport_clear_stage_cmd = "%sbin/manage --clearImportStage" % (
-                self.getDBImportCommandPath(sudo_user=sudo_user)
+                self.get_dbimport_command_path(sudo_user=sudo_user)
             )
 
             task_id = row["hive_table"].replace(r"/", "_").replace(r".", "_")
@@ -861,36 +870,40 @@ class initialize:
                 clear_stage_required = True
 
             if clear_stage_required == True:
-                if self.airflowMode == "default":
-                    self.DAGfile.write("%s_clearStage = BashOperator(\n" % (task_id))
-                    self.DAGfile.write("    task_id='%s_clearStage',\n" % (task_id))
-                    self.DAGfile.write(
+                if self.airflow_mode == "default":
+                    self.dag_file.write("%s_clearStage = BashOperator(\n" % (task_id))
+                    self.dag_file.write("    task_id='%s_clearStage',\n" % (task_id))
+                    self.dag_file.write(
                         "    bash_command='%s -h %s -t %s ',\n"
                         % (dbimport_clear_stage_cmd, row["hive_db"], row["hive_table"])
                     )
-                    self.DAGfile.write("    pool='%s',\n" % (import_phase_pool))
-                    self.DAGfile.write("    priority_weight=%s,\n" % (airflow_priority))
-                    self.DAGfile.write("    weight_rule='absolute',\n")
-                    self.DAGfile.write("    retries=%s,\n" % (retries))
-                    self.DAGfile.write("    dag=dag)\n")
-                    self.DAGfile.write("\n")
-                elif self.airflowMode == "aws_mwaa":
-                    instance_id = self.getAWSInstanceID(row["hive_table"])
-                    self.DAGfile.write("%s_clearStage = PythonOperator(\n" % (task_id))
-                    self.DAGfile.write("    task_id='%s_clearStage',\n" % (task_id))
-                    self.DAGfile.write("    python_callable=startDBImportExecution,\n")
-                    # self.DAGfile.write("    op_kwargs={\"command\": \"manage --clearImportStage -h %s -t %s\"},\n"%(row['hive_db'], row['hive_table']))
-                    self.DAGfile.write(
+                    self.dag_file.write("    pool='%s',\n" % (import_phase_pool))
+                    self.dag_file.write(
+                        "    priority_weight=%s,\n" % (airflow_priority)
+                    )
+                    self.dag_file.write("    weight_rule='absolute',\n")
+                    self.dag_file.write("    retries=%s,\n" % (retries))
+                    self.dag_file.write("    dag=dag)\n")
+                    self.dag_file.write("\n")
+                elif self.airflow_mode == "aws_mwaa":
+                    instance_id = self.get_aws_instance_id(row["hive_table"])
+                    self.dag_file.write("%s_clearStage = PythonOperator(\n" % (task_id))
+                    self.dag_file.write("    task_id='%s_clearStage',\n" % (task_id))
+                    self.dag_file.write("    python_callable=startDBImportExecution,\n")
+                    # self.dag_file.write("    op_kwargs={\"command\": \"manage --clearImportStage -h %s -t %s\"},\n"%(row['hive_db'], row['hive_table']))
+                    self.dag_file.write(
                         '    op_kwargs={"command": "manage --clearImportStage -h %s -t %s", "instanceID": "%s"},\n'
                         % (row["hive_db"], row["hive_table"], instance_id)
                     )
-                    self.DAGfile.write("    pool='%s',\n" % (import_phase_pool))
-                    # self.DAGfile.write("    pool='%s',\n"%(instanceID))
-                    self.DAGfile.write("    priority_weight=%s,\n" % (airflow_priority))
-                    self.DAGfile.write("    weight_rule='absolute',\n")
-                    self.DAGfile.write("    retries=%s,\n" % (retries))
-                    self.DAGfile.write("    dag=dag)\n")
-                    self.DAGfile.write("\n")
+                    self.dag_file.write("    pool='%s',\n" % (import_phase_pool))
+                    # self.dag_file.write("    pool='%s',\n"%(instanceID))
+                    self.dag_file.write(
+                        "    priority_weight=%s,\n" % (airflow_priority)
+                    )
+                    self.dag_file.write("    weight_rule='absolute',\n")
+                    self.dag_file.write("    retries=%s,\n" % (retries))
+                    self.dag_file.write("    dag=dag)\n")
+                    self.dag_file.write("\n")
 
             if (
                 dag["finish_all_stage1_first"] == 1
@@ -898,133 +911,143 @@ class initialize:
             ):
                 if import_phase_as_sensor == True:
                     # Running Import phase as a sensor
-                    self.DAGfile.write("%s_sensor = SqlSensor(\n" % (task_id))
-                    self.DAGfile.write("    task_id='%s_sensor',\n" % (task_id))
-                    self.DAGfile.write("    conn_id='DBImport',\n")
-                    self.DAGfile.write(
+                    self.dag_file.write("%s_sensor = SqlSensor(\n" % (task_id))
+                    self.dag_file.write("    task_id='%s_sensor',\n" % (task_id))
+                    self.dag_file.write("    conn_id='DBImport',\n")
+                    self.dag_file.write(
                         "    sql=\"\"\"select count(*) from import_tables where hive_db = '%s' and hive_table = '%s' and "
                         % (row["hive_db"], row["hive_table"])
                     )
-                    self.DAGfile.write(
+                    self.dag_file.write(
                         "copy_finished >= '{{ next_execution_date.strftime('%Y-%m-%d %H:%M:%S.%f') }}'\"\"\",\n"
                     )
-                    self.DAGfile.write("    pool='%s',\n" % (import_phase_pool))
-                    self.DAGfile.write("    priority_weight=%s,\n" % (airflow_priority))
-                    self.DAGfile.write("    weight_rule='absolute',\n")
-                    self.DAGfile.write("    timeout=18000,\n")
-                    self.DAGfile.write("    poke_interval=300,\n")
-                    self.DAGfile.write("    mode='reschedule',\n")
-                    self.DAGfile.write("    dag=dag)\n")
-                    self.DAGfile.write("\n")
+                    self.dag_file.write("    pool='%s',\n" % (import_phase_pool))
+                    self.dag_file.write(
+                        "    priority_weight=%s,\n" % (airflow_priority)
+                    )
+                    self.dag_file.write("    weight_rule='absolute',\n")
+                    self.dag_file.write("    timeout=18000,\n")
+                    self.dag_file.write("    poke_interval=300,\n")
+                    self.dag_file.write("    mode='reschedule',\n")
+                    self.dag_file.write("    dag=dag)\n")
+                    self.dag_file.write("\n")
 
-                if self.airflowMode == "default":
-                    self.DAGfile.write("%s_import = BashOperator(\n" % (task_id))
-                    self.DAGfile.write("    task_id='%s_import',\n" % (task_id))
-                    self.DAGfile.write(
+                if self.airflow_mode == "default":
+                    self.dag_file.write("%s_import = BashOperator(\n" % (task_id))
+                    self.dag_file.write("    task_id='%s_import',\n" % (task_id))
+                    self.dag_file.write(
                         "    bash_command='%s -h %s -t %s -I -C ',\n"
                         % (dbimport_cmd, row["hive_db"], row["hive_table"])
                     )
-                    self.DAGfile.write("    pool='%s',\n" % (import_phase_pool))
-                    self.DAGfile.write("    priority_weight=%s,\n" % (airflow_priority))
-                    self.DAGfile.write("    weight_rule='absolute',\n")
-                    self.DAGfile.write("    retries=%s,\n" % (retries_import_phase))
-                    self.DAGfile.write("    dag=dag)\n")
-                    self.DAGfile.write("\n")
+                    self.dag_file.write("    pool='%s',\n" % (import_phase_pool))
+                    self.dag_file.write(
+                        "    priority_weight=%s,\n" % (airflow_priority)
+                    )
+                    self.dag_file.write("    weight_rule='absolute',\n")
+                    self.dag_file.write("    retries=%s,\n" % (retries_import_phase))
+                    self.dag_file.write("    dag=dag)\n")
+                    self.dag_file.write("\n")
 
-                    self.DAGfile.write("%s_etl = BashOperator(\n" % (task_id))
-                    self.DAGfile.write("    task_id='%s_etl',\n" % (task_id))
-                    self.DAGfile.write(
+                    self.dag_file.write("%s_etl = BashOperator(\n" % (task_id))
+                    self.dag_file.write("    task_id='%s_etl',\n" % (task_id))
+                    self.dag_file.write(
                         "    bash_command='%s -h %s -t %s -E ',\n"
                         % (dbimport_cmd, row["hive_db"], row["hive_table"])
                     )
-                    self.DAGfile.write("    pool='%s',\n" % (etl_phase_pool))
-                    self.DAGfile.write("    priority_weight=%s,\n" % (airflow_priority))
-                    self.DAGfile.write("    weight_rule='absolute',\n")
-                    self.DAGfile.write("    retries=%s,\n" % (retries_etl_phase))
-                    self.DAGfile.write("    dag=dag)\n")
-                    self.DAGfile.write("\n")
+                    self.dag_file.write("    pool='%s',\n" % (etl_phase_pool))
+                    self.dag_file.write(
+                        "    priority_weight=%s,\n" % (airflow_priority)
+                    )
+                    self.dag_file.write("    weight_rule='absolute',\n")
+                    self.dag_file.write("    retries=%s,\n" % (retries_etl_phase))
+                    self.dag_file.write("    dag=dag)\n")
+                    self.dag_file.write("\n")
 
-                elif self.airflowMode == "aws_mwaa":
-                    instance_id = self.getAWSInstanceID(row["hive_table"])
-                    self.DAGfile.write("%s_import = PythonOperator(\n" % (task_id))
-                    self.DAGfile.write("    task_id='%s_import',\n" % (task_id))
-                    self.DAGfile.write("    python_callable=startDBImportExecution,\n")
-                    self.DAGfile.write(
+                elif self.airflow_mode == "aws_mwaa":
+                    instance_id = self.get_aws_instance_id(row["hive_table"])
+                    self.dag_file.write("%s_import = PythonOperator(\n" % (task_id))
+                    self.dag_file.write("    task_id='%s_import',\n" % (task_id))
+                    self.dag_file.write("    python_callable=startDBImportExecution,\n")
+                    self.dag_file.write(
                         '    op_kwargs={"command": "import -d %s -t %s -I -C", "instanceID": "%s"},\n'
                         % (row["hive_db"], row["hive_table"], instance_id)
                     )
-                    self.DAGfile.write("    pool='%s',\n" % (import_phase_pool))
-                    self.DAGfile.write("    priority_weight=%s,\n" % (airflow_priority))
-                    self.DAGfile.write("    weight_rule='absolute',\n")
-                    self.DAGfile.write("    retries=%s,\n" % (retries_import_phase))
-                    self.DAGfile.write("    dag=dag)\n")
-                    self.DAGfile.write("\n")
+                    self.dag_file.write("    pool='%s',\n" % (import_phase_pool))
+                    self.dag_file.write(
+                        "    priority_weight=%s,\n" % (airflow_priority)
+                    )
+                    self.dag_file.write("    weight_rule='absolute',\n")
+                    self.dag_file.write("    retries=%s,\n" % (retries_import_phase))
+                    self.dag_file.write("    dag=dag)\n")
+                    self.dag_file.write("\n")
 
-                    self.DAGfile.write("%s_etl = PythonOperator(\n" % (task_id))
-                    self.DAGfile.write("    task_id='%s_etl',\n" % (task_id))
-                    self.DAGfile.write("    python_callable=startDBImportExecution,\n")
-                    self.DAGfile.write(
+                    self.dag_file.write("%s_etl = PythonOperator(\n" % (task_id))
+                    self.dag_file.write("    task_id='%s_etl',\n" % (task_id))
+                    self.dag_file.write("    python_callable=startDBImportExecution,\n")
+                    self.dag_file.write(
                         '    op_kwargs={"command": "import -d %s -t %s -E", "instanceID": "%s"},\n'
                         % (row["hive_db"], row["hive_table"], instance_id)
                     )
-                    self.DAGfile.write("    pool='%s',\n" % (etl_phase_pool))
-                    self.DAGfile.write("    priority_weight=%s,\n" % (airflow_priority))
-                    self.DAGfile.write("    weight_rule='absolute',\n")
-                    self.DAGfile.write("    retries=%s,\n" % (retries_etl_phase))
-                    self.DAGfile.write("    dag=dag)\n")
-                    self.DAGfile.write("\n")
+                    self.dag_file.write("    pool='%s',\n" % (etl_phase_pool))
+                    self.dag_file.write(
+                        "    priority_weight=%s,\n" % (airflow_priority)
+                    )
+                    self.dag_file.write("    weight_rule='absolute',\n")
+                    self.dag_file.write("    retries=%s,\n" % (retries_etl_phase))
+                    self.dag_file.write("    dag=dag)\n")
+                    self.dag_file.write("\n")
 
                 if clear_stage_required == True and dag["finish_all_stage1_first"] == 1:
-                    self.DAGfile.write(
+                    self.dag_file.write(
                         "%s.set_downstream(%s_clearStage)\n"
                         % (self.mainStartTask, task_id)
                     )
                     if import_phase_as_sensor == True:
-                        self.DAGfile.write(
+                        self.dag_file.write(
                             "%s_clearStage.set_downstream(%s_sensor)\n"
                             % (task_id, task_id)
                         )
-                        self.DAGfile.write(
+                        self.dag_file.write(
                             "%s_sensor.set_downstream(%s_import)\n" % (task_id, task_id)
                         )
                     else:
-                        self.DAGfile.write(
+                        self.dag_file.write(
                             "%s_clearStage.set_downstream(%s_import)\n"
                             % (task_id, task_id)
                         )
-                    self.DAGfile.write(
+                    self.dag_file.write(
                         "%s_import.set_downstream(Import_Phase_Finished)\n" % (task_id)
                     )
-                    self.DAGfile.write(
+                    self.dag_file.write(
                         "Import_Phase_Finished.set_downstream(%s_etl)\n" % (task_id)
                     )
-                    self.DAGfile.write(
+                    self.dag_file.write(
                         "%s_etl.set_downstream(%s)\n" % (task_id, self.mainStopTask)
                     )
                 elif (
                     clear_stage_required == True and dag["finish_all_stage1_first"] == 0
                 ):  # This means that runImportAndEtlSeparate == True
-                    self.DAGfile.write(
+                    self.dag_file.write(
                         "%s.set_downstream(%s_clearStage)\n"
                         % (self.mainStartTask, task_id)
                     )
                     if import_phase_as_sensor == True:
-                        self.DAGfile.write(
+                        self.dag_file.write(
                             "%s_clearStage.set_downstream(%s_sensor)\n"
                             % (task_id, task_id)
                         )
-                        self.DAGfile.write(
+                        self.dag_file.write(
                             "%s_sensor.set_downstream(%s_import)\n" % (task_id, task_id)
                         )
                     else:
-                        self.DAGfile.write(
+                        self.dag_file.write(
                             "%s_clearStage.set_downstream(%s_import)\n"
                             % (task_id, task_id)
                         )
-                    self.DAGfile.write(
+                    self.dag_file.write(
                         "%s_import.set_downstream(%s_etl)\n" % (task_id, task_id)
                     )
-                    self.DAGfile.write(
+                    self.dag_file.write(
                         "%s_etl.set_downstream(%s)\n" % (task_id, self.mainStopTask)
                     )
                 elif (
@@ -1032,75 +1055,77 @@ class initialize:
                     and dag["finish_all_stage1_first"] == 1
                 ):
                     if import_phase_as_sensor == True:
-                        self.DAGfile.write(
+                        self.dag_file.write(
                             "%s.set_downstream(%s_sensor)\n"
                             % (self.mainStartTask, task_id)
                         )
-                        self.DAGfile.write(
+                        self.dag_file.write(
                             "%s_sensor.set_downstream(%s_import)\n" % (task_id, task_id)
                         )
                     else:
-                        self.DAGfile.write(
+                        self.dag_file.write(
                             "%s.set_downstream(%s_import)\n"
                             % (self.mainStartTask, task_id)
                         )
-                    self.DAGfile.write(
+                    self.dag_file.write(
                         "%s_import.set_downstream(Import_Phase_Finished)\n" % (task_id)
                     )
-                    self.DAGfile.write(
+                    self.dag_file.write(
                         "Import_Phase_Finished.set_downstream(%s_etl)\n" % (task_id)
                     )
-                    self.DAGfile.write(
+                    self.dag_file.write(
                         "%s_etl.set_downstream(%s)\n" % (task_id, self.mainStopTask)
                     )
                 else:
                     if import_phase_as_sensor == True:
-                        self.DAGfile.write(
+                        self.dag_file.write(
                             "%s.set_downstream(%s_sensor)\n"
                             % (self.mainStartTask, task_id)
                         )
-                        self.DAGfile.write(
+                        self.dag_file.write(
                             "%s_sensor.set_downstream(%s_import)\n" % (task_id, task_id)
                         )
                     else:
-                        self.DAGfile.write(
+                        self.dag_file.write(
                             "%s.set_downstream(%s_import)\n"
                             % (self.mainStartTask, task_id)
                         )
-                    self.DAGfile.write(
+                    self.dag_file.write(
                         "%s_import.set_downstream(%s_etl)\n" % (task_id, task_id)
                     )
-                    self.DAGfile.write(
+                    self.dag_file.write(
                         "%s_etl.set_downstream(%s)\n" % (task_id, self.mainStopTask)
                     )
-                self.DAGfile.write("\n")
+                self.dag_file.write("\n")
 
             else:
                 if import_phase_as_sensor == True:
                     # Running Import phase as a sensor
-                    self.DAGfile.write("%s_sensor = SqlSensor(\n" % (task_id))
-                    self.DAGfile.write("    task_id='%s_sensor',\n" % (task_id))
-                    self.DAGfile.write("    conn_id='DBImport',\n")
-                    self.DAGfile.write(
+                    self.dag_file.write("%s_sensor = SqlSensor(\n" % (task_id))
+                    self.dag_file.write("    task_id='%s_sensor',\n" % (task_id))
+                    self.dag_file.write("    conn_id='DBImport',\n")
+                    self.dag_file.write(
                         "    sql=\"\"\"select count(*) from import_tables where hive_db = '%s' and hive_table = '%s' and "
                         % (row["hive_db"], row["hive_table"])
                     )
-                    self.DAGfile.write(
+                    self.dag_file.write(
                         "copy_finished >= '{{ next_execution_date.strftime('%Y-%m-%d %H:%M:%S.%f') }}'\"\"\",\n"
                     )
-                    self.DAGfile.write("    pool='%s',\n" % (import_phase_pool))
-                    self.DAGfile.write("    priority_weight=%s,\n" % (airflow_priority))
-                    self.DAGfile.write("    weight_rule='absolute',\n")
-                    self.DAGfile.write("    timeout=18000,\n")
-                    self.DAGfile.write("    poke_interval=300,\n")
-                    self.DAGfile.write("    mode='reschedule',\n")
-                    self.DAGfile.write("    dag=dag)\n")
-                    self.DAGfile.write("\n")
+                    self.dag_file.write("    pool='%s',\n" % (import_phase_pool))
+                    self.dag_file.write(
+                        "    priority_weight=%s,\n" % (airflow_priority)
+                    )
+                    self.dag_file.write("    weight_rule='absolute',\n")
+                    self.dag_file.write("    timeout=18000,\n")
+                    self.dag_file.write("    poke_interval=300,\n")
+                    self.dag_file.write("    mode='reschedule',\n")
+                    self.dag_file.write("    dag=dag)\n")
+                    self.dag_file.write("\n")
 
-                if self.airflowMode == "default":
-                    self.DAGfile.write("%s = BashOperator(\n" % (task_id))
-                    self.DAGfile.write("    task_id='%s',\n" % (task_id))
-                    self.DAGfile.write(
+                if self.airflow_mode == "default":
+                    self.dag_file.write("%s = BashOperator(\n" % (task_id))
+                    self.dag_file.write("    task_id='%s',\n" % (task_id))
+                    self.dag_file.write(
                         "    bash_command='%s -h %s -t %s %s ',\n"
                         % (
                             dbimport_cmd,
@@ -1109,18 +1134,20 @@ class initialize:
                             meta_data_import_option,
                         )
                     )
-                    self.DAGfile.write("    pool='%s',\n" % (etl_phase_pool))
-                    self.DAGfile.write("    priority_weight=%s,\n" % (airflow_priority))
-                    self.DAGfile.write("    weight_rule='absolute',\n")
-                    self.DAGfile.write("    retries=%s,\n" % (retries))
-                    self.DAGfile.write("    dag=dag)\n")
-                    self.DAGfile.write("\n")
-                elif self.airflowMode == "aws_mwaa":
-                    instance_id = self.getAWSInstanceID(row["hive_table"])
-                    self.DAGfile.write("%s = PythonOperator(\n" % (task_id))
-                    self.DAGfile.write("    task_id='%s',\n" % (task_id))
-                    self.DAGfile.write("    python_callable=startDBImportExecution,\n")
-                    self.DAGfile.write(
+                    self.dag_file.write("    pool='%s',\n" % (etl_phase_pool))
+                    self.dag_file.write(
+                        "    priority_weight=%s,\n" % (airflow_priority)
+                    )
+                    self.dag_file.write("    weight_rule='absolute',\n")
+                    self.dag_file.write("    retries=%s,\n" % (retries))
+                    self.dag_file.write("    dag=dag)\n")
+                    self.dag_file.write("\n")
+                elif self.airflow_mode == "aws_mwaa":
+                    instance_id = self.get_aws_instance_id(row["hive_table"])
+                    self.dag_file.write("%s = PythonOperator(\n" % (task_id))
+                    self.dag_file.write("    task_id='%s',\n" % (task_id))
+                    self.dag_file.write("    python_callable=startDBImportExecution,\n")
+                    self.dag_file.write(
                         '    op_kwargs={"command": "import -d %s -t %s %s", "instanceID": "%s"},\n'
                         % (
                             row["hive_db"],
@@ -1129,82 +1156,87 @@ class initialize:
                             instance_id,
                         )
                     )
-                    self.DAGfile.write("    pool='%s',\n" % (etl_phase_pool))
-                    self.DAGfile.write("    priority_weight=%s,\n" % (airflow_priority))
-                    self.DAGfile.write("    weight_rule='absolute',\n")
-                    self.DAGfile.write("    retries=%s,\n" % (retries))
-                    self.DAGfile.write("    dag=dag)\n")
-                    self.DAGfile.write("\n")
+                    self.dag_file.write("    pool='%s',\n" % (etl_phase_pool))
+                    self.dag_file.write(
+                        "    priority_weight=%s,\n" % (airflow_priority)
+                    )
+                    self.dag_file.write("    weight_rule='absolute',\n")
+                    self.dag_file.write("    retries=%s,\n" % (retries))
+                    self.dag_file.write("    dag=dag)\n")
+                    self.dag_file.write("\n")
 
                 if clear_stage_required == True:
                     if import_phase_as_sensor == True:
-                        self.DAGfile.write(
+                        self.dag_file.write(
                             "%s.set_downstream(%s_clearStage)\n"
                             % (self.mainStartTask, task_id)
                         )
-                        self.DAGfile.write(
+                        self.dag_file.write(
                             "%s_clearStage.set_downstream(%s_sensor)\n"
                             % (task_id, task_id)
                         )
-                        self.DAGfile.write(
+                        self.dag_file.write(
                             "%s_sensor.set_downstream(%s)\n" % (task_id, task_id)
                         )
-                        self.DAGfile.write(
+                        self.dag_file.write(
                             "%s.set_downstream(%s)\n" % (task_id, self.mainStopTask)
                         )
                     else:
-                        self.DAGfile.write(
+                        self.dag_file.write(
                             "%s.set_downstream(%s_clearStage)\n"
                             % (self.mainStartTask, task_id)
                         )
-                        self.DAGfile.write(
+                        self.dag_file.write(
                             "%s_clearStage.set_downstream(%s)\n" % (task_id, task_id)
                         )
-                        self.DAGfile.write(
+                        self.dag_file.write(
                             "%s.set_downstream(%s)\n" % (task_id, self.mainStopTask)
                         )
                 else:
                     if import_phase_as_sensor == True:
-                        self.DAGfile.write(
+                        self.dag_file.write(
                             "%s.set_downstream(%s_sensor)\n"
                             % (self.mainStartTask, task_id)
                         )
-                        self.DAGfile.write(
+                        self.dag_file.write(
                             "%s_sensor.set_downstream(%s)\n" % (task_id, task_id)
                         )
-                        self.DAGfile.write(
+                        self.dag_file.write(
                             "%s.set_downstream(%s)\n" % (task_id, self.mainStopTask)
                         )
                     else:
-                        self.DAGfile.write(
+                        self.dag_file.write(
                             "%s.set_downstream(%s)\n" % (self.mainStartTask, task_id)
                         )
-                        self.DAGfile.write(
+                        self.dag_file.write(
                             "%s.set_downstream(%s)\n" % (task_id, self.mainStopTask)
                         )
-                self.DAGfile.write("\n")
+                self.dag_file.write("\n")
 
-        self.addTasksToDAGfile(
+        self.add_tasks_to_dag_file(
             dag_name=dag["dag_name"],
             main_dag_schedule=dag["schedule_interval"],
             default_retries=retries,
             default_sudo_user=sudo_user,
         )
-        self.addSensorsToDAGfile(
+        self.add_sensors_to_dag_file(
             dag_name=dag["dag_name"], main_dag_schedule=dag["schedule_interval"]
         )
-        self.createAirflowPools(pools=used_pools)
-        if self.airflowMode == "aws_mwaa" and self.airflowAWSpoolToInstanceId == True:
-            self.AWSappendInstanceIDasPools()
-        self.closeDAGfile()
+        self.create_airflow_pools(pools=used_pools)
+        if (
+            self.airflow_mode == "aws_mwaa"
+            and self.airflow_aws_pool_to_instance_id == True
+        ):
+            self.aws_append_instance_id_as_pools()
+        self.close_dag_file()
         session.close()
 
-    def createAirflowPools(self, pools):
+    def create_airflow_pools(self, pools):
         """Creates the pools in Airflow database"""
         log = logging.getLogger(self.logger)
 
-        if self.airflowMode == "default" and self.createPoolsWithTasks == False:
-            session = self.airflowDBSession()
+        if self.airflow_mode == "default" and self.create_pools_with_tasks == False:
+            session = self.airflow_db_session()
             slot_pool = aliased(airflowSchema.slotPool)
 
             airflow_pools = pd.DataFrame(
@@ -1215,10 +1247,10 @@ class initialize:
 
             for pool in pools:
                 # Just to make sure we dont create the same pool twice. That will generate an error in Airflow
-                if pool in self.createdPools:
+                if pool in self.created_pools:
                     continue
                 else:
-                    self.createdPools.append(pool)
+                    self.created_pools.append(pool)
 
                 if (
                     len(airflow_pools) == 0
@@ -1245,38 +1277,38 @@ class initialize:
 
             session.close()
 
-        elif self.createPoolsWithTasks == True:
+        elif self.create_pools_with_tasks == True:
             for pool in pools:
                 # Just to make sure we dont create the same pool twice. That will generate an error in Airflow
-                if pool in self.createdPools:
+                if pool in self.created_pools:
                     continue
                 else:
-                    self.createdPools.append(pool)
+                    self.created_pools.append(pool)
 
                 task_name = "createPool_%s" % (pool.replace(".", "_").replace("-", "_"))
-                self.DAGfile.write("\n")
-                self.DAGfile.write("%s = CreatePoolOperator(\n" % (task_name))
-                self.DAGfile.write("    name='%s',\n" % (pool))
-                self.DAGfile.write("    slots=%s,\n" % (self.airflowDefaultPoolSize))
-                self.DAGfile.write("    task_id='%s',\n" % (task_name))
-                self.DAGfile.write("    retries=5,\n")
-                self.DAGfile.write("    priority_weight=1,\n")
-                self.DAGfile.write("    weight_rule='absolute',\n")
-                self.DAGfile.write("    pool=None,\n")
-                self.DAGfile.write("    dag=dag)\n")
-                self.DAGfile.write("\n")
-                self.DAGfile.write("start.set_downstream(%s)\n" % (task_name))
-                self.DAGfile.write(
+                self.dag_file.write("\n")
+                self.dag_file.write("%s = CreatePoolOperator(\n" % (task_name))
+                self.dag_file.write("    name='%s',\n" % (pool))
+                self.dag_file.write("    slots=%s,\n" % (self.airflowDefaultPoolSize))
+                self.dag_file.write("    task_id='%s',\n" % (task_name))
+                self.dag_file.write("    retries=5,\n")
+                self.dag_file.write("    priority_weight=1,\n")
+                self.dag_file.write("    weight_rule='absolute',\n")
+                self.dag_file.write("    pool=None,\n")
+                self.dag_file.write("    dag=dag)\n")
+                self.dag_file.write("\n")
+                self.dag_file.write("start.set_downstream(%s)\n" % (task_name))
+                self.dag_file.write(
                     "%s.set_downstream(%s)\n" % (task_name, self.preStopTask)
                 )
-                self.DAGfile.write("\n")
+                self.dag_file.write("\n")
 
-    def generateCustomDAG(self, dag):
+    def generate_custom_dag(self, dag):
         """Generates a Custom DAG"""
         log = logging.getLogger(self.logger)
 
         # session = self.configDBSession()
-        session = self.getDBImportSession()
+        session = self.get_dbimport_session()
         airflow_tasks = aliased(configSchema.airflowTasks)
 
         tasks = (
@@ -1297,9 +1329,9 @@ class initialize:
             return
 
         used_pools = []
-        # 		if self.airflowMode == "aws_mwaa" and self.airflowAWSpoolToInstanceId == True:
+        # 		if self.airflow_mode == "aws_mwaa" and self.airflow_aws_pool_to_instance_id == True:
         # 			# We can choice to override the poolname and set it to the instance ID if we are running on AWS
-        # 			defaultPool = self.airflowAWSinstanceIds
+        # 			defaultPool = self.airflow_aws_instance_ids
         # 		else:
         # 			defaultPool = DAG['dag_name']
         default_pool = dag["dag_name"]
@@ -1311,8 +1343,8 @@ class initialize:
         else:
             retries = int(dag["retries"])
 
-        cron_schedule = self.convertTimeToCron(dag["schedule_interval"])
-        self.createDAGfileWithHeader(
+        cron_schedule = self.convert_time_to_cron(dag["schedule_interval"])
+        self.create_dag_file_with_header(
             dag_name=dag["dag_name"],
             cron_schedule=cron_schedule,
             default_pool=default_pool,
@@ -1326,20 +1358,20 @@ class initialize:
             retry_exponential_backoff=dag["retry_exponential_backoff"],
             concurrency=dag["concurrency"],
         )
-        self.addTasksToDAGfile(
+        self.add_tasks_to_dag_file(
             dag_name=dag["dag_name"],
             main_dag_schedule=dag["schedule_interval"],
             default_retries=retries,
             default_sudo_user=sudo_user,
         )
-        self.addSensorsToDAGfile(
+        self.add_sensors_to_dag_file(
             dag_name=dag["dag_name"], main_dag_schedule=dag["schedule_interval"]
         )
-        self.createAirflowPools(pools=used_pools)
-        self.closeDAGfile()
+        self.create_airflow_pools(pools=used_pools)
+        self.close_dag_file()
         session.close()
 
-    def convertTimeToCron(self, time):
+    def convert_time_to_cron(self, time):
         """Converts a string in format HH:MM to a CRON time string based on 'minute hour day month weekday'"""
         log = logging.getLogger(self.logger)
         return_value = time
@@ -1351,7 +1383,7 @@ class initialize:
 
         return return_value
 
-    def validateTimeZone(self, time_zone):
+    def validate_time_zone(self, time_zone):
         log = logging.getLogger(self.logger)
         try:
             pendulum.timezone(time_zone)
@@ -1360,7 +1392,7 @@ class initialize:
         else:
             return True
 
-    def createDAGfileWithHeader(
+    def create_dag_file_with_header(
         self,
         dag_name,
         cron_schedule,
@@ -1378,7 +1410,7 @@ class initialize:
     ):
         log = logging.getLogger(self.logger)
         # session = self.configDBSession()
-        session = self.getDBImportSession()
+        session = self.get_dbimport_session()
 
         self.sensorStartTask = "start"
         self.sensorStopTask = "dag_sensors_finished"
@@ -1390,13 +1422,13 @@ class initialize:
         self.postStopTask = "stop"
 
         if (
-            self.TaskQueueForDummy != None
-            and self.TaskQueueForDummy.strip() != ""
-            and self.TaskQueueForDummy.strip() != "default"
+            self.task_queue_for_dummy != None
+            and self.task_queue_for_dummy.strip() != ""
+            and self.task_queue_for_dummy.strip() != "default"
         ):
-            self.TaskQueueForDummy = self.TaskQueueForDummy.strip()
+            self.task_queue_for_dummy = self.task_queue_for_dummy.strip()
         else:
-            self.TaskQueueForDummy = None
+            self.task_queue_for_dummy = None
 
         tasks_before_main_exists = False
         tasks_after_main_exists = False
@@ -1405,7 +1437,7 @@ class initialize:
         if (
             dag_time_zone != None
             and dag_time_zone != ""
-            and self.validateTimeZone(dag_time_zone) == False
+            and self.validate_time_zone(dag_time_zone) == False
         ):
             log.warning(
                 "Time zone value specified for DAG is not valid, (%s)" % (dag_time_zone)
@@ -1414,621 +1446,627 @@ class initialize:
             dag_time_zone = None
 
         if self.DAGFolder == None:
-            self.DAGfilename = "%s/%s.py" % (self.DAGstagingDirectory, dag_name)
-            if not os.path.exists(self.DAGstagingDirectory):
+            self.dag_filename = "%s/%s.py" % (self.dag_staging_directory, dag_name)
+            if not os.path.exists(self.dag_staging_directory):
                 try:
                     log.info(
                         "Creating DAG staging directory (%s)"
-                        % (self.DAGstagingDirectory)
+                        % (self.dag_staging_directory)
                     )
-                    os.makedirs(self.DAGstagingDirectory)
+                    os.makedirs(self.dag_staging_directory)
                 except:
                     pass
         else:
-            self.DAGfilename = "%s/%s.py" % (self.DAGFolder, dag_name)
+            self.dag_filename = "%s/%s.py" % (self.DAGFolder, dag_name)
 
-        self.DAGfilenameInAwsMWAA = "dags/%s.py" % (dag_name)
-        self.DAGfilenameInAirflow = "%s/%s.py" % (self.DAGdirectory, dag_name)
+        self.dag_filename_in_aws_mwaa = "dags/%s.py" % (dag_name)
+        self.dag_filename_in_airflow = "%s/%s.py" % (self.dag_directory, dag_name)
 
         try:
-            self.DAGfile = open(self.DAGfilename, "w")
+            self.dag_file = open(self.dag_filename, "w")
         except FileNotFoundError:
             log.error(
                 "Cant open file '%s'. Please verify that the directory exists and that the configuration 'airflow_dbimport_commandpath' is correct"
-                % (self.DAGfilename)
+                % (self.dag_filename)
             )
             raise RuntimeError
             # self.common_config.remove_temporary_files()
             # sys.exit(1)
 
-        self.DAGfile.write("# -*- coding: utf-8 -*-\n")
-        self.DAGfile.write("import airflow\n")
-        self.DAGfile.write("from airflow import DAG\n")
-        self.DAGfile.write("from airflow.models import Variable\n")
+        self.dag_file.write("# -*- coding: utf-8 -*-\n")
+        self.dag_file.write("import airflow\n")
+        self.dag_file.write("from airflow import DAG\n")
+        self.dag_file.write("from airflow.models import Variable\n")
 
         if self.airflowMajorVersion == 2:
-            self.DAGfile.write(
+            self.dag_file.write(
                 "from airflow.sensors.external_task import ExternalTaskSensor\n"
             )
         else:
-            self.DAGfile.write(
+            self.dag_file.write(
                 "from airflow.operators.sensors import ExternalTaskSensor\n"
             )
 
-        self.DAGfile.write("from airflow.sensors.sql_sensor import SqlSensor\n")
-        self.DAGfile.write("from airflow.operators.bash_operator import BashOperator\n")
-        self.DAGfile.write(
+        self.dag_file.write("from airflow.sensors.sql_sensor import SqlSensor\n")
+        self.dag_file.write(
+            "from airflow.operators.bash_operator import BashOperator\n"
+        )
+        self.dag_file.write(
             "from airflow.operators.python_operator import BranchPythonOperator\n"
         )
-        self.DAGfile.write(
+        self.dag_file.write(
             "from airflow.operators.dagrun_operator import TriggerDagRunOperator\n"
         )
-        self.DAGfile.write(
+        self.dag_file.write(
             "from airflow.operators.dummy_operator import DummyOperator\n"
         )
-        self.DAGfile.write(
+        self.dag_file.write(
             "from airflow.api.common.experimental.pool import get_pool, create_pool\n"
         )
-        self.DAGfile.write("from airflow.exceptions import PoolNotFound\n")
-        self.DAGfile.write("from airflow.models import BaseOperator\n")
+        self.dag_file.write("from airflow.exceptions import PoolNotFound\n")
+        self.dag_file.write("from airflow.models import BaseOperator\n")
 
-        if self.airflowMode == "aws_mwaa":
-            self.DAGfile.write(
+        if self.airflow_mode == "aws_mwaa":
+            self.dag_file.write(
                 "from airflow.operators.dummy_operator import DummyOperator\n"
             )
-            self.DAGfile.write(
+            self.dag_file.write(
                 "from airflow.operators.python_operator import PythonOperator\n"
             )
-            self.DAGfile.write("import botocore\n")
-            self.DAGfile.write("import boto3\n")
-            self.DAGfile.write("import time\n")
+            self.dag_file.write("import botocore\n")
+            self.dag_file.write("import boto3\n")
+            self.dag_file.write("import time\n")
 
-        self.DAGfile.write("from datetime import datetime, timedelta, timezone\n")
-        self.DAGfile.write("import pendulum\n")
-        self.DAGfile.write("\n")
-        self.DAGfile.write("try:\n")
-        self.DAGfile.write('    Email_receiver = Variable.get("Email_receiver")\n')
-        self.DAGfile.write("except KeyError:\n")
-        self.DAGfile.write('    Email_receiver = "not-set@domain.com"\n')
-        self.DAGfile.write("\n")
-        self.DAGfile.write("\n")
+        self.dag_file.write("from datetime import datetime, timedelta, timezone\n")
+        self.dag_file.write("import pendulum\n")
+        self.dag_file.write("\n")
+        self.dag_file.write("try:\n")
+        self.dag_file.write('    Email_receiver = Variable.get("Email_receiver")\n')
+        self.dag_file.write("except KeyError:\n")
+        self.dag_file.write('    Email_receiver = "not-set@domain.com"\n')
+        self.dag_file.write("\n")
+        self.dag_file.write("\n")
 
-        self.DAGfile.write("class CreatePoolOperator(BaseOperator):\n")
-        self.DAGfile.write("    ui_color = '#b8e9ee'\n")
-        self.DAGfile.write("\n")
-        self.DAGfile.write("    def __init__(\n")
-        self.DAGfile.write("            self,\n")
-        self.DAGfile.write("            name,\n")
-        self.DAGfile.write("            slots,\n")
-        self.DAGfile.write("            description='',\n")
-        self.DAGfile.write("            *args, **kwargs):\n")
-        self.DAGfile.write(
+        self.dag_file.write("class CreatePoolOperator(BaseOperator):\n")
+        self.dag_file.write("    ui_color = '#b8e9ee'\n")
+        self.dag_file.write("\n")
+        self.dag_file.write("    def __init__(\n")
+        self.dag_file.write("            self,\n")
+        self.dag_file.write("            name,\n")
+        self.dag_file.write("            slots,\n")
+        self.dag_file.write("            description='',\n")
+        self.dag_file.write("            *args, **kwargs):\n")
+        self.dag_file.write(
             "        super(CreatePoolOperator, self).__init__(*args, **kwargs)\n"
         )
-        self.DAGfile.write("        self.description = description\n")
-        self.DAGfile.write("        self.slots = slots\n")
-        self.DAGfile.write("        self.name = name\n")
-        self.DAGfile.write("\n")
-        self.DAGfile.write("    def execute(self, context):\n")
-        self.DAGfile.write("        try:\n")
-        self.DAGfile.write("            pool = get_pool(name=self.name)\n")
-        # self.DAGfile.write("            if pool:\n")
-        self.DAGfile.write("            print('Pool exists: %s'%(pool))\n")
-        self.DAGfile.write("        except PoolNotFound:\n")
-        self.DAGfile.write("            # create the pool\n")
-        self.DAGfile.write(
+        self.dag_file.write("        self.description = description\n")
+        self.dag_file.write("        self.slots = slots\n")
+        self.dag_file.write("        self.name = name\n")
+        self.dag_file.write("\n")
+        self.dag_file.write("    def execute(self, context):\n")
+        self.dag_file.write("        try:\n")
+        self.dag_file.write("            pool = get_pool(name=self.name)\n")
+        # self.dag_file.write("            if pool:\n")
+        self.dag_file.write("            print('Pool exists: %s'%(pool))\n")
+        self.dag_file.write("        except PoolNotFound:\n")
+        self.dag_file.write("            # create the pool\n")
+        self.dag_file.write(
             "            pool = create_pool(name=self.name, slots=self.slots, description=self.description)\n"
         )
-        self.DAGfile.write("            print('Pool exists: %s'%(pool))\n")
-        self.DAGfile.write("\n")
-        self.DAGfile.write("\n")
+        self.dag_file.write("            print('Pool exists: %s'%(pool))\n")
+        self.dag_file.write("\n")
+        self.dag_file.write("\n")
 
         if dag_time_zone == None or dag_time_zone == "":
-            self.DAGfile.write(
-                'local_tz = pendulum.timezone("%s")\n' % (self.defaultTimeZone)
+            self.dag_file.write(
+                'local_tz = pendulum.timezone("%s")\n' % (self.default_time_zone)
             )
-            self.DAGfile.write("\n")
+            self.dag_file.write("\n")
         else:
-            self.DAGfile.write('local_tz = pendulum.timezone("%s")\n' % (dag_time_zone))
-            self.DAGfile.write("\n")
+            self.dag_file.write(
+                'local_tz = pendulum.timezone("%s")\n' % (dag_time_zone)
+            )
+            self.dag_file.write("\n")
 
-        if self.airflowMode == "aws_mwaa":
-            self.DAGfile.write(
+        if self.airflow_mode == "aws_mwaa":
+            self.dag_file.write(
                 "def printAndFindEventErrors(event, startWithNewline = False):\n"
             )
-            self.DAGfile.write("    errorFound = False\n")
-            self.DAGfile.write("\n")
-            self.DAGfile.write("    if startWithNewline == True:\n")
-            self.DAGfile.write('        findPattern = "\\nERROR"\n')
-            self.DAGfile.write("    else:\n")
-            self.DAGfile.write('        findPattern = "ERROR"\n')
-            self.DAGfile.write("\n")
-            self.DAGfile.write("    try:\n")
-            self.DAGfile.write("        print(event['message'], end=\"\")\n")
-            self.DAGfile.write("        if event['message'].find(findPattern) != -1:\n")
-            # self.DAGfile.write("        if event['message'].find(\"ERROR\") != -1:\n")
-            self.DAGfile.write("            errorFound = True\n")
-            # self.DAGfile.write("            print(\"Error Found (A) !!!!!\")\n")
-            self.DAGfile.write("            print(event)\n")
-            self.DAGfile.write("    except:\n")
-            self.DAGfile.write("        print(event)\n")
-            self.DAGfile.write("        if str(event).find(findPattern) != -1:\n")
-            # self.DAGfile.write("        if str(event).find(\"ERROR\") != -1:\n")
-            self.DAGfile.write("            errorFound = True\n")
-            # self.DAGfile.write("            print(\"Error Found (B) !!!!!\")\n")
-            self.DAGfile.write("\n")
-            self.DAGfile.write("    return errorFound\n")
-            self.DAGfile.write("\n")
-            self.DAGfile.write("\n")
-            self.DAGfile.write("def startDBImportExecution(command, instanceID):\n")
-            self.DAGfile.write("\n")
-            self.DAGfile.write(
+            self.dag_file.write("    errorFound = False\n")
+            self.dag_file.write("\n")
+            self.dag_file.write("    if startWithNewline == True:\n")
+            self.dag_file.write('        findPattern = "\\nERROR"\n')
+            self.dag_file.write("    else:\n")
+            self.dag_file.write('        findPattern = "ERROR"\n')
+            self.dag_file.write("\n")
+            self.dag_file.write("    try:\n")
+            self.dag_file.write("        print(event['message'], end=\"\")\n")
+            self.dag_file.write(
+                "        if event['message'].find(findPattern) != -1:\n"
+            )
+            # self.dag_file.write("        if event['message'].find(\"ERROR\") != -1:\n")
+            self.dag_file.write("            errorFound = True\n")
+            # self.dag_file.write("            print(\"Error Found (A) !!!!!\")\n")
+            self.dag_file.write("            print(event)\n")
+            self.dag_file.write("    except:\n")
+            self.dag_file.write("        print(event)\n")
+            self.dag_file.write("        if str(event).find(findPattern) != -1:\n")
+            # self.dag_file.write("        if str(event).find(\"ERROR\") != -1:\n")
+            self.dag_file.write("            errorFound = True\n")
+            # self.dag_file.write("            print(\"Error Found (B) !!!!!\")\n")
+            self.dag_file.write("\n")
+            self.dag_file.write("    return errorFound\n")
+            self.dag_file.write("\n")
+            self.dag_file.write("\n")
+            self.dag_file.write("def startDBImportExecution(command, instanceID):\n")
+            self.dag_file.write("\n")
+            self.dag_file.write(
                 "    ssm_client = boto3.client('ssm',region_name='eu-west-1')\n"
             )
-            self.DAGfile.write(
+            self.dag_file.write(
                 "    logs_client = boto3.client('logs',region_name='eu-west-1')\n"
             )
-            self.DAGfile.write("\n")
-            # self.DAGfile.write("    instanceID = \"%s\"\n"%(self.airflowAWSinstanceIds))
-            self.DAGfile.write(
-                '    commandPath = "%s"\n' % (self.getDBImportCommandPath())
+            self.dag_file.write("\n")
+            # self.dag_file.write("    instanceID = \"%s\"\n"%(self.airflow_aws_instance_ids))
+            self.dag_file.write(
+                '    commandPath = "%s"\n' % (self.get_dbimport_command_path())
             )
-            self.DAGfile.write(
+            self.dag_file.write(
                 '    command = "%sbin/%s || echo ERROR; sleep 1"%(commandPath, command)\n'
             )
-            self.DAGfile.write('    cloudWatchLogGroupName = "dbimport"\n')
-            self.DAGfile.write("    errorFound = False\n")
-            self.DAGfile.write("\n")
-            self.DAGfile.write("\n")
-            self.DAGfile.write(
+            self.dag_file.write('    cloudWatchLogGroupName = "dbimport"\n')
+            self.dag_file.write("    errorFound = False\n")
+            self.dag_file.write("\n")
+            self.dag_file.write("\n")
+            self.dag_file.write(
                 "    # Start the import by the help of SSM Send Command\n"
             )
-            self.DAGfile.write("    sendCommand_response = ssm_client.send_command(\n")
-            self.DAGfile.write("        InstanceIds=[instanceID],\n")
-            self.DAGfile.write('        DocumentName="AWS-RunShellScript",\n')
-            self.DAGfile.write(
+            self.dag_file.write("    sendCommand_response = ssm_client.send_command(\n")
+            self.dag_file.write("        InstanceIds=[instanceID],\n")
+            self.dag_file.write('        DocumentName="AWS-RunShellScript",\n')
+            self.dag_file.write(
                 "        Parameters={'commands': [command], 'executionTimeout': ['172800']},\n"
             )
-            self.DAGfile.write(
+            self.dag_file.write(
                 "        CloudWatchOutputConfig={'CloudWatchLogGroupName': cloudWatchLogGroupName, 'CloudWatchOutputEnabled': True}\n"
             )
-            self.DAGfile.write("        )\n")
-            self.DAGfile.write("\n")
-            self.DAGfile.write("\n")
-            self.DAGfile.write(
+            self.dag_file.write("        )\n")
+            self.dag_file.write("\n")
+            self.dag_file.write("\n")
+            self.dag_file.write(
                 "    # Get the commandID and set the logStreamName for CloudWatch\n"
             )
-            self.DAGfile.write(
+            self.dag_file.write(
                 "    commandID = sendCommand_response['Command']['CommandId']\n"
             )
-            self.DAGfile.write(
+            self.dag_file.write(
                 '    logStreamNameStdOut = "%s/%s/aws-runShellScript/stdout"%(commandID, instanceID)\n'
             )
-            self.DAGfile.write(
+            self.dag_file.write(
                 '    logStreamNameStdErr = "%s/%s/aws-runShellScript/stderr"%(commandID, instanceID)\n'
             )
-            self.DAGfile.write("\n")
-            self.DAGfile.write("    print('')\n")
-            self.DAGfile.write("    print('CloudWatch logs is available at:')\n")
-            self.DAGfile.write("    print(logStreamNameStdOut)\n")
-            self.DAGfile.write("    print(logStreamNameStdErr)\n")
-            self.DAGfile.write("    print('')\n")
-            self.DAGfile.write("\n")
-            self.DAGfile.write("\n")
-            self.DAGfile.write(
+            self.dag_file.write("\n")
+            self.dag_file.write("    print('')\n")
+            self.dag_file.write("    print('CloudWatch logs is available at:')\n")
+            self.dag_file.write("    print(logStreamNameStdOut)\n")
+            self.dag_file.write("    print(logStreamNameStdErr)\n")
+            self.dag_file.write("    print('')\n")
+            self.dag_file.write("\n")
+            self.dag_file.write("\n")
+            self.dag_file.write(
                 "    # Run a loop until the command is actually running\n"
             )
-            self.DAGfile.write("    commandRunning = False\n")
-            self.DAGfile.write("    while commandRunning == False:\n")
-            self.DAGfile.write("        try:\n")
-            self.DAGfile.write(
+            self.dag_file.write("    commandRunning = False\n")
+            self.dag_file.write("    while commandRunning == False:\n")
+            self.dag_file.write("        try:\n")
+            self.dag_file.write(
                 "            commandInvocation_response = ssm_client.get_command_invocation(\n"
             )
-            self.DAGfile.write("                CommandId=commandID,\n")
-            self.DAGfile.write("                InstanceId=instanceID\n")
-            self.DAGfile.write("                )\n")
-            self.DAGfile.write(
+            self.dag_file.write("                CommandId=commandID,\n")
+            self.dag_file.write("                InstanceId=instanceID\n")
+            self.dag_file.write("                )\n")
+            self.dag_file.write(
                 "            commandStatus = commandInvocation_response['Status']\n"
             )
-            self.DAGfile.write("\n")
-            # self.DAGfile.write("            print('commandStatus = %s'%(commandStatus))\n")
-            # self.DAGfile.write("\n")
-            self.DAGfile.write(
+            self.dag_file.write("\n")
+            # self.dag_file.write("            print('commandStatus = %s'%(commandStatus))\n")
+            # self.dag_file.write("\n")
+            self.dag_file.write(
                 "            if commandStatus in ('InProgress', 'Success'):\n"
             )
-            self.DAGfile.write("                commandRunning = True\n")
-            self.DAGfile.write(
+            self.dag_file.write("                commandRunning = True\n")
+            self.dag_file.write(
                 "            elif commandStatus in ('Pending', 'Delayed'):\n"
             )
-            self.DAGfile.write("                commandRunning = False\n")
-            self.DAGfile.write(
+            self.dag_file.write("                commandRunning = False\n")
+            self.dag_file.write(
                 "            elif commandStatus in ('DeliveryTimedOut', 'ExecutionTimedOut', 'Failed', 'Cancelled', 'Undeliverable', 'Terminated', 'InvalidPlatform', 'AccessDenied'):\n"
             )
-            self.DAGfile.write("                raise\n")
-            self.DAGfile.write("\n")
-            self.DAGfile.write(
+            self.dag_file.write("                raise\n")
+            self.dag_file.write("\n")
+            self.dag_file.write(
                 "        except botocore.exceptions.ClientError as err:\n"
             )
-            self.DAGfile.write(
+            self.dag_file.write(
                 "            if err.response['Error']['Code'] == 'InvocationDoesNotExist':\n"
             )
-            self.DAGfile.write("                pass\n")
-            self.DAGfile.write("            else:\n")
-            self.DAGfile.write("                raise err\n")
-            self.DAGfile.write("\n")
-            self.DAGfile.write("        time.sleep(5)\n")
-            self.DAGfile.write("\n")
-            self.DAGfile.write(
+            self.dag_file.write("                pass\n")
+            self.dag_file.write("            else:\n")
+            self.dag_file.write("                raise err\n")
+            self.dag_file.write("\n")
+            self.dag_file.write("        time.sleep(5)\n")
+            self.dag_file.write("\n")
+            self.dag_file.write(
                 "    # Start fetching log from CloudWatch. Initial fetch will be from head and also fetch the token for upcomming messages\n"
             )
-            self.DAGfile.write("    nextTokenStdOut = None\n")
-            self.DAGfile.write("    nextTokenStdErr = None\n")
-            self.DAGfile.write("    logEventsRunning = False\n")
-            self.DAGfile.write("    while logEventsRunning == False:\n")
-            self.DAGfile.write("        try:\n")
-            self.DAGfile.write(
+            self.dag_file.write("    nextTokenStdOut = None\n")
+            self.dag_file.write("    nextTokenStdErr = None\n")
+            self.dag_file.write("    logEventsRunning = False\n")
+            self.dag_file.write("    while logEventsRunning == False:\n")
+            self.dag_file.write("        try:\n")
+            self.dag_file.write(
                 "            responseStdOut = logs_client.get_log_events(\n"
             )
-            self.DAGfile.write("                logGroupName='dbimport',\n")
-            self.DAGfile.write("                logStreamName=logStreamNameStdOut,\n")
-            self.DAGfile.write("                startFromHead=True\n")
-            self.DAGfile.write("                )\n")
-            self.DAGfile.write("\n")
-            self.DAGfile.write("            for event in responseStdOut['events']:\n")
-            self.DAGfile.write(
+            self.dag_file.write("                logGroupName='dbimport',\n")
+            self.dag_file.write("                logStreamName=logStreamNameStdOut,\n")
+            self.dag_file.write("                startFromHead=True\n")
+            self.dag_file.write("                )\n")
+            self.dag_file.write("\n")
+            self.dag_file.write("            for event in responseStdOut['events']:\n")
+            self.dag_file.write(
                 "                if printAndFindEventErrors(event, startWithNewline = False) == True:\n"
             )
-            self.DAGfile.write("                    errorFound = True\n")
-            # self.DAGfile.write("                try:\n")
-            # self.DAGfile.write("                    print(event['message'], end=\"\")\n")
-            # self.DAGfile.write("                    if event['message'].find(\"\\nERROR\") != -1:\n")
-            # # self.DAGfile.write("                    if event['message'].find(\"ERROR\") != -1:\n")
-            # self.DAGfile.write("                        errorFound = True\n")
-            # self.DAGfile.write("                        print(\"Error Found (1) !!!!!\")\n")
-            # self.DAGfile.write("                        print(event)\n")
-            # self.DAGfile.write("                except:\n")
-            # self.DAGfile.write("                    print(event)\n")
-            # self.DAGfile.write("                    if str(event).find(\"\\nERROR\") != -1:\n")
-            # # self.DAGfile.write("                    if str(event).find(\"ERROR\") != -1:\n")
-            # self.DAGfile.write("                        errorFound = True\n")
-            # self.DAGfile.write("                        print(\"Error Found (2) !!!!!\")\n")
-            self.DAGfile.write("\n")
-            self.DAGfile.write(
+            self.dag_file.write("                    errorFound = True\n")
+            # self.dag_file.write("                try:\n")
+            # self.dag_file.write("                    print(event['message'], end=\"\")\n")
+            # self.dag_file.write("                    if event['message'].find(\"\\nERROR\") != -1:\n")
+            # # self.dag_file.write("                    if event['message'].find(\"ERROR\") != -1:\n")
+            # self.dag_file.write("                        errorFound = True\n")
+            # self.dag_file.write("                        print(\"Error Found (1) !!!!!\")\n")
+            # self.dag_file.write("                        print(event)\n")
+            # self.dag_file.write("                except:\n")
+            # self.dag_file.write("                    print(event)\n")
+            # self.dag_file.write("                    if str(event).find(\"\\nERROR\") != -1:\n")
+            # # self.dag_file.write("                    if str(event).find(\"ERROR\") != -1:\n")
+            # self.dag_file.write("                        errorFound = True\n")
+            # self.dag_file.write("                        print(\"Error Found (2) !!!!!\")\n")
+            self.dag_file.write("\n")
+            self.dag_file.write(
                 "            nextTokenStdOut = responseStdOut['nextForwardToken']\n"
             )
-            self.DAGfile.write("            logEventsRunning = True\n")
-            self.DAGfile.write("\n")
-            self.DAGfile.write(
+            self.dag_file.write("            logEventsRunning = True\n")
+            self.dag_file.write("\n")
+            self.dag_file.write(
                 "            responseStdErr = logs_client.get_log_events(\n"
             )
-            self.DAGfile.write("                logGroupName='dbimport',\n")
-            self.DAGfile.write("                logStreamName=logStreamNameStdErr,\n")
-            self.DAGfile.write("                startFromHead=True\n")
-            self.DAGfile.write("                )\n")
-            self.DAGfile.write("\n")
-            self.DAGfile.write(
+            self.dag_file.write("                logGroupName='dbimport',\n")
+            self.dag_file.write("                logStreamName=logStreamNameStdErr,\n")
+            self.dag_file.write("                startFromHead=True\n")
+            self.dag_file.write("                )\n")
+            self.dag_file.write("\n")
+            self.dag_file.write(
                 "            nextTokenStdErr = responseStdErr['nextForwardToken']\n"
             )
-            self.DAGfile.write("\n")
-            self.DAGfile.write("            for event in responseStdErr['events']:\n")
-            self.DAGfile.write(
+            self.dag_file.write("\n")
+            self.dag_file.write("            for event in responseStdErr['events']:\n")
+            self.dag_file.write(
                 "                if printAndFindEventErrors(event, startWithNewline = True) == True:\n"
             )
-            self.DAGfile.write("                    errorFound = True\n")
-            # self.DAGfile.write("                try:\n")
-            # self.DAGfile.write("                    print(event['message'], end=\"\")\n")
-            # self.DAGfile.write("                    if event['message'].find(\"\\nERROR\") != -1:\n")
-            # # self.DAGfile.write("                    if event['message'].find(\"ERROR\") != -1:\n")
-            # self.DAGfile.write("                        errorFound = True\n")
-            # self.DAGfile.write("                        print(\"Error Found (1) !!!!!\")\n")
-            # self.DAGfile.write("                        print(event)\n")
-            # self.DAGfile.write("                except:\n")
-            # self.DAGfile.write("                    print(event)\n")
-            # self.DAGfile.write("                    if str(event).find(\"\\nERROR\") != -1:\n")
-            # # self.DAGfile.write("                    if str(event).find(\"ERROR\") != -1:\n")
-            # self.DAGfile.write("                        errorFound = True\n")
-            # self.DAGfile.write("                        print(\"Error Found (2) !!!!!\")\n")
-            self.DAGfile.write("\n")
-            self.DAGfile.write(
+            self.dag_file.write("                    errorFound = True\n")
+            # self.dag_file.write("                try:\n")
+            # self.dag_file.write("                    print(event['message'], end=\"\")\n")
+            # self.dag_file.write("                    if event['message'].find(\"\\nERROR\") != -1:\n")
+            # # self.dag_file.write("                    if event['message'].find(\"ERROR\") != -1:\n")
+            # self.dag_file.write("                        errorFound = True\n")
+            # self.dag_file.write("                        print(\"Error Found (1) !!!!!\")\n")
+            # self.dag_file.write("                        print(event)\n")
+            # self.dag_file.write("                except:\n")
+            # self.dag_file.write("                    print(event)\n")
+            # self.dag_file.write("                    if str(event).find(\"\\nERROR\") != -1:\n")
+            # # self.dag_file.write("                    if str(event).find(\"ERROR\") != -1:\n")
+            # self.dag_file.write("                        errorFound = True\n")
+            # self.dag_file.write("                        print(\"Error Found (2) !!!!!\")\n")
+            self.dag_file.write("\n")
+            self.dag_file.write(
                 "        except botocore.exceptions.ClientError as err:\n"
             )
-            self.DAGfile.write(
+            self.dag_file.write(
                 "            if err.response['Error']['Code'] == 'ResourceNotFoundException':\n"
             )
-            self.DAGfile.write("                pass\n")
-            self.DAGfile.write(
+            self.dag_file.write("                pass\n")
+            self.dag_file.write(
                 "            elif err.response['Error']['Code'] == 'ThrottlingException':\n"
             )
-            self.DAGfile.write("                pass\n")
-            self.DAGfile.write("            else:\n")
-            self.DAGfile.write(
+            self.dag_file.write("                pass\n")
+            self.dag_file.write("            else:\n")
+            self.dag_file.write(
                 "                print(\"DEBUG: %s\"%(err.response['Error']['Code']))\n"
             )
-            self.DAGfile.write("                raise err\n")
-            self.DAGfile.write("\n")
-            self.DAGfile.write("\n")
-            self.DAGfile.write("        time.sleep(1)\n")
-            self.DAGfile.write("\n")
-            self.DAGfile.write("    if commandStatus == 'TimedOut':\n")
-            self.DAGfile.write("        print('AWS SSM Send-command timeout!')\n")
-            self.DAGfile.write("        errorFound = True\n")
-            self.DAGfile.write("\n")
-            self.DAGfile.write(
+            self.dag_file.write("                raise err\n")
+            self.dag_file.write("\n")
+            self.dag_file.write("\n")
+            self.dag_file.write("        time.sleep(1)\n")
+            self.dag_file.write("\n")
+            self.dag_file.write("    if commandStatus == 'TimedOut':\n")
+            self.dag_file.write("        print('AWS SSM Send-command timeout!')\n")
+            self.dag_file.write("        errorFound = True\n")
+            self.dag_file.write("\n")
+            self.dag_file.write(
                 "    # Loop while the command is running and print all messages from CloudWatch at the same time\n"
             )
-            self.DAGfile.write("    while commandStatus == 'InProgress':\n")
-            self.DAGfile.write("        try:\n")
-            self.DAGfile.write(
+            self.dag_file.write("    while commandStatus == 'InProgress':\n")
+            self.dag_file.write("        try:\n")
+            self.dag_file.write(
                 "            commandInvocation_response = ssm_client.get_command_invocation(\n"
             )
-            self.DAGfile.write("                CommandId=commandID,\n")
-            self.DAGfile.write("                InstanceId=instanceID\n")
-            self.DAGfile.write("                )\n")
-            self.DAGfile.write("\n")
-            self.DAGfile.write(
+            self.dag_file.write("                CommandId=commandID,\n")
+            self.dag_file.write("                InstanceId=instanceID\n")
+            self.dag_file.write("                )\n")
+            self.dag_file.write("\n")
+            self.dag_file.write(
                 "            commandStatus = commandInvocation_response['Status']\n"
             )
-            # self.DAGfile.write("            print(commandInvocation_response)\n")
-            self.DAGfile.write("\n")
-            self.DAGfile.write("            if commandStatus == 'TimedOut':\n")
-            self.DAGfile.write(
+            # self.dag_file.write("            print(commandInvocation_response)\n")
+            self.dag_file.write("\n")
+            self.dag_file.write("            if commandStatus == 'TimedOut':\n")
+            self.dag_file.write(
                 "                print('AWS SSM Send-command timeout!')\n"
             )
-            self.DAGfile.write("                errorFound = True\n")
-            self.DAGfile.write("                break\n")
-            self.DAGfile.write("            elif commandStatus != 'InProgress':\n")
-            self.DAGfile.write("                break\n")
-            self.DAGfile.write("\n")
-            self.DAGfile.write(
+            self.dag_file.write("                errorFound = True\n")
+            self.dag_file.write("                break\n")
+            self.dag_file.write("            elif commandStatus != 'InProgress':\n")
+            self.dag_file.write("                break\n")
+            self.dag_file.write("\n")
+            self.dag_file.write(
                 "            responseStdOut = logs_client.get_log_events(\n"
             )
-            self.DAGfile.write("                logGroupName='dbimport',\n")
-            self.DAGfile.write("                logStreamName=logStreamNameStdOut,\n")
-            self.DAGfile.write("                nextToken=nextTokenStdOut\n")
-            self.DAGfile.write("                )\n")
-            self.DAGfile.write("\n")
-            self.DAGfile.write(
+            self.dag_file.write("                logGroupName='dbimport',\n")
+            self.dag_file.write("                logStreamName=logStreamNameStdOut,\n")
+            self.dag_file.write("                nextToken=nextTokenStdOut\n")
+            self.dag_file.write("                )\n")
+            self.dag_file.write("\n")
+            self.dag_file.write(
                 "            nextTokenStdOut = responseStdOut['nextForwardToken']\n"
             )
-            self.DAGfile.write("\n")
-            self.DAGfile.write("            for event in responseStdOut['events']:\n")
-            self.DAGfile.write(
+            self.dag_file.write("\n")
+            self.dag_file.write("            for event in responseStdOut['events']:\n")
+            self.dag_file.write(
                 "                if printAndFindEventErrors(event, startWithNewline = False) == True:\n"
             )
-            self.DAGfile.write("                    errorFound = True\n")
-            # self.DAGfile.write("                try:\n")
-            # self.DAGfile.write("                    print(str(event['message']), end=\"\")\n")
-            # self.DAGfile.write("                    if event['message'].find(\"\\nERROR\") != -1:\n")
-            # # self.DAGfile.write("                    if event['message'].find(\"ERROR\") != -1:\n")
-            # self.DAGfile.write("                        errorFound = True\n")
-            # self.DAGfile.write("                        print(\"Error Found (3) !!!!!\")\n")
-            # self.DAGfile.write("                        print(event)\n")
-            # self.DAGfile.write("                except:\n")
-            # self.DAGfile.write("                    print(event)\n")
-            # self.DAGfile.write("                    if str(event).find(\"\\nERROR\") != -1:\n")
-            # # self.DAGfile.write("                    if str(event).find(\"ERROR\") != -1:\n")
-            # self.DAGfile.write("                        errorFound = True\n")
-            # self.DAGfile.write("                        print(\"Error Found (4) !!!!!\")\n")
-            self.DAGfile.write("\n")
-            self.DAGfile.write("            if nextTokenStdErr == None:\n")
-            self.DAGfile.write(
+            self.dag_file.write("                    errorFound = True\n")
+            # self.dag_file.write("                try:\n")
+            # self.dag_file.write("                    print(str(event['message']), end=\"\")\n")
+            # self.dag_file.write("                    if event['message'].find(\"\\nERROR\") != -1:\n")
+            # # self.dag_file.write("                    if event['message'].find(\"ERROR\") != -1:\n")
+            # self.dag_file.write("                        errorFound = True\n")
+            # self.dag_file.write("                        print(\"Error Found (3) !!!!!\")\n")
+            # self.dag_file.write("                        print(event)\n")
+            # self.dag_file.write("                except:\n")
+            # self.dag_file.write("                    print(event)\n")
+            # self.dag_file.write("                    if str(event).find(\"\\nERROR\") != -1:\n")
+            # # self.dag_file.write("                    if str(event).find(\"ERROR\") != -1:\n")
+            # self.dag_file.write("                        errorFound = True\n")
+            # self.dag_file.write("                        print(\"Error Found (4) !!!!!\")\n")
+            self.dag_file.write("\n")
+            self.dag_file.write("            if nextTokenStdErr == None:\n")
+            self.dag_file.write(
                 "                responseStdErr = logs_client.get_log_events(\n"
             )
-            self.DAGfile.write("                    logGroupName='dbimport',\n")
-            self.DAGfile.write(
+            self.dag_file.write("                    logGroupName='dbimport',\n")
+            self.dag_file.write(
                 "                    logStreamName=logStreamNameStdErr,\n"
             )
-            self.DAGfile.write("                    startFromHead=True\n")
-            self.DAGfile.write("                    )\n")
-            self.DAGfile.write("            else:\n")
-            self.DAGfile.write(
+            self.dag_file.write("                    startFromHead=True\n")
+            self.dag_file.write("                    )\n")
+            self.dag_file.write("            else:\n")
+            self.dag_file.write(
                 "                responseStdErr = logs_client.get_log_events(\n"
             )
-            self.DAGfile.write("                    logGroupName='dbimport',\n")
-            self.DAGfile.write(
+            self.dag_file.write("                    logGroupName='dbimport',\n")
+            self.dag_file.write(
                 "                    logStreamName=logStreamNameStdErr,\n"
             )
-            self.DAGfile.write("                    nextToken=nextTokenStdErr\n")
-            self.DAGfile.write("                    )\n")
-            self.DAGfile.write("\n")
-            self.DAGfile.write(
+            self.dag_file.write("                    nextToken=nextTokenStdErr\n")
+            self.dag_file.write("                    )\n")
+            self.dag_file.write("\n")
+            self.dag_file.write(
                 "            nextTokenStdErr = responseStdErr['nextForwardToken']\n"
             )
-            self.DAGfile.write("\n")
-            self.DAGfile.write("            for event in responseStdErr['events']:\n")
-            self.DAGfile.write(
+            self.dag_file.write("\n")
+            self.dag_file.write("            for event in responseStdErr['events']:\n")
+            self.dag_file.write(
                 "                if printAndFindEventErrors(event, startWithNewline = True) == True:\n"
             )
-            self.DAGfile.write("                    errorFound = True\n")
-            # self.DAGfile.write("                try:\n")
-            # self.DAGfile.write("                    print(str(event['message']), end=\"\")\n")
-            # self.DAGfile.write("                    if event['message'].find(\"\\nERROR\") != -1:\n")
-            # # self.DAGfile.write("                    if event['message'].find(\"ERROR\") != -1:\n")
-            # self.DAGfile.write("                        errorFound = True\n")
-            # self.DAGfile.write("                        print(\"Error Found (3) !!!!!\")\n")
-            # self.DAGfile.write("                        print(event)\n")
-            # self.DAGfile.write("                except:\n")
-            # self.DAGfile.write("                    print(event)\n")
-            # self.DAGfile.write("                    if str(event).find(\"\\nERROR\") != -1:\n")
-            # # self.DAGfile.write("                    if str(event).find(\"ERROR\") != -1:\n")
-            # self.DAGfile.write("                        errorFound = True\n")
-            # self.DAGfile.write("                        print(\"Error Found (4) !!!!!\")\n")
-            self.DAGfile.write("\n")
-            self.DAGfile.write(
+            self.dag_file.write("                    errorFound = True\n")
+            # self.dag_file.write("                try:\n")
+            # self.dag_file.write("                    print(str(event['message']), end=\"\")\n")
+            # self.dag_file.write("                    if event['message'].find(\"\\nERROR\") != -1:\n")
+            # # self.dag_file.write("                    if event['message'].find(\"ERROR\") != -1:\n")
+            # self.dag_file.write("                        errorFound = True\n")
+            # self.dag_file.write("                        print(\"Error Found (3) !!!!!\")\n")
+            # self.dag_file.write("                        print(event)\n")
+            # self.dag_file.write("                except:\n")
+            # self.dag_file.write("                    print(event)\n")
+            # self.dag_file.write("                    if str(event).find(\"\\nERROR\") != -1:\n")
+            # # self.dag_file.write("                    if str(event).find(\"ERROR\") != -1:\n")
+            # self.dag_file.write("                        errorFound = True\n")
+            # self.dag_file.write("                        print(\"Error Found (4) !!!!!\")\n")
+            self.dag_file.write("\n")
+            self.dag_file.write(
                 "        except botocore.exceptions.ClientError as err:\n"
             )
-            self.DAGfile.write(
+            self.dag_file.write(
                 "            if err.response['Error']['Code'] == 'ResourceNotFoundException':\n"
             )
-            self.DAGfile.write("                pass\n")
-            self.DAGfile.write(
+            self.dag_file.write("                pass\n")
+            self.dag_file.write(
                 "            elif err.response['Error']['Code'] == 'ThrottlingException':\n"
             )
-            self.DAGfile.write("                pass\n")
-            self.DAGfile.write("            else:\n")
-            self.DAGfile.write(
+            self.dag_file.write("                pass\n")
+            self.dag_file.write("            else:\n")
+            self.dag_file.write(
                 "                print(\"DEBUG: %s\"%(err.response['Error']['Code']))\n"
             )
-            self.DAGfile.write("                raise err\n")
-            self.DAGfile.write("\n")
-            self.DAGfile.write("        except UnboundLocalError:\n")
-            self.DAGfile.write("            pass\n")
-            self.DAGfile.write("\n")
-            self.DAGfile.write("        time.sleep(15)\n")
-            self.DAGfile.write("\n")
-            self.DAGfile.write("\n")
-            self.DAGfile.write(
+            self.dag_file.write("                raise err\n")
+            self.dag_file.write("\n")
+            self.dag_file.write("        except UnboundLocalError:\n")
+            self.dag_file.write("            pass\n")
+            self.dag_file.write("\n")
+            self.dag_file.write("        time.sleep(15)\n")
+            self.dag_file.write("\n")
+            self.dag_file.write("\n")
+            self.dag_file.write(
                 "    # Loop to get the last message and print in the output\n"
             )
-            self.DAGfile.write("    lastMessagePrinted = False\n")
-            self.DAGfile.write("    while lastMessagePrinted == False:\n")
-            self.DAGfile.write("        try:\n")
-            self.DAGfile.write(
+            self.dag_file.write("    lastMessagePrinted = False\n")
+            self.dag_file.write("    while lastMessagePrinted == False:\n")
+            self.dag_file.write("        try:\n")
+            self.dag_file.write(
                 "            responseStdOut = logs_client.get_log_events(\n"
             )
-            self.DAGfile.write("                logGroupName='dbimport',\n")
-            self.DAGfile.write("                logStreamName=logStreamNameStdOut,\n")
-            self.DAGfile.write("                nextToken=nextTokenStdOut\n")
-            self.DAGfile.write("                )\n")
-            self.DAGfile.write("\n")
-            self.DAGfile.write(
+            self.dag_file.write("                logGroupName='dbimport',\n")
+            self.dag_file.write("                logStreamName=logStreamNameStdOut,\n")
+            self.dag_file.write("                nextToken=nextTokenStdOut\n")
+            self.dag_file.write("                )\n")
+            self.dag_file.write("\n")
+            self.dag_file.write(
                 "            nextTokenStdOut = responseStdOut['nextForwardToken']\n"
             )
-            self.DAGfile.write("            for event in responseStdOut['events']:\n")
-            self.DAGfile.write(
+            self.dag_file.write("            for event in responseStdOut['events']:\n")
+            self.dag_file.write(
                 "                if printAndFindEventErrors(event, startWithNewline = False) == True:\n"
             )
-            self.DAGfile.write("                    errorFound = True\n")
-            # self.DAGfile.write("                try:\n")
-            # self.DAGfile.write("                    print(str(event['message']), end=\"\")\n")
-            # self.DAGfile.write("                    if event['message'].find(\"\\nERROR\") != -1:\n")
-            # # self.DAGfile.write("                    if event['message'].find(\"ERROR\") != -1:\n")
-            # self.DAGfile.write("                        errorFound = True\n")
-            # self.DAGfile.write("                        print(\"Error Found (5) !!!!!\")\n")
-            # self.DAGfile.write("                        print(event)\n")
-            # self.DAGfile.write("                except:\n")
-            # self.DAGfile.write("                    print(event)\n")
-            # self.DAGfile.write("                    if str(event).find(\"\\nERROR\") != -1:\n")
-            # # self.DAGfile.write("                    if str(event).find(\"ERROR\") != -1:\n")
-            # self.DAGfile.write("                        errorFound = True\n")
-            # self.DAGfile.write("                        print(\"Error Found (6) !!!!!\")\n")
-            self.DAGfile.write("\n")
-            self.DAGfile.write("            lastMessagePrinted = True\n")
-            self.DAGfile.write("\n")
-            self.DAGfile.write("            if nextTokenStdErr == None:\n")
-            self.DAGfile.write(
+            self.dag_file.write("                    errorFound = True\n")
+            # self.dag_file.write("                try:\n")
+            # self.dag_file.write("                    print(str(event['message']), end=\"\")\n")
+            # self.dag_file.write("                    if event['message'].find(\"\\nERROR\") != -1:\n")
+            # # self.dag_file.write("                    if event['message'].find(\"ERROR\") != -1:\n")
+            # self.dag_file.write("                        errorFound = True\n")
+            # self.dag_file.write("                        print(\"Error Found (5) !!!!!\")\n")
+            # self.dag_file.write("                        print(event)\n")
+            # self.dag_file.write("                except:\n")
+            # self.dag_file.write("                    print(event)\n")
+            # self.dag_file.write("                    if str(event).find(\"\\nERROR\") != -1:\n")
+            # # self.dag_file.write("                    if str(event).find(\"ERROR\") != -1:\n")
+            # self.dag_file.write("                        errorFound = True\n")
+            # self.dag_file.write("                        print(\"Error Found (6) !!!!!\")\n")
+            self.dag_file.write("\n")
+            self.dag_file.write("            lastMessagePrinted = True\n")
+            self.dag_file.write("\n")
+            self.dag_file.write("            if nextTokenStdErr == None:\n")
+            self.dag_file.write(
                 "                responseStdErr = logs_client.get_log_events(\n"
             )
-            self.DAGfile.write("                    logGroupName='dbimport',\n")
-            self.DAGfile.write(
+            self.dag_file.write("                    logGroupName='dbimport',\n")
+            self.dag_file.write(
                 "                    logStreamName=logStreamNameStdErr,\n"
             )
-            self.DAGfile.write("                    startFromHead=True\n")
-            self.DAGfile.write("                    )\n")
-            self.DAGfile.write("            else:\n")
-            self.DAGfile.write(
+            self.dag_file.write("                    startFromHead=True\n")
+            self.dag_file.write("                    )\n")
+            self.dag_file.write("            else:\n")
+            self.dag_file.write(
                 "                responseStdErr = logs_client.get_log_events(\n"
             )
-            self.DAGfile.write("                    logGroupName='dbimport',\n")
-            self.DAGfile.write(
+            self.dag_file.write("                    logGroupName='dbimport',\n")
+            self.dag_file.write(
                 "                    logStreamName=logStreamNameStdErr,\n"
             )
-            self.DAGfile.write("                    nextToken=nextTokenStdErr\n")
-            self.DAGfile.write("                    )\n")
-            self.DAGfile.write("\n")
-            self.DAGfile.write(
+            self.dag_file.write("                    nextToken=nextTokenStdErr\n")
+            self.dag_file.write("                    )\n")
+            self.dag_file.write("\n")
+            self.dag_file.write(
                 "            nextTokenStdErr = responseStdErr['nextForwardToken']\n"
             )
-            self.DAGfile.write("\n")
-            self.DAGfile.write("            for event in responseStdErr['events']:\n")
-            self.DAGfile.write(
+            self.dag_file.write("\n")
+            self.dag_file.write("            for event in responseStdErr['events']:\n")
+            self.dag_file.write(
                 "                if printAndFindEventErrors(event, startWithNewline = True) == True:\n"
             )
-            self.DAGfile.write("                    errorFound = True\n")
-            # self.DAGfile.write("                try:\n")
-            # self.DAGfile.write("                    print(str(event['message']), end=\"\")\n")
-            # self.DAGfile.write("                    if event['message'].find(\"\\nERROR\") != -1:\n")
-            # # self.DAGfile.write("                    if event['message'].find(\"ERROR\") != -1:\n")
-            # self.DAGfile.write("                        errorFound = True\n")
-            # self.DAGfile.write("                        print(\"Error Found (5) !!!!!\")\n")
-            # self.DAGfile.write("                        print(event)\n")
-            # self.DAGfile.write("                except:\n")
-            # self.DAGfile.write("                    print(event)\n")
-            # self.DAGfile.write("                    if str(event).find(\"\\nERROR\") != -1:\n")
-            # # self.DAGfile.write("                    if str(event).find(\"ERROR\") != -1:\n")
-            # self.DAGfile.write("                        errorFound = True\n")
-            # self.DAGfile.write("                        print(\"Error Found (6) !!!!!\")\n")
-            self.DAGfile.write("\n")
-            self.DAGfile.write(
+            self.dag_file.write("                    errorFound = True\n")
+            # self.dag_file.write("                try:\n")
+            # self.dag_file.write("                    print(str(event['message']), end=\"\")\n")
+            # self.dag_file.write("                    if event['message'].find(\"\\nERROR\") != -1:\n")
+            # # self.dag_file.write("                    if event['message'].find(\"ERROR\") != -1:\n")
+            # self.dag_file.write("                        errorFound = True\n")
+            # self.dag_file.write("                        print(\"Error Found (5) !!!!!\")\n")
+            # self.dag_file.write("                        print(event)\n")
+            # self.dag_file.write("                except:\n")
+            # self.dag_file.write("                    print(event)\n")
+            # self.dag_file.write("                    if str(event).find(\"\\nERROR\") != -1:\n")
+            # # self.dag_file.write("                    if str(event).find(\"ERROR\") != -1:\n")
+            # self.dag_file.write("                        errorFound = True\n")
+            # self.dag_file.write("                        print(\"Error Found (6) !!!!!\")\n")
+            self.dag_file.write("\n")
+            self.dag_file.write(
                 "        except botocore.exceptions.ClientError as err:\n"
             )
-            self.DAGfile.write(
+            self.dag_file.write(
                 "            if err.response['Error']['Code'] == 'ResourceNotFoundException':\n"
             )
-            self.DAGfile.write("                pass\n")
-            self.DAGfile.write(
+            self.dag_file.write("                pass\n")
+            self.dag_file.write(
                 "            elif err.response['Error']['Code'] == 'ThrottlingException':\n"
             )
-            self.DAGfile.write("                pass\n")
-            self.DAGfile.write("            else:\n")
-            self.DAGfile.write(
+            self.dag_file.write("                pass\n")
+            self.dag_file.write("            else:\n")
+            self.dag_file.write(
                 "                print(\"DEBUG: %s\"%(err.response['Error']['Code']))\n"
             )
-            self.DAGfile.write("                raise err\n")
-            self.DAGfile.write("\n")
-            self.DAGfile.write("        except UnboundLocalError:\n")
-            self.DAGfile.write("            pass\n")
-            self.DAGfile.write("\n")
-            self.DAGfile.write("        time.sleep(1)\n")
-            self.DAGfile.write("\n")
-            # self.DAGfile.write("    print(response)\n")
-            # self.DAGfile.write("    print('Sequence - 008')\n")
-            # self.DAGfile.write("    print(errorFound)\n")
-            # self.DAGfile.write("    print(commandInvocation_response)\n")
-            # self.DAGfile.write("    if commandStatus != 'Success':\n")
-            self.DAGfile.write("    if errorFound == True:\n")
-            # self.DAGfile.write("        print('Raising error as errorFound = True')\n")
-            self.DAGfile.write("        raise\n")
-            self.DAGfile.write("\n")
-            # self.DAGfile.write("    print('AWS ssm send-command exit')\n")
-            self.DAGfile.write("\n")
+            self.dag_file.write("                raise err\n")
+            self.dag_file.write("\n")
+            self.dag_file.write("        except UnboundLocalError:\n")
+            self.dag_file.write("            pass\n")
+            self.dag_file.write("\n")
+            self.dag_file.write("        time.sleep(1)\n")
+            self.dag_file.write("\n")
+            # self.dag_file.write("    print(response)\n")
+            # self.dag_file.write("    print('Sequence - 008')\n")
+            # self.dag_file.write("    print(errorFound)\n")
+            # self.dag_file.write("    print(commandInvocation_response)\n")
+            # self.dag_file.write("    if commandStatus != 'Success':\n")
+            self.dag_file.write("    if errorFound == True:\n")
+            # self.dag_file.write("        print('Raising error as errorFound = True')\n")
+            self.dag_file.write("        raise\n")
+            self.dag_file.write("\n")
+            # self.dag_file.write("    print('AWS ssm send-command exit')\n")
+            self.dag_file.write("\n")
 
-        self.DAGfile.write("\n")
-        self.DAGfile.write("default_args = {\n")
-        self.DAGfile.write("    'owner': 'airflow',\n")
-        self.DAGfile.write("    'depends_on_past': False,\n")
-        self.DAGfile.write(
+        self.dag_file.write("\n")
+        self.dag_file.write("default_args = {\n")
+        self.dag_file.write("    'owner': 'airflow',\n")
+        self.dag_file.write("    'depends_on_past': False,\n")
+        self.dag_file.write(
             "    'start_date': datetime(2017, 1, 1, 0, 0, tzinfo=local_tz),\n"
         )
-        self.DAGfile.write("    'max_active_runs': 1,\n")
+        self.dag_file.write("    'max_active_runs': 1,\n")
 
         if email != None and email.strip() != "":
             email = email.split(",")
-            self.DAGfile.write("    'email': %s,\n" % (email))
+            self.dag_file.write("    'email': %s,\n" % (email))
         else:
-            self.DAGfile.write("    'email': Email_receiver,\n")
+            self.dag_file.write("    'email': Email_receiver,\n")
 
         if email_on_failure == 1:
-            self.DAGfile.write("    'email_on_failure': True,\n")
+            self.dag_file.write("    'email_on_failure': True,\n")
         else:
-            self.DAGfile.write("    'email_on_failure': False,\n")
+            self.dag_file.write("    'email_on_failure': False,\n")
 
         if email_on_retries == 1:
-            self.DAGfile.write("    'email_on_retry': True,\n")
+            self.dag_file.write("    'email_on_retry': True,\n")
         else:
-            self.DAGfile.write("    'email_on_retry': False,\n")
+            self.dag_file.write("    'email_on_retry': False,\n")
 
         if retry_exponential_backoff == 1:
-            self.DAGfile.write("    'retry_exponential_backoff': True,\n")
+            self.dag_file.write("    'retry_exponential_backoff': True,\n")
         else:
-            self.DAGfile.write("    'retry_exponential_backoff': False,\n")
+            self.dag_file.write("    'retry_exponential_backoff': False,\n")
 
-        self.DAGfile.write("    'retries': 0,\n")
-        self.DAGfile.write("    'pool': '%s',\n" % (default_pool))
-        self.DAGfile.write("    'retry_delay': timedelta(minutes=5),\n")
+        self.dag_file.write("    'retries': 0,\n")
+        self.dag_file.write("    'pool': '%s',\n" % (default_pool))
+        self.dag_file.write("    'retry_delay': timedelta(minutes=5),\n")
 
         if sla_warning_time != None and type(sla_warning_time) == time:
-            self.DAGfile.write(
+            self.dag_file.write(
                 "    'sla': timedelta(hours=%s, minutes=%s, seconds=%s),\n"
                 % (
                     sla_warning_time.hour,
@@ -2037,16 +2075,16 @@ class initialize:
                 )
             )
 
-        self.DAGfile.write("}\n")
-        self.DAGfile.write("\n")
-        self.DAGfile.write("dag = DAG(\n")
-        self.DAGfile.write("    '%s',\n" % (dag_name))
-        self.DAGfile.write("    default_args=default_args,\n")
-        self.DAGfile.write("    description='%s',\n" % (dag_name))
-        self.DAGfile.write("    catchup=False,\n")
+        self.dag_file.write("}\n")
+        self.dag_file.write("\n")
+        self.dag_file.write("dag = DAG(\n")
+        self.dag_file.write("    '%s',\n" % (dag_name))
+        self.dag_file.write("    default_args=default_args,\n")
+        self.dag_file.write("    description='%s',\n" % (dag_name))
+        self.dag_file.write("    catchup=False,\n")
 
         if tags != None and tags.strip() != "":
-            self.DAGfile.write(
+            self.dag_file.write(
                 "    tags=[%s],\n"
                 % (
                     ", ".join(
@@ -2060,97 +2098,97 @@ class initialize:
 
         try:
             if int(concurrency) > 0:
-                self.DAGfile.write("    concurrency=%s,\n" % (int(concurrency)))
+                self.dag_file.write("    concurrency=%s,\n" % (int(concurrency)))
         except ValueError:
             pass
 
-        self.DAGfile.write("    schedule_interval=%s)\n" % (cron_schedule))
+        self.dag_file.write("    schedule_interval=%s)\n" % (cron_schedule))
 
-        self.DAGfile.write("\n")
-        if self.airflowMode == "default":
-            self.DAGfile.write("start = BashOperator(\n")
-            self.DAGfile.write("    task_id='start',\n")
-            if self.TaskQueueForDummy != None:
-                self.DAGfile.write(
-                    "    queue='%s',\n" % (self.TaskQueueForDummy.strip())
+        self.dag_file.write("\n")
+        if self.airflow_mode == "default":
+            self.dag_file.write("start = BashOperator(\n")
+            self.dag_file.write("    task_id='start',\n")
+            if self.task_queue_for_dummy != None:
+                self.dag_file.write(
+                    "    queue='%s',\n" % (self.task_queue_for_dummy.strip())
                 )
-            self.DAGfile.write(
+            self.dag_file.write(
                 "    bash_command='%sbin/manage --checkAirflowExecution --airflowDAG=%s',\n"
-                % (self.getDBImportCommandPath(sudo_user=sudo_user), dag_name)
+                % (self.get_dbimport_command_path(sudo_user=sudo_user), dag_name)
             )
-            self.DAGfile.write("    priority_weight=100,\n")
-            self.DAGfile.write("    weight_rule='absolute',\n")
-            self.DAGfile.write("    pool=None,\n")
-            self.DAGfile.write("    dag=dag)\n")
-            self.DAGfile.write("\n")
+            self.dag_file.write("    priority_weight=100,\n")
+            self.dag_file.write("    weight_rule='absolute',\n")
+            self.dag_file.write("    pool=None,\n")
+            self.dag_file.write("    dag=dag)\n")
+            self.dag_file.write("\n")
 
-            self.DAGfile.write("stop = BashOperator(\n")
-            self.DAGfile.write("    task_id='stop',\n")
-            if self.TaskQueueForDummy != None:
-                self.DAGfile.write(
-                    "    queue='%s',\n" % (self.TaskQueueForDummy.strip())
+            self.dag_file.write("stop = BashOperator(\n")
+            self.dag_file.write("    task_id='stop',\n")
+            if self.task_queue_for_dummy != None:
+                self.dag_file.write(
+                    "    queue='%s',\n" % (self.task_queue_for_dummy.strip())
                 )
-            self.DAGfile.write(
+            self.dag_file.write(
                 "    bash_command='%sbin/manage --sendAirflowStopMessage --airflowDAG=%s',\n"
-                % (self.getDBImportCommandPath(sudo_user=sudo_user), dag_name)
+                % (self.get_dbimport_command_path(sudo_user=sudo_user), dag_name)
             )
-            self.DAGfile.write("    priority_weight=100,\n")
-            self.DAGfile.write("    weight_rule='absolute',\n")
-            self.DAGfile.write("    pool=None,\n")
-            self.DAGfile.write("    dag=dag)\n")
-            self.DAGfile.write("\n")
+            self.dag_file.write("    priority_weight=100,\n")
+            self.dag_file.write("    weight_rule='absolute',\n")
+            self.dag_file.write("    pool=None,\n")
+            self.dag_file.write("    dag=dag)\n")
+            self.dag_file.write("\n")
 
-        elif self.airflowMode == "aws_mwaa":
-            self.DAGfile.write("start = PythonOperator(\n")
-            self.DAGfile.write("    task_id='start',\n")
-            if self.TaskQueueForDummy != None:
-                self.DAGfile.write(
-                    "    queue='%s',\n" % (self.TaskQueueForDummy.strip())
+        elif self.airflow_mode == "aws_mwaa":
+            self.dag_file.write("start = PythonOperator(\n")
+            self.dag_file.write("    task_id='start',\n")
+            if self.task_queue_for_dummy != None:
+                self.dag_file.write(
+                    "    queue='%s',\n" % (self.task_queue_for_dummy.strip())
                 )
-            self.DAGfile.write("    python_callable=startDBImportExecution,\n")
-            self.DAGfile.write(
+            self.dag_file.write("    python_callable=startDBImportExecution,\n")
+            self.dag_file.write(
                 '    op_kwargs={"command": "manage --checkAirflowExecution --airflowDAG=%s", "instanceID": "%s"},\n'
-                % (dag_name, self.getAWSInstanceID("start"))
+                % (dag_name, self.get_aws_instance_id("start"))
             )
-            self.DAGfile.write("    priority_weight=100,\n")
-            self.DAGfile.write("    weight_rule='absolute',\n")
-            self.DAGfile.write("    pool=None,\n")
-            self.DAGfile.write("    dag=dag)\n")
-            self.DAGfile.write("\n")
+            self.dag_file.write("    priority_weight=100,\n")
+            self.dag_file.write("    weight_rule='absolute',\n")
+            self.dag_file.write("    pool=None,\n")
+            self.dag_file.write("    dag=dag)\n")
+            self.dag_file.write("\n")
 
-            self.DAGfile.write("stop = PythonOperator(\n")
-            self.DAGfile.write("    task_id='stop',\n")
-            if self.TaskQueueForDummy != None:
-                self.DAGfile.write(
-                    "    queue='%s',\n" % (self.TaskQueueForDummy.strip())
+            self.dag_file.write("stop = PythonOperator(\n")
+            self.dag_file.write("    task_id='stop',\n")
+            if self.task_queue_for_dummy != None:
+                self.dag_file.write(
+                    "    queue='%s',\n" % (self.task_queue_for_dummy.strip())
                 )
-            self.DAGfile.write("    python_callable=startDBImportExecution,\n")
-            self.DAGfile.write(
+            self.dag_file.write("    python_callable=startDBImportExecution,\n")
+            self.dag_file.write(
                 '    op_kwargs={"command": "manage --checkAirflowExecution --airflowDAG=%s", "instanceID": "%s"},\n'
-                % (dag_name, self.getAWSInstanceID("stop"))
+                % (dag_name, self.get_aws_instance_id("stop"))
             )
-            self.DAGfile.write("    priority_weight=100,\n")
-            self.DAGfile.write("    weight_rule='absolute',\n")
-            self.DAGfile.write("    pool=None,\n")
-            self.DAGfile.write("    dag=dag)\n")
-            self.DAGfile.write("\n")
+            self.dag_file.write("    priority_weight=100,\n")
+            self.dag_file.write("    weight_rule='absolute',\n")
+            self.dag_file.write("    pool=None,\n")
+            self.dag_file.write("    dag=dag)\n")
+            self.dag_file.write("\n")
 
         if self.airflowMajorVersion == 1:
-            self.DAGfile.write("def always_trigger(context, dag_run_obj):\n")
-            self.DAGfile.write("    return dag_run_obj\n")
-            self.DAGfile.write("\n")
+            self.dag_file.write("def always_trigger(context, dag_run_obj):\n")
+            self.dag_file.write("    return dag_run_obj\n")
+            self.dag_file.write("\n")
 
         if import_phase_finish_first == True:
-            self.DAGfile.write("Import_Phase_Finished = DummyOperator(\n")
-            self.DAGfile.write("    task_id='Import_Phase_Finished',\n")
-            if self.TaskQueueForDummy != None:
-                self.DAGfile.write(
-                    "    queue='%s',\n" % (self.TaskQueueForDummy.strip())
+            self.dag_file.write("Import_Phase_Finished = DummyOperator(\n")
+            self.dag_file.write("    task_id='Import_Phase_Finished',\n")
+            if self.task_queue_for_dummy != None:
+                self.dag_file.write(
+                    "    queue='%s',\n" % (self.task_queue_for_dummy.strip())
                 )
-            self.DAGfile.write("    priority_weight=100,\n")
-            self.DAGfile.write("    weight_rule='absolute',\n")
-            self.DAGfile.write("    dag=dag)\n")
-            self.DAGfile.write("\n")
+            self.dag_file.write("    priority_weight=100,\n")
+            self.dag_file.write("    weight_rule='absolute',\n")
+            self.dag_file.write("    dag=dag)\n")
+            self.dag_file.write("\n")
 
         airflow_dag_sensors = aliased(configSchema.airflowDagSensors, name="ads")
         sensors = (
@@ -2177,7 +2215,7 @@ class initialize:
 
         if (
             len(tasks.loc[tasks["placement"] == "before main"]) > 0
-            or self.createPoolsWithTasks == True
+            or self.create_pools_with_tasks == True
         ):
             tasks_before_main_exists = True
 
@@ -2185,40 +2223,40 @@ class initialize:
             tasks_after_main_exists = True
 
         if tasks_before_main_exists == True:
-            self.DAGfile.write("%s = DummyOperator(\n" % (self.preStopTask))
-            self.DAGfile.write("    task_id='%s',\n" % (self.preStopTask))
-            if self.TaskQueueForDummy != None:
-                self.DAGfile.write(
-                    "    queue='%s',\n" % (self.TaskQueueForDummy.strip())
+            self.dag_file.write("%s = DummyOperator(\n" % (self.preStopTask))
+            self.dag_file.write("    task_id='%s',\n" % (self.preStopTask))
+            if self.task_queue_for_dummy != None:
+                self.dag_file.write(
+                    "    queue='%s',\n" % (self.task_queue_for_dummy.strip())
                 )
-            self.DAGfile.write("    priority_weight=100,\n")
-            self.DAGfile.write("    weight_rule='absolute',\n")
-            self.DAGfile.write("    dag=dag)\n")
-            self.DAGfile.write("\n")
+            self.dag_file.write("    priority_weight=100,\n")
+            self.dag_file.write("    weight_rule='absolute',\n")
+            self.dag_file.write("    dag=dag)\n")
+            self.dag_file.write("\n")
 
         if tasks_after_main_exists == True:
-            self.DAGfile.write("%s = DummyOperator(\n" % (self.postStartTask))
-            self.DAGfile.write("    task_id='%s',\n" % (self.postStartTask))
-            if self.TaskQueueForDummy != None:
-                self.DAGfile.write(
-                    "    queue='%s',\n" % (self.TaskQueueForDummy.strip())
+            self.dag_file.write("%s = DummyOperator(\n" % (self.postStartTask))
+            self.dag_file.write("    task_id='%s',\n" % (self.postStartTask))
+            if self.task_queue_for_dummy != None:
+                self.dag_file.write(
+                    "    queue='%s',\n" % (self.task_queue_for_dummy.strip())
                 )
-            self.DAGfile.write("    priority_weight=100,\n")
-            self.DAGfile.write("    weight_rule='absolute',\n")
-            self.DAGfile.write("    dag=dag)\n")
-            self.DAGfile.write("\n")
+            self.dag_file.write("    priority_weight=100,\n")
+            self.dag_file.write("    weight_rule='absolute',\n")
+            self.dag_file.write("    dag=dag)\n")
+            self.dag_file.write("\n")
 
         if tasks_sensors_exists == True:
-            self.DAGfile.write("%s = DummyOperator(\n" % (self.sensorStopTask))
-            self.DAGfile.write("    task_id='%s',\n" % (self.sensorStopTask))
-            if self.TaskQueueForDummy != None:
-                self.DAGfile.write(
-                    "    queue='%s',\n" % (self.TaskQueueForDummy.strip())
+            self.dag_file.write("%s = DummyOperator(\n" % (self.sensorStopTask))
+            self.dag_file.write("    task_id='%s',\n" % (self.sensorStopTask))
+            if self.task_queue_for_dummy != None:
+                self.dag_file.write(
+                    "    queue='%s',\n" % (self.task_queue_for_dummy.strip())
                 )
-            self.DAGfile.write("    priority_weight=100,\n")
-            self.DAGfile.write("    weight_rule='absolute',\n")
-            self.DAGfile.write("    dag=dag)\n")
-            self.DAGfile.write("\n")
+            self.dag_file.write("    priority_weight=100,\n")
+            self.dag_file.write("    weight_rule='absolute',\n")
+            self.dag_file.write("    dag=dag)\n")
+            self.dag_file.write("\n")
 
         if tasks_sensors_exists == False and tasks_before_main_exists == True:
             self.mainStartTask = self.preStopTask
@@ -2244,52 +2282,60 @@ class initialize:
         log.debug("postStartTask = %s" % (self.postStartTask))
         log.debug("postStopTask = %s" % (self.postStopTask))
 
-    def closeDAGfile(self):
+    def close_dag_file(self):
         log = logging.getLogger(self.logger)
-        self.DAGfile.close()
+        self.dag_file.close()
 
         try:
-            os.chmod(self.DAGfilename, int(self.DAGfilePermission, 8))
+            os.chmod(self.dag_filename, int(self.dag_file_permission, 8))
         except PermissionError:
-            log.warning("Could not change file mode to '%s'" % (self.DAGfilePermission))
+            log.warning(
+                "Could not change file mode to '%s'" % (self.dag_file_permission)
+            )
 
         try:
-            shutil.chown(self.DAGfilename, group=self.DAGfileGroup)
+            shutil.chown(self.dag_filename, group=self.dag_file_group)
         except PermissionError:
             log.warning(
                 "Could not change group owner of file to '%s'. Permission Denied"
-                % (self.DAGfileGroup)
+                % (self.dag_file_group)
             )
         except LookupError:
             log.warning(
                 "Could not change group owner of file to '%s'. Group does not exists"
-                % (self.DAGfileGroup)
+                % (self.dag_file_group)
             )
 
         if self.writeDAG == True:
-            if self.airflowMode == "default":
+            if self.airflow_mode == "default":
                 try:
-                    shutil.copy(self.DAGfilename, self.DAGfilenameInAirflow)
-                    os.chmod(self.DAGfilenameInAirflow, int(self.DAGfilePermission, 8))
-                    shutil.chown(self.DAGfilenameInAirflow, group=self.DAGfileGroup)
+                    shutil.copy(self.dag_filename, self.dag_filename_in_airflow)
+                    os.chmod(
+                        self.dag_filename_in_airflow, int(self.dag_file_permission, 8)
+                    )
+                    shutil.chown(
+                        self.dag_filename_in_airflow, group=self.dag_file_group
+                    )
                 except PermissionError:
                     log.warning(
                         "Could not copy and change permission of file '%s'. Permission Denied"
-                        % (self.DAGfilenameInAirflow)
+                        % (self.dag_filename_in_airflow)
                     )
                 except LookupError:
                     pass
                 else:
-                    print("DAG file written to %s" % (self.DAGfilenameInAirflow))
+                    print("DAG file written to %s" % (self.dag_filename_in_airflow))
 
-            elif self.airflowMode == "aws_mwaa":
+            elif self.airflow_mode == "aws_mwaa":
                 try:
                     s3client = boto3.client(
                         "s3", region_name=self.common_config.awsRegion
                     )
-                    # response = s3client.upload_file(self.DAGfilename, "dl-mwaa-artifacts-uat-eu-west-1-176686534647", self.DAGfilenameInAwsMWAA)
+                    # response = s3client.upload_file(self.dag_filename, "dl-mwaa-artifacts-uat-eu-west-1-176686534647", self.dag_filename_in_aws_mwaa)
                     response = s3client.upload_file(
-                        self.DAGfilename, self.DAGdirectory, self.DAGfilenameInAwsMWAA
+                        self.dag_filename,
+                        self.dag_directory,
+                        self.dag_filename_in_aws_mwaa,
                     )
                 except botocore.exceptions.ClientError as err:
                     log.error(err)
@@ -2299,25 +2345,25 @@ class initialize:
                     log.error(err)
 
         else:
-            print("DAG file written to %s" % (self.DAGfilename))
+            print("DAG file written to %s" % (self.dag_filename))
 
-    def addFailureTask(self, task_name):
+    def add_failure_task(self, task_name):
         log = logging.getLogger(self.logger)
-        self.DAGfile.write("%s = BashOperator(\n" % (task_name))
-        self.DAGfile.write("    task_id='%s',\n" % (task_name))
-        self.DAGfile.write("    bash_command='exit 1 ',\n")
-        self.DAGfile.write("    priority_weight=1,\n")
-        self.DAGfile.write("    weight_rule='absolute',\n")
-        self.DAGfile.write("    dag=dag)\n")
-        self.DAGfile.write("\n")
+        self.dag_file.write("%s = BashOperator(\n" % (task_name))
+        self.dag_file.write("    task_id='%s',\n" % (task_name))
+        self.dag_file.write("    bash_command='exit 1 ',\n")
+        self.dag_file.write("    priority_weight=1,\n")
+        self.dag_file.write("    weight_rule='absolute',\n")
+        self.dag_file.write("    dag=dag)\n")
+        self.dag_file.write("\n")
 
-    def addTasksToDAGfile(
+    def add_tasks_to_dag_file(
         self, dag_name, main_dag_schedule, default_retries=0, default_sudo_user=""
     ):
         log = logging.getLogger(self.logger)
 
         # session = self.configDBSession()
-        session = self.getDBImportSession()
+        session = self.get_dbimport_session()
 
         if default_sudo_user == None:
             default_sudo_user = ""
@@ -2436,11 +2482,11 @@ class initialize:
                     )
 
                     row["task_name"] = "%s_FAILURE" % (row["task_name"])
-                    self.addFailureTask(row["task_name"])
+                    self.add_failure_task(row["task_name"])
                     add_dag_sensor = False
                 # 					continue
                 # 					log.error("Cant find schedule interval for DAG to wait for")
-                # 					self.DAGfile.close()
+                # 					self.dag_file.close()
                 # 					self.common_config.remove_temporary_files()
                 # 					sys.exit(1)
 
@@ -2466,7 +2512,7 @@ class initialize:
                         "The DAG Sensor will not be added to the DAG. Instead, there will be a Task that always failes. The DAG will never execute"
                     )
                     row["task_name"] = "%s_FAILURE" % (row["task_name"])
-                    self.addFailureTask(row["task_name"])
+                    self.add_failure_task(row["task_name"])
                     add_dag_sensor = False
 
                 if main_dag_match_hour_min != None and add_dag_sensor == True:
@@ -2520,44 +2566,46 @@ class initialize:
                             "The DAG Sensor will not be added to the DAG. Instead, there will be a Task that always failes. The DAG will never execute"
                         )
                         row["task_name"] = "%s_FAILURE" % (row["task_name"])
-                        self.addFailureTask(row["task_name"])
+                        self.add_failure_task(row["task_name"])
                         add_dag_sensor = False
 
                 if add_dag_sensor == True:
-                    self.DAGfile.write(
+                    self.dag_file.write(
                         "%s = ExternalTaskSensor(\n" % (row["task_name"])
                     )
-                    self.DAGfile.write("    task_id='%s',\n" % (row["task_name"]))
-                    self.DAGfile.write("    external_dag_id='%s',\n" % (wait_for_dag))
-                    self.DAGfile.write("    external_task_id='%s',\n" % (wait_for_task))
-                    self.DAGfile.write("    retries=0,\n")
-                    self.DAGfile.write(
+                    self.dag_file.write("    task_id='%s',\n" % (row["task_name"]))
+                    self.dag_file.write("    external_dag_id='%s',\n" % (wait_for_dag))
+                    self.dag_file.write(
+                        "    external_task_id='%s',\n" % (wait_for_task)
+                    )
+                    self.dag_file.write("    retries=0,\n")
+                    self.dag_file.write(
                         "    execution_delta=timedelta(seconds=%s),\n" % (time_diff)
                     )
                     if row["airflow_pool"] != "":
-                        self.DAGfile.write("    pool='%s',\n" % (row["airflow_pool"]))
+                        self.dag_file.write("    pool='%s',\n" % (row["airflow_pool"]))
                     if row["airflow_priority"] != "":
-                        self.DAGfile.write(
+                        self.dag_file.write(
                             "    priority_weight=%s,\n" % (int(row["airflow_priority"]))
                         )
-                        self.DAGfile.write("    weight_rule='absolute',\n")
+                        self.dag_file.write("    weight_rule='absolute',\n")
                     else:
-                        self.DAGfile.write("    priority_weight=100,\n")
-                        self.DAGfile.write("    weight_rule='absolute',\n")
-                    self.DAGfile.write(
+                        self.dag_file.write("    priority_weight=100,\n")
+                        self.dag_file.write("    weight_rule='absolute',\n")
+                    self.dag_file.write(
                         "    timeout=%s,\n" % (int(sensor_timeout_seconds))
                     )
-                    self.DAGfile.write(
+                    self.dag_file.write(
                         "    poke_interval=%s,\n" % (int(sensor_poke_interval))
                     )
-                    self.DAGfile.write("    mode='reschedule',\n")
+                    self.dag_file.write("    mode='reschedule',\n")
                     if (
                         row["sensor_soft_fail"] is not None
                         and row["sensor_soft_fail"] == 1
                     ):
-                        self.DAGfile.write("    soft_fail=True,\n")
-                    self.DAGfile.write("    dag=dag)\n")
-                    self.DAGfile.write("\n")
+                        self.dag_file.write("    soft_fail=True,\n")
+                    self.dag_file.write("    dag=dag)\n")
+                    self.dag_file.write("\n")
 
             if row["task_type"] == "SQL Sensor":
                 if row["sensor_connection"] == "":
@@ -2565,7 +2613,7 @@ class initialize:
                         "SQL Sensors requires a valid Airflow Connection ID in column 'sensor_connection'"
                     )
                 else:
-                    # 					self.DAGfile.close()
+                    # 					self.dag_file.close()
                     # 					self.common_config.remove_temporary_files()
                     # 					sys.exit(1)
 
@@ -2574,210 +2622,212 @@ class initialize:
                         # Default to 5 minutes
                         sensor_poke_interval = 300
 
-                    self.DAGfile.write("%s = SqlSensor(\n" % (row["task_name"]))
-                    self.DAGfile.write("    task_id='%s',\n" % (row["task_name"]))
-                    self.DAGfile.write(
+                    self.dag_file.write("%s = SqlSensor(\n" % (row["task_name"]))
+                    self.dag_file.write("    task_id='%s',\n" % (row["task_name"]))
+                    self.dag_file.write(
                         "    conn_id='%s',\n" % (row["sensor_connection"])
                     )
-                    self.DAGfile.write('    sql="""%s""",\n' % (row["task_config"]))
+                    self.dag_file.write('    sql="""%s""",\n' % (row["task_config"]))
                     if row["airflow_pool"] != "":
-                        self.DAGfile.write("    pool='%s',\n" % (row["airflow_pool"]))
+                        self.dag_file.write("    pool='%s',\n" % (row["airflow_pool"]))
                     if row["airflow_priority"] != "":
-                        self.DAGfile.write(
+                        self.dag_file.write(
                             "    priority_weight=%s,\n" % (int(row["airflow_priority"]))
                         )
-                        self.DAGfile.write("    weight_rule='absolute',\n")
+                        self.dag_file.write("    weight_rule='absolute',\n")
                     else:
-                        self.DAGfile.write("    priority_weight=100,\n")
-                        self.DAGfile.write("    weight_rule='absolute',\n")
-                    self.DAGfile.write(
+                        self.dag_file.write("    priority_weight=100,\n")
+                        self.dag_file.write("    weight_rule='absolute',\n")
+                    self.dag_file.write(
                         "    timeout=%s,\n" % (int(sensor_timeout_seconds))
                     )
-                    self.DAGfile.write(
+                    self.dag_file.write(
                         "    poke_interval=%s,\n" % (int(sensor_poke_interval))
                     )
-                    self.DAGfile.write("    mode='reschedule',\n")
+                    self.dag_file.write("    mode='reschedule',\n")
                     if (
                         row["sensor_soft_fail"] is not None
                         and row["sensor_soft_fail"] == 1
                     ):
-                        self.DAGfile.write("    soft_fail=True,\n")
-                    self.DAGfile.write("    dag=dag)\n")
-                    self.DAGfile.write("\n")
+                        self.dag_file.write("    soft_fail=True,\n")
+                    self.dag_file.write("    dag=dag)\n")
+                    self.dag_file.write("\n")
 
             if row["task_type"] == "Trigger DAG":
-                self.DAGfile.write("%s = TriggerDagRunOperator(\n" % (row["task_name"]))
-                self.DAGfile.write("    task_id='%s',\n" % (row["task_name"]))
-                self.DAGfile.write("    trigger_dag_id='%s',\n" % (row["task_config"]))
+                self.dag_file.write(
+                    "%s = TriggerDagRunOperator(\n" % (row["task_name"])
+                )
+                self.dag_file.write("    task_id='%s',\n" % (row["task_name"]))
+                self.dag_file.write("    trigger_dag_id='%s',\n" % (row["task_config"]))
                 if row["airflow_pool"] != "":
-                    self.DAGfile.write("    pool='%s',\n" % (row["airflow_pool"]))
+                    self.dag_file.write("    pool='%s',\n" % (row["airflow_pool"]))
                 if row["airflow_priority"] != "":
-                    self.DAGfile.write(
+                    self.dag_file.write(
                         "    priority_weight=%s,\n" % (int(row["airflow_priority"]))
                     )
-                    self.DAGfile.write("    weight_rule='absolute',\n")
+                    self.dag_file.write("    weight_rule='absolute',\n")
                 else:
-                    self.DAGfile.write("    priority_weight=100,\n")
-                    self.DAGfile.write("    weight_rule='absolute',\n")
+                    self.dag_file.write("    priority_weight=100,\n")
+                    self.dag_file.write("    weight_rule='absolute',\n")
                 if self.airflowMajorVersion == 1:
-                    self.DAGfile.write("    python_callable=always_trigger,\n")
-                self.DAGfile.write("    dag=dag)\n")
-                self.DAGfile.write("\n")
+                    self.dag_file.write("    python_callable=always_trigger,\n")
+                self.dag_file.write("    dag=dag)\n")
+                self.dag_file.write("\n")
 
             if row["task_type"] == "shell script":
-                self.DAGfile.write("%s = BashOperator(\n" % (row["task_name"]))
-                self.DAGfile.write("    task_id='%s',\n" % (row["task_name"]))
-                self.DAGfile.write("    retries=%s,\n" % (default_retries))
-                self.DAGfile.write("    bash_command='%s ',\n" % (row["task_config"]))
+                self.dag_file.write("%s = BashOperator(\n" % (row["task_name"]))
+                self.dag_file.write("    task_id='%s',\n" % (row["task_name"]))
+                self.dag_file.write("    retries=%s,\n" % (default_retries))
+                self.dag_file.write("    bash_command='%s ',\n" % (row["task_config"]))
                 if row["airflow_pool"] != "":
-                    self.DAGfile.write("    pool='%s',\n" % (row["airflow_pool"]))
+                    self.dag_file.write("    pool='%s',\n" % (row["airflow_pool"]))
                 if row["airflow_priority"] != "":
-                    self.DAGfile.write(
+                    self.dag_file.write(
                         "    priority_weight=%s,\n" % (int(row["airflow_priority"]))
                     )
-                    self.DAGfile.write("    weight_rule='absolute',\n")
+                    self.dag_file.write("    weight_rule='absolute',\n")
                 else:
-                    self.DAGfile.write("    priority_weight=1,\n")
-                    self.DAGfile.write("    weight_rule='absolute',\n")
-                self.DAGfile.write("    dag=dag)\n")
-                self.DAGfile.write("\n")
+                    self.dag_file.write("    priority_weight=1,\n")
+                    self.dag_file.write("    weight_rule='absolute',\n")
+                self.dag_file.write("    dag=dag)\n")
+                self.dag_file.write("\n")
 
             if row["task_type"] == "Hive SQL Script":
-                self.DAGfile.write("%s = BashOperator(\n" % (row["task_name"]))
-                self.DAGfile.write("    task_id='%s',\n" % (row["task_name"]))
-                self.DAGfile.write("    retries=%s,\n" % (default_retries))
+                self.dag_file.write("%s = BashOperator(\n" % (row["task_name"]))
+                self.dag_file.write("    task_id='%s',\n" % (row["task_name"]))
+                self.dag_file.write("    retries=%s,\n" % (default_retries))
 
                 if row["hive_db"] != None and row["hive_db"].strip() != "":
-                    self.DAGfile.write(
+                    self.dag_file.write(
                         "    bash_command='%sbin/manage --runHiveScript=%s --hiveDB=%s ',\n"
                         % (
-                            self.getDBImportCommandPath(sudo_user=sudo_user),
+                            self.get_dbimport_command_path(sudo_user=sudo_user),
                             row["task_config"],
                             row["hive_db"],
                         )
                     )
                 else:
-                    self.DAGfile.write(
+                    self.dag_file.write(
                         "    bash_command='%sbin/manage --runHiveScript=%s ',\n"
                         % (
-                            self.getDBImportCommandPath(sudo_user=sudo_user),
+                            self.get_dbimport_command_path(sudo_user=sudo_user),
                             row["task_config"],
                         )
                     )
 
                 if row["airflow_pool"] != "":
-                    self.DAGfile.write("    pool='%s',\n" % (row["airflow_pool"]))
+                    self.dag_file.write("    pool='%s',\n" % (row["airflow_pool"]))
                 if row["airflow_priority"] != "":
-                    self.DAGfile.write(
+                    self.dag_file.write(
                         "    priority_weight=%s,\n" % (int(row["airflow_priority"]))
                     )
-                    self.DAGfile.write("    weight_rule='absolute',\n")
+                    self.dag_file.write("    weight_rule='absolute',\n")
                 else:
-                    self.DAGfile.write("    priority_weight=1,\n")
-                    self.DAGfile.write("    weight_rule='absolute',\n")
-                self.DAGfile.write("    dag=dag)\n")
-                self.DAGfile.write("\n")
+                    self.dag_file.write("    priority_weight=1,\n")
+                    self.dag_file.write("    weight_rule='absolute',\n")
+                self.dag_file.write("    dag=dag)\n")
+                self.dag_file.write("\n")
 
             if row["task_type"] == "Hive SQL":
                 jdbc_sql = row["task_config"].replace(r"'", "\\'")
-                self.DAGfile.write("%s = BashOperator(\n" % (row["task_name"]))
-                self.DAGfile.write("    task_id='%s',\n" % (row["task_name"]))
-                self.DAGfile.write("    retries=%s,\n" % (default_retries))
-                self.DAGfile.write(
+                self.dag_file.write("%s = BashOperator(\n" % (row["task_name"]))
+                self.dag_file.write("    task_id='%s',\n" % (row["task_name"]))
+                self.dag_file.write("    retries=%s,\n" % (default_retries))
+                self.dag_file.write(
                     "    bash_command='%sbin/manage --runHiveQuery=\"%s\" ',\n"
-                    % (self.getDBImportCommandPath(sudo_user=sudo_user), jdbc_sql)
+                    % (self.get_dbimport_command_path(sudo_user=sudo_user), jdbc_sql)
                 )
                 if row["airflow_pool"] != "":
-                    self.DAGfile.write("    pool='%s',\n" % (row["airflow_pool"]))
+                    self.dag_file.write("    pool='%s',\n" % (row["airflow_pool"]))
                 if row["airflow_priority"] != "":
-                    self.DAGfile.write(
+                    self.dag_file.write(
                         "    priority_weight=%s,\n" % (int(row["airflow_priority"]))
                     )
-                    self.DAGfile.write("    weight_rule='absolute',\n")
+                    self.dag_file.write("    weight_rule='absolute',\n")
                 else:
-                    self.DAGfile.write("    priority_weight=1,\n")
-                    self.DAGfile.write("    weight_rule='absolute',\n")
-                self.DAGfile.write("    dag=dag)\n")
-                self.DAGfile.write("\n")
+                    self.dag_file.write("    priority_weight=1,\n")
+                    self.dag_file.write("    weight_rule='absolute',\n")
+                self.dag_file.write("    dag=dag)\n")
+                self.dag_file.write("\n")
 
             if row["task_type"] == "JDBC SQL":
                 jdbc_sql = row["task_config"].replace(r"'", "\\'")
-                self.DAGfile.write("%s = BashOperator(\n" % (row["task_name"]))
-                self.DAGfile.write("    task_id='%s',\n" % (row["task_name"]))
-                self.DAGfile.write("    retries=%s,\n" % (default_retries))
-                self.DAGfile.write(
+                self.dag_file.write("%s = BashOperator(\n" % (row["task_name"]))
+                self.dag_file.write("    task_id='%s',\n" % (row["task_name"]))
+                self.dag_file.write("    retries=%s,\n" % (default_retries))
+                self.dag_file.write(
                     "    bash_command='%sbin/manage --dbAlias=%s --runJDBCQuery=\"%s\" ',\n"
                     % (
-                        self.getDBImportCommandPath(sudo_user=sudo_user),
+                        self.get_dbimport_command_path(sudo_user=sudo_user),
                         row["jdbc_dbalias"],
                         jdbc_sql,
                     )
                 )
                 if row["airflow_pool"] != "":
-                    self.DAGfile.write("    pool='%s',\n" % (row["airflow_pool"]))
+                    self.dag_file.write("    pool='%s',\n" % (row["airflow_pool"]))
                 if row["airflow_priority"] != "":
-                    self.DAGfile.write(
+                    self.dag_file.write(
                         "    priority_weight=%s,\n" % (int(row["airflow_priority"]))
                     )
-                    self.DAGfile.write("    weight_rule='absolute',\n")
+                    self.dag_file.write("    weight_rule='absolute',\n")
                 else:
-                    self.DAGfile.write("    priority_weight=1,\n")
-                    self.DAGfile.write("    weight_rule='absolute',\n")
-                self.DAGfile.write("    dag=dag)\n")
-                self.DAGfile.write("\n")
+                    self.dag_file.write("    priority_weight=1,\n")
+                    self.dag_file.write("    weight_rule='absolute',\n")
+                self.dag_file.write("    dag=dag)\n")
+                self.dag_file.write("\n")
 
             if row["task_type"] == "DBImport command":
                 dbimport_command = row["task_config"].replace(r"'", "\\'")
-                if self.airflowMode == "default":
-                    self.DAGfile.write("%s = BashOperator(\n" % (row["task_name"]))
-                    self.DAGfile.write("    task_id='%s',\n" % (row["task_name"]))
-                    self.DAGfile.write("    retries=%s,\n" % (default_retries))
-                    self.DAGfile.write(
+                if self.airflow_mode == "default":
+                    self.dag_file.write("%s = BashOperator(\n" % (row["task_name"]))
+                    self.dag_file.write("    task_id='%s',\n" % (row["task_name"]))
+                    self.dag_file.write("    retries=%s,\n" % (default_retries))
+                    self.dag_file.write(
                         "    bash_command='%sbin/%s',\n"
                         % (
-                            self.getDBImportCommandPath(sudo_user=sudo_user),
+                            self.get_dbimport_command_path(sudo_user=sudo_user),
                             dbimport_command,
                         )
                     )
                     if row["airflow_pool"] != "":
-                        self.DAGfile.write("    pool='%s',\n" % (row["airflow_pool"]))
+                        self.dag_file.write("    pool='%s',\n" % (row["airflow_pool"]))
                     if row["airflow_priority"] != "":
-                        self.DAGfile.write(
+                        self.dag_file.write(
                             "    priority_weight=%s,\n" % (int(row["airflow_priority"]))
                         )
-                        self.DAGfile.write("    weight_rule='absolute',\n")
+                        self.dag_file.write("    weight_rule='absolute',\n")
                     else:
-                        self.DAGfile.write("    priority_weight=1,\n")
-                        self.DAGfile.write("    weight_rule='absolute',\n")
-                    self.DAGfile.write("    dag=dag)\n")
-                    self.DAGfile.write("\n")
-                elif self.airflowMode == "aws_mwaa":
-                    instance_id = self.getAWSInstanceID(row["task_name"])
-                    self.DAGfile.write("%s = PythonOperator(\n" % (row["task_name"]))
-                    self.DAGfile.write("    task_id='%s',\n" % (row["task_name"]))
-                    self.DAGfile.write("    retries=%s,\n" % (default_retries))
-                    self.DAGfile.write("    python_callable=startDBImportExecution,\n")
-                    self.DAGfile.write(
+                        self.dag_file.write("    priority_weight=1,\n")
+                        self.dag_file.write("    weight_rule='absolute',\n")
+                    self.dag_file.write("    dag=dag)\n")
+                    self.dag_file.write("\n")
+                elif self.airflow_mode == "aws_mwaa":
+                    instance_id = self.get_aws_instance_id(row["task_name"])
+                    self.dag_file.write("%s = PythonOperator(\n" % (row["task_name"]))
+                    self.dag_file.write("    task_id='%s',\n" % (row["task_name"]))
+                    self.dag_file.write("    retries=%s,\n" % (default_retries))
+                    self.dag_file.write("    python_callable=startDBImportExecution,\n")
+                    self.dag_file.write(
                         '    op_kwargs={"command": "%s", "instanceID": "%s"},\n'
                         % (dbimport_command, instance_id)
                     )
                     if row["airflow_pool"] != "":
-                        self.DAGfile.write("    pool='%s',\n" % (row["airflow_pool"]))
+                        self.dag_file.write("    pool='%s',\n" % (row["airflow_pool"]))
                     else:
-                        if self.airflowAWSpoolToInstanceId == True:
-                            self.DAGfile.write("    pool='%s',\n" % (instance_id))
+                        if self.airflow_aws_pool_to_instance_id == True:
+                            self.dag_file.write("    pool='%s',\n" % (instance_id))
                         else:
-                            self.DAGfile.write("    pool='%s',\n" % (dag_name))
+                            self.dag_file.write("    pool='%s',\n" % (dag_name))
                     if row["airflow_priority"] != "":
-                        self.DAGfile.write(
+                        self.dag_file.write(
                             "    priority_weight=%s,\n" % (int(row["airflow_priority"]))
                         )
-                        self.DAGfile.write("    weight_rule='absolute',\n")
+                        self.dag_file.write("    weight_rule='absolute',\n")
                     else:
-                        self.DAGfile.write("    priority_weight=1,\n")
-                        self.DAGfile.write("    weight_rule='absolute',\n")
-                    self.DAGfile.write("    dag=dag)\n")
-                    self.DAGfile.write("\n")
+                        self.dag_file.write("    priority_weight=1,\n")
+                        self.dag_file.write("    weight_rule='absolute',\n")
+                    self.dag_file.write("    dag=dag)\n")
+                    self.dag_file.write("\n")
 
             if row["placement"] == "before main":
                 temp_start_task = self.preStartTask
@@ -2946,13 +2996,13 @@ class initialize:
 
                 task_dependencies += "\n"
 
-        self.DAGfile.write(task_dependencies)
+        self.dag_file.write(task_dependencies)
         session.close()
 
-    def addSensorsToDAGfile(self, dag_name, main_dag_schedule):
+    def add_sensors_to_dag_file(self, dag_name, main_dag_schedule):
         log = logging.getLogger(self.logger)
         # session = self.configDBSession()
-        session = self.getDBImportSession()
+        session = self.get_dbimport_session()
 
         airflow_dag_sensors = aliased(configSchema.airflowDagSensors, name="ads")
         airflow_custom_dags = aliased(configSchema.airflowCustomDags, name="acd")
@@ -3015,19 +3065,19 @@ class initialize:
                 log.warning(
                     "The DAG Sensor will not be added to the DAG. Instead, there will be a Task that always failes. The DAG will never execute"
                 )
-                self.addFailureTask("%s_FAILURE" % (row["sensor_name"]))
-                self.DAGfile.write(
+                self.add_failure_task("%s_FAILURE" % (row["sensor_name"]))
+                self.dag_file.write(
                     "%s.set_downstream(%s_FAILURE)\n"
                     % (self.sensorStartTask, row["sensor_name"])
                 )
-                self.DAGfile.write(
+                self.dag_file.write(
                     "%s_FAILURE.set_downstream(%s)\n"
                     % (row["sensor_name"], self.sensorStopTask)
                 )
-                self.DAGfile.write("\n")
+                self.dag_file.write("\n")
                 continue
             # 				log.error("Cant find schedule interval for DAG to wait for")
-            # 				self.DAGfile.close()
+            # 				self.dag_file.close()
             # 				self.common_config.remove_temporary_files()
             # 				sys.exit(1)
 
@@ -3066,18 +3116,18 @@ class initialize:
                 log.warning(
                     "The DAG Sensor will not be added to the DAG. Instead, there will be a Task that always failes. The DAG will never execute"
                 )
-                self.addFailureTask("%s_FAILURE" % (row["sensor_name"]))
-                self.DAGfile.write(
+                self.add_failure_task("%s_FAILURE" % (row["sensor_name"]))
+                self.dag_file.write(
                     "%s.set_downstream(%s_FAILURE)\n"
                     % (self.sensorStartTask, row["sensor_name"])
                 )
-                self.DAGfile.write(
+                self.dag_file.write(
                     "%s_FAILURE.set_downstream(%s)\n"
                     % (row["sensor_name"], self.sensorStopTask)
                 )
-                self.DAGfile.write("\n")
+                self.dag_file.write("\n")
                 continue
-            # 				self.DAGfile.close()
+            # 				self.dag_file.close()
             # 				self.common_config.remove_temporary_files()
             # 				sys.exit(1)
 
@@ -3135,57 +3185,59 @@ class initialize:
                     log.warning(
                         "The DAG Sensor will not be added to the DAG. Instead, there will be a Task that always failes. The DAG will never execute"
                     )
-                    self.addFailureTask("%s_FAILURE" % (row["sensor_name"]))
-                    self.DAGfile.write(
+                    self.add_failure_task("%s_FAILURE" % (row["sensor_name"]))
+                    self.dag_file.write(
                         "%s.set_downstream(%s_FAILURE)\n"
                         % (self.sensorStartTask, row["sensor_name"])
                     )
-                    self.DAGfile.write(
+                    self.dag_file.write(
                         "%s_FAILURE.set_downstream(%s)\n"
                         % (row["sensor_name"], self.sensorStopTask)
                     )
-                    self.DAGfile.write("\n")
+                    self.dag_file.write("\n")
                     continue
-            # 					self.DAGfile.close()
+            # 					self.dag_file.close()
             # 					self.common_config.remove_temporary_files()
             # 					sys.exit(1)
 
-            self.DAGfile.write("%s = ExternalTaskSensor(\n" % (row["sensor_name"]))
-            self.DAGfile.write("    task_id='%s',\n" % (row["sensor_name"]))
-            self.DAGfile.write("    external_dag_id='%s',\n" % (row["wait_for_dag"]))
-            self.DAGfile.write("    external_task_id='%s',\n" % (wait_for_task))
-            self.DAGfile.write("    retries=0,\n")
-            # 			self.DAGfile.write("    execution_timeout=timedelta(seconds=%s),\n"%(timeoutSeconds))
-            self.DAGfile.write(
+            self.dag_file.write("%s = ExternalTaskSensor(\n" % (row["sensor_name"]))
+            self.dag_file.write("    task_id='%s',\n" % (row["sensor_name"]))
+            self.dag_file.write("    external_dag_id='%s',\n" % (row["wait_for_dag"]))
+            self.dag_file.write("    external_task_id='%s',\n" % (wait_for_task))
+            self.dag_file.write("    retries=0,\n")
+            # 			self.dag_file.write("    execution_timeout=timedelta(seconds=%s),\n"%(timeoutSeconds))
+            self.dag_file.write(
                 "    execution_delta=timedelta(seconds=%s),\n" % (time_diff)
             )
-            self.DAGfile.write("    timeout=%s,\n" % (int(timeout_seconds)))
-            self.DAGfile.write("    poke_interval=300,\n")
-            self.DAGfile.write("    mode='reschedule',\n")
+            self.dag_file.write("    timeout=%s,\n" % (int(timeout_seconds)))
+            self.dag_file.write("    poke_interval=300,\n")
+            self.dag_file.write("    mode='reschedule',\n")
             if row["sensor_soft_fail"] is not None and row["sensor_soft_fail"] == 1:
-                self.DAGfile.write("    soft_fail=True,\n")
-            self.DAGfile.write("    dag=dag)\n")
-            self.DAGfile.write("\n")
-            self.DAGfile.write(
+                self.dag_file.write("    soft_fail=True,\n")
+            self.dag_file.write("    dag=dag)\n")
+            self.dag_file.write("\n")
+            self.dag_file.write(
                 "%s.set_downstream(%s)\n" % (self.sensorStartTask, row["sensor_name"])
             )
-            self.DAGfile.write(
+            self.dag_file.write(
                 "%s.set_downstream(%s)\n" % (row["sensor_name"], self.sensorStopTask)
             )
-            self.DAGfile.write("\n")
+            self.dag_file.write("\n")
 
         session.close()
 
-    def sendJSON(self, airflow_dag, status):
+    def send_json(self, airflow_dag, status):
         """Sends a start JSON document to REST and/or Kafka"""
         log = logging.getLogger(self.logger)
-        log.debug("Executing Airflow.sendStartJSON()")
+        log.debug("Executing Airflow.send_start_json()")
 
-        self.postAirflowDAGoperations = self.common_config.getConfigValue(
+        self.postAirflowDAGoperations = self.common_config.get_config_value(
             key="post_airflow_dag_operations"
         )
-        self.postDataToREST = self.common_config.getConfigValue(key="post_data_to_rest")
-        self.postDataToKafka = self.common_config.getConfigValue(
+        self.postDataToREST = self.common_config.get_config_value(
+            key="post_data_to_rest"
+        )
+        self.postDataToKafka = self.common_config.get_config_value(
             key="post_data_to_kafka"
         )
 
@@ -3207,13 +3259,13 @@ class initialize:
         json_data["airflow_timestamp"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
 
         if self.postDataToKafka == True:
-            result = self.sendStatistics.publishKafkaData(json.dumps(json_data))
+            result = self.sendStatistics.publish_kafka_data(json.dumps(json_data))
             if result == False:
                 log.warning("Kafka publish failed! No start message posted")
 
         if self.postDataToREST == True:
-            response = self.sendStatistics.sendRESTdata(json.dumps(json_data))
+            response = self.sendStatistics.send_rest_data(json.dumps(json_data))
             if response != 200:
                 log.warn("REST call failed! No start message posted")
 
-        log.debug("Executing Airflow.sendStartJSON() - Finished")
+        log.debug("Executing Airflow.send_start_json() - Finished")

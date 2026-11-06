@@ -31,30 +31,32 @@ class sendStatistics:
         logging.debug("Executing rest.__init__()")
 
         self.common_config = common_config.config()
-        self.RESTheaders = {"Content-type": "application/json"}
+        self.rest_headers = {"Content-type": "application/json"}
 
-        self.RESTendpoint = self.common_config.getConfigValue(key="rest_url")
-        self.RESTtimeout = self.common_config.getConfigValue(key="rest_timeout")
-        self.RESTverifySSL = self.common_config.getConfigValue(key="rest_verifyssl")
-        self.RESTtrustCAfile = self.common_config.getConfigValue(key="rest_trustcafile")
+        self.rest_endpoint = self.common_config.get_config_value(key="rest_url")
+        self.RESTtimeout = self.common_config.get_config_value(key="rest_timeout")
+        self.rest_verify_ssl = self.common_config.get_config_value(key="rest_verifyssl")
+        self.rest_trust_ca_file = self.common_config.get_config_value(
+            key="rest_trustcafile"
+        )
 
-        self.kafkaBrokers = self.common_config.getConfigValue(key="kafka_brokers")
-        self.kafkaTrustCAFile = self.common_config.getConfigValue(
+        self.kafkaBrokers = self.common_config.get_config_value(key="kafka_brokers")
+        self.kafka_trust_ca_file = self.common_config.get_config_value(
             key="kafka_trustcafile"
         )
-        self.kafkaSecurityProtocol = self.common_config.getConfigValue(
+        self.kafka_security_protocol = self.common_config.get_config_value(
             key="kafka_securityprotocol"
         )
-        self.kafkaSaslMechanism = self.common_config.getConfigValue(
+        self.kafka_sasl_mechanism = self.common_config.get_config_value(
             key="kafka_saslmechanism"
         )
-        self.kafkaTopic = self.common_config.getConfigValue(key="kafka_topic")
+        self.kafkaTopic = self.common_config.get_config_value(key="kafka_topic")
 
-        self.awsSNStopic = self.common_config.getConfigValue(
+        self.aws_sns_topic = self.common_config.get_config_value(
             key="post_data_to_awssns_topic"
         )
 
-        if self.RESTendpoint == "":
+        if self.rest_endpoint == "":
             logging.error(
                 "Cant find the REST endpoint. Please check configuration file"
             )
@@ -66,9 +68,9 @@ class sendStatistics:
             )
             sys.exit(1)
 
-    def sendRESTdata(self, json_data):
+    def send_rest_data(self, json_data):
         """Sending data to REST endpoint"""
-        logging.debug("Executing sendStatistics.sendRESTdata")
+        logging.debug("Executing sendStatistics.send_rest_data")
 
         logging.info("Sending data to REST interface")
         logging.debug(
@@ -79,25 +81,25 @@ class sendStatistics:
         response_code = -1
 
         try:
-            rest_protocol = self.RESTendpoint.split(":")[0].lower()
+            rest_protocol = self.rest_endpoint.split(":")[0].lower()
 
             if rest_protocol == "http":
                 response = requests.post(
-                    self.RESTendpoint,
+                    self.rest_endpoint,
                     data=json_data,
-                    headers=self.RESTheaders,
+                    headers=self.rest_headers,
                     timeout=self.RESTtimeout,
                 )
             else:
-                if self.RESTverifySSL == True:
-                    rest_verify = self.RESTtrustCAfile
+                if self.rest_verify_ssl == True:
+                    rest_verify = self.rest_trust_ca_file
                 else:
                     rest_verify = False
 
                 response = requests.post(
-                    self.RESTendpoint,
+                    self.rest_endpoint,
                     data=json_data,
-                    headers=self.RESTheaders,
+                    headers=self.rest_headers,
                     timeout=self.RESTtimeout,
                     verify=rest_verify,
                 )
@@ -109,12 +111,12 @@ class sendStatistics:
         if response_code != 200:
             logging.error("REST call unsuccessful! Return code %s" % (response_code))
 
-        logging.debug("Executing sendStatistics.sendRESTdata - Finished")
+        logging.debug("Executing sendStatistics.send_rest_data - Finished")
         return response_code
 
-    def publishKafkaData(self, json_data):
+    def publish_kafka_data(self, json_data):
         """Publish data to Kafka topic"""
-        logging.debug("Executing sendStatistics.publishKafkaData")
+        logging.debug("Executing sendStatistics.publish_kafka_data")
 
         logging.info("Sending statistics data to Kafka topic")
         logging.debug("Sending the following JSON to Kafka: %s" % (json_data))
@@ -127,18 +129,21 @@ class sendStatistics:
         # 		return result
 
         try:
-            ssl_context = ssl.create_default_context(cafile=self.kafkaTrustCAFile)
+            ssl_context = ssl.create_default_context(cafile=self.kafka_trust_ca_file)
 
         except FileNotFoundError:
             logging.error("SSL CA file for Kafka cant be found")
             ssl_context = None
 
         try:
-            if self.kafkaSaslMechanism != None and self.kafkaSecurityProtocol != None:
+            if (
+                self.kafka_sasl_mechanism != None
+                and self.kafka_security_protocol != None
+            ):
                 producer = kafka.KafkaProducer(
                     bootstrap_servers=self.kafkaBrokers,
-                    security_protocol=self.kafkaSecurityProtocol,
-                    sasl_mechanism=self.kafkaSaslMechanism,
+                    security_protocol=self.kafka_security_protocol,
+                    sasl_mechanism=self.kafka_sasl_mechanism,
                     ssl_context=ssl_context,
                 )
             else:
@@ -173,12 +178,12 @@ class sendStatistics:
         if kafka_error == True:
             result = False
 
-        logging.debug("Executing sendStatistics.publishKafkaData - Finished")
+        logging.debug("Executing sendStatistics.publish_kafka_data - Finished")
         return result
 
-    def sendAWSSNSdata(self, json_data):
+    def send_aws_sns_data(self, json_data):
         """Publish data to AWS SNS topic"""
-        logging.debug("Executing sendStatistics.sendAWSSNSdata")
+        logging.debug("Executing sendStatistics.send_aws_sns_data")
 
         logging.info("Sending statistics data to AWS SNS topic")
         logging.debug("Sending the following JSON to AWS SNS: %s" % (json_data))
@@ -196,12 +201,12 @@ class sendStatistics:
 
         try:
             publish_sns_response = client.publish(
-                TopicArn=self.awsSNStopic, Message=json_data
+                TopicArn=self.aws_sns_topic, Message=json_data
             )
         except ClientError as e:  # For a list of exceptions thrown, see
             # https://docs.aws.amazon.com/secretsmanager/latest/apireference/API_GetSecretValue.html
             logging.error(e)
             result = False
 
-        logging.debug("Executing sendStatistics.sendAWSSNSdata - Finished")
+        logging.debug("Executing sendStatistics.send_aws_sns_data - Finished")
         return result

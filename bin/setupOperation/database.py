@@ -54,26 +54,26 @@ class initialize:
         self.common_config = common_config.config()
 
         # Fetch configuration about MySQL database and how to connect to it
-        self.databaseCredentials = self.common_config.getMysqlCredentials()
-        self.configHostname = self.databaseCredentials["mysql_hostname"]
-        self.configPort = self.databaseCredentials["mysql_port"]
-        self.configDatabase = self.databaseCredentials["mysql_database"]
-        self.configUsername = self.databaseCredentials["mysql_username"]
-        self.configPassword = self.databaseCredentials["mysql_password"]
-        # self.configPassword = quote(self.databaseCredentials["mysql_password"], safe=" +")
+        self.database_credentials = self.common_config.get_mysql_credentials()
+        self.config_hostname = self.database_credentials["mysql_hostname"]
+        self.config_port = self.database_credentials["mysql_port"]
+        self.config_database = self.database_credentials["mysql_database"]
+        self.config_username = self.database_credentials["mysql_username"]
+        self.config_password = self.database_credentials["mysql_password"]
+        # self.config_password = quote(self.database_credentials["mysql_password"], safe=" +")
 
-        self.connectStr = "mysql+pymysql://%s:%s@%s:%s/%s" % (
-            self.configUsername,
-            # self.configPassword,
-            quote(self.configPassword, safe=" +"),
-            self.configHostname,
-            self.configPort,
-            self.configDatabase,
+        self.connect_str = "mysql+pymysql://%s:%s@%s:%s/%s" % (
+            self.config_username,
+            # self.config_password,
+            quote(self.config_password, safe=" +"),
+            self.config_hostname,
+            self.config_port,
+            self.config_database,
         )
 
         # Esablish a SQLAlchemy connection to the DBImport database
         try:
-            self.configDB = sa.create_engine(self.connectStr, echo=self.debugLogLevel)
+            self.configDB = sa.create_engine(self.connect_str, echo=self.debugLogLevel)
             self.configDB.connect()
             self.configDBSession = sessionmaker(bind=self.configDB)
 
@@ -86,20 +86,20 @@ class initialize:
             sys.exit(1)
 
         # Setup configuration for Alembic
-        self.alembicSchemaDir = dbimport_home + "/bin/SchemaUpgrade"
-        self.alembicConfig = Config()
-        self.alembicConfig.set_main_option("script_location", self.alembicSchemaDir)
-        self.connectStr = self.connectStr.replace("%", "%%")
-        self.alembicConfig.set_main_option("sqlalchemy.url", self.connectStr)
+        self.alembic_schema_dir = dbimport_home + "/bin/SchemaUpgrade"
+        self.alembic_config = Config()
+        self.alembic_config.set_main_option("script_location", self.alembic_schema_dir)
+        self.connect_str = self.connect_str.replace("%", "%%")
+        self.alembic_config.set_main_option("sqlalchemy.url", self.connect_str)
 
         # Esablish a connection to the DBImport database in MySQL
         try:
             self.mysql_conn = mysql.connector.connect(
-                host=self.configHostname,
-                port=self.configPort,
-                database=self.configDatabase,
-                user=self.configUsername,
-                password=self.configPassword,
+                host=self.config_hostname,
+                port=self.config_port,
+                database=self.config_database,
+                user=self.config_username,
+                password=self.config_password,
             )
         except mysql.connector.errors.ProgrammingError as err:
             logging.error("%s" % err)
@@ -122,7 +122,7 @@ class initialize:
 
         logging.debug("Executing database.__init__() - Finished")
 
-    def generateSchemaRst(self):
+    def generate_schema_rst(self):
 
         query = "select max(length(c.column_name)), max(length(c.column_comment)) "
         query += "from information_schema.columns c "
@@ -231,8 +231,8 @@ class initialize:
             print(line)
             print(line_single)
 
-    def getListOfConfigTables(self):
-        logging.debug("Executing common_config.getListOfConfigTables()")
+    def get_list_of_config_tables(self):
+        logging.debug("Executing common_config.get_list_of_config_tables()")
 
         query = "select "
         query += "   table_name "
@@ -241,17 +241,17 @@ class initialize:
         query += "order by table_name "
 
         logging.debug("SQL Statement executed: %s" % (query))
-        self.mysql_cursor.execute(query, (self.configDatabase,))
+        self.mysql_cursor.execute(query, (self.config_database,))
 
         tables_df = pd.DataFrame(self.mysql_cursor.fetchall())
 
         if len(tables_df) > 0:
             tables_df.columns = ["table"]
 
-        logging.debug("Executing common_config.getListOfConfigTables() - Finished")
+        logging.debug("Executing common_config.get_list_of_config_tables() - Finished")
         return tables_df
 
-    def createDB(self, create_only_table=None):
+    def create_db(self, create_only_table=None):
 
         inspector = sa.inspect(self.configDB)
         all_tables = inspector.get_table_names()
@@ -261,20 +261,20 @@ class initialize:
             )
             return
 
-        alembicCommand.upgrade(self.alembicConfig, "head")
-        self.createDefaultEnvironmentTypes()
-        self.updateConfigurationValues()
+        alembicCommand.upgrade(self.alembic_config, "head")
+        self.create_default_environment_types()
+        self.update_configuration_values()
 
         print("DBImport configuration database is created successfully")
 
-    def upgradeDB(self):
+    def upgrade_db(self):
 
         print("Upgrading database to latest level")
-        alembicCommand.upgrade(self.alembicConfig, "head")
-        self.createDefaultEnvironmentTypes()
-        self.updateConfigurationValues()
+        alembicCommand.upgrade(self.alembic_config, "head")
+        self.create_default_environment_types()
+        self.update_configuration_values()
 
-    def createDefaultEnvironmentTypes(self):
+    def create_default_environment_types(self):
         session = self.configDBSession()
 
         number_of_environemnt_types = session.query(
@@ -293,7 +293,7 @@ class initialize:
             session.add_all(objects_to_add)
             session.commit()
 
-    def updateConfigurationValues(self):
+    def update_configuration_values(self):
         session = self.configDBSession()
 
         # Create a list of all available JDBC drivers
