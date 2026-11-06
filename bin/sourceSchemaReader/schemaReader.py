@@ -171,8 +171,8 @@ class source:
 
         if serverType == constant.ORACLE:
             # First determine if column ORIGIN_CON_ID exists in ALL_TAB_COMMENTS. If it does, we need to take that into consideration
-            oracle_OriginConId_exists = True
-            oracle_OriginConId = None
+            oracle_origin_con_id_exists = True
+            oracle_origin_con_id = None
             # query = "SELECT ORIGIN_CON_ID FROM ALL_TAB_COMMENTS WHERE 1 = 0"
             query = "SELECT ORIGIN_CON_ID FROM ALL_TAB_COMMENTS "
             query += "WHERE OWNER = '%s' " % (schema)
@@ -182,22 +182,22 @@ class source:
                 JDBCCursor.execute(query)
             except jaydebeapi.DatabaseError as errMsg:
                 if "invalid identifier" in str(errMsg):
-                    oracle_OriginConId_exists = False
+                    oracle_origin_con_id_exists = False
                 else:
                     logging.error(
                         "Failure when communicating with JDBC database. %s" % (errMsg)
                     )
                     return result_df
 
-            if oracle_OriginConId_exists == True:
-                rowCount = 0
+            if oracle_origin_con_id_exists == True:
+                row_count = 0
                 for row in JDBCCursor.fetchall():
-                    oracle_OriginConId = row[0]
-                    rowCount += 1
+                    oracle_origin_con_id = row[0]
+                    row_count += 1
 
-                if rowCount != 1:
+                if row_count != 1:
                     # If there are more than one originConId, it's impossible to determine what we will use. So then we go to default
-                    oracle_OriginConId = None
+                    oracle_origin_con_id = None
 
             query = "SELECT "
             query += "  ALL_TAB_COLUMNS.OWNER SCHEMA_NAME, "
@@ -217,23 +217,23 @@ class source:
             query += "LEFT JOIN ALL_TAB_COMMENTS ALL_TAB_COMMENTS "
             query += "  ON  ALL_TAB_COLUMNS.OWNER = ALL_TAB_COMMENTS.OWNER "
             query += "  AND ALL_TAB_COLUMNS.TABLE_NAME = ALL_TAB_COMMENTS.TABLE_NAME "
-            if oracle_OriginConId_exists == True:
-                if oracle_OriginConId == None:
+            if oracle_origin_con_id_exists == True:
+                if oracle_origin_con_id == None:
                     query += "  AND ALL_TAB_COMMENTS.ORIGIN_CON_ID <= 1 "
                 else:
                     query += "  AND ALL_TAB_COMMENTS.ORIGIN_CON_ID = %s " % (
-                        oracle_OriginConId
+                        oracle_origin_con_id
                     )
             query += "LEFT JOIN ALL_COL_COMMENTS ALL_COL_COMMENTS "
             query += "  ON  ALL_TAB_COLUMNS.OWNER = ALL_COL_COMMENTS.OWNER "
             query += "  AND ALL_TAB_COLUMNS.TABLE_NAME = ALL_COL_COMMENTS.TABLE_NAME "
             query += "  AND ALL_TAB_COLUMNS.COLUMN_NAME = ALL_COL_COMMENTS.COLUMN_NAME "
-            if oracle_OriginConId_exists == True:
-                if oracle_OriginConId == None:
+            if oracle_origin_con_id_exists == True:
+                if oracle_origin_con_id == None:
                     query += "  AND ALL_COL_COMMENTS.ORIGIN_CON_ID <= 1 "
                 else:
                     query += "  AND ALL_COL_COMMENTS.ORIGIN_CON_ID = %s " % (
-                        oracle_OriginConId
+                        oracle_origin_con_id
                     )
             query += "LEFT JOIN ALL_OBJECTS ALL_OBJECTS "
             query += "  ON  ALL_TAB_COLUMNS.OWNER = ALL_OBJECTS.OWNER "
@@ -936,77 +936,77 @@ class source:
 
                 # Column type column includes not only the column type, but also values like if it allows null or not
                 # More info can be found on https://www.ibm.com/docs/en/informix-servers/12.10?topic=tables-syscolumns
-                columnTypeMaskedValue = row[4] & 0x00FF  #
+                column_type_masked_value = row[4] & 0x00FF  #
 
-                if columnTypeMaskedValue == 0:
+                if column_type_masked_value == 0:
                     line_dict["SOURCE_COLUMN_TYPE"] = "CHAR(%s)" % (row[5])
-                elif columnTypeMaskedValue == 1:
+                elif column_type_masked_value == 1:
                     line_dict["SOURCE_COLUMN_TYPE"] = "SMALLINT"
-                elif columnTypeMaskedValue == 2:
+                elif column_type_masked_value == 2:
                     line_dict["SOURCE_COLUMN_TYPE"] = "INTEGER"
-                elif columnTypeMaskedValue == 2:
+                elif column_type_masked_value == 2:
                     line_dict["SOURCE_COLUMN_TYPE"] = "INTEGER"
-                elif columnTypeMaskedValue == 3:
+                elif column_type_masked_value == 3:
                     line_dict["SOURCE_COLUMN_TYPE"] = "FLOAT(%s)" % (row[5])
-                elif columnTypeMaskedValue == 4:
+                elif column_type_masked_value == 4:
                     line_dict["SOURCE_COLUMN_TYPE"] = "SMALLFLOAT(%s)" % (row[5])
                 # elif columnTypeMaskedValue == 5:	line_dict["SOURCE_COLUMN_TYPE"] = "DECIMAL(%s)"%(row[5])
-                elif columnTypeMaskedValue == 6:
+                elif column_type_masked_value == 6:
                     line_dict["SOURCE_COLUMN_TYPE"] = "SERIAL"
-                elif columnTypeMaskedValue == 7:
+                elif column_type_masked_value == 7:
                     line_dict["SOURCE_COLUMN_TYPE"] = "DATE"
                 # elif columnTypeMaskedValue == 8:	line_dict["SOURCE_COLUMN_TYPE"] = "MONEY(%s)"%(row[5])
-                elif columnTypeMaskedValue == 9:
+                elif column_type_masked_value == 9:
                     line_dict["SOURCE_COLUMN_TYPE"] = "NULL"
-                elif columnTypeMaskedValue == 10:
+                elif column_type_masked_value == 10:
                     line_dict["SOURCE_COLUMN_TYPE"] = "DATETIME"
-                elif columnTypeMaskedValue == 11:
+                elif column_type_masked_value == 11:
                     line_dict["SOURCE_COLUMN_TYPE"] = "BYTE(%s)" % (row[5])
-                elif columnTypeMaskedValue == 12:
+                elif column_type_masked_value == 12:
                     line_dict["SOURCE_COLUMN_TYPE"] = "TEXT(%s)" % (row[5])
-                elif columnTypeMaskedValue == 13:
+                elif column_type_masked_value == 13:
                     line_dict["SOURCE_COLUMN_TYPE"] = "VARCHAR(%s)" % (row[5])
-                elif columnTypeMaskedValue == 14:
+                elif column_type_masked_value == 14:
                     line_dict["SOURCE_COLUMN_TYPE"] = "INTERVAL"
-                elif columnTypeMaskedValue == 15:
+                elif column_type_masked_value == 15:
                     line_dict["SOURCE_COLUMN_TYPE"] = "NCHAR(%s)" % (row[5])
-                elif columnTypeMaskedValue == 16:
+                elif column_type_masked_value == 16:
                     line_dict["SOURCE_COLUMN_TYPE"] = "NVARCHAR(%s)" % (row[5])
-                elif columnTypeMaskedValue == 17:
+                elif column_type_masked_value == 17:
                     line_dict["SOURCE_COLUMN_TYPE"] = "INT8"
-                elif columnTypeMaskedValue == 18:
+                elif column_type_masked_value == 18:
                     line_dict["SOURCE_COLUMN_TYPE"] = "SERIAL8"
-                elif columnTypeMaskedValue == 19:
+                elif column_type_masked_value == 19:
                     line_dict["SOURCE_COLUMN_TYPE"] = "SET"
-                elif columnTypeMaskedValue == 20:
+                elif column_type_masked_value == 20:
                     line_dict["SOURCE_COLUMN_TYPE"] = "MULTISET"
-                elif columnTypeMaskedValue == 21:
+                elif column_type_masked_value == 21:
                     line_dict["SOURCE_COLUMN_TYPE"] = "LIST"
-                elif columnTypeMaskedValue == 22:
+                elif column_type_masked_value == 22:
                     line_dict["SOURCE_COLUMN_TYPE"] = "ROW"
-                elif columnTypeMaskedValue == 23:
+                elif column_type_masked_value == 23:
                     line_dict["SOURCE_COLUMN_TYPE"] = "COLLECTION"
-                elif columnTypeMaskedValue == 40:
+                elif column_type_masked_value == 40:
                     line_dict["SOURCE_COLUMN_TYPE"] = "LVARCHAR(%s)" % (row[5])
-                elif columnTypeMaskedValue == 41:
+                elif column_type_masked_value == 41:
                     line_dict["SOURCE_COLUMN_TYPE"] = "CLOB"
-                elif columnTypeMaskedValue == 43:
+                elif column_type_masked_value == 43:
                     line_dict["SOURCE_COLUMN_TYPE"] = "LVARCHAR(%s)" % (row[5])
-                elif columnTypeMaskedValue == 45:
+                elif column_type_masked_value == 45:
                     line_dict["SOURCE_COLUMN_TYPE"] = "BOOLEAN"
-                elif columnTypeMaskedValue == 52:
+                elif column_type_masked_value == 52:
                     line_dict["SOURCE_COLUMN_TYPE"] = "BIGINT"
-                elif columnTypeMaskedValue == 53:
+                elif column_type_masked_value == 53:
                     line_dict["SOURCE_COLUMN_TYPE"] = "BIGSERIAL"
 
-                if columnTypeMaskedValue == 5:
+                if column_type_masked_value == 5:
                     precision, scale = divmod(row[5], 256)
                     line_dict["SOURCE_COLUMN_TYPE"] = "DECIMAL(%s,%s)" % (
                         precision,
                         scale,
                     )
 
-                if columnTypeMaskedValue == 8:
+                if column_type_masked_value == 8:
                     precision, scale = divmod(row[5], 256)
                     line_dict["SOURCE_COLUMN_TYPE"] = "MONEY(%s,%s)" % (
                         precision,
@@ -1662,43 +1662,43 @@ class source:
             for row in JDBCCursor.fetchall():
                 logging.debug(row)
                 line_dict = {}
-                schemaName = row[0]
-                tableName = row[1]
-                constraintName = row[2]
-                constraintType = row[3]
-                colName = row[4].strip('"')
-                refSchemaName = row[5]
-                refTableName = row[6].strip('"')
-                refColName = row[7].strip('"')
-                colKeyPosition = 1
+                schema_name = row[0]
+                table_name = row[1]
+                constraint_name = row[2]
+                constraint_type = row[3]
+                col_name = row[4].strip('"')
+                ref_schema_name = row[5]
+                ref_table_name = row[6].strip('"')
+                ref_col_name = row[7].strip('"')
+                col_key_position = 1
 
-                if constraintType == constant.FOREIGN_KEY:
-                    if refSchemaName == "" and "." in refTableName:
-                        refArray = refTableName.split(".")
-                        refSchemaName = refArray[0]
-                        refTableName = refArray[1]
+                if constraint_type == constant.FOREIGN_KEY:
+                    if ref_schema_name == "" and "." in ref_table_name:
+                        ref_array = ref_table_name.split(".")
+                        ref_schema_name = ref_array[0]
+                        ref_table_name = ref_array[1]
 
-                    if refSchemaName == "":
-                        refSchemaName = "public"
+                    if ref_schema_name == "":
+                        ref_schema_name = "public"
 
-                colNameList = colName.split(",")
-                refColNameList = refColName.split(",")
+                col_name_list = col_name.split(",")
+                ref_col_name_list = ref_col_name.split(",")
 
-                for i, column in enumerate(colNameList):
-                    colName = colNameList[i]
-                    refColName = refColNameList[i]
+                for i, column in enumerate(col_name_list):
+                    col_name = col_name_list[i]
+                    ref_col_name = ref_col_name_list[i]
 
                     if table == None:
-                        line_dict["SCHEMA_NAME"] = schemaName
-                        line_dict["TABLE_NAME"] = tableName
-                    line_dict["CONSTRAINT_NAME"] = constraintName
-                    line_dict["CONSTRAINT_TYPE"] = constraintType
-                    line_dict["COL_NAME"] = colName
+                        line_dict["SCHEMA_NAME"] = schema_name
+                        line_dict["TABLE_NAME"] = table_name
+                    line_dict["CONSTRAINT_NAME"] = constraint_name
+                    line_dict["CONSTRAINT_TYPE"] = constraint_type
+                    line_dict["COL_NAME"] = col_name
                     # 					line_dict["COL_DATA_TYPE"] = line.split('|')[5]
-                    line_dict["REFERENCE_SCHEMA_NAME"] = refSchemaName
-                    line_dict["REFERENCE_TABLE_NAME"] = refTableName
-                    line_dict["REFERENCE_COL_NAME"] = refColName
-                    line_dict["COL_KEY_POSITION"] = colKeyPosition
+                    line_dict["REFERENCE_SCHEMA_NAME"] = ref_schema_name
+                    line_dict["REFERENCE_TABLE_NAME"] = ref_table_name
+                    line_dict["REFERENCE_COL_NAME"] = ref_col_name
+                    line_dict["COL_KEY_POSITION"] = col_key_position
                     rows_list.append(line_dict)
             result_df = pd.DataFrame(rows_list)
 
@@ -1786,31 +1786,31 @@ class source:
             rows_list = []
             for row in JDBCCursor.fetchall():
                 logging.debug(row)
-                schemaName = row[0]
-                tableName = row[1]
-                constraintName = row[2]
-                constraintType = row[3]
-                colKeyPosition = 1
-                colIndex = 3  # 3 + lowest value of colKeyPosition will be the first column in the PK
+                schema_name = row[0]
+                table_name = row[1]
+                constraint_name = row[2]
+                constraint_type = row[3]
+                col_key_position = 1
+                col_index = 3  # 3 + lowest value of colKeyPosition will be the first column in the PK
 
                 # Informix will only give one row for the PrimaryKey, but 16 columns with columnnames of what columns that is part of the PK.
-                while colKeyPosition <= 16:
-                    if row[colIndex + colKeyPosition] == None:
+                while col_key_position <= 16:
+                    if row[col_index + col_key_position] == None:
                         break
 
                     line_dict = {}
                     if table == None:
-                        line_dict["SCHEMA_NAME"] = schemaName
-                        line_dict["TABLE_NAME"] = tableName
-                    line_dict["CONSTRAINT_NAME"] = constraintName
+                        line_dict["SCHEMA_NAME"] = schema_name
+                        line_dict["TABLE_NAME"] = table_name
+                    line_dict["CONSTRAINT_NAME"] = constraint_name
                     line_dict["CONSTRAINT_TYPE"] = constant.PRIMARY_KEY
-                    line_dict["COL_NAME"] = row[colIndex + colKeyPosition]
+                    line_dict["COL_NAME"] = row[col_index + col_key_position]
                     line_dict["REFERENCE_SCHEMA_NAME"] = None
                     line_dict["REFERENCE_TABLE_NAME"] = None
                     line_dict["REFERENCE_COL_NAME"] = None
-                    line_dict["COL_KEY_POSITION"] = colKeyPosition
+                    line_dict["COL_KEY_POSITION"] = col_key_position
 
-                    colKeyPosition = colKeyPosition + 1
+                    col_key_position = col_key_position + 1
                     rows_list.append(line_dict)
 
             # 				print(rows_list)
@@ -1914,20 +1914,20 @@ class source:
 
             for row in JDBCCursor.fetchall():
                 logging.debug(row)
-                columnCounter = 0
-                for columnKey in row[5].split(","):
+                column_counter = 0
+                for column_key in row[5].split(","):
                     line_dict = {}
                     if table == None:
                         line_dict["SCHEMA_NAME"] = row[0]
                         line_dict["TABLE_NAME"] = row[1]
                     line_dict["CONSTRAINT_NAME"] = row[4]
                     line_dict["CONSTRAINT_TYPE"] = constant.FOREIGN_KEY
-                    line_dict["COL_NAME"] = columnKey.split(" IS ")[0]
+                    line_dict["COL_NAME"] = column_key.split(" IS ")[0]
                     line_dict["REFERENCE_SCHEMA_NAME"] = row[2]
                     line_dict["REFERENCE_TABLE_NAME"] = row[3]
-                    line_dict["REFERENCE_COL_NAME"] = columnKey.split(" IS ")[1]
-                    line_dict["COL_KEY_POSITION"] = columnCounter
-                    columnCounter += 1
+                    line_dict["REFERENCE_COL_NAME"] = column_key.split(" IS ")[1]
+                    line_dict["COL_KEY_POSITION"] = column_counter
+                    column_counter += 1
                     rows_list.append(line_dict)
 
             result_df = pd.DataFrame(rows_list)
@@ -1976,8 +1976,8 @@ class source:
                 )
                 return result_df
 
-            uniqueDict = {0: "Not unique", 1: "Unique"}
-            indexTypeDict = {
+            unique_dict = {0: "Not unique", 1: "Unique"}
+            index_type_dict = {
                 1: "Clustered index",
                 2: "Nonclustered unique index",
                 3: "XML index",
@@ -1992,8 +1992,8 @@ class source:
                 logging.debug(row)
                 line_dict = {}
                 line_dict["Name"] = row[0]
-                line_dict["Type"] = indexTypeDict.get(row[1], row[1])
-                line_dict["Unique"] = uniqueDict.get(int(row[2]), int(row[2]))
+                line_dict["Type"] = index_type_dict.get(row[1], row[1])
+                line_dict["Unique"] = unique_dict.get(int(row[2]), int(row[2]))
                 line_dict["Column"] = row[3]
                 line_dict["ColumnOrder"] = row[4]
                 line_dict["IsNullable"] = row[5]
@@ -2103,8 +2103,8 @@ class source:
                 )
                 return result_df
 
-            uniqueDict = {"D": "Not unique", "U": "Unique", "P": "Unique - PrimaryKey"}
-            indexTypeDict = {
+            unique_dict = {"D": "Not unique", "U": "Unique", "P": "Unique - PrimaryKey"}
+            index_type_dict = {
                 "BLOK": "Block index",
                 "CLUS": "Clustering index",
                 "DIM": "Dimension block index",
@@ -2120,8 +2120,8 @@ class source:
                 logging.debug(row)
                 line_dict = {}
                 line_dict["Name"] = row[0]
-                line_dict["Type"] = indexTypeDict.get(row[1].strip(), row[1].strip())
-                line_dict["Unique"] = uniqueDict.get(row[2].strip(), row[2].strip())
+                line_dict["Type"] = index_type_dict.get(row[1].strip(), row[1].strip())
+                line_dict["Unique"] = unique_dict.get(row[2].strip(), row[2].strip())
                 line_dict["Column"] = row[3]
                 line_dict["ColumnOrder"] = row[4]
                 if row[5] == "N":
@@ -2166,8 +2166,8 @@ class source:
                 )
                 return result_df
 
-            indexTypeDict = {" ": "No Clustering index", "C": "Clustering index"}
-            uniqueDict = {
+            index_type_dict = {" ": "No Clustering index", "C": "Clustering index"}
+            unique_dict = {
                 "U": "Not unique",
                 "D": "Unique",
                 "G": "Unknown",
@@ -2179,27 +2179,27 @@ class source:
             rows_list = []
             for row in JDBCCursor.fetchall():
                 logging.debug(row)
-                indexName = row[0]
-                indexUnique = uniqueDict.get(row[1], row[1])
-                indexType = indexTypeDict.get(row[2], row[2])
-                colKeyPosition = 1
-                colIndex = 2  # 2 + lowest value of colKeyPosition will be the first column in the PK
+                index_name = row[0]
+                index_unique = unique_dict.get(row[1], row[1])
+                index_type = index_type_dict.get(row[2], row[2])
+                col_key_position = 1
+                col_index = 2  # 2 + lowest value of colKeyPosition will be the first column in the PK
 
                 # Informix will only give one row for the PrimaryKey, but 16 columns with columnnames of what columns that is part of the PK.
-                while colKeyPosition <= 16:
-                    if row[colIndex + colKeyPosition] == None:
+                while col_key_position <= 16:
+                    if row[col_index + col_key_position] == None:
                         break
 
                     line_dict = {}
-                    line_dict["Name"] = indexName
-                    line_dict["Type"] = indexType
-                    line_dict["Unique"] = indexUnique
-                    line_dict["Column"] = row[colIndex + colKeyPosition]
-                    line_dict["ColumnOrder"] = colKeyPosition
+                    line_dict["Name"] = index_name
+                    line_dict["Type"] = index_type
+                    line_dict["Unique"] = index_unique
+                    line_dict["Column"] = row[col_index + col_key_position]
+                    line_dict["ColumnOrder"] = col_key_position
                     # We cant determine if the column allows null or not. So we set it to -1 = Unknown
                     line_dict["isNullable"] = -1
 
-                    colKeyPosition = colKeyPosition + 1
+                    col_key_position = col_key_position + 1
                     rows_list.append(line_dict)
 
             result_df = pd.DataFrame(rows_list)
@@ -2375,46 +2375,46 @@ class source:
             return None
 
         # 		tableTypeFromSource = self.source_columns_df.iloc[0]["TABLE_TYPE"]
-        tableType = None
+        table_type = None
 
         if serverType == constant.MSSQL:
             # BASE TABLE, VIEW
             if tableTypeFromSource == "VIEW":
-                tableType = "view"
+                table_type = "view"
             else:
-                tableType = "table"
+                table_type = "table"
 
         elif serverType == constant.ORACLE:
             # TABLE, VIEW
             if tableTypeFromSource == "VIEW":
-                tableType = "view"
+                table_type = "view"
             else:
-                tableType = "table"
+                table_type = "table"
 
         elif serverType == constant.MYSQL:
             # BASE TABLE, VIEW, SYSTEM VIEW (for an INFORMATION_SCHEMA table)
             if tableTypeFromSource == "VIEW":
-                tableType = "view"
+                table_type = "view"
             else:
-                tableType = "table"
+                table_type = "table"
 
         elif serverType == constant.POSTGRESQL:
             # BASE TABLE, VIEW, FOREIGN TABLE, LOCAL TEMPORARY
             if tableTypeFromSource == "VIEW":
-                tableType = "view"
+                table_type = "view"
             if tableTypeFromSource == "LOCAL TEMPORARY":
-                tableType = "temporary"
+                table_type = "temporary"
             else:
-                tableType = "table"
+                table_type = "table"
 
         elif serverType == constant.PROGRESS:
             # Unsure. Cant find documentation.
             # Verified	T=Table
             # We assume	V=View
             if tableTypeFromSource == "V":
-                tableType = "view"
+                table_type = "view"
             else:
-                tableType = "table"
+                table_type = "table"
 
         elif serverType == constant.DB2_UDB or serverType == constant.DB2_AS400:
             # A = Alias
@@ -2429,43 +2429,43 @@ class source:
             # V = View
             # X = Auxiliary table
             if tableTypeFromSource == "A":
-                tableType = "view"
+                table_type = "view"
             elif tableTypeFromSource == "V":
-                tableType = "view"
+                table_type = "view"
             else:
-                tableType = "table"
+                table_type = "table"
 
         elif serverType == constant.INFORMIX:
             # https://www.ibm.com/docs/en/informix-servers/12.10?topic=tables-systables
             if tableTypeFromSource == "T":
-                tableType = "table"
+                table_type = "table"
             elif tableTypeFromSource == "E":
-                tableType = "external table"
+                table_type = "external table"
             elif tableTypeFromSource == "V":
-                tableType = "view"
+                table_type = "view"
             elif tableTypeFromSource == "Q":
-                tableType = "sequence"
+                table_type = "sequence"
             elif tableTypeFromSource == "P":
-                tableType = "private synonym"
+                table_type = "private synonym"
             elif tableTypeFromSource == "S":
-                tableType = "public synonym"
+                table_type = "public synonym"
 
         elif serverType == constant.SQLANYWHERE:
             # https://infocenter.sybase.com/help/index.jsp?topic=/com.sybase.help.sqlanywhere.12.0.1/dbreference/systabcol-system-view.html
             if tableTypeFromSource == "1":
-                tableType = "table"
+                table_type = "table"
             elif tableTypeFromSource == "2":
-                tableType = "Materialized view"
+                table_type = "Materialized view"
             elif tableTypeFromSource == "3":
-                tableType = "Global temporary table"
+                table_type = "Global temporary table"
             elif tableTypeFromSource == "4":
-                tableType = "Local temporary table"
+                table_type = "Local temporary table"
             elif tableTypeFromSource == "5":
-                tableType = "Text index base table"
+                table_type = "Text index base table"
             elif tableTypeFromSource == "6":
-                tableType = "Text index global temporary table"
+                table_type = "Text index global temporary table"
             elif tableTypeFromSource == "21":
-                tableType = "view"
+                table_type = "view"
 
         logging.debug("Executing schemaReader.getJdbcTableType() - Finished")
-        return tableType
+        return table_type
