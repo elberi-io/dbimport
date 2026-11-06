@@ -15,7 +15,7 @@
     "F841": 2,
     "N802": 52,
     "N803": 53,
-    "N806": 115,
+    "N806": 12,
     "UP031": 163
   },
   "bin/DBImportConfig/configSchema.py": {
@@ -26,8 +26,7 @@
     "E711": 1,
     "E712": 4,
     "N802": 2,
-    "N803": 4,
-    "N806": 5
+    "N803": 4
   },
   "bin/DBImportConfig/export_config.py": {
     "B007": 7,
@@ -36,7 +35,7 @@
     "F841": 7,
     "N802": 44,
     "N803": 50,
-    "N806": 226,
+    "N806": 39,
     "UP031": 147
   },
   "bin/DBImportConfig/export_stage.py": {
@@ -46,7 +45,6 @@
     "F841": 1,
     "N802": 11,
     "N803": 7,
-    "N806": 82,
     "UP031": 58
   },
   "bin/DBImportConfig/import_config.py": {
@@ -57,7 +55,7 @@
     "F841": 4,
     "N802": 67,
     "N803": 47,
-    "N806": 240,
+    "N806": 1,
     "UP031": 259
   },
   "bin/DBImportConfig/import_stage.py": {
@@ -67,7 +65,6 @@
     "F841": 1,
     "N802": 12,
     "N803": 5,
-    "N806": 445,
     "UP031": 56
   },
   "bin/DBImportConfig/sendStatistics.py": {
@@ -76,7 +73,6 @@
     "F841": 1,
     "N802": 3,
     "N803": 3,
-    "N806": 10,
     "UP031": 5
   },
   "bin/DBImportOperation/atlas_operations.py": {

@@ -61,7 +61,7 @@ class stage:
         self.targetTable = targetTable
 
     def getStageDescription(self, stage):
-        stageDescription = ""
+        stage_description = ""
 
         # RULES FOR STAGE NUMBERS
         # 1. Take a series of even 50 numbers to a specific method
@@ -73,7 +73,7 @@ class stage:
         # 7. 3000 -> 3999 is reserved for ETL PHASE
 
         if stage == 0:
-            stageDescription = "Start of program"
+            stage_description = "Start of program"
 
         # getHiveTableSchema
         # createExportTempTable
@@ -86,71 +86,71 @@ class stage:
 
         # Export_Phase_FULL
         elif stage == 100:
-            stageDescription = "Getting Hive tableschema"
+            stage_description = "Getting Hive tableschema"
         elif stage == 101:
-            stageDescription = "Clear table rowcount"
+            stage_description = "Clear table rowcount"
         elif stage == 102:
-            stageDescription = "Update Hive statistics on target table"
+            stage_description = "Update Hive statistics on target table"
         elif stage == 103:
-            stageDescription = "Create Export Temp table"
+            stage_description = "Create Export Temp table"
         elif stage == 104:
-            stageDescription = "Truncate Export Temp table"
+            stage_description = "Truncate Export Temp table"
         elif stage == 105:
-            stageDescription = "Insert data into Export Temp table"
+            stage_description = "Insert data into Export Temp table"
         elif stage == 106:
-            stageDescription = "Create Target table"
+            stage_description = "Create Target table"
         elif stage == 107:
-            stageDescription = "Truncate Target table"
+            stage_description = "Truncate Target table"
         elif stage == 108:
-            stageDescription = "Update Target table"
+            stage_description = "Update Target table"
         elif stage == 109:
-            stageDescription = "Sqoop Export"
+            stage_description = "Sqoop Export"
         elif stage == 110:
-            stageDescription = "Spark Export"
+            stage_description = "Spark Export"
         elif stage == 111:
-            stageDescription = "Validations"
+            stage_description = "Validations"
 
         # Export_Phase_INCR
         elif stage == 150:
-            stageDescription = "Getting Hive tableschema"
+            stage_description = "Getting Hive tableschema"
         elif stage == 151:
-            stageDescription = "Clear table rowcount"
+            stage_description = "Clear table rowcount"
         elif stage == 152:
-            stageDescription = "Update Hive statistics on target table"
+            stage_description = "Update Hive statistics on target table"
         elif stage == 153:
-            stageDescription = "Create Export Temp table"
+            stage_description = "Create Export Temp table"
         elif stage == 154:
-            stageDescription = "Truncate Export Temp table"
+            stage_description = "Truncate Export Temp table"
         elif stage == 155:
-            stageDescription = "Fetching the Max value from Hive"
+            stage_description = "Fetching the Max value from Hive"
         elif stage == 156:
-            stageDescription = "Insert data into Export Temp table"
+            stage_description = "Insert data into Export Temp table"
         elif stage == 157:
-            stageDescription = "Create Target table"
+            stage_description = "Create Target table"
         elif stage == 158:
-            stageDescription = "Update Target table"
+            stage_description = "Update Target table"
         elif stage == 159:
-            stageDescription = "Sqoop Export"
+            stage_description = "Sqoop Export"
         elif stage == 160:
-            stageDescription = "Spark Export"
+            stage_description = "Spark Export"
         elif stage == 161:
-            stageDescription = "Validations"
+            stage_description = "Validations"
         elif stage == 162:
-            stageDescription = "Saving pending incremental values"
+            stage_description = "Saving pending incremental values"
 
         elif stage == 950:
-            stageDescription = "Update Atlas Schema"
+            stage_description = "Update Atlas Schema"
 
         elif stage == 999:
-            stageDescription = "DBImport completed successfully"
+            stage_description = "DBImport completed successfully"
 
-        return stageDescription
+        return stage_description
 
     def getStageShortName(self, stage):
 
-        stageShortName = ""
+        stage_short_name = ""
         if stage == 0:
-            stageShortName = "skip"
+            stage_short_name = "skip"
 
         # RULES FOR STAGE NUMBERS
         # 1. Take a series of even 50 numbers to a specific method
@@ -163,65 +163,65 @@ class stage:
 
         # Export_Phase_FULL
         elif stage == 100:
-            stageShortName = "get_hive_tableschema"
+            stage_short_name = "get_hive_tableschema"
         elif stage == 101:
-            stageShortName = "clear_table_rowcount"
+            stage_short_name = "clear_table_rowcount"
         elif stage == 102:
-            stageShortName = "update_statistics"
+            stage_short_name = "update_statistics"
         elif stage == 103:
-            stageShortName = "create_temp_table"
+            stage_short_name = "create_temp_table"
         elif stage == 104:
-            stageShortName = "truncate_temp_table"
+            stage_short_name = "truncate_temp_table"
         elif stage == 105:
-            stageShortName = "insert_into_temp_table"
+            stage_short_name = "insert_into_temp_table"
         elif stage == 106:
-            stageShortName = "create_target_table"
+            stage_short_name = "create_target_table"
         elif stage == 107:
-            stageShortName = "truncate_target_table"
+            stage_short_name = "truncate_target_table"
         elif stage == 108:
-            stageShortName = "update_target_table"
+            stage_short_name = "update_target_table"
         elif stage == 109:
-            stageShortName = "sqoop"
+            stage_short_name = "sqoop"
         elif stage == 110:
-            stageShortName = "spark"
+            stage_short_name = "spark"
         elif stage == 111:
-            stageShortName = "validate"
+            stage_short_name = "validate"
 
         # Export_Phase_INCR
         elif stage == 150:
-            stageShortName = "get_hive_tableschema"
+            stage_short_name = "get_hive_tableschema"
         elif stage == 151:
-            stageShortName = "clear_table_rowcount"
+            stage_short_name = "clear_table_rowcount"
         elif stage == 152:
-            stageShortName = "update_statistics"
+            stage_short_name = "update_statistics"
         elif stage == 153:
-            stageShortName = "create_temp_table"
+            stage_short_name = "create_temp_table"
         elif stage == 154:
-            stageShortName = "truncate_temp_table"
+            stage_short_name = "truncate_temp_table"
         elif stage == 155:
-            stageShortName = "fetch_maxvalue"
+            stage_short_name = "fetch_maxvalue"
         elif stage == 156:
-            stageShortName = "insert_into_temp_table"
+            stage_short_name = "insert_into_temp_table"
         elif stage == 157:
-            stageShortName = "create_target_table"
+            stage_short_name = "create_target_table"
         elif stage == 158:
-            stageShortName = "update_target_table"
+            stage_short_name = "update_target_table"
         elif stage == 159:
-            stageShortName = "sqoop"
+            stage_short_name = "sqoop"
         elif stage == 160:
-            stageShortName = "spark"
+            stage_short_name = "spark"
         elif stage == 161:
-            stageShortName = "validate"
+            stage_short_name = "validate"
         elif stage == 162:
-            stageShortName = "skip"
+            stage_short_name = "skip"
 
         elif stage == 950:
-            stageShortName = "atlas_schema"
+            stage_short_name = "atlas_schema"
 
         elif stage == 999:
-            stageShortName = "skip"
+            stage_short_name = "skip"
 
-        return stageShortName
+        return stage_short_name
 
     def convertStageStatisticsToJSON(self, **kwargs):
         """Reads the export_stage_statistics and convert the information to a JSON document"""
@@ -254,25 +254,25 @@ class stage:
             return
 
         export_stop = None
-        jsonDataKafka = {}
-        jsonDataKafka["type"] = "export"
-        jsonDataKafka["status"] = "finished"
-        jsonDataREST = jsonDataKafka.copy()
-        jsonDataAWSSNS = jsonDataKafka.copy()
+        json_data_kafka = {}
+        json_data_kafka["type"] = "export"
+        json_data_kafka["status"] = "finished"
+        json_data_rest = json_data_kafka.copy()
+        json_data_aws_sns = json_data_kafka.copy()
 
         for key, value in kwargs.items():
-            jsonDataKafka[key] = value
-            jsonDataREST[key] = value
-            jsonDataAWSSNS[key] = value
+            json_data_kafka[key] = value
+            json_data_rest[key] = value
+            json_data_aws_sns[key] = value
 
         if self.postDataToKafkaExtended == False:
-            jsonDataKafka.pop("sessions")
+            json_data_kafka.pop("sessions")
 
         if self.postDataToRESTextended == False:
-            jsonDataREST.pop("sessions")
+            json_data_rest.pop("sessions")
 
         if self.postDataToAWSSNSExtended == False:
-            jsonDataAWSSNS.pop("sessions")
+            json_data_aws_sns.pop("sessions")
 
         query = "select stage, start, stop, duration from export_stage_statistics where dbalias = %s and target_schema = %s and target_table = %s"
         self.mysql_cursor.execute(
@@ -286,30 +286,30 @@ class stage:
             stage_stop = row[2]
             stage_duration = row[3]
 
-            stageShortName = self.getStageShortName(stage)
+            stage_short_name = self.getStageShortName(stage)
 
-            if stageShortName == "":
+            if stage_short_name == "":
                 logging.error(
                     "There is no stage description for the JSON data for stage %s"
                     % (stage)
                 )
                 logging.error("Will put the raw stage number into the JSON document")
-                stageShortName = str(stage)
+                stage_short_name = str(stage)
 
-            if stageShortName != "skip" and self.postDataToRESTextended == True:
-                jsonDataREST["%s_start" % (stageShortName)] = str(stage_start)
-                jsonDataREST["%s_stop" % (stageShortName)] = str(stage_stop)
-                jsonDataREST["%s_duration" % (stageShortName)] = stage_duration
+            if stage_short_name != "skip" and self.postDataToRESTextended == True:
+                json_data_rest["%s_start" % (stage_short_name)] = str(stage_start)
+                json_data_rest["%s_stop" % (stage_short_name)] = str(stage_stop)
+                json_data_rest["%s_duration" % (stage_short_name)] = stage_duration
 
-            if stageShortName != "skip" and self.postDataToKafkaExtended == True:
-                jsonDataKafka["%s_start" % (stageShortName)] = str(stage_start)
-                jsonDataKafka["%s_stop" % (stageShortName)] = str(stage_stop)
-                jsonDataKafka["%s_duration" % (stageShortName)] = stage_duration
+            if stage_short_name != "skip" and self.postDataToKafkaExtended == True:
+                json_data_kafka["%s_start" % (stage_short_name)] = str(stage_start)
+                json_data_kafka["%s_stop" % (stage_short_name)] = str(stage_stop)
+                json_data_kafka["%s_duration" % (stage_short_name)] = stage_duration
 
-            if stageShortName != "skip" and self.postDataToAWSSNSExtended == True:
-                jsonDataAWSSNS["%s_start" % (stageShortName)] = str(stage_start)
-                jsonDataAWSSNS["%s_stop" % (stageShortName)] = str(stage_stop)
-                jsonDataAWSSNS["%s_duration" % (stageShortName)] = stage_duration
+            if stage_short_name != "skip" and self.postDataToAWSSNSExtended == True:
+                json_data_aws_sns["%s_start" % (stage_short_name)] = str(stage_start)
+                json_data_aws_sns["%s_stop" % (stage_short_name)] = str(stage_stop)
+                json_data_aws_sns["%s_duration" % (stage_short_name)] = stage_duration
 
             if stage == 0:
                 export_start = stage_start
@@ -319,66 +319,66 @@ class stage:
 
         export_duration = int((export_stop - export_start).total_seconds())
 
-        jsonDataKafka["start"] = str(export_start)
-        jsonDataKafka["stop"] = str(export_stop)
-        jsonDataKafka["duration"] = export_duration
+        json_data_kafka["start"] = str(export_start)
+        json_data_kafka["stop"] = str(export_stop)
+        json_data_kafka["duration"] = export_duration
 
-        jsonDataREST["start"] = str(export_start)
-        jsonDataREST["stop"] = str(export_stop)
-        jsonDataREST["duration"] = export_duration
+        json_data_rest["start"] = str(export_start)
+        json_data_rest["stop"] = str(export_stop)
+        json_data_rest["duration"] = export_duration
 
-        jsonDataAWSSNS["start"] = str(export_start)
-        jsonDataAWSSNS["stop"] = str(export_stop)
-        jsonDataAWSSNS["duration"] = export_duration
+        json_data_aws_sns["start"] = str(export_start)
+        json_data_aws_sns["stop"] = str(export_stop)
+        json_data_aws_sns["duration"] = export_duration
 
         # 		print(jsonDataKafka)
         # 		print("================================================")
         # 		print(jsonDataREST)
 
         if self.postDataToKafka == True:
-            result = self.sendStatistics.publishKafkaData(json.dumps(jsonDataKafka))
+            result = self.sendStatistics.publishKafkaData(json.dumps(json_data_kafka))
             if result == False:
                 logging.info("Kafka publish failed!")
                 logging.info("Saving the JSON to the json_to_send table instead")
                 self.common_config.saveJsonToDatabase(
-                    "import_statistics", "kafka", json.dumps(jsonDataKafka)
+                    "import_statistics", "kafka", json.dumps(json_data_kafka)
                 )
 
         if self.postDataToREST == True:
-            response = self.sendStatistics.sendRESTdata(json.dumps(jsonDataREST))
+            response = self.sendStatistics.sendRESTdata(json.dumps(json_data_rest))
             if response != 200:
                 logging.info("REST call failed!")
                 logging.info("Saving the JSON to the json_to_send table instead")
                 self.common_config.saveJsonToDatabase(
-                    "import_statistics", "rest", json.dumps(jsonDataREST)
+                    "import_statistics", "rest", json.dumps(json_data_rest)
                 )
 
         if self.postDataToAWSSNS == True:
-            result = self.sendStatistics.sendAWSSNSdata(json.dumps(jsonDataAWSSNS))
+            result = self.sendStatistics.sendAWSSNSdata(json.dumps(json_data_aws_sns))
             if result == False:
                 logging.info("AWS SNS publish failed!")
                 logging.info("Saving the JSON to the json_to_send table instead")
                 self.common_config.saveJsonToDatabase(
-                    "import_statistics", "rest", json.dumps(jsonDataREST)
+                    "import_statistics", "rest", json.dumps(json_data_rest)
                 )
 
     def saveStageStatistics(self, **kwargs):
         """Reads the export_stage_statistics and insert it to the export_statistics table"""
         logging.debug("Executing stage.saveStageStatistics()")
 
-        columnsPart = []
-        valuesPart = []
+        columns_part = []
+        values_part = []
         export_start = None
         export_stop = None
         export_duration = None
 
         for key, value in kwargs.items():
-            columnsPart.append(key)
+            columns_part.append(key)
             if value == True:
                 value = 1
             if value == False:
                 value = 0
-            valuesPart.append(value)
+            values_part.append(value)
 
         query = "select stage, start, stop, duration from export_stage_statistics where dbalias = %s and target_schema = %s and target_table = %s"
         self.mysql_cursor.execute(
@@ -386,25 +386,25 @@ class stage:
         )
         logging.debug("SQL Statement executed: %s" % (self.mysql_cursor.statement))
 
-        rowCounter = 0
+        row_counter = 0
         for row in self.mysql_cursor.fetchall():
-            rowCounter += 1
+            row_counter += 1
             stage = row[0]
             stage_start = row[1]
             stage_stop = row[2]
             stage_duration = row[3]
 
-            stageShortName = self.getStageShortName(stage)
+            stage_short_name = self.getStageShortName(stage)
 
-            if stageShortName != "" and stageShortName != "skip":
-                columnsPart.append("%s_start" % (stageShortName))
-                valuesPart.append(str(stage_start))
+            if stage_short_name != "" and stage_short_name != "skip":
+                columns_part.append("%s_start" % (stage_short_name))
+                values_part.append(str(stage_start))
 
-                columnsPart.append("%s_stop" % (stageShortName))
-                valuesPart.append(str(stage_stop))
+                columns_part.append("%s_stop" % (stage_short_name))
+                values_part.append(str(stage_stop))
 
-                columnsPart.append("%s_duration" % (stageShortName))
-                valuesPart.append(str(stage_duration))
+                columns_part.append("%s_duration" % (stage_short_name))
+                values_part.append(str(stage_duration))
 
             if stage == 0:
                 export_start = stage_start
@@ -412,7 +412,7 @@ class stage:
             if export_stop == None or stage_stop > export_stop:
                 export_stop = stage_stop
 
-        if rowCounter == 0:
+        if row_counter == 0:
             logging.warning("There is no statistical data to save.")
             return
 
@@ -421,29 +421,29 @@ class stage:
         else:
             export_duration = None
 
-        columnsPart.append("start")
-        valuesPart.append(str(export_start))
+        columns_part.append("start")
+        values_part.append(str(export_start))
 
-        columnsPart.append("stop")
-        valuesPart.append(str(export_stop))
+        columns_part.append("stop")
+        values_part.append(str(export_stop))
 
-        columnsPart.append("duration")
-        valuesPart.append(str(export_duration))
+        columns_part.append("duration")
+        values_part.append(str(export_duration))
 
         query = "insert into export_statistics "
-        insertQuery = "(`"
-        insertQuery += "`, `".join(map(str, columnsPart))
-        insertQuery += "`) values ("
+        insert_query = "(`"
+        insert_query += "`, `".join(map(str, columns_part))
+        insert_query += "`) values ("
 
-        strInsert = ""
-        for i in valuesPart:
-            if strInsert != "":
-                strInsert += ", "
-            strInsert += "%s"
+        str_insert = ""
+        for i in values_part:
+            if str_insert != "":
+                str_insert += ", "
+            str_insert += "%s"
 
-        insertQuery += strInsert
-        insertQuery += ")"
-        query += insertQuery
+        insert_query += str_insert
+        insert_query += ")"
+        query += insert_query
 
         # 		print(columnsPart)
         # 		print("-------------------------------------------------")
@@ -451,7 +451,7 @@ class stage:
         # 		print("-------------------------------------------------")
         # 		print(insertQuery)
 
-        self.mysql_cursor.execute(query, valuesPart)
+        self.mysql_cursor.execute(query, values_part)
         self.mysql_conn.commit()
         logging.debug("SQL Statement executed: %s" % (self.mysql_cursor.statement))
 
@@ -463,8 +463,8 @@ class stage:
         logging.debug("SQL Statement executed: %s" % (self.mysql_cursor.statement))
 
         query = "insert into export_statistics_last "
-        query += insertQuery
-        self.mysql_cursor.execute(query, valuesPart)
+        query += insert_query
+        self.mysql_cursor.execute(query, values_part)
         self.mysql_conn.commit()
         logging.debug("SQL Statement executed: %s" % (self.mysql_cursor.statement))
 
@@ -480,9 +480,9 @@ class stage:
         )
         logging.debug("SQL Statement executed: %s" % (self.mysql_cursor.statement))
 
-        returnDict = {}
-        returnDict["startTime"] = "1970-01-01T00:00:00.000000Z"
-        returnDict["stopTime"] = "1970-01-01T00:00:00.000000Z"
+        return_dict = {}
+        return_dict["startTime"] = "1970-01-01T00:00:00.000000Z"
+        return_dict["stopTime"] = "1970-01-01T00:00:00.000000Z"
 
         for row in self.mysql_cursor.fetchall():
             stage_id = row[0]
@@ -490,13 +490,13 @@ class stage:
             stage_stop = row[2]
             stage_duration = row[3]
 
-            stageShortName = self.getStageShortName(stage_id)
-            if stageShortName == stage:
-                returnDict["startTime"] = stage_start.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
-                returnDict["stopTime"] = stage_stop.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+            stage_short_name = self.getStageShortName(stage_id)
+            if stage_short_name == stage:
+                return_dict["startTime"] = stage_start.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+                return_dict["stopTime"] = stage_stop.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
                 break
 
-        return returnDict
+        return return_dict
 
         logging.debug("Executing stage.getStageStartStop() - Finished")
 
@@ -598,8 +598,8 @@ class stage:
         logging.debug("SQL Statement executed: %s" % (self.mysql_cursor.statement))
 
         row = self.mysql_cursor.fetchone()
-        rowCount = row[0]
-        if rowCount == 0:
+        row_count = row[0]
+        if row_count == 0:
             query = "insert into export_stage_statistics "
             query += (
                 "( dbalias, target_schema, target_table, stage, start, stop, duration )"
@@ -629,7 +629,7 @@ class stage:
         self.mysql_conn.commit()
         logging.debug("SQL Statement executed: %s" % (self.mysql_cursor.statement))
 
-        stageDescription = self.getStageDescription(newStage)
+        stage_description = self.getStageDescription(newStage)
 
         # Save stage information in export_stage
         query = "select count(stage) from export_stage where dbalias = %s and target_schema = %s and target_table = %s"
@@ -639,8 +639,8 @@ class stage:
         logging.debug("SQL Statement executed: %s" % (self.mysql_cursor.statement))
 
         row = self.mysql_cursor.fetchone()
-        rowCount = row[0]
-        if rowCount == 0:
+        row_count = row[0]
+        if row_count == 0:
             query = "insert into export_stage "
             query += "( "
             query += "	dbalias, "
@@ -657,14 +657,14 @@ class stage:
             query += "	'%s', " % (self.targetSchema)
             query += "	'%s', " % (self.targetTable)
             query += "	%s, " % (newStage)
-            query += "	'%s', " % (stageDescription)
+            query += "	'%s', " % (stage_description)
             query += "	'%s' " % (datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f"))
             # 			query += "	0 "
             query += ") "
         else:
             query = "update export_stage set"
             query += "	stage = %s, " % (newStage)
-            query += "	stage_description = '%s', " % (stageDescription)
+            query += "	stage_description = '%s', " % (stage_description)
             query += "	stage_time = '%s' " % (
                 datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
             )
@@ -693,7 +693,7 @@ class stage:
         if self.memoryStage == True:
             return
 
-        stageDescription = self.getStageDescription(stage)
+        stage_description = self.getStageDescription(stage)
 
         query = "insert into export_retries_log "
         query += "( "
@@ -714,7 +714,7 @@ class stage:
                 self.targetTable,
                 datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f"),
                 stage,
-                stageDescription,
+                stage_description,
             ),
         )
         self.mysql_conn.commit()

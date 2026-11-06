@@ -79,9 +79,9 @@ class sendStatistics:
         response_code = -1
 
         try:
-            restProtocol = self.RESTendpoint.split(":")[0].lower()
+            rest_protocol = self.RESTendpoint.split(":")[0].lower()
 
-            if restProtocol == "http":
+            if rest_protocol == "http":
                 response = requests.post(
                     self.RESTendpoint,
                     data=jsonData,
@@ -90,16 +90,16 @@ class sendStatistics:
                 )
             else:
                 if self.RESTverifySSL == True:
-                    restVerify = self.RESTtrustCAfile
+                    rest_verify = self.RESTtrustCAfile
                 else:
-                    restVerify = False
+                    rest_verify = False
 
                 response = requests.post(
                     self.RESTendpoint,
                     data=jsonData,
                     headers=self.RESTheaders,
                     timeout=self.RESTtimeout,
-                    verify=restVerify,
+                    verify=rest_verify,
                 )
 
             response_code = response.status_code
@@ -118,10 +118,10 @@ class sendStatistics:
 
         logging.info("Sending statistics data to Kafka topic")
         logging.debug("Sending the following JSON to Kafka: %s" % (jsonData))
-        kafkaLogger = logging.getLogger("kafka")
-        kafkaLogger.setLevel(logging.ERROR)
+        kafka_logger = logging.getLogger("kafka")
+        kafka_logger.setLevel(logging.ERROR)
 
-        kafkaError = False
+        kafka_error = False
         result = True
         # 		logging.error("SEND TO KAFKA DISABLED")
         # 		return result
@@ -150,27 +150,27 @@ class sendStatistics:
 
         except AssertionError as e:
             logging.error("Kafka Error: %s" % e)
-            kafkaError = True
+            kafka_error = True
 
         except kafka.errors.NoBrokersAvailable:
             logging.error("None of the Kafka brokers configured are available")
-            kafkaError = True
+            kafka_error = True
 
         except kafka.errors.UnrecognizedBrokerVersion:
             logging.error(
                 "Unrecognized broker version. Are you connecting to a secure Kafka broker without the correct security protocols?"
             )
-            kafkaError = True
+            kafka_error = True
 
         except kafka.errors.KafkaTimeoutError:
             logging.error("Timeout error when trying to send statistics to Kafka")
-            kafkaError = True
+            kafka_error = True
 
         except ssl.SSLCertVerificationError:
             logging.error("SSL Certificate error when communicating with Kafka")
-            kafkaError = True
+            kafka_error = True
 
-        if kafkaError == True:
+        if kafka_error == True:
             result = False
 
         logging.debug("Executing sendStatistics.publishKafkaData - Finished")

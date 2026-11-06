@@ -349,16 +349,16 @@ class config(metaclass=Singleton):
             if printReconnectMessage == True:
                 logging.warn("Connection to MySQL have been lost. Reconnecting...")
 
-            mysqlCredentials = self.getMysqlCredentials()
+            mysql_credentials = self.getMysqlCredentials()
 
             # Esablish a connection to the DBImport database in MySQL
             try:
                 self.mysql_conn = mysql.connector.connect(
-                    host=mysqlCredentials["mysql_hostname"],
-                    port=mysqlCredentials["mysql_port"],
-                    database=mysqlCredentials["mysql_database"],
-                    user=mysqlCredentials["mysql_username"],
-                    password=mysqlCredentials["mysql_password"],
+                    host=mysql_credentials["mysql_hostname"],
+                    port=mysql_credentials["mysql_port"],
+                    database=mysql_credentials["mysql_database"],
+                    user=mysql_credentials["mysql_username"],
+                    password=mysql_credentials["mysql_password"],
                 )
             except mysql.connector.Error as err:
                 if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
@@ -393,24 +393,24 @@ class config(metaclass=Singleton):
             )
 
         row = self.mysql_cursor.fetchone()
-        returnDict = {}
-        returnDict["contact_info"] = row[0]
-        returnDict["description"] = row[1]
-        returnDict["owner"] = row[2]
-        returnDict["atlas_discovery"] = row[3]
-        returnDict["atlas_include_filter"] = row[4]
-        returnDict["atlas_exclude_filter"] = row[5]
-        returnDict["atlas_last_discovery"] = row[6]
+        return_dict = {}
+        return_dict["contact_info"] = row[0]
+        return_dict["description"] = row[1]
+        return_dict["owner"] = row[2]
+        return_dict["atlas_discovery"] = row[3]
+        return_dict["atlas_include_filter"] = row[4]
+        return_dict["atlas_exclude_filter"] = row[5]
+        return_dict["atlas_last_discovery"] = row[6]
 
-        if returnDict["contact_info"] == None:
-            returnDict["contact_info"] = ""
-        if returnDict["description"] == None:
-            returnDict["description"] = ""
-        if returnDict["owner"] == None:
-            returnDict["owner"] = ""
+        if return_dict["contact_info"] == None:
+            return_dict["contact_info"] = ""
+        if return_dict["description"] == None:
+            return_dict["description"] = ""
+        if return_dict["owner"] == None:
+            return_dict["owner"] = ""
 
         logging.debug("Executing common_config.getAtlasJdbcConnectionData() - Finished")
-        return returnDict
+        return return_dict
 
     def disconnectSQLAlchemy(self, logger=""):
         """Disconnects from the database and removes all sessions and engine"""
@@ -431,14 +431,14 @@ class config(metaclass=Singleton):
             # If we already have a connection, we just say that it's ok....
             return True
 
-        mysqlCredentials = self.getMysqlCredentials()
+        mysql_credentials = self.getMysqlCredentials()
 
         self.connectStr = "mysql+pymysql://%s:%s@%s:%s/%s" % (
-            mysqlCredentials["mysql_username"],
-            quote(mysqlCredentials["mysql_password"], safe=" +"),
-            mysqlCredentials["mysql_hostname"],
-            mysqlCredentials["mysql_port"],
-            mysqlCredentials["mysql_database"],
+            mysql_credentials["mysql_username"],
+            quote(mysql_credentials["mysql_password"], safe=" +"),
+            mysql_credentials["mysql_hostname"],
+            mysql_credentials["mysql_port"],
+            mysql_credentials["mysql_database"],
         )
 
         try:
@@ -488,11 +488,11 @@ class config(metaclass=Singleton):
         # Remove the kerberos ticket file
         if self.kerberosInitiated == True:
             try:
-                klistCommandList = ["kdestroy"]
-                klistProc = subprocess.Popen(
-                    klistCommandList, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+                klist_command_list = ["kdestroy"]
+                klist_proc = subprocess.Popen(
+                    klist_command_list, stdout=subprocess.PIPE, stderr=subprocess.PIPE
                 )
-                stdOut, stdErr = klistProc.communicate()
+                std_out, std_err = klist_proc.communicate()
             except:
                 pass
 
@@ -527,47 +527,47 @@ class config(metaclass=Singleton):
         if row[2] is not None and row[2].strip() != "":
             self.timeZone = row[2]
 
-        currentTime = pendulum.now(self.timeZone)  # Get time in configured timeZone
-        timeWindowStart = None
-        timeWindowStop = None
+        current_time = pendulum.now(self.timeZone)  # Get time in configured timeZone
+        time_window_start = None
+        time_window_stop = None
 
         if hour != None:
             if hour == timedelta(days=1):
                 hour = timedelta(days=0)
 
-            timeWindowStart = currentTime.set(
+            time_window_start = current_time.set(
                 hour=int(str(hour).split(":")[0]),
                 minute=int(str(hour).split(":")[1]),
                 second=int(str(hour).split(":")[2]),
             )
 
         if row[1] != None:
-            timeWindowStop = currentTime.set(
+            time_window_stop = current_time.set(
                 hour=int(str(minute).split(":")[0]),
                 minute=int(str(minute).split(":")[1]),
                 second=int(str(minute).split(":")[2]),
             )
 
-        passedMidnight = False
+        passed_midnight = False
         if (
-            timeWindowStart != None
-            and timeWindowStop != None
-            and timeWindowStart > timeWindowStop
+            time_window_start != None
+            and time_window_stop != None
+            and time_window_start > time_window_stop
         ):
             # This happens if we pass midnight
-            timeWindowStop = timeWindowStop.add(days=1)
-            passedMidnight = True
+            time_window_stop = time_window_stop.add(days=1)
+            passed_midnight = True
 
-        logging.debug("timeWindowStart: %s" % (timeWindowStart))
-        logging.debug("timeWindowStop: %s" % (timeWindowStop))
+        logging.debug("timeWindowStart: %s" % (time_window_start))
+        logging.debug("timeWindowStop: %s" % (time_window_stop))
 
-        if timeWindowStart == None and timeWindowStop == None:
+        if time_window_start == None and time_window_stop == None:
             if atlasDiscoveryMode == False:
                 logging.info(
                     "SUCCESSFUL: This import is allowed to run at any time during the day."
                 )
             return True
-        elif timeWindowStart == None or timeWindowStop == None:
+        elif time_window_start == None or time_window_stop == None:
             if atlasDiscoveryMode == False:
                 logging.error(
                     "Atleast one of the TimeWindow settings are NULL in the database. Only way to disable the Time Window"
@@ -581,7 +581,7 @@ class config(metaclass=Singleton):
                 sys.exit(1)
             else:
                 return False
-        elif timeWindowStart == timeWindowStop:
+        elif time_window_start == time_window_stop:
             if atlasDiscoveryMode == False:
                 logging.error(
                     "The value in timewindow_start column is the same as the value in timewindow_stop."
@@ -592,36 +592,37 @@ class config(metaclass=Singleton):
             else:
                 return False
         else:
-            allowedTime = False
+            allowed_time = False
 
-            if currentTime > timeWindowStart and currentTime < timeWindowStop:
-                allowedTime = True
+            if current_time > time_window_start and current_time < time_window_stop:
+                allowed_time = True
 
-            if passedMidnight == True:
+            if passed_midnight == True:
                 # If we passed midnight, it means that we added one day to the stop time. But depending on what time it is, and when the
                 # window starts, we might be on the previous days window and should be allowed to run. So we need to test for that aswell
-                timeWindowStart = timeWindowStart.add(days=-1)
-                timeWindowStop = timeWindowStop.add(days=-1)
-                logging.debug("timeWindowStart: %s" % (timeWindowStart))
-                logging.debug("timeWindowStop: %s" % (timeWindowStop))
+                time_window_start = time_window_start.add(days=-1)
+                time_window_stop = time_window_stop.add(days=-1)
+                logging.debug("timeWindowStart: %s" % (time_window_start))
+                logging.debug("timeWindowStop: %s" % (time_window_stop))
 
-                if currentTime > timeWindowStart and currentTime < timeWindowStop:
-                    allowedTime = True
+                if current_time > time_window_start and current_time < time_window_stop:
+                    allowed_time = True
 
-            if allowedTime == False:
+            if allowed_time == False:
                 if atlasDiscoveryMode == False:
                     logging.error(
                         "We are not allowed to run this import outside the configured Time Window"
                     )
                     logging.info(
                         "    Current time:     %s (%s)"
-                        % (currentTime.to_time_string(), self.timeZone)
+                        % (current_time.to_time_string(), self.timeZone)
                     )
                     logging.info(
-                        "    TimeWindow Start: %s" % (timeWindowStart.to_time_string())
+                        "    TimeWindow Start: %s"
+                        % (time_window_start.to_time_string())
                     )
                     logging.info(
-                        "    TimeWindow Stop:  %s" % (timeWindowStop.to_time_string())
+                        "    TimeWindow Stop:  %s" % (time_window_stop.to_time_string())
                     )
                     self.remove_temporary_files()
                     sys.exit(1)
@@ -633,9 +634,9 @@ class config(metaclass=Singleton):
                         "SUCCESSFUL: There is a configured Time Window for this operation, and we are running inside that window."
                     )
 
-        logging.debug("    currentTime = %s" % (currentTime.to_time_string()))
-        logging.debug("    timeWindowStart = %s" % (timeWindowStart.to_time_string()))
-        logging.debug("    timeWindowStop = %s" % (timeWindowStop.to_time_string()))
+        logging.debug("    currentTime = %s" % (current_time.to_time_string()))
+        logging.debug("    timeWindowStart = %s" % (time_window_start.to_time_string()))
+        logging.debug("    timeWindowStop = %s" % (time_window_stop.to_time_string()))
         logging.debug("Executing common_config.checkTimeWindow() - Finished")
         return True
 
@@ -643,7 +644,7 @@ class config(metaclass=Singleton):
         """Will check if the connection alias exists in the jdbc_connection table"""
         logging.debug("Executing common_config.checkConnectionAlias()")
 
-        RC = False
+        rc = False
 
         query = "select count(1) from jdbc_connections where dbalias = %s "
         logging.debug("Executing the following SQL: %s" % (query))
@@ -651,10 +652,10 @@ class config(metaclass=Singleton):
 
         row = self.mysql_cursor.fetchone()
         if row[0] == 1:
-            RC = True
+            rc = True
 
         logging.debug("Executing common_config.checkConnectionAlias() - Finished")
-        return RC
+        return rc
 
     def checkKerberosTicket(self):
         """Checks if there is a valid kerberos ticket or not. Runst 'klist -s' and checks the exitCode. Returns True or False"""
@@ -664,14 +665,14 @@ class config(metaclass=Singleton):
 
         if self.kerberosPrincipal == "" and self.kerberosKeytab != "":
             # There is information about a keytab, but not the principal. So lets grab the first from the file
-            kinitCommandList = ["klist", "-k", self.kerberosKeytab]
+            kinit_command_list = ["klist", "-k", self.kerberosKeytab]
             try:
-                kinitProc = subprocess.Popen(
-                    kinitCommandList, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+                kinit_proc = subprocess.Popen(
+                    kinit_command_list, stdout=subprocess.PIPE, stderr=subprocess.PIPE
                 )
-                stdOut, stdErr = kinitProc.communicate()
-                stdOut = stdOut.decode("utf-8").rstrip()
-                stdErr = stdErr.decode("utf-8").rstrip()
+                std_out, std_err = kinit_proc.communicate()
+                std_out = std_out.decode("utf-8").rstrip()
+                std_err = std_err.decode("utf-8").rstrip()
             except FileNotFoundError:
                 logging.error(
                     "kinit command was not found. Have you installed and configured Kerberos?"
@@ -679,7 +680,7 @@ class config(metaclass=Singleton):
                 self.remove_temporary_files()
                 sys.exit(1)
 
-            for line in stdOut.splitlines():
+            for line in std_out.splitlines():
                 try:
                     if "@" in line.strip().split(" ")[1]:
                         # Get the first line with a @ in it. That should be the first principal in the keytab file
@@ -703,23 +704,28 @@ class config(metaclass=Singleton):
         logging.info("Initialize Kerberos ticket")
         self.kerberosInitiated = True
 
-        kinitCommandList = ["kinit", "-kt", self.kerberosKeytab, self.kerberosPrincipal]
-        kinitProc = subprocess.Popen(
-            kinitCommandList, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        kinit_command_list = [
+            "kinit",
+            "-kt",
+            self.kerberosKeytab,
+            self.kerberosPrincipal,
+        ]
+        kinit_proc = subprocess.Popen(
+            kinit_command_list, stdout=subprocess.PIPE, stderr=subprocess.PIPE
         )
-        stdOut, stdErr = kinitProc.communicate()
-        stdOut = stdOut.decode("utf-8").rstrip()
-        stdErr = stdErr.decode("utf-8").rstrip()
+        std_out, std_err = kinit_proc.communicate()
+        std_out = std_out.decode("utf-8").rstrip()
+        std_err = std_err.decode("utf-8").rstrip()
 
-        klistCommandList = ["klist", "-s"]
-        klistProc = subprocess.Popen(
-            klistCommandList, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        klist_command_list = ["klist", "-s"]
+        klist_proc = subprocess.Popen(
+            klist_command_list, stdout=subprocess.PIPE, stderr=subprocess.PIPE
         )
-        stdOut, stdErr = klistProc.communicate()
-        stdOut = stdOut.decode("utf-8").rstrip()
-        stdErr = stdErr.decode("utf-8").rstrip()
+        std_out, std_err = klist_proc.communicate()
+        std_out = std_out.decode("utf-8").rstrip()
+        std_err = std_err.decode("utf-8").rstrip()
 
-        if klistProc.returncode == 0:
+        if klist_proc.returncode == 0:
             return True
         else:
             return False
@@ -730,8 +736,8 @@ class config(metaclass=Singleton):
         self.crypto.setPrivateKeyFile(configuration.get("Credentials", "private_key"))
         self.crypto.setPublicKeyFile(configuration.get("Credentials", "public_key"))
 
-        encryptedStr = self.crypto.encrypt(strToEncrypt)
-        return encryptedStr
+        encrypted_str = self.crypto.encrypt(strToEncrypt)
+        return encrypted_str
 
     def encryptUserPassword(self, connection_alias, username, password):
 
@@ -747,31 +753,31 @@ class config(metaclass=Singleton):
 
         row = self.mysql_cursor.fetchone()
 
-        privateKeyFile = row[0]
-        publicKeyFile = row[1]
+        private_key_file = row[0]
+        public_key_file = row[1]
 
         if (
-            privateKeyFile != None
-            and publicKeyFile != None
-            and privateKeyFile.strip() != ""
-            and publicKeyFile.strip() != ""
+            private_key_file != None
+            and public_key_file != None
+            and private_key_file.strip() != ""
+            and public_key_file.strip() != ""
         ):
-            self.crypto.setPrivateKeyFile(privateKeyFile)
-            self.crypto.setPublicKeyFile(publicKeyFile)
+            self.crypto.setPrivateKeyFile(private_key_file)
+            self.crypto.setPublicKeyFile(public_key_file)
         else:
             self.crypto.setPrivateKeyFile(
                 configuration.get("Credentials", "private_key")
             )
             self.crypto.setPublicKeyFile(configuration.get("Credentials", "public_key"))
 
-        strToEncrypt = "%s %s\n" % (username, password)
+        str_to_encrypt = "%s %s\n" % (username, password)
 
-        encryptedStr = self.crypto.encrypt(strToEncrypt)
+        encrypted_str = self.crypto.encrypt(str_to_encrypt)
 
-        if encryptedStr != None and encryptedStr != "":
+        if encrypted_str != None and encrypted_str != "":
             query = "update jdbc_connections set credentials = %s where dbalias = %s "
             logging.debug("Executing the following SQL: %s" % (query))
-            self.mysql_cursor.execute(query, (encryptedStr, connection_alias))
+            self.mysql_cursor.execute(query, (encrypted_str, connection_alias))
             self.mysql_conn.commit()
 
     def getJDBCDriverConfig(self, databaseType, version):
@@ -788,15 +794,15 @@ class config(metaclass=Singleton):
 
         row = self.mysql_cursor.fetchone()
         driver = row[0]
-        classPath = row[1]
+        class_path = row[1]
 
-        if classPath == "add path to JAR file" or not classPath.startswith("/"):
+        if class_path == "add path to JAR file" or not class_path.startswith("/"):
             raise invalidConfiguration(
                 "Error: You need to specify the full path to the JAR files in the table 'jdbc_connections_drivers'"
             )
 
         logging.debug("Executing common_config.getJDBCDriverConfig() - Finished")
-        return driver, classPath
+        return driver, class_path
 
     def printConnectionAliasDetails(self):
         logging.debug("Executing common_config.printConnectionAliasDetails()")
@@ -990,13 +996,13 @@ class config(metaclass=Singleton):
             row = self.mysql_cursor.fetchone()
 
             self.jdbc_url = row[0]
-            jdbcCredentials = row[1]
-            privateKeyFile = row[2]
-            publicKeyFile = row[3]
+            jdbc_credentials = row[1]
+            private_key_file = row[2]
+            public_key_file = row[3]
             self.jdbc_environment = row[4]
 
         if decryptCredentials == True and copySlave == False:
-            if jdbcCredentials is not None and jdbcCredentials.startswith(
+            if jdbc_credentials is not None and jdbc_credentials.startswith(
                 "arn:aws:secretsmanager:"
             ):
                 # This jdbc connection have its key stored in AWS Secrets Manager
@@ -1011,17 +1017,17 @@ class config(metaclass=Singleton):
 
                 try:
                     get_secret_value_response = client.get_secret_value(
-                        SecretId=jdbcCredentials
+                        SecretId=jdbc_credentials
                     )
                 except ClientError as e:
                     # For a list of exceptions thrown, see
                     # https://docs.aws.amazon.com/secretsmanager/latest/apireference/API_GetSecretValue.html
                     raise e
 
-                jdbcSecrets = json.loads(get_secret_value_response["SecretString"])
+                jdbc_secrets = json.loads(get_secret_value_response["SecretString"])
                 credentials = "%s %s" % (
-                    jdbcSecrets["username"],
-                    jdbcSecrets["password"],
+                    jdbc_secrets["username"],
+                    jdbc_secrets["password"],
                 )
                 # print(json.loads(get_secret_value_response['SecretString']))
                 # mysql_username = rds_credentials["username"]
@@ -1031,13 +1037,13 @@ class config(metaclass=Singleton):
 
             else:
                 if (
-                    privateKeyFile != None
-                    and publicKeyFile != None
-                    and privateKeyFile.strip() != ""
-                    and publicKeyFile.strip() != ""
+                    private_key_file != None
+                    and public_key_file != None
+                    and private_key_file.strip() != ""
+                    and public_key_file.strip() != ""
                 ):
-                    self.crypto.setPrivateKeyFile(privateKeyFile)
-                    self.crypto.setPublicKeyFile(publicKeyFile)
+                    self.crypto.setPrivateKeyFile(private_key_file)
+                    self.crypto.setPublicKeyFile(public_key_file)
                 else:
                     self.crypto.setPrivateKeyFile(
                         configuration.get("Credentials", "private_key")
@@ -1046,7 +1052,7 @@ class config(metaclass=Singleton):
                         configuration.get("Credentials", "public_key")
                     )
 
-                credentials = self.crypto.decrypt(jdbcCredentials)
+                credentials = self.crypto.decrypt(jdbc_credentials)
 
             if credentials == None and exceptionIfFailureToDecrypt == True:
                 raise invalidConfiguration(
@@ -1428,10 +1434,10 @@ class config(metaclass=Singleton):
 
             # Get all options in order to find authSource
             try:
-                mongoOptions = dict(
+                mongo_options = dict(
                     x.split("=") for x in self.jdbc_url.split("?")[1].split("&")
                 )
-                for k, v in mongoOptions.items():
+                for k, v in mongo_options.items():
                     if k.lower() == "authsource":
                         self.mongoAuthSource = v
             except IndexError:
@@ -1783,7 +1789,7 @@ class config(metaclass=Singleton):
             log.debug("   impalaAddress = %s" % (self.impalaAddress))
 
             try:
-                JDBCCredentials = [self.jdbc_username, self.jdbc_password]
+                jdbc_credentials = [self.jdbc_username, self.jdbc_password]
 
                 self.impalaJDBCConn = jaydebeapi.connect(
                     self.impalaClasspath, self.impalaAddress, [], self.impalaDriver
@@ -1850,12 +1856,12 @@ class config(metaclass=Singleton):
                 "   jdbc_classpath_for_python = %s" % (self.jdbc_classpath_for_python)
             )
 
-            JDBCCredentials = [self.jdbc_username, self.jdbc_password]
+            jdbc_credentials = [self.jdbc_username, self.jdbc_password]
             try:
                 self.JDBCConn = jaydebeapi.connect(
                     self.jdbc_driver,
                     self.jdbc_url,
-                    JDBCCredentials,
+                    jdbc_credentials,
                     self.jdbc_classpath_for_python,
                 )
                 self.JDBCCursor = self.JDBCConn.cursor()
@@ -2057,13 +2063,13 @@ class config(metaclass=Singleton):
         self.JDBCCursor.execute(query)
         row = self.JDBCCursor.fetchone()
 
-        tableExists = False
+        table_exists = False
 
         if int(row[0]) > 0:
-            tableExists = True
+            table_exists = True
 
         logging.debug("Executing common_config.checkJDBCTable() - Finished")
-        return tableExists
+        return table_exists
 
     def executeJDBCquery(self, query):
         """Executes a query against the JDBC database and return the values in a Pandas DF"""
@@ -2465,72 +2471,72 @@ class config(metaclass=Singleton):
         self.mysql_conn.commit()
 
     def getQuoteAroundColumn(self):
-        quoteAroundColumn = ""
+        quote_around_column = ""
         if self.jdbc_servertype == constant.MSSQL:
-            quoteAroundColumn = '"'
+            quote_around_column = '"'
         if self.jdbc_servertype == constant.ORACLE:
-            quoteAroundColumn = '"'
+            quote_around_column = '"'
         if self.jdbc_servertype == constant.MYSQL:
-            quoteAroundColumn = "`"
+            quote_around_column = "`"
         if self.jdbc_servertype == constant.POSTGRESQL:
-            quoteAroundColumn = '"'
+            quote_around_column = '"'
         if self.jdbc_servertype == constant.PROGRESS:
-            quoteAroundColumn = '"'
+            quote_around_column = '"'
         if self.jdbc_servertype == constant.DB2_UDB:
-            quoteAroundColumn = '"'
+            quote_around_column = '"'
         if self.jdbc_servertype == constant.DB2_AS400:
-            quoteAroundColumn = '"'
+            quote_around_column = '"'
         if self.jdbc_servertype == constant.SNOWFLAKE:
-            quoteAroundColumn = '"'
+            quote_around_column = '"'
         if self.jdbc_servertype == constant.INFORMIX:
-            quoteAroundColumn = '"'
+            quote_around_column = '"'
         if self.jdbc_servertype == constant.SQLANYWHERE:
-            quoteAroundColumn = "`"
+            quote_around_column = "`"
 
-        return quoteAroundColumn
+        return quote_around_column
 
     def getJDBCUpperCase(self):
-        upperCase = False
+        upper_case = False
         if self.jdbc_servertype == constant.ORACLE:
-            upperCase = True
+            upper_case = True
         if self.jdbc_servertype == constant.DB2_UDB:
-            upperCase = True
+            upper_case = True
 
-        return upperCase
+        return upper_case
 
     def getJDBCsqlFromTable(self, schema, table):
         logging.debug("Executing common_config.getJDBCsqlFromTable()")
 
-        fromTable = ""
+        from_table = ""
         if self.jdbc_servertype == constant.MSSQL:
-            fromTable = "[%s].[%s].[%s]" % (self.jdbc_database, schema, table)
+            from_table = "[%s].[%s].[%s]" % (self.jdbc_database, schema, table)
         if self.jdbc_servertype == constant.ORACLE:
-            fromTable = '"%s"."%s"' % (schema.upper(), table.upper())
+            from_table = '"%s"."%s"' % (schema.upper(), table.upper())
         if self.jdbc_servertype == constant.MYSQL:
-            fromTable = "%s" % (table)
+            from_table = "%s" % (table)
         if self.jdbc_servertype == constant.POSTGRESQL:
-            fromTable = '"%s"."%s"' % (schema.lower(), table.lower())
+            from_table = '"%s"."%s"' % (schema.lower(), table.lower())
         if self.jdbc_servertype == constant.PROGRESS:
-            fromTable = '"%s"."%s"' % (schema, table)
+            from_table = '"%s"."%s"' % (schema, table)
         if self.jdbc_servertype == constant.DB2_UDB:
-            fromTable = '"%s"."%s"' % (schema, table)
+            from_table = '"%s"."%s"' % (schema, table)
         if self.jdbc_servertype == constant.DB2_AS400:
-            fromTable = '"%s"."%s"' % (schema, table)
+            from_table = '"%s"."%s"' % (schema, table)
         if self.jdbc_servertype == constant.SNOWFLAKE:
-            fromTable = '"%s"."%s"' % (schema, table)
+            from_table = '"%s"."%s"' % (schema, table)
         if self.jdbc_servertype == constant.INFORMIX:
-            fromTable = "%s.%s" % (schema, table)
+            from_table = "%s.%s" % (schema, table)
         if self.jdbc_servertype == constant.SQLANYWHERE:
-            fromTable = "%s" % (table)
+            from_table = "%s" % (table)
 
         logging.debug("Executing common_config.getJDBCsqlFromTable() - Finished")
-        return fromTable
+        return from_table
 
     def getConfigValueColumn(self, key, ignoreErrorOutput=False):
         """Return the type of the column that have the value for the specified key"""
 
-        valueColumn = ""
-        boolValue = False
+        value_column = ""
+        bool_value = False
 
         if key in (
             "hive_remove_locks_by_force",
@@ -2558,8 +2564,8 @@ class config(metaclass=Singleton):
             "airflow_create_pool_with_task",
             "timestamp_with_timezone",
         ):
-            valueColumn = "valueInt"
-            boolValue = True
+            value_column = "valueInt"
+            bool_value = True
         elif key in (
             "spark_max_executors",
             "import_default_sessions",
@@ -2572,7 +2578,7 @@ class config(metaclass=Singleton):
             "airflow_default_pool_size",
             "restserver_token_ttl",
         ):
-            valueColumn = "valueInt"
+            value_column = "valueInt"
         elif key in (
             "import_staging_table",
             "import_staging_database",
@@ -2615,7 +2621,7 @@ class config(metaclass=Singleton):
             "restserver_authentication_method",
             "post_data_to_awssns_topic",
         ):
-            valueColumn = "valueStr"
+            value_column = "valueStr"
         else:
             if ignoreErrorOutput == False:
                 # This is needed from the REST interface, as it's parsing everything in the database. And entries may exists that isnt a valid config anymore
@@ -2623,21 +2629,21 @@ class config(metaclass=Singleton):
                 self.remove_temporary_files()
                 sys.exit(1)
             else:
-                valueColumn = None
-                boolValue = None
+                value_column = None
+                bool_value = None
 
-        return (valueColumn, boolValue)
+        return (value_column, bool_value)
 
     def getConfigValue(self, key):
         """Returns a value from the configuration table based on the supplied key. Value returned can be Int, Str or DateTime"""
         logging.debug("Executing common_config.getConfigValue()")
-        returnValue = None
-        boolValue = False
+        return_value = None
+        bool_value = False
 
-        valueColumn, boolValue = self.getConfigValueColumn(key)
+        value_column, bool_value = self.getConfigValueColumn(key)
 
         query = "select %s from configuration where configkey = '%s'" % (
-            valueColumn,
+            value_column,
             key,
         )
 
@@ -2647,28 +2653,28 @@ class config(metaclass=Singleton):
         self.mysql_conn.commit()
 
         try:
-            if valueColumn == "valueInt":
-                returnValue = int(row[0])
+            if value_column == "valueInt":
+                return_value = int(row[0])
 
-            if valueColumn == "valueStr":
-                returnValue = row[0]
-                if returnValue == None or returnValue.strip() == "":
+            if value_column == "valueStr":
+                return_value = row[0]
+                if return_value == None or return_value.strip() == "":
                     logging.error(
                         "Configuration Key '%s' must have a value in '%s'"
-                        % (key, valueColumn)
+                        % (key, value_column)
                     )
                     self.remove_temporary_files()
                     sys.exit(1)
 
-            if boolValue == True:
-                if returnValue == 1:
-                    returnValue = True
-                elif returnValue == 0:
-                    returnValue = False
+            if bool_value == True:
+                if return_value == 1:
+                    return_value = True
+                elif return_value == 0:
+                    return_value = False
                 else:
                     logging.error(
                         "Configuration Key '%s' can only have 0 or 1 in column '%s'"
-                        % (key, valueColumn)
+                        % (key, value_column)
                     )
                     self.remove_temporary_files()
                     sys.exit(1)
@@ -2680,9 +2686,9 @@ class config(metaclass=Singleton):
             self.remove_temporary_files()
             sys.exit(1)
 
-        logging.debug("Fetched configuration '%s' as '%s'" % (key, returnValue))
+        logging.debug("Fetched configuration '%s' as '%s'" % (key, return_value))
         logging.debug("Executing common_config.getConfigValue() - Finished")
-        return returnValue
+        return return_value
 
     def connectToMongo(self, exitIfFailure=True, logger=""):
         log = logging.getLogger(logger)
@@ -2732,21 +2738,21 @@ class config(metaclass=Singleton):
 
         # Connect to MongoDB and get a list of all collections
         self.connectToMongo()
-        mongoCollections = self.mongoDB.list_collection_names()
+        mongo_collections = self.mongoDB.list_collection_names()
         self.disconnectFromMongo()
 
         if collectionFilter == None:
             collectionFilter = ""
         collectionFilter = collectionFilter.replace("*", ".*")
 
-        collectionList = []
-        for collection in mongoCollections:
+        collection_list = []
+        for collection in mongo_collections:
             if re.search(collectionFilter, collection):
-                collectionDict = {"schema": "-"}
-                collectionDict["table"] = collection
-                collectionList.append(collectionDict)
+                collection_dict = {"schema": "-"}
+                collection_dict["table"] = collection
+                collection_list.append(collection_dict)
 
-        result_df = pd.DataFrame(collectionList)
+        result_df = pd.DataFrame(collection_list)
 
         logging.debug("Executing common_config.getMongoTables() - Finished")
         return result_df
@@ -2775,36 +2781,36 @@ class config(metaclass=Singleton):
             dbAlias = self.dbAlias
 
         self.lookupConnectionAlias(dbAlias)
-        jdbcConnectionData = self.getAtlasJdbcConnectionData(dbAlias)
+        jdbc_connection_data = self.getAtlasJdbcConnectionData(dbAlias)
 
-        configObject = {}
-        configObject["dbAlias"] = dbAlias
-        configObject["contactInfo"] = jdbcConnectionData.get("contact_info")
-        configObject["description"] = jdbcConnectionData.get("description")
-        configObject["owner"] = jdbcConnectionData.get("owner")
-        configObject["atlasIncludeFilter"] = jdbcConnectionData.get(
+        config_object = {}
+        config_object["dbAlias"] = dbAlias
+        config_object["contactInfo"] = jdbc_connection_data.get("contact_info")
+        config_object["description"] = jdbc_connection_data.get("description")
+        config_object["owner"] = jdbc_connection_data.get("owner")
+        config_object["atlasIncludeFilter"] = jdbc_connection_data.get(
             "atlas_include_filter"
         )
-        configObject["atlasExcludeFilter"] = jdbcConnectionData.get(
+        config_object["atlasExcludeFilter"] = jdbc_connection_data.get(
             "atlas_exclude_filter"
         )
-        configObject["jdbc_hostname"] = self.jdbc_hostname
-        configObject["jdbc_port"] = self.jdbc_port
-        configObject["jdbc_servertype"] = self.jdbc_servertype
-        configObject["jdbc_database"] = self.jdbc_database
-        configObject["jdbc_oracle_sid"] = self.jdbc_oracle_sid
-        configObject["jdbc_oracle_servicename"] = self.jdbc_oracle_servicename
-        configObject["jdbc_username"] = self.jdbc_username
-        configObject["jdbc_password"] = self.jdbc_password
-        configObject["jdbc_driver"] = self.jdbc_driver
-        configObject["jdbc_url"] = self.jdbc_url
-        configObject["jdbc_classpath_for_python"] = self.jdbc_classpath_for_python
-        configObject["jdbc_environment"] = self.jdbc_environment
-        configObject["hdfs_address"] = self.getConfigValue(key="hdfs_address")
-        configObject["cluster_name"] = self.getConfigValue(key="cluster_name")
+        config_object["jdbc_hostname"] = self.jdbc_hostname
+        config_object["jdbc_port"] = self.jdbc_port
+        config_object["jdbc_servertype"] = self.jdbc_servertype
+        config_object["jdbc_database"] = self.jdbc_database
+        config_object["jdbc_oracle_sid"] = self.jdbc_oracle_sid
+        config_object["jdbc_oracle_servicename"] = self.jdbc_oracle_servicename
+        config_object["jdbc_username"] = self.jdbc_username
+        config_object["jdbc_password"] = self.jdbc_password
+        config_object["jdbc_driver"] = self.jdbc_driver
+        config_object["jdbc_url"] = self.jdbc_url
+        config_object["jdbc_classpath_for_python"] = self.jdbc_classpath_for_python
+        config_object["jdbc_environment"] = self.jdbc_environment
+        config_object["hdfs_address"] = self.getConfigValue(key="hdfs_address")
+        config_object["cluster_name"] = self.getConfigValue(key="cluster_name")
 
         log.debug("Executing common_config.getAtlasDiscoverConfigObject() - Finished")
-        return configObject
+        return config_object
 
     def getAnonymizationSeed(self):
         logging.debug("Executing common_config.getAnonymizationSeed()")
@@ -2817,17 +2823,17 @@ class config(metaclass=Singleton):
         self.mysql_cursor.execute(query, (self.dbAlias,))
 
         row = self.mysql_cursor.fetchone()
-        seedFile = row[0]
+        seed_file = row[0]
 
-        if seedFile != None:
-            if os.path.exists(seedFile) == False:
+        if seed_file != None:
+            if os.path.exists(seed_file) == False:
                 logging.error(
                     "The connection have a seed file configured, but the tool is unable to find that file."
                 )
                 self.remove_temporary_files()
                 sys.exit(1)
 
-            seed = open(seedFile).read()
+            seed = open(seed_file).read()
 
         if len(seed) > 16:
             logging.warning(
@@ -2892,12 +2898,12 @@ class config(metaclass=Singleton):
         logging.debug("Executing common_config.updateYarnStatistics()")
 
         query = None
-        startStopDate = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        start_stop_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         if yarnContainersTotal == None:
             # If it's None, it means that it was called when query was started. At this stage, we need to insert the data
 
             if self.operationType == "import":
-                self.yarnApplicationStart = startStopDate
+                self.yarnApplicationStart = start_stop_date
 
                 query = "insert into yarn_statistics "
                 query += "( yarn_application_id, operation_timestamp, operation_tool, operation_type, hive_db, hive_table, application_start ) "
@@ -2913,13 +2919,13 @@ class config(metaclass=Singleton):
                         operationTool,
                         self.Hive_DB,
                         self.Hive_Table,
-                        startStopDate,
+                        start_stop_date,
                     ),
                 )
                 self.mysql_conn.commit()
 
             if self.operationType == "export":
-                self.yarnApplicationStart = startStopDate
+                self.yarnApplicationStart = start_stop_date
 
                 query = "insert into yarn_statistics "
                 query += "( yarn_application_id, operation_timestamp, operation_tool, operation_type, dbalias, target_schema, target_table, application_start ) "
@@ -2936,7 +2942,7 @@ class config(metaclass=Singleton):
                         self.dbAlias,
                         self.targetSchema,
                         self.targetTable,
-                        startStopDate,
+                        start_stop_date,
                     ),
                 )
                 self.mysql_conn.commit()
@@ -2954,7 +2960,7 @@ class config(metaclass=Singleton):
             self.mysql_cursor.execute(
                 query,
                 (
-                    startStopDate,
+                    start_stop_date,
                     yarnContainersTotal,
                     yarnContainersFailed,
                     yarnContainersKilled,
