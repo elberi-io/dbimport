@@ -902,9 +902,9 @@ python-pam==2.1.1 ; sys_platform == 'linux' \
     --hash=sha256:4f85666ebb69ecdf4c2cdcc648e781d3ee0ec60f7048483e160e585a66ab914e \
     --hash=sha256:d5bf50bd619a7d93514149a34aa4e4f9f174c90b38ec9657054f6a2017f65bb5
     # via dbimport
-pytz==2024.1 ; sys_platform == 'linux' \
-    --hash=sha256:2a29735ea9c18baf14b448846bde5a48030ed267578472d8955cd0e7443a9812 \
-    --hash=sha256:328171f4e3623139da4983451950b28e95ac706e13f3f2630a879749e7a8b319
+pytz==2026.6 ; sys_platform == 'linux' \
+    --hash=sha256:3b0fc2727707663d6e517936f444fd8a8b240f1fc32f4bf7ee03274245945284 \
+    --hash=sha256:7fed3fee8fd6bd4a2b7b75a8d56021d0624127bf69bd5691f115db929ac570b3
     # via
     #   dbimport
     #   pandas
