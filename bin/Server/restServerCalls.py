@@ -176,14 +176,14 @@ class dbCalls:
             # return self.configDBSession()
             return scoped_session(self.configDBSession)
 
-        mysqlCredentials = self.common_config.getMysqlCredentials()
+        mysql_credentials = self.common_config.getMysqlCredentials()
 
         self.connectStr = "mysql+pymysql://%s:%s@%s:%s/%s" % (
-            mysqlCredentials["mysql_username"],
-            quote(mysqlCredentials["mysql_password"], safe=" +"),
-            mysqlCredentials["mysql_hostname"],
-            mysqlCredentials["mysql_port"],
-            mysqlCredentials["mysql_database"],
+            mysql_credentials["mysql_username"],
+            quote(mysql_credentials["mysql_password"], safe=" +"),
+            mysql_credentials["mysql_hostname"],
+            mysql_credentials["mysql_port"],
+            mysql_credentials["mysql_database"],
         )
 
         try:
@@ -213,10 +213,10 @@ class dbCalls:
     def getConfigValue(self, key):
         """Returns a value from the configuration table based on the supplied key. Value returned can be Int, Str or DateTime"""
         log = logging.getLogger(self.logger)
-        returnValue = None
-        boolValue = False
+        return_value = None
+        bool_value = False
 
-        valueColumn, boolValue = self.common_config.getConfigValueColumn(key)
+        value_column, bool_value = self.common_config.getConfigValueColumn(key)
 
         try:
             session = self.getDBImportSession()
@@ -224,55 +224,55 @@ class dbCalls:
             self.disconnectDBImportDB()
             return None
 
-        configurationTable = aliased(configSchema.configuration)
+        configuration_table = aliased(configSchema.configuration)
 
         configuration = (
             session.query(
-                configurationTable.configKey,
-                configurationTable.valueInt,
-                configurationTable.valueStr,
-                configurationTable.valueDate,
+                configuration_table.configKey,
+                configuration_table.valueInt,
+                configuration_table.valueStr,
+                configuration_table.valueDate,
             )
-            .select_from(configurationTable)
-            .filter(configurationTable.configKey == key)
+            .select_from(configuration_table)
+            .filter(configuration_table.configKey == key)
             .one()
         )
 
         session.remove()
-        returnValue = None
+        return_value = None
 
         try:
-            if valueColumn == "valueInt":
-                returnValue = int(configuration[1])
+            if value_column == "valueInt":
+                return_value = int(configuration[1])
 
-            if valueColumn == "valueStr":
-                returnValue = configuration[2]
-                if returnValue == None or returnValue.strip() == "":
+            if value_column == "valueStr":
+                return_value = configuration[2]
+                if return_value == None or return_value.strip() == "":
                     log.error(
                         "Configuration Key '%s' must have a value in '%s'"
-                        % (key, valueColumn)
+                        % (key, value_column)
                     )
-                    returnValue = None
+                    return_value = None
 
-            if boolValue == True:
-                if returnValue == 1:
-                    returnValue = True
-                elif returnValue == 0:
-                    returnValue = False
+            if bool_value == True:
+                if return_value == 1:
+                    return_value = True
+                elif return_value == 0:
+                    return_value = False
                 else:
                     log.error(
                         "Configuration Key '%s' can only have 0 or 1 in column '%s'"
-                        % (key, valueColumn)
+                        % (key, value_column)
                     )
-                    returnValue = None
+                    return_value = None
         except TypeError:
             log.error(
                 "Configuration key '%s' cant be found. Have you upgraded the database schema to the latest version?"
                 % (key)
             )
-            returnValue = None
+            return_value = None
 
-        return returnValue
+        return return_value
 
     def createDefaultAdminUser(self):
         """Creates the default admin user in the auth_users table if it doesnt exist"""
@@ -284,9 +284,9 @@ class dbCalls:
             self.disconnectDBImportDB()
             return None
 
-        defaultAdminUser = self.getConfigValue("restserver_admin_user")
-        userObject = self.getUser(defaultAdminUser)
-        if userObject == None:
+        default_admin_user = self.getConfigValue("restserver_admin_user")
+        user_object = self.getUser(default_admin_user)
+        if user_object == None:
             # User does not exists, so lets create it
             log.info(
                 "Default admin user does not exists in the 'auth_users' table. Creating it with password 'admin'"
@@ -299,7 +299,7 @@ class dbCalls:
             ).decode("utf-8")
 
             query = sa.insert(configSchema.authUsers).values(
-                username=defaultAdminUser, password=hashed_password
+                username=default_admin_user, password=hashed_password
             )
             session.execute(query)
             session.commit()
@@ -343,18 +343,18 @@ class dbCalls:
             self.disconnectDBImportDB()
             return None
 
-        tableAuthUsers = aliased(configSchema.authUsers)
-        authUser = (
+        table_auth_users = aliased(configSchema.authUsers)
+        auth_user = (
             session.query(
-                tableAuthUsers.username,
-                tableAuthUsers.password,
-                tableAuthUsers.disabled,
-                tableAuthUsers.fullname,
-                tableAuthUsers.department,
-                tableAuthUsers.email,
+                table_auth_users.username,
+                table_auth_users.password,
+                table_auth_users.disabled,
+                table_auth_users.fullname,
+                table_auth_users.department,
+                table_auth_users.email,
             )
-            .select_from(tableAuthUsers)
-            .filter(tableAuthUsers.username == username)
+            .select_from(table_auth_users)
+            .filter(table_auth_users.username == username)
             .first()
         )
 
@@ -363,14 +363,14 @@ class dbCalls:
 
         user = None
 
-        if authUser != None:
+        if auth_user != None:
             user = {}
-            user["username"] = authUser[0]
-            user["password"] = authUser[1]
-            user["disabled"] = authUser[2]
-            user["fullname"] = authUser[3]
-            user["department"] = authUser[4]
-            user["email"] = authUser[5]
+            user["username"] = auth_user[0]
+            user["password"] = auth_user[1]
+            user["disabled"] = auth_user[2]
+            user["fullname"] = auth_user[3]
+            user["department"] = auth_user[4]
+            user["email"] = auth_user[5]
 
         return user
 
@@ -395,9 +395,9 @@ class dbCalls:
                 % (currentUser, user["username"])
             )
 
-        tableAuthUsers = aliased(configSchema.authUsers)
+        table_auth_users = aliased(configSchema.authUsers)
         session.execute(
-            update(tableAuthUsers),
+            update(table_auth_users),
             [
                 {
                     "username": user["username"],
@@ -424,11 +424,11 @@ class dbCalls:
             self.disconnectDBImportDB()
             return None
 
-        tableAuthUsers = aliased(configSchema.authUsers)
+        table_auth_users = aliased(configSchema.authUsers)
 
         (
-            session.query(tableAuthUsers)
-            .filter(tableAuthUsers.username == username)
+            session.query(table_auth_users)
+            .filter(table_auth_users.username == username)
             .delete()
         )
         session.commit()
@@ -440,168 +440,174 @@ class dbCalls:
         """Generates a JDBC connection string"""
         log = logging.getLogger(self.logger)
 
-        databaseType = connectionValues.databaseType
-        databaseVersion = connectionValues.version
+        database_type = connectionValues.databaseType
+        database_version = connectionValues.version
         hostname = connectionValues.hostname
         port = connectionValues.port
         database = connectionValues.database
-        jdbcConnectionString = ""
+        jdbc_connection_string = ""
 
         # Validate to make sure we have a valid combination of databaseType and version
-        correctDriverVersion = False
+        correct_driver_version = False
         for driver in self.getJDBCdrivers():
             if (
-                databaseType == driver["databaseType"]
-                and databaseVersion == driver["version"]
+                database_type == driver["databaseType"]
+                and database_version == driver["version"]
             ):
-                correctDriverVersion = True
+                correct_driver_version = True
 
-        if correctDriverVersion == False:
+        if correct_driver_version == False:
             result = "Not a valid combination of databaseType and version"
-            returnCode = 404
-            return (result, returnCode)
+            return_code = 404
+            return (result, return_code)
 
         # Generate the connection string for each combo of databaseType and databaseVersion
-        if databaseType == "DB2 AS400" and databaseVersion == "default":
+        if database_type == "DB2 AS400" and database_version == "default":
             if connectionValues.port == None:
-                jdbcConnectionString = "jdbc:as400://%s/%s" % (hostname, database)
+                jdbc_connection_string = "jdbc:as400://%s/%s" % (hostname, database)
             else:
-                jdbcConnectionString = "jdbc:as400://%s:%s/%s" % (
+                jdbc_connection_string = "jdbc:as400://%s:%s/%s" % (
                     hostname,
                     port,
                     database,
                 )
 
-        if databaseType == "DB2 UDB" and databaseVersion == "default":
+        if database_type == "DB2 UDB" and database_version == "default":
             if connectionValues.port == None:
-                jdbcConnectionString = "jdbc:db2://%s/%s" % (hostname, database)
+                jdbc_connection_string = "jdbc:db2://%s/%s" % (hostname, database)
             else:
-                jdbcConnectionString = "jdbc:db2://%s:%s/%s" % (
+                jdbc_connection_string = "jdbc:db2://%s:%s/%s" % (
                     hostname,
                     port,
                     database,
                 )
 
-        if databaseType == "MySQL" and databaseVersion == "default":
+        if database_type == "MySQL" and database_version == "default":
             if connectionValues.port == None:
-                jdbcConnectionString = "jdbc:mysql://%s/%s" % (hostname, database)
+                jdbc_connection_string = "jdbc:mysql://%s/%s" % (hostname, database)
             else:
-                jdbcConnectionString = "jdbc:mysql://%s:%s/%s" % (
+                jdbc_connection_string = "jdbc:mysql://%s:%s/%s" % (
                     hostname,
                     port,
                     database,
                 )
 
-        if databaseType == "Oracle" and databaseVersion == "default":
+        if database_type == "Oracle" and database_version == "default":
             if connectionValues.port == None:
-                jdbcConnectionString = (
+                jdbc_connection_string = (
                     "jdbc:oracle:thin:@(DESCRIPTION=(ADDRESS_LIST=(ADDRESS=(PROTOCOL=TCP)(HOST=%s)))(CONNECT_DATA=(SERVICE_NAME=%s)))"
                     % (hostname, database)
                 )
             else:
-                jdbcConnectionString = (
+                jdbc_connection_string = (
                     "jdbc:oracle:thin:@(DESCRIPTION=(ADDRESS_LIST=(ADDRESS=(PROTOCOL=TCP)(HOST=%s)(PORT=%s)))(CONNECT_DATA=(SERVICE_NAME=%s)))"
                     % (hostname, port, database)
                 )
 
-        if databaseType == "PostgreSQL" and databaseVersion == "default":
+        if database_type == "PostgreSQL" and database_version == "default":
             if connectionValues.port == None:
-                jdbcConnectionString = "jdbc:postgresql://%s/%s" % (hostname, database)
+                jdbc_connection_string = "jdbc:postgresql://%s/%s" % (
+                    hostname,
+                    database,
+                )
             else:
-                jdbcConnectionString = "jdbc:postgresql://%s:%s/%s" % (
+                jdbc_connection_string = "jdbc:postgresql://%s:%s/%s" % (
                     hostname,
                     port,
                     database,
                 )
 
-        if databaseType == "Progress DB" and databaseVersion == "default":
+        if database_type == "Progress DB" and database_version == "default":
             if connectionValues.port == None:
-                jdbcConnectionString = "jdbc:datadirect:openedge://%s/%s" % (
+                jdbc_connection_string = "jdbc:datadirect:openedge://%s/%s" % (
                     hostname,
                     database,
                 )
             else:
-                jdbcConnectionString = "jdbc:datadirect:openedge://%s:%s/%s" % (
+                jdbc_connection_string = "jdbc:datadirect:openedge://%s:%s/%s" % (
                     hostname,
                     port,
                     database,
                 )
 
-        if databaseType == "SQL Server" and databaseVersion == "default":
+        if database_type == "SQL Server" and database_version == "default":
             if connectionValues.port == None:
-                jdbcConnectionString = "jdbc:sqlserver://%s;database=%s" % (
+                jdbc_connection_string = "jdbc:sqlserver://%s;database=%s" % (
                     hostname,
                     database,
                 )
             else:
-                jdbcConnectionString = "jdbc:sqlserver://%s:%s;database=%s" % (
+                jdbc_connection_string = "jdbc:sqlserver://%s:%s;database=%s" % (
                     hostname,
                     port,
                     database,
                 )
 
-        if databaseType == "SQL Server" and databaseVersion == "jTDS":
+        if database_type == "SQL Server" and database_version == "jTDS":
             if connectionValues.port == None:
-                jdbcConnectionString = (
+                jdbc_connection_string = (
                     "jdbc:jtds:sqlserver://%s;useNTLMv2=true;databaseName=%s"
                     % (hostname, database)
                 )
             else:
-                jdbcConnectionString = (
+                jdbc_connection_string = (
                     "jdbc:jtds:sqlserver://%s:%s;useNTLMv2=true;databaseName=%s"
                     % (hostname, port, database)
                 )
 
-        if databaseType == "CacheDB" and databaseVersion == "default":
+        if database_type == "CacheDB" and database_version == "default":
             if connectionValues.port == None:
-                jdbcConnectionString = "jdbc:Cache://%s/%s" % (hostname, database)
+                jdbc_connection_string = "jdbc:Cache://%s/%s" % (hostname, database)
             else:
-                jdbcConnectionString = "jdbc:Cache://%s:%s/%s" % (
+                jdbc_connection_string = "jdbc:Cache://%s:%s/%s" % (
                     hostname,
                     port,
                     database,
                 )
 
-        if databaseType == "Snowflake" and databaseVersion == "default":
+        if database_type == "Snowflake" and database_version == "default":
             if connectionValues.port == None:
-                jdbcConnectionString = "jdbc:snowflake://%s/?db=%s" % (
+                jdbc_connection_string = "jdbc:snowflake://%s/?db=%s" % (
                     hostname,
                     database,
                 )
             else:
-                jdbcConnectionString = "jdbc:snowflake://%s:%s/?db=%s" % (
+                jdbc_connection_string = "jdbc:snowflake://%s:%s/?db=%s" % (
                     hostname,
                     port,
                     database,
                 )
 
-        if databaseType == "Informix" and databaseVersion == "default":
+        if database_type == "Informix" and database_version == "default":
             if connectionValues.port == None:
-                jdbcConnectionString = "jdbc:informix-sqli://%s/%s" % (
+                jdbc_connection_string = "jdbc:informix-sqli://%s/%s" % (
                     hostname,
                     database,
                 )
             else:
-                jdbcConnectionString = "jdbc:informix-sqli://%s:%s/%s" % (
+                jdbc_connection_string = "jdbc:informix-sqli://%s:%s/%s" % (
                     hostname,
                     port,
                     database,
                 )
 
-        if databaseType == "SQL Anywhere" and databaseVersion == "default":
+        if database_type == "SQL Anywhere" and database_version == "default":
             if connectionValues.port == None:
-                jdbcConnectionString = "jdbc:sybase:Tds://%s/%s" % (hostname, database)
+                jdbc_connection_string = "jdbc:sybase:Tds://%s/%s" % (
+                    hostname,
+                    database,
+                )
             else:
-                jdbcConnectionString = "jdbc:sybase:Tds://%s:%s/%s" % (
+                jdbc_connection_string = "jdbc:sybase:Tds://%s:%s/%s" % (
                     hostname,
                     port,
                     database,
                 )
 
-        resultMsg = {"connectionString": jdbcConnectionString}
+        result_msg = {"connectionString": jdbc_connection_string}
 
-        returnCode = 200
-        return (resultMsg, returnCode)
+        return_code = 200
+        return (result_msg, return_code)
 
     def getJDBCdrivers(self):
         """Returns all JDBC Driver configuration"""
@@ -613,34 +619,34 @@ class dbCalls:
             self.disconnectDBImportDB()
             return None
 
-        tableJDBCconnectionsDrivers = aliased(configSchema.jdbcConnectionsDrivers)
-        jdbcConnectionsDrivers = (
+        table_jdbc_connections_drivers = aliased(configSchema.jdbcConnectionsDrivers)
+        jdbc_connections_drivers = (
             session.query(
-                tableJDBCconnectionsDrivers.database_type,
-                tableJDBCconnectionsDrivers.version,
-                tableJDBCconnectionsDrivers.driver,
-                tableJDBCconnectionsDrivers.classpath,
+                table_jdbc_connections_drivers.database_type,
+                table_jdbc_connections_drivers.version,
+                table_jdbc_connections_drivers.driver,
+                table_jdbc_connections_drivers.classpath,
             )
-            .select_from(tableJDBCconnectionsDrivers)
-            .order_by(tableJDBCconnectionsDrivers.database_type)
+            .select_from(table_jdbc_connections_drivers)
+            .order_by(table_jdbc_connections_drivers.database_type)
             .all()
         )
 
-        listOfJDBCdrivers = []
-        for row in jdbcConnectionsDrivers:
-            jdbcDriver = {}
-            jdbcDriver["databaseType"] = row[0]
-            jdbcDriver["version"] = row[1]
-            jdbcDriver["driver"] = row[2]
-            jdbcDriver["classpath"] = row[3]
-            listOfJDBCdrivers.append(jdbcDriver)
+        list_of_jdbc_drivers = []
+        for row in jdbc_connections_drivers:
+            jdbc_driver = {}
+            jdbc_driver["databaseType"] = row[0]
+            jdbc_driver["version"] = row[1]
+            jdbc_driver["driver"] = row[2]
+            jdbc_driver["classpath"] = row[3]
+            list_of_jdbc_drivers.append(jdbc_driver)
 
-        jsonResult = json.loads(json.dumps(listOfJDBCdrivers))
+        json_result = json.loads(json.dumps(list_of_jdbc_drivers))
 
         # session.close()
         session.remove()
 
-        return jsonResult
+        return json_result
 
     def updateJDBCdriver(self, jdbcDriver, currentUser):
         """Returns all configuration items from the configuration table"""
@@ -662,13 +668,13 @@ class dbCalls:
         log.debug("driver: %s" % jdbcDriver.driver)
         log.debug("classpath: %s" % jdbcDriver.classpath)
 
-        tableJDBCconnectionsDrivers = aliased(configSchema.jdbcConnectionsDrivers)
+        table_jdbc_connections_drivers = aliased(configSchema.jdbcConnectionsDrivers)
         result = "ok"
-        returnCode = 200
+        return_code = 200
 
         try:
             session.execute(
-                update(tableJDBCconnectionsDrivers),
+                update(table_jdbc_connections_drivers),
                 [
                     {
                         "database_type": jdbcDriver.databaseType,
@@ -684,16 +690,16 @@ class dbCalls:
             result = (
                 "JDBC Driver databaseType with version is not a supported combination"
             )
-            returnCode = 400
+            return_code = 400
 
-        resultDict = {}
-        resultDict["status"] = result
+        result_dict = {}
+        result_dict["status"] = result
         # session.close()
         session.remove()
 
-        jsonResult = json.loads(json.dumps(resultDict))
+        json_result = json.loads(json.dumps(result_dict))
         # return (jsonResult, returnCode)
-        return (result, returnCode)
+        return (result, return_code)
 
     def getConfiguration(self, currentUser):
         """Returns all configuration items from the configuration table"""
@@ -705,22 +711,22 @@ class dbCalls:
             self.disconnectDBImportDB()
             return None
 
-        configurationTable = aliased(configSchema.configuration)
-        tableJDBCconnections = aliased(configSchema.jdbcConnections)
+        configuration_table = aliased(configSchema.configuration)
+        table_jdbc_connections = aliased(configSchema.jdbcConnections)
 
         configurations = (
             session.query(
-                configurationTable.configKey,
-                configurationTable.valueInt,
-                configurationTable.valueStr,
-                configurationTable.valueDate,
+                configuration_table.configKey,
+                configuration_table.valueInt,
+                configuration_table.valueStr,
+                configuration_table.valueDate,
             )
-            .select_from(configurationTable)
-            .order_by(configurationTable.configKey)
+            .select_from(configuration_table)
+            .order_by(configuration_table.configKey)
             .all()
         )
 
-        resultDict = {}
+        result_dict = {}
         for row in configurations:
             if row[0] in ["restserver_secret_key"]:
                 # These should not be visable in the REST service. Skip them
@@ -729,10 +735,10 @@ class dbCalls:
             if row[0] == "restserver_admin_user":
                 self.adminUser = row[2]
 
-            valueColumn, boolValue = self.common_config.getConfigValueColumn(
+            value_column, bool_value = self.common_config.getConfigValueColumn(
                 row[0], ignoreErrorOutput=True
             )
-            if valueColumn == None:
+            if value_column == None:
                 # If there is no handling of the value in self.common_config.getConfigValueColumn we will ignore it.
                 # But even if it's handling in that configuration, it must also exists in the datamodel for it to be shown
                 continue
@@ -745,17 +751,17 @@ class dbCalls:
                 if currentUser != self.adminUser:
                     continue
 
-            if valueColumn == "valueInt":
-                resultDict[row[0]] = row[1]
-            elif valueColumn == "valueStr":
-                resultDict[row[0]] = row[2]
-            elif valueColumn == "valueDate":
-                resultDict[row[0]] = row[3]
+            if value_column == "valueInt":
+                result_dict[row[0]] = row[1]
+            elif value_column == "valueStr":
+                result_dict[row[0]] = row[2]
+            elif value_column == "valueDate":
+                result_dict[row[0]] = row[3]
 
         session.remove()
 
-        jsonResult = json.loads(json.dumps(resultDict))
-        return jsonResult
+        json_result = json.loads(json.dumps(result_dict))
+        return json_result
 
     def updateConfiguration(self, configuration, currentUser):
         """Update configuration items in the configuration table"""
@@ -767,7 +773,7 @@ class dbCalls:
             self.disconnectDBImportDB()
             return None
 
-        configurationTable = aliased(configSchema.configuration)
+        configuration_table = aliased(configSchema.configuration)
 
         # First check to make sure we have valid options in the changed options
         try:
@@ -826,24 +832,24 @@ class dbCalls:
                     % (currentUser, key, getattr(configuration, key))
                 )
 
-                valueColumn, boolValue = self.common_config.getConfigValueColumn(key)
+                value_column, bool_value = self.common_config.getConfigValueColumn(key)
 
                 session.execute(
-                    update(configurationTable),
-                    [{"configKey": key, valueColumn: getattr(configuration, key)}],
+                    update(configuration_table),
+                    [{"configKey": key, value_column: getattr(configuration, key)}],
                 )
                 session.commit()
 
         result = "ok"
-        returnCode = 200
-        resultDict = {}
-        resultDict["status"] = "ok"
+        return_code = 200
+        result_dict = {}
+        result_dict["status"] = "ok"
         # session.close()
         session.remove()
 
-        jsonResult = json.loads(json.dumps(resultDict))
+        json_result = json.loads(json.dumps(result_dict))
         # return jsonResult
-        return (result, returnCode)
+        return (result, return_code)
 
     def getJDBCserverType(self, name, connectionString):
         """Return the server type based on the connection string"""
@@ -854,35 +860,35 @@ class dbCalls:
         except invalidConfiguration:
             pass
 
-        serverType = None
+        server_type = None
         if self.common_config.jdbc_servertype == constant.MYSQL:
-            serverType = "MySQL"
+            server_type = "MySQL"
         if self.common_config.jdbc_servertype == constant.ORACLE:
-            serverType = "Oracle"
+            server_type = "Oracle"
         if self.common_config.jdbc_servertype == constant.MSSQL:
-            serverType = "MSSQL Server"
+            server_type = "MSSQL Server"
         if self.common_config.jdbc_servertype == constant.POSTGRESQL:
-            serverType = "PostgreSQL"
+            server_type = "PostgreSQL"
         if self.common_config.jdbc_servertype == constant.PROGRESS:
-            serverType = "Progress"
+            server_type = "Progress"
         if self.common_config.jdbc_servertype == constant.DB2_UDB:
-            serverType = "DB2 UDB"
+            server_type = "DB2 UDB"
         if self.common_config.jdbc_servertype == constant.DB2_AS400:
-            serverType = "DB2 AS400"
+            server_type = "DB2 AS400"
         if self.common_config.jdbc_servertype == constant.MONGO:
-            serverType = "MongoDB"
+            server_type = "MongoDB"
         if self.common_config.jdbc_servertype == constant.CACHEDB:
-            serverType = "Cache"
+            server_type = "Cache"
         if self.common_config.jdbc_servertype == constant.SNOWFLAKE:
-            serverType = "Snowflake"
+            server_type = "Snowflake"
         if self.common_config.jdbc_servertype == constant.AWS_S3:
-            serverType = "AWS S3"
+            server_type = "AWS S3"
         if self.common_config.jdbc_servertype == constant.INFORMIX:
-            serverType = "Informix"
+            server_type = "Informix"
         if self.common_config.jdbc_servertype == constant.SQLANYWHERE:
-            serverType = "SQL Anywhere"
+            server_type = "SQL Anywhere"
 
-        return serverType
+        return server_type
 
     def getAllConnections(self, listOnlyName):
         """Returns all Connections"""
@@ -894,39 +900,41 @@ class dbCalls:
             self.disconnectDBImportDB()
             return None
 
-        tableJDBCconnections = aliased(configSchema.jdbcConnections)
-        jdbcConnections = (
-            session.query(tableJDBCconnections.dbalias, tableJDBCconnections.jdbc_url)
-            .select_from(tableJDBCconnections)
-            .order_by(tableJDBCconnections.dbalias)
+        table_jdbc_connections = aliased(configSchema.jdbcConnections)
+        jdbc_connections = (
+            session.query(
+                table_jdbc_connections.dbalias, table_jdbc_connections.jdbc_url
+            )
+            .select_from(table_jdbc_connections)
+            .order_by(table_jdbc_connections.dbalias)
             .limit(self.contentMaxRows)
         )
 
-        listOfConnections = []
+        list_of_connections = []
         count = 0
-        for row in jdbcConnections:
+        for row in jdbc_connections:
             count = count + 1
-            resultDict = {}
-            resultDict["name"] = row[0]
+            result_dict = {}
+            result_dict["name"] = row[0]
             if listOnlyName == False:
-                resultDict["connectionString"] = row[1]
-                resultDict["serverType"] = self.getJDBCserverType(
+                result_dict["connectionString"] = row[1]
+                result_dict["serverType"] = self.getJDBCserverType(
                     name=row[0], connectionString=row[1]
                 )
 
-            listOfConnections.append(resultDict)
+            list_of_connections.append(result_dict)
 
             if count == self.contentMaxRows:
                 break
 
-        jsonResult = json.loads(json.dumps(listOfConnections))
+        json_result = json.loads(json.dumps(list_of_connections))
         session.remove()
 
         headers = {
             "content-rows": str(count),
             "content-max-returned-rows": str(self.contentMaxRows),
         }
-        return JSONResponse(content=jsonResult, headers=headers, status_code=200)
+        return JSONResponse(content=json_result, headers=headers, status_code=200)
 
     def searchConnections(self, searchValues, currentUser):
         """Search for import tables"""
@@ -938,24 +946,24 @@ class dbCalls:
             self.disconnectDBImportDB()
             return None
 
-        jdbcConnections = aliased(configSchema.jdbcConnections)
+        jdbc_connections = aliased(configSchema.jdbcConnections)
 
-        attributeToColumn = {}
-        attributeToColumn["name"] = jdbcConnections.dbalias
-        attributeToColumn["connectionString"] = jdbcConnections.jdbc_url
-        attributeToColumn["timeWindowTimezone"] = jdbcConnections.timewindow_timezone
-        attributeToColumn["operatorNotes"] = jdbcConnections.operator_notes
-        attributeToColumn["contactInformation"] = jdbcConnections.contact_info
-        attributeToColumn["description"] = jdbcConnections.description
-        attributeToColumn["owner"] = jdbcConnections.owner
+        attribute_to_column = {}
+        attribute_to_column["name"] = jdbc_connections.dbalias
+        attribute_to_column["connectionString"] = jdbc_connections.jdbc_url
+        attribute_to_column["timeWindowTimezone"] = jdbc_connections.timewindow_timezone
+        attribute_to_column["operatorNotes"] = jdbc_connections.operator_notes
+        attribute_to_column["contactInformation"] = jdbc_connections.contact_info
+        attribute_to_column["description"] = jdbc_connections.description
+        attribute_to_column["owner"] = jdbc_connections.owner
 
         # Return a list of connections
-        jdbcConnectionsData = session.query(
-            jdbcConnections.dbalias, jdbcConnections.jdbc_url
-        ).select_from(jdbcConnections)
+        jdbc_connections_data = session.query(
+            jdbc_connections.dbalias, jdbc_connections.jdbc_url
+        ).select_from(jdbc_connections)
 
-        jdbcConnectionsDataCount = session.query(func.count(1)).select_from(
-            jdbcConnections
+        jdbc_connections_data_count = session.query(func.count(1)).select_from(
+            jdbc_connections
         )
 
         # Add the filters for the specific column that we search on
@@ -966,61 +974,61 @@ class dbCalls:
 
             column = items[0]
             value = items[1]
-            likeSearch = False
+            like_search = False
 
             if type(value) is str:
                 if "%" in value or "*" in value:
                     value = value.replace("*", "%")
-                    likeSearch = True
+                    like_search = True
 
             log.debug("search filter: %s = %s" % (column, value))
 
-            if likeSearch == True:
-                jdbcConnectionsData = jdbcConnectionsData.filter(
-                    like_op(attributeToColumn[column], value)
+            if like_search == True:
+                jdbc_connections_data = jdbc_connections_data.filter(
+                    like_op(attribute_to_column[column], value)
                 )
-                jdbcConnectionsDataCount = jdbcConnectionsDataCount.filter(
-                    like_op(attributeToColumn[column], value)
+                jdbc_connections_data_count = jdbc_connections_data_count.filter(
+                    like_op(attribute_to_column[column], value)
                 )
             else:
-                jdbcConnectionsData = jdbcConnectionsData.filter(
-                    attributeToColumn[column] == value
+                jdbc_connections_data = jdbc_connections_data.filter(
+                    attribute_to_column[column] == value
                 )
-                jdbcConnectionsDataCount = jdbcConnectionsDataCount.filter(
-                    attributeToColumn[column] == value
+                jdbc_connections_data_count = jdbc_connections_data_count.filter(
+                    attribute_to_column[column] == value
                 )
 
         # Fetch all rows matching the filter
-        jdbcConnectionsData = jdbcConnectionsData.limit(self.contentMaxRows)
-        jdbcConnectionsDataCount = jdbcConnectionsDataCount.one()
+        jdbc_connections_data = jdbc_connections_data.limit(self.contentMaxRows)
+        jdbc_connections_data_count = jdbc_connections_data_count.one()
 
         # Loop through result and create the return dict
         count = 0
-        listOfConnections = []
-        for row in jdbcConnectionsData:
+        list_of_connections = []
+        for row in jdbc_connections_data:
             count = count + 1
-            resultDict = {}
-            resultDict["name"] = row[0]
-            resultDict["connectionString"] = row[1]
-            resultDict["serverType"] = self.getJDBCserverType(
+            result_dict = {}
+            result_dict["name"] = row[0]
+            result_dict["connectionString"] = row[1]
+            result_dict["serverType"] = self.getJDBCserverType(
                 name=row[0], connectionString=row[1]
             )
 
-            listOfConnections.append(resultDict)
+            list_of_connections.append(result_dict)
 
             if count == self.contentMaxRows:
                 break
 
-        jsonResult = json.loads(json.dumps(listOfConnections))
+        json_result = json.loads(json.dumps(list_of_connections))
         # session.close()
         session.remove()
 
         headers = {
             "content-rows": str(count),
             "content-max-returned-rows": str(self.contentMaxRows),
-            "content-total-rows": str(jdbcConnectionsDataCount[0]),
+            "content-total-rows": str(jdbc_connections_data_count[0]),
         }
-        return JSONResponse(content=jsonResult, headers=headers, status_code=200)
+        return JSONResponse(content=json_result, headers=headers, status_code=200)
 
     def updateConnection(self, connection, currentUser):
         """Update or create a Connections"""
@@ -1032,9 +1040,9 @@ class dbCalls:
             self.disconnectDBImportDB()
             return None
 
-        tableJDBCconnections = aliased(configSchema.jdbcConnections)
+        table_jdbc_connections = aliased(configSchema.jdbcConnections)
         result = "ok"
-        returnCode = 200
+        return_code = 200
 
         log.debug(connection)
         log.info(
@@ -1110,11 +1118,11 @@ class dbCalls:
             log.error(column)  # noqa: F821  # TODO(#164): column is undefined here
 
             result = str(err)
-            returnCode = 500
+            return_code = 500
 
         # session.close()
         session.remove()
-        return (result, returnCode)
+        return (result, return_code)
 
     def getConnection(self, connection):
         """Returns all Connections"""
@@ -1126,35 +1134,35 @@ class dbCalls:
             self.disconnectDBImportDB()
             return None
 
-        tableJDBCconnections = aliased(configSchema.jdbcConnections)
+        table_jdbc_connections = aliased(configSchema.jdbcConnections)
         row = (
             session.query(
-                tableJDBCconnections.dbalias,
-                tableJDBCconnections.jdbc_url,
-                tableJDBCconnections.private_key_path,
-                tableJDBCconnections.public_key_path,
-                tableJDBCconnections.credentials,
-                tableJDBCconnections.datalake_source,
-                tableJDBCconnections.force_string,
-                tableJDBCconnections.max_import_sessions,
-                tableJDBCconnections.create_datalake_import,
-                tableJDBCconnections.timewindow_start,
-                tableJDBCconnections.timewindow_stop,
-                tableJDBCconnections.timewindow_timezone,
-                tableJDBCconnections.operator_notes,
-                tableJDBCconnections.contact_info,
-                tableJDBCconnections.description,
-                tableJDBCconnections.owner,
-                tableJDBCconnections.environment,
-                tableJDBCconnections.seed_file,
-                tableJDBCconnections.create_foreign_keys,
-                tableJDBCconnections.atlas_discovery,
-                tableJDBCconnections.atlas_include_filter,
-                tableJDBCconnections.atlas_exclude_filter,
-                tableJDBCconnections.atlas_last_discovery,
+                table_jdbc_connections.dbalias,
+                table_jdbc_connections.jdbc_url,
+                table_jdbc_connections.private_key_path,
+                table_jdbc_connections.public_key_path,
+                table_jdbc_connections.credentials,
+                table_jdbc_connections.datalake_source,
+                table_jdbc_connections.force_string,
+                table_jdbc_connections.max_import_sessions,
+                table_jdbc_connections.create_datalake_import,
+                table_jdbc_connections.timewindow_start,
+                table_jdbc_connections.timewindow_stop,
+                table_jdbc_connections.timewindow_timezone,
+                table_jdbc_connections.operator_notes,
+                table_jdbc_connections.contact_info,
+                table_jdbc_connections.description,
+                table_jdbc_connections.owner,
+                table_jdbc_connections.environment,
+                table_jdbc_connections.seed_file,
+                table_jdbc_connections.create_foreign_keys,
+                table_jdbc_connections.atlas_discovery,
+                table_jdbc_connections.atlas_include_filter,
+                table_jdbc_connections.atlas_exclude_filter,
+                table_jdbc_connections.atlas_last_discovery,
             )
-            .select_from(tableJDBCconnections)
-            .filter(tableJDBCconnections.dbalias == connection)
+            .select_from(table_jdbc_connections)
+            .filter(table_jdbc_connections.dbalias == connection)
             .one_or_none()
         )
 
@@ -1164,51 +1172,51 @@ class dbCalls:
                 detail="connection does not exist",
             )
 
-        resultDict = {}
-        resultDict["name"] = row[0]
-        resultDict["connectionString"] = row[1]
-        resultDict["private_key_path"] = row[2]
-        resultDict["public_key_path"] = row[3]
-        resultDict["credentials"] = row[4]
-        resultDict["source"] = row[5]
-        resultDict["forceString"] = row[6]
+        result_dict = {}
+        result_dict["name"] = row[0]
+        result_dict["connectionString"] = row[1]
+        result_dict["private_key_path"] = row[2]
+        result_dict["public_key_path"] = row[3]
+        result_dict["credentials"] = row[4]
+        result_dict["source"] = row[5]
+        result_dict["forceString"] = row[6]
         if (
-            resultDict["forceString"] != 0
-            and resultDict["forceString"] != 1
-            and resultDict["forceString"] != -1
+            result_dict["forceString"] != 0
+            and result_dict["forceString"] != 1
+            and result_dict["forceString"] != -1
         ):
-            resultDict["forceString"] = -1
-        resultDict["maxSessions"] = row[7]
-        resultDict["createDatalakeImport"] = row[8]
+            result_dict["forceString"] = -1
+        result_dict["maxSessions"] = row[7]
+        result_dict["createDatalakeImport"] = row[8]
         try:
-            resultDict["timeWindowStart"] = row[9].strftime("%H:%M:%S")
+            result_dict["timeWindowStart"] = row[9].strftime("%H:%M:%S")
         except AttributeError:
-            resultDict["timeWindowStart"] = None
+            result_dict["timeWindowStart"] = None
         try:
-            resultDict["timeWindowStop"] = row[10].strftime("%H:%M:%S")
+            result_dict["timeWindowStop"] = row[10].strftime("%H:%M:%S")
         except AttributeError:
-            resultDict["timeWindowStop"] = None
-        resultDict["timeWindowTimezone"] = row[11]
-        resultDict["operatorNotes"] = row[12]
-        resultDict["contactInformation"] = row[13]
-        resultDict["description"] = row[14]
-        resultDict["owner"] = row[15]
-        resultDict["environment"] = row[16]
-        resultDict["seedFile"] = row[17]
-        resultDict["createForeignKey"] = row[18]
-        resultDict["atlasDiscovery"] = row[19]
-        resultDict["atlasIncludeFilter"] = row[20]
-        resultDict["atlasExcludeFilter"] = row[21]
+            result_dict["timeWindowStop"] = None
+        result_dict["timeWindowTimezone"] = row[11]
+        result_dict["operatorNotes"] = row[12]
+        result_dict["contactInformation"] = row[13]
+        result_dict["description"] = row[14]
+        result_dict["owner"] = row[15]
+        result_dict["environment"] = row[16]
+        result_dict["seedFile"] = row[17]
+        result_dict["createForeignKey"] = row[18]
+        result_dict["atlasDiscovery"] = row[19]
+        result_dict["atlasIncludeFilter"] = row[20]
+        result_dict["atlasExcludeFilter"] = row[21]
         try:
-            resultDict["atlasLastDiscovery"] = row[22].strftime("%Y-%m-%d %H:%M:%S")
+            result_dict["atlasLastDiscovery"] = row[22].strftime("%Y-%m-%d %H:%M:%S")
         except AttributeError:
-            resultDict["atlasLastDiscovery"] = None
+            result_dict["atlasLastDiscovery"] = None
 
-        jsonResult = json.loads(json.dumps(resultDict))
+        json_result = json.loads(json.dumps(result_dict))
         # session.close()
         session.remove()
 
-        return jsonResult
+        return json_result
 
     def deleteConnection(self, connection, currentUser):
         """Delete a connection"""
@@ -1221,7 +1229,7 @@ class dbCalls:
             return None
 
         result = "ok"
-        returnCode = 200
+        return_code = 200
 
         log.info("User '%s' deleted connection '%s'" % (currentUser, connection))
 
@@ -1236,7 +1244,7 @@ class dbCalls:
 
         if row == None:
             result = "Connection does not exist"
-            returnCode = 404
+            return_code = 404
         else:
             (
                 session.query(configSchema.jdbcConnections)
@@ -1247,66 +1255,66 @@ class dbCalls:
 
         # session.close()
         session.remove()
-        return (result, returnCode)
+        return (result, return_code)
 
     def encryptedCredentials(self, credentials, currentUser):
         """Encrypt username and password with private key and store in connection"""
         log = logging.getLogger(self.logger)
 
-        manageCmd = "%s/bin/manage" % (os.environ["DBIMPORT_HOME"])
+        manage_cmd = "%s/bin/manage" % (os.environ["DBIMPORT_HOME"])
 
-        jsonInput = {}
-        jsonInput["connection"] = credentials.connection
-        jsonInput["username"] = credentials.username
-        jsonInput["password"] = credentials.password
+        json_input = {}
+        json_input["connection"] = credentials.connection
+        json_input["username"] = credentials.username
+        json_input["password"] = credentials.password
 
-        processKilled = False
-        manageSession = subprocess.Popen(
-            [manageCmd, "--encryptCredentials", "--jsonInput", "--quiet"],
+        process_killed = False
+        manage_session = subprocess.Popen(
+            [manage_cmd, "--encryptCredentials", "--jsonInput", "--quiet"],
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
         )
         try:
-            stdout, stderr = manageSession.communicate(
-                json.dumps(jsonInput).encode(), timeout=10
+            stdout, stderr = manage_session.communicate(
+                json.dumps(json_input).encode(), timeout=10
             )
         except subprocess.TimeoutExpired:
             log.error("Killing 'manage --encryptCredentials' process")
-            manageSession.kill()
-            stdout, stderr = manageSession.communicate()
-            processKilled = True
+            manage_session.kill()
+            stdout, stderr = manage_session.communicate()
+            process_killed = True
 
-        if manageSession.returncode != 0 or processKilled == True:
-            returnCode = 500
-            resultMsg = {
+        if manage_session.returncode != 0 or process_killed == True:
+            return_code = 500
+            result_msg = {
                 "result": re.sub("\n$", "", re.sub("^json: ", "", stdout.decode()))
             }
         else:
-            returnCode = 200
-            resultMsg = {"result": "Credentials updated successfully"}
+            return_code = 200
+            result_msg = {"result": "Credentials updated successfully"}
 
-        return (resultMsg, returnCode)
+        return (result_msg, return_code)
 
     def testConnection(self, connection, currentUser):
         """Make a test connection to a JDBC source and return result"""
         log = logging.getLogger(self.logger)
 
-        manageCmd = "%s/bin/manage" % (os.environ["DBIMPORT_HOME"])
+        manage_cmd = "%s/bin/manage" % (os.environ["DBIMPORT_HOME"])
 
         result = subprocess.run(
-            [manageCmd, "--testConnection", "-a", connection, "--quiet"],
+            [manage_cmd, "--testConnection", "-a", connection, "--quiet"],
             stdout=subprocess.PIPE,
             check=False,
         )
         if result.returncode != 0:
-            returnCode = 500
+            return_code = 500
         else:
-            returnCode = 200
+            return_code = 200
 
-        resultMsg = {"result": re.sub("\n$", "", result.stdout.decode())}
+        result_msg = {"result": re.sub("\n$", "", result.stdout.decode())}
 
-        return (resultMsg, returnCode)
+        return (result_msg, return_code)
 
     def getAllImportDatabases(self):
         """Returns all databases that have imports configured in them"""
@@ -1318,125 +1326,125 @@ class dbCalls:
             self.disconnectDBImportDB()
             return None
 
-        importTables = aliased(configSchema.importTables)
+        import_tables = aliased(configSchema.importTables)
 
-        importTableDBs = (
+        import_table_dbs = (
             session.query(
-                importTables.hive_db,
-                func.count(importTables.hive_db),
-                func.max(importTables.last_update_from_source),
-                func.sum(importTables.sqoop_last_size),
-                func.sum(importTables.sqoop_last_rows),
+                import_tables.hive_db,
+                func.count(import_tables.hive_db),
+                func.max(import_tables.last_update_from_source),
+                func.sum(import_tables.sqoop_last_size),
+                func.sum(import_tables.sqoop_last_rows),
             )
-            .select_from(importTables)
-            .group_by(importTables.hive_db)
+            .select_from(import_tables)
+            .group_by(import_tables.hive_db)
             .limit(self.contentMaxRows)
         )
 
-        listOfDBs = []
+        list_of_dbs = []
         count = 0
-        for row in importTableDBs:
+        for row in import_table_dbs:
             count = count + 1
-            resultDict = {}
-            resultDict["name"] = row[0]
-            resultDict["tables"] = row[1]
+            result_dict = {}
+            result_dict["name"] = row[0]
+            result_dict["tables"] = row[1]
             if row[2] == None:
-                resultDict["lastImport"] = ""
+                result_dict["lastImport"] = ""
             else:
-                resultDict["lastImport"] = row[2].strftime("%Y-%m-%d %H:%M:%S")
+                result_dict["lastImport"] = row[2].strftime("%Y-%m-%d %H:%M:%S")
 
             if row[3] == None:
-                resultDict["lastSize"] = 0
+                result_dict["lastSize"] = 0
             else:
-                resultDict["lastSize"] = int(row[3])
+                result_dict["lastSize"] = int(row[3])
 
             if row[4] == None:
-                resultDict["lastRows"] = 0
+                result_dict["lastRows"] = 0
             else:
-                resultDict["lastRows"] = int(row[4])
-            listOfDBs.append(resultDict)
+                result_dict["lastRows"] = int(row[4])
+            list_of_dbs.append(result_dict)
 
             if count == self.contentMaxRows:
                 break
 
-        jsonResult = json.loads(json.dumps(listOfDBs))
+        json_result = json.loads(json.dumps(list_of_dbs))
         session.remove()
 
         headers = {
             "content-rows": str(count),
             "content-max-returned-rows": str(self.contentMaxRows),
         }
-        return JSONResponse(content=jsonResult, headers=headers, status_code=200)
+        return JSONResponse(content=json_result, headers=headers, status_code=200)
 
     def discoverImportTables(self, data, currentUser):
         """Search for import tables"""
         log = logging.getLogger(self.logger)
 
-        manageCmd = "%s/bin/manage" % (os.environ["DBIMPORT_HOME"])
+        manage_cmd = "%s/bin/manage" % (os.environ["DBIMPORT_HOME"])
 
-        commandArg = []
-        commandArg.append(manageCmd)
-        commandArg.append("--addImportTable")
-        commandArg.append("-a")
-        commandArg.append(data.connection)
-        commandArg.append("-h")
-        commandArg.append(data.database)
+        command_arg = []
+        command_arg.append(manage_cmd)
+        command_arg.append("--addImportTable")
+        command_arg.append("-a")
+        command_arg.append(data.connection)
+        command_arg.append("-h")
+        command_arg.append(data.database)
 
         if data.schemaFilter != None and data.schemaFilter.strip() != "":
-            commandArg.append("-S")
-            commandArg.append(data.schemaFilter)
+            command_arg.append("-S")
+            command_arg.append(data.schemaFilter)
 
         if data.tableFilter != None and data.tableFilter.strip() != "":
-            commandArg.append("-T")
-            commandArg.append(data.tableFilter)
+            command_arg.append("-T")
+            command_arg.append(data.tableFilter)
 
         if data.addSchemaToTable != None and data.addSchemaToTable == True:
-            commandArg.append("--addSchemaToTable")
+            command_arg.append("--addSchemaToTable")
 
         if data.addCounterToTable != None and data.addCounterToTable == True:
-            commandArg.append("--addCounterToTable")
+            command_arg.append("--addCounterToTable")
 
             if data.counterStart != None:
-                commandArg.append("--counterStart")
-                commandArg.append(str(data.counterStart))
+                command_arg.append("--counterStart")
+                command_arg.append(str(data.counterStart))
 
         if data.addCustomText != None and data.addCustomText.strip() != "":
-            commandArg.append("--addCustomText")
-            commandArg.append(data.addCustomText)
+            command_arg.append("--addCustomText")
+            command_arg.append(data.addCustomText)
 
-        commandArg.append("--quiet")
-        commandArg.append("--jsonOutput")
+        command_arg.append("--quiet")
+        command_arg.append("--jsonOutput")
 
-        log.debug(commandArg)
+        log.debug(command_arg)
 
-        result = subprocess.run(commandArg, stdout=subprocess.PIPE, check=False)
+        result = subprocess.run(command_arg, stdout=subprocess.PIPE, check=False)
 
         if result.returncode != 0:
             raise HTTPException(status_code=500, detail=result.stdout.decode())
 
         else:
-            returnCode = 200
+            return_code = 200
             if (
                 result.stdout.decode().strip()
                 == "There are no tables in the source database that we dont already have in DBImport"
             ):
-                returnMsg = []
+                return_msg = []
             else:
-                returnMsg = json.loads(result.stdout.decode().replace("\n", ""))
+                return_msg = json.loads(result.stdout.decode().replace("\n", ""))
 
-        return (returnMsg, returnCode)
+        return (return_msg, return_code)
 
     def addDiscoveredImportTables(self, data, currentUser):
         """Add discovered import tables"""
         log = logging.getLogger(self.logger)
 
-        createCounter = 0
+        create_counter = 0
         for record in data:
-            createCounter = createCounter + 1
+            create_counter = create_counter + 1
             database = record.database
             table = record.table
 
-            createData = dataModels.importTableDetailsWrite(
+            create_data = dataModels.importTableDetailsWrite(
                 connection=record.connection,
                 sourceSchema=record.sourceSchema,
                 sourceTable=record.sourceTable,
@@ -1446,12 +1454,12 @@ class dbCalls:
                 etlEngine="spark",
             )
 
-            self.updateImportTable(database, table, createData, currentUser)
+            self.updateImportTable(database, table, create_data, currentUser)
 
-        returnCode = 200
-        resultMsg = {"result": "%s tables created" % (createCounter)}
+        return_code = 200
+        result_msg = {"result": "%s tables created" % (create_counter)}
 
-        return (resultMsg, returnCode)
+        return (result_msg, return_code)
 
     def searchImportTables(self, searchValues, currentUser):
         """Search for import tables"""
@@ -1463,38 +1471,40 @@ class dbCalls:
             self.disconnectDBImportDB()
             return None
 
-        importTables = aliased(configSchema.importTables)
+        import_tables = aliased(configSchema.importTables)
 
-        attributeToColumn = {}
-        attributeToColumn["database"] = importTables.hive_db
-        attributeToColumn["table"] = importTables.hive_table
-        attributeToColumn["connection"] = importTables.dbalias
-        attributeToColumn["sourceSchema"] = importTables.source_schema
-        attributeToColumn["sourceTable"] = importTables.source_table
-        attributeToColumn["importPhaseType"] = importTables.import_phase_type
-        attributeToColumn["etlPhaseType"] = importTables.etl_phase_type
-        attributeToColumn["importTool"] = importTables.import_tool
-        attributeToColumn["etlEngine"] = importTables.etl_engine
-        attributeToColumn["includeInAirflow"] = importTables.include_in_airflow
-        attributeToColumn["operatorNotes"] = importTables.operator_notes
+        attribute_to_column = {}
+        attribute_to_column["database"] = import_tables.hive_db
+        attribute_to_column["table"] = import_tables.hive_table
+        attribute_to_column["connection"] = import_tables.dbalias
+        attribute_to_column["sourceSchema"] = import_tables.source_schema
+        attribute_to_column["sourceTable"] = import_tables.source_table
+        attribute_to_column["importPhaseType"] = import_tables.import_phase_type
+        attribute_to_column["etlPhaseType"] = import_tables.etl_phase_type
+        attribute_to_column["importTool"] = import_tables.import_tool
+        attribute_to_column["etlEngine"] = import_tables.etl_engine
+        attribute_to_column["includeInAirflow"] = import_tables.include_in_airflow
+        attribute_to_column["operatorNotes"] = import_tables.operator_notes
 
         # Return a list of Hive tables with details
-        importTablesData = session.query(
-            importTables.hive_db,
-            importTables.hive_table,
-            importTables.dbalias,
-            importTables.source_schema,
-            importTables.source_table,
-            importTables.import_phase_type,
-            importTables.etl_phase_type,
-            importTables.import_tool,
-            importTables.etl_engine,
-            importTables.last_update_from_source,
-            importTables.include_in_airflow,
-            importTables.operator_notes,
-        ).select_from(importTables)
+        import_tables_data = session.query(
+            import_tables.hive_db,
+            import_tables.hive_table,
+            import_tables.dbalias,
+            import_tables.source_schema,
+            import_tables.source_table,
+            import_tables.import_phase_type,
+            import_tables.etl_phase_type,
+            import_tables.import_tool,
+            import_tables.etl_engine,
+            import_tables.last_update_from_source,
+            import_tables.include_in_airflow,
+            import_tables.operator_notes,
+        ).select_from(import_tables)
 
-        importTablesDataCount = session.query(func.count(1)).select_from(importTables)
+        import_tables_data_count = session.query(func.count(1)).select_from(
+            import_tables
+        )
 
         # Add the filters for the specific column that we search on
         for items in searchValues:
@@ -1504,94 +1514,94 @@ class dbCalls:
 
             column = items[0]
             value = items[1]
-            likeSearch = False
+            like_search = False
 
             if type(value) is str:
                 if "%" in value or "*" in value:
                     value = value.replace("*", "%")
-                    likeSearch = True
+                    like_search = True
 
             log.debug("search filter: %s = %s" % (column, value))
 
-            if likeSearch == True:
-                importTablesData = importTablesData.filter(
-                    like_op(attributeToColumn[column], value)
+            if like_search == True:
+                import_tables_data = import_tables_data.filter(
+                    like_op(attribute_to_column[column], value)
                 )
-                importTablesDataCount = importTablesDataCount.filter(
-                    like_op(attributeToColumn[column], value)
+                import_tables_data_count = import_tables_data_count.filter(
+                    like_op(attribute_to_column[column], value)
                 )
             else:
-                importTablesData = importTablesData.filter(
-                    attributeToColumn[column] == value
+                import_tables_data = import_tables_data.filter(
+                    attribute_to_column[column] == value
                 )
-                importTablesDataCount = importTablesDataCount.filter(
-                    attributeToColumn[column] == value
+                import_tables_data_count = import_tables_data_count.filter(
+                    attribute_to_column[column] == value
                 )
 
         # Fetch all rows matching the filter
-        importTablesData = importTablesData.limit(self.contentMaxRows)
-        importTablesDataCount = importTablesDataCount.one()
+        import_tables_data = import_tables_data.limit(self.contentMaxRows)
+        import_tables_data_count = import_tables_data_count.one()
 
         # Loop through result and create the return dict
         count = 0
-        listOfTables = []
-        for row in importTablesData:
+        list_of_tables = []
+        for row in import_tables_data:
             count = count + 1
-            resultDict = {}
-            resultDict["database"] = row[0]
-            resultDict["table"] = row[1]
-            resultDict["connection"] = row[2]
-            resultDict["sourceSchema"] = row[3]
-            resultDict["sourceTable"] = row[4]
-            resultDict["importPhaseType"] = row[5]
-            resultDict["etlPhaseType"] = row[6]
-            resultDict["importTool"] = row[7]
-            resultDict["etlEngine"] = row[8]
+            result_dict = {}
+            result_dict["database"] = row[0]
+            result_dict["table"] = row[1]
+            result_dict["connection"] = row[2]
+            result_dict["sourceSchema"] = row[3]
+            result_dict["sourceTable"] = row[4]
+            result_dict["importPhaseType"] = row[5]
+            result_dict["etlPhaseType"] = row[6]
+            result_dict["importTool"] = row[7]
+            result_dict["etlEngine"] = row[8]
             try:
-                resultDict["lastUpdateFromSource"] = row[9].strftime(
+                result_dict["lastUpdateFromSource"] = row[9].strftime(
                     "%Y-%m-%d %H:%M:%S"
                 )
             except AttributeError:
-                resultDict["lastUpdateFromSource"] = None
+                result_dict["lastUpdateFromSource"] = None
             if row[10] == 1:
-                resultDict["includeInAirflow"] = True
+                result_dict["includeInAirflow"] = True
             else:
-                resultDict["includeInAirflow"] = False
-            resultDict["operatorNotes"] = row[11]
+                result_dict["includeInAirflow"] = False
+            result_dict["operatorNotes"] = row[11]
 
-            listOfTables.append(resultDict)
+            list_of_tables.append(result_dict)
 
             if count == self.contentMaxRows:
                 break
 
-        jsonResult = json.loads(json.dumps(listOfTables))
+        json_result = json.loads(json.dumps(list_of_tables))
         # session.close()
         session.remove()
 
         headers = {
             "content-rows": str(count),
             "content-max-returned-rows": str(self.contentMaxRows),
-            "content-total-rows": str(importTablesDataCount[0]),
+            "content-total-rows": str(import_tables_data_count[0]),
         }
-        return JSONResponse(content=jsonResult, headers=headers, status_code=200)
+        return JSONResponse(content=json_result, headers=headers, status_code=200)
 
     def getImportTablesOnConnection(self, connection, currentUser):
         """Returns all import tables in a specific database"""
         log = logging.getLogger(self.logger)
 
-        searchValues = dataModels.importTableSearch(
+        search_values = dataModels.importTableSearch(
             database="*", table="*", connection=connection
         )
 
-        return self.searchImportTables(searchValues, currentUser)
+        return self.searchImportTables(search_values, currentUser)
 
     def getImportTablesInDatabase(self, database, currentUser):
         """Returns all import tables in a specific database"""
         log = logging.getLogger(self.logger)
 
-        searchValues = dataModels.importTableSearch(database=database, table="*")
+        search_values = dataModels.importTableSearch(database=database, table="*")
 
-        return self.searchImportTables(searchValues, currentUser)
+        return self.searchImportTables(search_values, currentUser)
 
     def getImportTableDetails(self, database, table, includeColumns):
         """Returns all import table details"""
@@ -1603,86 +1613,87 @@ class dbCalls:
             self.disconnectDBImportDB()
             return None
 
-        importTables = aliased(configSchema.importTables)
+        import_tables = aliased(configSchema.importTables)
 
         # Return a list of Hive tables with details
         row = (
             session.query(
-                importTables.hive_db,
-                importTables.hive_table,
-                importTables.dbalias,
-                importTables.source_schema,
-                importTables.source_table,
-                importTables.import_phase_type,
-                importTables.etl_phase_type,
-                importTables.import_tool,
-                importTables.etl_engine,
-                importTables.last_update_from_source,
-                importTables.sqoop_sql_where_addition,
-                importTables.nomerge_ingestion_sql_addition,
-                importTables.include_in_airflow,
-                importTables.airflow_priority,
-                importTables.validate_import,
-                importTables.validationMethod,
-                importTables.validate_source,
-                importTables.validate_diff_allowed,
-                importTables.validationCustomQuerySourceSQL,
-                importTables.validationCustomQueryHiveSQL,
-                importTables.validationCustomQueryValidateImportTable,
-                importTables.truncate_hive,
-                importTables.mappers,
-                importTables.soft_delete_during_merge,
-                importTables.source_rowcount,
-                importTables.source_rowcount_incr,
-                importTables.hive_rowcount,
-                importTables.validationCustomQuerySourceValue,
-                importTables.validationCustomQueryHiveValue,
-                importTables.incr_mode,
-                importTables.incr_column,
-                importTables.incr_validation_method,
-                importTables.incr_minvalue,
-                importTables.incr_maxvalue,
-                importTables.incr_minvalue_pending,
-                importTables.incr_maxvalue_pending,
-                importTables.pk_column_override,
-                importTables.pk_column_override_mergeonly,
-                importTables.hive_merge_heap,
-                importTables.hive_split_count,
-                importTables.spark_executor_memory,
-                importTables.spark_executors,
-                importTables.split_by_column,
-                importTables.sqoop_query,
-                importTables.sqoop_options,
-                importTables.sqoop_last_size,
-                importTables.sqoop_last_rows,
-                importTables.sqoop_last_mappers,
-                importTables.sqoop_last_execution,
-                importTables.sqoop_use_generated_sql,
-                importTables.sqoop_allow_text_splitter,
-                importTables.force_string,
-                importTables.comment,
-                importTables.generated_hive_column_definition,
-                importTables.generated_sqoop_query,
-                importTables.generated_sqoop_options,
-                importTables.generated_pk_columns,
-                importTables.generated_foreign_keys,
-                importTables.datalake_source,
-                importTables.operator_notes,
-                importTables.copy_finished,
-                importTables.copy_slave,
-                importTables.create_foreign_keys,
-                importTables.invalidate_impala,
-                importTables.custom_max_query,
-                importTables.mergeCompactionMethod,
-                importTables.sourceTableType,
-                importTables.import_database,
-                importTables.import_table,
-                importTables.history_database,
-                importTables.history_table,
+                import_tables.hive_db,
+                import_tables.hive_table,
+                import_tables.dbalias,
+                import_tables.source_schema,
+                import_tables.source_table,
+                import_tables.import_phase_type,
+                import_tables.etl_phase_type,
+                import_tables.import_tool,
+                import_tables.etl_engine,
+                import_tables.last_update_from_source,
+                import_tables.sqoop_sql_where_addition,
+                import_tables.nomerge_ingestion_sql_addition,
+                import_tables.include_in_airflow,
+                import_tables.airflow_priority,
+                import_tables.validate_import,
+                import_tables.validationMethod,
+                import_tables.validate_source,
+                import_tables.validate_diff_allowed,
+                import_tables.validationCustomQuerySourceSQL,
+                import_tables.validationCustomQueryHiveSQL,
+                import_tables.validationCustomQueryValidateImportTable,
+                import_tables.truncate_hive,
+                import_tables.mappers,
+                import_tables.soft_delete_during_merge,
+                import_tables.source_rowcount,
+                import_tables.source_rowcount_incr,
+                import_tables.hive_rowcount,
+                import_tables.validationCustomQuerySourceValue,
+                import_tables.validationCustomQueryHiveValue,
+                import_tables.incr_mode,
+                import_tables.incr_column,
+                import_tables.incr_validation_method,
+                import_tables.incr_minvalue,
+                import_tables.incr_maxvalue,
+                import_tables.incr_minvalue_pending,
+                import_tables.incr_maxvalue_pending,
+                import_tables.pk_column_override,
+                import_tables.pk_column_override_mergeonly,
+                import_tables.hive_merge_heap,
+                import_tables.hive_split_count,
+                import_tables.spark_executor_memory,
+                import_tables.spark_executors,
+                import_tables.split_by_column,
+                import_tables.sqoop_query,
+                import_tables.sqoop_options,
+                import_tables.sqoop_last_size,
+                import_tables.sqoop_last_rows,
+                import_tables.sqoop_last_mappers,
+                import_tables.sqoop_last_execution,
+                import_tables.sqoop_use_generated_sql,
+                import_tables.sqoop_allow_text_splitter,
+                import_tables.force_string,
+                import_tables.comment,
+                import_tables.generated_hive_column_definition,
+                import_tables.generated_sqoop_query,
+                import_tables.generated_sqoop_options,
+                import_tables.generated_pk_columns,
+                import_tables.generated_foreign_keys,
+                import_tables.datalake_source,
+                import_tables.operator_notes,
+                import_tables.copy_finished,
+                import_tables.copy_slave,
+                import_tables.create_foreign_keys,
+                import_tables.invalidate_impala,
+                import_tables.custom_max_query,
+                import_tables.mergeCompactionMethod,
+                import_tables.sourceTableType,
+                import_tables.import_database,
+                import_tables.import_table,
+                import_tables.history_database,
+                import_tables.history_table,
             )
-            .select_from(importTables)
+            .select_from(import_tables)
             .filter(
-                (importTables.hive_db == database) & (importTables.hive_table == table)
+                (import_tables.hive_db == database)
+                & (import_tables.hive_table == table)
             )
             .one_or_none()
         )
@@ -1693,110 +1704,110 @@ class dbCalls:
                 detail="import table does not exist",
             )
 
-        resultDict = {}
-        resultDict["database"] = row[0]
-        resultDict["table"] = row[1]
-        resultDict["connection"] = row[2]
-        resultDict["sourceSchema"] = row[3]
-        resultDict["sourceTable"] = row[4]
-        resultDict["importPhaseType"] = row[5]
-        resultDict["etlPhaseType"] = row[6]
-        resultDict["importTool"] = row[7]
-        resultDict["etlEngine"] = row[8]
+        result_dict = {}
+        result_dict["database"] = row[0]
+        result_dict["table"] = row[1]
+        result_dict["connection"] = row[2]
+        result_dict["sourceSchema"] = row[3]
+        result_dict["sourceTable"] = row[4]
+        result_dict["importPhaseType"] = row[5]
+        result_dict["etlPhaseType"] = row[6]
+        result_dict["importTool"] = row[7]
+        result_dict["etlEngine"] = row[8]
         try:
-            resultDict["lastUpdateFromSource"] = row[9].strftime("%Y-%m-%d %H:%M:%S")
+            result_dict["lastUpdateFromSource"] = row[9].strftime("%Y-%m-%d %H:%M:%S")
         except AttributeError:
-            resultDict["lastUpdateFromSource"] = None
-        resultDict["sqlWhereAddition"] = row[10]
-        resultDict["nomergeIngestionSqlAddition"] = row[11]
+            result_dict["lastUpdateFromSource"] = None
+        result_dict["sqlWhereAddition"] = row[10]
+        result_dict["nomergeIngestionSqlAddition"] = row[11]
         if row[12] == 1:
-            resultDict["includeInAirflow"] = True
+            result_dict["includeInAirflow"] = True
         else:
-            resultDict["includeInAirflow"] = False
-        resultDict["airflowPriority"] = row[13]
-        resultDict["validateImport"] = row[14]
-        resultDict["validationMethod"] = row[15]
-        resultDict["validateSource"] = row[16]
-        resultDict["validateDiffAllowed"] = row[17]
-        resultDict["validationCustomQuerySourceSQL"] = row[18]
-        resultDict["validationCustomQueryHiveSQL"] = row[19]
-        resultDict["validationCustomQueryValidateImportTable"] = row[20]
+            result_dict["includeInAirflow"] = False
+        result_dict["airflowPriority"] = row[13]
+        result_dict["validateImport"] = row[14]
+        result_dict["validationMethod"] = row[15]
+        result_dict["validateSource"] = row[16]
+        result_dict["validateDiffAllowed"] = row[17]
+        result_dict["validationCustomQuerySourceSQL"] = row[18]
+        result_dict["validationCustomQueryHiveSQL"] = row[19]
+        result_dict["validationCustomQueryValidateImportTable"] = row[20]
         # 		resultDict['truncateTable'] = row[21]
-        resultDict["sqlSessions"] = row[22]
-        resultDict["softDeleteDuringMerge"] = row[23]
-        resultDict["sourceRowcount"] = row[24]
-        resultDict["sourceRowcountIncr"] = row[25]
-        resultDict["targetRowcount"] = row[26]
-        resultDict["validationCustomQuerySourceValue"] = row[27]
-        resultDict["validationCustomQueryHiveValue"] = row[28]
+        result_dict["sqlSessions"] = row[22]
+        result_dict["softDeleteDuringMerge"] = row[23]
+        result_dict["sourceRowcount"] = row[24]
+        result_dict["sourceRowcountIncr"] = row[25]
+        result_dict["targetRowcount"] = row[26]
+        result_dict["validationCustomQuerySourceValue"] = row[27]
+        result_dict["validationCustomQueryHiveValue"] = row[28]
         if row[29] == None or row[29] == "":
-            resultDict["incrMode"] = "lastmodified"
+            result_dict["incrMode"] = "lastmodified"
         else:
-            resultDict["incrMode"] = row[29]
-        resultDict["incrColumn"] = row[30]
-        resultDict["incrValidationMethod"] = row[31]
-        resultDict["incrMinvalue"] = row[32]
-        resultDict["incrMaxvalue"] = row[33]
-        resultDict["incrMinvaluePending"] = row[34]
-        resultDict["incrMaxvaluePending"] = row[35]
-        resultDict["pkColumnOverride"] = row[36]
-        resultDict["pkColumnOverrideMergeonly"] = row[37]
-        resultDict["hiveContainerSize"] = row[38]
-        resultDict["splitCount"] = row[39]
-        resultDict["sparkExecutorMemory"] = row[40]
-        resultDict["sparkExecutors"] = row[41]
-        resultDict["splitByColumn"] = row[42]
-        resultDict["sqoopCustomQuery"] = row[43]
-        resultDict["sqoopOptions"] = row[44]
-        resultDict["lastSize"] = row[45]
-        resultDict["lastRows"] = row[46]
-        resultDict["lastSqlSessions"] = row[47]
-        resultDict["lastExecution"] = row[48]
+            result_dict["incrMode"] = row[29]
+        result_dict["incrColumn"] = row[30]
+        result_dict["incrValidationMethod"] = row[31]
+        result_dict["incrMinvalue"] = row[32]
+        result_dict["incrMaxvalue"] = row[33]
+        result_dict["incrMinvaluePending"] = row[34]
+        result_dict["incrMaxvaluePending"] = row[35]
+        result_dict["pkColumnOverride"] = row[36]
+        result_dict["pkColumnOverrideMergeonly"] = row[37]
+        result_dict["hiveContainerSize"] = row[38]
+        result_dict["splitCount"] = row[39]
+        result_dict["sparkExecutorMemory"] = row[40]
+        result_dict["sparkExecutors"] = row[41]
+        result_dict["splitByColumn"] = row[42]
+        result_dict["sqoopCustomQuery"] = row[43]
+        result_dict["sqoopOptions"] = row[44]
+        result_dict["lastSize"] = row[45]
+        result_dict["lastRows"] = row[46]
+        result_dict["lastSqlSessions"] = row[47]
+        result_dict["lastExecution"] = row[48]
         if (
             row[49] == -1
         ):  # -1 is not allowed, but default in the database. Setting these to 1
-            resultDict["sqoopUseGeneratedSql"] = 1
+            result_dict["sqoopUseGeneratedSql"] = 1
         else:
-            resultDict["sqoopUseGeneratedSql"] = row[49]
-        resultDict["allowTextSplitter"] = row[50]
-        resultDict["forceString"] = row[51]
+            result_dict["sqoopUseGeneratedSql"] = row[49]
+        result_dict["allowTextSplitter"] = row[50]
+        result_dict["forceString"] = row[51]
         if (
-            resultDict["forceString"] != 0
-            and resultDict["forceString"] != 1
-            and resultDict["forceString"] != -1
+            result_dict["forceString"] != 0
+            and result_dict["forceString"] != 1
+            and result_dict["forceString"] != -1
         ):
-            resultDict["forceString"] = -1
-        resultDict["comment"] = row[52]
-        resultDict["generatedHiveColumnDefinition"] = row[53]
-        resultDict["generatedSqoopQuery"] = row[54]
-        resultDict["generatedSqoopOptions"] = row[55]
-        resultDict["generatedPkColumns"] = row[56]
+            result_dict["forceString"] = -1
+        result_dict["comment"] = row[52]
+        result_dict["generatedHiveColumnDefinition"] = row[53]
+        result_dict["generatedSqoopQuery"] = row[54]
+        result_dict["generatedSqoopOptions"] = row[55]
+        result_dict["generatedPkColumns"] = row[56]
         # 		resultDict['generatedForeignKeys'] = row[57]
-        resultDict["datalakeSource"] = row[58]
-        resultDict["operatorNotes"] = row[59]
+        result_dict["datalakeSource"] = row[58]
+        result_dict["operatorNotes"] = row[59]
         try:
-            resultDict["copyFinished"] = row[60].strftime("%Y-%m-%d %H:%M:%S")
+            result_dict["copyFinished"] = row[60].strftime("%Y-%m-%d %H:%M:%S")
         except AttributeError:
-            resultDict["copyFinished"] = None
-        resultDict["copySlave"] = row[61]
-        resultDict["createForeignKeys"] = row[62]
-        resultDict["invalidateImpala"] = row[63]
-        resultDict["customMaxQuery"] = row[64]
-        resultDict["mergeCompactionMethod"] = row[65]
-        resultDict["sourceTableType"] = row[66]
-        resultDict["importDatabase"] = row[67]
-        resultDict["importTable"] = row[68]
-        resultDict["historyDatabase"] = row[69]
-        resultDict["historyTable"] = row[70]
+            result_dict["copyFinished"] = None
+        result_dict["copySlave"] = row[61]
+        result_dict["createForeignKeys"] = row[62]
+        result_dict["invalidateImpala"] = row[63]
+        result_dict["customMaxQuery"] = row[64]
+        result_dict["mergeCompactionMethod"] = row[65]
+        result_dict["sourceTableType"] = row[66]
+        result_dict["importDatabase"] = row[67]
+        result_dict["importTable"] = row[68]
+        result_dict["historyDatabase"] = row[69]
+        result_dict["historyTable"] = row[70]
 
         if includeColumns == True:
-            resultDict["columns"] = self.getImportTableColumns(database, table)
+            result_dict["columns"] = self.getImportTableColumns(database, table)
 
-        jsonResult = json.loads(json.dumps(resultDict))
+        json_result = json.loads(json.dumps(result_dict))
         # session.close()
         session.remove()
 
-        return jsonResult
+        return json_result
 
     def deleteImportTable(self, database, table, currentUser):
         """Update or create an import table"""
@@ -1808,10 +1819,10 @@ class dbCalls:
             self.disconnectDBImportDB()
             return None
 
-        importColumns = aliased(configSchema.importColumns)
-        importTables = aliased(configSchema.importTables)
+        import_columns = aliased(configSchema.importColumns)
+        import_tables = aliased(configSchema.importTables)
         result = "ok"
-        returnCode = 200
+        return_code = 200
 
         log.info(
             "User '%s' deleted import table '%s.%s'" % (currentUser, database, table)
@@ -1831,31 +1842,31 @@ class dbCalls:
 
         if row == None:
             result = "Table does not exist"
-            returnCode = 404
+            return_code = 404
         else:
-            tableID = row[0]
+            table_id = row[0]
 
             (
                 session.query(configSchema.importTables)
-                .filter(configSchema.importTables.table_id == tableID)
+                .filter(configSchema.importTables.table_id == table_id)
                 .delete()
             )
             session.commit()
 
         # session.close()
         session.remove()
-        return (result, returnCode)
+        return (result, return_code)
 
     def bulkDeleteImportTable(self, bulkData, currentUser):
         """Bulk delete of import tables"""
         log = logging.getLogger(self.logger)
 
         if len(bulkData) == 0:
-            resultMsg = {
+            result_msg = {
                 "result": "Body must contain a list of databas and table to delete"
             }
-            returnCode = 422
-            return (resultMsg, returnCode)
+            return_code = 422
+            return (result_msg, return_code)
 
         try:
             session = self.getDBImportSession()
@@ -1863,36 +1874,36 @@ class dbCalls:
             self.disconnectDBImportDB()
             return None
 
-        deleteStatement = delete(configSchema.importTables)
-        deleteStatement = deleteStatement.where(
+        delete_statement = delete(configSchema.importTables)
+        delete_statement = delete_statement.where(
             (configSchema.importTables.hive_db == bindparam("database"))
             & (configSchema.importTables.hive_table == bindparam("table"))
         )
 
         # Create a list of dicts that contain all the databas and table combinations that will be deleted
-        tableList = []
+        table_list = []
         for tables in bulkData:
-            tableList.append({"database": tables.database, "table": tables.table})
+            table_list.append({"database": tables.database, "table": tables.table})
 
-        session.connection().execute(deleteStatement, tableList)
+        session.connection().execute(delete_statement, table_list)
         session.commit()
         session.remove()
 
-        returnCode = 200
-        resultMsg = {"result": "Ok"}
+        return_code = 200
+        result_msg = {"result": "Ok"}
 
-        return (resultMsg, returnCode)
+        return (result_msg, return_code)
 
     def bulkUpdateImportTable(self, bulkData, currentUser):
         """Bulk update of import tables"""
         log = logging.getLogger(self.logger)
 
         if len(bulkData.importTables) == 0:
-            resultMsg = {
+            result_msg = {
                 "result": "importTables must contain a list of database/tables to update"
             }
-            returnCode = 422
-            return (resultMsg, returnCode)
+            return_code = 422
+            return (result_msg, return_code)
 
         try:
             session = self.getDBImportSession()
@@ -1900,57 +1911,59 @@ class dbCalls:
             self.disconnectDBImportDB()
             return None
 
-        importTables = aliased(configSchema.importTables)
-        updateStatement = update(importTables)
-        updateStatement = updateStatement.where(
-            (importTables.hive_db == bindparam("database"))
-            & (importTables.hive_table == bindparam("table"))
+        import_tables = aliased(configSchema.importTables)
+        update_statement = update(import_tables)
+        update_statement = update_statement.where(
+            (import_tables.hive_db == bindparam("database"))
+            & (import_tables.hive_table == bindparam("table"))
         )
 
         # This will loop through only the fields specified in the Posted JSON. So if a field have got a default None value in dataModel validation,
         # that field wont be part of this loop
-        for updateField in bulkData.__pydantic_fields_set__:
-            if updateField == "connection":
-                updateStatement = updateStatement.values(dbalias=bulkData.connection)
-            elif updateField == "importPhaseType":
-                updateStatement = updateStatement.values(
+        for update_field in bulkData.__pydantic_fields_set__:
+            if update_field == "connection":
+                update_statement = update_statement.values(dbalias=bulkData.connection)
+            elif update_field == "importPhaseType":
+                update_statement = update_statement.values(
                     import_phase_type=bulkData.importPhaseType
                 )
-            elif updateField == "etlPhaseType":
-                updateStatement = updateStatement.values(
+            elif update_field == "etlPhaseType":
+                update_statement = update_statement.values(
                     etl_phase_type=bulkData.etlPhaseType
                 )
-            elif updateField == "importTool":
-                updateStatement = updateStatement.values(
+            elif update_field == "importTool":
+                update_statement = update_statement.values(
                     import_tool=bulkData.importTool
                 )
-            elif updateField == "etlEngine":
-                updateStatement = updateStatement.values(etl_engine=bulkData.etlEngine)
-            elif updateField == "includeInAirflow":
-                updateStatement = updateStatement.values(
+            elif update_field == "etlEngine":
+                update_statement = update_statement.values(
+                    etl_engine=bulkData.etlEngine
+                )
+            elif update_field == "includeInAirflow":
+                update_statement = update_statement.values(
                     include_in_airflow=bulkData.includeInAirflow
                 )
-            elif updateField == "operatorNotes":
-                updateStatement = updateStatement.values(
+            elif update_field == "operatorNotes":
+                update_statement = update_statement.values(
                     operator_notes=bulkData.operatorNotes
                 )
 
         # Create a list of dicts that contain all the databas/table combinations that will be updated
-        tableList = []
+        table_list = []
         for tables in bulkData.importTables:
-            tableList.append({"database": tables.database, "table": tables.table})
+            table_list.append({"database": tables.database, "table": tables.table})
 
-        updateStatement = updateStatement.execution_options(synchronize_session=False)
+        update_statement = update_statement.execution_options(synchronize_session=False)
         # 		print(updateStatement)
 
-        session.connection().execute(updateStatement, tableList)
+        session.connection().execute(update_statement, table_list)
         session.commit()
         session.remove()
 
-        returnCode = 200
-        resultMsg = {"result": "Ok"}
+        return_code = 200
+        result_msg = {"result": "Ok"}
 
-        return (resultMsg, returnCode)
+        return (result_msg, return_code)
 
     def updateImportTable(self, database, table, data, currentUser):
         """Update or create an import table"""
@@ -1962,10 +1975,10 @@ class dbCalls:
             self.disconnectDBImportDB()
             return None
 
-        importColumns = aliased(configSchema.importColumns)
-        importTables = aliased(configSchema.importTables)
+        import_columns = aliased(configSchema.importColumns)
+        import_tables = aliased(configSchema.importTables)
         result = "ok"
-        returnCode = 200
+        return_code = 200
 
         log.debug(data)
         # log.info("User '%s' updated/created import table '%s.%s'"%(currentUser, getattr(data, "database"), getattr(data, "table")))
@@ -2127,35 +2140,36 @@ class dbCalls:
             log.error(column)  # noqa: F821  # TODO(#164): column is undefined here
 
             result = str(err)
-            returnCode = 500
+            return_code = 500
 
             # session.close()
             session.remove()
-            return (result, returnCode)
+            return (result, return_code)
 
         # Fetch the tableID as that is required to update/create data in import_columns
         row = (
-            session.query(importTables.table_id)
-            .select_from(importTables)
+            session.query(import_tables.table_id)
+            .select_from(import_tables)
             .filter(
-                (importTables.hive_db == database) & (importTables.hive_table == table)
+                (import_tables.hive_db == database)
+                & (import_tables.hive_table == table)
             )
             .one()
         )
         # 				.filter((importTables.hive_db == getattr(table, "database")) & (importTables.hive_table == getattr(table, "table")))
 
         session.execute(query)
-        tableID = row[0]
+        table_id = row[0]
 
         columns = data.columns
         for column in columns:
             # PK in import_columns is not the most optimal. So we need to check first if it exists and then insert or update. Upsert is not available
             row = (
-                session.query(importColumns.column_id)
-                .select_from(importColumns)
+                session.query(import_columns.column_id)
+                .select_from(import_columns)
                 .filter(
-                    (importColumns.table_id == tableID)
-                    & (importColumns.column_name == column.columnName)
+                    (import_columns.table_id == table_id)
+                    & (import_columns.column_name == column.columnName)
                 )
                 .one_or_none()
             )
@@ -2179,7 +2193,7 @@ class dbCalls:
                     # 						hive_db = getattr(data, "database"),
                     # 						hive_table = getattr(data, "table"),
                     query = sa.insert(configSchema.importColumns).values(
-                        table_id=tableID,
+                        table_id=table_id,
                         hive_db=database,
                         hive_table=table,
                         column_name=column.columnName,
@@ -2203,16 +2217,16 @@ class dbCalls:
                     session.execute(query)
 
                 else:
-                    columnID = row[0]
-                    log.debug("Import column with id '%s' was updated" % (columnID))
+                    column_id = row[0]
+                    log.debug("Import column with id '%s' was updated" % (column_id))
                     # 							"hive_db": getattr(data, "database"),
                     # 							"hive_table": getattr(data, "table"),
                     session.execute(
-                        update(importColumns),
+                        update(import_columns),
                         [
                             {
-                                "table_id": tableID,
-                                "column_id": columnID,
+                                "table_id": table_id,
+                                "column_id": column_id,
                                 "hive_db": database,
                                 "hive_table": table,
                                 "column_name": column.columnName,
@@ -2242,18 +2256,18 @@ class dbCalls:
                 log.error(column)
 
                 result = str(err)
-                returnCode = 500
+                return_code = 500
 
                 # session.close()
                 session.remove()
 
-                return (result, returnCode)
+                return (result, return_code)
 
             log.debug(column)
 
         # session.close()
         session.remove()
-        return (result, returnCode)
+        return (result, return_code)
 
     def getImportTableColumns(self, database, table):
         """Returns all columns in an import table"""
@@ -2265,254 +2279,254 @@ class dbCalls:
             self.disconnectDBImportDB()
             return None
 
-        importColumns = aliased(configSchema.importColumns)
-        listOfColumns = []
+        import_columns = aliased(configSchema.importColumns)
+        list_of_columns = []
 
         # Return a list of Hive tables with details
-        importColumnsData = (
+        import_columns_data = (
             session.query(
-                importColumns.hive_db,
-                importColumns.hive_table,
-                importColumns.column_name,
-                importColumns.column_order,
-                importColumns.source_column_name,
-                importColumns.column_type,
-                importColumns.source_column_type,
-                importColumns.source_database_type,
-                importColumns.column_name_override,
-                importColumns.column_type_override,
-                importColumns.sqoop_column_type,
-                importColumns.sqoop_column_type_override,
-                importColumns.force_string,
-                importColumns.include_in_import,
-                importColumns.source_primary_key,
-                importColumns.last_update_from_source,
-                importColumns.comment,
-                importColumns.operator_notes,
-                importColumns.anonymization_function,
+                import_columns.hive_db,
+                import_columns.hive_table,
+                import_columns.column_name,
+                import_columns.column_order,
+                import_columns.source_column_name,
+                import_columns.column_type,
+                import_columns.source_column_type,
+                import_columns.source_database_type,
+                import_columns.column_name_override,
+                import_columns.column_type_override,
+                import_columns.sqoop_column_type,
+                import_columns.sqoop_column_type_override,
+                import_columns.force_string,
+                import_columns.include_in_import,
+                import_columns.source_primary_key,
+                import_columns.last_update_from_source,
+                import_columns.comment,
+                import_columns.operator_notes,
+                import_columns.anonymization_function,
             )
-            .select_from(importColumns)
+            .select_from(import_columns)
             .filter(
-                (importColumns.hive_db == database)
-                & (importColumns.hive_table == table)
+                (import_columns.hive_db == database)
+                & (import_columns.hive_table == table)
             )
-            .order_by(importColumns.column_order)
+            .order_by(import_columns.column_order)
             .all()
         )
 
-        for row in importColumnsData:
-            resultDict = {}
+        for row in import_columns_data:
+            result_dict = {}
             # 			resultDict['database'] = row[0]
             # 			resultDict['table'] = row[1]
-            resultDict["columnName"] = row[2]
-            resultDict["columnOrder"] = row[3]
-            resultDict["sourceColumnName"] = row[4]
-            resultDict["columnType"] = row[5]
-            resultDict["sourceColumnType"] = row[6]
-            resultDict["sourceDatabaseType"] = row[7]
-            resultDict["columnNameOverride"] = row[8]
-            resultDict["columnTypeOverride"] = row[9]
-            resultDict["sqoopColumnType"] = row[10]
-            resultDict["sqoopColumnTypeOverride"] = row[11]
-            resultDict["forceString"] = row[12]
+            result_dict["columnName"] = row[2]
+            result_dict["columnOrder"] = row[3]
+            result_dict["sourceColumnName"] = row[4]
+            result_dict["columnType"] = row[5]
+            result_dict["sourceColumnType"] = row[6]
+            result_dict["sourceDatabaseType"] = row[7]
+            result_dict["columnNameOverride"] = row[8]
+            result_dict["columnTypeOverride"] = row[9]
+            result_dict["sqoopColumnType"] = row[10]
+            result_dict["sqoopColumnTypeOverride"] = row[11]
+            result_dict["forceString"] = row[12]
             if (
-                resultDict["forceString"] != 0
-                and resultDict["forceString"] != 1
-                and resultDict["forceString"] != -1
+                result_dict["forceString"] != 0
+                and result_dict["forceString"] != 1
+                and result_dict["forceString"] != -1
             ):
-                resultDict["forceString"] = -1
-            resultDict["includeInImport"] = row[13]
-            resultDict["sourcePrimaryKey"] = row[14]
+                result_dict["forceString"] = -1
+            result_dict["includeInImport"] = row[13]
+            result_dict["sourcePrimaryKey"] = row[14]
             try:
-                resultDict["lastUpdateFromSource"] = row[15].strftime(
+                result_dict["lastUpdateFromSource"] = row[15].strftime(
                     "%Y-%m-%d %H:%M:%S"
                 )
             except AttributeError:
-                resultDict["lastUpdateFromSource"] = None
-            resultDict["comment"] = row[16]
-            resultDict["operatorNotes"] = row[17]
-            resultDict["anonymizationFunction"] = row[18]
+                result_dict["lastUpdateFromSource"] = None
+            result_dict["comment"] = row[16]
+            result_dict["operatorNotes"] = row[17]
+            result_dict["anonymizationFunction"] = row[18]
 
-            listOfColumns.append(resultDict)
+            list_of_columns.append(result_dict)
 
         # 		jsonResult = json.loads(json.dumps(listOfColumns))
         # session.close()
         session.remove()
 
         # 		return jsonResult
-        return listOfColumns
+        return list_of_columns
 
     def repairImportTable(self, database, table, currentUser):
         """Repair Import table"""
         log = logging.getLogger(self.logger)
 
-        manageCmd = "%s/bin/manage" % (os.environ["DBIMPORT_HOME"])
+        manage_cmd = "%s/bin/manage" % (os.environ["DBIMPORT_HOME"])
 
-        commandArg = []
-        commandArg.append(manageCmd)
-        commandArg.append("--repairIncrementalImport")
-        commandArg.append("--yes")
-        commandArg.append("-h")
-        commandArg.append(database)
-        commandArg.append("-t")
-        commandArg.append(table)
-        commandArg.append("--quiet")
+        command_arg = []
+        command_arg.append(manage_cmd)
+        command_arg.append("--repairIncrementalImport")
+        command_arg.append("--yes")
+        command_arg.append("-h")
+        command_arg.append(database)
+        command_arg.append("-t")
+        command_arg.append(table)
+        command_arg.append("--quiet")
 
-        processKilled = False
-        manageSession = subprocess.Popen(
-            commandArg,
+        process_killed = False
+        manage_session = subprocess.Popen(
+            command_arg,
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
         )
         try:
-            stdout, stderr = manageSession.communicate(timeout=30)
+            stdout, stderr = manage_session.communicate(timeout=30)
         except subprocess.TimeoutExpired:
             log.error("Killing 'manage --repairIncrementalImport' process")
-            manageSession.kill()
-            stdout, stderr = manageSession.communicate()
-            processKilled = True
+            manage_session.kill()
+            stdout, stderr = manage_session.communicate()
+            process_killed = True
 
-        if manageSession.returncode != 0 or processKilled == True:
-            returnCode = 500
-            resultMsg = {
+        if manage_session.returncode != 0 or process_killed == True:
+            return_code = 500
+            result_msg = {
                 "result": re.sub("\n$", "", re.sub("^json: ", "", stdout.decode()))
             }
         else:
-            returnCode = 200
-            resultMsg = {"result": "Table repair was successfully"}
+            return_code = 200
+            result_msg = {"result": "Table repair was successfully"}
 
-        return (resultMsg, returnCode)
+        return (result_msg, return_code)
 
     def resetImportTable(self, database, table, currentUser):
         """Reset Import table"""
         log = logging.getLogger(self.logger)
 
-        manageCmd = "%s/bin/manage" % (os.environ["DBIMPORT_HOME"])
+        manage_cmd = "%s/bin/manage" % (os.environ["DBIMPORT_HOME"])
 
-        commandArg = []
-        commandArg.append(manageCmd)
-        commandArg.append("--resetIncrementalImport")
-        commandArg.append("--yes")
-        commandArg.append("-h")
-        commandArg.append(database)
-        commandArg.append("-t")
-        commandArg.append(table)
-        commandArg.append("--quiet")
+        command_arg = []
+        command_arg.append(manage_cmd)
+        command_arg.append("--resetIncrementalImport")
+        command_arg.append("--yes")
+        command_arg.append("-h")
+        command_arg.append(database)
+        command_arg.append("-t")
+        command_arg.append(table)
+        command_arg.append("--quiet")
 
-        processKilled = False
-        manageSession = subprocess.Popen(
-            commandArg,
+        process_killed = False
+        manage_session = subprocess.Popen(
+            command_arg,
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
         )
         try:
-            stdout, stderr = manageSession.communicate(timeout=30)
+            stdout, stderr = manage_session.communicate(timeout=30)
         except subprocess.TimeoutExpired:
             log.error("Killing 'manage --resetIncrementalImport' process")
-            manageSession.kill()
-            stdout, stderr = manageSession.communicate()
-            processKilled = True
+            manage_session.kill()
+            stdout, stderr = manage_session.communicate()
+            process_killed = True
 
-        if manageSession.returncode != 0 or processKilled == True:
-            returnCode = 500
-            resultMsg = {
+        if manage_session.returncode != 0 or process_killed == True:
+            return_code = 500
+            result_msg = {
                 "result": re.sub("\n$", "", re.sub("^json: ", "", stdout.decode()))
             }
         else:
-            returnCode = 200
-            resultMsg = {"result": "Table reset was successfully"}
+            return_code = 200
+            result_msg = {"result": "Table reset was successfully"}
 
-        return (resultMsg, returnCode)
+        return (result_msg, return_code)
 
     def repairExportTable(self, connection, schema, table, currentUser):
         """Repair Import table"""
         log = logging.getLogger(self.logger)
 
-        manageCmd = "%s/bin/manage" % (os.environ["DBIMPORT_HOME"])
+        manage_cmd = "%s/bin/manage" % (os.environ["DBIMPORT_HOME"])
 
-        commandArg = []
-        commandArg.append(manageCmd)
-        commandArg.append("--repairIncrementalExport")
-        commandArg.append("--yes")
-        commandArg.append("-a")
-        commandArg.append(connection)
-        commandArg.append("-S")
-        commandArg.append(schema)
-        commandArg.append("-T")
-        commandArg.append(table)
-        commandArg.append("--quiet")
+        command_arg = []
+        command_arg.append(manage_cmd)
+        command_arg.append("--repairIncrementalExport")
+        command_arg.append("--yes")
+        command_arg.append("-a")
+        command_arg.append(connection)
+        command_arg.append("-S")
+        command_arg.append(schema)
+        command_arg.append("-T")
+        command_arg.append(table)
+        command_arg.append("--quiet")
 
-        processKilled = False
-        manageSession = subprocess.Popen(
-            commandArg,
+        process_killed = False
+        manage_session = subprocess.Popen(
+            command_arg,
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
         )
         try:
-            stdout, stderr = manageSession.communicate(timeout=30)
+            stdout, stderr = manage_session.communicate(timeout=30)
         except subprocess.TimeoutExpired:
             log.error("Killing 'manage --repairIncrementalExport' process")
-            manageSession.kill()
-            stdout, stderr = manageSession.communicate()
-            processKilled = True
+            manage_session.kill()
+            stdout, stderr = manage_session.communicate()
+            process_killed = True
 
-        if manageSession.returncode != 0 or processKilled == True:
-            returnCode = 500
-            resultMsg = {
+        if manage_session.returncode != 0 or process_killed == True:
+            return_code = 500
+            result_msg = {
                 "result": re.sub("\n$", "", re.sub("^json: ", "", stdout.decode()))
             }
         else:
-            returnCode = 200
-            resultMsg = {"result": "Table repair was successfully"}
+            return_code = 200
+            result_msg = {"result": "Table repair was successfully"}
 
-        return (resultMsg, returnCode)
+        return (result_msg, return_code)
 
     def resetExportTable(self, connection, schema, table, currentUser):
         """Repair Import table"""
         log = logging.getLogger(self.logger)
 
-        manageCmd = "%s/bin/manage" % (os.environ["DBIMPORT_HOME"])
+        manage_cmd = "%s/bin/manage" % (os.environ["DBIMPORT_HOME"])
 
-        commandArg = []
-        commandArg.append(manageCmd)
-        commandArg.append("--resetIncrementalExport")
-        commandArg.append("--yes")
-        commandArg.append("-a")
-        commandArg.append(connection)
-        commandArg.append("-S")
-        commandArg.append(schema)
-        commandArg.append("-T")
-        commandArg.append(table)
-        commandArg.append("--quiet")
+        command_arg = []
+        command_arg.append(manage_cmd)
+        command_arg.append("--resetIncrementalExport")
+        command_arg.append("--yes")
+        command_arg.append("-a")
+        command_arg.append(connection)
+        command_arg.append("-S")
+        command_arg.append(schema)
+        command_arg.append("-T")
+        command_arg.append(table)
+        command_arg.append("--quiet")
 
-        processKilled = False
-        manageSession = subprocess.Popen(
-            commandArg,
+        process_killed = False
+        manage_session = subprocess.Popen(
+            command_arg,
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
         )
         try:
-            stdout, stderr = manageSession.communicate(timeout=30)
+            stdout, stderr = manage_session.communicate(timeout=30)
         except subprocess.TimeoutExpired:
             log.error("Killing 'manage --resetIncrementalExport' process")
-            manageSession.kill()
-            stdout, stderr = manageSession.communicate()
-            processKilled = True
+            manage_session.kill()
+            stdout, stderr = manage_session.communicate()
+            process_killed = True
 
-        if manageSession.returncode != 0 or processKilled == True:
-            returnCode = 500
-            resultMsg = {
+        if manage_session.returncode != 0 or process_killed == True:
+            return_code = 500
+            result_msg = {
                 "result": re.sub("\n$", "", re.sub("^json: ", "", stdout.decode()))
             }
         else:
-            returnCode = 200
-            resultMsg = {"result": "Table reset was successfully"}
+            return_code = 200
+            result_msg = {"result": "Table reset was successfully"}
 
-        return (resultMsg, returnCode)
+        return (result_msg, return_code)
 
     def getExportConnections(self):
         """Returns all connections that have exports configured in them"""
@@ -2524,23 +2538,23 @@ class dbCalls:
             self.disconnectDBImportDB()
             return None
 
-        exportTables = aliased(configSchema.exportTables)
+        export_tables = aliased(configSchema.exportTables)
 
-        exportTableDBs = (
+        export_table_dbs = (
             session.query(
-                exportTables.dbalias,
-                func.count(exportTables.dbalias),
-                func.max(exportTables.last_update_from_hive),
-                func.sum(exportTables.sqoop_last_rows),
+                export_tables.dbalias,
+                func.count(export_tables.dbalias),
+                func.max(export_tables.last_update_from_hive),
+                func.sum(export_tables.sqoop_last_rows),
             )
-            .select_from(exportTables)
-            .group_by(exportTables.dbalias)
+            .select_from(export_tables)
+            .group_by(export_tables.dbalias)
             .limit(self.contentMaxRows)
         )
 
-        listOfConnections = []
+        list_of_connections = []
         count = 0
-        for row in exportTableDBs:
+        for row in export_table_dbs:
             count = count + 1
             connection = {}
             connection["name"] = row[0]
@@ -2554,12 +2568,12 @@ class dbCalls:
                 connection["lastRows"] = 0
             else:
                 connection["lastRows"] = int(row[3])
-            listOfConnections.append(connection)
+            list_of_connections.append(connection)
 
             if count == self.contentMaxRows:
                 break
 
-        jsonResult = json.loads(json.dumps(listOfConnections))
+        json_result = json.loads(json.dumps(list_of_connections))
         # session.close()
         session.remove()
 
@@ -2567,106 +2581,106 @@ class dbCalls:
             "content-rows": str(count),
             "content-max-returned-rows": str(self.contentMaxRows),
         }
-        return JSONResponse(content=jsonResult, headers=headers, status_code=200)
+        return JSONResponse(content=json_result, headers=headers, status_code=200)
 
     def discoverExportTables(self, data, currentUser):
         """Search for import tables"""
         log = logging.getLogger(self.logger)
 
         # Due to incomplete development environments right now, this function returns a hardcoded json as it's not possible to generate a correct one
-        returnList = []
-        returnDict1 = {}
-        returnDict2 = {}
-        returnDict3 = {}
-        returnDict1["database"] = "hardcoded"
-        returnDict1["table"] = "table1"
-        returnDict1["connection"] = "dbimport"
-        returnDict1["targetSchema"] = "dbo"
-        returnDict1["targetTable"] = "table1"
-        returnDict2["database"] = "hardcoded"
-        returnDict2["table"] = "table2"
-        returnDict2["connection"] = "dbimport"
-        returnDict2["targetSchema"] = "dbo"
-        returnDict2["targetTable"] = "table2"
-        returnDict3["database"] = "hardcoded"
-        returnDict3["table"] = "table3"
-        returnDict3["connection"] = "dbimport"
-        returnDict3["targetSchema"] = "dbo"
-        returnDict3["targetTable"] = "table3"
-        returnList.append(returnDict1)
-        returnList.append(returnDict2)
-        returnList.append(returnDict3)
+        return_list = []
+        return_dict1 = {}
+        return_dict2 = {}
+        return_dict3 = {}
+        return_dict1["database"] = "hardcoded"
+        return_dict1["table"] = "table1"
+        return_dict1["connection"] = "dbimport"
+        return_dict1["targetSchema"] = "dbo"
+        return_dict1["targetTable"] = "table1"
+        return_dict2["database"] = "hardcoded"
+        return_dict2["table"] = "table2"
+        return_dict2["connection"] = "dbimport"
+        return_dict2["targetSchema"] = "dbo"
+        return_dict2["targetTable"] = "table2"
+        return_dict3["database"] = "hardcoded"
+        return_dict3["table"] = "table3"
+        return_dict3["connection"] = "dbimport"
+        return_dict3["targetSchema"] = "dbo"
+        return_dict3["targetTable"] = "table3"
+        return_list.append(return_dict1)
+        return_list.append(return_dict2)
+        return_list.append(return_dict3)
 
-        returnMsg = json.loads(json.dumps(returnList))
-        returnCode = 200
-        return (returnMsg, returnCode)
+        return_msg = json.loads(json.dumps(return_list))
+        return_code = 200
+        return (return_msg, return_code)
 
-        manageCmd = "%s/bin/manage" % (os.environ["DBIMPORT_HOME"])
+        manage_cmd = "%s/bin/manage" % (os.environ["DBIMPORT_HOME"])
 
-        commandArg = []
-        commandArg.append(manageCmd)
-        commandArg.append("--addExportTable")
-        commandArg.append("-a")
-        commandArg.append(data.connection)
-        commandArg.append("-S")
-        commandArg.append(data.targetSchema)
+        command_arg = []
+        command_arg.append(manage_cmd)
+        command_arg.append("--addExportTable")
+        command_arg.append("-a")
+        command_arg.append(data.connection)
+        command_arg.append("-S")
+        command_arg.append(data.targetSchema)
 
         if data.databaseFilter != None and data.databaseFilter.strip() != "":
-            commandArg.append("-h")
-            commandArg.append(data.databaseFilter)
+            command_arg.append("-h")
+            command_arg.append(data.databaseFilter)
 
         if data.tableFilter != None and data.tableFilter.strip() != "":
-            commandArg.append("-t")
-            commandArg.append(data.tableFilter)
+            command_arg.append("-t")
+            command_arg.append(data.tableFilter)
 
         if data.addDBToTable != None and data.addDBToTable == True:
-            commandArg.append("--addDBToTable")
+            command_arg.append("--addDBToTable")
 
         if data.addCounterToTable != None and data.addCounterToTable == True:
-            commandArg.append("--addCounterToTable")
+            command_arg.append("--addCounterToTable")
 
             if data.counterStart != None:
-                commandArg.append("--counterStart")
-                commandArg.append(str(data.counterStart))
+                command_arg.append("--counterStart")
+                command_arg.append(str(data.counterStart))
 
         if data.addCustomText != None and data.addCustomText.strip() != "":
-            commandArg.append("--addCustomText")
-            commandArg.append(data.addCustomText)
+            command_arg.append("--addCustomText")
+            command_arg.append(data.addCustomText)
 
-        commandArg.append("--quiet")
-        commandArg.append("--jsonOutput")
+        command_arg.append("--quiet")
+        command_arg.append("--jsonOutput")
 
-        log.debug(commandArg)
+        log.debug(command_arg)
 
-        result = subprocess.run(commandArg, stdout=subprocess.PIPE, check=False)
+        result = subprocess.run(command_arg, stdout=subprocess.PIPE, check=False)
 
         if result.returncode != 0:
             raise HTTPException(status_code=500, detail=result.stdout.decode())
 
         else:
-            returnCode = 200
+            return_code = 200
             if (
                 result.stdout.decode().strip()
                 == "There are no tables in the source database that we dont already have in DBImport"
             ):
-                returnMsg = []
+                return_msg = []
             else:
-                returnMsg = json.loads(result.stdout.decode().replace("\n", ""))
+                return_msg = json.loads(result.stdout.decode().replace("\n", ""))
 
-        return (returnMsg, returnCode)
+        return (return_msg, return_code)
 
     def addDiscoveredExportTables(self, data, currentUser):
         """Add discovered export tables"""
         log = logging.getLogger(self.logger)
 
-        createCounter = 0
+        create_counter = 0
         for record in data:
-            createCounter = createCounter + 1
+            create_counter = create_counter + 1
             connection = record.connection
-            targetSchema = record.targetSchema
-            targetTable = record.targetTable
+            target_schema = record.targetSchema
+            target_table = record.targetTable
 
-            createData = dataModels.exportTableDetailsWrite(
+            create_data = dataModels.exportTableDetailsWrite(
                 database=record.database,
                 table=record.table,
                 exportType="full",
@@ -2674,13 +2688,13 @@ class dbCalls:
             )
 
             self.updateExportTable(
-                connection, targetSchema, targetTable, createData, currentUser
+                connection, target_schema, target_table, create_data, currentUser
             )
 
-        returnCode = 200
-        resultMsg = {"result": "%s tables created" % (createCounter)}
+        return_code = 200
+        result_msg = {"result": "%s tables created" % (create_counter)}
 
-        return (resultMsg, returnCode)
+        return (result_msg, return_code)
 
     def searchExportTables(self, searchValues, currentUser):
         """Search for import tables"""
@@ -2692,34 +2706,36 @@ class dbCalls:
             self.disconnectDBImportDB()
             return None
 
-        exportTables = aliased(configSchema.exportTables)
+        export_tables = aliased(configSchema.exportTables)
 
-        attributeToColumn = {}
-        attributeToColumn["connection"] = exportTables.dbalias
-        attributeToColumn["targetSchema"] = exportTables.target_schema
-        attributeToColumn["targetTable"] = exportTables.target_table
-        attributeToColumn["database"] = exportTables.hive_db
-        attributeToColumn["table"] = exportTables.hive_table
-        attributeToColumn["exportType"] = exportTables.export_type
-        attributeToColumn["exportTool"] = exportTables.export_tool
-        attributeToColumn["includeInAirflow"] = exportTables.include_in_airflow
-        attributeToColumn["operatorNotes"] = exportTables.operator_notes
+        attribute_to_column = {}
+        attribute_to_column["connection"] = export_tables.dbalias
+        attribute_to_column["targetSchema"] = export_tables.target_schema
+        attribute_to_column["targetTable"] = export_tables.target_table
+        attribute_to_column["database"] = export_tables.hive_db
+        attribute_to_column["table"] = export_tables.hive_table
+        attribute_to_column["exportType"] = export_tables.export_type
+        attribute_to_column["exportTool"] = export_tables.export_tool
+        attribute_to_column["includeInAirflow"] = export_tables.include_in_airflow
+        attribute_to_column["operatorNotes"] = export_tables.operator_notes
 
         # Return a list of Hive tables with details
-        exportTablesData = session.query(
-            exportTables.dbalias,
-            exportTables.target_schema,
-            exportTables.target_table,
-            exportTables.hive_db,
-            exportTables.hive_table,
-            exportTables.export_type,
-            exportTables.export_tool,
-            exportTables.last_update_from_hive,
-            exportTables.include_in_airflow,
-            exportTables.operator_notes,
-        ).select_from(exportTables)
+        export_tables_data = session.query(
+            export_tables.dbalias,
+            export_tables.target_schema,
+            export_tables.target_table,
+            export_tables.hive_db,
+            export_tables.hive_table,
+            export_tables.export_type,
+            export_tables.export_tool,
+            export_tables.last_update_from_hive,
+            export_tables.include_in_airflow,
+            export_tables.operator_notes,
+        ).select_from(export_tables)
 
-        exportTablesDataCount = session.query(func.count(1)).select_from(exportTables)
+        export_tables_data_count = session.query(func.count(1)).select_from(
+            export_tables
+        )
 
         # Add the filters for the specific column that we search on
         for items in searchValues:
@@ -2729,71 +2745,71 @@ class dbCalls:
 
             column = items[0]
             value = items[1]
-            likeSearch = False
+            like_search = False
 
             if type(value) is str:
                 if "%" in value or "*" in value:
                     value = value.replace("*", "%")
-                    likeSearch = True
+                    like_search = True
 
             log.debug("search filter: %s = %s" % (column, value))
 
-            if likeSearch == True:
-                exportTablesData = exportTablesData.filter(
-                    like_op(attributeToColumn[column], value)
+            if like_search == True:
+                export_tables_data = export_tables_data.filter(
+                    like_op(attribute_to_column[column], value)
                 )
-                exportTablesDataCount = exportTablesDataCount.filter(
-                    like_op(attributeToColumn[column], value)
+                export_tables_data_count = export_tables_data_count.filter(
+                    like_op(attribute_to_column[column], value)
                 )
             else:
-                exportTablesData = exportTablesData.filter(
-                    attributeToColumn[column] == value
+                export_tables_data = export_tables_data.filter(
+                    attribute_to_column[column] == value
                 )
-                exportTablesDataCount = exportTablesDataCount.filter(
-                    attributeToColumn[column] == value
+                export_tables_data_count = export_tables_data_count.filter(
+                    attribute_to_column[column] == value
                 )
 
         # Fetch all rows matching the filter
-        exportTablesData = exportTablesData.limit(self.contentMaxRows)
-        exportTablesDataCount = exportTablesDataCount.one()
+        export_tables_data = export_tables_data.limit(self.contentMaxRows)
+        export_tables_data_count = export_tables_data_count.one()
 
         # Loop through result and create the return dict
         count = 0
-        listOfTables = []
-        for row in exportTablesData:
+        list_of_tables = []
+        for row in export_tables_data:
             count = count + 1
-            resultDict = {}
-            resultDict["connection"] = row[0]
-            resultDict["targetSchema"] = row[1]
-            resultDict["targetTable"] = row[2]
-            resultDict["database"] = row[3]
-            resultDict["table"] = row[4]
-            resultDict["exportType"] = row[5]
-            resultDict["exportTool"] = row[6]
+            result_dict = {}
+            result_dict["connection"] = row[0]
+            result_dict["targetSchema"] = row[1]
+            result_dict["targetTable"] = row[2]
+            result_dict["database"] = row[3]
+            result_dict["table"] = row[4]
+            result_dict["exportType"] = row[5]
+            result_dict["exportTool"] = row[6]
             try:
-                resultDict["lastUpdateFromHive"] = row[7].strftime("%Y-%m-%d %H:%M:%S")
+                result_dict["lastUpdateFromHive"] = row[7].strftime("%Y-%m-%d %H:%M:%S")
             except AttributeError:
-                resultDict["lastUpdateFromHive"] = None
+                result_dict["lastUpdateFromHive"] = None
             if row[8] == 1:
-                resultDict["includeInAirflow"] = True
+                result_dict["includeInAirflow"] = True
             else:
-                resultDict["includeInAirflow"] = False
-            resultDict["operatorNotes"] = row[9]
+                result_dict["includeInAirflow"] = False
+            result_dict["operatorNotes"] = row[9]
 
-            listOfTables.append(resultDict)
+            list_of_tables.append(result_dict)
 
             if count == self.contentMaxRows:
                 break
 
-        jsonResult = json.loads(json.dumps(listOfTables))
+        json_result = json.loads(json.dumps(list_of_tables))
         session.remove()
 
         headers = {
             "content-rows": str(count),
             "content-max-returned-rows": str(self.contentMaxRows),
-            "content-total-rows": str(exportTablesDataCount[0]),
+            "content-total-rows": str(export_tables_data_count[0]),
         }
-        return JSONResponse(content=jsonResult, headers=headers, status_code=200)
+        return JSONResponse(content=json_result, headers=headers, status_code=200)
 
     def getExportTables(self, connection, schema, currentUser):
         """Returns all connections that have exports configured in them"""
@@ -2801,11 +2817,11 @@ class dbCalls:
 
         if schema == None:
             schema = "*"
-        searchValues = dataModels.exportTableSearch(
+        search_values = dataModels.exportTableSearch(
             connection=connection, targetSchema=schema, targetTable="*"
         )
 
-        return self.searchExportTables(searchValues, currentUser)
+        return self.searchExportTables(search_values, currentUser)
 
     def getExportTableDetails(self, connection, schema, table, includeColumns):
         """Returns all connections that have exports configured in them"""
@@ -2817,53 +2833,53 @@ class dbCalls:
             self.disconnectDBImportDB()
             return None
 
-        exportTables = aliased(configSchema.exportTables)
+        export_tables = aliased(configSchema.exportTables)
 
         row = (
             session.query(
-                exportTables.dbalias,
-                exportTables.target_schema,
-                exportTables.target_table,
-                exportTables.export_type,
-                exportTables.export_tool,
-                exportTables.hive_db,
-                exportTables.hive_table,
-                exportTables.last_update_from_hive,
-                exportTables.sql_where_addition,
-                exportTables.include_in_airflow,
-                exportTables.airflow_priority,
-                exportTables.forceCreateTempTable,
-                exportTables.validate_export,
-                exportTables.validationMethod,
-                exportTables.validationCustomQueryHiveSQL,
-                exportTables.validationCustomQueryTargetSQL,
-                exportTables.uppercase_columns,
-                exportTables.truncate_target,
-                exportTables.mappers,
-                exportTables.hive_rowcount,
-                exportTables.target_rowcount,
-                exportTables.validationCustomQueryHiveValue,
-                exportTables.validationCustomQueryTargetValue,
-                exportTables.incr_column,
-                exportTables.incr_validation_method,
-                exportTables.incr_minvalue,
-                exportTables.incr_maxvalue,
-                exportTables.incr_minvalue_pending,
-                exportTables.incr_maxvalue_pending,
-                exportTables.sqoop_options,
-                exportTables.sqoop_last_size,
-                exportTables.sqoop_last_rows,
-                exportTables.sqoop_last_mappers,
-                exportTables.sqoop_last_execution,
-                exportTables.hive_javaheap,
-                exportTables.create_target_table_sql,
-                exportTables.operator_notes,
+                export_tables.dbalias,
+                export_tables.target_schema,
+                export_tables.target_table,
+                export_tables.export_type,
+                export_tables.export_tool,
+                export_tables.hive_db,
+                export_tables.hive_table,
+                export_tables.last_update_from_hive,
+                export_tables.sql_where_addition,
+                export_tables.include_in_airflow,
+                export_tables.airflow_priority,
+                export_tables.forceCreateTempTable,
+                export_tables.validate_export,
+                export_tables.validationMethod,
+                export_tables.validationCustomQueryHiveSQL,
+                export_tables.validationCustomQueryTargetSQL,
+                export_tables.uppercase_columns,
+                export_tables.truncate_target,
+                export_tables.mappers,
+                export_tables.hive_rowcount,
+                export_tables.target_rowcount,
+                export_tables.validationCustomQueryHiveValue,
+                export_tables.validationCustomQueryTargetValue,
+                export_tables.incr_column,
+                export_tables.incr_validation_method,
+                export_tables.incr_minvalue,
+                export_tables.incr_maxvalue,
+                export_tables.incr_minvalue_pending,
+                export_tables.incr_maxvalue_pending,
+                export_tables.sqoop_options,
+                export_tables.sqoop_last_size,
+                export_tables.sqoop_last_rows,
+                export_tables.sqoop_last_mappers,
+                export_tables.sqoop_last_execution,
+                export_tables.hive_javaheap,
+                export_tables.create_target_table_sql,
+                export_tables.operator_notes,
             )
-            .select_from(exportTables)
+            .select_from(export_tables)
             .filter(
-                (exportTables.dbalias == connection)
-                & (exportTables.target_schema == schema)
-                & (exportTables.target_table == table)
+                (export_tables.dbalias == connection)
+                & (export_tables.target_schema == schema)
+                & (export_tables.target_table == table)
             )
             .one_or_none()
         )
@@ -2874,61 +2890,61 @@ class dbCalls:
                 detail="export table does not exist",
             )
 
-        resultDict = {}
-        resultDict["connection"] = row[0]
-        resultDict["targetSchema"] = row[1]
-        resultDict["targetTable"] = row[2]
-        resultDict["exportType"] = row[3]
-        resultDict["exportTool"] = row[4]
-        resultDict["database"] = row[5]
-        resultDict["table"] = row[6]
+        result_dict = {}
+        result_dict["connection"] = row[0]
+        result_dict["targetSchema"] = row[1]
+        result_dict["targetTable"] = row[2]
+        result_dict["exportType"] = row[3]
+        result_dict["exportTool"] = row[4]
+        result_dict["database"] = row[5]
+        result_dict["table"] = row[6]
         try:
-            resultDict["lastUpdateFromHive"] = row[7].strftime("%Y-%m-%d %H:%M:%S")
+            result_dict["lastUpdateFromHive"] = row[7].strftime("%Y-%m-%d %H:%M:%S")
         except AttributeError:
-            resultDict["lastUpdateFromHive"] = None
-        resultDict["sqlWhereAddition"] = row[8]
+            result_dict["lastUpdateFromHive"] = None
+        result_dict["sqlWhereAddition"] = row[8]
         if row[9] == 1:
-            resultDict["includeInAirflow"] = True
+            result_dict["includeInAirflow"] = True
         else:
-            resultDict["includeInAirflow"] = False
-        resultDict["airflowPriority"] = row[10]
-        resultDict["forceCreateTempTable"] = row[11]
-        resultDict["validateExport"] = row[12]
-        resultDict["validationMethod"] = row[13]
-        resultDict["validationCustomQueryHiveSQL"] = row[14]
-        resultDict["validationCustomQueryTargetSQL"] = row[15]
-        resultDict["uppercaseColumns"] = row[16]
-        resultDict["truncateTarget"] = row[17]
-        resultDict["sqlSessions"] = row[18]
-        resultDict["tableRowcount"] = row[19]
-        resultDict["targetRowcount"] = row[20]
-        resultDict["validationCustomQueryHiveValue"] = row[21]
-        resultDict["validationCustomQueryTargetValue"] = row[22]
-        resultDict["incrColumn"] = row[23]
-        resultDict["incrValidationMethod"] = row[24]
-        resultDict["incrMinvalue"] = row[25]
-        resultDict["incrMaxvalue"] = row[26]
-        resultDict["incrMinvaluePending"] = row[27]
-        resultDict["incrMaxvaluePending"] = row[28]
-        resultDict["sqoopOptions"] = row[29]
-        resultDict["lastSize"] = row[30]
-        resultDict["lastRows"] = row[31]
-        resultDict["lastSqlSessions"] = row[32]
-        resultDict["lastExecution"] = row[33]
-        resultDict["hiveContainerSize"] = row[34]
-        resultDict["createTargetTableSql"] = row[35]
-        resultDict["operatorNotes"] = row[36]
+            result_dict["includeInAirflow"] = False
+        result_dict["airflowPriority"] = row[10]
+        result_dict["forceCreateTempTable"] = row[11]
+        result_dict["validateExport"] = row[12]
+        result_dict["validationMethod"] = row[13]
+        result_dict["validationCustomQueryHiveSQL"] = row[14]
+        result_dict["validationCustomQueryTargetSQL"] = row[15]
+        result_dict["uppercaseColumns"] = row[16]
+        result_dict["truncateTarget"] = row[17]
+        result_dict["sqlSessions"] = row[18]
+        result_dict["tableRowcount"] = row[19]
+        result_dict["targetRowcount"] = row[20]
+        result_dict["validationCustomQueryHiveValue"] = row[21]
+        result_dict["validationCustomQueryTargetValue"] = row[22]
+        result_dict["incrColumn"] = row[23]
+        result_dict["incrValidationMethod"] = row[24]
+        result_dict["incrMinvalue"] = row[25]
+        result_dict["incrMaxvalue"] = row[26]
+        result_dict["incrMinvaluePending"] = row[27]
+        result_dict["incrMaxvaluePending"] = row[28]
+        result_dict["sqoopOptions"] = row[29]
+        result_dict["lastSize"] = row[30]
+        result_dict["lastRows"] = row[31]
+        result_dict["lastSqlSessions"] = row[32]
+        result_dict["lastExecution"] = row[33]
+        result_dict["hiveContainerSize"] = row[34]
+        result_dict["createTargetTableSql"] = row[35]
+        result_dict["operatorNotes"] = row[36]
 
         if includeColumns == True:
-            resultDict["columns"] = self.getExportTableColumns(
+            result_dict["columns"] = self.getExportTableColumns(
                 connection, schema, table
             )
 
-        jsonResult = json.loads(json.dumps(resultDict))
+        json_result = json.loads(json.dumps(result_dict))
         # session.close()
         session.remove()
 
-        return jsonResult
+        return json_result
 
     def getExportTableColumns(self, connection, schema, table):
         """Returns all columns in an export table"""
@@ -2940,80 +2956,80 @@ class dbCalls:
             self.disconnectDBImportDB()
             return None
 
-        exportColumns = aliased(configSchema.exportColumns)
-        exportTables = aliased(configSchema.exportTables)
-        listOfColumns = []
+        export_columns = aliased(configSchema.exportColumns)
+        export_tables = aliased(configSchema.exportTables)
+        list_of_columns = []
 
         # Return a list of Hive tables with details
-        exportColumnsData = (
+        export_columns_data = (
             session.query(
-                exportTables.dbalias,
-                exportTables.target_schema,
-                exportTables.target_table,
-                exportColumns.column_name,
-                exportColumns.column_type,
-                exportColumns.column_order,
-                exportColumns.target_column_name,
-                exportColumns.target_column_type,
-                exportColumns.last_update_from_hive,
-                exportColumns.include_in_export,
-                exportColumns.comment,
-                exportColumns.operator_notes,
+                export_tables.dbalias,
+                export_tables.target_schema,
+                export_tables.target_table,
+                export_columns.column_name,
+                export_columns.column_type,
+                export_columns.column_order,
+                export_columns.target_column_name,
+                export_columns.target_column_type,
+                export_columns.last_update_from_hive,
+                export_columns.include_in_export,
+                export_columns.comment,
+                export_columns.operator_notes,
             )
-            .select_from(exportTables)
+            .select_from(export_tables)
             .join(
-                exportColumns,
-                exportTables.table_id == exportColumns.table_id,
+                export_columns,
+                export_tables.table_id == export_columns.table_id,
                 isouter=False,
             )
             .filter(
-                (exportTables.dbalias == connection)
-                & (exportTables.target_schema == schema)
-                & (exportTables.target_table == table)
+                (export_tables.dbalias == connection)
+                & (export_tables.target_schema == schema)
+                & (export_tables.target_table == table)
             )
             .all()
         )
 
-        for row in exportColumnsData:
-            resultDict = {}
+        for row in export_columns_data:
+            result_dict = {}
 
             # 			resultDict['connection'] = row[0]
             # 			resultDict['targetSchema'] = row[1]
             # 			resultDict['targetTable'] = row[2]
-            resultDict["columnName"] = row[3]
+            result_dict["columnName"] = row[3]
 
             if row[4] == None:
-                resultDict["columnType"] = "unknown"
+                result_dict["columnType"] = "unknown"
             else:
-                resultDict["columnType"] = row[4]
+                result_dict["columnType"] = row[4]
 
             # ColumnOrder should start with 1 in API, but database stores is as a start with 0.
             # For ImportColumns, it starts with 1. So we need to do a +1 here to have the same functionality as importColumns
             if row[5] != None:
-                resultDict["columnOrder"] = int(row[5]) + 1
+                result_dict["columnOrder"] = int(row[5]) + 1
 
-            resultDict["targetColumnName"] = row[6]
-            resultDict["targetColumnType"] = row[7]
+            result_dict["targetColumnName"] = row[6]
+            result_dict["targetColumnType"] = row[7]
 
             try:
-                resultDict["lastUpdateFromHive"] = row[8].strftime("%Y-%m-%d %H:%M:%S")
+                result_dict["lastUpdateFromHive"] = row[8].strftime("%Y-%m-%d %H:%M:%S")
             except AttributeError:
-                resultDict["lastUpdateFromHive"] = None
+                result_dict["lastUpdateFromHive"] = None
 
             if row[9] == 1:
-                resultDict["includeInExport"] = True
+                result_dict["includeInExport"] = True
             else:
-                resultDict["includeInExport"] = False
+                result_dict["includeInExport"] = False
 
-            resultDict["comment"] = row[10]
-            resultDict["operatorNotes"] = row[11]
+            result_dict["comment"] = row[10]
+            result_dict["operatorNotes"] = row[11]
 
-            listOfColumns.append(resultDict)
+            list_of_columns.append(result_dict)
 
         # session.close()
         session.remove()
 
-        return listOfColumns
+        return list_of_columns
 
     def deleteExportTable(self, connection, schema, table, currentUser):
         """Update or create an export table"""
@@ -3025,10 +3041,10 @@ class dbCalls:
             self.disconnectDBImportDB()
             return None
 
-        exportColumns = aliased(configSchema.exportColumns)
-        exportTables = aliased(configSchema.exportTables)
+        export_columns = aliased(configSchema.exportColumns)
+        export_tables = aliased(configSchema.exportTables)
         result = "ok"
-        returnCode = 200
+        return_code = 200
 
         log.info(
             "User '%s' deleted export table '%s.%s' on connection '%s'"
@@ -3050,31 +3066,31 @@ class dbCalls:
 
         if row == None:
             result = "Table does not exist"
-            returnCode = 404
+            return_code = 404
         else:
-            tableID = row[0]
+            table_id = row[0]
 
             (
                 session.query(configSchema.exportTables)
-                .filter(configSchema.exportTables.table_id == tableID)
+                .filter(configSchema.exportTables.table_id == table_id)
                 .delete()
             )
             session.commit()
 
         # session.close()
         session.remove()
-        return (result, returnCode)
+        return (result, return_code)
 
     def bulkDeleteExportTable(self, bulkData, currentUser):
         """Bulk delete of export tables"""
         log = logging.getLogger(self.logger)
 
         if len(bulkData) == 0:
-            resultMsg = {
+            result_msg = {
                 "result": "Body must contain a list of connection, database and table to delete"
             }
-            returnCode = 422
-            return (resultMsg, returnCode)
+            return_code = 422
+            return (result_msg, return_code)
 
         try:
             session = self.getDBImportSession()
@@ -3082,17 +3098,17 @@ class dbCalls:
             self.disconnectDBImportDB()
             return None
 
-        deleteStatement = delete(configSchema.exportTables)
-        deleteStatement = deleteStatement.where(
+        delete_statement = delete(configSchema.exportTables)
+        delete_statement = delete_statement.where(
             (configSchema.exportTables.dbalias == bindparam("connection"))
             & (configSchema.exportTables.target_schema == bindparam("targetSchema"))
             & (configSchema.exportTables.target_table == bindparam("targetTable"))
         )
 
         # Create a list of dicts that contain all the connection, schema and table combinations that will be deleted
-        tableList = []
+        table_list = []
         for tables in bulkData:
-            tableList.append(
+            table_list.append(
                 {
                     "connection": tables.connection,
                     "targetSchema": tables.targetSchema,
@@ -3100,25 +3116,25 @@ class dbCalls:
                 }
             )
 
-        session.connection().execute(deleteStatement, tableList)
+        session.connection().execute(delete_statement, table_list)
         session.commit()
         session.remove()
 
-        returnCode = 200
-        resultMsg = {"result": "Ok"}
+        return_code = 200
+        result_msg = {"result": "Ok"}
 
-        return (resultMsg, returnCode)
+        return (result_msg, return_code)
 
     def bulkUpdateExportTable(self, bulkData, currentUser):
         """Bulk update of export tables"""
         log = logging.getLogger(self.logger)
 
         if len(bulkData.exportTables) == 0:
-            resultMsg = {
+            result_msg = {
                 "result": "exportTables must contain a list of connections/targetSchema/targetDatabase to update"
             }
-            returnCode = 422
-            return (resultMsg, returnCode)
+            return_code = 422
+            return (result_msg, return_code)
 
         try:
             session = self.getDBImportSession()
@@ -3126,38 +3142,38 @@ class dbCalls:
             self.disconnectDBImportDB()
             return None
 
-        exportTables = aliased(configSchema.exportTables)
-        updateStatement = update(exportTables)
-        updateStatement = updateStatement.where(
-            (exportTables.dbalias == bindparam("connection"))
-            & (exportTables.target_schema == bindparam("targetSchema"))
-            & (exportTables.target_table == bindparam("targetTable"))
+        export_tables = aliased(configSchema.exportTables)
+        update_statement = update(export_tables)
+        update_statement = update_statement.where(
+            (export_tables.dbalias == bindparam("connection"))
+            & (export_tables.target_schema == bindparam("targetSchema"))
+            & (export_tables.target_table == bindparam("targetTable"))
         )
 
         # This will loop through only the fields specified in the Posted JSON. So if a field have got a default None value in dataModel validation,
         # that field wont be part of this loop
-        for updateField in bulkData.__pydantic_fields_set__:
-            if updateField == "exportType":
-                updateStatement = updateStatement.values(
+        for update_field in bulkData.__pydantic_fields_set__:
+            if update_field == "exportType":
+                update_statement = update_statement.values(
                     export_type=bulkData.exportType
                 )
-            elif updateField == "exportTool":
-                updateStatement = updateStatement.values(
+            elif update_field == "exportTool":
+                update_statement = update_statement.values(
                     export_tool=bulkData.exportTool
                 )
-            elif updateField == "includeInAirflow":
-                updateStatement = updateStatement.values(
+            elif update_field == "includeInAirflow":
+                update_statement = update_statement.values(
                     include_in_airflow=bulkData.includeInAirflow
                 )
-            elif updateField == "operatorNotes":
-                updateStatement = updateStatement.values(
+            elif update_field == "operatorNotes":
+                update_statement = update_statement.values(
                     operator_notes=bulkData.operatorNotes
                 )
 
         # Create a list of dicts that contain all the databas/table combinations that will be updated
-        tableList = []
+        table_list = []
         for tables in bulkData.exportTables:
-            tableList.append(
+            table_list.append(
                 {
                     "connection": tables.connection,
                     "targetSchema": tables.targetSchema,
@@ -3165,17 +3181,17 @@ class dbCalls:
                 }
             )
 
-        updateStatement = updateStatement.execution_options(synchronize_session=False)
+        update_statement = update_statement.execution_options(synchronize_session=False)
         # 		print(updateStatement)
 
-        session.connection().execute(updateStatement, tableList)
+        session.connection().execute(update_statement, table_list)
         session.commit()
         session.remove()
 
-        returnCode = 200
-        resultMsg = {"result": "Ok"}
+        return_code = 200
+        result_msg = {"result": "Ok"}
 
-        return (resultMsg, returnCode)
+        return (result_msg, return_code)
 
     def updateExportTable(self, connection, schema, table, data, currentUser):
         """Update or create an export table"""
@@ -3187,10 +3203,10 @@ class dbCalls:
             self.disconnectDBImportDB()
             return None
 
-        exportColumns = aliased(configSchema.exportColumns)
-        exportTables = aliased(configSchema.exportTables)
+        export_columns = aliased(configSchema.exportColumns)
+        export_tables = aliased(configSchema.exportTables)
         result = "ok"
-        returnCode = 200
+        return_code = 200
 
         log.debug(table)
         log.info(
@@ -3280,45 +3296,45 @@ class dbCalls:
             log.error(column)  # noqa: F821  # TODO(#164): column is undefined here
 
             result = str(err)
-            returnCode = 500
+            return_code = 500
 
             # session.close()
             session.remove()
-            return (result, returnCode)
+            return (result, return_code)
 
         # Fetch the tableID as that is required to update/create data in export_columns
         row = (
-            session.query(exportTables.table_id)
-            .select_from(exportTables)
+            session.query(export_tables.table_id)
+            .select_from(export_tables)
             .filter(
-                (exportTables.dbalias == connection)
-                & (exportTables.target_schema == schema)
-                & (exportTables.target_table == table)
+                (export_tables.dbalias == connection)
+                & (export_tables.target_schema == schema)
+                & (export_tables.target_table == table)
             )
             .one()
         )
 
         session.execute(query)
-        tableID = row[0]
+        table_id = row[0]
 
         columns = data.columns
         for column in columns:
             # PK in export_columns is not the most optimal. So we need to check first if it exists and then insert or update.
             # Upsert is not available
             row = (
-                session.query(exportColumns.column_id)
-                .select_from(exportColumns)
+                session.query(export_columns.column_id)
+                .select_from(export_columns)
                 .filter(
-                    (exportColumns.table_id == tableID)
-                    & (exportColumns.column_name == column.columnName)
+                    (export_columns.table_id == table_id)
+                    & (export_columns.column_name == column.columnName)
                 )
                 .one_or_none()
             )
 
             try:
-                columnOrder = None
+                column_order = None
                 if column.columnOrder != None:
-                    columnOrder = int(column.columnOrder) - 1
+                    column_order = int(column.columnOrder) - 1
 
                 # Force set to Null if string is empty. This will otherwise cause problems during executions as it's not handled there
                 if (
@@ -3336,10 +3352,10 @@ class dbCalls:
                     log.debug("Column does not exist")
 
                     query = sa.insert(configSchema.exportColumns).values(
-                        table_id=tableID,
+                        table_id=table_id,
                         column_name=column.columnName,
                         column_type=column.columnType,
-                        column_order=columnOrder,
+                        column_order=column_order,
                         hive_db=data.database,
                         hive_table=data.table,
                         target_column_name=column.targetColumnName,
@@ -3353,18 +3369,18 @@ class dbCalls:
                     session.execute(query)
 
                 else:
-                    columnID = row[0]
-                    log.debug("Export column with id '%s' was updated" % (columnID))
+                    column_id = row[0]
+                    log.debug("Export column with id '%s' was updated" % (column_id))
 
                     session.execute(
-                        update(exportColumns),
+                        update(export_columns),
                         [
                             {
-                                "table_id": tableID,
-                                "column_id": columnID,
+                                "table_id": table_id,
+                                "column_id": column_id,
                                 "column_name": column.columnName,
                                 "column_type": column.columnType,
-                                "column_order": columnOrder,
+                                "column_order": column_order,
                                 "hive_db": data.database,
                                 "hive_table": data.table,
                                 "target_column_name": column.targetColumnName,
@@ -3383,17 +3399,17 @@ class dbCalls:
                 log.error(column)
 
                 result = str(err)
-                returnCode = 500
+                return_code = 500
 
                 # session.close()
                 session.remove()
-                return (result, returnCode)
+                return (result, return_code)
 
             log.debug(column)
 
         # session.close()
         session.remove()
-        return (result, returnCode)
+        return (result, return_code)
 
     def getAllAirflowDags(self):
         """Returns all Airflow DAGs"""
@@ -3405,70 +3421,70 @@ class dbCalls:
             self.disconnectDBImportDB()
             return None
 
-        airflowCustomDags = aliased(configSchema.airflowCustomDags)
-        airflowExportDags = aliased(configSchema.airflowExportDags)
-        airflowImportDags = aliased(configSchema.airflowImportDags)
-        listOfDAGs = []
-        processedDAGs = []
+        airflow_custom_dags = aliased(configSchema.airflowCustomDags)
+        airflow_export_dags = aliased(configSchema.airflowExportDags)
+        airflow_import_dags = aliased(configSchema.airflowImportDags)
+        list_of_dags = []
+        processed_dags = []
 
-        airflowCustomDagsQuery = session.query(
-            airflowCustomDags.dag_name,
+        airflow_custom_dags_query = session.query(
+            airflow_custom_dags.dag_name,
             sa.sql.expression.literal_column("'custom'").label("dag_type"),
-            airflowCustomDags.schedule_interval,
-            airflowCustomDags.auto_regenerate_dag,
-            airflowCustomDags.operator_notes,
-            airflowCustomDags.application_notes,
-        ).select_from(airflowCustomDags)
+            airflow_custom_dags.schedule_interval,
+            airflow_custom_dags.auto_regenerate_dag,
+            airflow_custom_dags.operator_notes,
+            airflow_custom_dags.application_notes,
+        ).select_from(airflow_custom_dags)
 
-        airflowImportDagsQuery = session.query(
-            airflowImportDags.dag_name,
+        airflow_import_dags_query = session.query(
+            airflow_import_dags.dag_name,
             sa.sql.expression.literal_column("'import'").label("dag_type"),
-            airflowImportDags.schedule_interval,
-            airflowImportDags.auto_regenerate_dag,
-            airflowImportDags.operator_notes,
-            airflowImportDags.application_notes,
-        ).select_from(airflowImportDags)
+            airflow_import_dags.schedule_interval,
+            airflow_import_dags.auto_regenerate_dag,
+            airflow_import_dags.operator_notes,
+            airflow_import_dags.application_notes,
+        ).select_from(airflow_import_dags)
 
-        airflowExportDagsQuery = session.query(
-            airflowExportDags.dag_name,
+        airflow_export_dags_query = session.query(
+            airflow_export_dags.dag_name,
             sa.sql.expression.literal_column("'export'").label("dag_type"),
-            airflowExportDags.schedule_interval,
-            airflowExportDags.auto_regenerate_dag,
-            airflowExportDags.operator_notes,
-            airflowExportDags.application_notes,
-        ).select_from(airflowExportDags)
+            airflow_export_dags.schedule_interval,
+            airflow_export_dags.auto_regenerate_dag,
+            airflow_export_dags.operator_notes,
+            airflow_export_dags.application_notes,
+        ).select_from(airflow_export_dags)
 
-        airflowDagsData = airflowCustomDagsQuery.union(
-            airflowImportDagsQuery, airflowExportDagsQuery
+        airflow_dags_data = airflow_custom_dags_query.union(
+            airflow_import_dags_query, airflow_export_dags_query
         ).limit(self.contentMaxRows)
 
         count = 0
-        for row in airflowDagsData:
+        for row in airflow_dags_data:
             count = count + 1
-            resultDict = {}
+            result_dict = {}
 
             # Just to make sure that two DAGs dont exists with the same name in different tables
-            if row[0] in processedDAGs:
+            if row[0] in processed_dags:
                 raise HTTPException(
                     status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                     detail="Airflow DAG '%s' exists in more than one DAG table"
                     % (row[0]),
                 )
             else:
-                processedDAGs.append(row[0])
+                processed_dags.append(row[0])
 
-            resultDict["name"] = row[0]
-            resultDict["type"] = row[1]
-            resultDict["scheduleInterval"] = row[2]
-            resultDict["autoRegenerateDag"] = self.convertIntToBool(row[3])
+            result_dict["name"] = row[0]
+            result_dict["type"] = row[1]
+            result_dict["scheduleInterval"] = row[2]
+            result_dict["autoRegenerateDag"] = self.convertIntToBool(row[3])
             # 			resultDict['operatorNotes'] = row[4]
             # 			resultDict['applicationNotes'] = row[5]
-            listOfDAGs.append(resultDict)
+            list_of_dags.append(result_dict)
 
             if count == self.contentMaxRows:
                 break
 
-        jsonResult = json.loads(json.dumps(listOfDAGs))
+        json_result = json.loads(json.dumps(list_of_dags))
         # session.close()
         session.remove()
 
@@ -3476,7 +3492,7 @@ class dbCalls:
             "content-rows": str(count),
             "content-max-returned-rows": str(self.contentMaxRows),
         }
-        return JSONResponse(content=jsonResult, headers=headers, status_code=200)
+        return JSONResponse(content=json_result, headers=headers, status_code=200)
 
     def getAirflowImportDags(self):
         """Returns all Airflow Import DAGs"""
@@ -3488,57 +3504,57 @@ class dbCalls:
             self.disconnectDBImportDB()
             return None
 
-        airflowURL = self.getConfigValue("airflow_url")
+        airflow_url = self.getConfigValue("airflow_url")
 
-        airflowImportDags = aliased(configSchema.airflowImportDags)
-        listOfDAGs = []
+        airflow_import_dags = aliased(configSchema.airflowImportDags)
+        list_of_dags = []
 
-        airflowDagsData = (
+        airflow_dags_data = (
             session.query(
-                airflowImportDags.dag_name,
-                airflowImportDags.schedule_interval,
-                airflowImportDags.auto_regenerate_dag,
-                airflowImportDags.filter_hive,
-                airflowImportDags.operator_notes,
-                airflowImportDags.sudo_user,
-                airflowImportDags.timezone,
-                airflowImportDags.email,
-                airflowImportDags.email_on_failure,
-                airflowImportDags.email_on_retries,
-                airflowImportDags.sla_warning_time,
-                airflowImportDags.concurrency,
+                airflow_import_dags.dag_name,
+                airflow_import_dags.schedule_interval,
+                airflow_import_dags.auto_regenerate_dag,
+                airflow_import_dags.filter_hive,
+                airflow_import_dags.operator_notes,
+                airflow_import_dags.sudo_user,
+                airflow_import_dags.timezone,
+                airflow_import_dags.email,
+                airflow_import_dags.email_on_failure,
+                airflow_import_dags.email_on_retries,
+                airflow_import_dags.sla_warning_time,
+                airflow_import_dags.concurrency,
             )
-            .select_from(airflowImportDags)
+            .select_from(airflow_import_dags)
             .limit(self.contentMaxRows)
         )
 
         count = 0
-        for row in airflowDagsData:
+        for row in airflow_dags_data:
             count = count + 1
-            resultDict = {}
+            result_dict = {}
 
-            resultDict["name"] = row[0]
-            resultDict["scheduleInterval"] = row[1]
-            resultDict["autoRegenerateDag"] = self.convertIntToBool(row[2])
-            resultDict["filterTable"] = row[3]
-            resultDict["airflowLink"] = "%s/dags/%s" % (airflowURL, row[0])
-            resultDict["operatorNotes"] = row[4]
-            resultDict["sudoUser"] = row[5]
-            resultDict["timezone"] = row[6]
-            resultDict["email"] = row[7]
-            resultDict["emailOnFailure"] = self.convertIntToBool(row[8])
-            resultDict["emailOnRetries"] = self.convertIntToBool(row[9])
+            result_dict["name"] = row[0]
+            result_dict["scheduleInterval"] = row[1]
+            result_dict["autoRegenerateDag"] = self.convertIntToBool(row[2])
+            result_dict["filterTable"] = row[3]
+            result_dict["airflowLink"] = "%s/dags/%s" % (airflow_url, row[0])
+            result_dict["operatorNotes"] = row[4]
+            result_dict["sudoUser"] = row[5]
+            result_dict["timezone"] = row[6]
+            result_dict["email"] = row[7]
+            result_dict["emailOnFailure"] = self.convertIntToBool(row[8])
+            result_dict["emailOnRetries"] = self.convertIntToBool(row[9])
             try:
-                resultDict["slaWarningTime"] = row[10].strftime("%H:%M:%S")
+                result_dict["slaWarningTime"] = row[10].strftime("%H:%M:%S")
             except AttributeError:
-                resultDict["slaWarningTime"] = None
-            resultDict["concurrency"] = row[11]
-            listOfDAGs.append(resultDict)
+                result_dict["slaWarningTime"] = None
+            result_dict["concurrency"] = row[11]
+            list_of_dags.append(result_dict)
 
             if count == self.contentMaxRows:
                 break
 
-        jsonResult = json.loads(json.dumps(listOfDAGs))
+        json_result = json.loads(json.dumps(list_of_dags))
         # session.close()
         session.remove()
 
@@ -3546,7 +3562,7 @@ class dbCalls:
             "content-rows": str(count),
             "content-max-returned-rows": str(self.contentMaxRows),
         }
-        return JSONResponse(content=jsonResult, headers=headers, status_code=200)
+        return JSONResponse(content=json_result, headers=headers, status_code=200)
 
     def getAirflowExportDags(self):
         """Returns all Airflow Export DAGs"""
@@ -3558,59 +3574,59 @@ class dbCalls:
             self.disconnectDBImportDB()
             return None
 
-        airflowURL = self.getConfigValue("airflow_url")
+        airflow_url = self.getConfigValue("airflow_url")
 
-        airflowExportDags = aliased(configSchema.airflowExportDags)
-        listOfDAGs = []
+        airflow_export_dags = aliased(configSchema.airflowExportDags)
+        list_of_dags = []
 
-        airflowDagsData = (
+        airflow_dags_data = (
             session.query(
-                airflowExportDags.dag_name,
-                airflowExportDags.schedule_interval,
-                airflowExportDags.auto_regenerate_dag,
-                airflowExportDags.filter_dbalias,
-                airflowExportDags.filter_target_schema,
-                airflowExportDags.filter_target_table,
-                airflowExportDags.operator_notes,
-                airflowExportDags.sudo_user,
-                airflowExportDags.timezone,
-                airflowExportDags.email,
-                airflowExportDags.email_on_failure,
-                airflowExportDags.email_on_retries,
-                airflowExportDags.sla_warning_time,
-                airflowExportDags.concurrency,
+                airflow_export_dags.dag_name,
+                airflow_export_dags.schedule_interval,
+                airflow_export_dags.auto_regenerate_dag,
+                airflow_export_dags.filter_dbalias,
+                airflow_export_dags.filter_target_schema,
+                airflow_export_dags.filter_target_table,
+                airflow_export_dags.operator_notes,
+                airflow_export_dags.sudo_user,
+                airflow_export_dags.timezone,
+                airflow_export_dags.email,
+                airflow_export_dags.email_on_failure,
+                airflow_export_dags.email_on_retries,
+                airflow_export_dags.sla_warning_time,
+                airflow_export_dags.concurrency,
             )
-            .select_from(airflowExportDags)
+            .select_from(airflow_export_dags)
             .limit(self.contentMaxRows)
         )
 
         count = 0
-        for row in airflowDagsData:
+        for row in airflow_dags_data:
             count = count + 1
-            resultDict = {}
+            result_dict = {}
 
-            resultDict["name"] = row[0]
-            resultDict["scheduleInterval"] = row[1]
-            resultDict["autoRegenerateDag"] = self.convertIntToBool(row[2])
-            resultDict["filterConnection"] = row[3]
-            resultDict["filterTargetSchema"] = row[4]
-            resultDict["filterTargetTable"] = row[5]
-            resultDict["airflowLink"] = "%s/dags/%s" % (airflowURL, row[0])
-            resultDict["operatorNotes"] = row[6]
-            resultDict["sudoUser"] = row[7]
-            resultDict["timezone"] = row[8]
-            resultDict["email"] = row[9]
-            resultDict["emailOnFailure"] = self.convertIntToBool(row[10])
-            resultDict["emailOnRetries"] = self.convertIntToBool(row[11])
+            result_dict["name"] = row[0]
+            result_dict["scheduleInterval"] = row[1]
+            result_dict["autoRegenerateDag"] = self.convertIntToBool(row[2])
+            result_dict["filterConnection"] = row[3]
+            result_dict["filterTargetSchema"] = row[4]
+            result_dict["filterTargetTable"] = row[5]
+            result_dict["airflowLink"] = "%s/dags/%s" % (airflow_url, row[0])
+            result_dict["operatorNotes"] = row[6]
+            result_dict["sudoUser"] = row[7]
+            result_dict["timezone"] = row[8]
+            result_dict["email"] = row[9]
+            result_dict["emailOnFailure"] = self.convertIntToBool(row[10])
+            result_dict["emailOnRetries"] = self.convertIntToBool(row[11])
             try:
-                resultDict["slaWarningTime"] = row[12].strftime("%H:%M:%S")
+                result_dict["slaWarningTime"] = row[12].strftime("%H:%M:%S")
             except AttributeError:
-                resultDict["slaWarningTime"] = None
-            resultDict["concurrency"] = row[13]
+                result_dict["slaWarningTime"] = None
+            result_dict["concurrency"] = row[13]
 
-            listOfDAGs.append(resultDict)
+            list_of_dags.append(result_dict)
 
-        jsonResult = json.loads(json.dumps(listOfDAGs))
+        json_result = json.loads(json.dumps(list_of_dags))
         # session.close()
         session.remove()
 
@@ -3618,7 +3634,7 @@ class dbCalls:
             "content-rows": str(count),
             "content-max-returned-rows": str(self.contentMaxRows),
         }
-        return JSONResponse(content=jsonResult, headers=headers, status_code=200)
+        return JSONResponse(content=json_result, headers=headers, status_code=200)
 
     def getAirflowCustomDags(self):
         """Returns all Airflow Custom DAGs"""
@@ -3630,55 +3646,55 @@ class dbCalls:
             self.disconnectDBImportDB()
             return None
 
-        airflowURL = self.getConfigValue("airflow_url")
+        airflow_url = self.getConfigValue("airflow_url")
 
-        airflowCustomDags = aliased(configSchema.airflowCustomDags)
-        listOfDAGs = []
+        airflow_custom_dags = aliased(configSchema.airflowCustomDags)
+        list_of_dags = []
 
-        airflowDagsData = (
+        airflow_dags_data = (
             session.query(
-                airflowCustomDags.dag_name,
-                airflowCustomDags.schedule_interval,
-                airflowCustomDags.auto_regenerate_dag,
-                airflowCustomDags.operator_notes,
-                airflowCustomDags.sudo_user,
-                airflowCustomDags.timezone,
-                airflowCustomDags.email,
-                airflowCustomDags.email_on_failure,
-                airflowCustomDags.email_on_retries,
-                airflowCustomDags.sla_warning_time,
-                airflowCustomDags.concurrency,
+                airflow_custom_dags.dag_name,
+                airflow_custom_dags.schedule_interval,
+                airflow_custom_dags.auto_regenerate_dag,
+                airflow_custom_dags.operator_notes,
+                airflow_custom_dags.sudo_user,
+                airflow_custom_dags.timezone,
+                airflow_custom_dags.email,
+                airflow_custom_dags.email_on_failure,
+                airflow_custom_dags.email_on_retries,
+                airflow_custom_dags.sla_warning_time,
+                airflow_custom_dags.concurrency,
             )
-            .select_from(airflowCustomDags)
+            .select_from(airflow_custom_dags)
             .limit(self.contentMaxRows)
         )
 
         count = 0
-        for row in airflowDagsData:
+        for row in airflow_dags_data:
             count = count + 1
-            resultDict = {}
+            result_dict = {}
 
-            resultDict["name"] = row[0]
-            resultDict["scheduleInterval"] = row[1]
-            resultDict["autoRegenerateDag"] = self.convertIntToBool(row[2])
-            resultDict["airflowLink"] = "%s/dags/%s" % (airflowURL, row[0])
-            resultDict["operatorNotes"] = row[3]
-            resultDict["sudoUser"] = row[4]
-            resultDict["timezone"] = row[5]
-            resultDict["email"] = row[6]
-            resultDict["emailOnFailure"] = self.convertIntToBool(row[7])
-            resultDict["emailOnRetries"] = self.convertIntToBool(row[8])
+            result_dict["name"] = row[0]
+            result_dict["scheduleInterval"] = row[1]
+            result_dict["autoRegenerateDag"] = self.convertIntToBool(row[2])
+            result_dict["airflowLink"] = "%s/dags/%s" % (airflow_url, row[0])
+            result_dict["operatorNotes"] = row[3]
+            result_dict["sudoUser"] = row[4]
+            result_dict["timezone"] = row[5]
+            result_dict["email"] = row[6]
+            result_dict["emailOnFailure"] = self.convertIntToBool(row[7])
+            result_dict["emailOnRetries"] = self.convertIntToBool(row[8])
             try:
-                resultDict["slaWarningTime"] = row[9].strftime("%H:%M:%S")
+                result_dict["slaWarningTime"] = row[9].strftime("%H:%M:%S")
             except AttributeError:
-                resultDict["slaWarningTime"] = None
-            resultDict["concurrency"] = row[10]
-            listOfDAGs.append(resultDict)
+                result_dict["slaWarningTime"] = None
+            result_dict["concurrency"] = row[10]
+            list_of_dags.append(result_dict)
 
             if count == self.contentMaxRows:
                 break
 
-        jsonResult = json.loads(json.dumps(listOfDAGs))
+        json_result = json.loads(json.dumps(list_of_dags))
         # session.close()
         session.remove()
 
@@ -3686,7 +3702,7 @@ class dbCalls:
             "content-rows": str(count),
             "content-max-returned-rows": str(self.contentMaxRows),
         }
-        return JSONResponse(content=jsonResult, headers=headers, status_code=200)
+        return JSONResponse(content=json_result, headers=headers, status_code=200)
 
     def getAirflowTasks(self, dagname):
         """Returns a list with all airflow dags associated with a specified dag"""
@@ -3698,57 +3714,57 @@ class dbCalls:
             self.disconnectDBImportDB()
             return None
 
-        airflowTasks = aliased(configSchema.airflowTasks)
-        listOfTasks = []
+        airflow_tasks = aliased(configSchema.airflowTasks)
+        list_of_tasks = []
 
         # Return a list of Hive tables with details
-        airflowTasksData = (
+        airflow_tasks_data = (
             session.query(
-                airflowTasks.task_name,
-                airflowTasks.task_type,
-                airflowTasks.placement,
-                airflowTasks.jdbc_dbalias,
-                airflowTasks.airflow_pool,
-                airflowTasks.airflow_priority,
-                airflowTasks.include_in_airflow,
-                airflowTasks.task_dependency_downstream,
-                airflowTasks.task_dependency_upstream,
-                airflowTasks.task_config,
-                airflowTasks.sensor_poke_interval,
-                airflowTasks.sensor_timeout_minutes,
-                airflowTasks.sensor_connection,
-                airflowTasks.sensor_soft_fail,
-                airflowTasks.sudo_user,
+                airflow_tasks.task_name,
+                airflow_tasks.task_type,
+                airflow_tasks.placement,
+                airflow_tasks.jdbc_dbalias,
+                airflow_tasks.airflow_pool,
+                airflow_tasks.airflow_priority,
+                airflow_tasks.include_in_airflow,
+                airflow_tasks.task_dependency_downstream,
+                airflow_tasks.task_dependency_upstream,
+                airflow_tasks.task_config,
+                airflow_tasks.sensor_poke_interval,
+                airflow_tasks.sensor_timeout_minutes,
+                airflow_tasks.sensor_connection,
+                airflow_tasks.sensor_soft_fail,
+                airflow_tasks.sudo_user,
             )
-            .select_from(airflowTasks)
-            .filter(airflowTasks.dag_name == dagname)
+            .select_from(airflow_tasks)
+            .filter(airflow_tasks.dag_name == dagname)
             .all()
         )
 
-        for row in airflowTasksData:
-            resultDict = {}
-            resultDict["name"] = row[0]
-            resultDict["type"] = row[1]
-            resultDict["placement"] = row[2]
-            resultDict["connection"] = row[3]
-            resultDict["airflowPool"] = row[4]
-            resultDict["airflowPriority"] = row[5]
+        for row in airflow_tasks_data:
+            result_dict = {}
+            result_dict["name"] = row[0]
+            result_dict["type"] = row[1]
+            result_dict["placement"] = row[2]
+            result_dict["connection"] = row[3]
+            result_dict["airflowPool"] = row[4]
+            result_dict["airflowPriority"] = row[5]
             if row[6] == 1:
-                resultDict["includeInAirflow"] = True
+                result_dict["includeInAirflow"] = True
             else:
-                resultDict["includeInAirflow"] = False
-            resultDict["taskDependencyDownstream"] = row[7]
-            resultDict["taskDependencyUpstream"] = row[8]
-            resultDict["taskConfig"] = row[9]
-            resultDict["sensorPokeInterval"] = row[10]
-            resultDict["sensorTimeoutMinutes"] = row[11]
-            resultDict["sensorConnection"] = row[12]
-            resultDict["sensorSoftFail"] = row[13]
-            resultDict["sudoUser"] = row[14]
-            listOfTasks.append(resultDict)
+                result_dict["includeInAirflow"] = False
+            result_dict["taskDependencyDownstream"] = row[7]
+            result_dict["taskDependencyUpstream"] = row[8]
+            result_dict["taskConfig"] = row[9]
+            result_dict["sensorPokeInterval"] = row[10]
+            result_dict["sensorTimeoutMinutes"] = row[11]
+            result_dict["sensorConnection"] = row[12]
+            result_dict["sensorSoftFail"] = row[13]
+            result_dict["sudoUser"] = row[14]
+            list_of_tasks.append(result_dict)
 
         session.remove()
-        return listOfTasks
+        return list_of_tasks
 
     def getAirflowCustomDag(self, dagname):
         """Returns an Airflow Custom DAG"""
@@ -3760,31 +3776,31 @@ class dbCalls:
             self.disconnectDBImportDB()
             return None
 
-        airflowURL = self.getConfigValue("airflow_url")
+        airflow_url = self.getConfigValue("airflow_url")
 
-        airflowCustomDags = aliased(configSchema.airflowCustomDags)
+        airflow_custom_dags = aliased(configSchema.airflowCustomDags)
 
         row = (
             session.query(
-                airflowCustomDags.dag_name,
-                airflowCustomDags.schedule_interval,
-                airflowCustomDags.retries,
-                airflowCustomDags.operator_notes,
-                airflowCustomDags.application_notes,
-                airflowCustomDags.airflow_notes,
-                airflowCustomDags.auto_regenerate_dag,
-                airflowCustomDags.sudo_user,
-                airflowCustomDags.timezone,
-                airflowCustomDags.email,
-                airflowCustomDags.email_on_failure,
-                airflowCustomDags.email_on_retries,
-                airflowCustomDags.tags,
-                airflowCustomDags.sla_warning_time,
-                airflowCustomDags.retry_exponential_backoff,
-                airflowCustomDags.concurrency,
+                airflow_custom_dags.dag_name,
+                airflow_custom_dags.schedule_interval,
+                airflow_custom_dags.retries,
+                airflow_custom_dags.operator_notes,
+                airflow_custom_dags.application_notes,
+                airflow_custom_dags.airflow_notes,
+                airflow_custom_dags.auto_regenerate_dag,
+                airflow_custom_dags.sudo_user,
+                airflow_custom_dags.timezone,
+                airflow_custom_dags.email,
+                airflow_custom_dags.email_on_failure,
+                airflow_custom_dags.email_on_retries,
+                airflow_custom_dags.tags,
+                airflow_custom_dags.sla_warning_time,
+                airflow_custom_dags.retry_exponential_backoff,
+                airflow_custom_dags.concurrency,
             )
-            .select_from(airflowCustomDags)
-            .filter(airflowCustomDags.dag_name == dagname)
+            .select_from(airflow_custom_dags)
+            .filter(airflow_custom_dags.dag_name == dagname)
             .one_or_none()
         )
 
@@ -3794,37 +3810,37 @@ class dbCalls:
                 detail="Airflow DAG does not exist",
             )
 
-        resultDict = {}
-        resultDict["name"] = row[0]
-        resultDict["scheduleInterval"] = row[1]
-        resultDict["retries"] = row[2]
-        if resultDict["retries"] == None or resultDict["retries"] == "":
-            resultDict["retries"] = 0
-        resultDict["operatorNotes"] = row[3]
-        resultDict["applicationNotes"] = row[4]
-        resultDict["airflowNotes"] = row[5]
-        resultDict["autoRegenerateDag"] = self.convertIntToBool(row[6])
-        resultDict["sudoUser"] = row[7]
-        resultDict["timezone"] = row[8]
-        resultDict["email"] = row[9]
-        resultDict["emailOnFailure"] = self.convertIntToBool(row[10])
-        resultDict["emailOnRetries"] = self.convertIntToBool(row[11])
-        resultDict["tags"] = row[12]
+        result_dict = {}
+        result_dict["name"] = row[0]
+        result_dict["scheduleInterval"] = row[1]
+        result_dict["retries"] = row[2]
+        if result_dict["retries"] == None or result_dict["retries"] == "":
+            result_dict["retries"] = 0
+        result_dict["operatorNotes"] = row[3]
+        result_dict["applicationNotes"] = row[4]
+        result_dict["airflowNotes"] = row[5]
+        result_dict["autoRegenerateDag"] = self.convertIntToBool(row[6])
+        result_dict["sudoUser"] = row[7]
+        result_dict["timezone"] = row[8]
+        result_dict["email"] = row[9]
+        result_dict["emailOnFailure"] = self.convertIntToBool(row[10])
+        result_dict["emailOnRetries"] = self.convertIntToBool(row[11])
+        result_dict["tags"] = row[12]
         try:
-            resultDict["slaWarningTime"] = row[13].strftime("%H:%M:%S")
+            result_dict["slaWarningTime"] = row[13].strftime("%H:%M:%S")
         except AttributeError:
-            resultDict["slaWarningTime"] = None
-        resultDict["retryExponentialBackoff"] = row[14]
-        resultDict["concurrency"] = row[15]
-        resultDict["airflowLink"] = "%s/dags/%s" % (airflowURL, row[0])
+            result_dict["slaWarningTime"] = None
+        result_dict["retryExponentialBackoff"] = row[14]
+        result_dict["concurrency"] = row[15]
+        result_dict["airflowLink"] = "%s/dags/%s" % (airflow_url, row[0])
 
-        resultDict["tasks"] = self.getAirflowTasks(dagname)
+        result_dict["tasks"] = self.getAirflowTasks(dagname)
 
-        jsonResult = json.loads(json.dumps(resultDict))
+        json_result = json.loads(json.dumps(result_dict))
         # session.close()
         session.remove()
 
-        return jsonResult
+        return json_result
 
     def checkDagNameAvailability(
         self, name, excludeImport=False, excludeExport=False, excludeCustom=False
@@ -3838,48 +3854,48 @@ class dbCalls:
             self.disconnectDBImportDB()
             return None
 
-        airflowCustomDags = aliased(configSchema.airflowCustomDags)
-        airflowExportDags = aliased(configSchema.airflowExportDags)
-        airflowImportDags = aliased(configSchema.airflowImportDags)
-        listOfDAGs = []
-        processedDAGs = []
-        dagNameIsFree = True
+        airflow_custom_dags = aliased(configSchema.airflowCustomDags)
+        airflow_export_dags = aliased(configSchema.airflowExportDags)
+        airflow_import_dags = aliased(configSchema.airflowImportDags)
+        list_of_dags = []
+        processed_dags = []
+        dag_name_is_free = True
 
         if excludeCustom == False:
             row = (
-                session.query(airflowCustomDags.dag_name)
-                .select_from(airflowCustomDags)
-                .filter(airflowCustomDags.dag_name == name)
+                session.query(airflow_custom_dags.dag_name)
+                .select_from(airflow_custom_dags)
+                .filter(airflow_custom_dags.dag_name == name)
                 .one_or_none()
             )
 
             if row != None:
-                dagNameIsFree = False
+                dag_name_is_free = False
 
         if excludeImport == False:
             row = (
-                session.query(airflowImportDags.dag_name)
-                .select_from(airflowImportDags)
-                .filter(airflowImportDags.dag_name == name)
+                session.query(airflow_import_dags.dag_name)
+                .select_from(airflow_import_dags)
+                .filter(airflow_import_dags.dag_name == name)
                 .one_or_none()
             )
 
             if row != None:
-                dagNameIsFree = False
+                dag_name_is_free = False
 
         if excludeExport == False:
             row = (
-                session.query(airflowExportDags.dag_name)
-                .select_from(airflowExportDags)
-                .filter(airflowExportDags.dag_name == name)
+                session.query(airflow_export_dags.dag_name)
+                .select_from(airflow_export_dags)
+                .filter(airflow_export_dags.dag_name == name)
                 .one_or_none()
             )
 
             if row != None:
-                dagNameIsFree = False
+                dag_name_is_free = False
 
         session.remove()
-        return dagNameIsFree
+        return dag_name_is_free
 
     def updateAirflowTasks(self, dagname, task, currentUser):
         """Create or update Airflow tasks"""
@@ -3891,7 +3907,7 @@ class dbCalls:
             self.disconnectDBImportDB()
             return None
 
-        airflowTasks = aliased(configSchema.airflowTasks)
+        airflow_tasks = aliased(configSchema.airflowTasks)
 
         try:
             query = insert(configSchema.airflowTasks).values(
@@ -3955,34 +3971,34 @@ class dbCalls:
             self.disconnectDBImportDB()
             return None
 
-        airflowURL = self.getConfigValue("airflow_url")
+        airflow_url = self.getConfigValue("airflow_url")
 
-        airflowExportDags = aliased(configSchema.airflowExportDags)
+        airflow_export_dags = aliased(configSchema.airflowExportDags)
 
         row = (
             session.query(
-                airflowExportDags.dag_name,
-                airflowExportDags.schedule_interval,
-                airflowExportDags.filter_dbalias,
-                airflowExportDags.filter_target_schema,
-                airflowExportDags.filter_target_table,
-                airflowExportDags.retries,
-                airflowExportDags.operator_notes,
-                airflowExportDags.application_notes,
-                airflowExportDags.auto_regenerate_dag,
-                airflowExportDags.airflow_notes,
-                airflowExportDags.sudo_user,
-                airflowExportDags.timezone,
-                airflowExportDags.email,
-                airflowExportDags.email_on_failure,
-                airflowExportDags.email_on_retries,
-                airflowExportDags.tags,
-                airflowExportDags.sla_warning_time,
-                airflowExportDags.retry_exponential_backoff,
-                airflowExportDags.concurrency,
+                airflow_export_dags.dag_name,
+                airflow_export_dags.schedule_interval,
+                airflow_export_dags.filter_dbalias,
+                airflow_export_dags.filter_target_schema,
+                airflow_export_dags.filter_target_table,
+                airflow_export_dags.retries,
+                airflow_export_dags.operator_notes,
+                airflow_export_dags.application_notes,
+                airflow_export_dags.auto_regenerate_dag,
+                airflow_export_dags.airflow_notes,
+                airflow_export_dags.sudo_user,
+                airflow_export_dags.timezone,
+                airflow_export_dags.email,
+                airflow_export_dags.email_on_failure,
+                airflow_export_dags.email_on_retries,
+                airflow_export_dags.tags,
+                airflow_export_dags.sla_warning_time,
+                airflow_export_dags.retry_exponential_backoff,
+                airflow_export_dags.concurrency,
             )
-            .select_from(airflowExportDags)
-            .filter(airflowExportDags.dag_name == dagname)
+            .select_from(airflow_export_dags)
+            .filter(airflow_export_dags.dag_name == dagname)
             .one_or_none()
         )
 
@@ -3992,40 +4008,40 @@ class dbCalls:
                 detail="Airflow DAG does not exist",
             )
 
-        resultDict = {}
-        resultDict["name"] = row[0]
-        resultDict["scheduleInterval"] = row[1]
-        resultDict["filterConnection"] = row[2]
-        resultDict["filterTargetSchema"] = row[3]
-        resultDict["filterTargetTable"] = row[4]
-        resultDict["retries"] = row[5]
-        if resultDict["retries"] == None or resultDict["retries"] == "":
-            resultDict["retries"] = 5
-        resultDict["operatorNotes"] = row[6]
-        resultDict["applicationNotes"] = row[7]
-        resultDict["autoRegenerateDag"] = self.convertIntToBool(row[8])
-        resultDict["airflowNotes"] = row[9]
-        resultDict["sudoUser"] = row[10]
-        resultDict["timezone"] = row[11]
-        resultDict["email"] = row[12]
-        resultDict["emailOnFailure"] = self.convertIntToBool(row[13])
-        resultDict["emailOnRetries"] = self.convertIntToBool(row[14])
-        resultDict["tags"] = row[15]
+        result_dict = {}
+        result_dict["name"] = row[0]
+        result_dict["scheduleInterval"] = row[1]
+        result_dict["filterConnection"] = row[2]
+        result_dict["filterTargetSchema"] = row[3]
+        result_dict["filterTargetTable"] = row[4]
+        result_dict["retries"] = row[5]
+        if result_dict["retries"] == None or result_dict["retries"] == "":
+            result_dict["retries"] = 5
+        result_dict["operatorNotes"] = row[6]
+        result_dict["applicationNotes"] = row[7]
+        result_dict["autoRegenerateDag"] = self.convertIntToBool(row[8])
+        result_dict["airflowNotes"] = row[9]
+        result_dict["sudoUser"] = row[10]
+        result_dict["timezone"] = row[11]
+        result_dict["email"] = row[12]
+        result_dict["emailOnFailure"] = self.convertIntToBool(row[13])
+        result_dict["emailOnRetries"] = self.convertIntToBool(row[14])
+        result_dict["tags"] = row[15]
         try:
-            resultDict["slaWarningTime"] = row[16].strftime("%H:%M:%S")
+            result_dict["slaWarningTime"] = row[16].strftime("%H:%M:%S")
         except AttributeError:
-            resultDict["slaWarningTime"] = None
-        resultDict["retryExponentialBackoff"] = row[17]
-        resultDict["concurrency"] = row[18]
-        resultDict["airflowLink"] = "%s/dags/%s" % (airflowURL, row[0])
+            result_dict["slaWarningTime"] = None
+        result_dict["retryExponentialBackoff"] = row[17]
+        result_dict["concurrency"] = row[18]
+        result_dict["airflowLink"] = "%s/dags/%s" % (airflow_url, row[0])
 
-        resultDict["tasks"] = self.getAirflowTasks(dagname)
+        result_dict["tasks"] = self.getAirflowTasks(dagname)
 
-        jsonResult = json.loads(json.dumps(resultDict))
+        json_result = json.loads(json.dumps(result_dict))
         # session.close()
         session.remove()
 
-        return jsonResult
+        return json_result
 
     def getAirflowImportDag(self, dagname):
         """Returns an Airflow Import DAG"""
@@ -4037,39 +4053,39 @@ class dbCalls:
             self.disconnectDBImportDB()
             return None
 
-        airflowURL = self.getConfigValue("airflow_url")
+        airflow_url = self.getConfigValue("airflow_url")
 
-        airflowImportDags = aliased(configSchema.airflowImportDags)
+        airflow_import_dags = aliased(configSchema.airflowImportDags)
 
         row = (
             session.query(
-                airflowImportDags.dag_name,
-                airflowImportDags.schedule_interval,
-                airflowImportDags.filter_hive,
-                airflowImportDags.finish_all_stage1_first,
-                airflowImportDags.run_import_and_etl_separate,
-                airflowImportDags.retries,
-                airflowImportDags.retries_stage1,
-                airflowImportDags.retries_stage2,
-                airflowImportDags.pool_stage1,
-                airflowImportDags.pool_stage2,
-                airflowImportDags.operator_notes,
-                airflowImportDags.application_notes,
-                airflowImportDags.auto_regenerate_dag,
-                airflowImportDags.airflow_notes,
-                airflowImportDags.sudo_user,
-                airflowImportDags.metadata_import,
-                airflowImportDags.timezone,
-                airflowImportDags.email,
-                airflowImportDags.email_on_failure,
-                airflowImportDags.email_on_retries,
-                airflowImportDags.tags,
-                airflowImportDags.sla_warning_time,
-                airflowImportDags.retry_exponential_backoff,
-                airflowImportDags.concurrency,
+                airflow_import_dags.dag_name,
+                airflow_import_dags.schedule_interval,
+                airflow_import_dags.filter_hive,
+                airflow_import_dags.finish_all_stage1_first,
+                airflow_import_dags.run_import_and_etl_separate,
+                airflow_import_dags.retries,
+                airflow_import_dags.retries_stage1,
+                airflow_import_dags.retries_stage2,
+                airflow_import_dags.pool_stage1,
+                airflow_import_dags.pool_stage2,
+                airflow_import_dags.operator_notes,
+                airflow_import_dags.application_notes,
+                airflow_import_dags.auto_regenerate_dag,
+                airflow_import_dags.airflow_notes,
+                airflow_import_dags.sudo_user,
+                airflow_import_dags.metadata_import,
+                airflow_import_dags.timezone,
+                airflow_import_dags.email,
+                airflow_import_dags.email_on_failure,
+                airflow_import_dags.email_on_retries,
+                airflow_import_dags.tags,
+                airflow_import_dags.sla_warning_time,
+                airflow_import_dags.retry_exponential_backoff,
+                airflow_import_dags.concurrency,
             )
-            .select_from(airflowImportDags)
-            .filter(airflowImportDags.dag_name == dagname)
+            .select_from(airflow_import_dags)
+            .filter(airflow_import_dags.dag_name == dagname)
             .one_or_none()
         )
 
@@ -4079,45 +4095,45 @@ class dbCalls:
                 detail="Airflow DAG does not exist",
             )
 
-        resultDict = {}
-        resultDict["name"] = row[0]
-        resultDict["scheduleInterval"] = row[1]
-        resultDict["filterTable"] = row[2]
-        resultDict["finishAllStage1First"] = row[3]
-        resultDict["runImportAndEtlSeparate"] = row[4]
-        resultDict["retries"] = row[5]
-        if resultDict["retries"] == None or resultDict["retries"] == "":
-            resultDict["retries"] = 5
-        resultDict["retriesStage1"] = row[6]
-        resultDict["retriesStage2"] = row[7]
-        resultDict["poolStage1"] = row[8]
-        resultDict["poolStage2"] = row[9]
-        resultDict["operatorNotes"] = row[10]
-        resultDict["applicationNotes"] = row[11]
-        resultDict["autoRegenerateDag"] = self.convertIntToBool(row[12])
-        resultDict["airflowNotes"] = row[13]
-        resultDict["sudoUser"] = row[14]
-        resultDict["metadataImport"] = row[15]
-        resultDict["timezone"] = row[16]
-        resultDict["email"] = row[17]
-        resultDict["emailOnFailure"] = self.convertIntToBool(row[18])
-        resultDict["emailOnRetries"] = self.convertIntToBool(row[19])
-        resultDict["tags"] = row[20]
+        result_dict = {}
+        result_dict["name"] = row[0]
+        result_dict["scheduleInterval"] = row[1]
+        result_dict["filterTable"] = row[2]
+        result_dict["finishAllStage1First"] = row[3]
+        result_dict["runImportAndEtlSeparate"] = row[4]
+        result_dict["retries"] = row[5]
+        if result_dict["retries"] == None or result_dict["retries"] == "":
+            result_dict["retries"] = 5
+        result_dict["retriesStage1"] = row[6]
+        result_dict["retriesStage2"] = row[7]
+        result_dict["poolStage1"] = row[8]
+        result_dict["poolStage2"] = row[9]
+        result_dict["operatorNotes"] = row[10]
+        result_dict["applicationNotes"] = row[11]
+        result_dict["autoRegenerateDag"] = self.convertIntToBool(row[12])
+        result_dict["airflowNotes"] = row[13]
+        result_dict["sudoUser"] = row[14]
+        result_dict["metadataImport"] = row[15]
+        result_dict["timezone"] = row[16]
+        result_dict["email"] = row[17]
+        result_dict["emailOnFailure"] = self.convertIntToBool(row[18])
+        result_dict["emailOnRetries"] = self.convertIntToBool(row[19])
+        result_dict["tags"] = row[20]
         try:
-            resultDict["slaWarningTime"] = row[21].strftime("%H:%M:%S")
+            result_dict["slaWarningTime"] = row[21].strftime("%H:%M:%S")
         except AttributeError:
-            resultDict["slaWarningTime"] = None
-        resultDict["retryExponentialBackoff"] = row[22]
-        resultDict["concurrency"] = row[23]
-        resultDict["airflowLink"] = "%s/dags/%s" % (airflowURL, row[0])
+            result_dict["slaWarningTime"] = None
+        result_dict["retryExponentialBackoff"] = row[22]
+        result_dict["concurrency"] = row[23]
+        result_dict["airflowLink"] = "%s/dags/%s" % (airflow_url, row[0])
 
-        resultDict["tasks"] = self.getAirflowTasks(dagname)
+        result_dict["tasks"] = self.getAirflowTasks(dagname)
 
-        jsonResult = json.loads(json.dumps(resultDict))
+        json_result = json.loads(json.dumps(result_dict))
         # session.close()
         session.remove()
 
-        return jsonResult
+        return json_result
 
     def deleteAirflowTasks(self, dagname):
         """Delete all Airflow tasks for the specified DAG"""
@@ -4147,9 +4163,9 @@ class dbCalls:
             self.disconnectDBImportDB()
             return None
 
-        airflowImportDags = aliased(configSchema.airflowImportDags)
-        resultMsg = {"result": "ok"}
-        returnCode = 200
+        airflow_import_dags = aliased(configSchema.airflowImportDags)
+        result_msg = {"result": "ok"}
+        return_code = 200
 
         log.info(
             "User '%s' deleted Airflow task '%s' from DAG '%s'"
@@ -4169,8 +4185,8 @@ class dbCalls:
         session.commit()
 
         if row == None:
-            resultMsg = {"result": "Airflow Task on DAG does not exist"}
-            returnCode = 404
+            result_msg = {"result": "Airflow Task on DAG does not exist"}
+            return_code = 404
         else:
             (
                 session.query(configSchema.airflowTasks)
@@ -4183,7 +4199,7 @@ class dbCalls:
             session.commit()
 
         session.remove()
-        return (resultMsg, returnCode)
+        return (result_msg, return_code)
 
     def deleteImportAirflowDag(self, dagname, currentUser):
         """Delete an Airflow import DAG"""
@@ -4195,9 +4211,9 @@ class dbCalls:
             self.disconnectDBImportDB()
             return None
 
-        airflowImportDags = aliased(configSchema.airflowImportDags)
+        airflow_import_dags = aliased(configSchema.airflowImportDags)
         result = "ok"
-        returnCode = 200
+        return_code = 200
 
         log.info("User '%s' deleted Airflow import DAG '%s'" % (currentUser, dagname))
 
@@ -4212,7 +4228,7 @@ class dbCalls:
 
         if row == None:
             result = "Airflow DAG does not exist"
-            returnCode = 404
+            return_code = 404
         else:
             (
                 session.query(configSchema.airflowImportDags)
@@ -4225,16 +4241,18 @@ class dbCalls:
 
         # session.close()
         session.remove()
-        return (result, returnCode)
+        return (result, return_code)
 
     def bulkDeleteImportAirflowDag(self, bulkData, currentUser):
         """Bulk delete of Airflow import Dags"""
         log = logging.getLogger(self.logger)
 
         if len(bulkData) == 0:
-            resultMsg = {"result": "Body must contain a list of Airflow dags to delete"}
-            returnCode = 422
-            return (resultMsg, returnCode)
+            result_msg = {
+                "result": "Body must contain a list of Airflow dags to delete"
+            }
+            return_code = 422
+            return (result_msg, return_code)
 
         try:
             session = self.getDBImportSession()
@@ -4242,33 +4260,35 @@ class dbCalls:
             self.disconnectDBImportDB()
             return None
 
-        deleteStatement = delete(configSchema.airflowImportDags)
-        deleteStatement = deleteStatement.where(
+        delete_statement = delete(configSchema.airflowImportDags)
+        delete_statement = delete_statement.where(
             configSchema.airflowImportDags.dag_name == bindparam("dag")
         )
 
         # Create a list of dicts that contain all the databas and table combinations that will be deleted
-        tableList = []
+        table_list = []
         for tables in bulkData:
-            tableList.append({"dag": tables.name})
+            table_list.append({"dag": tables.name})
 
-        session.connection().execute(deleteStatement, tableList)
+        session.connection().execute(delete_statement, table_list)
         session.commit()
         session.remove()
 
-        returnCode = 200
-        resultMsg = {"result": "Ok"}
+        return_code = 200
+        result_msg = {"result": "Ok"}
 
-        return (resultMsg, returnCode)
+        return (result_msg, return_code)
 
     def bulkUpdateImportAirflowDag(self, bulkData, currentUser):
         """Bulk update of Airflow import Dags"""
         log = logging.getLogger(self.logger)
 
         if len(bulkData.dags) == 0:
-            resultMsg = {"result": "dags must contain a list of Airflow dags to update"}
-            returnCode = 422
-            return (resultMsg, returnCode)
+            result_msg = {
+                "result": "dags must contain a list of Airflow dags to update"
+            }
+            return_code = 422
+            return (result_msg, return_code)
 
         try:
             session = self.getDBImportSession()
@@ -4276,67 +4296,67 @@ class dbCalls:
             self.disconnectDBImportDB()
             return None
 
-        exportTables = aliased(configSchema.exportTables)
-        airflowImportDags = aliased(configSchema.airflowImportDags)
-        updateStatement = update(airflowImportDags)
-        updateStatement = updateStatement.where(
-            airflowImportDags.dag_name == bindparam("dag")
+        export_tables = aliased(configSchema.exportTables)
+        airflow_import_dags = aliased(configSchema.airflowImportDags)
+        update_statement = update(airflow_import_dags)
+        update_statement = update_statement.where(
+            airflow_import_dags.dag_name == bindparam("dag")
         )
 
         # This will loop through only the fields specified in the Posted JSON. So if a field have got a default None value in dataModel validation,
         # that field wont be part of this loop
-        for updateField in bulkData.__pydantic_fields_set__:
-            if updateField == "scheduleInterval":
-                updateStatement = updateStatement.values(
+        for update_field in bulkData.__pydantic_fields_set__:
+            if update_field == "scheduleInterval":
+                update_statement = update_statement.values(
                     schedule_interval=bulkData.scheduleInterval
                 )
-            elif updateField == "operatorNotes":
-                updateStatement = updateStatement.values(
+            elif update_field == "operatorNotes":
+                update_statement = update_statement.values(
                     operator_notes=bulkData.operatorNotes
                 )
-            elif updateField == "autoRegenerateDag":
-                updateStatement = updateStatement.values(
+            elif update_field == "autoRegenerateDag":
+                update_statement = update_statement.values(
                     auto_regenerate_dag=bulkData.autoRegenerateDag
                 )
-            elif updateField == "sudoUser":
-                updateStatement = updateStatement.values(sudo_user=bulkData.sudoUser)
-            elif updateField == "timezone":
-                updateStatement = updateStatement.values(timezone=bulkData.timezone)
-            elif updateField == "email":
-                updateStatement = updateStatement.values(email=bulkData.email)
-            elif updateField == "emailOnFailure":
-                updateStatement = updateStatement.values(
+            elif update_field == "sudoUser":
+                update_statement = update_statement.values(sudo_user=bulkData.sudoUser)
+            elif update_field == "timezone":
+                update_statement = update_statement.values(timezone=bulkData.timezone)
+            elif update_field == "email":
+                update_statement = update_statement.values(email=bulkData.email)
+            elif update_field == "emailOnFailure":
+                update_statement = update_statement.values(
                     email_on_failure=bulkData.emailOnFailure
                 )
-            elif updateField == "emailOnRetries":
-                updateStatement = updateStatement.values(
+            elif update_field == "emailOnRetries":
+                update_statement = update_statement.values(
                     email_on_retries=bulkData.emailOnRetries
                 )
-            elif updateField == "slaWarningTime":
-                updateStatement = updateStatement.values(
+            elif update_field == "slaWarningTime":
+                update_statement = update_statement.values(
                     sla_warning_time=bulkData.slaWarningTime
                 )
-            elif updateField == "concurrency":
-                updateStatement = updateStatement.values(
+            elif update_field == "concurrency":
+                update_statement = update_statement.values(
                     concurrency=bulkData.concurrency
                 )
 
         # Create a list of dicts that contain all the databas/table combinations that will be updated
-        tableList = []
+        table_list = []
         for tables in bulkData.dags:
-            tableList.append({"dag": tables.name})
+            table_list.append({"dag": tables.name})
 
-        updateStatement = updateStatement.execution_options(synchronize_session=False)
+        update_statement = update_statement.execution_options(synchronize_session=False)
         # 		print(updateStatement)
 
-        session.connection().execute(updateStatement, tableList)
+        session.connection().execute(update_statement, table_list)
         session.commit()
         session.remove()
 
-        returnCode = 200
-        resultMsg = {"result": "Ok"}
+        return_code = 200
+        result_msg = {"result": "Ok"}
 
-        return (resultMsg, returnCode)
+        return (result_msg, return_code)
 
     def updateImportAirflowDag(self, dagname, airflowDag, currentUser):
         """Update or create an Airflow import DAG"""
@@ -4348,9 +4368,9 @@ class dbCalls:
             self.disconnectDBImportDB()
             return None
 
-        airflowImportDags = aliased(configSchema.airflowImportDags)
+        airflow_import_dags = aliased(configSchema.airflowImportDags)
         result = "ok"
-        returnCode = 200
+        return_code = 200
 
         if self.checkDagNameAvailability(name=dagname, excludeImport=True) == False:
             log.error(
@@ -4359,8 +4379,8 @@ class dbCalls:
             result = (
                 "Ariflow DAG with the specified name already exists as Custom or Export"
             )
-            returnCode = 400
-            return (result, returnCode)
+            return_code = 400
+            return (result, return_code)
 
         log.debug(airflowDag)
         log.info(
@@ -4451,11 +4471,11 @@ class dbCalls:
             log.error(column)  # noqa: F821  # TODO(#164): column is undefined here
 
             result = str(err)
-            returnCode = 500
+            return_code = 500
 
             # session.close()
             session.remove()
-            return (result, returnCode)
+            return (result, return_code)
 
         # session.close()
         session.remove()
@@ -4469,10 +4489,10 @@ class dbCalls:
                 == False
             ):
                 result = "Error while updating/creating Airflow tasks. Please check logs on server"
-                returnCode = 400
-                return (result, returnCode)
+                return_code = 400
+                return (result, return_code)
 
-        return (result, returnCode)
+        return (result, return_code)
 
     def deleteExportAirflowDag(self, dagname, currentUser):
         """Delete an Airflow export DAG"""
@@ -4485,7 +4505,7 @@ class dbCalls:
             return None
 
         result = "ok"
-        returnCode = 200
+        return_code = 200
 
         log.info("User '%s' deleted Airflow export DAG '%s'" % (currentUser, dagname))
 
@@ -4500,7 +4520,7 @@ class dbCalls:
 
         if row == None:
             result = "Airflow DAG does not exist"
-            returnCode = 404
+            return_code = 404
         else:
             (
                 session.query(configSchema.airflowExportDags)
@@ -4513,16 +4533,18 @@ class dbCalls:
 
         # session.close()
         session.remove()
-        return (result, returnCode)
+        return (result, return_code)
 
     def bulkDeleteExportAirflowDag(self, bulkData, currentUser):
         """Bulk delete of Airflow import Dags"""
         log = logging.getLogger(self.logger)
 
         if len(bulkData) == 0:
-            resultMsg = {"result": "Body must contain a list of Airflow dags to delete"}
-            returnCode = 422
-            return (resultMsg, returnCode)
+            result_msg = {
+                "result": "Body must contain a list of Airflow dags to delete"
+            }
+            return_code = 422
+            return (result_msg, return_code)
 
         try:
             session = self.getDBImportSession()
@@ -4530,33 +4552,35 @@ class dbCalls:
             self.disconnectDBImportDB()
             return None
 
-        deleteStatement = delete(configSchema.airflowExportDags)
-        deleteStatement = deleteStatement.where(
+        delete_statement = delete(configSchema.airflowExportDags)
+        delete_statement = delete_statement.where(
             configSchema.airflowExportDags.dag_name == bindparam("dag")
         )
 
         # Create a list of dicts that contain all the databas and table combinations that will be deleted
-        tableList = []
+        table_list = []
         for tables in bulkData:
-            tableList.append({"dag": tables.name})
+            table_list.append({"dag": tables.name})
 
-        session.connection().execute(deleteStatement, tableList)
+        session.connection().execute(delete_statement, table_list)
         session.commit()
         session.remove()
 
-        returnCode = 200
-        resultMsg = {"result": "Ok"}
+        return_code = 200
+        result_msg = {"result": "Ok"}
 
-        return (resultMsg, returnCode)
+        return (result_msg, return_code)
 
     def bulkUpdateExportAirflowDag(self, bulkData, currentUser):
         """Bulk update of Airflow export Dags"""
         log = logging.getLogger(self.logger)
 
         if len(bulkData.dags) == 0:
-            resultMsg = {"result": "dags must contain a list of Airflow dags to update"}
-            returnCode = 422
-            return (resultMsg, returnCode)
+            result_msg = {
+                "result": "dags must contain a list of Airflow dags to update"
+            }
+            return_code = 422
+            return (result_msg, return_code)
 
         try:
             session = self.getDBImportSession()
@@ -4564,67 +4588,67 @@ class dbCalls:
             self.disconnectDBImportDB()
             return None
 
-        exportTables = aliased(configSchema.exportTables)
-        airflowExportDags = aliased(configSchema.airflowExportDags)
-        updateStatement = update(airflowExportDags)
-        updateStatement = updateStatement.where(
-            airflowExportDags.dag_name == bindparam("dag")
+        export_tables = aliased(configSchema.exportTables)
+        airflow_export_dags = aliased(configSchema.airflowExportDags)
+        update_statement = update(airflow_export_dags)
+        update_statement = update_statement.where(
+            airflow_export_dags.dag_name == bindparam("dag")
         )
 
         # This will loop through only the fields specified in the Posted JSON. So if a field have got a default None value in dataModel validation,
         # that field wont be part of this loop
-        for updateField in bulkData.__pydantic_fields_set__:
-            if updateField == "scheduleInterval":
-                updateStatement = updateStatement.values(
+        for update_field in bulkData.__pydantic_fields_set__:
+            if update_field == "scheduleInterval":
+                update_statement = update_statement.values(
                     schedule_interval=bulkData.scheduleInterval
                 )
-            elif updateField == "operatorNotes":
-                updateStatement = updateStatement.values(
+            elif update_field == "operatorNotes":
+                update_statement = update_statement.values(
                     operator_notes=bulkData.operatorNotes
                 )
-            elif updateField == "autoRegenerateDag":
-                updateStatement = updateStatement.values(
+            elif update_field == "autoRegenerateDag":
+                update_statement = update_statement.values(
                     auto_regenerate_dag=bulkData.autoRegenerateDag
                 )
-            elif updateField == "sudoUser":
-                updateStatement = updateStatement.values(sudo_user=bulkData.sudoUser)
-            elif updateField == "timezone":
-                updateStatement = updateStatement.values(timezone=bulkData.timezone)
-            elif updateField == "email":
-                updateStatement = updateStatement.values(email=bulkData.email)
-            elif updateField == "emailOnFailure":
-                updateStatement = updateStatement.values(
+            elif update_field == "sudoUser":
+                update_statement = update_statement.values(sudo_user=bulkData.sudoUser)
+            elif update_field == "timezone":
+                update_statement = update_statement.values(timezone=bulkData.timezone)
+            elif update_field == "email":
+                update_statement = update_statement.values(email=bulkData.email)
+            elif update_field == "emailOnFailure":
+                update_statement = update_statement.values(
                     email_on_failure=bulkData.emailOnFailure
                 )
-            elif updateField == "emailOnRetries":
-                updateStatement = updateStatement.values(
+            elif update_field == "emailOnRetries":
+                update_statement = update_statement.values(
                     email_on_retries=bulkData.emailOnRetries
                 )
-            elif updateField == "slaWarningTime":
-                updateStatement = updateStatement.values(
+            elif update_field == "slaWarningTime":
+                update_statement = update_statement.values(
                     sla_warning_time=bulkData.slaWarningTime
                 )
-            elif updateField == "concurrency":
-                updateStatement = updateStatement.values(
+            elif update_field == "concurrency":
+                update_statement = update_statement.values(
                     concurrency=bulkData.concurrency
                 )
 
         # Create a list of dicts that contain all the databas/table combinations that will be updated
-        tableList = []
+        table_list = []
         for tables in bulkData.dags:
-            tableList.append({"dag": tables.name})
+            table_list.append({"dag": tables.name})
 
-        updateStatement = updateStatement.execution_options(synchronize_session=False)
+        update_statement = update_statement.execution_options(synchronize_session=False)
         # 		print(updateStatement)
 
-        session.connection().execute(updateStatement, tableList)
+        session.connection().execute(update_statement, table_list)
         session.commit()
         session.remove()
 
-        returnCode = 200
-        resultMsg = {"result": "Ok"}
+        return_code = 200
+        result_msg = {"result": "Ok"}
 
-        return (resultMsg, returnCode)
+        return (result_msg, return_code)
 
     def updateExportAirflowDag(self, dagname, airflowDag, currentUser):
         """Update or create an Airflow export DAG"""
@@ -4636,9 +4660,9 @@ class dbCalls:
             self.disconnectDBImportDB()
             return None
 
-        airflowExportDags = aliased(configSchema.airflowExportDags)
+        airflow_export_dags = aliased(configSchema.airflowExportDags)
         result = "ok"
-        returnCode = 200
+        return_code = 200
 
         if self.checkDagNameAvailability(name=dagname, excludeExport=True) == False:
             log.error(
@@ -4647,8 +4671,8 @@ class dbCalls:
             result = (
                 "Ariflow DAG with the specified name already exists as Custom or Export"
             )
-            returnCode = 400
-            return (result, returnCode)
+            return_code = 400
+            return (result, return_code)
 
         log.debug(airflowDag)
         log.info(
@@ -4723,11 +4747,11 @@ class dbCalls:
             log.error(column)  # noqa: F821  # TODO(#164): column is undefined here
 
             result = str(err)
-            returnCode = 500
+            return_code = 500
 
             # session.close()
             session.remove()
-            return (result, returnCode)
+            return (result, return_code)
 
         # session.close()
         session.remove()
@@ -4741,10 +4765,10 @@ class dbCalls:
                 == False
             ):
                 result = "Error while updating/creating Airflow tasks. Please check logs on server"
-                returnCode = 400
-                return (result, returnCode)
+                return_code = 400
+                return (result, return_code)
 
-        return (result, returnCode)
+        return (result, return_code)
 
     def deleteCustomAirflowDag(self, dagname, currentUser):
         """Delete an Airflow import DAG"""
@@ -4757,7 +4781,7 @@ class dbCalls:
             return None
 
         result = "ok"
-        returnCode = 200
+        return_code = 200
 
         log.info("User '%s' deleted Airflow import DAG '%s'" % (currentUser, dagname))
 
@@ -4772,7 +4796,7 @@ class dbCalls:
 
         if row == None:
             result = "Airflow DAG does not exist"
-            returnCode = 404
+            return_code = 404
         else:
             (
                 session.query(configSchema.airflowCustomDags)
@@ -4785,16 +4809,18 @@ class dbCalls:
 
         # session.close()
         session.remove()
-        return (result, returnCode)
+        return (result, return_code)
 
     def bulkDeleteCustomAirflowDag(self, bulkData, currentUser):
         """Bulk delete of Airflow custom Dags"""
         log = logging.getLogger(self.logger)
 
         if len(bulkData) == 0:
-            resultMsg = {"result": "Body must contain a list of Airflow dags to delete"}
-            returnCode = 422
-            return (resultMsg, returnCode)
+            result_msg = {
+                "result": "Body must contain a list of Airflow dags to delete"
+            }
+            return_code = 422
+            return (result_msg, return_code)
 
         try:
             session = self.getDBImportSession()
@@ -4802,33 +4828,35 @@ class dbCalls:
             self.disconnectDBImportDB()
             return None
 
-        deleteStatement = delete(configSchema.airflowCustomDags)
-        deleteStatement = deleteStatement.where(
+        delete_statement = delete(configSchema.airflowCustomDags)
+        delete_statement = delete_statement.where(
             configSchema.airflowCustomDags.dag_name == bindparam("dag")
         )
 
         # Create a list of dicts that contain all the databas and table combinations that will be deleted
-        tableList = []
+        table_list = []
         for tables in bulkData:
-            tableList.append({"dag": tables.name})
+            table_list.append({"dag": tables.name})
 
-        session.connection().execute(deleteStatement, tableList)
+        session.connection().execute(delete_statement, table_list)
         session.commit()
         session.remove()
 
-        returnCode = 200
-        resultMsg = {"result": "Ok"}
+        return_code = 200
+        result_msg = {"result": "Ok"}
 
-        return (resultMsg, returnCode)
+        return (result_msg, return_code)
 
     def bulkUpdateCustomAirflowDag(self, bulkData, currentUser):
         """Bulk update of Airflow custom Dags"""
         log = logging.getLogger(self.logger)
 
         if len(bulkData.dags) == 0:
-            resultMsg = {"result": "dags must contain a list of Airflow dags to update"}
-            returnCode = 422
-            return (resultMsg, returnCode)
+            result_msg = {
+                "result": "dags must contain a list of Airflow dags to update"
+            }
+            return_code = 422
+            return (result_msg, return_code)
 
         try:
             session = self.getDBImportSession()
@@ -4836,67 +4864,67 @@ class dbCalls:
             self.disconnectDBImportDB()
             return None
 
-        exportTables = aliased(configSchema.exportTables)
-        airflowCustomDags = aliased(configSchema.airflowCustomDags)
-        updateStatement = update(airflowCustomDags)
-        updateStatement = updateStatement.where(
-            airflowCustomDags.dag_name == bindparam("dag")
+        export_tables = aliased(configSchema.exportTables)
+        airflow_custom_dags = aliased(configSchema.airflowCustomDags)
+        update_statement = update(airflow_custom_dags)
+        update_statement = update_statement.where(
+            airflow_custom_dags.dag_name == bindparam("dag")
         )
 
         # This will loop through only the fields specified in the Posted JSON. So if a field have got a default None value in dataModel validation,
         # that field wont be part of this loop
-        for updateField in bulkData.__pydantic_fields_set__:
-            if updateField == "scheduleInterval":
-                updateStatement = updateStatement.values(
+        for update_field in bulkData.__pydantic_fields_set__:
+            if update_field == "scheduleInterval":
+                update_statement = update_statement.values(
                     schedule_interval=bulkData.scheduleInterval
                 )
-            elif updateField == "operatorNotes":
-                updateStatement = updateStatement.values(
+            elif update_field == "operatorNotes":
+                update_statement = update_statement.values(
                     operator_notes=bulkData.operatorNotes
                 )
-            elif updateField == "autoRegenerateDag":
-                updateStatement = updateStatement.values(
+            elif update_field == "autoRegenerateDag":
+                update_statement = update_statement.values(
                     auto_regenerate_dag=bulkData.autoRegenerateDag
                 )
-            elif updateField == "sudoUser":
-                updateStatement = updateStatement.values(sudo_user=bulkData.sudoUser)
-            elif updateField == "timezone":
-                updateStatement = updateStatement.values(timezone=bulkData.timezone)
-            elif updateField == "email":
-                updateStatement = updateStatement.values(email=bulkData.email)
-            elif updateField == "emailOnFailure":
-                updateStatement = updateStatement.values(
+            elif update_field == "sudoUser":
+                update_statement = update_statement.values(sudo_user=bulkData.sudoUser)
+            elif update_field == "timezone":
+                update_statement = update_statement.values(timezone=bulkData.timezone)
+            elif update_field == "email":
+                update_statement = update_statement.values(email=bulkData.email)
+            elif update_field == "emailOnFailure":
+                update_statement = update_statement.values(
                     email_on_failure=bulkData.emailOnFailure
                 )
-            elif updateField == "emailOnRetries":
-                updateStatement = updateStatement.values(
+            elif update_field == "emailOnRetries":
+                update_statement = update_statement.values(
                     email_on_retries=bulkData.emailOnRetries
                 )
-            elif updateField == "slaWarningTime":
-                updateStatement = updateStatement.values(
+            elif update_field == "slaWarningTime":
+                update_statement = update_statement.values(
                     sla_warning_time=bulkData.slaWarningTime
                 )
-            elif updateField == "concurrency":
-                updateStatement = updateStatement.values(
+            elif update_field == "concurrency":
+                update_statement = update_statement.values(
                     concurrency=bulkData.concurrency
                 )
 
         # Create a list of dicts that contain all the databas/table combinations that will be updated
-        tableList = []
+        table_list = []
         for tables in bulkData.dags:
-            tableList.append({"dag": tables.name})
+            table_list.append({"dag": tables.name})
 
-        updateStatement = updateStatement.execution_options(synchronize_session=False)
+        update_statement = update_statement.execution_options(synchronize_session=False)
         # 		print(updateStatement)
 
-        session.connection().execute(updateStatement, tableList)
+        session.connection().execute(update_statement, table_list)
         session.commit()
         session.remove()
 
-        returnCode = 200
-        resultMsg = {"result": "Ok"}
+        return_code = 200
+        result_msg = {"result": "Ok"}
 
-        return (resultMsg, returnCode)
+        return (result_msg, return_code)
 
     def updateCustomAirflowDag(self, dagname, airflowDag, currentUser):
         """Update or create an Airflow custom DAG"""
@@ -4908,9 +4936,9 @@ class dbCalls:
             self.disconnectDBImportDB()
             return None
 
-        airflowCustomDags = aliased(configSchema.airflowCustomDags)
+        airflow_custom_dags = aliased(configSchema.airflowCustomDags)
         result = "ok"
-        returnCode = 200
+        return_code = 200
 
         if self.checkDagNameAvailability(name=dagname, excludeCustom=True) == False:
             log.error(
@@ -4919,8 +4947,8 @@ class dbCalls:
             result = (
                 "Ariflow DAG with the specified name already exists as Custom or Export"
             )
-            returnCode = 400
-            return (result, returnCode)
+            return_code = 400
+            return (result, return_code)
 
         log.debug(airflowDag)
         log.info(
@@ -4987,11 +5015,11 @@ class dbCalls:
             log.error(column)  # noqa: F821  # TODO(#164): column is undefined here
 
             result = str(err)
-            returnCode = 500
+            return_code = 500
 
             # session.close()
             session.remove()
-            return (result, returnCode)
+            return (result, return_code)
 
         # session.close()
         session.remove()
@@ -5005,7 +5033,7 @@ class dbCalls:
                 == False
             ):
                 result = "Error while updating/creating Airflow tasks. Please check logs on server"
-                returnCode = 400
-                return (result, returnCode)
+                return_code = 400
+                return (result, return_code)
 
-        return (result, returnCode)
+        return (result, return_code)
