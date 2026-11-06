@@ -123,8 +123,10 @@ npm run build
 All Python code is formatted with `ruff format` and checked with one
 rule set, `select` in `pyproject.toml` (pycodestyle E4, E7 and E9,
 pyflakes, bugbear, pyupgrade, import sorting with the packages in `bin/`
-as first party, invalid escape sequences, unused `noqa`). Existing
-modules that still break some of these rules are listed under
+as first party, PEP 8 naming, invalid escape sequences, unused `noqa`).
+Names that are contracts are not checked yet: class names, class-level
+fields (they include the JSON field names of the REST API) and module
+names. Existing modules that still break some of these rules are listed under
 `per-file-ignores`, each with exactly the rule codes it breaks.
 `tests/unit/test_ruff_ratchet.py` checks these modules without the
 ignores: it fails when a listed code no longer occurs in its module, and
@@ -132,7 +134,8 @@ when the number of findings per module and code differs from
 `tests/fixtures/ruff_baseline.json`. So a new finding in a listed module
 fails too; after you fix old findings, regenerate the baseline (see
 below) and remove codes that no longer occur. New modules must pass the
-full set. A known bug
+full set, and new names in listed modules follow PEP 8 too, even where
+the code around them does not. A known bug
 that a rule reports is marked on its line with `noqa` and a `TODO` that
 names the issue. import-linter checks the package layering defined in
 `pyproject.toml`.
