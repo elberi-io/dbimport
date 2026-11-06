@@ -50,7 +50,7 @@ dependencies = [
     "pure-sasl==0.6.2",
     "pure-transport==0.2.0",
     "pyasn1==0.6.5",
-    "pycparser==2.21",
+    "pycparser==3.12",
     "pycryptodome==3.20.0",
     "pydantic==2.6.2",
     "pydantic_core==2.16.3",
