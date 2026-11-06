@@ -101,7 +101,7 @@ shows up as an unexpected pass and the marker must be removed with it.
 
 ## Checks
 
-CI (`.github/workflows/ci.yml`) runs these on every pull request. Run them
+CI (`.github/workflows/ci.yaml`) runs these on every pull request. Run them
 before you open one:
 
 ```bash
@@ -120,11 +120,30 @@ npm run lint
 npm run build
 ```
 
-Existing code in `bin/` is only checked for errors that point at real
-bugs (syntax errors, invalid comparisons, undefined names, unused `noqa`)
-and is not reformatted. The tests use the stricter rules in
-`tests/ruff.toml` and `ruff format`. import-linter checks the package
-layering defined in `pyproject.toml`.
+All Python code is formatted with `ruff format` and checked with one
+rule set, `select` in `pyproject.toml` (pycodestyle E4, E7 and E9,
+pyflakes, bugbear, pyupgrade, import sorting with the packages in `bin/`
+as first party, invalid escape sequences, unused `noqa`). Existing
+modules that still break some of these rules are listed under
+`per-file-ignores`, each with exactly the rule codes it breaks.
+`tests/unit/test_ruff_ratchet.py` checks these modules without the
+ignores: it fails when a listed code no longer occurs in its module, and
+when the number of findings per module and code differs from
+`tests/fixtures/ruff_baseline.json`. So a new finding in a listed module
+fails too; after you fix old findings, regenerate the baseline (see
+below) and remove codes that no longer occur. New modules must pass the
+full set. A known bug
+that a rule reports is marked on its line with `noqa` and a `TODO` that
+names the issue. import-linter checks the package layering defined in
+`pyproject.toml`.
+
+The commits that reformatted `bin/` are listed in `.git-blame-ignore-revs`.
+GitHub skips them in the blame view; to skip them in `git blame` locally,
+run once:
+
+```bash
+git config blame.ignoreRevsFile .git-blame-ignore-revs
+```
 
 ## Generated files
 
@@ -135,6 +154,7 @@ Do not edit these by hand; regenerate them and review the diff:
 | `uv.lock` | `uv lock` (after changing dependencies in `pyproject.toml`) |
 | `bin/requirements.txt` | `uv export --locked --no-dev --format requirements-txt -o bin/requirements.txt` |
 | `tests/fixtures/dags/*.py.txt` | `DBIMPORT_UPDATE_EXPECTED_DAGS=1 uv run pytest tests/integration/test_airflow_dag_generation.py` |
+| `tests/fixtures/ruff_baseline.json` | `DBIMPORT_UPDATE_RUFF_BASELINE=1 uv run pytest tests/unit/test_ruff_ratchet.py` |
 
 `tests/fixtures/orm_schema_drift.txt` lists the known differences between
 the ORM and the migrated schema. When the ORM or the migrations change,

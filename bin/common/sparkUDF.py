@@ -16,77 +16,81 @@
 # under the License.
 
 import base64
-import re
 import hashlib
+import re
 import sys
 from datetime import datetime
 
 this = sys.modules[__name__]
 this.seedString = None
-seedString = 'testSeed'
+seedString = "testSeed"
+
 
 def _is_bin(ints):
-	try:
-		i = int(str(ints))
-		if 0 <= i and i < 256:
-			return True
-		return False
-	except ValueError:
-		return False
+    try:
+        i = int(str(ints))
+        if 0 <= i and i < 256:
+            return True
+        return False
+    except ValueError:
+        return False
 
 
 def base64EncodeArray(s):
-	try:
-		s_new = []
-		for struct in s:
-			s_new.append(list(map(_base64EncodeBinary, struct)))
-		return s_new
+    try:
+        s_new = []
+        for struct in s:
+            s_new.append(list(map(_base64EncodeBinary, struct)))
+        return s_new
 
-	except TypeError:
-		return _base64EncodeBinary(s)
+    except TypeError:
+        return _base64EncodeBinary(s)
+
 
 def _checkBinary(s):
-	for b in s:
-		if not _is_bin(b):
-			return False
-	return True
+    for b in s:
+        if not _is_bin(b):
+            return False
+    return True
+
 
 def _base64EncodeBinary(s):
-	try:
-		if _is_bin(s[0]) and _checkBinary(s[1]):
-			base_64 = base64.b64encode(s[1]).decode('UTF-8')
-			return [s[0], base_64]
-	except:
-		pass
+    try:
+        if _is_bin(s[0]) and _checkBinary(s[1]):
+            base_64 = base64.b64encode(s[1]).decode("UTF-8")
+            return [s[0], base_64]
+    except:
+        pass
 
-	return s
+    return s
+
 
 def parseStructDate(timestampString):
-	timestampString = str(timestampString)
-	m = re.match('\{ *\"\$date\" *: *(-?\d+)\ *}', timestampString)
-	if m:
-		num = m.group(1)
-		timestamp = datetime.utcfromtimestamp(int(num)/1000)
-		return timestamp.strftime('%Y-%m-%d %H:%M:%S.%f')
-	return timestampString
+    timestampString = str(timestampString)
+    m = re.match(r'\{ *"\$date" *: *(-?\d+)\ *}', timestampString)
+    if m:
+        num = m.group(1)
+        timestamp = datetime.utcfromtimestamp(int(num) / 1000)
+        return timestamp.strftime("%Y-%m-%d %H:%M:%S.%f")
+    return timestampString
 
 
 def setSeedString(setValue):
-	global seedString
-	seedString = setValue
-	this.seedString = setValue
-	print(seedString)
-	print(this.seedString)
+    global seedString
+    seedString = setValue
+    this.seedString = setValue
+    print(seedString)
+    print(this.seedString)
+
 
 def hashColumn(columnValue):
-	global seedString
-	sha_value = hashlib.sha3_512(columnValue.encode()).hexdigest()
-#	SeedString = None
-#	SeedString = 'testSeed'
-	h = hashlib.blake2b(digest_size=32, person=seedString.encode())
-	h.update(columnValue.encode())
-	hashedColumnContent = h.hexdigest()
-#	sha_value = hashlib.blake2b(columnValue.encode()).hexdigest()
-#	return sha_value
-	return this.seedString
-
+    global seedString
+    sha_value = hashlib.sha3_512(columnValue.encode()).hexdigest()
+    # 	SeedString = None
+    # 	SeedString = 'testSeed'
+    h = hashlib.blake2b(digest_size=32, person=seedString.encode())
+    h.update(columnValue.encode())
+    hashedColumnContent = h.hexdigest()
+    # 	sha_value = hashlib.blake2b(columnValue.encode()).hexdigest()
+    # 	return sha_value
+    return this.seedString

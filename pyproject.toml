@@ -12,90 +12,78 @@ requires-python = "==3.11.*"
 # Python 3.11 (see issue #152).
 dependencies = [
     "alembic==1.13.1",
-    "annotated-types==0.6.0",
+    "annotated-types==0.8.0",
     "anyio==4.3.0",
-    "backports.shutil-get-terminal-size==1.0.0",
     "bcrypt==4.1.2",
     "boto3==1.34.50",
     "botocore==1.34.50",
     "certifi==2026.10.18",
     "cffi==1.16.0",
-    "charset-normalizer==3.3.2",
-    "click==8.1.7",
-    "colorama==0.4.6",
-    "configparser==6.0.1",
+    "charset-normalizer==3.5.2",
+    "click==8.5.0",
     "cryptography==42.0.5",
     "daemons==1.3.2",
-    "decorator==5.1.1",
-    "dnspython==2.6.1",
-    "ecdsa==0.18.0",
-    "exceptiongroup==1.2.0",
+    "decorator==5.3.1",
+    "dnspython==2.9.0",
+    "ecdsa==0.19.2",
     "fastapi==0.110.0",
     "future==1.0.0",
-    "greenlet==3.0.3",
-    "gssapi==1.8.3",
+    "greenlet==3.5.6",
+    "gssapi==1.12.0",
     "gunicorn==21.2.0",
-    "h11==0.14.0",
-    "httptools==0.6.1",
-    "idna==3.6",
-    "importlib-metadata==7.0.1",
-    "importlib_resources==6.1.2",
+    "h11==0.16.0",
+    "httptools==0.9.0",
+    "idna==3.20",
     "JayDeBeApi==1.2.3",
-    "jmespath==1.0.1",
+    "jmespath==1.1.0",
     "JPype1==1.5.0",
     "kafka-python==2.0.2",
-    "krb5==0.5.1",
+    "krb5==0.10.0",
     "Mako==1.3.2",
     "MarkupSafe==2.1.5",
-    "mysql-connector-python==8.3.0",
+    "mysql-connector-python==26.10.0",
     "numpy==1.26.4",
     "packaging==23.2",
     "pandas==2.2.1",
-    "passlib==1.7.4",
-    "pendulum==3.0.0",
-    "protobuf==4.25.3",
+    "pendulum==3.3.0",
     "psutil==5.9.8",
     "pure-sasl==0.6.2",
     "pure-transport==0.2.0",
-    "pyasn1==0.5.1",
+    "pyasn1==0.6.5",
     "pycparser==2.21",
     "pycryptodome==3.20.0",
     "pydantic==2.6.2",
     "pydantic_core==2.16.3",
     "PyHive==0.7.0",
     "pykerberos==1.2.4",
-    "pymongo==4.6.2",
+    "pymongo==4.19.0",
     "PyMySQL==1.1.0",
-    "pyspnego==0.10.2",
+    "pyspnego==0.12.4",
     "python-dateutil==2.8.2",
-    "python-dotenv==1.0.1",
-    "python-jose==3.3.0",
-    "python-multipart==0.0.9",
-    "python-pam==2.0.2",
+    "python-dotenv==1.2.4",
+    "python-jose==3.5.0",
+    "python-multipart==0.0.32",
+    "python-pam==2.1.1",
     "pytz==2024.1",
     "PyYAML==6.0.1",
-    "reprint==0.6.0",
-    "requests==2.31.0",
-    "requests-kerberos==0.14.0",
-    "rsa==4.9",
+    "requests==2.34.2",
+    "requests-kerberos==0.15.0",
+    "rsa==4.9.1",
     "s3transfer==0.10.0",
-    "six==1.16.0",
+    "six==1.17.0",
     "sniffio==1.3.1",
     "SQLAlchemy==2.0.27",
-    "SQLAlchemy-Utils==0.41.1",
-    "sqlalchemy-views==0.3.2",
     "starlette==0.36.3",
-    "thrift==0.16.0",
+    "thrift==0.25.0",
     "thrift-sasl==0.4.3",
     "time-machine==2.13.0",
-    "typing_extensions==4.10.0",
-    "tzdata==2024.1",
+    "typing_extensions==4.16.0",
+    "tzdata==2026.6",
     "urllib3==1.26.18",
-    "uvicorn==0.27.1",
-    "uvloop==0.19.0",
+    "uvicorn==0.54.0",
+    "uvloop==0.23.0",
     "watchfiles==0.21.0",
     "websockets==12.0",
-    "zipp==3.17.0",
 ]
 
 [tool.uv]
@@ -127,18 +115,68 @@ extend-include = [
     "bin/restServer",
     "bin/setup",
 ]
+# Import sorting treats the packages in bin/ and the tests as first party.
+src = ["bin", "."]
 
 [tool.ruff.lint]
-# Existing code is checked only for errors that point at real bugs:
-# syntax errors, invalid comparisons and undefined names. RUF100 reports
-# noqa comments that are no longer needed, so a suppression is removed
-# together with the bug it hides. tests/ruff.toml applies a stricter rule
-# set to the tests.
-select = ["E9", "F63", "F7", "F82", "RUF100"]
+# One rule set for all Python code (#159). RUF100 reports noqa comments
+# that are no longer needed, so a suppression is removed together with
+# the bug it hides.
+select = ["B", "E4", "E7", "E9", "F", "I", "UP", "W605", "RUF100"]
+
+[tool.ruff.lint.per-file-ignores]
+# The Sphinx configuration is outside #159: it sets sys.path before its
+# imports and imports its theme.
+"docs/conf.py" = ["E402", "F401"]
+# Existing modules that still break rules of the set, each with exactly
+# the codes it breaks today (#159). Most of them need changes to logic
+# (%-formatting, == None/True, bare except, unused variables), so they
+# are fixed when the module is refactored, and the module's line goes. A
+# module not listed here must pass the full set. Known bugs are marked
+# on their line with noqa and TODO(#issue) instead.
+"bin/ConfigReader/configuration.py" = ["B904", "E712", "UP031"]
+"bin/DBImportConfig/common_config.py" = ["B904", "E711", "E712", "E713", "E722", "F841", "UP031"]
+"bin/DBImportConfig/configSchema.py" = ["UP009"]
+"bin/DBImportConfig/decryption.py" = ["B904", "E711", "E712"]
+"bin/DBImportConfig/export_config.py" = ["B007", "E711", "E712", "F841", "UP031"]
+"bin/DBImportConfig/export_stage.py" = ["B007", "E711", "E712", "F841", "UP031"]
+"bin/DBImportConfig/import_config.py" = ["B007", "B904", "E711", "E712", "F841", "UP031"]
+"bin/DBImportConfig/import_stage.py" = ["B007", "E711", "E712", "F841", "UP031"]
+"bin/DBImportConfig/sendStatistics.py" = ["E711", "E712", "F841", "UP031"]
+"bin/DBImportOperation/atlas_operations.py" = ["B007", "B904", "E711", "E712", "E722", "F841", "UP031"]
+"bin/DBImportOperation/common_operations.py" = ["B007", "B904", "E711", "E712", "E722", "UP031"]
+"bin/DBImportOperation/copy_operations.py" = ["B007", "E711", "E712", "E722", "F841", "UP031"]
+"bin/DBImportOperation/etl_operations.py" = ["B007", "E711", "E712", "E722", "F841", "UP031"]
+"bin/DBImportOperation/export_operations.py" = ["B007", "E711", "E712", "E722", "F841", "UP031"]
+"bin/DBImportOperation/hiveSchema.py" = ["UP009"]
+"bin/DBImportOperation/import_operations.py" = ["B007", "B904", "B905", "E711", "E712", "E721", "E722", "F841", "UP031"]
+"bin/Schedule/Airflow.py" = ["B007", "B904", "E711", "E712", "E721", "E722", "F841", "UP031", "UP032"]
+"bin/Schedule/airflowSchema.py" = ["UP009"]
+"bin/SchemaUpgrade/env.py" = ["UP031"]
+"bin/Server/atlasDiscovery.py" = ["B007", "E711", "E712", "E722", "F841", "UP031"]
+"bin/Server/daemon.py" = ["B007", "E711", "E712", "E722", "F841", "UP031"]
+"bin/Server/dataModels.py" = ["UP006", "UP007", "UP035"]
+"bin/Server/restServer.py" = ["B904", "E711", "E712", "UP006", "UP031", "UP035"]
+"bin/Server/restServerCalls.py" = ["B904", "E711", "E712", "E721", "E722", "F841", "UP031"]
+"bin/catalogService/glue.py" = ["B904", "E712", "F841", "UP031"]
+"bin/catalogService/hiveDirect.py" = ["B904", "E711", "E712", "E722", "F841", "UP031"]
+"bin/common/sparkUDF.py" = ["E722", "F841"]
+"bin/common/sparkUDF2.py" = ["B007", "E711", "E722"]
+"bin/copy" = ["E711", "E712", "F841", "UP031"]
+"bin/deploy" = ["E711", "E712", "F841", "UP031"]
+"bin/export" = ["E711", "E712", "UP031"]
+"bin/import" = ["B007", "E711", "E712", "F841", "UP031"]
+"bin/mainServer" = ["B007", "E712", "UP031"]
+"bin/manage" = ["E711", "E712", "F841", "UP031"]
+"bin/restServer" = ["B007", "E712", "F841", "UP031"]
+"bin/setup" = ["B007", "E711", "E712", "F841", "UP031"]
+"bin/setupOperation/database.py" = ["B007", "E711", "E722", "UP031"]
+"bin/sourceSchemaReader/schemaReader.py" = ["B007", "E711", "E712", "E722", "UP031"]
 
 [tool.ruff.format]
-# Existing code is not reformatted; only the tests are formatted.
-exclude = ["bin/**", "docs/**"]
+# bin/ was formatted in one commit per package, listed in
+# .git-blame-ignore-revs. The Sphinx configuration in docs/ is left as is.
+exclude = ["docs/**"]
 
 [tool.mypy]
 python_version = "3.11"
@@ -207,9 +245,9 @@ layers = [
     "common",
 ]
 ignore_imports = [
-    # Existing exception: the catalog services use the Hive metastore
+    # Existing exception: the Hive catalog service uses the Hive metastore
     # table definitions in DBImportOperation.hiveSchema.
-    "catalogService.* -> DBImportOperation.hiveSchema",
+    "catalogService.hiveDirect -> DBImportOperation.hiveSchema",
 ]
 
 [tool.pytest.ini_options]

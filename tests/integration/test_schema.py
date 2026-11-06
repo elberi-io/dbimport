@@ -5,6 +5,7 @@ import sqlalchemy as sa
 from alembic.autogenerate import compare_metadata
 from alembic.migration import MigrationContext
 from alembic.script import ScriptDirectory
+
 from DBImportConfig import configSchema
 
 REPO_ROOT = Path(__file__).resolve().parents[2]

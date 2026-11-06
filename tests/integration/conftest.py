@@ -12,6 +12,7 @@ from pathlib import Path
 
 import pytest
 import sqlalchemy as sa
+
 from tests.configdb import close_dbimport_connections
 
 _INTEGRATION_DIR = Path(__file__).parent

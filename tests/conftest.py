@@ -15,6 +15,7 @@ from pathlib import Path
 
 import pytest
 from Crypto.PublicKey import RSA
+
 from tests.configdb import close_dbimport_connections
 
 REPO_ROOT = Path(__file__).resolve().parent.parent

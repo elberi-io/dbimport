@@ -7,8 +7,9 @@ from types import ModuleType
 
 import pytest
 import sqlalchemy as sa
-from common import constants
 from fastapi.testclient import TestClient
+
+from common import constants
 from tests.configdb import insert_row
 
 USERNAME = "tester"

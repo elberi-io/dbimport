@@ -16,97 +16,94 @@
 # under the License.
 
 import base64
-import re
 import hashlib
-import sys
+import re
 from datetime import datetime
 
-class sparkUDFClass(object):
-	def __init__(self):
 
-		self.seedStringEncoded = None
+class sparkUDFClass:
+    def __init__(self):
 
-	def _is_bin(self, ints):
-		try:
-			i = int(str(ints))
-			if 0 <= i and i < 256:
-				return True
-			return False
-		except ValueError:
-			return False
+        self.seedStringEncoded = None
 
+    def _is_bin(self, ints):
+        try:
+            i = int(str(ints))
+            if 0 <= i and i < 256:
+                return True
+            return False
+        except ValueError:
+            return False
 
-	def base64EncodeArray(self, s):
-		try:
-			s_new = []
-			for struct in s:
-				s_new.append(list(map(_base64EncodeBinary, struct)))  # noqa: F821  # TODO(#154): missing self.
-			return s_new
+    def base64EncodeArray(self, s):
+        try:
+            s_new = []
+            for struct in s:
+                s_new.append(list(map(self._base64EncodeBinary, struct)))
+            return s_new
 
-		except TypeError:
-			return _base64EncodeBinary(s)  # noqa: F821  # TODO(#154): missing self.
+        except TypeError:
+            return self._base64EncodeBinary(s)
 
-	def _checkBinary(self, s):
-		for b in s:
-			if not _is_bin(b):  # noqa: F821  # TODO(#154): missing self.
-				return False
-		return True
+    def _checkBinary(self, s):
+        for b in s:
+            if not self._is_bin(b):
+                return False
+        return True
 
-	def _base64EncodeBinary(self, s):
-		try:
-			if _is_bin(s[0]) and _checkBinary(s[1]):  # noqa: F821  # TODO(#154): missing self.
-				base_64 = base64.b64encode(s[1]).decode('UTF-8')
-				return [s[0], base_64]
-		except:
-			pass
+    def _base64EncodeBinary(self, s):
+        try:
+            if self._is_bin(s[0]) and self._checkBinary(s[1]):
+                base_64 = base64.b64encode(s[1]).decode("UTF-8")
+                return [s[0], base_64]
+        except:
+            pass
 
-		return s
+        return s
 
-	def parseStructDate(self, timestampString):
-		timestampString = str(timestampString)
-		m = re.match('\{ *\"\$date\" *: *(-?\d+)\ *}', timestampString)
-		if m:
-			num = m.group(1)
-			timestamp = datetime.utcfromtimestamp(int(num)/1000)
-			return timestamp.strftime('%Y-%m-%d %H:%M:%S.%f')
-		return timestampString
+    def parseStructDate(self, timestampString):
+        timestampString = str(timestampString)
+        m = re.match(r'\{ *"\$date" *: *(-?\d+)\ *}', timestampString)
+        if m:
+            num = m.group(1)
+            timestamp = datetime.utcfromtimestamp(int(num) / 1000)
+            return timestamp.strftime("%Y-%m-%d %H:%M:%S.%f")
+        return timestampString
 
+    def setSeedString(self, setValue):
+        self.seedStringEncoded = setValue.encode()
 
-	def setSeedString(self, setValue):
-		self.seedStringEncoded = setValue.encode()
+    def hashColumn(self, columnValue):
+        if columnValue == None:
+            return None
 
-	def hashColumn(self, columnValue):
-		if columnValue == None:
-			return None
+        # 		sha_value = hashlib.sha3_512(str(columnValue).encode()).hexdigest()
+        h = hashlib.blake2b(digest_size=32, person=self.seedStringEncoded)
+        h.update(str(columnValue).encode())
+        hashedColumnContent = h.hexdigest()
+        return hashedColumnContent
 
-#		sha_value = hashlib.sha3_512(str(columnValue).encode()).hexdigest()
-		h = hashlib.blake2b(digest_size=32, person=self.seedStringEncoded)
-		h.update(str(columnValue).encode())
-		hashedColumnContent = h.hexdigest()
-		return hashedColumnContent
+    def replaceCharWithStar(self, columnValue):
+        if columnValue == None:
+            return None
 
-	def replaceCharWithStar(self, columnValue):
-		if columnValue == None:
-			return None
+        returnString = ""
+        for character in str(columnValue):
+            if character == " ":
+                returnString = returnString + " "
+            else:
+                returnString = returnString + "*"
 
-		returnString = ''
-		for character in str(columnValue):
-			if character == ' ':
-				returnString = returnString + ' '
-			else:
-				returnString = returnString + '*'
+        return returnString
 
-		return returnString
+    def showFirstFourCharacters(self, columnValue):
+        if columnValue == None:
+            return None
 
-	def showFirstFourCharacters(self, columnValue):
-		if columnValue == None:
-			return None
+        returnString = str(columnValue)[:4]
 
-		returnString = str(columnValue)[:4]
+        if len(str(columnValue)) > 4:
+            for i in range(len(str(columnValue)) - 4):
+                returnString = returnString + "*"
 
-		if len(str(columnValue)) > 4:
-			for i in range( len(str(columnValue)) - 4 ):
-				returnString = returnString + '*'
-
-		return returnString
-
+        return returnString

@@ -16,205 +16,219 @@
 # specific language governing permissions and limitations
 # under the License.
 
-import os
-import time
-import sys
 import getopt
 import logging
-import psutil
+import os
 import signal
-from datetime import date, datetime, time, timedelta
-from common import constants as constant
-from common import Exceptions
-from ConfigReader import configuration
-from Server import restServer
-import uvicorn
+import sys
+
+from gunicorn import glogging
 from gunicorn.app.wsgiapp import WSGIApplication
-from gunicorn import glogging 
+
+from common import constants as constant
+from ConfigReader import configuration
+
+# Kept although unused: importing Server.restServer connects to the
+# configuration database. Without it, the gunicorn workers would make
+# that connection after they fork.
+from Server import restServer  # noqa: F401
+
 
 class StandaloneApplication(WSGIApplication):
-	def __init__(self, app_uri, options=None):
-		self.options = options or {}
-		self.app_uri = app_uri
-		super().__init__()
+    def __init__(self, app_uri, options=None):
+        self.options = options or {}
+        self.app_uri = app_uri
+        super().__init__()
 
-	def load_config(self):
-		config = {
-			key: value
-			for key, value in self.options.items()
-			if key in self.cfg.settings and value is not None
-		}
-		for key, value in config.items():
-			self.cfg.set(key.lower(), value)
+    def load_config(self):
+        config = {
+            key: value
+            for key, value in self.options.items()
+            if key in self.cfg.settings and value is not None
+        }
+        for key, value in config.items():
+            self.cfg.set(key.lower(), value)
 
-	def on_starting(server):
-		print("PREHOOK - Server has started")
+    def on_starting(server):
+        print("PREHOOK - Server has started")
 
 
 def printHelp():
-	print ("Usage: ./server <action> <options>")
-	print ("Actions:")
-	print ("  start              Start the DBImport REST server")
-	print ("  stop               Stop the DBImport REST server")
-	print ("  restart            Stop and start the DBImport REST server")
-	print ("  noDaemon           Start the DBImport REST server running in foreground")
-	print ("  status             Check status of DBImport REST server")
-	print ("")
-	print ("Options:")
-	print ("  --help             Show this help message and exit")
-	print ("  -v, --debug        Turn on extensive debug output.")
-	print ("  -V, --version      Displays the version of DBImport")
-	sys.exit(1)
-
+    print("Usage: ./server <action> <options>")
+    print("Actions:")
+    print("  start              Start the DBImport REST server")
+    print("  stop               Stop the DBImport REST server")
+    print("  restart            Stop and start the DBImport REST server")
+    print("  noDaemon           Start the DBImport REST server running in foreground")
+    print("  status             Check status of DBImport REST server")
+    print("")
+    print("Options:")
+    print("  --help             Show this help message and exit")
+    print("  -v, --debug        Turn on extensive debug output.")
+    print("  -V, --version      Displays the version of DBImport")
+    sys.exit(1)
 
 
 def setupLogger(name, logfile, logFormat, loggingLevel, logPropagate=True):
-	newLogger = logging.getLogger(name)
-	newLogger.propagate = logPropagate
-	logHandler = logging.FileHandler(logfile)
-	logHandler.setFormatter(logging.Formatter(logFormat))
-	logHandler.setLevel(loggingLevel)
-	newLogger.addHandler(logHandler)
+    newLogger = logging.getLogger(name)
+    newLogger.propagate = logPropagate
+    logHandler = logging.FileHandler(logfile)
+    logHandler.setFormatter(logging.Formatter(logFormat))
+    logHandler.setLevel(loggingLevel)
+    newLogger.addHandler(logHandler)
+
 
 def main(argv):
 
-	loggingLevel = logging.INFO
-	displayVersion = False
-	daemonMode = False
-	action = ""
+    loggingLevel = logging.INFO
+    displayVersion = False
+    daemonMode = False
+    action = ""
 
-	if argv != []:
-		try:
-			action = sys.argv[1]
-			opts, args = getopt.getopt(argv[1:], "vVh", ["version", "help", "debug"])
-		except getopt.GetoptError:
-			printHelp()
-	
-		for opt, arg in opts:
-			if opt in ("-h", "--help"):
-				printHelp()
-			elif opt in ("-V", "--version"):
-				displayVersion = True
-			elif opt in ("-v", "--debug"):
-				loggingLevel = logging.DEBUG
+    if argv != []:
+        try:
+            action = sys.argv[1]
+            opts, args = getopt.getopt(argv[1:], "vVh", ["version", "help", "debug"])
+        except getopt.GetoptError:
+            printHelp()
 
-	if action not in ["start", "stop", "restart", "status", "noDaemon"]:
-		printHelp()
-		sys.exit(0)
+        for opt, arg in opts:
+            if opt in ("-h", "--help"):
+                printHelp()
+            elif opt in ("-V", "--version"):
+                displayVersion = True
+            elif opt in ("-v", "--debug"):
+                loggingLevel = logging.DEBUG
 
-	if action in ("start", "restart"):
-		daemonMode = True
+    if action not in ["start", "stop", "restart", "status", "noDaemon"]:
+        printHelp()
+        sys.exit(0)
 
-	if displayVersion == True:
-		print("DBImport version: %s"%(constant.VERSION))
-		sys.exit(0)
-	
-	logdir = configuration.get("Server", "logdir")
-	pidfile = configuration.get("Server", "pidfile")
-	restServer_address = configuration.get("Server", "restServer_address")
-	restServer_port = configuration.get("Server", "restServer_port")
-	restServer_workers = configuration.get("Server", "restServer_workers")
-	restServer_keyfile = configuration.get("Server", "restServer_keyfile")
-	restServer_certfile = configuration.get("Server", "restServer_certfile")
+    if action in ("start", "restart"):
+        daemonMode = True
 
-	if os.path.isfile(restServer_keyfile) == False:
-		print("The restServer keyfile cant be opened.\n" +
-			"Please check the path in the configuration file for settings Server/restServer_keyfile")
-		sys.exit(1)
+    if displayVersion == True:
+        print("DBImport version: %s" % (constant.VERSION))
+        sys.exit(0)
 
-	if os.path.isfile(restServer_certfile) == False:
-		print("The restServer certfile cant be opened.\n" +
-			"Please check the path in the configuration file for settings Server/restServer_certfile")
-		sys.exit(1)
+    logdir = configuration.get("Server", "logdir")
+    pidfile = configuration.get("Server", "pidfile")
+    restServer_address = configuration.get("Server", "restServer_address")
+    restServer_port = configuration.get("Server", "restServer_port")
+    restServer_workers = configuration.get("Server", "restServer_workers")
+    restServer_keyfile = configuration.get("Server", "restServer_keyfile")
+    restServer_certfile = configuration.get("Server", "restServer_certfile")
 
-	if loggingLevel == logging.DEBUG:
-		logFormat = '%(asctime)s %(levelname)s %(name)s %(funcName)s - %(message)s'
-	else:
-		logFormat = '%(asctime)s %(levelname)s - %(message)s'
+    if os.path.isfile(restServer_keyfile) == False:
+        print(
+            "The restServer keyfile cant be opened.\n"
+            + "Please check the path in the configuration file for settings Server/restServer_keyfile"
+        )
+        sys.exit(1)
 
-	if daemonMode == False:
-		logging.basicConfig(stream=sys.stdout, format=logFormat, level=loggingLevel)
-		logPropagate = True
-	else:
-		# If we run in daemon mode, we log everything from the root logger to /dev/null.
-		logging.basicConfig(filename="/dev/null", format=logFormat, level=loggingLevel)
-		logPropagate = False
+    if os.path.isfile(restServer_certfile) == False:
+        print(
+            "The restServer certfile cant be opened.\n"
+            + "Please check the path in the configuration file for settings Server/restServer_certfile"
+        )
+        sys.exit(1)
 
-	# Setup the loggers
-	setupLogger(name="server", logfile="%s/restServer.log"%(logdir), logFormat=logFormat, loggingLevel=loggingLevel, logPropagate=logPropagate)
+    if loggingLevel == logging.DEBUG:
+        logFormat = "%(asctime)s %(levelname)s %(name)s %(funcName)s - %(message)s"
+    else:
+        logFormat = "%(asctime)s %(levelname)s - %(message)s"
 
-	glogging.Logger.datefmt = ""
-	glogging.Logger.error_fmt = logFormat
-	glogging.Logger.access_fmt = logFormat
-	glogging.Logger.syslog_fmt = logFormat
+    if daemonMode == False:
+        logging.basicConfig(stream=sys.stdout, format=logFormat, level=loggingLevel)
+        logPropagate = True
+    else:
+        # If we run in daemon mode, we log everything from the root logger to /dev/null.
+        logging.basicConfig(filename="/dev/null", format=logFormat, level=loggingLevel)
+        logPropagate = False
 
-	if loggingLevel == logging.DEBUG:
-		gunicornDebugLevel = "debug"
-	else:
-		gunicornDebugLevel = "info"
+    # Setup the loggers
+    setupLogger(
+        name="server",
+        logfile="%s/restServer.log" % (logdir),
+        logFormat=logFormat,
+        loggingLevel=loggingLevel,
+        logPropagate=logPropagate,
+    )
 
-	if daemonMode == True:
-		gunicornAccessLog = "%s/restServer_access.log"%(logdir)
-		gunicornErrorLog = "%s/restServer.log"%(logdir)
-	else:
-		gunicornAccessLog = "-"
-		gunicornErrorLog = "-"
+    glogging.Logger.datefmt = ""
+    glogging.Logger.error_fmt = logFormat
+    glogging.Logger.access_fmt = logFormat
+    glogging.Logger.syslog_fmt = logFormat
 
-	options = {
-		"bind": "%s:%s"%(restServer_address, restServer_port),
-		"workers": int(restServer_workers),
-		"worker_class": "uvicorn.workers.UvicornWorker",
-		"loglevel": gunicornDebugLevel,
-		"accesslog": gunicornAccessLog,
-		"errorlog": gunicornErrorLog,
-		"daemon": daemonMode,
-		"threaded": "True",
-		"keyfile": restServer_keyfile,
-		"certfile": restServer_certfile,
-	}
+    if loggingLevel == logging.DEBUG:
+        gunicornDebugLevel = "debug"
+    else:
+        gunicornDebugLevel = "info"
 
-	if action == "start":
-		print("Starting DBImport REST Server")
-		StandaloneApplication("Server.restServer:app", options).run()
+    if daemonMode == True:
+        gunicornAccessLog = "%s/restServer_access.log" % (logdir)
+        gunicornErrorLog = "%s/restServer.log" % (logdir)
+    else:
+        gunicornAccessLog = "-"
+        gunicornErrorLog = "-"
 
-	elif action == "noDaemon":
-		StandaloneApplication("Server.restServer:app", options).run()
+    options = {
+        "bind": "%s:%s" % (restServer_address, restServer_port),
+        "workers": int(restServer_workers),
+        "worker_class": "uvicorn.workers.UvicornWorker",
+        "loglevel": gunicornDebugLevel,
+        "accesslog": gunicornAccessLog,
+        "errorlog": gunicornErrorLog,
+        "daemon": daemonMode,
+        "threaded": "True",
+        "keyfile": restServer_keyfile,
+        "certfile": restServer_certfile,
+    }
 
-	elif action == "stop":
-		print("Stopping DBImport REST Server")
-		for line in os.popen("ps ax|grep -E \"/restServer restart$|/restServer start$|/restServer noDaemon\"|grep -v grep"):
-			pid = int(line.split()[0])
-			os.kill(pid, signal.SIGTERM)
+    if action == "start":
+        print("Starting DBImport REST Server")
+        StandaloneApplication("Server.restServer:app", options).run()
 
-	elif action == "restart":
-		print("Stopping DBImport REST Server")
-		currentPid = os.getpid()
-		for line in os.popen("ps ax|grep -E \"/restServer restart$|/restServer start$|/restServer noDaemon\"|grep -v grep"):
-			pid = int(line.split()[0])
-			if pid == currentPid:
-				continue
-			os.kill(pid, signal.SIGTERM)
+    elif action == "noDaemon":
+        StandaloneApplication("Server.restServer:app", options).run()
 
-		print("Starting DBImport REST Server")
-		StandaloneApplication("Server.restServer:app", options).run()
+    elif action == "stop":
+        print("Stopping DBImport REST Server")
+        for line in os.popen(
+            'ps ax|grep -E "/restServer restart$|/restServer start$|/restServer noDaemon"|grep -v grep'
+        ):
+            pid = int(line.split()[0])
+            os.kill(pid, signal.SIGTERM)
 
+    elif action == "restart":
+        print("Stopping DBImport REST Server")
+        currentPid = os.getpid()
+        for line in os.popen(
+            'ps ax|grep -E "/restServer restart$|/restServer start$|/restServer noDaemon"|grep -v grep'
+        ):
+            pid = int(line.split()[0])
+            if pid == currentPid:
+                continue
+            os.kill(pid, signal.SIGTERM)
 
-	elif action == "status":
-		processes = os.popen("ps ax|grep \"/restServer start$\"|grep -v grep").read()
-		if processes == "":
-			print("DBImport REST Server is not running")
-			sys.exit(1)
-		else:
-			print("DBImport REST Server is running")
-			sys.exit(0)
+        print("Starting DBImport REST Server")
+        StandaloneApplication("Server.restServer:app", options).run()
 
-	else:
-		printHelp()
+    elif action == "status":
+        processes = os.popen('ps ax|grep "/restServer start$"|grep -v grep').read()
+        if processes == "":
+            print("DBImport REST Server is not running")
+            sys.exit(1)
+        else:
+            print("DBImport REST Server is running")
+            sys.exit(0)
+
+    else:
+        printHelp()
+
 
 if __name__ == "__main__":
-	try:
-		main(sys.argv[1:])
-	except getopt.GetoptError:
-		printHelp()
-
-
+    try:
+        main(sys.argv[1:])
+    except getopt.GetoptError:
+        printHelp()
