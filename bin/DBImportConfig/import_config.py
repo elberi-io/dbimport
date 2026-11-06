@@ -1536,11 +1536,11 @@ class config(metaclass=Singleton):
         logging.debug("Executing import_config.getColumnForceString() - Finished")
         return force_string
 
-    def convertHiveColumnNameReservedWords(self, columnName):
-        if columnName.lower() in ("synchronized", "date", "interval", "int"):
-            columnName = "%s_hive" % (columnName)
+    def convertHiveColumnNameReservedWords(self, column_name):
+        if column_name.lower() in ("synchronized", "date", "interval", "int"):
+            column_name = "%s_hive" % (column_name)
 
-        return columnName
+        return column_name
 
     def isAnyColumnAnonymized(
         self,
@@ -2129,10 +2129,10 @@ class config(metaclass=Singleton):
         )
         logging.debug("Executing import_config.saveColumnData() - Finished")
 
-    def isColumnNameReservedInSqoop(self, columnName):
+    def isColumnNameReservedInSqoop(self, column_name):
         """Returns True or False depending if the column_name is reserved in Sqoop"""
 
-        if columnName in ("const", "private", "public", "default", "long"):
+        if column_name in ("const", "private", "public", "default", "long"):
             return True
         else:
             return False
@@ -3020,7 +3020,7 @@ class config(metaclass=Singleton):
                 "The size of the json document on the custom query exceeds 1024 bytes. Change the query to create a result with less than 512 bytes"
             )
 
-        self.saveCustomSQLValidationSourceValue(jsonValue=result_json)
+        self.saveCustomSQLValidationSourceValue(json_value=result_json)
 
         logging.debug("resultDF:")
         logging.debug(result_df)
@@ -3149,20 +3149,20 @@ class config(metaclass=Singleton):
         mongo_collection_count = mongo_collection.count()
         self.common_config.disconnectFromMongo()
 
-        self.saveSourceTableRowCount(rowCount=mongo_collection_count)
+        self.saveSourceTableRowCount(row_count=mongo_collection_count)
 
         logging.debug("Executing import_config.getMongoRowCount() - Finished")
 
-    def saveCustomSQLValidationSourceValue(self, jsonValue, printInfo=True):
+    def saveCustomSQLValidationSourceValue(self, json_value, print_info=True):
         logging.debug("Executing import_config.saveCustomSQLValidationSourceValue()")
-        if printInfo == True:
+        if print_info == True:
             logging.info(
                 "Saving the custom SQL validation data from Source Table to the configuration database"
             )
 
         query = "update import_tables set validationCustomQuerySourceValue = %s where table_id = %s"
 
-        self.mysql_cursor01.execute(query, (jsonValue, self.table_id))
+        self.mysql_cursor01.execute(query, (json_value, self.table_id))
         self.mysql_conn.commit()
         logging.debug("SQL Statement executed: %s" % (self.mysql_cursor01.statement))
 
@@ -3187,9 +3187,9 @@ class config(metaclass=Singleton):
             "Executing import_config.saveCustomSQLValidationHiveValue() - Finished"
         )
 
-    def saveSourceTableRowCount(self, rowCount, incr=False, printInfo=True):
+    def saveSourceTableRowCount(self, row_count, incr=False, print_info=True):
         logging.debug("Executing import_config.saveSourceTableRowCount()")
-        if printInfo == True:
+        if print_info == True:
             logging.info(
                 "Saving the number of rows in the Source Table to the configuration database"
             )
@@ -3209,7 +3209,7 @@ class config(metaclass=Singleton):
                 "update import_tables set source_rowcount_incr = %s where table_id = %s"
             )
 
-        self.mysql_cursor01.execute(query, (rowCount, self.table_id))
+        self.mysql_cursor01.execute(query, (row_count, self.table_id))
         self.mysql_conn.commit()
         logging.debug("SQL Statement executed: %s" % (self.mysql_cursor01.statement))
 
@@ -3229,12 +3229,12 @@ class config(metaclass=Singleton):
 
         logging.debug("Executing import_config.saveHiveTableRowCount() - Finished")
 
-    def resetSqoopStatistics(self, maxValue):
+    def resetSqoopStatistics(self, max_value):
         logging.debug("Executing import_config.resetSqoopStatistics()")
-        if maxValue != None:
+        if max_value != None:
             logging.info(
                 "Reseting incremental values for imports. New max value is: %s"
-                % (maxValue)
+                % (max_value)
             )
 
         query = "update import_tables set "
@@ -3244,7 +3244,7 @@ class config(metaclass=Singleton):
         query += "	incr_maxvalue_pending = NULL "
         query += "where table_id = %s "
 
-        self.mysql_cursor01.execute(query, (maxValue, self.table_id))
+        self.mysql_cursor01.execute(query, (max_value, self.table_id))
         logging.debug("SQL Statement executed: %s" % (self.mysql_cursor01.statement))
         self.mysql_conn.commit()
 
@@ -3252,19 +3252,19 @@ class config(metaclass=Singleton):
 
     def saveImportStatistics(
         self,
-        sqoopStartUTS,
-        sqoopSize=None,
-        sqoopRows=None,
-        sqoopIncrMaxvaluePending=None,
-        sqoopMappers=None,
+        sqoop_start_uts,
+        sqoop_size=None,
+        sqoop_rows=None,
+        sqoop_incr_maxvalue_pending=None,
+        sqoop_mappers=None,
     ):
         logging.debug("Executing import_config.saveImportStatistics()")
         logging.info("Saving %s statistics" % (self.importTool))
 
-        self.sqoopStartUTS = sqoopStartUTS
+        self.sqoopStartUTS = sqoop_start_uts
         try:
             self.sqoop_last_execution_timestamp = datetime.utcfromtimestamp(
-                sqoopStartUTS
+                sqoop_start_uts
             ).strftime("%Y-%m-%d %H:%M:%S.000")
         except TypeError:
             self.sqoop_last_execution_timestamp = None
@@ -3272,27 +3272,27 @@ class config(metaclass=Singleton):
         query_param = []
         query = "update import_tables set "
         query += "	sqoop_last_execution = %s "
-        query_param.append(sqoopStartUTS)
+        query_param.append(sqoop_start_uts)
 
-        if sqoopSize != None:
+        if sqoop_size != None:
             query += "  ,sqoop_last_size = %s "
-            self.sqoop_last_size = sqoopSize
-            query_param.append(sqoopSize)
+            self.sqoop_last_size = sqoop_size
+            query_param.append(sqoop_size)
 
-        if sqoopRows != None:
+        if sqoop_rows != None:
             query += "  ,sqoop_last_rows = %s "
-            self.sqoop_last_rows = sqoopRows
-            query_param.append(sqoopRows)
+            self.sqoop_last_rows = sqoop_rows
+            query_param.append(sqoop_rows)
 
-        if sqoopIncrMaxvaluePending != None:
+        if sqoop_incr_maxvalue_pending != None:
             query += "  ,incr_maxvalue_pending = %s "
-            self.sqoopIncrMaxvaluePending = sqoopIncrMaxvaluePending
-            query_param.append(sqoopIncrMaxvaluePending)
+            self.sqoopIncrMaxvaluePending = sqoop_incr_maxvalue_pending
+            query_param.append(sqoop_incr_maxvalue_pending)
 
-        if sqoopMappers != None:
+        if sqoop_mappers != None:
             query += "  ,sqoop_last_mappers = %s "
-            self.sqoop_last_mappers = sqoopMappers
-            query_param.append(sqoopMappers)
+            self.sqoop_last_mappers = sqoop_mappers
+            query_param.append(sqoop_mappers)
 
         if self.validate_source == "sqoop" and self.validationMethod == "rowCount":
             logging.info(
@@ -3304,7 +3304,7 @@ class config(metaclass=Singleton):
             else:
                 query += "  ,source_rowcount = %s "
                 query += "  ,source_rowcount_incr = NULL "
-            query_param.append(sqoopRows)
+            query_param.append(sqoop_rows)
 
         query += "where table_id = %s "
         query_param.append(self.table_id)
@@ -3350,7 +3350,7 @@ class config(metaclass=Singleton):
             logging.warning(
                 "The minimal version in MSSQL is larger than what is required. This means that we need to force a full initial load"
             )
-            self.resetSqoopStatistics(maxValue=None)
+            self.resetSqoopStatistics(max_value=None)
             self.incr_maxvalue = None
 
         logging.debug(
@@ -3362,7 +3362,7 @@ class config(metaclass=Singleton):
         logging.debug(
             "Executing import_config.getSQLtoReadFromSourceWithMSSQLChangeTracking()"
         )
-        query = self.getSQLtoReadFromSource(sourceTableAsName="ST")
+        query = self.getSQLtoReadFromSource(source_table_as_name="ST")
 
         query = re.sub(
             "^select",
@@ -3377,7 +3377,7 @@ class config(metaclass=Singleton):
                     schema=self.source_schema, table=self.source_table
                 )
             )
-            pk_columns = self.getPKcolumns(convertToLower=False)
+            pk_columns = self.getPKcolumns(convert_to_lower=False)
             join_columns = ""
             for i, target_column in enumerate(pk_columns.split(",")):
                 if join_columns == "":
@@ -3398,7 +3398,7 @@ class config(metaclass=Singleton):
                 self.incr_maxvalue,
             )
 
-            pk_columns = self.getPKcolumns(convertToLower=False)
+            pk_columns = self.getPKcolumns(convert_to_lower=False)
             join_columns = ""
 
             # PK must come from the CHANGETABLE function. This is needed in case of deletes, as the column would be NULL otherwise and the merge
@@ -3423,7 +3423,7 @@ class config(metaclass=Singleton):
             "Executing import_config.getSQLtoReadFromSourceWithMSSQLChangeTracking() - Finished"
         )
 
-    def getSQLtoReadFromSource(self, sourceTableAsName=None):
+    def getSQLtoReadFromSource(self, source_table_as_name=None):
         """Creates and return the SQL needed to read all rows from the source database"""
         logging.debug("Executing import_config.getSQLtoReadFromSource()")
 
@@ -3458,7 +3458,7 @@ class config(metaclass=Singleton):
                 spark_query = "select "
             else:
                 spark_query += ", "
-            if sourceTableAsName == None:
+            if source_table_as_name == None:
                 if row["source_name"] != row["name"]:
                     spark_query += (
                         quote
@@ -3475,7 +3475,7 @@ class config(metaclass=Singleton):
                 if row["source_name"] != row["name"]:
                     spark_query += (
                         quote
-                        + sourceTableAsName
+                        + source_table_as_name
                         + quote
                         + "."
                         + quote
@@ -3489,7 +3489,7 @@ class config(metaclass=Singleton):
                 else:
                     spark_query += (
                         quote
-                        + sourceTableAsName
+                        + source_table_as_name
                         + quote
                         + "."
                         + quote
@@ -3503,8 +3503,8 @@ class config(metaclass=Singleton):
                 schema=self.source_schema, table=self.source_table
             )
         )
-        if sourceTableAsName != None:
-            spark_query += " as %s" % (sourceTableAsName)
+        if source_table_as_name != None:
+            spark_query += " as %s" % (source_table_as_name)
 
         logging.debug("Executing import_config.getSQLtoReadFromSource() - Finished")
         return spark_query
@@ -3821,7 +3821,7 @@ class config(metaclass=Singleton):
         logging.debug("Executing import_config.validateRowCount() - Finished")
         return return_value
 
-    def getPKcolumns(self, PKforMerge=False, convertToLower=True):
+    def getPKcolumns(self, pk_for_merge=False, convert_to_lower=True):
         """Returns a comma seperated list of columns that is part of the PK"""
         logging.debug("Executing import_config.getPKcolumns()")
         return_value = None
@@ -3849,7 +3849,7 @@ class config(metaclass=Singleton):
         if (
             self.pk_column_override != None
             and self.pk_column_override.strip() != ""
-            and PKforMerge == False
+            and pk_for_merge == False
         ):
             logging.debug("Executing import_config.getPKcolumns() - Finished")
             self.pk_column_override = re.sub(
@@ -3861,7 +3861,7 @@ class config(metaclass=Singleton):
         if (
             self.pk_column_override_mergeonly != None
             and self.pk_column_override_mergeonly.strip() != ""
-            and PKforMerge == True
+            and pk_for_merge == True
         ):
             logging.debug("Executing import_config.getPKcolumns() - Finished")
             self.pk_column_override_mergeonly = re.sub(
@@ -3875,7 +3875,7 @@ class config(metaclass=Singleton):
         elif (
             self.pk_column_override != None
             and self.pk_column_override.strip() != ""
-            and PKforMerge == True
+            and pk_for_merge == True
         ):
             logging.debug("Executing import_config.getPKcolumns() - Finished")
             self.pk_column_override = re.sub(
@@ -3900,7 +3900,7 @@ class config(metaclass=Singleton):
             else:
                 return_value += "," + str(row[0])
 
-            if convertToLower == True:
+            if convert_to_lower == True:
                 return_value = return_value.lower()
 
         return return_value
@@ -4172,7 +4172,7 @@ class config(metaclass=Singleton):
         logging.debug("Executing import_config.getMinMaxBoundaryValues() - Finished")
         return return_dict
 
-    def getImportTables(self, hiveDB):
+    def getImportTables(self, hive_db):
         """Return all tables that we import to a specific Hive DB"""
         logging.debug("Executing import_config.getImportTables()")
         result_df = None
@@ -4186,7 +4186,7 @@ class config(metaclass=Singleton):
         query += "from import_tables "
         query += "where hive_db = %s"
 
-        self.mysql_cursor01.execute(query, (hiveDB,))
+        self.mysql_cursor01.execute(query, (hive_db,))
         logging.debug("SQL Statement executed: %s" % (self.mysql_cursor01.statement))
 
         if self.mysql_cursor01.rowcount == 0:
@@ -4213,7 +4213,7 @@ class config(metaclass=Singleton):
         logging.debug("Executing import_config.getImportTables() - Finished")
         return result_df
 
-    def addImportTable(self, hiveDB, hiveTable, dbalias, schema, table, catalog):
+    def addImportTable(self, hive_db, hive_table, dbalias, schema, table, catalog):
         """Add source table to import_tables"""
         logging.debug("Executing import_config.addImportTable()")
         return_value = True
@@ -4247,21 +4247,21 @@ class config(metaclass=Singleton):
                 "catalog option supplied to import_config.addImportTable does not contain a valid option"
             )
 
-        logging.debug("hiveDB:    %s" % (hiveDB))
-        logging.debug("hiveTable: %s" % (hiveTable))
+        logging.debug("hiveDB:    %s" % (hive_db))
+        logging.debug("hiveTable: %s" % (hive_table))
         logging.debug("dbalias:   %s" % (dbalias))
         logging.debug("schema:    %s" % (schema))
         logging.debug("table:     %s" % (table))
 
         try:
             self.mysql_cursor01.execute(
-                query, (hiveDB, hiveTable, dbalias, schema, table)
+                query, (hive_db, hive_table, dbalias, schema, table)
             )
             self.mysql_conn.commit()
         except mysql.connector.errors.IntegrityError:
             logging.warning(
                 "Hive table %s.%s cant be added as it's not unique in the configuration database"
-                % (hiveDB, hiveTable)
+                % (hive_db, hive_table)
             )
             return_value = False
 

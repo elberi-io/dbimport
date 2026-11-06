@@ -251,7 +251,7 @@ class initialize:
         logging.debug("Executing common_config.getListOfConfigTables() - Finished")
         return tables_df
 
-    def createDB(self, createOnlyTable=None):
+    def createDB(self, create_only_table=None):
 
         inspector = sa.inspect(self.configDB)
         all_tables = inspector.get_table_names()

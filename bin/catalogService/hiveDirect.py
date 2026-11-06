@@ -473,10 +473,10 @@ class hiveMetastoreDirect(metaclass=Singleton):
                 % (lock_count, hiveDB, hiveTable)
             )
             self.common_config.logImportFailure(
-                hiveDB=hiveDB,
-                hiveTable=hiveTable,
+                hive_db=hiveDB,
+                hive_table=hiveTable,
                 severity="Warning",
-                errorText="%s locks removed by force" % (lock_count),
+                error_text="%s locks removed by force" % (lock_count),
             )
 
         (

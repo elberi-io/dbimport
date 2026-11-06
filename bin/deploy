@@ -227,17 +227,21 @@ def main(argv):
 
     if operation == "deployAirflowImportDAG":
         copy_operation = copy_operations.operation()
-        copy_operation.checkRemoteInstanceSchema(remoteInstance=deploy_target)
+        copy_operation.checkRemoteInstanceSchema(remote_instance=deploy_target)
         copy_operation.copyAirflowImportDAG(
-            airflowDAGname=airflow_dag, copyDestination=deploy_target, deployMode=True
+            airflow_dag_name=airflow_dag,
+            copy_destination=deploy_target,
+            deploy_mode=True,
         )
         copy_operation.remove_temporary_files()
 
     if operation == "deployAirflowExportDAG":
         copy_operation = copy_operations.operation()
-        copy_operation.checkRemoteInstanceSchema(remoteInstance=deploy_target)
+        copy_operation.checkRemoteInstanceSchema(remote_instance=deploy_target)
         copy_operation.copyAirflowExportDAG(
-            airflowDAGname=airflow_dag, copyDestination=deploy_target, deployMode=True
+            airflow_dag_name=airflow_dag,
+            copy_destination=deploy_target,
+            deploy_mode=True,
         )
         copy_operation.remove_temporary_files()
 

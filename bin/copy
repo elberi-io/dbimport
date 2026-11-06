@@ -458,78 +458,78 @@ def main(argv):
         copy_operation = copy_operations.operation()
         import_operation = import_operations.operation()
         if concatenate_table == True:
-            import_operation.concatenateTable(hiveDB=hive_db, hiveTable=hive_table)
+            import_operation.concatenateTable(hive_db=hive_db, hive_table=hive_table)
 
         copy_operation.exportTable(
-            hiveDB=hive_db, hiveTable=hive_table, localHDFSpath=local_hdfs_path
+            hive_db=hive_db, hive_table=hive_table, local_hdfs_path=local_hdfs_path
         )
         import_operation.remove_temporary_files()
 
     if operation == "copyTableFromCluster":
         copy_operation = copy_operations.operation()
         copy_operation.copyTableToFromCluster(
-            hiveDB=hive_db,
-            hiveTable=hive_table,
-            remoteInstance=remote_instance,
-            localHDFSpath=local_hdfs_path,
-            remoteHDFSpath=remote_hdfs_path,
-            fromClusterMode=True,
+            hive_db=hive_db,
+            hive_table=hive_table,
+            remote_instance=remote_instance,
+            local_hdfs_path=local_hdfs_path,
+            remote_hdfs_path=remote_hdfs_path,
+            from_cluster_mode=True,
         )
         copy_operation.remove_temporary_files()
 
     if operation == "copyTableToCluster":
         copy_operation = copy_operations.operation()
         copy_operation.copyTableToFromCluster(
-            hiveDB=hive_db,
-            hiveTable=hive_table,
-            remoteInstance=remote_instance,
-            localHDFSpath=local_hdfs_path,
-            remoteHDFSpath=remote_hdfs_path,
-            fromClusterMode=False,
+            hive_db=hive_db,
+            hive_table=hive_table,
+            remote_instance=remote_instance,
+            local_hdfs_path=local_hdfs_path,
+            remote_hdfs_path=remote_hdfs_path,
+            from_cluster_mode=False,
         )
         copy_operation.remove_temporary_files()
 
     if operation == "importTable":
         copy_operation = copy_operations.operation()
         copy_operation.importCopiedTable(
-            hiveDB=hive_db, hiveTable=hive_table, localHDFSpath=local_hdfs_path
+            hive_db=hive_db, hive_table=hive_table, local_hdfs_path=local_hdfs_path
         )
         copy_operation.remove_temporary_files()
 
     if operation == "scheduleTableAsyncCopy":
         copy_operation = copy_operations.operation()
         copy_operation.scheduleTableAsyncCopy(
-            hiveFilterDB=hive_db,
-            hiveFilterTable=hive_table,
-            copyDestination=copy_destination,
+            hive_filter_db=hive_db,
+            hive_filter_table=hive_table,
+            copy_destination=copy_destination,
         )
         copy_operation.remove_temporary_files()
 
     if operation == "scheduleDAGasyncCopy":
         copy_operation = copy_operations.operation()
         copy_operation.scheduleDAGasyncCopy(
-            airflowDAGname=airflow_dag,
-            copyDestination=copy_destination,
-            includeIncrImports=include_incr_imports,
+            airflow_dag_name=airflow_dag,
+            copy_destination=copy_destination,
+            include_incr_imports=include_incr_imports,
         )
         copy_operation.remove_temporary_files()
 
     if operation == "copyAirflowImportDAG":
         copy_operation = copy_operations.operation()
         copy_operation.copyAirflowImportDAG(
-            airflowDAGname=airflow_dag,
-            copyDestination=copy_destination,
-            copyDAGnoSlave=copy_dag_no_slave,
-            setAutoRegenerateDAG=set_auto_regenerate_dag,
+            airflow_dag_name=airflow_dag,
+            copy_destination=copy_destination,
+            copy_dag_no_slave=copy_dag_no_slave,
+            set_auto_regenerate_dag=set_auto_regenerate_dag,
         )
         copy_operation.remove_temporary_files()
 
     if operation == "copyAirflowExportDAG":
         copy_operation = copy_operations.operation()
         copy_operation.copyAirflowExportDAG(
-            airflowDAGname=airflow_dag,
-            copyDestination=copy_destination,
-            setAutoRegenerateDAG=set_auto_regenerate_dag,
+            airflow_dag_name=airflow_dag,
+            copy_destination=copy_destination,
+            set_auto_regenerate_dag=set_auto_regenerate_dag,
         )
         copy_operation.remove_temporary_files()
 

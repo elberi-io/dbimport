@@ -92,15 +92,15 @@ def printHelp():
     sys.exit(1)
 
 
-def printBox(messageList):
+def printBox(message_list):
     # This code is not completed. It was a way to easily create the Ascii boxes used in the import, but we are still using hard-coded boxes. One day.....
-    if type(messageList) is not list:
-        messageList = [messageList]
+    if type(message_list) is not list:
+        message_list = [message_list]
 
     start_line = ""
     stop_line = ""
     max_length = 0
-    for message in messageList:
+    for message in message_list:
         if len(message) > max_length:
             max_length = len(message)
 
@@ -109,7 +109,7 @@ def printBox(messageList):
         stop_line += "_"
 
     print(start_line)
-    for message in messageList:
+    for message in message_list:
         if len(message) > max_length:
             max_length = len(message)
     print(stop_line)
@@ -358,7 +358,7 @@ def main(argv):
     )
 
     copy_destinations = copy_operation.getCopyDestinations(
-        hiveDB=hive_db, hiveTable=hive_table
+        hive_db=hive_db, hive_table=hive_table
     )
 
     # Save data down to import_operation
@@ -643,12 +643,12 @@ def main(argv):
             ) and skip_import_data == False:
                 if import_operation.import_config.importTool == "sqoop":
                     if import_operation.runStage(1013) == True:
-                        import_operation.runSqoopImport(PKOnlyImport=False)
+                        import_operation.runSqoopImport(pk_only_import=False)
                         import_operation.import_config.common_config.reconnectJDBC()
                 if import_operation.import_config.importTool == "spark":
                     # 					if import_operation.runStage(1014, 1017) == True:
                     if import_operation.runStage(1014) == True:
-                        import_operation.runSparkImport(PKOnlyImport=False)
+                        import_operation.runSparkImport(pk_only_import=False)
                         import_operation.import_config.common_config.reconnectJDBC()
 
                 if import_operation.runStage(1020) == True:
@@ -715,7 +715,7 @@ def main(argv):
                     if import_operation.runStage(1112) == True:
                         import_operation.saveIncrMinValue()
                         import_operation.runSqoopImport(
-                            PKOnlyImport=False, incrementalMax=incremental_max
+                            pk_only_import=False, incremental_max=incremental_max
                         )
                         import_operation.import_config.common_config.reconnectJDBC()
                         if import_operation.sqoopIncrNoNewRows == True:
@@ -724,7 +724,7 @@ def main(argv):
                     if import_operation.runStage(1113) == True:
                         import_operation.saveIncrMinValue()
                         import_operation.runSparkImport(
-                            PKOnlyImport=False, incrementalMax=incremental_max
+                            pk_only_import=False, incremental_max=incremental_max
                         )
                         import_operation.import_config.common_config.reconnectJDBC()
                         if import_operation.sqoopIncrNoNewRows == True:
@@ -813,11 +813,11 @@ def main(argv):
             ) and skip_import_data == False:
                 if import_operation.import_config.importTool == "sqoop":
                     if import_operation.runStage(1215) == True:
-                        import_operation.runSqoopImport(PKOnlyImport=False)
+                        import_operation.runSqoopImport(pk_only_import=False)
                         import_operation.import_config.common_config.reconnectJDBC()
                 if import_operation.import_config.importTool == "spark":
                     if import_operation.runStage(1216) == True:
-                        import_operation.runSparkImport(PKOnlyImport=False)
+                        import_operation.runSparkImport(pk_only_import=False)
                         import_operation.import_config.common_config.reconnectJDBC()
 
             if run_only_function == None or run_only_function in (
@@ -905,7 +905,7 @@ def main(argv):
                 # 						import_operation.runSqoopImport(PKOnlyImport = False)
                 if import_operation.import_config.importTool == "spark":
                     if import_operation.runStage(1265) == True:
-                        import_operation.runSparkImport(PKOnlyImport=False)
+                        import_operation.runSparkImport(pk_only_import=False)
                         import_operation.import_config.common_config.reconnectJDBC()
 
             if run_only_function == None or run_only_function in (
@@ -1118,7 +1118,7 @@ def main(argv):
                         import_operation.dropTargetTable()
                     import_operation.createTargetTable()
                     import_operation.updateTargetTable()
-                    import_operation.addHiveDBImportColumns(mergeOperation=False)
+                    import_operation.addHiveDBImportColumns(merge_operation=False)
                     import_operation.updatePKonTargetTable()
                     import_operation.updateFKonTargetTable()
 
@@ -1248,7 +1248,7 @@ def main(argv):
                         import_operation.dropTargetTable()
                     import_operation.createTargetTable()
                     import_operation.updateTargetTable()
-                    import_operation.addHiveDBImportColumns(mergeOperation=False)
+                    import_operation.addHiveDBImportColumns(merge_operation=False)
                     import_operation.updatePKonTargetTable()
                     import_operation.updateFKonTargetTable()
 
@@ -1386,7 +1386,7 @@ def main(argv):
                         import_operation.dropTargetTable()
                     import_operation.createTargetTable()
                     import_operation.updateTargetTable()
-                    import_operation.addHiveDBImportColumns(mergeOperation=False)
+                    import_operation.addHiveDBImportColumns(merge_operation=False)
                     import_operation.updatePKonTargetTable()
                     import_operation.updateFKonTargetTable()
 
@@ -1523,7 +1523,7 @@ def main(argv):
                     import_operation.createTargetTable()
                     import_operation.convertHiveTableToACID()
                     import_operation.updateTargetTable()
-                    import_operation.addHiveDBImportColumns(mergeOperation=True)
+                    import_operation.addHiveDBImportColumns(merge_operation=True)
                     import_operation.updatePKonTargetTable()
                     import_operation.updateFKonTargetTable()
 
@@ -1551,22 +1551,22 @@ def main(argv):
                             import_operation.import_config.Hive_Import_View
                         )
                     etl_operation.mergeHiveTables(
-                        sourceDB=import_operation.import_config.Hive_Import_DB,
-                        sourceTable=import_table_or_view,
-                        targetDB=import_operation.import_config.Hive_DB,
-                        targetTable=import_operation.import_config.Hive_Table,
-                        historyDB=import_operation.import_config.Hive_History_DB,
-                        historyTable=import_operation.import_config.Hive_History_Table,
-                        targetDeleteDB=import_operation.import_config.Hive_Delete_DB,
-                        targetDeleteTable=import_operation.import_config.Hive_Delete_Table,
-                        createHistoryAudit=True,
-                        sourceIsIncremental=False,
-                        sourceIsImportTable=True,
-                        softDelete=import_operation.import_config.soft_delete_during_merge,
-                        mergeTime=import_operation.import_config.sqoop_last_execution_timestamp,
-                        datalakeSource=import_operation.import_config.datalake_source,
-                        PKColumns=import_operation.import_config.getPKcolumns(
-                            PKforMerge=True
+                        source_db=import_operation.import_config.Hive_Import_DB,
+                        source_table=import_table_or_view,
+                        target_db=import_operation.import_config.Hive_DB,
+                        target_table=import_operation.import_config.Hive_Table,
+                        history_db=import_operation.import_config.Hive_History_DB,
+                        history_table=import_operation.import_config.Hive_History_Table,
+                        target_delete_db=import_operation.import_config.Hive_Delete_DB,
+                        target_delete_table=import_operation.import_config.Hive_Delete_Table,
+                        create_history_audit=True,
+                        source_is_incremental=False,
+                        source_is_import_table=True,
+                        soft_delete=import_operation.import_config.soft_delete_during_merge,
+                        merge_time=import_operation.import_config.sqoop_last_execution_timestamp,
+                        datalake_source=import_operation.import_config.datalake_source,
+                        pk_columns=import_operation.import_config.getPKcolumns(
+                            pk_for_merge=True
                         ),
                     )
 
@@ -1690,7 +1690,7 @@ def main(argv):
                     import_operation.createTargetTable()
                     import_operation.convertHiveTableToACID()
                     import_operation.updateTargetTable()
-                    import_operation.addHiveDBImportColumns(mergeOperation=True)
+                    import_operation.addHiveDBImportColumns(merge_operation=True)
                     import_operation.updatePKonTargetTable()
                     import_operation.updateFKonTargetTable()
 
@@ -1711,20 +1711,20 @@ def main(argv):
                             import_operation.import_config.Hive_Import_View
                         )
                     etl_operation.mergeHiveTables(
-                        sourceDB=import_operation.import_config.Hive_Import_DB,
-                        sourceTable=import_table_or_view,
-                        targetDB=import_operation.import_config.Hive_DB,
-                        targetTable=import_operation.import_config.Hive_Table,
-                        targetDeleteDB=import_operation.import_config.Hive_Delete_DB,
-                        targetDeleteTable=import_operation.import_config.Hive_Delete_Table,
-                        createHistoryAudit=False,
-                        sourceIsIncremental=False,
-                        sourceIsImportTable=True,
-                        softDelete=import_operation.import_config.soft_delete_during_merge,
-                        mergeTime=import_operation.import_config.sqoop_last_execution_timestamp,
-                        datalakeSource=import_operation.import_config.datalake_source,
-                        PKColumns=import_operation.import_config.getPKcolumns(
-                            PKforMerge=True
+                        source_db=import_operation.import_config.Hive_Import_DB,
+                        source_table=import_table_or_view,
+                        target_db=import_operation.import_config.Hive_DB,
+                        target_table=import_operation.import_config.Hive_Table,
+                        target_delete_db=import_operation.import_config.Hive_Delete_DB,
+                        target_delete_table=import_operation.import_config.Hive_Delete_Table,
+                        create_history_audit=False,
+                        source_is_incremental=False,
+                        source_is_import_table=True,
+                        soft_delete=import_operation.import_config.soft_delete_during_merge,
+                        merge_time=import_operation.import_config.sqoop_last_execution_timestamp,
+                        datalake_source=import_operation.import_config.datalake_source,
+                        pk_columns=import_operation.import_config.getPKcolumns(
+                            pk_for_merge=True
                         ),
                     )
 
@@ -1863,7 +1863,7 @@ def main(argv):
                         import_operation.dropTargetTable()
                     import_operation.createTargetTable()
                     import_operation.convertHiveTableToACID()
-                    import_operation.addHiveDBImportColumns(mergeOperation=True)
+                    import_operation.addHiveDBImportColumns(merge_operation=True)
                     import_operation.updateTargetTable()
                     import_operation.updatePKonTargetTable()
                     import_operation.updateFKonTargetTable()
@@ -1879,18 +1879,18 @@ def main(argv):
                             import_operation.import_config.Hive_Import_View
                         )
                     etl_operation.mergeHiveTables(
-                        sourceDB=import_operation.import_config.Hive_Import_DB,
-                        sourceTable=import_table_or_view,
-                        targetDB=import_operation.import_config.Hive_DB,
-                        targetTable=import_operation.import_config.Hive_Table,
-                        createHistoryAudit=False,
-                        sourceIsIncremental=True,
-                        sourceIsImportTable=True,
-                        softDelete=None,
-                        mergeTime=import_operation.import_config.sqoop_last_execution_timestamp,
-                        datalakeSource=import_operation.import_config.datalake_source,
-                        PKColumns=import_operation.import_config.getPKcolumns(
-                            PKforMerge=True
+                        source_db=import_operation.import_config.Hive_Import_DB,
+                        source_table=import_table_or_view,
+                        target_db=import_operation.import_config.Hive_DB,
+                        target_table=import_operation.import_config.Hive_Table,
+                        create_history_audit=False,
+                        source_is_incremental=True,
+                        source_is_import_table=True,
+                        soft_delete=None,
+                        merge_time=import_operation.import_config.sqoop_last_execution_timestamp,
+                        datalake_source=import_operation.import_config.datalake_source,
+                        pk_columns=import_operation.import_config.getPKcolumns(
+                            pk_for_merge=True
                         ),
                     )
 
@@ -2032,7 +2032,7 @@ def main(argv):
                     import_operation.createTargetTable()
                     import_operation.convertHiveTableToACID()
                     import_operation.updateTargetTable()
-                    import_operation.addHiveDBImportColumns(mergeOperation=True)
+                    import_operation.addHiveDBImportColumns(merge_operation=True)
                     import_operation.updatePKonTargetTable()
                     import_operation.updateFKonTargetTable()
 
@@ -2054,20 +2054,20 @@ def main(argv):
                             import_operation.import_config.Hive_Import_View
                         )
                     etl_operation.mergeHiveTables(
-                        sourceDB=import_operation.import_config.Hive_Import_DB,
-                        sourceTable=import_table_or_view,
-                        targetDB=import_operation.import_config.Hive_DB,
-                        targetTable=import_operation.import_config.Hive_Table,
-                        historyDB=import_operation.import_config.Hive_History_DB,
-                        historyTable=import_operation.import_config.Hive_History_Table,
-                        createHistoryAudit=True,
-                        sourceIsIncremental=True,
-                        sourceIsImportTable=True,
-                        softDelete=None,
-                        mergeTime=import_operation.import_config.sqoop_last_execution_timestamp,
-                        datalakeSource=import_operation.import_config.datalake_source,
-                        PKColumns=import_operation.import_config.getPKcolumns(
-                            PKforMerge=True
+                        source_db=import_operation.import_config.Hive_Import_DB,
+                        source_table=import_table_or_view,
+                        target_db=import_operation.import_config.Hive_DB,
+                        target_table=import_operation.import_config.Hive_Table,
+                        history_db=import_operation.import_config.Hive_History_DB,
+                        history_table=import_operation.import_config.Hive_History_Table,
+                        create_history_audit=True,
+                        source_is_incremental=True,
+                        source_is_import_table=True,
+                        soft_delete=None,
+                        merge_time=import_operation.import_config.sqoop_last_execution_timestamp,
+                        datalake_source=import_operation.import_config.datalake_source,
+                        pk_columns=import_operation.import_config.getPKcolumns(
+                            pk_for_merge=True
                         ),
                     )
 
@@ -2210,7 +2210,7 @@ def main(argv):
                     import_operation.createTargetTable()
                     import_operation.convertHiveTableToACID()
                     import_operation.updateTargetTable()
-                    import_operation.addHiveDBImportColumns(mergeOperation=True)
+                    import_operation.addHiveDBImportColumns(merge_operation=True)
                     import_operation.updatePKonTargetTable()
                     import_operation.updateFKonTargetTable()
 
@@ -2234,21 +2234,21 @@ def main(argv):
                         change_data_tracking_initial_load = False
 
                     etl_operation.mergeHiveTables(
-                        sourceDB=import_operation.import_config.Hive_Import_DB,
-                        sourceTable=import_table_or_view,
-                        targetDB=import_operation.import_config.Hive_DB,
-                        targetTable=import_operation.import_config.Hive_Table,
-                        createHistoryAudit=False,
-                        sourceIsIncremental=True,
-                        sourceIsImportTable=True,
-                        oracleFlashbackSource=True,
-                        softDelete=None,
-                        mergeTime=import_operation.import_config.sqoop_last_execution_timestamp,
-                        datalakeSource=import_operation.import_config.datalake_source,
-                        PKColumns=import_operation.import_config.getPKcolumns(
-                            PKforMerge=True
+                        source_db=import_operation.import_config.Hive_Import_DB,
+                        source_table=import_table_or_view,
+                        target_db=import_operation.import_config.Hive_DB,
+                        target_table=import_operation.import_config.Hive_Table,
+                        create_history_audit=False,
+                        source_is_incremental=True,
+                        source_is_import_table=True,
+                        oracle_flashback_source=True,
+                        soft_delete=None,
+                        merge_time=import_operation.import_config.sqoop_last_execution_timestamp,
+                        datalake_source=import_operation.import_config.datalake_source,
+                        pk_columns=import_operation.import_config.getPKcolumns(
+                            pk_for_merge=True
                         ),
-                        ChangeDataTrackingInitialLoad=change_data_tracking_initial_load,
+                        change_data_tracking_initial_load=change_data_tracking_initial_load,
                     )
 
                 if import_operation.runStage(3407) == True:
@@ -2458,7 +2458,7 @@ def main(argv):
                         import_operation.dropTargetTable()
                     import_operation.createTargetTable()
                     import_operation.updateTargetTable()
-                    import_operation.addHiveDBImportColumns(mergeOperation=False)
+                    import_operation.addHiveDBImportColumns(merge_operation=False)
                     import_operation.updatePKonTargetTable()
                     import_operation.updateFKonTargetTable()
 
@@ -2601,7 +2601,7 @@ def main(argv):
                     import_operation.createTargetTable()
                     import_operation.convertHiveTableToACID()
                     import_operation.updateTargetTable()
-                    import_operation.addHiveDBImportColumns(mergeOperation=True)
+                    import_operation.addHiveDBImportColumns(merge_operation=True)
                     import_operation.updatePKonTargetTable()
                     import_operation.updateFKonTargetTable()
 
@@ -2632,24 +2632,24 @@ def main(argv):
                         change_data_tracking_initial_load = False
 
                     etl_operation.mergeHiveTables(
-                        sourceDB=import_operation.import_config.Hive_Import_DB,
-                        sourceTable=import_table_or_view,
-                        targetDB=import_operation.import_config.Hive_DB,
-                        targetTable=import_operation.import_config.Hive_Table,
-                        historyDB=import_operation.import_config.Hive_History_DB,
-                        historyTable=import_operation.import_config.Hive_History_Table,
-                        createHistoryAudit=True,
-                        sourceIsIncremental=True,
-                        sourceIsImportTable=True,
-                        oracleFlashbackSource=True,
-                        softDelete=None,
-                        mergeTime=import_operation.import_config.sqoop_last_execution_timestamp,
-                        datalakeSource=import_operation.import_config.datalake_source,
-                        PKColumns=import_operation.import_config.getPKcolumns(
-                            PKforMerge=True
+                        source_db=import_operation.import_config.Hive_Import_DB,
+                        source_table=import_table_or_view,
+                        target_db=import_operation.import_config.Hive_DB,
+                        target_table=import_operation.import_config.Hive_Table,
+                        history_db=import_operation.import_config.Hive_History_DB,
+                        history_table=import_operation.import_config.Hive_History_Table,
+                        create_history_audit=True,
+                        source_is_incremental=True,
+                        source_is_import_table=True,
+                        oracle_flashback_source=True,
+                        soft_delete=None,
+                        merge_time=import_operation.import_config.sqoop_last_execution_timestamp,
+                        datalake_source=import_operation.import_config.datalake_source,
+                        pk_columns=import_operation.import_config.getPKcolumns(
+                            pk_for_merge=True
                         ),
-                        ChangeDataTrackingInitialLoad=change_data_tracking_initial_load,
-                        oracleFlashbackImportTable=import_operation.import_config.Hive_Import_Table,
+                        change_data_tracking_initial_load=change_data_tracking_initial_load,
+                        oracle_flashback_import_table=import_operation.import_config.Hive_Import_Table,
                     )
 
             if (
@@ -2784,7 +2784,7 @@ def main(argv):
                     import_operation.createTargetTable()
                     import_operation.convertHiveTableToACID()
                     import_operation.updateTargetTable()
-                    import_operation.addHiveDBImportColumns(mergeOperation=True)
+                    import_operation.addHiveDBImportColumns(merge_operation=True)
                     import_operation.updatePKonTargetTable()
                     import_operation.updateFKonTargetTable()
 
@@ -2810,21 +2810,21 @@ def main(argv):
                         source_is_incremental = True
 
                     etl_operation.mergeHiveTables(
-                        sourceDB=import_operation.import_config.Hive_Import_DB,
-                        sourceTable=import_table_or_view,
-                        targetDB=import_operation.import_config.Hive_DB,
-                        targetTable=import_operation.import_config.Hive_Table,
-                        createHistoryAudit=False,
-                        sourceIsIncremental=source_is_incremental,
-                        sourceIsImportTable=True,
-                        mssqlChangeTrackingSource=True,
-                        softDelete=False,
-                        mergeTime=import_operation.import_config.sqoop_last_execution_timestamp,
-                        datalakeSource=import_operation.import_config.datalake_source,
-                        PKColumns=import_operation.import_config.getPKcolumns(
-                            PKforMerge=True
+                        source_db=import_operation.import_config.Hive_Import_DB,
+                        source_table=import_table_or_view,
+                        target_db=import_operation.import_config.Hive_DB,
+                        target_table=import_operation.import_config.Hive_Table,
+                        create_history_audit=False,
+                        source_is_incremental=source_is_incremental,
+                        source_is_import_table=True,
+                        mssql_change_tracking_source=True,
+                        soft_delete=False,
+                        merge_time=import_operation.import_config.sqoop_last_execution_timestamp,
+                        datalake_source=import_operation.import_config.datalake_source,
+                        pk_columns=import_operation.import_config.getPKcolumns(
+                            pk_for_merge=True
                         ),
-                        ChangeDataTrackingInitialLoad=change_data_tracking_initial_load,
+                        change_data_tracking_initial_load=change_data_tracking_initial_load,
                     )
 
                 if import_operation.runStage(3608) == True:
@@ -2962,7 +2962,7 @@ def main(argv):
                     import_operation.createTargetTable()
                     import_operation.convertHiveTableToACID()
                     import_operation.updateTargetTable()
-                    import_operation.addHiveDBImportColumns(mergeOperation=True)
+                    import_operation.addHiveDBImportColumns(merge_operation=True)
                     import_operation.updatePKonTargetTable()
                     import_operation.updateFKonTargetTable()
 
@@ -3001,26 +3001,26 @@ def main(argv):
                         source_is_incremental = True
 
                     etl_operation.mergeHiveTables(
-                        sourceDB=import_operation.import_config.Hive_Import_DB,
-                        sourceTable=import_table_or_view,
-                        targetDB=import_operation.import_config.Hive_DB,
-                        targetTable=import_operation.import_config.Hive_Table,
-                        historyDB=import_operation.import_config.Hive_History_DB,
-                        historyTable=import_operation.import_config.Hive_History_Table,
-                        targetDeleteDB=import_operation.import_config.Hive_Delete_DB,
-                        targetDeleteTable=import_operation.import_config.Hive_Delete_Table,
-                        createHistoryAudit=True,
-                        sourceIsIncremental=source_is_incremental,
-                        sourceIsImportTable=True,
-                        mssqlChangeTrackingSource=True,
-                        softDelete=False,
-                        mergeTime=import_operation.import_config.sqoop_last_execution_timestamp,
-                        datalakeSource=import_operation.import_config.datalake_source,
-                        PKColumns=import_operation.import_config.getPKcolumns(
-                            PKforMerge=True
+                        source_db=import_operation.import_config.Hive_Import_DB,
+                        source_table=import_table_or_view,
+                        target_db=import_operation.import_config.Hive_DB,
+                        target_table=import_operation.import_config.Hive_Table,
+                        history_db=import_operation.import_config.Hive_History_DB,
+                        history_table=import_operation.import_config.Hive_History_Table,
+                        target_delete_db=import_operation.import_config.Hive_Delete_DB,
+                        target_delete_table=import_operation.import_config.Hive_Delete_Table,
+                        create_history_audit=True,
+                        source_is_incremental=source_is_incremental,
+                        source_is_import_table=True,
+                        mssql_change_tracking_source=True,
+                        soft_delete=False,
+                        merge_time=import_operation.import_config.sqoop_last_execution_timestamp,
+                        datalake_source=import_operation.import_config.datalake_source,
+                        pk_columns=import_operation.import_config.getPKcolumns(
+                            pk_for_merge=True
                         ),
-                        ChangeDataTrackingInitialLoad=change_data_tracking_initial_load,
-                        mssqlChangeTrackingImportTable=import_operation.import_config.Hive_Import_Table,
+                        change_data_tracking_initial_load=change_data_tracking_initial_load,
+                        mssql_change_tracking_import_table=import_operation.import_config.Hive_Import_Table,
                     )
 
                 if import_operation.runStage(3659) == True:

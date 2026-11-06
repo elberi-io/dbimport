@@ -163,7 +163,7 @@ class config(metaclass=Singleton):
 
         try:
             self.sparkMajorVersion = int(
-                configuration.get("Spark", "spark_major_version", exitOnError=False)
+                configuration.get("Spark", "spark_major_version", exit_on_error=False)
             )
         except invalidConfiguration:
             logging.warning(
@@ -182,14 +182,14 @@ class config(metaclass=Singleton):
 
         try:
             self.sparkLogLevel = configuration.get(
-                "Spark", "spark_log_level", exitOnError=False
+                "Spark", "spark_log_level", exit_on_error=False
             )
         except invalidConfiguration:
             pass
 
         try:
             self.sparkPackages = configuration.get(
-                "Spark", "packages", exitOnError=False
+                "Spark", "packages", exit_on_error=False
             )
         except invalidConfiguration:
             logging.warning(
@@ -208,7 +208,7 @@ class config(metaclass=Singleton):
         try:
             if (
                 configuration.get(
-                    "Spark", "s3_access_to_ozone", exitOnError=False
+                    "Spark", "s3_access_to_ozone", exit_on_error=False
                 ).lower()
                 == "true"
             ):
@@ -227,7 +227,7 @@ class config(metaclass=Singleton):
 
         self.awsRegion = None
         try:
-            self.awsRegion = configuration.get("AWS", "region", exitOnError=False)
+            self.awsRegion = configuration.get("AWS", "region", exit_on_error=False)
         except invalidConfiguration:
             pass
 
@@ -297,7 +297,7 @@ class config(metaclass=Singleton):
 
             try:
                 aws_secret_name = configuration.get(
-                    "Database", "aws_secret_name", exitOnError=False
+                    "Database", "aws_secret_name", exit_on_error=False
                 )
             except invalidConfiguration:
                 raise invalidConfiguration(
@@ -375,17 +375,17 @@ class config(metaclass=Singleton):
             else:
                 self.mysql_cursor = self.mysql_conn.cursor(buffered=True)
 
-    def getAtlasJdbcConnectionData(self, dbAlias=None):
+    def getAtlasJdbcConnectionData(self, db_alias=None):
         """Reads the extended information in jdbc_connections needed by Atlas (contact_info, owner and more)"""
         logging.debug("Executing common_config.getAtlasJdbcConnectionData()")
 
-        if dbAlias == None:
-            dbAlias = self.dbAlias
+        if db_alias == None:
+            db_alias = self.dbAlias
 
         # Fetch data from jdbc_connection table
         query = "select contact_info, description, owner, atlas_discovery, atlas_include_filter, atlas_exclude_filter, atlas_last_discovery from jdbc_connections where dbalias = %s "
         logging.debug("Executing the following SQL: %s" % (query))
-        self.mysql_cursor.execute(query, (dbAlias,))
+        self.mysql_cursor.execute(query, (db_alias,))
 
         if self.mysql_cursor.rowcount != 1:
             raise invalidConfiguration(
@@ -423,7 +423,7 @@ class config(metaclass=Singleton):
 
         self.configDBSession = None
 
-    def connectSQLAlchemy(self, exitIfFailure=True, logger=""):
+    def connectSQLAlchemy(self, exit_if_failure=True, logger=""):
         log = logging.getLogger(logger)
         """ Connects to the configuration database with SQLAlchemy """
 
@@ -450,7 +450,7 @@ class config(metaclass=Singleton):
 
         except sa.exc.OperationalError as err:
             logging.error("%s" % err)
-            if exitIfFailure == True:
+            if exit_if_failure == True:
                 self.remove_temporary_files()
                 sys.exit(1)
             else:
@@ -460,7 +460,7 @@ class config(metaclass=Singleton):
         except:
             print("Unexpected error: ")
             print(sys.exc_info())
-            if exitIfFailure == True:
+            if exit_if_failure == True:
                 self.remove_temporary_files()
                 sys.exit(1)
             else:
@@ -732,11 +732,11 @@ class config(metaclass=Singleton):
 
         logging.debug("Executing common_config.checkKerberosTicket() - Finished")
 
-    def encryptString(self, strToEncrypt):
+    def encryptString(self, str_to_encrypt):
         self.crypto.setPrivateKeyFile(configuration.get("Credentials", "private_key"))
         self.crypto.setPublicKeyFile(configuration.get("Credentials", "public_key"))
 
-        encrypted_str = self.crypto.encrypt(strToEncrypt)
+        encrypted_str = self.crypto.encrypt(str_to_encrypt)
         return encrypted_str
 
     def encryptUserPassword(self, connection_alias, username, password):
@@ -780,16 +780,16 @@ class config(metaclass=Singleton):
             self.mysql_cursor.execute(query, (encrypted_str, connection_alias))
             self.mysql_conn.commit()
 
-    def getJDBCDriverConfig(self, databaseType, version):
+    def getJDBCDriverConfig(self, database_type, version):
         logging.debug("Executing common_config.getJDBCDriverConfig()")
         query = "select driver, classpath from jdbc_connections_drivers where database_type = %s and version = %s"
         logging.debug("Executing the following SQL: %s" % (query))
-        self.mysql_cursor.execute(query, (databaseType, version))
+        self.mysql_cursor.execute(query, (database_type, version))
 
         if self.mysql_cursor.rowcount != 1:
             raise invalidConfiguration(
                 "Error: Cant find JDBC driver with database_type as '%s' and version as '%s'"
-                % (databaseType, version)
+                % (database_type, version)
             )
 
         row = self.mysql_cursor.fetchone()
@@ -1627,12 +1627,14 @@ class config(metaclass=Singleton):
 
         # Add Impala drivers to CP if configured in config file
         try:
-            self.impalaDriver = configuration.get("Impala", "driver", exitOnError=False)
+            self.impalaDriver = configuration.get(
+                "Impala", "driver", exit_on_error=False
+            )
             self.impalaClasspath = configuration.get(
-                "Impala", "class", exitOnError=False
+                "Impala", "class", exit_on_error=False
             )
             self.impalaAddress = configuration.get(
-                "Impala", "address", exitOnError=False
+                "Impala", "address", exit_on_error=False
             )
             if (
                 self.impalaDriver != None
@@ -1718,7 +1720,7 @@ class config(metaclass=Singleton):
 
         self.source_columns_df = self.sourceSchema.readTableColumns(
             self.JDBCCursor,
-            serverType=self.jdbc_servertype,
+            server_type=self.jdbc_servertype,
             database=self.jdbc_database,
             schema=self.source_schema,
             table=self.source_table,
@@ -1726,7 +1728,7 @@ class config(metaclass=Singleton):
 
         self.source_keys_df = self.sourceSchema.readTableKeys(
             self.JDBCCursor,
-            serverType=self.jdbc_servertype,
+            server_type=self.jdbc_servertype,
             database=self.jdbc_database,
             schema=self.source_schema,
             table=self.source_table,
@@ -1734,7 +1736,7 @@ class config(metaclass=Singleton):
 
         self.source_index_df = self.sourceSchema.readTableIndex(
             self.JDBCCursor,
-            serverType=self.jdbc_servertype,
+            server_type=self.jdbc_servertype,
             database=self.jdbc_database,
             schema=self.source_schema,
             table=self.source_table,
@@ -1825,7 +1827,7 @@ class config(metaclass=Singleton):
 
         if self.db_mongodb == True:
             # This is a MongoDB connection. Lets rediret to connectToMongo instead
-            return self.connectToMongo(exitIfFailure=exitIfFailure, logger=logger)
+            return self.connectToMongo(exit_if_failure=exitIfFailure, logger=logger)
 
         if allJarFiles == True:
             query = "select classpath from jdbc_connections_drivers"
@@ -2203,13 +2205,13 @@ class config(metaclass=Singleton):
         logging.debug("Executing common_config.dropJDBCTable() - Finished")
 
     def logImportFailure(
-        self, errorText, severity, importType=None, hiveDB=None, hiveTable=None
+        self, error_text, severity, import_type=None, hive_db=None, hive_table=None
     ):
 
-        if hiveDB == None:
-            hiveDB = self.Hive_DB
-        if hiveTable == None:
-            hiveTable = self.Hive_Table
+        if hive_db == None:
+            hive_db = self.Hive_DB
+        if hive_table == None:
+            hive_table = self.Hive_Table
 
         query = "insert into import_failure_log "
         query += (
@@ -2222,12 +2224,12 @@ class config(metaclass=Singleton):
         self.mysql_cursor.execute(
             query,
             (
-                hiveDB,
-                hiveTable,
+                hive_db,
+                hive_table,
                 datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f"),
                 severity,
-                importType,
-                errorText,
+                import_type,
+                error_text,
             ),
         )
         self.mysql_conn.commit()
@@ -2353,9 +2355,9 @@ class config(metaclass=Singleton):
     def logJDBCColumnAdd(
         self,
         column,
-        columnType=None,
+        column_type=None,
         description=None,
-        dbAlias=None,
+        db_alias=None,
         database=None,
         schema=None,
         table=None,
@@ -2363,7 +2365,7 @@ class config(metaclass=Singleton):
         if description == None:
             description = "Column '%s' added to table with type '%s'" % (
                 column,
-                columnType,
+                column_type,
             )
 
         query = "insert into jdbc_table_change_history "
@@ -2375,13 +2377,13 @@ class config(metaclass=Singleton):
         self.mysql_cursor.execute(
             query,
             (
-                dbAlias,
+                db_alias,
                 database,
                 schema,
                 table,
                 column,
                 datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f"),
-                columnType,
+                column_type,
                 description,
             ),
         )
@@ -2390,23 +2392,23 @@ class config(metaclass=Singleton):
     def logJDBCColumnTypeChange(
         self,
         column,
-        columnType,
-        previous_columnType=None,
+        column_type,
+        previous_column_type=None,
         description=None,
-        dbAlias=None,
+        db_alias=None,
         database=None,
         schema=None,
         table=None,
     ):
 
         if description == None:
-            if previous_columnType == None:
-                description = "Column '%s' type changed to %s" % (column, columnType)
+            if previous_column_type == None:
+                description = "Column '%s' type changed to %s" % (column, column_type)
             else:
                 description = "Column '%s' type changed from %s to %s" % (
                     column,
-                    previous_columnType,
-                    columnType,
+                    previous_column_type,
+                    column_type,
                 )
 
         query = "insert into jdbc_table_change_history "
@@ -2418,14 +2420,14 @@ class config(metaclass=Singleton):
         self.mysql_cursor.execute(
             query,
             (
-                dbAlias,
+                db_alias,
                 database,
                 schema,
                 table,
                 column,
                 datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f"),
-                previous_columnType,
-                columnType,
+                previous_column_type,
+                column_type,
                 description,
             ),
         )
@@ -2433,10 +2435,10 @@ class config(metaclass=Singleton):
 
     def logJDBCColumnRename(
         self,
-        columnName,
-        previous_columnName,
+        column_name,
+        previous_column_name,
         description=None,
-        dbAlias=None,
+        db_alias=None,
         database=None,
         schema=None,
         table=None,
@@ -2444,8 +2446,8 @@ class config(metaclass=Singleton):
 
         if description == None:
             description = "Column '%s' renamed to %s" % (
-                previous_columnName,
-                columnName,
+                previous_column_name,
+                column_name,
             )
 
         query = "insert into jdbc_table_change_history "
@@ -2457,14 +2459,14 @@ class config(metaclass=Singleton):
         self.mysql_cursor.execute(
             query,
             (
-                dbAlias,
+                db_alias,
                 database,
                 schema,
                 table,
-                columnName,
+                column_name,
                 datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f"),
-                previous_columnName,
-                columnName,
+                previous_column_name,
+                column_name,
                 description,
             ),
         )
@@ -2532,7 +2534,7 @@ class config(metaclass=Singleton):
         logging.debug("Executing common_config.getJDBCsqlFromTable() - Finished")
         return from_table
 
-    def getConfigValueColumn(self, key, ignoreErrorOutput=False):
+    def getConfigValueColumn(self, key, ignore_error_output=False):
         """Return the type of the column that have the value for the specified key"""
 
         value_column = ""
@@ -2623,7 +2625,7 @@ class config(metaclass=Singleton):
         ):
             value_column = "valueStr"
         else:
-            if ignoreErrorOutput == False:
+            if ignore_error_output == False:
                 # This is needed from the REST interface, as it's parsing everything in the database. And entries may exists that isnt a valid config anymore
                 logging.error("There is no configuration with the name '%s'" % (key))
                 self.remove_temporary_files()
@@ -2690,7 +2692,7 @@ class config(metaclass=Singleton):
         logging.debug("Executing common_config.getConfigValue() - Finished")
         return return_value
 
-    def connectToMongo(self, exitIfFailure=True, logger=""):
+    def connectToMongo(self, exit_if_failure=True, logger=""):
         log = logging.getLogger(logger)
         log.debug("Executing common_config.connectToMongo()")
 
@@ -2714,7 +2716,7 @@ class config(metaclass=Singleton):
                 "Timeout Error when connecting to Mongo at %s.%s"
                 % (self.jdbc_hostname, self.jdbc_port)
             )
-            if exitIfFailure == True:
+            if exit_if_failure == True:
                 self.remove_temporary_files()
                 sys.exit(1)
             else:
@@ -2733,7 +2735,7 @@ class config(metaclass=Singleton):
 
         logging.debug("Executing common_config.disconnectFromMongo() - Finished")
 
-    def getMongoCollections(self, collectionFilter=None):
+    def getMongoCollections(self, collection_filter=None):
         logging.debug("Executing common_config.getMongoTables()")
 
         # Connect to MongoDB and get a list of all collections
@@ -2741,13 +2743,13 @@ class config(metaclass=Singleton):
         mongo_collections = self.mongoDB.list_collection_names()
         self.disconnectFromMongo()
 
-        if collectionFilter == None:
-            collectionFilter = ""
-        collectionFilter = collectionFilter.replace("*", ".*")
+        if collection_filter == None:
+            collection_filter = ""
+        collection_filter = collection_filter.replace("*", ".*")
 
         collection_list = []
         for collection in mongo_collections:
-            if re.search(collectionFilter, collection):
+            if re.search(collection_filter, collection):
                 collection_dict = {"schema": "-"}
                 collection_dict["table"] = collection
                 collection_list.append(collection_dict)
@@ -2772,19 +2774,19 @@ class config(metaclass=Singleton):
         logging.debug("Executing common_config.getJDBCtablesAndViews() - Finished")
         return result_df
 
-    def getAtlasDiscoverConfigObject(self, dbAlias=None, logger=""):
+    def getAtlasDiscoverConfigObject(self, db_alias=None, logger=""):
         """Discover all RDBMS objects on the 'dbAlias' and populate Atlas with them"""
         log = logging.getLogger(logger)
         log.debug("Executing common_config.getAtlasDiscoverConfigObject()")
 
-        if dbAlias == None:
-            dbAlias = self.dbAlias
+        if db_alias == None:
+            db_alias = self.dbAlias
 
-        self.lookupConnectionAlias(dbAlias)
-        jdbc_connection_data = self.getAtlasJdbcConnectionData(dbAlias)
+        self.lookupConnectionAlias(db_alias)
+        jdbc_connection_data = self.getAtlasJdbcConnectionData(db_alias)
 
         config_object = {}
-        config_object["dbAlias"] = dbAlias
+        config_object["dbAlias"] = db_alias
         config_object["contactInfo"] = jdbc_connection_data.get("contact_info")
         config_object["description"] = jdbc_connection_data.get("description")
         config_object["owner"] = jdbc_connection_data.get("owner")
@@ -2888,18 +2890,18 @@ class config(metaclass=Singleton):
 
     def updateYarnStatistics(
         self,
-        yarnApplicationID,
-        operationTool,
-        yarnContainersTotal=None,
-        yarnContainersFailed=None,
-        yarnContainersKilled=None,
+        yarn_application_id,
+        operation_tool,
+        yarn_containers_total=None,
+        yarn_containers_failed=None,
+        yarn_containers_killed=None,
     ):
         """insert or update data to yarn_statistics"""
         logging.debug("Executing common_config.updateYarnStatistics()")
 
         query = None
         start_stop_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        if yarnContainersTotal == None:
+        if yarn_containers_total == None:
             # If it's None, it means that it was called when query was started. At this stage, we need to insert the data
 
             if self.operationType == "import":
@@ -2914,9 +2916,9 @@ class config(metaclass=Singleton):
                 self.mysql_cursor.execute(
                     query,
                     (
-                        yarnApplicationID,
+                        yarn_application_id,
                         self.operationTimestamp,
-                        operationTool,
+                        operation_tool,
                         self.Hive_DB,
                         self.Hive_Table,
                         start_stop_date,
@@ -2936,9 +2938,9 @@ class config(metaclass=Singleton):
                 self.mysql_cursor.execute(
                     query,
                     (
-                        yarnApplicationID,
+                        yarn_application_id,
                         self.operationTimestamp,
-                        operationTool,
+                        operation_tool,
                         self.dbAlias,
                         self.targetSchema,
                         self.targetTable,
@@ -2961,10 +2963,10 @@ class config(metaclass=Singleton):
                 query,
                 (
                     start_stop_date,
-                    yarnContainersTotal,
-                    yarnContainersFailed,
-                    yarnContainersKilled,
-                    yarnApplicationID,
+                    yarn_containers_total,
+                    yarn_containers_failed,
+                    yarn_containers_killed,
+                    yarn_application_id,
                     self.yarnApplicationStart,
                 ),
             )

@@ -36,8 +36,8 @@ class crypto:
         self.privateKey = None
         self.publicKey = None
 
-    def setPrivateKeyFile(self, privateKeyFile):
-        self.privateKeyFile = privateKeyFile
+    def setPrivateKeyFile(self, private_key_file):
+        self.privateKeyFile = private_key_file
 
         if self.privateKeyFile.startswith("/") == False:
             self.privateKeyFile = (
@@ -53,8 +53,8 @@ class crypto:
         self.privateKeyString = open(self.privateKeyFile).read()
         self.privateKey = RSA.importKey(self.privateKeyString)
 
-    def setPublicKeyFile(self, publicKeyFile):
-        self.publicKeyFile = publicKeyFile
+    def setPublicKeyFile(self, public_key_file):
+        self.publicKeyFile = public_key_file
 
         if self.publicKeyFile.startswith("/") == False:
             self.publicKeyFile = os.environ["DBIMPORT_HOME"] + "/" + self.publicKeyFile
@@ -68,15 +68,15 @@ class crypto:
         self.publicKeyString = open(self.publicKeyFile).read()
         self.publicKey = RSA.importKey(self.publicKeyString)
 
-    def decrypt(self, strToDecrypt):
+    def decrypt(self, str_to_decrypt):
 
-        if strToDecrypt == None:
+        if str_to_decrypt == None:
             return None
 
         sentinel = get_random_bytes(16)
 
         cipher = PKCS1_v1_5.new(self.privateKey)
-        str_decrypted = cipher.decrypt(base64.b64decode(strToDecrypt), sentinel)
+        str_decrypted = cipher.decrypt(base64.b64decode(str_to_decrypt), sentinel)
         # strDecrypted = self.privateKey.decrypt(base64.b64decode(strToDecrypt))
 
         try:
@@ -94,11 +94,11 @@ class crypto:
                 "Unable to decrypt using private/public keys. Are the keys setup correct?"
             )
 
-    def encrypt(self, strToEncrypt):
+    def encrypt(self, str_to_encrypt):
 
         cipher = PKCS1_v1_5.new(self.publicKey)
 
-        str_encrypted = cipher.encrypt(strToEncrypt.encode())
+        str_encrypted = cipher.encrypt(str_to_encrypt.encode())
         str_encrypted = base64.b64encode(str_encrypted).decode()
 
         return str_encrypted

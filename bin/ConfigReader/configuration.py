@@ -22,11 +22,11 @@ import sys
 from common.Exceptions import invalidConfiguration
 
 
-def get(section, key, exitOnError=True):
+def get(section, key, exit_on_error=True):
     try:
         return config[section][key]
     except KeyError:
-        if exitOnError == True:
+        if exit_on_error == True:
             print(
                 "[%s] '%s' Key was not found in configuration file. Please check settings"
                 % (section, key)

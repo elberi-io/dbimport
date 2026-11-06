@@ -116,45 +116,45 @@ class operation(metaclass=Singleton):
 
     def setTableAndColumnNames(
         self,
-        Hive_Import_DB,
-        Hive_Import_Table,
-        Hive_Import_View,
-        Hive_History_DB,
-        Hive_History_Table,
-        Hive_HistoryTemp_DB,
-        Hive_HistoryTemp_Table,
-        Hive_Import_PKonly_DB,
-        Hive_Import_PKonly_Table,
-        Hive_Delete_DB,
-        Hive_Delete_Table,
-        Hive_ColumnName_Import,
-        Hive_ColumnName_Insert,
-        Hive_ColumnName_Update,
-        Hive_ColumnName_Delete,
-        Hive_ColumnName_IUD,
-        Hive_ColumnName_HistoryTimestamp,
-        Hive_ColumnName_Source,
+        hive_import_db,
+        hive_import_table,
+        hive_import_view,
+        hive_history_db,
+        hive_history_table,
+        hive_history_temp_db,
+        hive_history_temp_table,
+        hive_import_pk_only_db,
+        hive_import_pk_only_table,
+        hive_delete_db,
+        hive_delete_table,
+        hive_column_name_import,
+        hive_column_name_insert,
+        hive_column_name_update,
+        hive_column_name_delete,
+        hive_column_name_iud,
+        hive_column_name_history_timestamp,
+        hive_column_name_source,
     ):
         """Sets the name of the databases, tables and columns"""
 
-        self.Hive_Import_DB = Hive_Import_DB
-        self.Hive_Import_Table = Hive_Import_Table
-        self.Hive_Import_View = Hive_Import_View
-        self.Hive_History_DB = Hive_History_DB
-        self.Hive_History_Table = Hive_History_Table
-        self.Hive_HistoryTemp_DB = Hive_HistoryTemp_DB
-        self.Hive_HistoryTemp_Table = Hive_HistoryTemp_Table
-        self.Hive_Import_PKonly_DB = Hive_Import_PKonly_DB
-        self.Hive_Import_PKonly_Table = Hive_Import_PKonly_Table
-        self.Hive_Delete_DB = Hive_Delete_DB
-        self.Hive_Delete_Table = Hive_Delete_Table
-        self.Hive_ColumnName_Import = Hive_ColumnName_Import
-        self.Hive_ColumnName_Insert = Hive_ColumnName_Insert
-        self.Hive_ColumnName_Update = Hive_ColumnName_Update
-        self.Hive_ColumnName_Delete = Hive_ColumnName_Delete
-        self.Hive_ColumnName_IUD = Hive_ColumnName_IUD
-        self.Hive_ColumnName_HistoryTimestamp = Hive_ColumnName_HistoryTimestamp
-        self.Hive_ColumnName_Source = Hive_ColumnName_Source
+        self.Hive_Import_DB = hive_import_db
+        self.Hive_Import_Table = hive_import_table
+        self.Hive_Import_View = hive_import_view
+        self.Hive_History_DB = hive_history_db
+        self.Hive_History_Table = hive_history_table
+        self.Hive_HistoryTemp_DB = hive_history_temp_db
+        self.Hive_HistoryTemp_Table = hive_history_temp_table
+        self.Hive_Import_PKonly_DB = hive_import_pk_only_db
+        self.Hive_Import_PKonly_Table = hive_import_pk_only_table
+        self.Hive_Delete_DB = hive_delete_db
+        self.Hive_Delete_Table = hive_delete_table
+        self.Hive_ColumnName_Import = hive_column_name_import
+        self.Hive_ColumnName_Insert = hive_column_name_insert
+        self.Hive_ColumnName_Update = hive_column_name_update
+        self.Hive_ColumnName_Delete = hive_column_name_delete
+        self.Hive_ColumnName_IUD = hive_column_name_iud
+        self.Hive_ColumnName_HistoryTimestamp = hive_column_name_history_timestamp
+        self.Hive_ColumnName_Source = hive_column_name_source
 
     def checkHiveMetaStore(self):
         logging.debug("Executing common_operations.checkHiveMetaStore()")
@@ -620,11 +620,11 @@ class operation(metaclass=Singleton):
         logging.debug("Executing common_operations.executeHiveQuery() - Finished")
         return result_df
 
-    def executeBeelineScript(self, hiveScriptFile, useDB=None):
+    def executeBeelineScript(self, hive_script_file, use_db=None):
         logging.debug("Executing common_operations.executeBeelineScript()")
 
-        if useDB == None:
-            useDB = ""
+        if use_db == None:
+            use_db = ""
 
         # Connect to Hive to get a working server in the list of Hive servers
         # This sets the self.hive_hostname and self.hive_port so that beeline can connect to a working Hive server
@@ -635,7 +635,7 @@ class operation(metaclass=Singleton):
             beeline_connect_str = "jdbc:hive2://%s:%s/%s;principal=%s/_HOST@%s" % (
                 self.hive_hostname,
                 self.hive_port,
-                useDB,
+                use_db,
                 self.hive_kerberos_service_name,
                 self.hive_kerberos_realm,
             )
@@ -645,7 +645,7 @@ class operation(metaclass=Singleton):
                 % (
                     self.hive_hostname,
                     self.hive_port,
-                    useDB,
+                    use_db,
                     self.hive_kerberos_service_name,
                     self.hive_kerberos_realm,
                 )
@@ -659,7 +659,7 @@ class operation(metaclass=Singleton):
             "-u",
             beeline_connect_str,
             "-f",
-            hiveScriptFile,
+            hive_script_file,
         ]
 
         # Start Beeline
@@ -703,28 +703,28 @@ class operation(metaclass=Singleton):
         logging.debug("Executing common_operations.getHiveTableRowCount() - Finished")
         return row_count
 
-    def dropHiveTable(self, hiveDB, hiveTable):
+    def dropHiveTable(self, hive_db, hive_table):
         logging.debug("Executing common_operations.dropHiveTable()")
-        logging.info("Dropping table %s.%s" % (hiveDB, hiveTable))
+        logging.info("Dropping table %s.%s" % (hive_db, hive_table))
 
         self.connectToHive(forceSkipTest=True, quiet=True)
-        self.executeHiveQuery("drop table if exists `%s`.`%s`" % (hiveDB, hiveTable))
+        self.executeHiveQuery("drop table if exists `%s`.`%s`" % (hive_db, hive_table))
 
         logging.debug("Executing common_operations.dropHiveTable() - Finished")
 
-    def truncateHiveTable(self, hiveDB, hiveTable):
+    def truncateHiveTable(self, hive_db, hive_table):
         """Truncates a Hive table"""
         logging.debug("Executing common_operations.truncateHiveTable()")
 
-        self.executeHiveQuery("truncate table `%s`.`%s`" % (hiveDB, hiveTable))
+        self.executeHiveQuery("truncate table `%s`.`%s`" % (hive_db, hive_table))
         logging.debug("Executing common_operations.truncateHiveTable() - Finished")
 
-    def updateHiveTableStatistics(self, hiveDB, hiveTable):
+    def updateHiveTableStatistics(self, hive_db, hive_table):
         """Compute Hive statistics on a Hive table"""
         logging.debug("Executing common_operations.updateHiveTableStatistics()")
 
         self.executeHiveQuery(
-            "analyze table `%s`.`%s` compute statistics " % (hiveDB, hiveTable)
+            "analyze table `%s`.`%s` compute statistics " % (hive_db, hive_table)
         )
         logging.debug(
             "Executing common_operations.updateHiveTableStatistics() - Finished"
@@ -895,36 +895,36 @@ class operation(metaclass=Singleton):
 
     def getHiveColumnNameDiff(
         self,
-        sourceDB,
-        sourceTable,
-        targetDB,
-        targetTable,
-        importTool,
-        sourceIsImportTable=False,
+        source_db,
+        source_table,
+        target_db,
+        target_table,
+        import_tool,
+        source_is_import_table=False,
     ):
         """Returns a dataframe that includes the diff between the source and target table. If sourceIsImportTable=True, then there is additional columns that contains the correct name for the import table columns"""
         logging.debug("Executing common_operations.getHiveColumnNameDiff()")
 
         source_columns = self.getColumns(
-            hiveDB=sourceDB,
-            hiveTable=sourceTable,
+            hiveDB=source_db,
+            hiveTable=source_table,
             includeType=False,
             includeComment=False,
         )
         target_columns = self.getColumns(
-            hiveDB=targetDB,
-            hiveTable=targetTable,
+            hiveDB=target_db,
+            hiveTable=target_table,
             includeType=False,
             includeComment=False,
         )
 
-        if sourceIsImportTable == True:
+        if source_is_import_table == True:
             # Logic here is to create a new column in both DF and call them sourceName vs targetName. These are the original names. Then we replace the values in targetColumn DF column col
             # with the name that the column should be called in the source system. This is needed to handle characters that is not supported in Parquet files, like SPACE
             source_columns["sourceName"] = source_columns["name"]
             target_columns["targetName"] = target_columns["name"]
 
-            if importTool != "spark":
+            if import_tool != "spark":
                 # If you change any of the name replace operations, you also need to change the same data in functions
                 # import_operations.updateColumnsForImportTable() and import_definitions.saveColumnData()
                 target_columns["name"] = target_columns["name"].str.replace(

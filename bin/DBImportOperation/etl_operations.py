@@ -91,61 +91,64 @@ class operation(metaclass=Singleton):
 
     def mergeHiveTables(
         self,
-        sourceDB,
-        sourceTable,
-        targetDB,
-        targetTable,
-        historyDB=None,
-        historyTable=None,
-        targetDeleteDB=None,
-        targetDeleteTable=None,
-        createHistoryAudit=False,
-        sourceIsIncremental=False,
-        sourceIsImportTable=False,
-        softDelete=False,
-        mergeTime=datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f"),  # noqa: B008  # every caller passes it; a fallback would hide a missing value
-        datalakeSource=None,
-        PKColumns=None,
-        hiveMergeJavaHeap=None,
-        oracleFlashbackSource=False,
-        mssqlChangeTrackingSource=False,
-        oracleFlashbackImportTable=None,
-        mssqlChangeTrackingImportTable=None,
-        ChangeDataTrackingInitialLoad=False,
+        source_db,
+        source_table,
+        target_db,
+        target_table,
+        history_db=None,
+        history_table=None,
+        target_delete_db=None,
+        target_delete_table=None,
+        create_history_audit=False,
+        source_is_incremental=False,
+        source_is_import_table=False,
+        soft_delete=False,
+        merge_time=datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f"),  # noqa: B008  # every caller passes it; a fallback would hide a missing value
+        datalake_source=None,
+        pk_columns=None,
+        hive_merge_java_heap=None,
+        oracle_flashback_source=False,
+        mssql_change_tracking_source=False,
+        oracle_flashback_import_table=None,
+        mssql_change_tracking_import_table=None,
+        change_data_tracking_initial_load=False,
     ):
         """Merge source table into Target table. Also populate a History Audit table if selected"""
         logging.debug("Executing etl_operations.mergeHiveTables()")
 
         target_columns = self.common_operations.getColumns(
-            hiveDB=targetDB,
-            hiveTable=targetTable,
+            hiveDB=target_db,
+            hiveTable=target_table,
             includeType=False,
             includeComment=False,
         )
         column_merge = self.common_operations.getHiveColumnNameDiff(
-            sourceDB=sourceDB,
-            sourceTable=sourceTable,
-            targetDB=targetDB,
-            targetTable=targetTable,
-            importTool=self.import_config.importTool,
-            sourceIsImportTable=True,
+            source_db=source_db,
+            source_table=source_table,
+            target_db=target_db,
+            target_table=target_table,
+            import_tool=self.import_config.importTool,
+            source_is_import_table=True,
         )
-        if PKColumns == None:
-            PKColumns = self.common_operations.getPK(
-                hiveDB=targetDB, hiveTable=targetTable, quotedColumns=False
+        if pk_columns == None:
+            pk_columns = self.common_operations.getPK(
+                hiveDB=target_db, hiveTable=target_table, quotedColumns=False
             )
 
-        source_db_and_table = "`%s`.`%s`" % (sourceDB, sourceTable)
-        target_db_and_table = "`%s`.`%s`" % (targetDB, targetTable)
-        history_db_and_table = "`%s`.`%s`" % (historyDB, historyTable)
-        target_delete_db_and_table = "`%s`.`%s`" % (targetDeleteDB, targetDeleteTable)
+        source_db_and_table = "`%s`.`%s`" % (source_db, source_table)
+        target_db_and_table = "`%s`.`%s`" % (target_db, target_table)
+        history_db_and_table = "`%s`.`%s`" % (history_db, history_table)
+        target_delete_db_and_table = "`%s`.`%s`" % (
+            target_delete_db,
+            target_delete_table,
+        )
         oracle_flashback_import_db_and_table = "`%s`.`%s`" % (
-            sourceDB,
-            oracleFlashbackImportTable,
+            source_db,
+            oracle_flashback_import_table,
         )
         mssql_change_tracking_import_db_and_table = "`%s`.`%s`" % (
-            sourceDB,
-            mssqlChangeTrackingImportTable,
+            source_db,
+            mssql_change_tracking_import_table,
         )
 
         if self.import_config.etlEngine == constant.ETL_ENGINE_SPARK:
@@ -199,15 +202,15 @@ class operation(metaclass=Singleton):
                 datalake_source_exists = True
 
         if self.import_config.etlEngine == constant.ETL_ENGINE_HIVE:
-            if hiveMergeJavaHeap != None:
-                query = "set hive.tez.container.size=%s" % (hiveMergeJavaHeap)
+            if hive_merge_java_heap != None:
+                query = "set hive.tez.container.size=%s" % (hive_merge_java_heap)
                 self.common_operations.executeHiveQuery(query)
 
         query = "merge into %s as T \n" % (target_db_and_table)
         query += "using %s as S \n" % (source_db_and_table)
         query += "on \n"
 
-        for i, target_column in enumerate(PKColumns.split(",")):
+        for i, target_column in enumerate(pk_columns.split(",")):
             try:
                 source_column = (
                     column_merge.loc[column_merge["Exist"] == "both"]
@@ -236,7 +239,7 @@ class operation(metaclass=Singleton):
         query += "\n"
 
         query += "when matched "
-        if sourceIsIncremental == False:
+        if source_is_incremental == False:
             # If the source is not incremental, it means that we need to check all the values in
             # all columns as we dont know if the row have changed or not
             query += "and (\n"
@@ -245,7 +248,7 @@ class operation(metaclass=Singleton):
                 column_merge["Exist"] == "both"
             ].iterrows():
                 found_pk_column = False
-                for column in PKColumns.split(","):
+                for column in pk_columns.split(","):
                     if row["targetName"] == column:
                         found_pk_column = True
                 if found_pk_column == False:
@@ -268,7 +271,7 @@ class operation(metaclass=Singleton):
                     )
                     query += "\n"
 
-            if softDelete == True and datalake_iud_exists == True:
+            if soft_delete == True and datalake_iud_exists == True:
                 # If a row is deleted and then inserted again with the same values in all fields, this will still trigger an update
                 # query += "   or T.datalake_iud = 'D' \n"
                 query += "   or T.%s = 'D' \n" % (
@@ -277,10 +280,10 @@ class operation(metaclass=Singleton):
 
             query += ") \n"
 
-        if oracleFlashbackSource == True:
+        if oracle_flashback_source == True:
             query += "and ( S.datalake_flashback_operation is null or S.datalake_flashback_operation != 'D' ) \n"
 
-        if mssqlChangeTrackingSource == True:
+        if mssql_change_tracking_source == True:
             query += "and ( S.datalake_mssql_changetrack_operation is null or S.datalake_mssql_changetrack_operation != 'D' ) \n"
 
         query += "then update set "
@@ -288,7 +291,7 @@ class operation(metaclass=Singleton):
         non_pk_column_found = False
         for index, row in column_merge.loc[column_merge["Exist"] == "both"].iterrows():
             found_pk_column = False
-            for column in PKColumns.split(","):
+            for column in pk_columns.split(","):
                 if row["targetName"] == column:
                     found_pk_column = True
             if found_pk_column == False:
@@ -316,33 +319,33 @@ class operation(metaclass=Singleton):
             # query += ", \n   `datalake_update` = TIMESTAMP('%s')"%(mergeTime)
             query += ", \n   `%s` = TIMESTAMP('%s')" % (
                 self.common_operations.Hive_ColumnName_Update,
-                mergeTime,
+                merge_time,
             )
 
-        if datalake_source_exists == True and datalakeSource != None:
+        if datalake_source_exists == True and datalake_source != None:
             # query += ", \n   `datalake_source` = '%s'"%(datalakeSource)
             query += ", \n   `%s` = '%s'" % (
                 self.common_operations.Hive_ColumnName_Source,
-                datalakeSource,
+                datalake_source,
             )
 
         query += " \n"
 
-        if oracleFlashbackSource == True:
+        if oracle_flashback_source == True:
             query += (
                 "when matched and S.datalake_flashback_operation = 'D' then delete \n"
             )
 
         # We should only delete rows during merge if we dont need to create the History table. Otherwise we will miss the values in all columns except PK columns
-        if mssqlChangeTrackingSource == True and createHistoryAudit == False:
+        if mssql_change_tracking_source == True and create_history_audit == False:
             query += "when matched and S.datalake_mssql_changetrack_operation = 'D' then delete \n"
 
         query += "when not matched "
 
-        if oracleFlashbackSource == True:
+        if oracle_flashback_source == True:
             query += "and ( S.datalake_flashback_operation is null or S.datalake_flashback_operation != 'D' ) \n"
 
-        if mssqlChangeTrackingSource == True:
+        if mssql_change_tracking_source == True:
             query += "and ( S.datalake_mssql_changetrack_operation is null or S.datalake_mssql_changetrack_operation != 'D' ) \n"
 
         query += "then insert ( "
@@ -379,13 +382,13 @@ class operation(metaclass=Singleton):
                 query += "   'I'"
             # elif ColumnName == "datalake_insert":
             elif column_name == self.common_operations.Hive_ColumnName_Insert:
-                query += "   TIMESTAMP('%s')" % (mergeTime)
+                query += "   TIMESTAMP('%s')" % (merge_time)
             # elif ColumnName == "datalake_update":
             elif column_name == self.common_operations.Hive_ColumnName_Update:
-                query += "   TIMESTAMP('%s')" % (mergeTime)
+                query += "   TIMESTAMP('%s')" % (merge_time)
             # elif ColumnName == "datalake_source":
             elif column_name == self.common_operations.Hive_ColumnName_Source:
-                query += "   '%s'" % (datalakeSource)
+                query += "   '%s'" % (datalake_source)
             else:
                 query += "   NULL"
 
@@ -395,7 +398,7 @@ class operation(metaclass=Singleton):
 
         # If a row was previously deleted and now inserted again and we are using Soft Delete,
         # then the information in the datalake_iud, datalake_insert and datalake_delete is wrong.
-        if softDelete == True:
+        if soft_delete == True:
             query = "update %s set " % (target_db_and_table)
             # query += "   datalake_iud = 'I', "
             # query += "   datalake_insert = datalake_update, "
@@ -418,17 +421,17 @@ class operation(metaclass=Singleton):
 
         # Statement to select all rows that was changed in the Target table and insert them to the History table
         if (
-            createHistoryAudit == True
-            and historyDB != None
-            and historyTable != None
-            and oracleFlashbackSource == False
-            and mssqlChangeTrackingSource == False
+            create_history_audit == True
+            and history_db != None
+            and history_table != None
+            and oracle_flashback_source == False
+            and mssql_change_tracking_source == False
         ) or (
-            createHistoryAudit == True
-            and historyDB != None
-            and historyTable != None
-            and mssqlChangeTrackingSource == True
-            and sourceIsIncremental == False
+            create_history_audit == True
+            and history_db != None
+            and history_table != None
+            and mssql_change_tracking_source == True
+            and source_is_incremental == False
         ):
             query = "insert into table %s \n" % (history_db_and_table)
             query += "( "
@@ -465,7 +468,7 @@ class operation(metaclass=Singleton):
                     query += ", \n"
                 query += "   `%s`" % (row["targetName"])
             if datalake_source_exists == True:
-                query += ",\n   '%s'" % (datalakeSource)
+                query += ",\n   '%s'" % (datalake_source)
             # query += ",\n   `datalake_iud`"
             # query += ",\n   `datalake_update`"
             # query += "\nfrom %s \n"%(targetDBandTable)
@@ -475,15 +478,15 @@ class operation(metaclass=Singleton):
             query += "\nfrom %s \n" % (target_db_and_table)
             query += "where %s = TIMESTAMP('%s') \n" % (
                 self.common_operations.Hive_ColumnName_Update,
-                mergeTime,
+                merge_time,
             )
 
             self.executeSQLQuery(query)
 
         if (
-            sourceIsIncremental == False
-            and targetDeleteDB != None
-            and targetDeleteTable != None
+            source_is_incremental == False
+            and target_delete_db != None
+            and target_delete_table != None
         ):
             # Start with truncating the History Delete table as we need to rebuild this one from scratch to determine what rows are deleted
             query = "truncate table %s" % (target_delete_db_and_table)
@@ -491,13 +494,13 @@ class operation(metaclass=Singleton):
 
             # Insert all rows (PK columns only) that exists in the Target Table but dont exists in the Import table (the ones that was deleted)
             query = "insert into table %s \n(`" % (target_delete_db_and_table)
-            query += "`, `".join(PKColumns.split(","))
+            query += "`, `".join(pk_columns.split(","))
             query += "`) \nselect T.`"
-            query += "`, T.`".join(PKColumns.split(","))
+            query += "`, T.`".join(pk_columns.split(","))
             query += "` \nfrom %s as T \n" % (target_db_and_table)
             query += "left outer join %s as S \n" % (source_db_and_table)
             query += "on \n"
-            for i, target_column in enumerate(PKColumns.split(",")):
+            for i, target_column in enumerate(pk_columns.split(",")):
                 source_column = (
                     column_merge.loc[column_merge["Exist"] == "both"]
                     .loc[column_merge["targetName"] == target_column]
@@ -511,7 +514,7 @@ class operation(metaclass=Singleton):
 
             query += "\nwhere \n"
 
-            for i, target_column in enumerate(PKColumns.split(",")):
+            for i, target_column in enumerate(pk_columns.split(",")):
                 source_column = (
                     column_merge.loc[column_merge["Exist"] == "both"]
                     .loc[column_merge["targetName"] == target_column]
@@ -525,7 +528,7 @@ class operation(metaclass=Singleton):
 
             self.executeSQLQuery(query)
 
-        if oracleFlashbackSource == True and createHistoryAudit == True:
+        if oracle_flashback_source == True and create_history_audit == True:
             # If it is a history merge with Oracle Flashback, we need to handle the deletes separatly
             query = "insert into table %s \n" % (history_db_and_table)
             query += "( "
@@ -562,14 +565,14 @@ class operation(metaclass=Singleton):
                     query += ", \n"
                 query += "   `%s`" % (row["targetName"])
             if datalake_source_exists == True:
-                query += ",\n   '%s'" % (datalakeSource)
+                query += ",\n   '%s'" % (datalake_source)
             # query += ",\n   `datalake_flashback_operation` as `datalake_iud`"
             # query += ",\n   timestamp('%s') as `datalake_timestamp`"%(mergeTime)
             query += ",\n   `datalake_flashback_operation` as `%s`" % (
                 self.common_operations.Hive_ColumnName_IUD
             )
             query += ",\n   timestamp('%s') as `%s`" % (
-                mergeTime,
+                merge_time,
                 self.common_operations.Hive_ColumnName_HistoryTimestamp,
             )
             query += "\nfrom %s \n" % (oracle_flashback_import_db_and_table)
@@ -577,9 +580,9 @@ class operation(metaclass=Singleton):
             self.executeSQLQuery(query)
 
         if (
-            mssqlChangeTrackingSource == True
-            and createHistoryAudit == True
-            and sourceIsIncremental == True
+            mssql_change_tracking_source == True
+            and create_history_audit == True
+            and source_is_incremental == True
         ):
             # We only run this of it's an incremental load, i.e CDT is working. Full load, falling over the edge and such should not load from import table but instead from target table
             # and that is handled above with the same code as full import with history is using
@@ -618,14 +621,14 @@ class operation(metaclass=Singleton):
                     query += ", \n"
                 query += "   `%s`" % (row["targetName"])
             if datalake_source_exists == True:
-                query += ",\n   '%s'" % (datalakeSource)
+                query += ",\n   '%s'" % (datalake_source)
             # query += ",\n   `datalake_mssql_changetrack_operation` as `datalake_iud`"
             # query += ",\n   timestamp('%s') as `datalake_timestamp`"%(mergeTime)
             query += ",\n   `datalake_mssql_changetrack_operation` as `%s`" % (
                 self.common_operations.Hive_ColumnName_IUD
             )
             query += ",\n   timestamp('%s') as `%s`" % (
-                mergeTime,
+                merge_time,
                 self.common_operations.Hive_ColumnName_HistoryTimestamp,
             )
             query += "\nfrom %s " % (mssql_change_tracking_import_db_and_table)
@@ -671,20 +674,20 @@ class operation(metaclass=Singleton):
                 query += "   T.`%s`" % (row["targetName"])
             if datalake_source_exists == True:
                 query += ",\n   '%s' as `%s`" % (
-                    datalakeSource,
+                    datalake_source,
                     self.common_operations.Hive_ColumnName_Source,
                 )
             # query += ",\n   'D' as `datalake_iud`"
             # query += ",\n   timestamp('%s') as `datalake_timestamp`"%(mergeTime)
             query += ",\n   'D' as `%s`" % (self.common_operations.Hive_ColumnName_IUD)
             query += ",\n   timestamp('%s') as `%s`" % (
-                mergeTime,
+                merge_time,
                 self.common_operations.Hive_ColumnName_HistoryTimestamp,
             )
             query += "\nfrom %s as D \n" % (mssql_change_tracking_import_db_and_table)
             query += "inner join %s as T \n" % (target_db_and_table)
             query += "on \n"
-            for i, column in enumerate(PKColumns.split(",")):
+            for i, column in enumerate(pk_columns.split(",")):
                 if i == 0:
                     query += "   T.`%s` = D.`%s` " % (column, column)
                 else:
@@ -698,7 +701,7 @@ class operation(metaclass=Singleton):
             query += "using %s as D \n" % (mssql_change_tracking_import_db_and_table)
             query += "on \n"
 
-            for i, column in enumerate(PKColumns.split(",")):
+            for i, column in enumerate(pk_columns.split(",")):
                 if i == 0:
                     query += "   T.`%s` = D.`%s` " % (column, column)
                 else:
@@ -711,12 +714,12 @@ class operation(metaclass=Singleton):
 
         # Insert the deleted rows into the History table. Without this, it's impossible to see what values the column had before the delete
         if (
-            sourceIsIncremental == False
-            and createHistoryAudit == True
-            and historyDB != None
-            and historyTable != None
-            and targetDeleteDB != None
-            and targetDeleteTable != None
+            source_is_incremental == False
+            and create_history_audit == True
+            and history_db != None
+            and history_table != None
+            and target_delete_db != None
+            and target_delete_table != None
         ):
             query = "insert into table %s \n" % (history_db_and_table)
             query += "( "
@@ -755,20 +758,20 @@ class operation(metaclass=Singleton):
             if datalake_source_exists == True:
                 # query += ",\n   '%s' as `datalake_source`"%(datalakeSource)
                 query += ",\n   '%s' as `%s`" % (
-                    datalakeSource,
+                    datalake_source,
                     self.common_operations.Hive_ColumnName_Source,
                 )
             # query += ",\n   'D' as `datalake_iud`"
             # query += ",\n   timestamp('%s') as `datalake_timestamp`"%(mergeTime)
             query += ",\n   'D' as `%s`" % (self.common_operations.Hive_ColumnName_IUD)
             query += ",\n   timestamp('%s') as `%s`" % (
-                mergeTime,
+                merge_time,
                 self.common_operations.Hive_ColumnName_HistoryTimestamp,
             )
             query += "\nfrom %s as D \n" % (target_delete_db_and_table)
             query += "left join %s as T \n" % (target_db_and_table)
             query += "on \n"
-            for i, column in enumerate(PKColumns.split(",")):
+            for i, column in enumerate(pk_columns.split(",")):
                 if i == 0:
                     query += "   T.`%s` = D.`%s` " % (column, column)
                 else:
@@ -777,20 +780,20 @@ class operation(metaclass=Singleton):
             self.executeSQLQuery(query)
 
         if (
-            sourceIsIncremental == False
-            and targetDeleteDB != None
-            and targetDeleteTable != None
+            source_is_incremental == False
+            and target_delete_db != None
+            and target_delete_table != None
         ):
             # Use the merge command to delete found rows between the Delete Table and the History Table
             if (
                 self.import_config.etlEngine == constant.ETL_ENGINE_SPARK
-                and softDelete == False
+                and soft_delete == False
             ):
                 # Due to Iceberg bug #8126 (https://github.com/apache/iceberg/issues/8126), we need to do a workaround for deletes without soft delete
                 query = "delete from %s as T \n" % (target_db_and_table)
                 query += "where exists ( \n"
                 query += "   select "
-                for i, column in enumerate(PKColumns.split(",")):
+                for i, column in enumerate(pk_columns.split(",")):
                     if i == 0:
                         query += "`%s` " % (column)
                     else:
@@ -798,7 +801,7 @@ class operation(metaclass=Singleton):
                 query += "\n"
                 query += "   from %s as D \n" % (target_delete_db_and_table)
                 query += "   where \n"
-                for i, column in enumerate(PKColumns.split(",")):
+                for i, column in enumerate(pk_columns.split(",")):
                     if i == 0:
                         query += "      T.`%s` = D.`%s` " % (column, column)
                     else:
@@ -811,19 +814,19 @@ class operation(metaclass=Singleton):
                 query += "using %s as D \n" % (target_delete_db_and_table)
                 query += "on \n"
 
-                for i, column in enumerate(PKColumns.split(",")):
+                for i, column in enumerate(pk_columns.split(",")):
                     if i == 0:
                         query += "   T.`%s` = D.`%s` " % (column, column)
                     else:
                         query += "and\n   T.`%s` = D.`%s` " % (column, column)
-                if softDelete == True:
+                if soft_delete == True:
                     # query += "and\n   T.`datalake_delete` != 'D' "
                     query += "and\n   T.`%s` != 'D' " % (
                         self.common_operations.Hive_ColumnName_Delete
                     )
                 query += "\n"
 
-                if softDelete == False:
+                if soft_delete == False:
                     query += "when matched then delete \n"
                 else:
                     query += "when matched then update set \n"
@@ -835,11 +838,11 @@ class operation(metaclass=Singleton):
                     )
                     query += "%s = timestamp('%s'), \n" % (
                         self.common_operations.Hive_ColumnName_Update,
-                        mergeTime,
+                        merge_time,
                     )
                     query += "%s = timestamp('%s') " % (
                         self.common_operations.Hive_ColumnName_Delete,
-                        mergeTime,
+                        merge_time,
                     )
 
             self.executeSQLQuery(query)

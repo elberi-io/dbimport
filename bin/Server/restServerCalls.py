@@ -150,8 +150,8 @@ class dbCalls:
 
         self.createDefaultAdminUser()
 
-    def convertIntToBool(self, intValue):
-        if intValue == 1:
+    def convertIntToBool(self, int_value):
+        if int_value == 1:
             return True
         else:
             return False
@@ -374,7 +374,7 @@ class dbCalls:
 
         return user
 
-    def updateUser(self, user, passwordChanged, currentUser):
+    def updateUser(self, user, password_changed, current_user):
         """Update a user object"""
         log = logging.getLogger(self.logger)
 
@@ -384,15 +384,15 @@ class dbCalls:
             self.disconnectDBImportDB()
             return None
 
-        if passwordChanged == False:
+        if password_changed == False:
             log.info(
                 "User '%s' updated details for user '%s'"
-                % (currentUser, user["username"])
+                % (current_user, user["username"])
             )
         else:
             log.info(
                 "User '%s' changed the password for user '%s'"
-                % (currentUser, user["username"])
+                % (current_user, user["username"])
             )
 
         table_auth_users = aliased(configSchema.authUsers)
@@ -436,15 +436,15 @@ class dbCalls:
         # session.close()
         session.remove()
 
-    def generateJDBCconnectionString(self, connectionValues, currentUser):
+    def generateJDBCconnectionString(self, connection_values, current_user):
         """Generates a JDBC connection string"""
         log = logging.getLogger(self.logger)
 
-        database_type = connectionValues.databaseType
-        database_version = connectionValues.version
-        hostname = connectionValues.hostname
-        port = connectionValues.port
-        database = connectionValues.database
+        database_type = connection_values.databaseType
+        database_version = connection_values.version
+        hostname = connection_values.hostname
+        port = connection_values.port
+        database = connection_values.database
         jdbc_connection_string = ""
 
         # Validate to make sure we have a valid combination of databaseType and version
@@ -463,7 +463,7 @@ class dbCalls:
 
         # Generate the connection string for each combo of databaseType and databaseVersion
         if database_type == "DB2 AS400" and database_version == "default":
-            if connectionValues.port == None:
+            if connection_values.port == None:
                 jdbc_connection_string = "jdbc:as400://%s/%s" % (hostname, database)
             else:
                 jdbc_connection_string = "jdbc:as400://%s:%s/%s" % (
@@ -473,7 +473,7 @@ class dbCalls:
                 )
 
         if database_type == "DB2 UDB" and database_version == "default":
-            if connectionValues.port == None:
+            if connection_values.port == None:
                 jdbc_connection_string = "jdbc:db2://%s/%s" % (hostname, database)
             else:
                 jdbc_connection_string = "jdbc:db2://%s:%s/%s" % (
@@ -483,7 +483,7 @@ class dbCalls:
                 )
 
         if database_type == "MySQL" and database_version == "default":
-            if connectionValues.port == None:
+            if connection_values.port == None:
                 jdbc_connection_string = "jdbc:mysql://%s/%s" % (hostname, database)
             else:
                 jdbc_connection_string = "jdbc:mysql://%s:%s/%s" % (
@@ -493,7 +493,7 @@ class dbCalls:
                 )
 
         if database_type == "Oracle" and database_version == "default":
-            if connectionValues.port == None:
+            if connection_values.port == None:
                 jdbc_connection_string = (
                     "jdbc:oracle:thin:@(DESCRIPTION=(ADDRESS_LIST=(ADDRESS=(PROTOCOL=TCP)(HOST=%s)))(CONNECT_DATA=(SERVICE_NAME=%s)))"
                     % (hostname, database)
@@ -505,7 +505,7 @@ class dbCalls:
                 )
 
         if database_type == "PostgreSQL" and database_version == "default":
-            if connectionValues.port == None:
+            if connection_values.port == None:
                 jdbc_connection_string = "jdbc:postgresql://%s/%s" % (
                     hostname,
                     database,
@@ -518,7 +518,7 @@ class dbCalls:
                 )
 
         if database_type == "Progress DB" and database_version == "default":
-            if connectionValues.port == None:
+            if connection_values.port == None:
                 jdbc_connection_string = "jdbc:datadirect:openedge://%s/%s" % (
                     hostname,
                     database,
@@ -531,7 +531,7 @@ class dbCalls:
                 )
 
         if database_type == "SQL Server" and database_version == "default":
-            if connectionValues.port == None:
+            if connection_values.port == None:
                 jdbc_connection_string = "jdbc:sqlserver://%s;database=%s" % (
                     hostname,
                     database,
@@ -544,7 +544,7 @@ class dbCalls:
                 )
 
         if database_type == "SQL Server" and database_version == "jTDS":
-            if connectionValues.port == None:
+            if connection_values.port == None:
                 jdbc_connection_string = (
                     "jdbc:jtds:sqlserver://%s;useNTLMv2=true;databaseName=%s"
                     % (hostname, database)
@@ -556,7 +556,7 @@ class dbCalls:
                 )
 
         if database_type == "CacheDB" and database_version == "default":
-            if connectionValues.port == None:
+            if connection_values.port == None:
                 jdbc_connection_string = "jdbc:Cache://%s/%s" % (hostname, database)
             else:
                 jdbc_connection_string = "jdbc:Cache://%s:%s/%s" % (
@@ -566,7 +566,7 @@ class dbCalls:
                 )
 
         if database_type == "Snowflake" and database_version == "default":
-            if connectionValues.port == None:
+            if connection_values.port == None:
                 jdbc_connection_string = "jdbc:snowflake://%s/?db=%s" % (
                     hostname,
                     database,
@@ -579,7 +579,7 @@ class dbCalls:
                 )
 
         if database_type == "Informix" and database_version == "default":
-            if connectionValues.port == None:
+            if connection_values.port == None:
                 jdbc_connection_string = "jdbc:informix-sqli://%s/%s" % (
                     hostname,
                     database,
@@ -592,7 +592,7 @@ class dbCalls:
                 )
 
         if database_type == "SQL Anywhere" and database_version == "default":
-            if connectionValues.port == None:
+            if connection_values.port == None:
                 jdbc_connection_string = "jdbc:sybase:Tds://%s/%s" % (
                     hostname,
                     database,
@@ -648,7 +648,7 @@ class dbCalls:
 
         return json_result
 
-    def updateJDBCdriver(self, jdbcDriver, currentUser):
+    def updateJDBCdriver(self, jdbc_driver, current_user):
         """Returns all configuration items from the configuration table"""
         log = logging.getLogger(self.logger)
 
@@ -660,13 +660,13 @@ class dbCalls:
 
         log.info(
             "User '%s' updated JDBC driver configuration for '%s'"
-            % (currentUser, jdbcDriver.databaseType)
+            % (current_user, jdbc_driver.databaseType)
         )
 
-        log.debug("databaseType: %s" % jdbcDriver.databaseType)
-        log.debug("version: %s" % jdbcDriver.version)
-        log.debug("driver: %s" % jdbcDriver.driver)
-        log.debug("classpath: %s" % jdbcDriver.classpath)
+        log.debug("databaseType: %s" % jdbc_driver.databaseType)
+        log.debug("version: %s" % jdbc_driver.version)
+        log.debug("driver: %s" % jdbc_driver.driver)
+        log.debug("classpath: %s" % jdbc_driver.classpath)
 
         table_jdbc_connections_drivers = aliased(configSchema.jdbcConnectionsDrivers)
         result = "ok"
@@ -677,10 +677,10 @@ class dbCalls:
                 update(table_jdbc_connections_drivers),
                 [
                     {
-                        "database_type": jdbcDriver.databaseType,
-                        "version": jdbcDriver.version,
-                        "driver": jdbcDriver.driver,
-                        "classpath": jdbcDriver.classpath,
+                        "database_type": jdbc_driver.databaseType,
+                        "version": jdbc_driver.version,
+                        "driver": jdbc_driver.driver,
+                        "classpath": jdbc_driver.classpath,
                     }
                 ],
             )
@@ -701,7 +701,7 @@ class dbCalls:
         # return (jsonResult, returnCode)
         return (result, return_code)
 
-    def getConfiguration(self, currentUser):
+    def getConfiguration(self, current_user):
         """Returns all configuration items from the configuration table"""
         log = logging.getLogger(self.logger)
 
@@ -736,7 +736,7 @@ class dbCalls:
                 self.adminUser = row[2]
 
             value_column, bool_value = self.common_config.getConfigValueColumn(
-                row[0], ignoreErrorOutput=True
+                row[0], ignore_error_output=True
             )
             if value_column == None:
                 # If there is no handling of the value in self.common_config.getConfigValueColumn we will ignore it.
@@ -748,7 +748,7 @@ class dbCalls:
                 "restserver_authentication_method",
                 "restserver_token_ttl",
             ]:
-                if currentUser != self.adminUser:
+                if current_user != self.adminUser:
                     continue
 
             if value_column == "valueInt":
@@ -763,7 +763,7 @@ class dbCalls:
         json_result = json.loads(json.dumps(result_dict))
         return json_result
 
-    def updateConfiguration(self, configuration, currentUser):
+    def updateConfiguration(self, configuration, current_user):
         """Update configuration items in the configuration table"""
         log = logging.getLogger(self.logger)
 
@@ -811,7 +811,7 @@ class dbCalls:
                         "restserver_authentication_method",
                         "restserver_token_ttl",
                     ]:
-                        if currentUser != self.adminUser:
+                        if current_user != self.adminUser:
                             raise HTTPException(
                                 status_code=status.HTTP_403_FORBIDDEN,
                                 detail="You are not allowed to update '%s'" % (key),
@@ -829,7 +829,7 @@ class dbCalls:
                 # At this point, only configuration items that exists in the class is iterrated
                 log.info(
                     "User '%s' updated global configuration. %s = %s"
-                    % (currentUser, key, getattr(configuration, key))
+                    % (current_user, key, getattr(configuration, key))
                 )
 
                 value_column, bool_value = self.common_config.getConfigValueColumn(key)
@@ -851,11 +851,11 @@ class dbCalls:
         # return jsonResult
         return (result, return_code)
 
-    def getJDBCserverType(self, name, connectionString):
+    def getJDBCserverType(self, name, connection_string):
         """Return the server type based on the connection string"""
         try:
             self.common_config.lookupConnectionAlias(
-                name, decryptCredentials=False, jdbcURL=connectionString, quiet=True
+                name, decryptCredentials=False, jdbcURL=connection_string, quiet=True
             )
         except invalidConfiguration:
             pass
@@ -890,7 +890,7 @@ class dbCalls:
 
         return server_type
 
-    def getAllConnections(self, listOnlyName):
+    def getAllConnections(self, list_only_name):
         """Returns all Connections"""
         log = logging.getLogger(self.logger)
 
@@ -916,10 +916,10 @@ class dbCalls:
             count = count + 1
             result_dict = {}
             result_dict["name"] = row[0]
-            if listOnlyName == False:
+            if list_only_name == False:
                 result_dict["connectionString"] = row[1]
                 result_dict["serverType"] = self.getJDBCserverType(
-                    name=row[0], connectionString=row[1]
+                    name=row[0], connection_string=row[1]
                 )
 
             list_of_connections.append(result_dict)
@@ -936,7 +936,7 @@ class dbCalls:
         }
         return JSONResponse(content=json_result, headers=headers, status_code=200)
 
-    def searchConnections(self, searchValues, currentUser):
+    def searchConnections(self, search_values, current_user):
         """Search for import tables"""
         log = logging.getLogger(self.logger)
 
@@ -967,7 +967,7 @@ class dbCalls:
         )
 
         # Add the filters for the specific column that we search on
-        for items in searchValues:
+        for items in search_values:
             if items[1] == None or items[1] == "" or items[1] == "*" or items[1] == "%":
                 # If it's None, empty or search *, it means we dont need to search on that value. So lets skip it
                 continue
@@ -1011,7 +1011,7 @@ class dbCalls:
             result_dict["name"] = row[0]
             result_dict["connectionString"] = row[1]
             result_dict["serverType"] = self.getJDBCserverType(
-                name=row[0], connectionString=row[1]
+                name=row[0], connection_string=row[1]
             )
 
             list_of_connections.append(result_dict)
@@ -1030,7 +1030,7 @@ class dbCalls:
         }
         return JSONResponse(content=json_result, headers=headers, status_code=200)
 
-    def updateConnection(self, connection, currentUser):
+    def updateConnection(self, connection, current_user):
         """Update or create a Connections"""
         log = logging.getLogger(self.logger)
 
@@ -1046,7 +1046,8 @@ class dbCalls:
 
         log.debug(connection)
         log.info(
-            "User '%s' updated/created connection '%s'" % (currentUser, connection.name)
+            "User '%s' updated/created connection '%s'"
+            % (current_user, connection.name)
         )
 
         if connection.forceString == None:
@@ -1218,7 +1219,7 @@ class dbCalls:
 
         return json_result
 
-    def deleteConnection(self, connection, currentUser):
+    def deleteConnection(self, connection, current_user):
         """Delete a connection"""
         log = logging.getLogger(self.logger)
 
@@ -1231,7 +1232,7 @@ class dbCalls:
         result = "ok"
         return_code = 200
 
-        log.info("User '%s' deleted connection '%s'" % (currentUser, connection))
+        log.info("User '%s' deleted connection '%s'" % (current_user, connection))
 
         # Fetch the tableID as that is required to update/create data in import_columns
         row = (
@@ -1257,7 +1258,7 @@ class dbCalls:
         session.remove()
         return (result, return_code)
 
-    def encryptedCredentials(self, credentials, currentUser):
+    def encryptedCredentials(self, credentials, current_user):
         """Encrypt username and password with private key and store in connection"""
         log = logging.getLogger(self.logger)
 
@@ -1296,7 +1297,7 @@ class dbCalls:
 
         return (result_msg, return_code)
 
-    def testConnection(self, connection, currentUser):
+    def testConnection(self, connection, current_user):
         """Make a test connection to a JDBC source and return result"""
         log = logging.getLogger(self.logger)
 
@@ -1376,7 +1377,7 @@ class dbCalls:
         }
         return JSONResponse(content=json_result, headers=headers, status_code=200)
 
-    def discoverImportTables(self, data, currentUser):
+    def discoverImportTables(self, data, current_user):
         """Search for import tables"""
         log = logging.getLogger(self.logger)
 
@@ -1434,7 +1435,7 @@ class dbCalls:
 
         return (return_msg, return_code)
 
-    def addDiscoveredImportTables(self, data, currentUser):
+    def addDiscoveredImportTables(self, data, current_user):
         """Add discovered import tables"""
         log = logging.getLogger(self.logger)
 
@@ -1454,14 +1455,14 @@ class dbCalls:
                 etlEngine="spark",
             )
 
-            self.updateImportTable(database, table, create_data, currentUser)
+            self.updateImportTable(database, table, create_data, current_user)
 
         return_code = 200
         result_msg = {"result": "%s tables created" % (create_counter)}
 
         return (result_msg, return_code)
 
-    def searchImportTables(self, searchValues, currentUser):
+    def searchImportTables(self, search_values, current_user):
         """Search for import tables"""
         log = logging.getLogger(self.logger)
 
@@ -1507,7 +1508,7 @@ class dbCalls:
         )
 
         # Add the filters for the specific column that we search on
-        for items in searchValues:
+        for items in search_values:
             if items[1] == None or items[1] == "" or items[1] == "*" or items[1] == "%":
                 # If it's None, empty or search *, it means we dont need to search on that value. So lets skip it
                 continue
@@ -1585,7 +1586,7 @@ class dbCalls:
         }
         return JSONResponse(content=json_result, headers=headers, status_code=200)
 
-    def getImportTablesOnConnection(self, connection, currentUser):
+    def getImportTablesOnConnection(self, connection, current_user):
         """Returns all import tables in a specific database"""
         log = logging.getLogger(self.logger)
 
@@ -1593,17 +1594,17 @@ class dbCalls:
             database="*", table="*", connection=connection
         )
 
-        return self.searchImportTables(search_values, currentUser)
+        return self.searchImportTables(search_values, current_user)
 
-    def getImportTablesInDatabase(self, database, currentUser):
+    def getImportTablesInDatabase(self, database, current_user):
         """Returns all import tables in a specific database"""
         log = logging.getLogger(self.logger)
 
         search_values = dataModels.importTableSearch(database=database, table="*")
 
-        return self.searchImportTables(search_values, currentUser)
+        return self.searchImportTables(search_values, current_user)
 
-    def getImportTableDetails(self, database, table, includeColumns):
+    def getImportTableDetails(self, database, table, include_columns):
         """Returns all import table details"""
         log = logging.getLogger(self.logger)
 
@@ -1800,7 +1801,7 @@ class dbCalls:
         result_dict["historyDatabase"] = row[69]
         result_dict["historyTable"] = row[70]
 
-        if includeColumns == True:
+        if include_columns == True:
             result_dict["columns"] = self.getImportTableColumns(database, table)
 
         json_result = json.loads(json.dumps(result_dict))
@@ -1809,7 +1810,7 @@ class dbCalls:
 
         return json_result
 
-    def deleteImportTable(self, database, table, currentUser):
+    def deleteImportTable(self, database, table, current_user):
         """Update or create an import table"""
         log = logging.getLogger(self.logger)
 
@@ -1825,7 +1826,7 @@ class dbCalls:
         return_code = 200
 
         log.info(
-            "User '%s' deleted import table '%s.%s'" % (currentUser, database, table)
+            "User '%s' deleted import table '%s.%s'" % (current_user, database, table)
         )
 
         # Fetch the tableID as that is required to update/create data in import_columns
@@ -1857,11 +1858,11 @@ class dbCalls:
         session.remove()
         return (result, return_code)
 
-    def bulkDeleteImportTable(self, bulkData, currentUser):
+    def bulkDeleteImportTable(self, bulk_data, current_user):
         """Bulk delete of import tables"""
         log = logging.getLogger(self.logger)
 
-        if len(bulkData) == 0:
+        if len(bulk_data) == 0:
             result_msg = {
                 "result": "Body must contain a list of databas and table to delete"
             }
@@ -1882,7 +1883,7 @@ class dbCalls:
 
         # Create a list of dicts that contain all the databas and table combinations that will be deleted
         table_list = []
-        for tables in bulkData:
+        for tables in bulk_data:
             table_list.append({"database": tables.database, "table": tables.table})
 
         session.connection().execute(delete_statement, table_list)
@@ -1894,11 +1895,11 @@ class dbCalls:
 
         return (result_msg, return_code)
 
-    def bulkUpdateImportTable(self, bulkData, currentUser):
+    def bulkUpdateImportTable(self, bulk_data, current_user):
         """Bulk update of import tables"""
         log = logging.getLogger(self.logger)
 
-        if len(bulkData.importTables) == 0:
+        if len(bulk_data.importTables) == 0:
             result_msg = {
                 "result": "importTables must contain a list of database/tables to update"
             }
@@ -1920,37 +1921,37 @@ class dbCalls:
 
         # This will loop through only the fields specified in the Posted JSON. So if a field have got a default None value in dataModel validation,
         # that field wont be part of this loop
-        for update_field in bulkData.__pydantic_fields_set__:
+        for update_field in bulk_data.__pydantic_fields_set__:
             if update_field == "connection":
-                update_statement = update_statement.values(dbalias=bulkData.connection)
+                update_statement = update_statement.values(dbalias=bulk_data.connection)
             elif update_field == "importPhaseType":
                 update_statement = update_statement.values(
-                    import_phase_type=bulkData.importPhaseType
+                    import_phase_type=bulk_data.importPhaseType
                 )
             elif update_field == "etlPhaseType":
                 update_statement = update_statement.values(
-                    etl_phase_type=bulkData.etlPhaseType
+                    etl_phase_type=bulk_data.etlPhaseType
                 )
             elif update_field == "importTool":
                 update_statement = update_statement.values(
-                    import_tool=bulkData.importTool
+                    import_tool=bulk_data.importTool
                 )
             elif update_field == "etlEngine":
                 update_statement = update_statement.values(
-                    etl_engine=bulkData.etlEngine
+                    etl_engine=bulk_data.etlEngine
                 )
             elif update_field == "includeInAirflow":
                 update_statement = update_statement.values(
-                    include_in_airflow=bulkData.includeInAirflow
+                    include_in_airflow=bulk_data.includeInAirflow
                 )
             elif update_field == "operatorNotes":
                 update_statement = update_statement.values(
-                    operator_notes=bulkData.operatorNotes
+                    operator_notes=bulk_data.operatorNotes
                 )
 
         # Create a list of dicts that contain all the databas/table combinations that will be updated
         table_list = []
-        for tables in bulkData.importTables:
+        for tables in bulk_data.importTables:
             table_list.append({"database": tables.database, "table": tables.table})
 
         update_statement = update_statement.execution_options(synchronize_session=False)
@@ -1965,7 +1966,7 @@ class dbCalls:
 
         return (result_msg, return_code)
 
-    def updateImportTable(self, database, table, data, currentUser):
+    def updateImportTable(self, database, table, data, current_user):
         """Update or create an import table"""
         log = logging.getLogger(self.logger)
 
@@ -1984,7 +1985,7 @@ class dbCalls:
         # log.info("User '%s' updated/created import table '%s.%s'"%(currentUser, getattr(data, "database"), getattr(data, "table")))
         log.info(
             "User '%s' updated/created import table '%s.%s'"
-            % (currentUser, database, table)
+            % (current_user, database, table)
         )
 
         # Set default values
@@ -2356,7 +2357,7 @@ class dbCalls:
         # 		return jsonResult
         return list_of_columns
 
-    def repairImportTable(self, database, table, currentUser):
+    def repairImportTable(self, database, table, current_user):
         """Repair Import table"""
         log = logging.getLogger(self.logger)
 
@@ -2398,7 +2399,7 @@ class dbCalls:
 
         return (result_msg, return_code)
 
-    def resetImportTable(self, database, table, currentUser):
+    def resetImportTable(self, database, table, current_user):
         """Reset Import table"""
         log = logging.getLogger(self.logger)
 
@@ -2440,7 +2441,7 @@ class dbCalls:
 
         return (result_msg, return_code)
 
-    def repairExportTable(self, connection, schema, table, currentUser):
+    def repairExportTable(self, connection, schema, table, current_user):
         """Repair Import table"""
         log = logging.getLogger(self.logger)
 
@@ -2484,7 +2485,7 @@ class dbCalls:
 
         return (result_msg, return_code)
 
-    def resetExportTable(self, connection, schema, table, currentUser):
+    def resetExportTable(self, connection, schema, table, current_user):
         """Repair Import table"""
         log = logging.getLogger(self.logger)
 
@@ -2583,7 +2584,7 @@ class dbCalls:
         }
         return JSONResponse(content=json_result, headers=headers, status_code=200)
 
-    def discoverExportTables(self, data, currentUser):
+    def discoverExportTables(self, data, current_user):
         """Search for import tables"""
         log = logging.getLogger(self.logger)
 
@@ -2669,7 +2670,7 @@ class dbCalls:
 
         return (return_msg, return_code)
 
-    def addDiscoveredExportTables(self, data, currentUser):
+    def addDiscoveredExportTables(self, data, current_user):
         """Add discovered export tables"""
         log = logging.getLogger(self.logger)
 
@@ -2688,7 +2689,7 @@ class dbCalls:
             )
 
             self.updateExportTable(
-                connection, target_schema, target_table, create_data, currentUser
+                connection, target_schema, target_table, create_data, current_user
             )
 
         return_code = 200
@@ -2696,7 +2697,7 @@ class dbCalls:
 
         return (result_msg, return_code)
 
-    def searchExportTables(self, searchValues, currentUser):
+    def searchExportTables(self, search_values, current_user):
         """Search for import tables"""
         log = logging.getLogger(self.logger)
 
@@ -2738,7 +2739,7 @@ class dbCalls:
         )
 
         # Add the filters for the specific column that we search on
-        for items in searchValues:
+        for items in search_values:
             if items[1] == None or items[1] == "" or items[1] == "*" or items[1] == "%":
                 # If it's None, empty or search *, it means we dont need to search on that value. So lets skip it
                 continue
@@ -2823,7 +2824,7 @@ class dbCalls:
 
         return self.searchExportTables(search_values, currentUser)
 
-    def getExportTableDetails(self, connection, schema, table, includeColumns):
+    def getExportTableDetails(self, connection, schema, table, include_columns):
         """Returns all connections that have exports configured in them"""
         log = logging.getLogger(self.logger)
 
@@ -2935,7 +2936,7 @@ class dbCalls:
         result_dict["createTargetTableSql"] = row[35]
         result_dict["operatorNotes"] = row[36]
 
-        if includeColumns == True:
+        if include_columns == True:
             result_dict["columns"] = self.getExportTableColumns(
                 connection, schema, table
             )
@@ -3031,7 +3032,7 @@ class dbCalls:
 
         return list_of_columns
 
-    def deleteExportTable(self, connection, schema, table, currentUser):
+    def deleteExportTable(self, connection, schema, table, current_user):
         """Update or create an export table"""
         log = logging.getLogger(self.logger)
 
@@ -3048,7 +3049,7 @@ class dbCalls:
 
         log.info(
             "User '%s' deleted export table '%s.%s' on connection '%s'"
-            % (currentUser, schema, table, connection)
+            % (current_user, schema, table, connection)
         )
 
         # Fetch the tableID as that is required to update/create data in import_columns
@@ -3081,11 +3082,11 @@ class dbCalls:
         session.remove()
         return (result, return_code)
 
-    def bulkDeleteExportTable(self, bulkData, currentUser):
+    def bulkDeleteExportTable(self, bulk_data, current_user):
         """Bulk delete of export tables"""
         log = logging.getLogger(self.logger)
 
-        if len(bulkData) == 0:
+        if len(bulk_data) == 0:
             result_msg = {
                 "result": "Body must contain a list of connection, database and table to delete"
             }
@@ -3107,7 +3108,7 @@ class dbCalls:
 
         # Create a list of dicts that contain all the connection, schema and table combinations that will be deleted
         table_list = []
-        for tables in bulkData:
+        for tables in bulk_data:
             table_list.append(
                 {
                     "connection": tables.connection,
@@ -3125,11 +3126,11 @@ class dbCalls:
 
         return (result_msg, return_code)
 
-    def bulkUpdateExportTable(self, bulkData, currentUser):
+    def bulkUpdateExportTable(self, bulk_data, current_user):
         """Bulk update of export tables"""
         log = logging.getLogger(self.logger)
 
-        if len(bulkData.exportTables) == 0:
+        if len(bulk_data.exportTables) == 0:
             result_msg = {
                 "result": "exportTables must contain a list of connections/targetSchema/targetDatabase to update"
             }
@@ -3152,27 +3153,27 @@ class dbCalls:
 
         # This will loop through only the fields specified in the Posted JSON. So if a field have got a default None value in dataModel validation,
         # that field wont be part of this loop
-        for update_field in bulkData.__pydantic_fields_set__:
+        for update_field in bulk_data.__pydantic_fields_set__:
             if update_field == "exportType":
                 update_statement = update_statement.values(
-                    export_type=bulkData.exportType
+                    export_type=bulk_data.exportType
                 )
             elif update_field == "exportTool":
                 update_statement = update_statement.values(
-                    export_tool=bulkData.exportTool
+                    export_tool=bulk_data.exportTool
                 )
             elif update_field == "includeInAirflow":
                 update_statement = update_statement.values(
-                    include_in_airflow=bulkData.includeInAirflow
+                    include_in_airflow=bulk_data.includeInAirflow
                 )
             elif update_field == "operatorNotes":
                 update_statement = update_statement.values(
-                    operator_notes=bulkData.operatorNotes
+                    operator_notes=bulk_data.operatorNotes
                 )
 
         # Create a list of dicts that contain all the databas/table combinations that will be updated
         table_list = []
-        for tables in bulkData.exportTables:
+        for tables in bulk_data.exportTables:
             table_list.append(
                 {
                     "connection": tables.connection,
@@ -3193,7 +3194,7 @@ class dbCalls:
 
         return (result_msg, return_code)
 
-    def updateExportTable(self, connection, schema, table, data, currentUser):
+    def updateExportTable(self, connection, schema, table, data, current_user):
         """Update or create an export table"""
         log = logging.getLogger(self.logger)
 
@@ -3211,7 +3212,7 @@ class dbCalls:
         log.debug(table)
         log.info(
             "User '%s' updated/created export table '%s.%s' on connection '%s'"
-            % (currentUser, schema, table, connection)
+            % (current_user, schema, table, connection)
         )
 
         # Set default values
@@ -3843,7 +3844,7 @@ class dbCalls:
         return json_result
 
     def checkDagNameAvailability(
-        self, name, excludeImport=False, excludeExport=False, excludeCustom=False
+        self, name, exclude_import=False, exclude_export=False, exclude_custom=False
     ):
         """Checks if the DAG name is available. Returns True or False"""
         log = logging.getLogger(self.logger)
@@ -3861,7 +3862,7 @@ class dbCalls:
         processed_dags = []
         dag_name_is_free = True
 
-        if excludeCustom == False:
+        if exclude_custom == False:
             row = (
                 session.query(airflow_custom_dags.dag_name)
                 .select_from(airflow_custom_dags)
@@ -3872,7 +3873,7 @@ class dbCalls:
             if row != None:
                 dag_name_is_free = False
 
-        if excludeImport == False:
+        if exclude_import == False:
             row = (
                 session.query(airflow_import_dags.dag_name)
                 .select_from(airflow_import_dags)
@@ -3883,7 +3884,7 @@ class dbCalls:
             if row != None:
                 dag_name_is_free = False
 
-        if excludeExport == False:
+        if exclude_export == False:
             row = (
                 session.query(airflow_export_dags.dag_name)
                 .select_from(airflow_export_dags)
@@ -3897,7 +3898,7 @@ class dbCalls:
         session.remove()
         return dag_name_is_free
 
-    def updateAirflowTasks(self, dagname, task, currentUser):
+    def updateAirflowTasks(self, dagname, task, current_user):
         """Create or update Airflow tasks"""
         log = logging.getLogger(self.logger)
 
@@ -4153,7 +4154,7 @@ class dbCalls:
         session.commit()
         session.remove()
 
-    def deleteTaskFromAirflowDag(self, dagname, taskname, currentUser):
+    def deleteTaskFromAirflowDag(self, dagname, taskname, current_user):
         """Delete tasks from an Airflow DAG"""
         log = logging.getLogger(self.logger)
 
@@ -4169,7 +4170,7 @@ class dbCalls:
 
         log.info(
             "User '%s' deleted Airflow task '%s' from DAG '%s'"
-            % (currentUser, taskname, dagname)
+            % (current_user, taskname, dagname)
         )
 
         # Fetch the tableID as that is required to update/create data in import_columns
@@ -4201,7 +4202,7 @@ class dbCalls:
         session.remove()
         return (result_msg, return_code)
 
-    def deleteImportAirflowDag(self, dagname, currentUser):
+    def deleteImportAirflowDag(self, dagname, current_user):
         """Delete an Airflow import DAG"""
         log = logging.getLogger(self.logger)
 
@@ -4215,7 +4216,7 @@ class dbCalls:
         result = "ok"
         return_code = 200
 
-        log.info("User '%s' deleted Airflow import DAG '%s'" % (currentUser, dagname))
+        log.info("User '%s' deleted Airflow import DAG '%s'" % (current_user, dagname))
 
         # Fetch the tableID as that is required to update/create data in import_columns
         row = (
@@ -4243,11 +4244,11 @@ class dbCalls:
         session.remove()
         return (result, return_code)
 
-    def bulkDeleteImportAirflowDag(self, bulkData, currentUser):
+    def bulkDeleteImportAirflowDag(self, bulk_data, current_user):
         """Bulk delete of Airflow import Dags"""
         log = logging.getLogger(self.logger)
 
-        if len(bulkData) == 0:
+        if len(bulk_data) == 0:
             result_msg = {
                 "result": "Body must contain a list of Airflow dags to delete"
             }
@@ -4267,7 +4268,7 @@ class dbCalls:
 
         # Create a list of dicts that contain all the databas and table combinations that will be deleted
         table_list = []
-        for tables in bulkData:
+        for tables in bulk_data:
             table_list.append({"dag": tables.name})
 
         session.connection().execute(delete_statement, table_list)
@@ -4279,11 +4280,11 @@ class dbCalls:
 
         return (result_msg, return_code)
 
-    def bulkUpdateImportAirflowDag(self, bulkData, currentUser):
+    def bulkUpdateImportAirflowDag(self, bulk_data, current_user):
         """Bulk update of Airflow import Dags"""
         log = logging.getLogger(self.logger)
 
-        if len(bulkData.dags) == 0:
+        if len(bulk_data.dags) == 0:
             result_msg = {
                 "result": "dags must contain a list of Airflow dags to update"
             }
@@ -4305,45 +4306,45 @@ class dbCalls:
 
         # This will loop through only the fields specified in the Posted JSON. So if a field have got a default None value in dataModel validation,
         # that field wont be part of this loop
-        for update_field in bulkData.__pydantic_fields_set__:
+        for update_field in bulk_data.__pydantic_fields_set__:
             if update_field == "scheduleInterval":
                 update_statement = update_statement.values(
-                    schedule_interval=bulkData.scheduleInterval
+                    schedule_interval=bulk_data.scheduleInterval
                 )
             elif update_field == "operatorNotes":
                 update_statement = update_statement.values(
-                    operator_notes=bulkData.operatorNotes
+                    operator_notes=bulk_data.operatorNotes
                 )
             elif update_field == "autoRegenerateDag":
                 update_statement = update_statement.values(
-                    auto_regenerate_dag=bulkData.autoRegenerateDag
+                    auto_regenerate_dag=bulk_data.autoRegenerateDag
                 )
             elif update_field == "sudoUser":
-                update_statement = update_statement.values(sudo_user=bulkData.sudoUser)
+                update_statement = update_statement.values(sudo_user=bulk_data.sudoUser)
             elif update_field == "timezone":
-                update_statement = update_statement.values(timezone=bulkData.timezone)
+                update_statement = update_statement.values(timezone=bulk_data.timezone)
             elif update_field == "email":
-                update_statement = update_statement.values(email=bulkData.email)
+                update_statement = update_statement.values(email=bulk_data.email)
             elif update_field == "emailOnFailure":
                 update_statement = update_statement.values(
-                    email_on_failure=bulkData.emailOnFailure
+                    email_on_failure=bulk_data.emailOnFailure
                 )
             elif update_field == "emailOnRetries":
                 update_statement = update_statement.values(
-                    email_on_retries=bulkData.emailOnRetries
+                    email_on_retries=bulk_data.emailOnRetries
                 )
             elif update_field == "slaWarningTime":
                 update_statement = update_statement.values(
-                    sla_warning_time=bulkData.slaWarningTime
+                    sla_warning_time=bulk_data.slaWarningTime
                 )
             elif update_field == "concurrency":
                 update_statement = update_statement.values(
-                    concurrency=bulkData.concurrency
+                    concurrency=bulk_data.concurrency
                 )
 
         # Create a list of dicts that contain all the databas/table combinations that will be updated
         table_list = []
-        for tables in bulkData.dags:
+        for tables in bulk_data.dags:
             table_list.append({"dag": tables.name})
 
         update_statement = update_statement.execution_options(synchronize_session=False)
@@ -4358,7 +4359,7 @@ class dbCalls:
 
         return (result_msg, return_code)
 
-    def updateImportAirflowDag(self, dagname, airflowDag, currentUser):
+    def updateImportAirflowDag(self, dagname, airflow_dag, current_user):
         """Update or create an Airflow import DAG"""
         log = logging.getLogger(self.logger)
 
@@ -4372,7 +4373,7 @@ class dbCalls:
         result = "ok"
         return_code = 200
 
-        if self.checkDagNameAvailability(name=dagname, excludeImport=True) == False:
+        if self.checkDagNameAvailability(name=dagname, exclude_import=True) == False:
             log.error(
                 "Airflow Import DAG creation was denied as the name was already existing on custom or export DAG"
             )
@@ -4382,86 +4383,87 @@ class dbCalls:
             return_code = 400
             return (result, return_code)
 
-        log.debug(airflowDag)
+        log.debug(airflow_dag)
         log.info(
-            "User '%s' updated/created Airflow import DAG '%s'" % (currentUser, dagname)
+            "User '%s' updated/created Airflow import DAG '%s'"
+            % (current_user, dagname)
         )
 
         # Set default values
-        if airflowDag.scheduleInterval == None:
-            airflowDag.scheduleInterval = "None"
-        if airflowDag.filterTable == None:
-            airflowDag.filterTable = ""
-        if airflowDag.finishAllStage1First == None:
-            airflowDag.finishAllStage1First = "0"
-        if airflowDag.retries == None:
-            airflowDag.retries = "5"
-        if airflowDag.autoRegenerateDag == None:
-            airflowDag.autoRegenerateDag = "1"
-        if airflowDag.runImportAndEtlSeparate == None:
-            airflowDag.runImportAndEtlSeparate = "0"
-        if airflowDag.metadataImport == None:
-            airflowDag.metadataImport = "0"
-        if airflowDag.emailOnFailure == None:
-            airflowDag.emailOnFailure = "0"
-        if airflowDag.emailOnRetries == None:
-            airflowDag.emailOnRetries = "0"
-        if airflowDag.retryExponentialBackoff == None:
-            airflowDag.retryExponentialBackoff = "0"
+        if airflow_dag.scheduleInterval == None:
+            airflow_dag.scheduleInterval = "None"
+        if airflow_dag.filterTable == None:
+            airflow_dag.filterTable = ""
+        if airflow_dag.finishAllStage1First == None:
+            airflow_dag.finishAllStage1First = "0"
+        if airflow_dag.retries == None:
+            airflow_dag.retries = "5"
+        if airflow_dag.autoRegenerateDag == None:
+            airflow_dag.autoRegenerateDag = "1"
+        if airflow_dag.runImportAndEtlSeparate == None:
+            airflow_dag.runImportAndEtlSeparate = "0"
+        if airflow_dag.metadataImport == None:
+            airflow_dag.metadataImport = "0"
+        if airflow_dag.emailOnFailure == None:
+            airflow_dag.emailOnFailure = "0"
+        if airflow_dag.emailOnRetries == None:
+            airflow_dag.emailOnRetries = "0"
+        if airflow_dag.retryExponentialBackoff == None:
+            airflow_dag.retryExponentialBackoff = "0"
 
         try:
             query = insert(configSchema.airflowImportDags).values(
                 dag_name=dagname,
-                schedule_interval=airflowDag.scheduleInterval,
-                filter_hive=airflowDag.filterTable,
-                finish_all_stage1_first=airflowDag.finishAllStage1First,
-                run_import_and_etl_separate=airflowDag.runImportAndEtlSeparate,
-                retries=airflowDag.retries,
-                retries_stage1=airflowDag.retriesStage1,
-                retries_stage2=airflowDag.retriesStage2,
-                pool_stage1=airflowDag.poolStage1,
-                pool_stage2=airflowDag.poolStage2,
-                operator_notes=airflowDag.operatorNotes,
-                application_notes=airflowDag.applicationNotes,
-                auto_regenerate_dag=airflowDag.autoRegenerateDag,
-                airflow_notes=airflowDag.airflowNotes,
-                sudo_user=airflowDag.sudoUser,
-                metadata_import=airflowDag.metadataImport,
-                timezone=airflowDag.timezone,
-                email=airflowDag.email,
-                email_on_failure=airflowDag.emailOnFailure,
-                email_on_retries=airflowDag.emailOnRetries,
-                tags=airflowDag.tags,
-                sla_warning_time=airflowDag.slaWarningTime,
-                retry_exponential_backoff=airflowDag.retryExponentialBackoff,
-                concurrency=airflowDag.concurrency,
+                schedule_interval=airflow_dag.scheduleInterval,
+                filter_hive=airflow_dag.filterTable,
+                finish_all_stage1_first=airflow_dag.finishAllStage1First,
+                run_import_and_etl_separate=airflow_dag.runImportAndEtlSeparate,
+                retries=airflow_dag.retries,
+                retries_stage1=airflow_dag.retriesStage1,
+                retries_stage2=airflow_dag.retriesStage2,
+                pool_stage1=airflow_dag.poolStage1,
+                pool_stage2=airflow_dag.poolStage2,
+                operator_notes=airflow_dag.operatorNotes,
+                application_notes=airflow_dag.applicationNotes,
+                auto_regenerate_dag=airflow_dag.autoRegenerateDag,
+                airflow_notes=airflow_dag.airflowNotes,
+                sudo_user=airflow_dag.sudoUser,
+                metadata_import=airflow_dag.metadataImport,
+                timezone=airflow_dag.timezone,
+                email=airflow_dag.email,
+                email_on_failure=airflow_dag.emailOnFailure,
+                email_on_retries=airflow_dag.emailOnRetries,
+                tags=airflow_dag.tags,
+                sla_warning_time=airflow_dag.slaWarningTime,
+                retry_exponential_backoff=airflow_dag.retryExponentialBackoff,
+                concurrency=airflow_dag.concurrency,
             )
 
             query = query.on_duplicate_key_update(
                 dag_name=dagname,
-                schedule_interval=airflowDag.scheduleInterval,
-                filter_hive=airflowDag.filterTable,
-                finish_all_stage1_first=airflowDag.finishAllStage1First,
-                run_import_and_etl_separate=airflowDag.runImportAndEtlSeparate,
-                retries=airflowDag.retries,
-                retries_stage1=airflowDag.retriesStage1,
-                retries_stage2=airflowDag.retriesStage2,
-                pool_stage1=airflowDag.poolStage1,
-                pool_stage2=airflowDag.poolStage2,
-                operator_notes=airflowDag.operatorNotes,
-                application_notes=airflowDag.applicationNotes,
-                auto_regenerate_dag=airflowDag.autoRegenerateDag,
-                airflow_notes=airflowDag.airflowNotes,
-                sudo_user=airflowDag.sudoUser,
-                metadata_import=airflowDag.metadataImport,
-                timezone=airflowDag.timezone,
-                email=airflowDag.email,
-                email_on_failure=airflowDag.emailOnFailure,
-                email_on_retries=airflowDag.emailOnRetries,
-                tags=airflowDag.tags,
-                sla_warning_time=airflowDag.slaWarningTime,
-                retry_exponential_backoff=airflowDag.retryExponentialBackoff,
-                concurrency=airflowDag.concurrency,
+                schedule_interval=airflow_dag.scheduleInterval,
+                filter_hive=airflow_dag.filterTable,
+                finish_all_stage1_first=airflow_dag.finishAllStage1First,
+                run_import_and_etl_separate=airflow_dag.runImportAndEtlSeparate,
+                retries=airflow_dag.retries,
+                retries_stage1=airflow_dag.retriesStage1,
+                retries_stage2=airflow_dag.retriesStage2,
+                pool_stage1=airflow_dag.poolStage1,
+                pool_stage2=airflow_dag.poolStage2,
+                operator_notes=airflow_dag.operatorNotes,
+                application_notes=airflow_dag.applicationNotes,
+                auto_regenerate_dag=airflow_dag.autoRegenerateDag,
+                airflow_notes=airflow_dag.airflowNotes,
+                sudo_user=airflow_dag.sudoUser,
+                metadata_import=airflow_dag.metadataImport,
+                timezone=airflow_dag.timezone,
+                email=airflow_dag.email,
+                email_on_failure=airflow_dag.emailOnFailure,
+                email_on_retries=airflow_dag.emailOnRetries,
+                tags=airflow_dag.tags,
+                sla_warning_time=airflow_dag.slaWarningTime,
+                retry_exponential_backoff=airflow_dag.retryExponentialBackoff,
+                concurrency=airflow_dag.concurrency,
             )
 
             session.execute(query)
@@ -4480,11 +4482,11 @@ class dbCalls:
         # session.close()
         session.remove()
 
-        tasks = airflowDag.tasks
+        tasks = airflow_dag.tasks
         for task in tasks:
             if (
                 self.updateAirflowTasks(
-                    dagname=dagname, task=task, currentUser=currentUser
+                    dagname=dagname, task=task, current_user=current_user
                 )
                 == False
             ):
@@ -4494,7 +4496,7 @@ class dbCalls:
 
         return (result, return_code)
 
-    def deleteExportAirflowDag(self, dagname, currentUser):
+    def deleteExportAirflowDag(self, dagname, current_user):
         """Delete an Airflow export DAG"""
         log = logging.getLogger(self.logger)
 
@@ -4507,7 +4509,7 @@ class dbCalls:
         result = "ok"
         return_code = 200
 
-        log.info("User '%s' deleted Airflow export DAG '%s'" % (currentUser, dagname))
+        log.info("User '%s' deleted Airflow export DAG '%s'" % (current_user, dagname))
 
         # Fetch the tableID as that is required to update/create data in import_columns
         row = (
@@ -4535,11 +4537,11 @@ class dbCalls:
         session.remove()
         return (result, return_code)
 
-    def bulkDeleteExportAirflowDag(self, bulkData, currentUser):
+    def bulkDeleteExportAirflowDag(self, bulk_data, current_user):
         """Bulk delete of Airflow import Dags"""
         log = logging.getLogger(self.logger)
 
-        if len(bulkData) == 0:
+        if len(bulk_data) == 0:
             result_msg = {
                 "result": "Body must contain a list of Airflow dags to delete"
             }
@@ -4559,7 +4561,7 @@ class dbCalls:
 
         # Create a list of dicts that contain all the databas and table combinations that will be deleted
         table_list = []
-        for tables in bulkData:
+        for tables in bulk_data:
             table_list.append({"dag": tables.name})
 
         session.connection().execute(delete_statement, table_list)
@@ -4571,11 +4573,11 @@ class dbCalls:
 
         return (result_msg, return_code)
 
-    def bulkUpdateExportAirflowDag(self, bulkData, currentUser):
+    def bulkUpdateExportAirflowDag(self, bulk_data, current_user):
         """Bulk update of Airflow export Dags"""
         log = logging.getLogger(self.logger)
 
-        if len(bulkData.dags) == 0:
+        if len(bulk_data.dags) == 0:
             result_msg = {
                 "result": "dags must contain a list of Airflow dags to update"
             }
@@ -4597,45 +4599,45 @@ class dbCalls:
 
         # This will loop through only the fields specified in the Posted JSON. So if a field have got a default None value in dataModel validation,
         # that field wont be part of this loop
-        for update_field in bulkData.__pydantic_fields_set__:
+        for update_field in bulk_data.__pydantic_fields_set__:
             if update_field == "scheduleInterval":
                 update_statement = update_statement.values(
-                    schedule_interval=bulkData.scheduleInterval
+                    schedule_interval=bulk_data.scheduleInterval
                 )
             elif update_field == "operatorNotes":
                 update_statement = update_statement.values(
-                    operator_notes=bulkData.operatorNotes
+                    operator_notes=bulk_data.operatorNotes
                 )
             elif update_field == "autoRegenerateDag":
                 update_statement = update_statement.values(
-                    auto_regenerate_dag=bulkData.autoRegenerateDag
+                    auto_regenerate_dag=bulk_data.autoRegenerateDag
                 )
             elif update_field == "sudoUser":
-                update_statement = update_statement.values(sudo_user=bulkData.sudoUser)
+                update_statement = update_statement.values(sudo_user=bulk_data.sudoUser)
             elif update_field == "timezone":
-                update_statement = update_statement.values(timezone=bulkData.timezone)
+                update_statement = update_statement.values(timezone=bulk_data.timezone)
             elif update_field == "email":
-                update_statement = update_statement.values(email=bulkData.email)
+                update_statement = update_statement.values(email=bulk_data.email)
             elif update_field == "emailOnFailure":
                 update_statement = update_statement.values(
-                    email_on_failure=bulkData.emailOnFailure
+                    email_on_failure=bulk_data.emailOnFailure
                 )
             elif update_field == "emailOnRetries":
                 update_statement = update_statement.values(
-                    email_on_retries=bulkData.emailOnRetries
+                    email_on_retries=bulk_data.emailOnRetries
                 )
             elif update_field == "slaWarningTime":
                 update_statement = update_statement.values(
-                    sla_warning_time=bulkData.slaWarningTime
+                    sla_warning_time=bulk_data.slaWarningTime
                 )
             elif update_field == "concurrency":
                 update_statement = update_statement.values(
-                    concurrency=bulkData.concurrency
+                    concurrency=bulk_data.concurrency
                 )
 
         # Create a list of dicts that contain all the databas/table combinations that will be updated
         table_list = []
-        for tables in bulkData.dags:
+        for tables in bulk_data.dags:
             table_list.append({"dag": tables.name})
 
         update_statement = update_statement.execution_options(synchronize_session=False)
@@ -4650,7 +4652,7 @@ class dbCalls:
 
         return (result_msg, return_code)
 
-    def updateExportAirflowDag(self, dagname, airflowDag, currentUser):
+    def updateExportAirflowDag(self, dagname, airflow_dag, current_user):
         """Update or create an Airflow export DAG"""
         log = logging.getLogger(self.logger)
 
@@ -4664,7 +4666,7 @@ class dbCalls:
         result = "ok"
         return_code = 200
 
-        if self.checkDagNameAvailability(name=dagname, excludeExport=True) == False:
+        if self.checkDagNameAvailability(name=dagname, exclude_export=True) == False:
             log.error(
                 "Airflow Import DAG creation was denied as the name was already existing on custom or export DAG"
             )
@@ -4674,70 +4676,71 @@ class dbCalls:
             return_code = 400
             return (result, return_code)
 
-        log.debug(airflowDag)
+        log.debug(airflow_dag)
         log.info(
-            "User '%s' updated/created Airflow export DAG '%s'" % (currentUser, dagname)
+            "User '%s' updated/created Airflow export DAG '%s'"
+            % (current_user, dagname)
         )
 
         # Set default values
-        if airflowDag.scheduleInterval == None:
-            airflowDag.scheduleInterval = "None"
-        if airflowDag.filterConnection == None:
-            airflowDag.filterConnection = ""
-        if airflowDag.retries == None:
-            airflowDag.retries = "5"
-        if airflowDag.autoRegenerateDag == None:
-            airflowDag.autoRegenerateDag = "1"
-        if airflowDag.emailOnFailure == None:
-            airflowDag.emailOnFailure = "0"
-        if airflowDag.emailOnRetries == None:
-            airflowDag.emailOnRetries = "0"
-        if airflowDag.retryExponentialBackoff == None:
-            airflowDag.retryExponentialBackoff = "0"
+        if airflow_dag.scheduleInterval == None:
+            airflow_dag.scheduleInterval = "None"
+        if airflow_dag.filterConnection == None:
+            airflow_dag.filterConnection = ""
+        if airflow_dag.retries == None:
+            airflow_dag.retries = "5"
+        if airflow_dag.autoRegenerateDag == None:
+            airflow_dag.autoRegenerateDag = "1"
+        if airflow_dag.emailOnFailure == None:
+            airflow_dag.emailOnFailure = "0"
+        if airflow_dag.emailOnRetries == None:
+            airflow_dag.emailOnRetries = "0"
+        if airflow_dag.retryExponentialBackoff == None:
+            airflow_dag.retryExponentialBackoff = "0"
 
         try:
             query = insert(configSchema.airflowExportDags).values(
                 dag_name=dagname,
-                schedule_interval=airflowDag.scheduleInterval,
-                filter_dbalias=airflowDag.filterConnection,
-                filter_target_schema=airflowDag.filterTargetSchema,
-                filter_target_table=airflowDag.filterTargetTable,
-                retries=airflowDag.retries,
-                operator_notes=airflowDag.operatorNotes,
-                application_notes=airflowDag.applicationNotes,
-                auto_regenerate_dag=airflowDag.autoRegenerateDag,
-                airflow_notes=airflowDag.airflowNotes,
-                sudo_user=airflowDag.sudoUser,
-                timezone=airflowDag.timezone,
-                email=airflowDag.email,
-                email_on_failure=airflowDag.emailOnFailure,
-                email_on_retries=airflowDag.emailOnRetries,
-                tags=airflowDag.tags,
-                sla_warning_time=airflowDag.slaWarningTime,
-                retry_exponential_backoff=airflowDag.retryExponentialBackoff,
-                concurrency=airflowDag.concurrency,
+                schedule_interval=airflow_dag.scheduleInterval,
+                filter_dbalias=airflow_dag.filterConnection,
+                filter_target_schema=airflow_dag.filterTargetSchema,
+                filter_target_table=airflow_dag.filterTargetTable,
+                retries=airflow_dag.retries,
+                operator_notes=airflow_dag.operatorNotes,
+                application_notes=airflow_dag.applicationNotes,
+                auto_regenerate_dag=airflow_dag.autoRegenerateDag,
+                airflow_notes=airflow_dag.airflowNotes,
+                sudo_user=airflow_dag.sudoUser,
+                timezone=airflow_dag.timezone,
+                email=airflow_dag.email,
+                email_on_failure=airflow_dag.emailOnFailure,
+                email_on_retries=airflow_dag.emailOnRetries,
+                tags=airflow_dag.tags,
+                sla_warning_time=airflow_dag.slaWarningTime,
+                retry_exponential_backoff=airflow_dag.retryExponentialBackoff,
+                concurrency=airflow_dag.concurrency,
             )
 
             query = query.on_duplicate_key_update(
                 dag_name=dagname,
-                schedule_interval=airflowDag.scheduleInterval,
-                filter_dbalias=airflowDag.filterConnection,
-                filter_target_schema=airflowDag.filterTargetSchema,
-                filter_target_table=airflowDag.filterTargetTable,
-                retries=airflowDag.retries,
-                operator_notes=airflowDag.operatorNotes,
-                application_notes=airflowDag.applicationNotes,
-                auto_regenerate_dag=airflowDag.autoRegenerateDag,
-                airflow_notes=airflowDag.airflowNotes,
-                sudo_user=airflowDag.sudoUser,
-                timezone=airflowDag.timezone,
-                email=airflowDag.email,
-                email_on_failure=airflowDag.emailOnFailure,
-                email_on_retries=airflowDag.emailOnRetries,
-                tags=airflowDag.tags,
-                sla_warning_time=airflowDag.slaWarningTime,
-                retry_exponential_backoff=airflowDag.retryExponentialBackoff,
-                concurrency=airflowDag.concurrency,
+                schedule_interval=airflow_dag.scheduleInterval,
+                filter_dbalias=airflow_dag.filterConnection,
+                filter_target_schema=airflow_dag.filterTargetSchema,
+                filter_target_table=airflow_dag.filterTargetTable,
+                retries=airflow_dag.retries,
+                operator_notes=airflow_dag.operatorNotes,
+                application_notes=airflow_dag.applicationNotes,
+                auto_regenerate_dag=airflow_dag.autoRegenerateDag,
+                airflow_notes=airflow_dag.airflowNotes,
+                sudo_user=airflow_dag.sudoUser,
+                timezone=airflow_dag.timezone,
+                email=airflow_dag.email,
+                email_on_failure=airflow_dag.emailOnFailure,
+                email_on_retries=airflow_dag.emailOnRetries,
+                tags=airflow_dag.tags,
+                sla_warning_time=airflow_dag.slaWarningTime,
+                retry_exponential_backoff=airflow_dag.retryExponentialBackoff,
+                concurrency=airflow_dag.concurrency,
             )
 
             session.execute(query)
@@ -4756,11 +4759,11 @@ class dbCalls:
         # session.close()
         session.remove()
 
-        tasks = airflowDag.tasks
+        tasks = airflow_dag.tasks
         for task in tasks:
             if (
                 self.updateAirflowTasks(
-                    dagname=dagname, task=task, currentUser=currentUser
+                    dagname=dagname, task=task, current_user=current_user
                 )
                 == False
             ):
@@ -4770,7 +4773,7 @@ class dbCalls:
 
         return (result, return_code)
 
-    def deleteCustomAirflowDag(self, dagname, currentUser):
+    def deleteCustomAirflowDag(self, dagname, current_user):
         """Delete an Airflow import DAG"""
         log = logging.getLogger(self.logger)
 
@@ -4783,7 +4786,7 @@ class dbCalls:
         result = "ok"
         return_code = 200
 
-        log.info("User '%s' deleted Airflow import DAG '%s'" % (currentUser, dagname))
+        log.info("User '%s' deleted Airflow import DAG '%s'" % (current_user, dagname))
 
         # Fetch the tableID as that is required to update/create data in import_columns
         row = (
@@ -4811,11 +4814,11 @@ class dbCalls:
         session.remove()
         return (result, return_code)
 
-    def bulkDeleteCustomAirflowDag(self, bulkData, currentUser):
+    def bulkDeleteCustomAirflowDag(self, bulk_data, current_user):
         """Bulk delete of Airflow custom Dags"""
         log = logging.getLogger(self.logger)
 
-        if len(bulkData) == 0:
+        if len(bulk_data) == 0:
             result_msg = {
                 "result": "Body must contain a list of Airflow dags to delete"
             }
@@ -4835,7 +4838,7 @@ class dbCalls:
 
         # Create a list of dicts that contain all the databas and table combinations that will be deleted
         table_list = []
-        for tables in bulkData:
+        for tables in bulk_data:
             table_list.append({"dag": tables.name})
 
         session.connection().execute(delete_statement, table_list)
@@ -4847,11 +4850,11 @@ class dbCalls:
 
         return (result_msg, return_code)
 
-    def bulkUpdateCustomAirflowDag(self, bulkData, currentUser):
+    def bulkUpdateCustomAirflowDag(self, bulk_data, current_user):
         """Bulk update of Airflow custom Dags"""
         log = logging.getLogger(self.logger)
 
-        if len(bulkData.dags) == 0:
+        if len(bulk_data.dags) == 0:
             result_msg = {
                 "result": "dags must contain a list of Airflow dags to update"
             }
@@ -4873,45 +4876,45 @@ class dbCalls:
 
         # This will loop through only the fields specified in the Posted JSON. So if a field have got a default None value in dataModel validation,
         # that field wont be part of this loop
-        for update_field in bulkData.__pydantic_fields_set__:
+        for update_field in bulk_data.__pydantic_fields_set__:
             if update_field == "scheduleInterval":
                 update_statement = update_statement.values(
-                    schedule_interval=bulkData.scheduleInterval
+                    schedule_interval=bulk_data.scheduleInterval
                 )
             elif update_field == "operatorNotes":
                 update_statement = update_statement.values(
-                    operator_notes=bulkData.operatorNotes
+                    operator_notes=bulk_data.operatorNotes
                 )
             elif update_field == "autoRegenerateDag":
                 update_statement = update_statement.values(
-                    auto_regenerate_dag=bulkData.autoRegenerateDag
+                    auto_regenerate_dag=bulk_data.autoRegenerateDag
                 )
             elif update_field == "sudoUser":
-                update_statement = update_statement.values(sudo_user=bulkData.sudoUser)
+                update_statement = update_statement.values(sudo_user=bulk_data.sudoUser)
             elif update_field == "timezone":
-                update_statement = update_statement.values(timezone=bulkData.timezone)
+                update_statement = update_statement.values(timezone=bulk_data.timezone)
             elif update_field == "email":
-                update_statement = update_statement.values(email=bulkData.email)
+                update_statement = update_statement.values(email=bulk_data.email)
             elif update_field == "emailOnFailure":
                 update_statement = update_statement.values(
-                    email_on_failure=bulkData.emailOnFailure
+                    email_on_failure=bulk_data.emailOnFailure
                 )
             elif update_field == "emailOnRetries":
                 update_statement = update_statement.values(
-                    email_on_retries=bulkData.emailOnRetries
+                    email_on_retries=bulk_data.emailOnRetries
                 )
             elif update_field == "slaWarningTime":
                 update_statement = update_statement.values(
-                    sla_warning_time=bulkData.slaWarningTime
+                    sla_warning_time=bulk_data.slaWarningTime
                 )
             elif update_field == "concurrency":
                 update_statement = update_statement.values(
-                    concurrency=bulkData.concurrency
+                    concurrency=bulk_data.concurrency
                 )
 
         # Create a list of dicts that contain all the databas/table combinations that will be updated
         table_list = []
-        for tables in bulkData.dags:
+        for tables in bulk_data.dags:
             table_list.append({"dag": tables.name})
 
         update_statement = update_statement.execution_options(synchronize_session=False)
@@ -4926,7 +4929,7 @@ class dbCalls:
 
         return (result_msg, return_code)
 
-    def updateCustomAirflowDag(self, dagname, airflowDag, currentUser):
+    def updateCustomAirflowDag(self, dagname, airflow_dag, current_user):
         """Update or create an Airflow custom DAG"""
         log = logging.getLogger(self.logger)
 
@@ -4940,7 +4943,7 @@ class dbCalls:
         result = "ok"
         return_code = 200
 
-        if self.checkDagNameAvailability(name=dagname, excludeCustom=True) == False:
+        if self.checkDagNameAvailability(name=dagname, exclude_custom=True) == False:
             log.error(
                 "Airflow Import DAG creation was denied as the name was already existing on custom or export DAG"
             )
@@ -4950,62 +4953,63 @@ class dbCalls:
             return_code = 400
             return (result, return_code)
 
-        log.debug(airflowDag)
+        log.debug(airflow_dag)
         log.info(
-            "User '%s' updated/created Airflow custom DAG '%s'" % (currentUser, dagname)
+            "User '%s' updated/created Airflow custom DAG '%s'"
+            % (current_user, dagname)
         )
 
         # Set default values
-        if airflowDag.scheduleInterval == None:
-            airflowDag.scheduleInterval = "None"
-        if airflowDag.retries == None:
-            airflowDag.retries = "0"
-        if airflowDag.autoRegenerateDag == None:
-            airflowDag.autoRegenerateDag = "1"
-        if airflowDag.emailOnFailure == None:
-            airflowDag.emailOnFailure = "0"
-        if airflowDag.emailOnRetries == None:
-            airflowDag.emailOnRetries = "0"
-        if airflowDag.retryExponentialBackoff == None:
-            airflowDag.retryExponentialBackoff = "0"
+        if airflow_dag.scheduleInterval == None:
+            airflow_dag.scheduleInterval = "None"
+        if airflow_dag.retries == None:
+            airflow_dag.retries = "0"
+        if airflow_dag.autoRegenerateDag == None:
+            airflow_dag.autoRegenerateDag = "1"
+        if airflow_dag.emailOnFailure == None:
+            airflow_dag.emailOnFailure = "0"
+        if airflow_dag.emailOnRetries == None:
+            airflow_dag.emailOnRetries = "0"
+        if airflow_dag.retryExponentialBackoff == None:
+            airflow_dag.retryExponentialBackoff = "0"
 
         try:
             query = insert(configSchema.airflowCustomDags).values(
                 dag_name=dagname,
-                schedule_interval=airflowDag.scheduleInterval,
-                retries=airflowDag.retries,
-                operator_notes=airflowDag.operatorNotes,
-                application_notes=airflowDag.applicationNotes,
-                auto_regenerate_dag=airflowDag.autoRegenerateDag,
-                airflow_notes=airflowDag.airflowNotes,
-                sudo_user=airflowDag.sudoUser,
-                timezone=airflowDag.timezone,
-                email=airflowDag.email,
-                email_on_failure=airflowDag.emailOnFailure,
-                email_on_retries=airflowDag.emailOnRetries,
-                tags=airflowDag.tags,
-                sla_warning_time=airflowDag.slaWarningTime,
-                retry_exponential_backoff=airflowDag.retryExponentialBackoff,
-                concurrency=airflowDag.concurrency,
+                schedule_interval=airflow_dag.scheduleInterval,
+                retries=airflow_dag.retries,
+                operator_notes=airflow_dag.operatorNotes,
+                application_notes=airflow_dag.applicationNotes,
+                auto_regenerate_dag=airflow_dag.autoRegenerateDag,
+                airflow_notes=airflow_dag.airflowNotes,
+                sudo_user=airflow_dag.sudoUser,
+                timezone=airflow_dag.timezone,
+                email=airflow_dag.email,
+                email_on_failure=airflow_dag.emailOnFailure,
+                email_on_retries=airflow_dag.emailOnRetries,
+                tags=airflow_dag.tags,
+                sla_warning_time=airflow_dag.slaWarningTime,
+                retry_exponential_backoff=airflow_dag.retryExponentialBackoff,
+                concurrency=airflow_dag.concurrency,
             )
 
             query = query.on_duplicate_key_update(
                 dag_name=dagname,
-                schedule_interval=airflowDag.scheduleInterval,
-                retries=airflowDag.retries,
-                operator_notes=airflowDag.operatorNotes,
-                application_notes=airflowDag.applicationNotes,
-                auto_regenerate_dag=airflowDag.autoRegenerateDag,
-                airflow_notes=airflowDag.airflowNotes,
-                sudo_user=airflowDag.sudoUser,
-                timezone=airflowDag.timezone,
-                email=airflowDag.email,
-                email_on_failure=airflowDag.emailOnFailure,
-                email_on_retries=airflowDag.emailOnRetries,
-                tags=airflowDag.tags,
-                sla_warning_time=airflowDag.slaWarningTime,
-                retry_exponential_backoff=airflowDag.retryExponentialBackoff,
-                concurrency=airflowDag.concurrency,
+                schedule_interval=airflow_dag.scheduleInterval,
+                retries=airflow_dag.retries,
+                operator_notes=airflow_dag.operatorNotes,
+                application_notes=airflow_dag.applicationNotes,
+                auto_regenerate_dag=airflow_dag.autoRegenerateDag,
+                airflow_notes=airflow_dag.airflowNotes,
+                sudo_user=airflow_dag.sudoUser,
+                timezone=airflow_dag.timezone,
+                email=airflow_dag.email,
+                email_on_failure=airflow_dag.emailOnFailure,
+                email_on_retries=airflow_dag.emailOnRetries,
+                tags=airflow_dag.tags,
+                sla_warning_time=airflow_dag.slaWarningTime,
+                retry_exponential_backoff=airflow_dag.retryExponentialBackoff,
+                concurrency=airflow_dag.concurrency,
             )
 
             session.execute(query)
@@ -5024,11 +5028,11 @@ class dbCalls:
         # session.close()
         session.remove()
 
-        tasks = airflowDag.tasks
+        tasks = airflow_dag.tasks
         for task in tasks:
             if (
                 self.updateAirflowTasks(
-                    dagname=dagname, task=task, currentUser=currentUser
+                    dagname=dagname, task=task, current_user=current_user
                 )
                 == False
             ):

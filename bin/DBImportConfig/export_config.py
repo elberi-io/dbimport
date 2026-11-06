@@ -151,18 +151,18 @@ class config(metaclass=Singleton):
     def logTargetColumnAdd(
         self,
         column,
-        columnType,
+        column_type,
         description=None,
-        dbAlias=None,
+        db_alias=None,
         database=None,
         schema=None,
         table=None,
     ):
         self.common_config.logJDBCColumnAdd(
             column=column,
-            columnType=columnType,
+            column_type=column_type,
             description=description,
-            dbAlias=dbAlias,
+            db_alias=db_alias,
             database=database,
             schema=schema,
             table=table,
@@ -171,20 +171,20 @@ class config(metaclass=Singleton):
     def logTargetColumnTypeChange(
         self,
         column,
-        columnType,
-        previous_columnType=None,
+        column_type,
+        previous_column_type=None,
         description=None,
-        dbAlias=None,
+        db_alias=None,
         database=None,
         schema=None,
         table=None,
     ):
         self.common_config.logJDBCColumnTypeChange(
             column,
-            columnType,
-            previous_columnType=previous_columnType,
+            column_type,
+            previous_column_type=previous_column_type,
             description=description,
-            dbAlias=dbAlias,
+            db_alias=db_alias,
             database=database,
             schema=schema,
             table=table,
@@ -192,19 +192,19 @@ class config(metaclass=Singleton):
 
     def logTargetColumnRename(
         self,
-        columnName,
-        previous_columnName,
+        column_name,
+        previous_column_name,
         description=None,
-        dbAlias=None,
+        db_alias=None,
         database=None,
         schema=None,
         table=None,
     ):
         self.common_config.logJDBCColumnRename(
-            columnName,
-            previous_columnName,
+            column_name,
+            previous_column_name,
             description=description,
-            dbAlias=dbAlias,
+            db_alias=db_alias,
             database=database,
             schema=schema,
             table=table,
@@ -593,16 +593,16 @@ class config(metaclass=Singleton):
             "Executing export_config.saveCustomSQLValidationHiveValue() - Finished"
         )
 
-    def saveCustomSQLValidationTargetValue(self, jsonValue, printInfo=True):
+    def saveCustomSQLValidationTargetValue(self, json_value, print_info=True):
         logging.debug("Executing export_config.saveCustomSQLValidationTargetValue()")
-        if printInfo == True:
+        if print_info == True:
             logging.info(
                 "Saving the custom SQL validation data from target table to the configuration database"
             )
 
         query = "update export_tables set validationCustomQueryTargetValue = %s where table_id = %s"
 
-        self.mysql_cursor01.execute(query, (jsonValue, self.tableID))
+        self.mysql_cursor01.execute(query, (json_value, self.tableID))
         self.mysql_conn.commit()
         logging.debug("SQL Statement executed: %s" % (self.mysql_cursor01.statement))
 
@@ -829,7 +829,7 @@ class config(metaclass=Singleton):
         )
         return result_df
 
-    def convertColumnTypeForTargetTable(self, columnName, columnType):
+    def convertColumnTypeForTargetTable(self, column_name, column_type):
         """Converts the column type to a type that is supported by the Target database type"""
         logging.debug("Executing export_config.convertColumnTypeForTargetTable()")
 
@@ -862,7 +862,7 @@ class config(metaclass=Singleton):
                 else:
                     source_table = self.hiveTable
 
-        if columnType in ("string", "binary"):
+        if column_type in ("string", "binary"):
             # If the columnType is "string", it might be because we are exporting a table that was imported with force_string = 1.
 
             query = "select "
@@ -883,20 +883,20 @@ class config(metaclass=Singleton):
             query += "  and t.hive_table = %s "
 
             self.mysql_cursor01.execute(
-                query, (columnName.lower(), source_db, source_table)
+                query, (column_name.lower(), source_db, source_table)
             )
             logging.debug(
                 "SQL Statement executed: %s" % (self.mysql_cursor01.statement)
             )
 
-            if columnType == "binary":
+            if column_type == "binary":
                 if self.mysql_cursor01.rowcount == 1:
                     row = self.mysql_cursor01.fetchone()
                     source_column_type = row[3]
                     source_database_type = row[4]
-                    columnType = source_column_type
+                    column_type = source_column_type
 
-            if columnType == "string":
+            if column_type == "string":
                 force_string = False
                 if self.mysql_cursor01.rowcount == 1:
                     row = self.mysql_cursor01.fetchone()
@@ -922,82 +922,82 @@ class config(metaclass=Singleton):
                         force_string = True
 
                 if force_string == True:
-                    columnType = source_column_type
+                    column_type = source_column_type
 
         if self.common_config.db_mssql == True:
-            columnType = re.sub("^timestamp", "datetime", columnType)
-            columnType = re.sub("^double$", "real", columnType)
-            columnType = re.sub("^string$", "varchar(max)", columnType)
-            columnType = re.sub("^boolean$", "tinyint", columnType)
+            column_type = re.sub("^timestamp", "datetime", column_type)
+            column_type = re.sub("^double$", "real", column_type)
+            column_type = re.sub("^string$", "varchar(max)", column_type)
+            column_type = re.sub("^boolean$", "tinyint", column_type)
 
             if source_database_type == constant.ORACLE:
-                columnType = re.sub(r"^varchar2\(", "varchar(", columnType)
+                column_type = re.sub(r"^varchar2\(", "varchar(", column_type)
 
         if self.common_config.db_oracle == True:
-            columnType = re.sub(r"^varchar\(-1\)$", "string", columnType)
-            columnType = re.sub(r"^nvarchar\(-1\)$", "string", columnType)
-            columnType = re.sub("^tinyint$", "number(3)", columnType)
-            columnType = re.sub("^smallint$", "number(5)", columnType)
-            columnType = re.sub(r"^decimal\(", "number(", columnType)
-            columnType = re.sub("^bigint$", "number(19)", columnType)
-            columnType = re.sub("^double$", "binary_double", columnType)
-            columnType = re.sub("^boolean$", "number(1)", columnType)
-            columnType = re.sub("^uniqueidentifier$", "varchar2(36)", columnType)
-            columnType = re.sub(r"^nvarchar\(", "varchar2(", columnType)
-            columnType = re.sub(r"^varchar\(", "varchar2(", columnType)
-            columnType = re.sub("^timestamp$", "date", columnType)
-            columnType = re.sub("^text$", "string", columnType)
-            columnType = re.sub("^int$", "number", columnType)
+            column_type = re.sub(r"^varchar\(-1\)$", "string", column_type)
+            column_type = re.sub(r"^nvarchar\(-1\)$", "string", column_type)
+            column_type = re.sub("^tinyint$", "number(3)", column_type)
+            column_type = re.sub("^smallint$", "number(5)", column_type)
+            column_type = re.sub(r"^decimal\(", "number(", column_type)
+            column_type = re.sub("^bigint$", "number(19)", column_type)
+            column_type = re.sub("^double$", "binary_double", column_type)
+            column_type = re.sub("^boolean$", "number(1)", column_type)
+            column_type = re.sub("^uniqueidentifier$", "varchar2(36)", column_type)
+            column_type = re.sub(r"^nvarchar\(", "varchar2(", column_type)
+            column_type = re.sub(r"^varchar\(", "varchar2(", column_type)
+            column_type = re.sub("^timestamp$", "date", column_type)
+            column_type = re.sub("^text$", "string", column_type)
+            column_type = re.sub("^int$", "number", column_type)
 
             # If the column is a NUMBER but with decimal 0, it will be read without the decimal.
-            if re.search(r"^number\([0-9]*,0\)$", columnType):
-                columnType = re.sub(r",0\)$", ")", columnType)
+            if re.search(r"^number\([0-9]*,0\)$", column_type):
+                column_type = re.sub(r",0\)$", ")", column_type)
 
             # Oracle only supports varchar up to 4000. After that it have to be a CLOB. This will rewrite the soure tabletype
             # to string and will later be converted to clob.
-            if columnType.startswith("varchar2("):
-                columnType = re.sub(r" char\)$", ")", columnType)
-                column_size = int(columnType.split("(")[1].split(")")[0])
+            if column_type.startswith("varchar2("):
+                column_type = re.sub(r" char\)$", ")", column_type)
+                column_size = int(column_type.split("(")[1].split(")")[0])
                 if column_size > 4000:
-                    columnType = "clob"
+                    column_type = "clob"
 
-            if columnType == "string":
+            if column_type == "string":
                 raise invalidConfiguration(
                     "Error: Exports of column '%s' with type 'string' to Oracle is not supported. Please set another columntype in 'target_column_type' or ignore this column in the export."
-                    % (columnName)
+                    % (column_name)
                 )
 
         if self.common_config.db_mysql == True:
-            columnType = re.sub("^string$", "text", columnType)
+            column_type = re.sub("^string$", "text", column_type)
 
         if self.common_config.db_db2udb == True:
-            if columnType == "string":
-                columnType = "clob"
+            if column_type == "string":
+                column_type = "clob"
                 map_column_java = "String"
-            columnType = re.sub("^timestamp$", "timestmp", columnType)
+            column_type = re.sub("^timestamp$", "timestmp", column_type)
 
         if self.common_config.db_postgresql == True:
-            if columnType == "string":
-                columnType = "text"
+            if column_type == "string":
+                column_type = "text"
                 map_column_java = "String"
-            columnType = re.sub("^tinyint$", "integer", columnType)
-            columnType = re.sub(
-                "^timestamp$", "timestamp without time zone", columnType
+            column_type = re.sub("^tinyint$", "integer", column_type)
+            column_type = re.sub(
+                "^timestamp$", "timestamp without time zone", column_type
             )
-            columnType = re.sub(r"^decimal\(", "numeric(", columnType)
-            columnType = re.sub("^int$", "integer", columnType)
-            columnType = re.sub(r"^char\(", "character(", columnType)
-            columnType = re.sub(r"^varchar\(", "character varying(", columnType)
+            column_type = re.sub(r"^decimal\(", "numeric(", column_type)
+            column_type = re.sub("^int$", "integer", column_type)
+            column_type = re.sub(r"^char\(", "character(", column_type)
+            column_type = re.sub(r"^varchar\(", "character varying(", column_type)
 
         if self.common_config.db_snowflake == True:
-            columnType = re.sub("^timestamp$", "TIMESTAMP_NTZ", columnType)
-            columnType = re.sub(r"^char\(", "TEXT(", columnType)
-            columnType = re.sub(r"^varchar\(", "TEXT(", columnType)
+            column_type = re.sub("^timestamp$", "TIMESTAMP_NTZ", column_type)
+            column_type = re.sub(r"^char\(", "TEXT(", column_type)
+            column_type = re.sub(r"^varchar\(", "TEXT(", column_type)
 
         logging.debug(
             "Executing export_config.convertColumnTypeForTargetTable() - Finished"
         )
-        return columnType, map_column_java
+        return column_type, map_column_java
 
     def updateTargetTable(self):
         """Updates the target table with new column definitions"""
@@ -1217,7 +1217,7 @@ class config(metaclass=Singleton):
                     self.logTargetColumnRename(
                         row_in_source["name"],
                         row_in_target["name"],
-                        dbAlias=self.connectionAlias,
+                        db_alias=self.connectionAlias,
                         database=self.common_config.jdbc_database,
                         schema=target_schema,
                         table=target_table,
@@ -1235,8 +1235,8 @@ class config(metaclass=Singleton):
                         self.logTargetColumnTypeChange(
                             row_in_source["name"],
                             row_in_source["type"],
-                            previous_columnType=row_in_target["type"],
-                            dbAlias=self.connectionAlias,
+                            previous_column_type=row_in_target["type"],
+                            db_alias=self.connectionAlias,
                             database=self.common_config.jdbc_database,
                             schema=target_schema,
                             table=target_table,
@@ -1330,7 +1330,7 @@ class config(metaclass=Singleton):
                         self.logTargetColumnRename(
                             row_in_source["name"],
                             row_in_target["name"],
-                            dbAlias=self.connectionAlias,
+                            db_alias=self.connectionAlias,
                             database=self.common_config.jdbc_database,
                             schema=target_schema,
                             table=target_table,
@@ -1350,8 +1350,8 @@ class config(metaclass=Singleton):
                             self.logTargetColumnTypeChange(
                                 row_in_source["name"],
                                 row_in_source["type"],
-                                previous_columnType=row_in_target["type"],
-                                dbAlias=self.connectionAlias,
+                                previous_column_type=row_in_target["type"],
+                                db_alias=self.connectionAlias,
                                 database=self.common_config.jdbc_database,
                                 schema=target_schema,
                                 table=target_table,
@@ -1447,8 +1447,8 @@ class config(metaclass=Singleton):
             )
             self.logTargetColumnAdd(
                 full_row["name"],
-                columnType=full_row["type"],
-                dbAlias=self.connectionAlias,
+                column_type=full_row["type"],
+                db_alias=self.connectionAlias,
                 database=self.common_config.jdbc_database,
                 schema=target_schema,
                 table=target_table,
@@ -1596,9 +1596,9 @@ class config(metaclass=Singleton):
             )
             self.logTargetColumnTypeChange(
                 row["name"],
-                columnType=row["type"],
-                previous_columnType=previous_column_type,
-                dbAlias=self.connectionAlias,
+                column_type=row["type"],
+                previous_column_type=previous_column_type,
+                db_alias=self.connectionAlias,
                 database=self.common_config.jdbc_database,
                 schema=target_schema,
                 table=target_table,
@@ -1840,66 +1840,66 @@ class config(metaclass=Singleton):
 
     def saveExportStatistics(
         self,
-        sqoopStartUTS=None,
-        sqoopSize=None,
-        sqoopRows=None,
-        sqoopIncrMaxvaluePending=None,
-        sqoopMappers=None,
+        sqoop_start_uts=None,
+        sqoop_size=None,
+        sqoop_rows=None,
+        sqoop_incr_maxvalue_pending=None,
+        sqoop_mappers=None,
     ):
         logging.debug("Executing export_config.saveExportStatistics()")
         logging.info("Saving export statistics")
 
-        self.sqoopStartUTS = sqoopStartUTS
+        self.sqoopStartUTS = sqoop_start_uts
         self.sqoop_last_execution_timestamp = datetime.utcfromtimestamp(
-            sqoopStartUTS
+            sqoop_start_uts
         ).strftime("%Y-%m-%d %H:%M:%S.000")
 
         query_param = []
         query = "update export_tables set "
         first_set = True
-        if sqoopStartUTS != None:
+        if sqoop_start_uts != None:
             if first_set == False:
                 query += " ,"
                 first_set = False
 
             query += "sqoop_last_execution = %s"
-            query_param.append(sqoopStartUTS)
+            query_param.append(sqoop_start_uts)
 
-        if sqoopSize != None:
+        if sqoop_size != None:
             if first_set == False:
                 query += " , "
                 first_set = False
 
             query += "sqoop_last_size = %s"
-            self.sqoop_last_size = sqoopSize
-            query_param.append(sqoopSize)
+            self.sqoop_last_size = sqoop_size
+            query_param.append(sqoop_size)
 
-        if sqoopRows != None:
+        if sqoop_rows != None:
             if first_set == False:
                 query += " , "
                 first_set = False
 
             query += "sqoop_last_rows = %s"
-            self.sqoop_last_rows = sqoopRows
-            query_param.append(sqoopRows)
+            self.sqoop_last_rows = sqoop_rows
+            query_param.append(sqoop_rows)
 
-        if sqoopIncrMaxvaluePending != None:
+        if sqoop_incr_maxvalue_pending != None:
             if first_set == False:
                 query += " , "
                 first_set = False
 
             query += "incr_maxvalue_pending = %s"
-            self.sqoopIncrMaxvaluePending = sqoopIncrMaxvaluePending
-            query_param.append(sqoopIncrMaxvaluePending)
+            self.sqoopIncrMaxvaluePending = sqoop_incr_maxvalue_pending
+            query_param.append(sqoop_incr_maxvalue_pending)
 
-        if sqoopMappers != None:
+        if sqoop_mappers != None:
             if first_set == False:
                 query += " , "
                 first_set = False
 
             query += "sqoop_last_mappers = %s"
-            self.sqoop_last_mappers = sqoopMappers
-            query_param.append(sqoopMappers)
+            self.sqoop_last_mappers = sqoop_mappers
+            query_param.append(sqoop_mappers)
 
         if first_set == False:
             # Only run this if any of the set columns are not None
@@ -1943,7 +1943,9 @@ class config(metaclass=Singleton):
         result_json = result_df.to_json(orient="values")
         self.validationCustomQueryTargetValue = result_json
 
-        self.saveCustomSQLValidationTargetValue(jsonValue=result_json, printInfo=False)
+        self.saveCustomSQLValidationTargetValue(
+            json_value=result_json, print_info=False
+        )
 
         if len(self.validationCustomQueryTargetValue) > 1024:
             logging.warning(
@@ -2196,7 +2198,7 @@ class config(metaclass=Singleton):
 
         logging.debug("Executing export_config.calculateJobMappers() - Finished")
 
-    def saveIncrMinMaxValue(self, minValue, maxValue):
+    def saveIncrMinMaxValue(self, min_value, max_value):
         """Save the min value in the pendings column"""
         logging.debug("Executing export_config.saveIncrMinValue()")
 
@@ -2208,8 +2210,8 @@ class config(metaclass=Singleton):
         self.mysql_cursor01.execute(
             query,
             (
-                minValue,
-                maxValue,
+                min_value,
+                max_value,
                 self.tableID,
             ),
         )
@@ -2409,7 +2411,7 @@ class config(metaclass=Singleton):
         logging.debug("Executing export_config.getExportTables() - Finished")
         return result_df
 
-    def addExportTable(self, hiveDB, hiveTable, dbalias, schema, table):
+    def addExportTable(self, hive_db, hive_table, dbalias, schema, table):
         """Add source table to export_tables"""
         logging.debug("Executing export_config.addExportTable()")
         return_value = True
@@ -2425,21 +2427,21 @@ class config(metaclass=Singleton):
             ") values ( %s, %s, %s, %s, %s )"
         )
 
-        logging.debug("hiveDB:    %s" % (hiveDB))
-        logging.debug("hiveTable: %s" % (hiveTable))
+        logging.debug("hiveDB:    %s" % (hive_db))
+        logging.debug("hiveTable: %s" % (hive_table))
         logging.debug("dbalias:   %s" % (dbalias))
         logging.debug("schema:    %s" % (schema))
         logging.debug("table:     %s" % (table))
 
         try:
             self.mysql_cursor01.execute(
-                query, (hiveDB, hiveTable, dbalias, schema, table)
+                query, (hive_db, hive_table, dbalias, schema, table)
             )
             self.mysql_conn.commit()
         except mysql.connector.errors.IntegrityError:
             logging.warning(
                 "Hive table %s.%s cant be added. The Connection name, Schema and Table already exists"
-                % (hiveDB, hiveTable)
+                % (hive_db, hive_table)
             )
             return_value = False
 

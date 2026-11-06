@@ -777,7 +777,7 @@ def main(argv):
             common_operation = common_operations.operation()
             common_operation.common_config.checkKerberosTicket()
             return_code = common_operation.executeBeelineScript(
-                hiveScriptFile=hive_script, useDB=hive_db
+                hive_script_file=hive_script, use_db=hive_db
             )
             if return_code != 0:
                 raise SQLerror("Hive Query Error")
@@ -840,14 +840,14 @@ def main(argv):
             common_operation.common_config.checkKerberosTicket()
             airflow = Airflow.initialize()
             airflow.checkExecution()
-            airflow.sendJSON(airflowDAG=airflow_dag, status="started")
+            airflow.sendJSON(airflow_dag=airflow_dag, status="started")
             airflow.common_config.remove_temporary_files()
 
         if operation == "sendAirflowStopMessage":
             common_operation = common_operations.operation()
             common_operation.common_config.checkKerberosTicket()
             airflow = Airflow.initialize()
-            airflow.sendJSON(airflowDAG=airflow_dag, status="finished")
+            airflow.sendJSON(airflow_dag=airflow_dag, status="finished")
             airflow.common_config.remove_temporary_files()
 
         if operation == "airflowGenerate":
@@ -872,9 +872,9 @@ def main(argv):
 
             airflow.generateDAG(
                 name=airflow_dag,
-                autoDAGonly=airflow_auto_dag_only,
-                writeDAG=airflow_write_dag,
-                DAGFolder=airflow_dag_folder,
+                auto_dag_only=airflow_auto_dag_only,
+                write_dag=airflow_write_dag,
+                dag_folder=airflow_dag_folder,
             )
             airflow.common_config.remove_temporary_files()
 
@@ -1245,27 +1245,27 @@ def main(argv):
             import_operation = import_operations.operation()
             import_operation.discoverAndAddTablesFromSource(
                 dbalias=connection_alias,
-                hiveDB=hive_db,
-                schemaFilter=jdbc_schema,
-                tableFilter=jdbc_table,
-                addSchemaToTable=add_schema_to_table,
-                addCustomText=add_custom_text,
-                addCounterToTable=add_counter_to_table,
-                counterStart=counter_start,
-                onlyJsonOutput=json_output,
+                hive_db=hive_db,
+                schema_filter=jdbc_schema,
+                table_filter=jdbc_table,
+                add_schema_to_table=add_schema_to_table,
+                add_custom_text=add_custom_text,
+                add_counter_to_table=add_counter_to_table,
+                counter_start=counter_start,
+                only_json_output=json_output,
             )
 
         if operation == "addExportTable":
             export_operation = export_operations.operation()
             export_operation.discoverAndAddTablesFromHive(
-                dbFilter=hive_db,
-                tableFilter=hive_table,
+                db_filter=hive_db,
+                table_filter=hive_table,
                 dbalias=connection_alias,
                 schema=jdbc_schema,
-                addDBToTable=add_db_to_table,
-                addCustomText=add_custom_text,
-                addCounterToTable=add_counter_to_table,
-                counterStart=counter_start,
+                add_db_to_table=add_db_to_table,
+                add_custom_text=add_custom_text,
+                add_counter_to_table=add_counter_to_table,
+                counter_start=counter_start,
             )
 
         if operation == "testConnection":

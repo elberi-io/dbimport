@@ -26,7 +26,7 @@ SECRET_KEY = common_config.getConfigValue("restserver_secret_key")
 ACCESS_TOKEN_EXPIRE_MINUTES = common_config.getConfigValue("restserver_token_ttl")
 ALGORITHM = "HS256"
 try:
-    AWS_REGION = configuration.get("AWS", "region", exitOnError=False)
+    AWS_REGION = configuration.get("AWS", "region", exit_on_error=False)
 except invalidConfiguration:
     AWS_REGION = ""
 
@@ -329,7 +329,9 @@ async def change_the_user_password(
 
     # set the new password in the user object and save it
     user["password"] = get_password_hash(password_data.new_password)
-    dbCalls.updateUser(user, passwordChanged=True, currentUser=current_user["username"])
+    dbCalls.updateUser(
+        user, password_changed=True, current_user=current_user["username"]
+    )
 
     return "Password changed successfully"
 
@@ -394,7 +396,7 @@ async def update_user_details(  # noqa: F811  # the delete handler above has thi
         user["email"] = user_data.email
 
     dbCalls.updateUser(
-        user, passwordChanged=False, currentUser=current_user["username"]
+        user, password_changed=False, current_user=current_user["username"]
     )
 
     user = get_user(
@@ -664,7 +666,7 @@ async def get_import_table_details(
     includeColumns: bool = True,
 ):
     return dbCalls.getImportTableDetails(
-        database=database, table=table, includeColumns=includeColumns
+        database=database, table=table, include_columns=includeColumns
     )
 
 
@@ -855,7 +857,10 @@ async def get_export_table_details(
     includeColumns: bool = True,
 ):
     return dbCalls.getExportTableDetails(
-        connection=connection, schema=schema, table=table, includeColumns=includeColumns
+        connection=connection,
+        schema=schema,
+        table=table,
+        include_columns=includeColumns,
     )
 
 

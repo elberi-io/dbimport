@@ -53,12 +53,12 @@ class stage:
     #
     # 		self.rest = rest.restInterface()
 
-    def setTargetTable(self, connectionAlias, targetSchema, targetTable):
+    def setTargetTable(self, connection_alias, target_schema, target_table):
         """Sets the parameters to work against a new Target table"""
 
-        self.connectionAlias = connectionAlias
-        self.targetSchema = targetSchema
-        self.targetTable = targetTable
+        self.connectionAlias = connection_alias
+        self.targetSchema = target_schema
+        self.targetTable = target_table
 
     def getStageDescription(self, stage):
         stage_description = ""

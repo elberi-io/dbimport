@@ -66,14 +66,14 @@ class sendStatistics:
             )
             sys.exit(1)
 
-    def sendRESTdata(self, jsonData):
+    def sendRESTdata(self, json_data):
         """Sending data to REST endpoint"""
         logging.debug("Executing sendStatistics.sendRESTdata")
 
         logging.info("Sending data to REST interface")
         logging.debug(
             "Sending the following JSON to REST: %s"
-            % (json.dumps(jsonData, sort_keys=True, indent=4))
+            % (json.dumps(json_data, sort_keys=True, indent=4))
         )
 
         response_code = -1
@@ -84,7 +84,7 @@ class sendStatistics:
             if rest_protocol == "http":
                 response = requests.post(
                     self.RESTendpoint,
-                    data=jsonData,
+                    data=json_data,
                     headers=self.RESTheaders,
                     timeout=self.RESTtimeout,
                 )
@@ -96,7 +96,7 @@ class sendStatistics:
 
                 response = requests.post(
                     self.RESTendpoint,
-                    data=jsonData,
+                    data=json_data,
                     headers=self.RESTheaders,
                     timeout=self.RESTtimeout,
                     verify=rest_verify,
@@ -112,12 +112,12 @@ class sendStatistics:
         logging.debug("Executing sendStatistics.sendRESTdata - Finished")
         return response_code
 
-    def publishKafkaData(self, jsonData):
+    def publishKafkaData(self, json_data):
         """Publish data to Kafka topic"""
         logging.debug("Executing sendStatistics.publishKafkaData")
 
         logging.info("Sending statistics data to Kafka topic")
-        logging.debug("Sending the following JSON to Kafka: %s" % (jsonData))
+        logging.debug("Sending the following JSON to Kafka: %s" % (json_data))
         kafka_logger = logging.getLogger("kafka")
         kafka_logger.setLevel(logging.ERROR)
 
@@ -146,7 +146,7 @@ class sendStatistics:
                     bootstrap_servers=self.kafkaBrokers, ssl_context=ssl_context
                 )
 
-            producer.send(topic=self.kafkaTopic, value=jsonData.encode("utf-8"))
+            producer.send(topic=self.kafkaTopic, value=json_data.encode("utf-8"))
 
         except AssertionError as e:
             logging.error("Kafka Error: %s" % e)
@@ -176,12 +176,12 @@ class sendStatistics:
         logging.debug("Executing sendStatistics.publishKafkaData - Finished")
         return result
 
-    def sendAWSSNSdata(self, jsonData):
+    def sendAWSSNSdata(self, json_data):
         """Publish data to AWS SNS topic"""
         logging.debug("Executing sendStatistics.sendAWSSNSdata")
 
         logging.info("Sending statistics data to AWS SNS topic")
-        logging.debug("Sending the following JSON to AWS SNS: %s" % (jsonData))
+        logging.debug("Sending the following JSON to AWS SNS: %s" % (json_data))
 
         result = True
 
@@ -196,7 +196,7 @@ class sendStatistics:
 
         try:
             publish_sns_response = client.publish(
-                TopicArn=self.awsSNStopic, Message=jsonData
+                TopicArn=self.awsSNStopic, Message=json_data
             )
         except ClientError as e:  # For a list of exceptions thrown, see
             # https://docs.aws.amazon.com/secretsmanager/latest/apireference/API_GetSecretValue.html

@@ -161,9 +161,9 @@ class distCP(threading.Thread):
 
 
 class serverDaemon(run.RunDaemon):
-    def setConfig(self, action, logFormat):
+    def setConfig(self, action, log_format):
         self.action = action
-        self.logFormat = logFormat
+        self.logFormat = log_format
 
     def run(self):
         # This is the main event loop where the 'real' daemonwork happens

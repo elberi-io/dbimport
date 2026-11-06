@@ -213,20 +213,20 @@ class operation(metaclass=Singleton):
 
             try:
                 self.atlasOperation.updateAtlasWithRDBMSdata(
-                    schemaName=target_schema, tableName=target_table
+                    schema_name=target_schema, table_name=target_table
                 )
 
                 self.atlasOperation.updateAtlasWithExportLineage(
-                    hiveDB=self.hiveDB,
-                    hiveTable=self.hiveTable,
-                    hiveExportTempDB=self.export_config.hiveExportTempDB,
-                    hiveExportTempTable=self.export_config.hiveExportTempTable,
-                    targetSchema=target_schema,
-                    targetTable=target_table,
-                    tempTableNeeded=self.export_config.tempTableNeeded,
-                    startStopDict=start_stop_dict,
-                    fullExecutedCommand=self.export_config.fullExecutedCommand,
-                    exportTool=self.export_config.exportTool,
+                    hive_db=self.hiveDB,
+                    hive_table=self.hiveTable,
+                    hive_export_temp_db=self.export_config.hiveExportTempDB,
+                    hive_export_temp_table=self.export_config.hiveExportTempTable,
+                    target_schema=target_schema,
+                    target_table=target_table,
+                    temp_table_needed=self.export_config.tempTableNeeded,
+                    start_stop_dict=start_stop_dict,
+                    full_executed_command=self.export_config.fullExecutedCommand,
+                    export_tool=self.export_config.exportTool,
                 )
             except:
                 pass
@@ -362,19 +362,19 @@ class operation(metaclass=Singleton):
         self,
         dbalias,
         schema,
-        dbFilter=None,
-        tableFilter=None,
-        addDBToTable=False,
-        addCustomText=None,
-        addCounterToTable=False,
-        counterStart=None,
+        db_filter=None,
+        table_filter=None,
+        add_db_to_table=False,
+        add_custom_text=None,
+        add_counter_to_table=False,
+        counter_start=None,
     ):
         """This is the main function to search for tables/view in Hive and add them to export_tables"""
         logging.debug("Executing export_operations.discoverAndAddTablesFromHive()")
         error_during_add = False
 
         source_df = self.common_operations.getTables(
-            dbFilter=dbFilter, tableFilter=tableFilter
+            dbFilter=db_filter, tableFilter=table_filter
         )
 
         if len(source_df) == 0:
@@ -392,19 +392,23 @@ class operation(metaclass=Singleton):
         merge_df["targetTable"] = merge_df["hiveTable"]
         discovered_tables = len(merge_df.loc[merge_df["Exist"] == "left_only"])
 
-        if addCounterToTable == True or addDBToTable == True or addCustomText != None:
+        if (
+            add_counter_to_table == True
+            or add_db_to_table == True
+            or add_custom_text != None
+        ):
             for index, row in merge_df.iterrows():
                 if merge_df.loc[index, "Exist"] == "left_only":
                     merge_df.loc[index, "targetTable"] = (
                         "_%s" % (merge_df.loc[index, "targetTable"])
                     )
 
-        if addCounterToTable == True:
-            if counterStart == None:
-                counterStart = "1"
-            number_length = len(counterStart)
+        if add_counter_to_table == True:
+            if counter_start == None:
+                counter_start = "1"
+            number_length = len(counter_start)
             try:
-                start_value = int(counterStart)
+                start_value = int(counter_start)
             except ValueError:
                 logging.error("The value specified for --counterStart must be a number")
                 self.export_config.remove_temporary_files()
@@ -423,7 +427,7 @@ class operation(metaclass=Singleton):
                     )
                     start_value += 1
 
-        if addDBToTable == True:
+        if add_db_to_table == True:
             for index, row in merge_df.iterrows():
                 if merge_df.loc[index, "Exist"] == "left_only":
                     merge_df.loc[index, "targetTable"] = "%s%s" % (
@@ -431,11 +435,11 @@ class operation(metaclass=Singleton):
                         merge_df.loc[index, "targetTable"],
                     )
 
-        if addCustomText != None:
+        if add_custom_text != None:
             for index, row in merge_df.iterrows():
                 if merge_df.loc[index, "Exist"] == "left_only":
                     merge_df.loc[index, "targetTable"] = "%s%s" % (
-                        addCustomText.lower().strip(),
+                        add_custom_text.lower().strip(),
                         merge_df.loc[index, "targetTable"],
                     )
 
@@ -473,8 +477,8 @@ class operation(metaclass=Singleton):
                     dbalias=dbalias,
                     schema=schema,
                     table=row["targetTable"],
-                    hiveDB=row["hiveDB"],
-                    hiveTable=row["hiveTable"],
+                    hive_db=row["hiveDB"],
+                    hive_table=row["hiveTable"],
                 )
 
                 if add_result == False:
@@ -528,17 +532,17 @@ class operation(metaclass=Singleton):
 
         return self.tempTableNeeded
 
-    def getIncrMaxvalueFromHive(self, column=None, hiveDB=None, hiveTable=None):
+    def getIncrMaxvalueFromHive(self, column=None, hive_db=None, hive_table=None):
         logging.debug("Executing export_operations.getIncrMaxvalueFromHive()")
 
-        if hiveDB == None:
-            hiveDB = self.hiveDB
-        if hiveTable == None:
-            hiveTable = self.hiveTable
+        if hive_db == None:
+            hive_db = self.hiveDB
+        if hive_table == None:
+            hive_table = self.hiveTable
         if column == None:
             column = self.export_config.incr_column
 
-        query = "select max(`%s`) from `%s`.`%s`" % (column, hiveDB, hiveTable)
+        query = "select max(`%s`) from `%s`.`%s`" % (column, hive_db, hive_table)
         result_df = self.common_operations.executeHiveQuery(query)
         max_value = result_df.loc[0][0]
         logging.debug("Maxvalue: %s" % (max_value))
@@ -1011,7 +1015,7 @@ class operation(metaclass=Singleton):
         max_value = str(self.getIncrMaxvalueFromHive())
         min_value = self.export_config.incr_maxvalue
 
-        self.export_config.saveIncrMinMaxValue(minValue=min_value, maxValue=max_value)
+        self.export_config.saveIncrMinMaxValue(min_value=min_value, max_value=max_value)
 
         logging.debug("Executing export_operations.fetchIncrMinMaxvalue() - Finished")
 
@@ -1537,7 +1541,7 @@ class operation(metaclass=Singleton):
                 spark_executor_count += 1
 
         self.export_config.common_config.updateYarnStatistics(
-            self.yarnApplicationID, "spark", yarnContainersTotal=spark_executor_count
+            self.yarnApplicationID, "spark", yarn_containers_total=spark_executor_count
         )
 
         time.sleep(
@@ -1554,7 +1558,7 @@ class operation(metaclass=Singleton):
 
         try:
             self.export_config.saveExportStatistics(
-                self.sparkStartUTS, sqoopMappers=self.sqoopMappers
+                self.sparkStartUTS, sqoop_mappers=self.sqoopMappers
             )
         except:
             logging.error("Fatal error when saving spark statistics")
@@ -1781,9 +1785,9 @@ class operation(metaclass=Singleton):
         try:
             self.export_config.saveExportStatistics(
                 self.sqoopStartUTS,
-                sqoopSize=self.sqoopSize,
-                sqoopRows=self.sqoopRows,
-                sqoopMappers=self.sqoopMappers,
+                sqoop_size=self.sqoopSize,
+                sqoop_rows=self.sqoopRows,
+                sqoop_mappers=self.sqoopMappers,
             )
         except:
             logging.exception("Fatal error when saving sqoop statistics")

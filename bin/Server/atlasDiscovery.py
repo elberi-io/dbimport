@@ -412,11 +412,11 @@ class atlasDiscovery(threading.Thread):
         if atlas_enabled == True:
             log.info("atlasDiscovery stopped")
 
-    def isConnectionBlacklisted(self, dbAlias):
-        if self.failureLog.get(dbAlias, None) != None:
-            black_list_enable_time = self.failureLog[dbAlias][
+    def isConnectionBlacklisted(self, db_alias):
+        if self.failureLog.get(db_alias, None) != None:
+            black_list_enable_time = self.failureLog[db_alias][
                 "blackListStart"
-            ] + timedelta(hours=self.failureLog[dbAlias]["blackListTime"])
+            ] + timedelta(hours=self.failureLog[db_alias]["blackListTime"])
 
             if datetime.now() < black_list_enable_time:
                 # This dbAlias is still blacklisted
@@ -424,31 +424,31 @@ class atlasDiscovery(threading.Thread):
 
         return False
 
-    def removeBlacklist(self, dbAlias):
-        self.failureLog.pop(dbAlias, None)
+    def removeBlacklist(self, db_alias):
+        self.failureLog.pop(db_alias, None)
 
-    def blacklistConnection(self, dbAlias, printBlackListWarning=True):
+    def blacklistConnection(self, db_alias, print_black_list_warning=True):
         log = logging.getLogger("atlasDiscovery")
 
-        black_list_data = self.failureLog.get(dbAlias, None)
+        black_list_data = self.failureLog.get(db_alias, None)
         if black_list_data == None:
             black_list_time = 1
         else:
-            black_list_time = self.failureLog[dbAlias]["blackListTime"] * 2
+            black_list_time = self.failureLog[db_alias]["blackListTime"] * 2
 
             # Max blacklist time is 24 hours
             if black_list_time > 24:
                 black_list_time = 24
 
-        self.failureLog[dbAlias] = {
+        self.failureLog[db_alias] = {
             "blackListTime": black_list_time,
             "blackListStart": datetime.now(),
         }
 
-        if printBlackListWarning == True:
+        if print_black_list_warning == True:
             log.warning(
                 "Connection '%s' is blacklisted for %s hours"
-                % (dbAlias, self.failureLog[dbAlias]["blackListTime"])
+                % (db_alias, self.failureLog[db_alias]["blackListTime"])
             )
 
     def getDBImportSession(self):

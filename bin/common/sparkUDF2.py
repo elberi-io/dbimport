@@ -83,12 +83,12 @@ class sparkUDFClass:
         hashed_column_content = h.hexdigest()
         return hashed_column_content
 
-    def replaceCharWithStar(self, columnValue):
-        if columnValue == None:
+    def replaceCharWithStar(self, column_value):
+        if column_value == None:
             return None
 
         return_string = ""
-        for character in str(columnValue):
+        for character in str(column_value):
             if character == " ":
                 return_string = return_string + " "
             else:
@@ -96,14 +96,14 @@ class sparkUDFClass:
 
         return return_string
 
-    def showFirstFourCharacters(self, columnValue):
-        if columnValue == None:
+    def showFirstFourCharacters(self, column_value):
+        if column_value == None:
             return None
 
-        return_string = str(columnValue)[:4]
+        return_string = str(column_value)[:4]
 
-        if len(str(columnValue)) > 4:
-            for i in range(len(str(columnValue)) - 4):
+        if len(str(column_value)) > 4:
+            for i in range(len(str(column_value)) - 4):
                 return_string = return_string + "*"
 
         return return_string

@@ -164,7 +164,7 @@ def main(argv):
             )
 
     d = daemon.serverDaemon(pidfile=pidfile)
-    d.setConfig(action=action, logFormat=log_format)
+    d.setConfig(action=action, log_format=log_format)
 
     if action == "start":
         print("Starting DBImport Main Server")
