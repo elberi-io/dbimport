@@ -36,7 +36,7 @@ class crypto:
         self.privateKey = None
         self.publicKey = None
 
-    def setPrivateKeyFile(self, private_key_file):
+    def set_private_key_file(self, private_key_file):
         self.privateKeyFile = private_key_file
 
         if self.privateKeyFile.startswith("/") == False:
@@ -53,7 +53,7 @@ class crypto:
         self.privateKeyString = open(self.privateKeyFile).read()
         self.privateKey = RSA.importKey(self.privateKeyString)
 
-    def setPublicKeyFile(self, public_key_file):
+    def set_public_key_file(self, public_key_file):
         self.publicKeyFile = public_key_file
 
         if self.publicKeyFile.startswith("/") == False:

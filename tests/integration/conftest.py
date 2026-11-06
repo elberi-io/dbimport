@@ -89,7 +89,7 @@ def config_db(engine: sa.Engine) -> None:
         conn.execute(sa.text("SET FOREIGN_KEY_CHECKS = 1"))
     setup = database.initialize()
     try:
-        setup.createDB()
+        setup.create_db()
     finally:
         close_dbimport_connections(setup)
 
@@ -111,8 +111,8 @@ def clean_config_db(config_db: None, engine: sa.Engine) -> None:
         conn.execute(sa.text("SET FOREIGN_KEY_CHECKS = 1"))
     setup = database.initialize()
     try:
-        setup.createDefaultEnvironmentTypes()
-        setup.updateConfigurationValues()
+        setup.create_default_environment_types()
+        setup.update_configuration_values()
     finally:
         close_dbimport_connections(setup)
 

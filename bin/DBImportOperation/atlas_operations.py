@@ -144,7 +144,7 @@ class atlasOperation:
 
     # 				sys.exit(1)
 
-    def getAtlasRdbmsReferredEntities(
+    def get_atlas_rdbms_referred_entities(
         self,
         schema_name,
         table_name,
@@ -158,7 +158,7 @@ class atlasOperation:
         if self.atlasEnabled == False:
             return None
 
-        return_dict = self.getAtlasRdbmsNames(
+        return_dict = self.get_atlas_rdbms_names(
             schema_name=schema_name, table_name=table_name
         )
         if return_dict == None:
@@ -173,7 +173,7 @@ class atlasOperation:
         environment_type = return_dict["environmentType"]
 
         if ref_schema_name != "" and ref_table_name != "":
-            return_dict = self.getAtlasRdbmsNames(
+            return_dict = self.get_atlas_rdbms_names(
                 schema_name=ref_schema_name, table_name=ref_table_name
             )
             if return_dict == None:
@@ -190,7 +190,7 @@ class atlasOperation:
         if len(self.source_columns_df) > 0:
             table_create_time = self.source_columns_df.iloc[0]["TABLE_CREATE_TIME"]
             table_comment = self.source_columns_df.iloc[0]["TABLE_COMMENT"]
-            # 			tableType = self.getJdbcTableType()
+            # 			tableType = self.get_jdbc_table_type()
 
             json_data["referredEntities"]["-100"] = {}
             json_data["referredEntities"]["-100"]["guid"] = "-100"
@@ -242,8 +242,8 @@ class atlasOperation:
                 }
 
             if hdfs_path != "":
-                # 				hdfsAddress = self.getConfigValue(key = "hdfs_address")
-                # 				clusterName = self.getConfigValue(key = "cluster_name")
+                # 				hdfsAddress = self.get_config_value(key = "hdfs_address")
+                # 				clusterName = self.get_config_value(key = "cluster_name")
                 hdfs_uri = "%s%s@%s" % (self.hdfsAddress, hdfs_path, self.clusterName)
                 hdfs_full_path = "%s%s" % (self.hdfsAddress, hdfs_path)
 
@@ -312,10 +312,10 @@ class atlasOperation:
             "Executing atlas_operations.getAtlasReferredEntities() - Finished"
         )
 
-    def checkAtlasSchema(self, logger=""):
+    def check_atlas_schema(self, logger=""):
         """Checks if the Atlas schema for DBImport is available and at the correct version. Returns True or False"""
         log = logging.getLogger(logger)
-        log.debug("Executing atlas_operations.checkAtlasSchema()")
+        log.debug("Executing atlas_operations.check_atlas_schema()")
 
         # We only check the Atlas schema ones per execution. This will otherwise add more requests to Atlas for the same data
         if self.atlasSchemaChecked == True:
@@ -323,7 +323,7 @@ class atlasOperation:
 
         if self.atlasEnabled == True:
             log.info("Checking Atlas connection")
-            response = self.atlasGetData(
+            response = self.atlas_get_data(
                 url=self.atlasRestTypeDefDBImportProcess, logger=logger
             )
             if response == None:
@@ -368,28 +368,28 @@ class atlasOperation:
 
         return self.atlasEnabled
 
-        logging.debug("Executing atlas_operations.checkAtlasSchema() - Finished")
+        logging.debug("Executing atlas_operations.check_atlas_schema() - Finished")
 
-    def atlasGetData(self, url, logger=""):
+    def atlas_get_data(self, url, logger=""):
         log = logging.getLogger(logger)
-        log.debug("Executing atlas_operations.atlasGetData()")
-        return self.atlasCommunicate(url=url, request_type="GET", logger=logger)
+        log.debug("Executing atlas_operations.atlas_get_data()")
+        return self.atlas_communicate(url=url, request_type="GET", logger=logger)
 
-    def atlasPostData(self, url, data, logger=""):
+    def atlas_post_data(self, url, data, logger=""):
         log = logging.getLogger(logger)
-        log.debug("Executing atlas_operations.atlasPostData()")
-        return self.atlasCommunicate(
+        log.debug("Executing atlas_operations.atlas_post_data()")
+        return self.atlas_communicate(
             url=url, request_type="POST", data=data, logger=logger
         )
 
-    def atlasDeleteData(self, url, logger=""):
+    def atlas_delete_data(self, url, logger=""):
         log = logging.getLogger(logger)
-        log.debug("Executing atlas_operations.atlasDeleteData()")
-        return self.atlasCommunicate(url=url, request_type="DELETE", logger=logger)
+        log.debug("Executing atlas_operations.atlas_delete_data()")
+        return self.atlas_communicate(url=url, request_type="DELETE", logger=logger)
 
-    def atlasCommunicate(self, url, request_type, data=None, logger=""):
+    def atlas_communicate(self, url, request_type, data=None, logger=""):
         log = logging.getLogger(logger)
-        log.debug("Executing atlas_operations.atlasCommunicate()")
+        log.debug("Executing atlas_operations.atlas_communicate()")
 
         return_value = None
         if self.atlasEnabled == True:
@@ -465,7 +465,7 @@ class atlasOperation:
                 self.atlasEnabled = False
             except ValueError:
                 log.error(
-                    "The used requstType (%s) for atlasCommunicate() is not supported"
+                    "The used requstType (%s) for atlas_communicate() is not supported"
                     % (request_type)
                 )
                 log.warning("Atlas integration is Disabled")
@@ -473,10 +473,10 @@ class atlasOperation:
                 log.debug("Atlas requestType: %s" % (request_type))
                 self.atlasEnabled = False
 
-        log.debug("Executing atlas_operations.atlasCommunicate() - Finished")
+        log.debug("Executing atlas_operations.atlas_communicate() - Finished")
         return return_value
 
-    def setConfiguration(self, config_dict, mutex=None):
+    def set_configuration(self, config_dict, mutex=None):
         """
         configDict must includes the following settings
                 dbAlias
@@ -499,7 +499,7 @@ class atlasOperation:
         """
 
         log = logging.getLogger(self.loggerName)
-        log.debug("Executing atlas_operations.setConfiguration()")
+        log.debug("Executing atlas_operations.set_configuration()")
 
         self.dbAlias = config_dict.get("dbAlias")
         self.contactInfo = config_dict.get("contactInfo")
@@ -524,13 +524,13 @@ class atlasOperation:
 
         self.jdbcConnectionMutex = mutex
 
-        log.debug("Executing atlas_operations.setConfiguration() - Finished")
+        log.debug("Executing atlas_operations.set_configuration() - Finished")
 
-    def discoverAtlasRdbms(self):
+    def discover_atlas_rdbms(self):
         """Discover all RDBMS objects on the 'dbAlias' and populate Atlas with them"""
 
         log = logging.getLogger(self.loggerName)
-        log.debug("Executing atlas_operations.discoverAtlasRdbms()")
+        log.debug("Executing atlas_operations.discover_atlas_rdbms()")
         log.info("Starting a Atlas discovery on connection '%s'" % (self.dbAlias))
 
         if self.atlasIncludeFilter == None or self.atlasIncludeFilter == "":
@@ -552,7 +552,7 @@ class atlasOperation:
             )
 
         try:
-            self.connectToJDBC()
+            self.connect_to_jdbc()
             log.debug("Connected to JDBC source")
         except:
             if self.jdbcConnectionMutex != None:
@@ -562,11 +562,11 @@ class atlasOperation:
 
         try:
             # Get a list of all schemas and tables that can be found on the database connection
-            tables_and_views_df = self.sourceSchema.getJDBCtablesAndViews(
+            tables_and_views_df = self.sourceSchema.get_jdbc_tables_and_views(
                 self.JDBCCursor, self.jdbc_servertype, database=self.jdbc_database
             )
 
-            self.disconnectFromJDBC()
+            self.disconnect_from_jdbc()
         except:
             log.error(
                 "Unknown error during reading of tables and views from '%s'"
@@ -668,24 +668,24 @@ class atlasOperation:
 
             try:
                 # Connect to the source database
-                self.connectToJDBC()
+                self.connect_to_jdbc()
                 # TODO: Handle failures of the connection
 
-                full_schema_column_df = self.sourceSchema.readTableColumns(
+                full_schema_column_df = self.sourceSchema.read_table_columns(
                     self.JDBCCursor,
                     server_type=self.jdbc_servertype,
                     database=self.jdbc_database,
                     schema=schema,
                 )
 
-                full_schema_key_df = self.sourceSchema.readTableKeys(
+                full_schema_key_df = self.sourceSchema.read_table_keys(
                     self.JDBCCursor,
                     server_type=self.jdbc_servertype,
                     database=self.jdbc_database,
                     schema=schema,
                 )
 
-                self.disconnectFromJDBC()
+                self.disconnect_from_jdbc()
             except connectionError:
                 if self.jdbcConnectionMutex != None:
                     self.jdbcConnectionMutex.release()
@@ -715,7 +715,7 @@ class atlasOperation:
             )
 
             try:
-                session = self.getDBImportSession()
+                session = self.get_dbimport_session()
 
                 full_cache_source_column_df = pd.DataFrame(
                     session.query(
@@ -747,7 +747,7 @@ class atlasOperation:
             except SQLAlchemyError as e:
                 log.error(str(e.__dict__["orig"]))
                 session.rollback()
-                self.disconnectDBImportDB()
+                self.disconnect_dbimport_db()
                 raise SQLerror
 
             if len(full_cache_source_column_df) > 0:
@@ -763,7 +763,7 @@ class atlasOperation:
             )
 
             try:
-                session = self.getDBImportSession()
+                session = self.get_dbimport_session()
 
                 full_cache_source_key_df = pd.DataFrame(
                     session.query(
@@ -793,7 +793,7 @@ class atlasOperation:
             except SQLAlchemyError as e:
                 log.error(str(e.__dict__["orig"]))
                 session.rollback()
-                self.disconnectDBImportDB()
+                self.disconnect_dbimport_db()
                 raise SQLerror
 
             log.debug(
@@ -825,7 +825,7 @@ class atlasOperation:
                 self.source_columns_df.replace({pd.NaT: None}, inplace=True)
 
                 if len(self.source_columns_df) > 0:
-                    self.tableType = self.sourceSchema.getJdbcTableType(
+                    self.tableType = self.sourceSchema.get_jdbc_table_type(
                         self.jdbc_servertype,
                         self.source_columns_df.iloc[0]["TABLE_TYPE"],
                     )
@@ -1003,7 +1003,7 @@ class atlasOperation:
                                 )
                             continue
 
-                self.atlasEnabled = True  # This can be set to False in self.updateAtlasWithRDBMSdata depending on what it finds
+                self.atlasEnabled = True  # This can be set to False in self.update_atlas_with_rdbms_data depending on what it finds
 
                 if row["schema"] != "-":
                     log.info(
@@ -1042,7 +1042,7 @@ class atlasOperation:
                 # We need to save if there is an error and raise them after all tables are processed. If not, tables with foreign keys that dont have
                 # the refered table in Atlas will never be able to be created correctly
                 try:
-                    self.updateAtlasWithRDBMSdata(
+                    self.update_atlas_with_rdbms_data(
                         schema_name=schema,
                         table_name=table,
                         print_info=False,
@@ -1057,7 +1057,7 @@ class atlasOperation:
                 except invalidConfiguration:
                     atlas_error_detected = True
                     continue
-                # 				result = self.updateAtlasWithRDBMSdata(schemaName = schema, tableName = table, printInfo = False, errorOnWarning=True)
+                # 				result = self.update_atlas_with_rdbms_data(schemaName = schema, tableName = table, printInfo = False, errorOnWarning=True)
                 # 				if result == False:
                 # 					return False
 
@@ -1065,7 +1065,7 @@ class atlasOperation:
 
                 if cache_operation == "update":
                     try:
-                        session = self.getDBImportSession()
+                        session = self.get_dbimport_session()
 
                         (
                             session.query(configSchema.atlasColumnCache)
@@ -1112,12 +1112,12 @@ class atlasOperation:
                     except SQLAlchemyError as e:
                         log.error(str(e.__dict__["orig"]))
                         session.rollback()
-                        self.disconnectDBImportDB()
+                        self.disconnect_dbimport_db()
                         raise SQLerror
 
                 if cache_operation == "insert" or cache_operation == "update":
                     try:
-                        session = self.getDBImportSession()
+                        session = self.get_dbimport_session()
                         source_column_df.to_sql(
                             "atlas_column_cache",
                             self.configDBEngine,
@@ -1136,16 +1136,16 @@ class atlasOperation:
                     except SQLAlchemyError as e:
                         log.error(str(e.__dict__["orig"]))
                         session.rollback()
-                        self.disconnectDBImportDB()
+                        self.disconnect_dbimport_db()
                         raise SQLerror
 
-        self.disconnectFromJDBC()
+        self.disconnect_from_jdbc()
 
         log.debug("Table parsing completed")
 
         # Remove tables that exists in Atlas that we didnt find
         # Get the unique names for the rdbms_db. No need for schema or table as we are only intressted in the dbUri result
-        atlas_name_dict = self.getAtlasRdbmsNames(schema_name="", table_name="")
+        atlas_name_dict = self.get_atlas_rdbms_names(schema_name="", table_name="")
         if atlas_name_dict == None:
             log.warning(
                 "Could not check for deleted tables in Atlas as the name specifications in DBImport was not created correctly"
@@ -1162,7 +1162,7 @@ class atlasOperation:
             instance_type = atlas_name_dict["instanceType"]
             environment_type = atlas_name_dict["environmentType"]
 
-            json_data = self.getAtlasRdbmsReferredEntities(
+            json_data = self.get_atlas_rdbms_referred_entities(
                 schema_name="", table_name=""
             )
 
@@ -1191,7 +1191,7 @@ class atlasOperation:
             # 			log.info(json.dumps(jsonData, indent=3))
             # 			log.info("======================================")
 
-            response = self.atlasPostData(
+            response = self.atlas_post_data(
                 url=self.atlasRestEntities, data=json.dumps(json_data)
             )
             if response == None:
@@ -1215,9 +1215,9 @@ class atlasOperation:
             self.atlasRestUniqueAttributeType,
             db_uri,
         )
-        response = self.atlasGetData(url=atlas_rest_url)
+        response = self.atlas_get_data(url=atlas_rest_url)
         if response == None:
-            # If there is an error in self.atlasGetData(), we need to stop here as the response is None
+            # If there is an error in self.atlas_get_data(), we need to stop here as the response is None
             log.warning(
                 "No response from GET rest call to Atlas when reading table object for deletion"
             )
@@ -1323,7 +1323,7 @@ class atlasOperation:
                 self.atlasRestUniqueAttributeType,
                 row["qualifiedName"],
             )
-            response = self.atlasDeleteData(url=atlas_rest_url)
+            response = self.atlas_delete_data(url=atlas_rest_url)
             if response == None:
                 log.warning(
                     "No response from DELETE rest call to Atlas when deleting table object"
@@ -1344,9 +1344,9 @@ class atlasOperation:
             raise foreignKeyError
 
         log.info("Finished Atlas discovery on connection '%s'" % (self.dbAlias))
-        log.debug("Executing atlas_operations.discoverAtlasRdbms() - Finished")
+        log.debug("Executing atlas_operations.discover_atlas_rdbms() - Finished")
 
-    def disconnectFromJDBC(self):
+    def disconnect_from_jdbc(self):
         log = logging.getLogger(self.loggerName)
         log.debug("Disconnect from JDBC database")
 
@@ -1371,7 +1371,7 @@ class atlasOperation:
 
         self.JDBCCursor = None
 
-    def connectToJDBC(self, force=False):
+    def connect_to_jdbc(self, force=False):
         log = logging.getLogger(self.loggerName)
 
         if self.JDBCCursor == None or force == True:
@@ -1399,14 +1399,14 @@ class atlasOperation:
                 log.error(exception.message())
                 raise connectionError
 
-    def getDBImportSession(self):
+    def get_dbimport_session(self):
         log = logging.getLogger(self.loggerName)
         if self.configDBSession == None:
-            self.connectDBImportDB()
+            self.connect_dbimport_db()
 
         return self.configDBSession()
 
-    def connectDBImportDB(self):
+    def connect_dbimport_db(self):
         # Esablish a SQLAlchemy connection to the DBImport database
         log = logging.getLogger(self.loggerName)
         self.connectStr = "mysql+pymysql://%s:%s@%s:%s/%s" % (
@@ -1431,7 +1431,7 @@ class atlasOperation:
 
         log.info("Connected successful against DBImport database")
 
-    def disconnectDBImportDB(self):
+    def disconnect_dbimport_db(self):
         """Disconnects from the database and removes all sessions and engine"""
         log = logging.getLogger(self.loggerName)
 
@@ -1442,7 +1442,7 @@ class atlasOperation:
 
         self.configDBSession = None
 
-    def updateAtlasWithRDBMSdata(
+    def update_atlas_with_rdbms_data(
         self, schema_name, table_name, print_info=True, error_on_warning=False
     ):
         """This will update Atlas metadata with the information about the remote table schema"""
@@ -1466,17 +1466,17 @@ class atlasOperation:
         if print_info == True:
             log.info("Updating Atlas with remote database schema")
 
-        self.tableType = self.sourceSchema.getJdbcTableType(
+        self.tableType = self.sourceSchema.get_jdbc_table_type(
             self.jdbc_servertype, self.source_columns_df.iloc[0]["TABLE_TYPE"]
         )
 
         # Get the referredEntities part of the JSON. This is common for both import and export as the rdbms_* in Atlas is the same
-        json_data = self.getAtlasRdbmsReferredEntities(
+        json_data = self.get_atlas_rdbms_referred_entities(
             schema_name=schema_name, table_name=table_name
         )
 
         # Get the unique names for the rdbms_* entities. This is common for both import and export as the rdbms_* in Atlas is the same
-        return_dict = self.getAtlasRdbmsNames(
+        return_dict = self.get_atlas_rdbms_names(
             schema_name=schema_name, table_name=table_name
         )
         if return_dict == None:
@@ -1502,7 +1502,7 @@ class atlasOperation:
             column_data["attributes"] = {}
 
             column_name = row["SOURCE_COLUMN_NAME"]
-            column_uri = self.getAtlasRdbmsColumnURI(
+            column_uri = self.get_atlas_rdbms_column_uri(
                 schema_name=schema_name, table_name=table_name, column_name=column_name
             )
             if row["IS_NULLABLE"] == "YES":
@@ -1553,7 +1553,7 @@ class atlasOperation:
         log.debug(json.dumps(json_data, indent=3))
         log.debug("======================================")
 
-        response = self.atlasPostData(
+        response = self.atlas_post_data(
             url=self.atlasRestEntities, data=json.dumps(json_data)
         )
         if response == None:
@@ -1579,7 +1579,7 @@ class atlasOperation:
             self.atlasRestUniqueAttributeType,
             table_uri,
         )
-        response = self.atlasGetData(url=atlas_rest_url)
+        response = self.atlas_get_data(url=atlas_rest_url)
         if response == None:
             log.warning(
                 "No response from GET rest call to Atlas when reading the table"
@@ -1608,7 +1608,7 @@ class atlasOperation:
                 found_source_column = False
                 for index, row in self.source_columns_df.iterrows():
                     source_column_name = row["SOURCE_COLUMN_NAME"]
-                    source_column_uri = self.getAtlasRdbmsColumnURI(
+                    source_column_uri = self.get_atlas_rdbms_column_uri(
                         schema_name=schema_name,
                         table_name=table_name,
                         column_name=source_column_name,
@@ -1633,7 +1633,7 @@ class atlasOperation:
                         self.atlasRestUniqueAttributeType,
                         column_qualified_name,
                     )
-                    response = self.atlasDeleteData(url=atlas_rest_url)
+                    response = self.atlas_delete_data(url=atlas_rest_url)
                     if response == None:
                         log.warning(
                             "No response from DELETE rest call to Atlas when deleting non-existing columns"
@@ -1675,7 +1675,7 @@ class atlasOperation:
                         # We do the check here and exit later depending on status of refTableExists
                         ref_schema_name = row["REFERENCE_SCHEMA_NAME"].strip()
                         ref_table_name = row["REFERENCE_TABLE_NAME"].strip()
-                        return_dict = self.getAtlasRdbmsNames(
+                        return_dict = self.get_atlas_rdbms_names(
                             schema_name=ref_schema_name, table_name=ref_table_name
                         )
                         ref_table_uri = return_dict["tableUri"]
@@ -1684,7 +1684,7 @@ class atlasOperation:
                             self.atlasRestUniqueAttributeType,
                             ref_table_uri,
                         )
-                        response = self.atlasGetData(url=atlas_rest_url)
+                        response = self.atlas_get_data(url=atlas_rest_url)
                         if response == None:
                             log.warning(
                                 "No response from GET rest call to Atlas when checking if table that is used for ForeignKeys exists in Atlas"
@@ -1698,7 +1698,7 @@ class atlasOperation:
                             ref_table_exists = False
 
                         # First time we loop through the columns and jsonData is empty. Lets create the base for the json
-                        json_data = self.getAtlasRdbmsReferredEntities(
+                        json_data = self.get_atlas_rdbms_referred_entities(
                             schema_name=schema_name,
                             table_name=table_name,
                             ref_schema_name=row["REFERENCE_SCHEMA_NAME"],
@@ -1733,7 +1733,7 @@ class atlasOperation:
                     # Lets add the columns
 
                     # Reference to the table column
-                    source_column_uri = self.getAtlasRdbmsColumnURI(
+                    source_column_uri = self.get_atlas_rdbms_column_uri(
                         schema_name=schema_name,
                         table_name=table_name,
                         column_name=row["COL_NAME"],
@@ -1764,7 +1764,7 @@ class atlasOperation:
                     )
 
                     # Reference to the refTable column
-                    ref_column_uri = self.getAtlasRdbmsColumnURI(
+                    ref_column_uri = self.get_atlas_rdbms_column_uri(
                         schema_name=row["REFERENCE_SCHEMA_NAME"],
                         table_name=row["REFERENCE_TABLE_NAME"],
                         column_name=row["REFERENCE_COL_NAME"],
@@ -1800,7 +1800,7 @@ class atlasOperation:
                 if ref_table_exists == True:
                     log.debug(json.dumps(json_data, indent=3))
 
-                    response = self.atlasPostData(
+                    response = self.atlas_post_data(
                         url=self.atlasRestEntities, data=json.dumps(json_data)
                     )
                     if response == None:
@@ -1838,10 +1838,10 @@ class atlasOperation:
 
         log.debug("Executing atlas_operations.updateAtlasWithSourceSchema() - Finished")
 
-    def getAtlasRdbmsColumnURI(self, schema_name, table_name, column_name):
+    def get_atlas_rdbms_column_uri(self, schema_name, table_name, column_name):
         """Returns a string with the correct column URI for Atlas"""
         log = logging.getLogger(self.loggerName)
-        log.debug("Executing atlas_operations.getAtlasRdbmsColumnURI()")
+        log.debug("Executing atlas_operations.get_atlas_rdbms_column_uri()")
 
         if self.atlasEnabled == False:
             return None
@@ -1939,13 +1939,13 @@ class atlasOperation:
             self.atlasEnabled = False
             return None
 
-        log.debug("Executing atlas_operations.getAtlasRdbmsColumnURI() - Finished")
+        log.debug("Executing atlas_operations.get_atlas_rdbms_column_uri() - Finished")
         return column_uri
 
-    def getAtlasRdbmsNames(self, schema_name, table_name):
+    def get_atlas_rdbms_names(self, schema_name, table_name):
         """Returns a dict with the names needed for the rdbms_* configuration, depending on database type"""
         log = logging.getLogger(self.loggerName)
-        log.debug("Executing atlas_operations.getAtlasRdbmsNames()")
+        log.debug("Executing atlas_operations.get_atlas_rdbms_names()")
 
         table_uri = None
         db_uri = None
@@ -2125,10 +2125,10 @@ class atlasOperation:
         return_dict["instanceType"] = instance_type
         return_dict["environmentType"] = environment_type
 
-        log.debug("Executing atlas_operations.getAtlasRdbmsNames() - Finished")
+        log.debug("Executing atlas_operations.get_atlas_rdbms_names() - Finished")
         return return_dict
 
-    def updateAtlasWithImportLineage(
+    def update_atlas_with_import_lineage(
         self,
         hive_db,
         hive_table,
@@ -2141,7 +2141,7 @@ class atlasOperation:
     ):
         """This will update Atlas lineage for the import process"""
         log = logging.getLogger(self.loggerName)
-        log.debug("Executing atlas_operations.updateAtlasWithImportLineage()")
+        log.debug("Executing atlas_operations.update_atlas_with_import_lineage()")
 
         if self.atlasEnabled == False:
             return
@@ -2149,14 +2149,14 @@ class atlasOperation:
         log.info("Updating Atlas with import lineage")
 
         # Get the referredEntities part of the JSON. This is common for both import and export as the rdbms_* in Atlas is the same
-        json_data = self.getAtlasRdbmsReferredEntities(
+        json_data = self.get_atlas_rdbms_referred_entities(
             schema_name=source_schema,
             table_name=source_table,
             hdfs_path=sqoop_hdfs_location,
         )
 
         # Get the unique names for the rdbms_* entities. This is common for both import and export as the rdbms_* in Atlas is the same
-        return_dict = self.getAtlasRdbmsNames(
+        return_dict = self.get_atlas_rdbms_names(
             schema_name=source_schema, table_name=source_table
         )
         if return_dict == None:
@@ -2200,7 +2200,7 @@ class atlasOperation:
 
         logging.debug(json.dumps(json_data, indent=3))
 
-        response = self.atlasPostData(
+        response = self.atlas_post_data(
             url=self.atlasRestEntities, data=json.dumps(json_data)
         )
         status_code = response["statusCode"]
@@ -2212,10 +2212,10 @@ class atlasOperation:
             self.atlasEnabled == False  # noqa: B015  # TODO(#182): = was meant
 
         log.debug(
-            "Executing atlas_operations.updateAtlasWithImportLineage() - Finished"
+            "Executing atlas_operations.update_atlas_with_import_lineage() - Finished"
         )
 
-    def updateAtlasWithExportLineage(
+    def update_atlas_with_export_lineage(
         self,
         hive_db,
         hive_table,
@@ -2230,7 +2230,7 @@ class atlasOperation:
     ):
         """This will update Atlas lineage for the export process"""
         log = logging.getLogger(self.loggerName)
-        log.debug("Executing atlas_operations.updateAtlasWithExportLineage()")
+        log.debug("Executing atlas_operations.update_atlas_with_export_lineage()")
 
         if self.atlasEnabled == False:
             return
@@ -2238,13 +2238,13 @@ class atlasOperation:
         log.info("Updating Atlas with export lineage")
 
         # Get the referredEntities part of the JSON. This is common for both import and export as the rdbms_* in Atlas is the same
-        json_data = self.getAtlasRdbmsReferredEntities(
+        json_data = self.get_atlas_rdbms_referred_entities(
             schema_name=target_schema,
             table_name=target_table,
         )
 
         # Get the unique names for the rdbms_* entities. This is common for both import and export as the rdbms_* in Atlas is the same
-        return_dict = self.getAtlasRdbmsNames(
+        return_dict = self.get_atlas_rdbms_names(
             schema_name=target_schema, table_name=target_table
         )
         if return_dict == None:
@@ -2306,7 +2306,7 @@ class atlasOperation:
 
         logging.debug(json.dumps(json_data, indent=3))
 
-        response = self.atlasPostData(
+        response = self.atlas_post_data(
             url=self.atlasRestEntities, data=json.dumps(json_data)
         )
         status_code = response["statusCode"]
@@ -2318,5 +2318,5 @@ class atlasOperation:
             self.atlasEnabled == False  # noqa: B015  # TODO(#182): = was meant
 
         log.debug(
-            "Executing atlas_operations.updateAtlasWithExportLineage() - Finished"
+            "Executing atlas_operations.update_atlas_with_export_lineage() - Finished"
         )

@@ -41,7 +41,7 @@ class webServerOperations:
         self.common_config = common_config.config()
 
         # 		# Fetch configuration about MySQL database and how to connect to it
-        # 		self.databaseCredentials = self.common_config.getMysqlCredentials()
+        # 		self.databaseCredentials = self.common_config.get_mysql_credentials()
         # 		self.configHostname = self.databaseCredentials["mysql_hostname"]
         # 		self.configPort =     self.databaseCredentials["mysql_port"]
         # 		self.configDatabase = self.databaseCredentials["mysql_database"]
@@ -73,18 +73,18 @@ class webServerOperations:
 
         logging.debug("Executing webServerOperations.__init__() - Finished")
 
-    def buildHTML(self):
-        logging.debug("Executing webServerOperations.buildHTML()")
+    def build_html(self):
+        logging.debug("Executing webServerOperations.build_html()")
 
-        self.runNPMinstall()
-        self.runNPMbuild()
+        self.run_npm_install()
+        self.run_npm_build()
 
         print()
         logging.info("WebServer files built and installed successfully")
-        logging.debug("Executing webServerOperations.buildHTML() - Finished")
+        logging.debug("Executing webServerOperations.build_html() - Finished")
 
-    def runNPMinstall(self):
-        logging.debug("Executing webServerOperations.runNPMinstall()")
+    def run_npm_install(self):
+        logging.debug("Executing webServerOperations.run_npm_install()")
         logging.info("Installing NPM Packages")
 
         prefix_dir = self.DBImport_Home + "/bin/Server/html"
@@ -103,10 +103,10 @@ class webServerOperations:
             )
             sys.exit(1)
 
-        logging.debug("Executing webServerOperations.runNPMinstall() - Finished")
+        logging.debug("Executing webServerOperations.run_npm_install() - Finished")
 
-    def runNPMbuild(self):
-        logging.debug("Executing webServerOperations.runNPMbuild()")
+    def run_npm_build(self):
+        logging.debug("Executing webServerOperations.run_npm_build()")
         logging.info("Building HTML files")
 
         prefix_dir = self.DBImport_Home + "/bin/Server/html"
@@ -123,4 +123,4 @@ class webServerOperations:
             )
             sys.exit(1)
 
-        logging.debug("Executing webServerOperations.runNPMbuild() - Finished")
+        logging.debug("Executing webServerOperations.run_npm_build() - Finished")

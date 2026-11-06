@@ -47,16 +47,16 @@ class stage:
 
         self.sendStatistics = sendStatistics.sendStatistics()
 
-    def setMySQLConnection(self, mysql_conn):
+    def set_mysql_connection(self, mysql_conn):
         self.mysql_conn = mysql_conn
         self.mysql_cursor = self.mysql_conn.cursor(buffered=False)
 
-    def setHiveTable(self, Hive_DB, Hive_Table):
+    def set_hive_table(self, Hive_DB, Hive_Table):
         """Sets the parameters to work against a new Hive database and table"""
         self.Hive_DB = Hive_DB.lower()
         self.Hive_Table = Hive_Table.lower()
 
-    def getStageDescription(self, stage):
+    def get_stage_description(self, stage):
         stage_description = ""
 
         # RULES FOR STAGE NUMBERS
@@ -526,7 +526,7 @@ class stage:
             stage_description = "DBImport completed successfully"
         return stage_description
 
-    def getStageShortName(self, stage):
+    def get_stage_short_name(self, stage):
 
         stage_short_name = ""
         if stage == 0:
@@ -1000,24 +1000,26 @@ class stage:
 
         return stage_short_name
 
-    def convertStageStatisticsToJSON(self, **kwargs):
+    def convert_stage_statistics_to_json(self, **kwargs):
         """Reads the import_stage_statistics and convert the information to a JSON document"""
-        logging.debug("Executing stage.convertStageStatisticsToJSON()")
+        logging.debug("Executing stage.convert_stage_statistics_to_json()")
 
-        self.postDataToREST = self.common_config.getConfigValue(key="post_data_to_rest")
-        self.postDataToRESTextended = self.common_config.getConfigValue(
+        self.postDataToREST = self.common_config.get_config_value(
+            key="post_data_to_rest"
+        )
+        self.postDataToRESTextended = self.common_config.get_config_value(
             key="post_data_to_rest_extended"
         )
-        self.postDataToKafka = self.common_config.getConfigValue(
+        self.postDataToKafka = self.common_config.get_config_value(
             key="post_data_to_kafka"
         )
-        self.postDataToKafkaExtended = self.common_config.getConfigValue(
+        self.postDataToKafkaExtended = self.common_config.get_config_value(
             key="post_data_to_kafka_extended"
         )
-        self.postDataToAWSSNS = self.common_config.getConfigValue(
+        self.postDataToAWSSNS = self.common_config.get_config_value(
             key="post_data_to_awssns"
         )
-        self.postDataToAWSSNSExtended = self.common_config.getConfigValue(
+        self.postDataToAWSSNSExtended = self.common_config.get_config_value(
             key="post_data_to_awssns_extended"
         )
 
@@ -1066,7 +1068,7 @@ class stage:
             stage_stop = row[2]
             stage_duration = row[3]
 
-            stage_short_name = self.getStageShortName(stage)
+            stage_short_name = self.get_stage_short_name(stage)
 
             if stage_short_name == "":
                 logging.error(
@@ -1117,37 +1119,39 @@ class stage:
         json_data_aws_sns["duration"] = import_duration
 
         if self.postDataToKafka == True:
-            result = self.sendStatistics.publishKafkaData(json.dumps(json_data_kafka))
+            result = self.sendStatistics.publish_kafka_data(json.dumps(json_data_kafka))
             if result == False:
                 logging.info("Kafka publish failed!")
                 logging.info("Saving the JSON to the json_to_send table instead")
-                self.common_config.saveJsonToDatabase(
+                self.common_config.save_json_to_database(
                     "import_statistics", "kafka", json.dumps(json_data_kafka)
                 )
 
         if self.postDataToREST == True:
-            response = self.sendStatistics.sendRESTdata(json.dumps(json_data_rest))
+            response = self.sendStatistics.send_rest_data(json.dumps(json_data_rest))
             if response != 200:
                 logging.info("REST call failed!")
                 logging.info("Saving the JSON to the json_to_send table instead")
-                self.common_config.saveJsonToDatabase(
+                self.common_config.save_json_to_database(
                     "import_statistics", "rest", json.dumps(json_data_rest)
                 )
 
         if self.postDataToAWSSNS == True:
-            result = self.sendStatistics.sendAWSSNSdata(json.dumps(json_data_aws_sns))
+            result = self.sendStatistics.send_aws_sns_data(
+                json.dumps(json_data_aws_sns)
+            )
             if result == False:
                 logging.info("AWS SNS publish failed!")
                 logging.info("Saving the JSON to the json_to_send table instead")
-                self.common_config.saveJsonToDatabase(
+                self.common_config.save_json_to_database(
                     "import_statistics", "rest", json.dumps(json_data_aws_sns)
                 )
 
-        logging.debug("Executing stage.convertStageStatisticsToJSON() - Finished")
+        logging.debug("Executing stage.convert_stage_statistics_to_json() - Finished")
 
-    def saveStageStatistics(self, **kwargs):
+    def save_stage_statistics(self, **kwargs):
         """Reads the import_stage_statistics and insert it to the import_statistics table"""
-        logging.debug("Executing stage.saveStageStatistics()")
+        logging.debug("Executing stage.save_stage_statistics()")
 
         columns_part = []
         values_part = []
@@ -1174,7 +1178,7 @@ class stage:
             stage_stop = row[2]
             stage_duration = row[3]
 
-            stage_short_name = self.getStageShortName(stage)
+            stage_short_name = self.get_stage_short_name(stage)
 
             if stage_short_name != "" and stage_short_name != "skip":
                 if "%s_start" % (stage_short_name) in columns_part:
@@ -1264,14 +1268,14 @@ class stage:
             self.mysql_conn.commit()
             logging.debug("SQL Statement executed: %s" % (self.mysql_cursor.statement))
 
-        logging.debug("Executing stage.saveStageStatistics() - Finished")
+        logging.debug("Executing stage.save_stage_statistics() - Finished")
 
-    def setStageOnlyInMemory(self):
+    def set_stage_only_in_memory(self):
         self.memoryStage = True
 
-    def clearStage(self):
+    def clear_stage(self):
         """Removes all stage information from the import_stage table"""
-        logging.debug("Executing stage.clearStage()")
+        logging.debug("Executing stage.clear_stage()")
 
         if self.memoryStage == False:
             query = "delete from import_stage where hive_db = %s and hive_table = %s"
@@ -1284,11 +1288,11 @@ class stage:
             self.mysql_conn.commit()
             logging.debug("SQL Statement executed: %s" % (self.mysql_cursor.statement))
 
-        logging.debug("Executing stage.clearStage() - Finished")
+        logging.debug("Executing stage.clear_stage() - Finished")
 
-    def getStage(self):
+    def get_stage(self):
         """Fetches the stage from import_stage table and return stage value. If no stage, 0 is returned"""
-        logging.debug("Executing stage.getStage()")
+        logging.debug("Executing stage.get_stage()")
 
         if self.currentStage == None:
             if self.memoryStage == True:
@@ -1312,12 +1316,12 @@ class stage:
         self.stageDurationStop = 0.0
         self.stageDurationTime = 0.0
 
-        logging.debug("Executing stage.getStage() - Finished")
+        logging.debug("Executing stage.get_stage() - Finished")
         return self.currentStage
 
-    def getStageStartStop(self, stage):
+    def get_stage_start_stop(self, stage):
         """Returns the start and stop time for a specific stage. If no info can be found, None is returned"""
-        logging.debug("Executing stage.getStageStartStop()")
+        logging.debug("Executing stage.get_stage_start_stop()")
 
         query = "select stage, start, stop, duration from import_stage_statistics where hive_db = %s and hive_table = %s "
         self.mysql_cursor.execute(query, (self.Hive_DB, self.Hive_Table))
@@ -1333,7 +1337,7 @@ class stage:
             stage_stop = row[2]
             stage_duration = row[3]
 
-            stage_short_name = self.getStageShortName(stage_id)
+            stage_short_name = self.get_stage_short_name(stage_id)
             if stage_short_name == stage:
                 return_dict["startTime"] = stage_start.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
                 return_dict["stopTime"] = stage_stop.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
@@ -1341,23 +1345,23 @@ class stage:
 
         return return_dict
 
-        logging.debug("Executing stage.getStageStartStop() - Finished")
+        logging.debug("Executing stage.get_stage_start_stop() - Finished")
 
-    def setStage(self, newStage, force=False):
+    def set_stage(self, newStage, force=False):
         """Saves the stage information that is used for finding the correct step in the retries operations"""
-        logging.debug("Executing stage.setStage()")
+        logging.debug("Executing stage.set_stage()")
 
         if force == True:
             self.currentStage = 0
 
         if self.currentStage != None and self.currentStage > newStage:
-            logging.debug("Executing stage.setStage() - Finished (no stage set)")
+            logging.debug("Executing stage.set_stage() - Finished (no stage set)")
             return
 
         if self.memoryStage == True:
             self.currentStage = newStage
             logging.debug(
-                "Executing stage.setStage() - Finished (stage only in memory)"
+                "Executing stage.set_stage() - Finished (stage only in memory)"
             )
             return
 
@@ -1408,7 +1412,7 @@ class stage:
         self.mysql_conn.commit()
         logging.debug("SQL Statement executed: %s" % (self.mysql_cursor.statement))
 
-        stage_description = self.getStageDescription(newStage)
+        stage_description = self.get_stage_description(newStage)
 
         # Save stage information in import_stage
         query = "select count(stage) from import_stage where hive_db = %s and hive_table = %s"
@@ -1458,16 +1462,16 @@ class stage:
         self.stageDurationStop = 0.0
         self.stageDurationTime = 0.0
 
-        logging.debug("Executing stage.setStage() - Finished")
+        logging.debug("Executing stage.set_stage() - Finished")
 
-    def saveRetryAttempt(self, stage):
+    def save_retry_attempt(self, stage):
         """Saves the retry attempt in the import_retries_log table"""
-        logging.debug("Executing stage.saveRetryAttempt()")
+        logging.debug("Executing stage.save_retry_attempt()")
 
         if self.memoryStage == True:
             return
 
-        stage_description = self.getStageDescription(stage)
+        stage_description = self.get_stage_description(stage)
 
         query = "insert into import_retries_log "
         query += "( "
@@ -1492,4 +1496,4 @@ class stage:
         self.mysql_conn.commit()
         logging.debug("SQL Statement executed: %s" % (self.mysql_cursor.statement))
 
-        logging.debug("Executing stage.saveRetryAttempt() - Finished")
+        logging.debug("Executing stage.save_retry_attempt() - Finished")

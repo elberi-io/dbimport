@@ -25,7 +25,7 @@ def _add_connection(
         dbalias=DBALIAS,
         jdbc_url="jdbc:mysql://source.example:3306/sourcedb",
     )
-    common_config.config().encryptUserPassword(DBALIAS, username, password)
+    common_config.config().encrypt_user_password(DBALIAS, username, password)
 
 
 def _add_import_table(conn: sa.Connection, **settings: str | None) -> None:
@@ -47,7 +47,7 @@ def _resolve(conn: sa.Connection, **settings: str | None) -> import_config.confi
     _add_connection(conn, "user", "secret")
     _add_import_table(conn, **settings)
     config = import_config.config(HIVE_DB, HIVE_TABLE)
-    config.getImportConfig()
+    config.get_import_config()
     return config
 
 
@@ -219,7 +219,7 @@ def test_get_import_config_without_import_tables_row_raises(
     clean_config_db: None,
 ) -> None:
     with pytest.raises(invalidConfiguration):
-        import_config.config(HIVE_DB, HIVE_TABLE).getImportConfig()
+        import_config.config(HIVE_DB, HIVE_TABLE).get_import_config()
 
 
 def test_lookup_connection_alias_returns_decrypted_credentials(
@@ -228,7 +228,7 @@ def test_lookup_connection_alias_returns_decrypted_credentials(
     _add_connection(db_connection, "user", "secret")
 
     config = common_config.config()
-    config.lookupConnectionAlias(DBALIAS)
+    config.lookup_connection_alias(DBALIAS)
 
     assert (config.jdbc_username, config.jdbc_password) == ("user", "secret")
 
@@ -240,7 +240,7 @@ def test_lookup_connection_alias_with_seeded_driver_placeholder_raises(
     _add_connection(db_connection, "user", "secret", configure_driver=False)
 
     with pytest.raises(invalidConfiguration):
-        common_config.config().lookupConnectionAlias(DBALIAS)
+        common_config.config().lookup_connection_alias(DBALIAS)
 
 
 @pytest.mark.xfail(
@@ -255,6 +255,6 @@ def test_lookup_connection_alias_keeps_password_with_space(
     _add_connection(db_connection, "user", "pass word")
 
     config = common_config.config()
-    config.lookupConnectionAlias(DBALIAS)
+    config.lookup_connection_alias(DBALIAS)
 
     assert config.jdbc_password == "pass word"

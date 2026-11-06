@@ -268,17 +268,17 @@ class config(metaclass=Singleton):
             self.remove_temporary_files()
             sys.exit(1)
 
-        self.reconnectConfigDatabase(printReconnectMessage=False)
+        self.reconnect_config_database(printReconnectMessage=False)
 
         logging.debug("Executing common_config.__init__() - Finished")
 
-    def disconnectConfigDatabase(self):
+    def disconnect_config_database(self):
         """Closing connection against config database. Only used during debug and development"""
         logging.debug("Connection against MySQL Config database have been closed")
         self.mysql_cursor.close()
         self.mysql_conn.close()
 
-    def getMysqlCredentials(self):
+    def get_mysql_credentials(self):
         # Fetch configuration about MySQL database and how to connect to it
 
         if self.mysqlConnectionDetails != None:
@@ -344,12 +344,12 @@ class config(metaclass=Singleton):
 
         return self.mysqlConnectionDetails
 
-    def reconnectConfigDatabase(self, printReconnectMessage=True):
+    def reconnect_config_database(self, printReconnectMessage=True):
         if self.mysql_conn == None or self.mysql_conn.is_connected() == False:
             if printReconnectMessage == True:
                 logging.warn("Connection to MySQL have been lost. Reconnecting...")
 
-            mysql_credentials = self.getMysqlCredentials()
+            mysql_credentials = self.get_mysql_credentials()
 
             # Esablish a connection to the DBImport database in MySQL
             try:
@@ -375,9 +375,9 @@ class config(metaclass=Singleton):
             else:
                 self.mysql_cursor = self.mysql_conn.cursor(buffered=True)
 
-    def getAtlasJdbcConnectionData(self, db_alias=None):
+    def get_atlas_jdbc_connection_data(self, db_alias=None):
         """Reads the extended information in jdbc_connections needed by Atlas (contact_info, owner and more)"""
-        logging.debug("Executing common_config.getAtlasJdbcConnectionData()")
+        logging.debug("Executing common_config.get_atlas_jdbc_connection_data()")
 
         if db_alias == None:
             db_alias = self.dbAlias
@@ -409,10 +409,12 @@ class config(metaclass=Singleton):
         if return_dict["owner"] == None:
             return_dict["owner"] = ""
 
-        logging.debug("Executing common_config.getAtlasJdbcConnectionData() - Finished")
+        logging.debug(
+            "Executing common_config.get_atlas_jdbc_connection_data() - Finished"
+        )
         return return_dict
 
-    def disconnectSQLAlchemy(self, logger=""):
+    def disconnect_sqlalchemy(self, logger=""):
         """Disconnects from the database and removes all sessions and engine"""
         log = logging.getLogger(logger)
 
@@ -423,7 +425,7 @@ class config(metaclass=Singleton):
 
         self.configDBSession = None
 
-    def connectSQLAlchemy(self, exit_if_failure=True, logger=""):
+    def connect_sqlalchemy(self, exit_if_failure=True, logger=""):
         log = logging.getLogger(logger)
         """ Connects to the configuration database with SQLAlchemy """
 
@@ -431,7 +433,7 @@ class config(metaclass=Singleton):
             # If we already have a connection, we just say that it's ok....
             return True
 
-        mysql_credentials = self.getMysqlCredentials()
+        mysql_credentials = self.get_mysql_credentials()
 
         self.connectStr = "mysql+pymysql://%s:%s@%s:%s/%s" % (
             mysql_credentials["mysql_username"],
@@ -471,15 +473,15 @@ class config(metaclass=Singleton):
         else:
             return True
 
-    def setHiveTable(self, Hive_DB, Hive_Table):
+    def set_hive_table(self, Hive_DB, Hive_Table):
         """Sets the parameters to work against a new Hive database and table"""
         self.Hive_DB = Hive_DB.lower()
         self.Hive_Table = Hive_Table.lower()
 
-    def getMysqlCursor(self):
+    def get_mysql_cursor(self):
         return self.mysql_cursor
 
-    def getMysqlConnector(self):
+    def get_mysql_connector(self):
         return self.mysql_conn
 
     def remove_temporary_files(self):
@@ -506,14 +508,14 @@ class config(metaclass=Singleton):
 
         logging.debug("Executing common_config.remove_temporary_files() - Finished")
 
-    def checkTimeWindow(self, connection_alias, atlasDiscoveryMode=False):
-        logging.debug("Executing common_config.checkTimeWindow()")
+    def check_time_window(self, connection_alias, atlasDiscoveryMode=False):
+        logging.debug("Executing common_config.check_time_window()")
         if atlasDiscoveryMode == False:
             logging.info(
                 "Checking if we are allowed to use this jdbc connection at this time"
             )
 
-        self.timeZone = self.getConfigValue("timezone")
+        self.timeZone = self.get_config_value("timezone")
 
         query = "select timewindow_start, timewindow_stop, timewindow_timezone from jdbc_connections where dbalias = %s"
         self.mysql_cursor.execute(query, (connection_alias,))
@@ -637,12 +639,12 @@ class config(metaclass=Singleton):
         logging.debug("    currentTime = %s" % (current_time.to_time_string()))
         logging.debug("    timeWindowStart = %s" % (time_window_start.to_time_string()))
         logging.debug("    timeWindowStop = %s" % (time_window_stop.to_time_string()))
-        logging.debug("Executing common_config.checkTimeWindow() - Finished")
+        logging.debug("Executing common_config.check_time_window() - Finished")
         return True
 
-    def checkConnectionAlias(self, connection_alias):
+    def check_connection_alias(self, connection_alias):
         """Will check if the connection alias exists in the jdbc_connection table"""
-        logging.debug("Executing common_config.checkConnectionAlias()")
+        logging.debug("Executing common_config.check_connection_alias()")
 
         rc = False
 
@@ -654,12 +656,12 @@ class config(metaclass=Singleton):
         if row[0] == 1:
             rc = True
 
-        logging.debug("Executing common_config.checkConnectionAlias() - Finished")
+        logging.debug("Executing common_config.check_connection_alias() - Finished")
         return rc
 
-    def checkKerberosTicket(self):
+    def check_kerberos_ticket(self):
         """Checks if there is a valid kerberos ticket or not. Runst 'klist -s' and checks the exitCode. Returns True or False"""
-        logging.debug("Executing common_config.checkKerberosTicket()")
+        logging.debug("Executing common_config.check_kerberos_ticket()")
 
         os.environ["KRB5CCNAME"] = "FILE:/tmp/krb5cc_%s_%s" % (os.getuid(), os.getpid())
 
@@ -730,16 +732,18 @@ class config(metaclass=Singleton):
         else:
             return False
 
-        logging.debug("Executing common_config.checkKerberosTicket() - Finished")
+        logging.debug("Executing common_config.check_kerberos_ticket() - Finished")
 
-    def encryptString(self, str_to_encrypt):
-        self.crypto.setPrivateKeyFile(configuration.get("Credentials", "private_key"))
-        self.crypto.setPublicKeyFile(configuration.get("Credentials", "public_key"))
+    def encrypt_string(self, str_to_encrypt):
+        self.crypto.set_private_key_file(
+            configuration.get("Credentials", "private_key")
+        )
+        self.crypto.set_public_key_file(configuration.get("Credentials", "public_key"))
 
         encrypted_str = self.crypto.encrypt(str_to_encrypt)
         return encrypted_str
 
-    def encryptUserPassword(self, connection_alias, username, password):
+    def encrypt_user_password(self, connection_alias, username, password):
 
         # Fetch public/private key from jdbc_connection table if it exists
         query = "select private_key_path, public_key_path from jdbc_connections where dbalias = %s "
@@ -762,13 +766,15 @@ class config(metaclass=Singleton):
             and private_key_file.strip() != ""
             and public_key_file.strip() != ""
         ):
-            self.crypto.setPrivateKeyFile(private_key_file)
-            self.crypto.setPublicKeyFile(public_key_file)
+            self.crypto.set_private_key_file(private_key_file)
+            self.crypto.set_public_key_file(public_key_file)
         else:
-            self.crypto.setPrivateKeyFile(
+            self.crypto.set_private_key_file(
                 configuration.get("Credentials", "private_key")
             )
-            self.crypto.setPublicKeyFile(configuration.get("Credentials", "public_key"))
+            self.crypto.set_public_key_file(
+                configuration.get("Credentials", "public_key")
+            )
 
         str_to_encrypt = "%s %s\n" % (username, password)
 
@@ -780,8 +786,8 @@ class config(metaclass=Singleton):
             self.mysql_cursor.execute(query, (encrypted_str, connection_alias))
             self.mysql_conn.commit()
 
-    def getJDBCDriverConfig(self, database_type, version):
-        logging.debug("Executing common_config.getJDBCDriverConfig()")
+    def get_jdbc_driver_config(self, database_type, version):
+        logging.debug("Executing common_config.get_jdbc_driver_config()")
         query = "select driver, classpath from jdbc_connections_drivers where database_type = %s and version = %s"
         logging.debug("Executing the following SQL: %s" % (query))
         self.mysql_cursor.execute(query, (database_type, version))
@@ -801,11 +807,11 @@ class config(metaclass=Singleton):
                 "Error: You need to specify the full path to the JAR files in the table 'jdbc_connections_drivers'"
             )
 
-        logging.debug("Executing common_config.getJDBCDriverConfig() - Finished")
+        logging.debug("Executing common_config.get_jdbc_driver_config() - Finished")
         return driver, class_path
 
-    def printConnectionAliasDetails(self):
-        logging.debug("Executing common_config.printConnectionAliasDetails()")
+    def print_connection_alias_details(self):
+        logging.debug("Executing common_config.print_connection_alias_details()")
 
         query = "select dbalias from jdbc_connections"
         logging.debug("Executing the following SQL: %s" % (query))
@@ -815,7 +821,7 @@ class config(metaclass=Singleton):
         for row in self.mysql_cursor.fetchall():
             counter = counter + 1
             try:
-                self.lookupConnectionAlias(
+                self.lookup_connection_alias(
                     connection_alias=row[0], exceptionIfFailureToDecrypt=False
                 )
             except:
@@ -948,10 +954,10 @@ class config(metaclass=Singleton):
         print()
 
         logging.debug(
-            "Executing common_config.printConnectionAliasDetails() - Finished"
+            "Executing common_config.print_connection_alias_details() - Finished"
         )
 
-    def lookupConnectionAlias(
+    def lookup_connection_alias(
         self,
         connection_alias,
         decryptCredentials=True,
@@ -960,7 +966,7 @@ class config(metaclass=Singleton):
         jdbcURL=None,
         quiet=False,
     ):
-        logging.debug("Executing common_config.lookupConnectionAlias()")
+        logging.debug("Executing common_config.lookup_connection_alias()")
 
         exit_after_function = False
         self.dbAlias = connection_alias
@@ -1042,13 +1048,13 @@ class config(metaclass=Singleton):
                     and private_key_file.strip() != ""
                     and public_key_file.strip() != ""
                 ):
-                    self.crypto.setPrivateKeyFile(private_key_file)
-                    self.crypto.setPublicKeyFile(public_key_file)
+                    self.crypto.set_private_key_file(private_key_file)
+                    self.crypto.set_public_key_file(public_key_file)
                 else:
-                    self.crypto.setPrivateKeyFile(
+                    self.crypto.set_private_key_file(
                         configuration.get("Credentials", "private_key")
                     )
-                    self.crypto.setPublicKeyFile(
+                    self.crypto.set_public_key_file(
                         configuration.get("Credentials", "public_key")
                     )
 
@@ -1090,7 +1096,7 @@ class config(metaclass=Singleton):
             self.jdbc_servertype = constant.MSSQL
             if jdbcURL == None:
                 # jdbcURL have a value only when executed from restAPI server in order to get a full list of connection. Lookup of drivers is not needed in that case
-                self.jdbc_driver, self.jdbc_classpath = self.getJDBCDriverConfig(
+                self.jdbc_driver, self.jdbc_classpath = self.get_jdbc_driver_config(
                     "SQL Server", "default"
                 )
             self.jdbc_classpath_for_python = self.jdbc_classpath
@@ -1163,7 +1169,7 @@ class config(metaclass=Singleton):
             self.jdbc_force_column_lowercase = True
             if jdbcURL == None:
                 # jdbcURL have a value only when executed from restAPI server in order to get a full list of connection. Lookup of drivers is not needed in that case
-                self.jdbc_driver, self.jdbc_classpath = self.getJDBCDriverConfig(
+                self.jdbc_driver, self.jdbc_classpath = self.get_jdbc_driver_config(
                     "SQL Server", "jTDS"
                 )
             self.jdbc_classpath_for_python = self.jdbc_classpath
@@ -1191,7 +1197,7 @@ class config(metaclass=Singleton):
             self.jdbc_force_column_lowercase = False
             if jdbcURL == None:
                 # jdbcURL have a value only when executed from restAPI server in order to get a full list of connection. Lookup of drivers is not needed in that case
-                self.jdbc_driver, self.jdbc_classpath = self.getJDBCDriverConfig(
+                self.jdbc_driver, self.jdbc_classpath = self.get_jdbc_driver_config(
                     "Oracle", "default"
                 )
             self.jdbc_classpath_for_python = self.jdbc_classpath
@@ -1250,7 +1256,7 @@ class config(metaclass=Singleton):
             self.jdbc_force_column_lowercase = True
             if jdbcURL == None:
                 # jdbcURL have a value only when executed from restAPI server in order to get a full list of connection. Lookup of drivers is not needed in that case
-                self.jdbc_driver, self.jdbc_classpath = self.getJDBCDriverConfig(
+                self.jdbc_driver, self.jdbc_classpath = self.get_jdbc_driver_config(
                     "MySQL", "default"
                 )
             self.jdbc_classpath_for_python = self.jdbc_classpath
@@ -1281,7 +1287,7 @@ class config(metaclass=Singleton):
             self.jdbc_force_column_lowercase = True
             if jdbcURL == None:
                 # jdbcURL have a value only when executed from restAPI server in order to get a full list of connection. Lookup of drivers is not needed in that case
-                self.jdbc_driver, self.jdbc_classpath = self.getJDBCDriverConfig(
+                self.jdbc_driver, self.jdbc_classpath = self.get_jdbc_driver_config(
                     "PostgreSQL", "default"
                 )
             self.jdbc_classpath_for_python = self.jdbc_classpath
@@ -1310,7 +1316,7 @@ class config(metaclass=Singleton):
             self.jdbc_force_column_lowercase = True
             if jdbcURL == None:
                 # jdbcURL have a value only when executed from restAPI server in order to get a full list of connection. Lookup of drivers is not needed in that case
-                self.jdbc_driver, self.jdbc_classpath = self.getJDBCDriverConfig(
+                self.jdbc_driver, self.jdbc_classpath = self.get_jdbc_driver_config(
                     "Progress DB", "default"
                 )
             self.jdbc_classpath_for_python = self.jdbc_classpath
@@ -1339,7 +1345,7 @@ class config(metaclass=Singleton):
             self.jdbc_force_column_lowercase = False
             if jdbcURL == None:
                 # jdbcURL have a value only when executed from restAPI server in order to get a full list of connection. Lookup of drivers is not needed in that case
-                self.jdbc_driver, self.jdbc_classpath = self.getJDBCDriverConfig(
+                self.jdbc_driver, self.jdbc_classpath = self.get_jdbc_driver_config(
                     "DB2 UDB", "default"
                 )
             self.jdbc_classpath_for_python = self.jdbc_classpath
@@ -1393,7 +1399,7 @@ class config(metaclass=Singleton):
             self.jdbc_force_column_lowercase = False
             if jdbcURL == None:
                 # jdbcURL have a value only when executed from restAPI server in order to get a full list of connection. Lookup of drivers is not needed in that case
-                self.jdbc_driver, self.jdbc_classpath = self.getJDBCDriverConfig(
+                self.jdbc_driver, self.jdbc_classpath = self.get_jdbc_driver_config(
                     "DB2 AS400", "default"
                 )
             self.jdbc_classpath_for_python = self.jdbc_classpath
@@ -1423,7 +1429,7 @@ class config(metaclass=Singleton):
             self.jdbc_servertype = constant.MONGO
             if jdbcURL == None:
                 # jdbcURL have a value only when executed from restAPI server in order to get a full list of connection. Lookup of drivers is not needed in that case
-                self.jdbc_driver, self.jdbc_classpath = self.getJDBCDriverConfig(
+                self.jdbc_driver, self.jdbc_classpath = self.get_jdbc_driver_config(
                     "MongoDB", "default"
                 )
             self.jdbc_classpath_for_python = self.jdbc_classpath
@@ -1450,7 +1456,7 @@ class config(metaclass=Singleton):
             self.jdbc_force_column_lowercase = False
             if jdbcURL == None:
                 # jdbcURL have a value only when executed from restAPI server in order to get a full list of connection. Lookup of drivers is not needed in that case
-                self.jdbc_driver, self.jdbc_classpath = self.getJDBCDriverConfig(
+                self.jdbc_driver, self.jdbc_classpath = self.get_jdbc_driver_config(
                     "CacheDB", "default"
                 )
             self.jdbc_classpath_for_python = self.jdbc_classpath
@@ -1481,7 +1487,7 @@ class config(metaclass=Singleton):
             self.jdbc_force_column_lowercase = False
             if jdbcURL == None:
                 # jdbcURL have a value only when executed from restAPI server in order to get a full list of connection. Lookup of drivers is not needed in that case
-                self.jdbc_driver, self.jdbc_classpath = self.getJDBCDriverConfig(
+                self.jdbc_driver, self.jdbc_classpath = self.get_jdbc_driver_config(
                     "SnowFlake", "default"
                 )
             self.jdbc_classpath_for_python = self.jdbc_classpath
@@ -1572,7 +1578,7 @@ class config(metaclass=Singleton):
             self.jdbc_force_column_lowercase = False
             if jdbcURL == None:
                 # jdbcURL have a value only when executed from restAPI server in order to get a full list of connection. Lookup of drivers is not needed in that case
-                self.jdbc_driver, self.jdbc_classpath = self.getJDBCDriverConfig(
+                self.jdbc_driver, self.jdbc_classpath = self.get_jdbc_driver_config(
                     "Informix", "default"
                 )
             self.jdbc_classpath_for_python = self.jdbc_classpath
@@ -1610,7 +1616,7 @@ class config(metaclass=Singleton):
             self.jdbc_force_column_lowercase = False
             if jdbcURL == None:
                 # jdbcURL have a value only when executed from restAPI server in order to get a full list of connection. Lookup of drivers is not needed in that case
-                self.jdbc_driver, self.jdbc_classpath = self.getJDBCDriverConfig(
+                self.jdbc_driver, self.jdbc_classpath = self.get_jdbc_driver_config(
                     "SQL Anywhere", "default"
                 )
             self.jdbc_classpath_for_python = self.jdbc_classpath
@@ -1703,22 +1709,22 @@ class config(metaclass=Singleton):
         logging.debug("    self.awsS3proxyServer = %s" % (self.awsS3proxyServer))
         logging.debug("    self.awsS3externalId = %s" % (self.awsS3externalId))
         logging.debug("    self.awsS3region = %s" % (self.awsS3region))
-        logging.debug("Executing common_config.lookupConnectionAlias() - Finished")
+        logging.debug("Executing common_config.lookup_connection_alias() - Finished")
 
         if exit_after_function == True:
             raise invalidConfiguration
 
-    def getJDBCTableDefinition(self, source_schema, source_table, printInfo=True):
-        logging.debug("Executing common_config.getJDBCTableDefinition()")
+    def get_jdbc_table_definition(self, source_schema, source_table, printInfo=True):
+        logging.debug("Executing common_config.get_jdbc_table_definition()")
         if printInfo == True:
             logging.info("Reading SQL table definitions from source database")
         self.source_schema = source_schema
         self.source_table = source_table
 
         # Connect to the source database
-        self.connectToJDBC()
+        self.connect_to_jdbc()
 
-        self.source_columns_df = self.sourceSchema.readTableColumns(
+        self.source_columns_df = self.sourceSchema.read_table_columns(
             self.JDBCCursor,
             server_type=self.jdbc_servertype,
             database=self.jdbc_database,
@@ -1726,7 +1732,7 @@ class config(metaclass=Singleton):
             table=self.source_table,
         )
 
-        self.source_keys_df = self.sourceSchema.readTableKeys(
+        self.source_keys_df = self.sourceSchema.read_table_keys(
             self.JDBCCursor,
             server_type=self.jdbc_servertype,
             database=self.jdbc_database,
@@ -1734,7 +1740,7 @@ class config(metaclass=Singleton):
             table=self.source_table,
         )
 
-        self.source_index_df = self.sourceSchema.readTableIndex(
+        self.source_index_df = self.sourceSchema.read_table_index(
             self.JDBCCursor,
             server_type=self.jdbc_servertype,
             database=self.jdbc_database,
@@ -1743,7 +1749,7 @@ class config(metaclass=Singleton):
         )
 
         try:
-            self.tableType = self.sourceSchema.getJdbcTableType(
+            self.tableType = self.sourceSchema.get_jdbc_table_type(
                 self.jdbc_servertype, self.source_columns_df.iloc[0]["TABLE_TYPE"]
             )
         except IndexError:
@@ -1751,17 +1757,17 @@ class config(metaclass=Singleton):
 
         logging.debug("Executing common_config.getSourceTableDefinition() - Finished")
 
-    def reconnectJDBC(self, logger=""):
-        self.disconnectFromJDBC(logger=logger)
-        self.connectToJDBC(logger=logger)
+    def reconnect_jdbc(self, logger=""):
+        self.disconnect_from_jdbc(logger=logger)
+        self.connect_to_jdbc(logger=logger)
 
-    def disconnectFromJDBC(self, logger=""):
+    def disconnect_from_jdbc(self, logger=""):
         log = logging.getLogger(logger)
         log.debug("Disconnect from JDBC database")
 
         if self.db_mongodb == True:
             # This is a MongoDB connection. Lets rediret to disconnectFromMongo instead
-            return self.disconnectFromMongo()
+            return self.disconnect_from_mongo()
 
         try:
             self.JDBCCursor.close()
@@ -1777,7 +1783,7 @@ class config(metaclass=Singleton):
 
         self.JDBCCursor = None
 
-    def connectToImpala(self, logger=""):
+    def connect_to_impala(self, logger=""):
         log = logging.getLogger(logger)
         if self.impalaDriver == None:
             log.info("Impala is not configured")
@@ -1802,7 +1808,7 @@ class config(metaclass=Singleton):
                 log.error("Connection to Impala failed with the following error:")
                 log.error(exception.message())
 
-    def disconnectFromImpala(self, logger=""):
+    def disconnect_from_impala(self, logger=""):
         log = logging.getLogger(logger)
         log.info("Disconnecting from Impala")
 
@@ -1820,14 +1826,14 @@ class config(metaclass=Singleton):
 
         self.impalaJDBCCursor = None
 
-    def connectToJDBC(
+    def connect_to_jdbc(
         self, allJarFiles=False, exitIfFailure=True, logger="", printError=True
     ):
         log = logging.getLogger(logger)
 
         if self.db_mongodb == True:
             # This is a MongoDB connection. Lets rediret to connectToMongo instead
-            return self.connectToMongo(exit_if_failure=exitIfFailure, logger=logger)
+            return self.connect_to_mongo(exit_if_failure=exitIfFailure, logger=logger)
 
         if allJarFiles == True:
             query = "select classpath from jdbc_connections_drivers"
@@ -1892,10 +1898,10 @@ class config(metaclass=Singleton):
 
         return True
 
-    def getJDBCcolumnMaxValue(self, source_schema, source_table, column):
-        logging.debug("Executing common_config.getJDBCcolumnMaxValue()")
+    def get_jdbc_column_max_value(self, source_schema, source_table, column):
+        logging.debug("Executing common_config.get_jdbc_column_max_value()")
 
-        self.connectToJDBC()
+        self.connect_to_jdbc()
         query = None
 
         if self.db_mssql == True:
@@ -1975,12 +1981,12 @@ class config(metaclass=Singleton):
 
         return row[0]
 
-        logging.debug("Executing common_config.getJDBCcolumnMaxValue() - Finished")
+        logging.debug("Executing common_config.get_jdbc_column_max_value() - Finished")
 
-    def truncateJDBCTable(self, schema, table):
+    def truncate_jdbc_table(self, schema, table):
         """Truncates a table on the JDBC connection"""
-        logging.debug("Executing common_config.truncateJDBCTable()")
-        self.connectToJDBC()
+        logging.debug("Executing common_config.truncate_jdbc_table()")
+        self.connect_to_jdbc()
         query = None
 
         if self.db_oracle == True:
@@ -2006,18 +2012,18 @@ class config(metaclass=Singleton):
 
         if query == None:
             raise undevelopedFeature(
-                "There is no support for this database type in common_config.truncateJDBCTable()"
+                "There is no support for this database type in common_config.truncate_jdbc_table()"
             )
 
         logging.debug("SQL Statement executed: %s" % (query))
         self.JDBCCursor.execute(query)
 
-        logging.debug("Executing common_config.truncateJDBCTable() - Finished")
+        logging.debug("Executing common_config.truncate_jdbc_table() - Finished")
 
-    def checkJDBCTable(self, schema, table):
+    def check_jdbc_table(self, schema, table):
         """Checks if a table exists on the JDBC connections. Return True or False"""
-        logging.debug("Executing common_config.checkJDBCTable()")
-        self.connectToJDBC()
+        logging.debug("Executing common_config.check_jdbc_table()")
+        self.connect_to_jdbc()
         query = None
 
         if self.db_oracle == True:
@@ -2058,7 +2064,7 @@ class config(metaclass=Singleton):
 
         if query == None:
             raise undevelopedFeature(
-                "There is no support for this database type in common_config.checkJDBCTable()"
+                "There is no support for this database type in common_config.check_jdbc_table()"
             )
 
         logging.debug("SQL Statement executed: %s" % (query))
@@ -2070,16 +2076,16 @@ class config(metaclass=Singleton):
         if int(row[0]) > 0:
             table_exists = True
 
-        logging.debug("Executing common_config.checkJDBCTable() - Finished")
+        logging.debug("Executing common_config.check_jdbc_table() - Finished")
         return table_exists
 
-    def executeJDBCquery(self, query):
+    def execute_jdbc_query(self, query):
         """Executes a query against the JDBC database and return the values in a Pandas DF"""
-        logging.debug("Executing common_config.executeJDBCquery()")
+        logging.debug("Executing common_config.execute_jdbc_query()")
 
         logging.debug("Query to execute: %s" % (query))
         try:
-            self.connectToJDBC()
+            self.connect_to_jdbc()
             self.JDBCCursor.execute(query)
         except jaydebeapi.DatabaseError as errMsg:
             raise SQLerror(errMsg)
@@ -2101,16 +2107,16 @@ class config(metaclass=Singleton):
 
         # Set the correct column namnes in the DataFrame
 
-        logging.debug("Executing common_config.executeJDBCquery() - Finished")
+        logging.debug("Executing common_config.execute_jdbc_query() - Finished")
         return result_df
 
-    def executeImpalaQuery(self, query):
+    def execute_impala_query(self, query):
         """Executes a query against Impala and return the values in a Pandas DF"""
-        logging.debug("Executing common_config.executeImpalaQuery()")
+        logging.debug("Executing common_config.execute_impala_query()")
 
         logging.debug("Query to execute: %s" % (query))
         try:
-            self.connectToImpala()
+            self.connect_to_impala()
             self.impalaJDBCCursor.execute(query)
         except jaydebeapi.DatabaseError as errMsg:
             raise SQLerror(errMsg)
@@ -2132,13 +2138,15 @@ class config(metaclass=Singleton):
 
         # Set the correct column namnes in the DataFrame
 
-        logging.debug("Executing common_config.executeImpalaQuery() - Finished")
+        logging.debug("Executing common_config.execute_impala_query() - Finished")
         return result_df
 
-    def getJDBCTableRowCount(self, source_schema, source_table, whereStatement=None):
-        logging.debug("Executing common_config.getJDBCTableRowCount()")
+    def get_jdbc_table_row_count(
+        self, source_schema, source_table, whereStatement=None
+    ):
+        logging.debug("Executing common_config.get_jdbc_table_row_count()")
 
-        self.connectToJDBC()
+        self.connect_to_jdbc()
         query = None
 
         if self.db_mssql == True:
@@ -2193,18 +2201,20 @@ class config(metaclass=Singleton):
 
         return int(row[0])
 
-        logging.debug("Executing common_config.getJDBCTableRowCount() - Finished")
+        logging.debug("Executing common_config.get_jdbc_table_row_count() - Finished")
 
-    def dropJDBCTable(self, schema, table):
-        logging.debug("Executing common_config.dropJDBCTable()")
+    def drop_jdbc_table(self, schema, table):
+        logging.debug("Executing common_config.drop_jdbc_table()")
 
-        self.connectToJDBC()
-        query = "drop table %s" % (self.getJDBCsqlFromTable(schema=schema, table=table))
+        self.connect_to_jdbc()
+        query = "drop table %s" % (
+            self.get_jdbc_sql_from_table(schema=schema, table=table)
+        )
         self.JDBCCursor.execute(query)
 
-        logging.debug("Executing common_config.dropJDBCTable() - Finished")
+        logging.debug("Executing common_config.drop_jdbc_table() - Finished")
 
-    def logImportFailure(
+    def log_import_failure(
         self, error_text, severity, import_type=None, hive_db=None, hive_table=None
     ):
 
@@ -2234,7 +2244,7 @@ class config(metaclass=Singleton):
         )
         self.mysql_conn.commit()
 
-    def logHiveColumnAdd(
+    def log_hive_column_add(
         self, column, columnType=None, description=None, hiveDB=None, hiveTable=None
     ):
         if description == None:
@@ -2267,7 +2277,7 @@ class config(metaclass=Singleton):
         )
         self.mysql_conn.commit()
 
-    def logHiveColumnTypeChange(
+    def log_hive_column_type_change(
         self,
         column,
         columnType,
@@ -2312,7 +2322,7 @@ class config(metaclass=Singleton):
         )
         self.mysql_conn.commit()
 
-    def logHiveColumnRename(
+    def log_hive_column_rename(
         self,
         columnName,
         previous_columnName,
@@ -2352,7 +2362,7 @@ class config(metaclass=Singleton):
         )
         self.mysql_conn.commit()
 
-    def logJDBCColumnAdd(
+    def log_jdbc_column_add(
         self,
         column,
         column_type=None,
@@ -2389,7 +2399,7 @@ class config(metaclass=Singleton):
         )
         self.mysql_conn.commit()
 
-    def logJDBCColumnTypeChange(
+    def log_jdbc_column_type_change(
         self,
         column,
         column_type,
@@ -2433,7 +2443,7 @@ class config(metaclass=Singleton):
         )
         self.mysql_conn.commit()
 
-    def logJDBCColumnRename(
+    def log_jdbc_column_rename(
         self,
         column_name,
         previous_column_name,
@@ -2472,7 +2482,7 @@ class config(metaclass=Singleton):
         )
         self.mysql_conn.commit()
 
-    def getQuoteAroundColumn(self):
+    def get_quote_around_column(self):
         quote_around_column = ""
         if self.jdbc_servertype == constant.MSSQL:
             quote_around_column = '"'
@@ -2497,7 +2507,7 @@ class config(metaclass=Singleton):
 
         return quote_around_column
 
-    def getJDBCUpperCase(self):
+    def get_jdbc_upper_case(self):
         upper_case = False
         if self.jdbc_servertype == constant.ORACLE:
             upper_case = True
@@ -2506,8 +2516,8 @@ class config(metaclass=Singleton):
 
         return upper_case
 
-    def getJDBCsqlFromTable(self, schema, table):
-        logging.debug("Executing common_config.getJDBCsqlFromTable()")
+    def get_jdbc_sql_from_table(self, schema, table):
+        logging.debug("Executing common_config.get_jdbc_sql_from_table()")
 
         from_table = ""
         if self.jdbc_servertype == constant.MSSQL:
@@ -2531,10 +2541,10 @@ class config(metaclass=Singleton):
         if self.jdbc_servertype == constant.SQLANYWHERE:
             from_table = "%s" % (table)
 
-        logging.debug("Executing common_config.getJDBCsqlFromTable() - Finished")
+        logging.debug("Executing common_config.get_jdbc_sql_from_table() - Finished")
         return from_table
 
-    def getConfigValueColumn(self, key, ignore_error_output=False):
+    def get_config_value_column(self, key, ignore_error_output=False):
         """Return the type of the column that have the value for the specified key"""
 
         value_column = ""
@@ -2636,13 +2646,13 @@ class config(metaclass=Singleton):
 
         return (value_column, bool_value)
 
-    def getConfigValue(self, key):
+    def get_config_value(self, key):
         """Returns a value from the configuration table based on the supplied key. Value returned can be Int, Str or DateTime"""
-        logging.debug("Executing common_config.getConfigValue()")
+        logging.debug("Executing common_config.get_config_value()")
         return_value = None
         bool_value = False
 
-        value_column, bool_value = self.getConfigValueColumn(key)
+        value_column, bool_value = self.get_config_value_column(key)
 
         query = "select %s from configuration where configkey = '%s'" % (
             value_column,
@@ -2689,12 +2699,12 @@ class config(metaclass=Singleton):
             sys.exit(1)
 
         logging.debug("Fetched configuration '%s' as '%s'" % (key, return_value))
-        logging.debug("Executing common_config.getConfigValue() - Finished")
+        logging.debug("Executing common_config.get_config_value() - Finished")
         return return_value
 
-    def connectToMongo(self, exit_if_failure=True, logger=""):
+    def connect_to_mongo(self, exit_if_failure=True, logger=""):
         log = logging.getLogger(logger)
-        log.debug("Executing common_config.connectToMongo()")
+        log.debug("Executing common_config.connect_to_mongo()")
 
         if self.mongoClient != None:
             return True
@@ -2724,24 +2734,24 @@ class config(metaclass=Singleton):
 
         return True
 
-        log.debug("Executing common_config.connectToMongo() - Finished")
+        log.debug("Executing common_config.connect_to_mongo() - Finished")
 
-    def disconnectFromMongo(self):
-        logging.debug("Executing common_config.disconnectFromMongo()")
+    def disconnect_from_mongo(self):
+        logging.debug("Executing common_config.disconnect_from_mongo()")
 
         self.mongoClient.close()
         self.mongoClient = None
         self.mongoDB = None
 
-        logging.debug("Executing common_config.disconnectFromMongo() - Finished")
+        logging.debug("Executing common_config.disconnect_from_mongo() - Finished")
 
-    def getMongoCollections(self, collection_filter=None):
+    def get_mongo_collections(self, collection_filter=None):
         logging.debug("Executing common_config.getMongoTables()")
 
         # Connect to MongoDB and get a list of all collections
-        self.connectToMongo()
+        self.connect_to_mongo()
         mongo_collections = self.mongoDB.list_collection_names()
-        self.disconnectFromMongo()
+        self.disconnect_from_mongo()
 
         if collection_filter == None:
             collection_filter = ""
@@ -2759,11 +2769,11 @@ class config(metaclass=Singleton):
         logging.debug("Executing common_config.getMongoTables() - Finished")
         return result_df
 
-    def getJDBCtablesAndViews(self, schemaFilter=None, tableFilter=None):
-        logging.debug("Executing common_config.getJDBCtablesAndViews()")
-        self.connectToJDBC()
+    def get_jdbc_tables_and_views(self, schemaFilter=None, tableFilter=None):
+        logging.debug("Executing common_config.get_jdbc_tables_and_views()")
+        self.connect_to_jdbc()
 
-        result_df = self.sourceSchema.getJDBCtablesAndViews(
+        result_df = self.sourceSchema.get_jdbc_tables_and_views(
             JDBCCursor=self.JDBCCursor,
             serverType=self.jdbc_servertype,
             database=self.jdbc_database,
@@ -2771,19 +2781,19 @@ class config(metaclass=Singleton):
             tableFilter=tableFilter,
         )
 
-        logging.debug("Executing common_config.getJDBCtablesAndViews() - Finished")
+        logging.debug("Executing common_config.get_jdbc_tables_and_views() - Finished")
         return result_df
 
-    def getAtlasDiscoverConfigObject(self, db_alias=None, logger=""):
+    def get_atlas_discover_config_object(self, db_alias=None, logger=""):
         """Discover all RDBMS objects on the 'dbAlias' and populate Atlas with them"""
         log = logging.getLogger(logger)
-        log.debug("Executing common_config.getAtlasDiscoverConfigObject()")
+        log.debug("Executing common_config.get_atlas_discover_config_object()")
 
         if db_alias == None:
             db_alias = self.dbAlias
 
-        self.lookupConnectionAlias(db_alias)
-        jdbc_connection_data = self.getAtlasJdbcConnectionData(db_alias)
+        self.lookup_connection_alias(db_alias)
+        jdbc_connection_data = self.get_atlas_jdbc_connection_data(db_alias)
 
         config_object = {}
         config_object["dbAlias"] = db_alias
@@ -2808,14 +2818,16 @@ class config(metaclass=Singleton):
         config_object["jdbc_url"] = self.jdbc_url
         config_object["jdbc_classpath_for_python"] = self.jdbc_classpath_for_python
         config_object["jdbc_environment"] = self.jdbc_environment
-        config_object["hdfs_address"] = self.getConfigValue(key="hdfs_address")
-        config_object["cluster_name"] = self.getConfigValue(key="cluster_name")
+        config_object["hdfs_address"] = self.get_config_value(key="hdfs_address")
+        config_object["cluster_name"] = self.get_config_value(key="cluster_name")
 
-        log.debug("Executing common_config.getAtlasDiscoverConfigObject() - Finished")
+        log.debug(
+            "Executing common_config.get_atlas_discover_config_object() - Finished"
+        )
         return config_object
 
-    def getAnonymizationSeed(self):
-        logging.debug("Executing common_config.getAnonymizationSeed()")
+    def get_anonymization_seed(self):
+        logging.debug("Executing common_config.get_anonymization_seed()")
 
         # Set the default seed from the configuration file
         seed = configuration.get("Anonymization", "seed")
@@ -2843,10 +2855,10 @@ class config(metaclass=Singleton):
             )
             seed = seed[:16]
 
-        logging.debug("Executing common_config.getAnonymizationSeed() - Finished")
+        logging.debug("Executing common_config.get_anonymization_seed() - Finished")
         return seed
 
-    def stripUnwantedCharComment(self, work_string):
+    def strip_unwanted_char_comment(self, work_string):
         if work_string == None:
             return
         work_string = work_string.replace("`", "")
@@ -2858,7 +2870,7 @@ class config(metaclass=Singleton):
         work_string = work_string.replace('"', "")
         return work_string.strip()
 
-    def stripUnwantedCharColumnName(self, work_string):
+    def strip_unwanted_char_column_name(self, work_string):
         if work_string == None:
             return
         work_string = work_string.replace("`", "")
@@ -2873,9 +2885,9 @@ class config(metaclass=Singleton):
         work_string = work_string.replace('"', "")
         return work_string.strip()
 
-    def saveJsonToDatabase(self, datatype, destination, json):
+    def save_json_to_database(self, datatype, destination, json):
         """Saves a json that was unable to be sent successfully to the 'json_to_send' table so it can be sent at a later time"""
-        logging.debug("Executing common_config.saveJsonToDatabase()")
+        logging.debug("Executing common_config.save_json_to_database()")
 
         query = "insert into json_to_send "
         query += "( type, status, destination, jsondata ) "
@@ -2886,9 +2898,9 @@ class config(metaclass=Singleton):
         self.mysql_cursor.execute(query, (datatype, destination, json))
         self.mysql_conn.commit()
 
-        logging.debug("Executing common_config.saveJsonToDatabase() - Finished")
+        logging.debug("Executing common_config.save_json_to_database() - Finished")
 
-    def updateYarnStatistics(
+    def update_yarn_statistics(
         self,
         yarn_application_id,
         operation_tool,
@@ -2897,7 +2909,7 @@ class config(metaclass=Singleton):
         yarn_containers_killed=None,
     ):
         """insert or update data to yarn_statistics"""
-        logging.debug("Executing common_config.updateYarnStatistics()")
+        logging.debug("Executing common_config.update_yarn_statistics()")
 
         query = None
         start_stop_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -2972,4 +2984,4 @@ class config(metaclass=Singleton):
             )
             self.mysql_conn.commit()
 
-        logging.debug("Executing common_config.updateYarnStatistics() - Finished")
+        logging.debug("Executing common_config.update_yarn_statistics() - Finished")

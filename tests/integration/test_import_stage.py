@@ -39,15 +39,15 @@ def _rows(conn: sa.Connection, table: str) -> list[int]:
 def test_get_stage_without_stored_stage_returns_zero(
     stage: import_stage.stage,
 ) -> None:
-    assert stage.getStage() == 0
+    assert stage.get_stage() == 0
 
 
 def test_set_stage_persists_stage(
     stage: import_stage.stage, db_connection: sa.Connection
 ) -> None:
-    stage.getStage()
+    stage.get_stage()
 
-    stage.setStage(1010)
+    stage.set_stage(1010)
 
     assert _persisted_stage(db_connection) == 1010
 
@@ -55,10 +55,10 @@ def test_set_stage_persists_stage(
 def test_set_stage_lower_than_current_stage_is_ignored(
     stage: import_stage.stage, db_connection: sa.Connection
 ) -> None:
-    stage.getStage()
-    stage.setStage(1020)
+    stage.get_stage()
+    stage.set_stage(1020)
 
-    stage.setStage(1010)
+    stage.set_stage(1010)
 
     assert _persisted_stage(db_connection) == 1020
 
@@ -66,10 +66,10 @@ def test_set_stage_lower_than_current_stage_is_ignored(
 def test_set_stage_with_force_allows_lower_stage(
     stage: import_stage.stage, db_connection: sa.Connection
 ) -> None:
-    stage.getStage()
-    stage.setStage(1020)
+    stage.get_stage()
+    stage.set_stage(1020)
 
-    stage.setStage(1010, force=True)
+    stage.set_stage(1010, force=True)
 
     assert _persisted_stage(db_connection) == 1010
 
@@ -77,10 +77,10 @@ def test_set_stage_with_force_allows_lower_stage(
 def test_set_stage_records_statistics_for_the_stage_it_leaves(
     stage: import_stage.stage, db_connection: sa.Connection
 ) -> None:
-    stage.getStage()
+    stage.get_stage()
 
-    stage.setStage(1010)
-    stage.setStage(1011)
+    stage.set_stage(1010)
+    stage.set_stage(1011)
 
     assert _rows(db_connection, "import_stage_statistics") == [0, 1010]
 
@@ -88,12 +88,12 @@ def test_set_stage_records_statistics_for_the_stage_it_leaves(
 def test_set_stage_in_memory_mode_writes_nothing(
     stage: import_stage.stage, db_connection: sa.Connection
 ) -> None:
-    stage.setStageOnlyInMemory()
-    stage.getStage()
+    stage.set_stage_only_in_memory()
+    stage.get_stage()
 
-    stage.setStage(1010)
+    stage.set_stage(1010)
 
-    assert stage.getStage() == 1010
+    assert stage.get_stage() == 1010
     assert _persisted_stage(db_connection) is None
     assert _rows(db_connection, "import_stage_statistics") == []
 
@@ -101,7 +101,7 @@ def test_set_stage_in_memory_mode_writes_nothing(
 def test_save_retry_attempt_logs_the_stage(
     stage: import_stage.stage, db_connection: sa.Connection
 ) -> None:
-    stage.saveRetryAttempt(1013)
+    stage.save_retry_attempt(1013)
 
     assert _rows(db_connection, "import_retries_log") == [1013]
 
@@ -109,11 +109,11 @@ def test_save_retry_attempt_logs_the_stage(
 def test_clear_stage_removes_stage_and_statistics(
     stage: import_stage.stage, db_connection: sa.Connection
 ) -> None:
-    stage.getStage()
-    stage.setStage(1010)
-    stage.setStage(1011)
+    stage.get_stage()
+    stage.set_stage(1010)
+    stage.set_stage(1011)
 
-    stage.clearStage()
+    stage.clear_stage()
 
     assert _persisted_stage(db_connection) is None
     assert _rows(db_connection, "import_stage_statistics") == []

@@ -58,21 +58,25 @@ class initialize:
         self.common_config = common_config.config()
         self.sendStatistics = sendStatistics.sendStatistics()
 
-        self.dbimportCommandPath = self.getConfigValue("airflow_dbimport_commandpath")
-        self.defaultSudoUser = self.getConfigValue("airflow_sudo_user")
-        self.DAGdirectory = self.getConfigValue("airflow_dag_directory")
-        self.DAGstagingDirectory = self.getConfigValue("airflow_dag_staging_directory")
-        self.DAGfileGroup = self.getConfigValue("airflow_dag_file_group")
-        self.DAGfilePermission = self.getConfigValue("airflow_dag_file_permission")
-        self.TaskQueueForDummy = self.getConfigValue("airflow_dummy_task_queue")
-        self.airflowMajorVersion = self.getConfigValue("airflow_major_version")
-        self.defaultTimeZone = self.getConfigValue("timezone")
-        self.airflowAWSinstanceIds = self.getConfigValue("airflow_aws_instanceids")
-        self.airflowAWSpoolToInstanceId = self.getConfigValue(
+        self.dbimportCommandPath = self.get_config_value("airflow_dbimport_commandpath")
+        self.defaultSudoUser = self.get_config_value("airflow_sudo_user")
+        self.DAGdirectory = self.get_config_value("airflow_dag_directory")
+        self.DAGstagingDirectory = self.get_config_value(
+            "airflow_dag_staging_directory"
+        )
+        self.DAGfileGroup = self.get_config_value("airflow_dag_file_group")
+        self.DAGfilePermission = self.get_config_value("airflow_dag_file_permission")
+        self.TaskQueueForDummy = self.get_config_value("airflow_dummy_task_queue")
+        self.airflowMajorVersion = self.get_config_value("airflow_major_version")
+        self.defaultTimeZone = self.get_config_value("timezone")
+        self.airflowAWSinstanceIds = self.get_config_value("airflow_aws_instanceids")
+        self.airflowAWSpoolToInstanceId = self.get_config_value(
             "airflow_aws_pool_to_instanceid"
         )
-        self.airflowDefaultPoolSize = self.getConfigValue("airflow_default_pool_size")
-        self.createPoolsWithTasks = self.getConfigValue("airflow_create_pool_with_task")
+        self.airflowDefaultPoolSize = self.get_config_value("airflow_default_pool_size")
+        self.createPoolsWithTasks = self.get_config_value(
+            "airflow_create_pool_with_task"
+        )
 
         self.DAGfile = None
         self.DAGfilename = None
@@ -133,7 +137,7 @@ class initialize:
 
         log.debug("Executing Airflow.__init__() - Finished")
 
-    def disconnectDBImportDB(self):
+    def disconnect_dbimport_db(self):
         """Disconnects from the database and removes all sessions and engine"""
         log = logging.getLogger(self.logger)
 
@@ -144,7 +148,7 @@ class initialize:
 
         self.configDBSession = None
 
-    def getDBImportSession(self):
+    def get_dbimport_session(self):
         """Connects to the configuration database with SQLAlchemy and return a session"""
         log = logging.getLogger(self.logger)
 
@@ -153,7 +157,7 @@ class initialize:
             # return self.configDBSession()
             return scoped_session(self.configDBSession)
 
-        mysql_credentials = self.common_config.getMysqlCredentials()
+        mysql_credentials = self.common_config.get_mysql_credentials()
 
         self.connectStr = "mysql+pymysql://%s:%s@%s:%s/%s" % (
             mysql_credentials["mysql_username"],
@@ -187,19 +191,19 @@ class initialize:
             # return self.configDBSession()
             return scoped_session(self.configDBSession)
 
-    def getConfigValue(self, key):
+    def get_config_value(self, key):
         """Returns a value from the configuration table based on the supplied key. Value returned can be Int, Str or DateTime"""
         log = logging.getLogger(self.logger)
 
         return_value = None
         bool_value = False
 
-        value_column, bool_value = self.common_config.getConfigValueColumn(key)
+        value_column, bool_value = self.common_config.get_config_value_column(key)
 
         try:
-            session = self.getDBImportSession()
+            session = self.get_dbimport_session()
         except SQLerror:
-            self.disconnectDBImportDB()
+            self.disconnect_dbimport_db()
             return None
 
         configuration_table = aliased(configSchema.configuration)
@@ -252,10 +256,10 @@ class initialize:
 
         return return_value
 
-    def checkExecution(self):
+    def check_execution(self):
         """Checks the 'airflow_disable' settings and exit with 0 or 1 depending on that"""
 
-        airflow_execution_disabled = self.getConfigValue("airflow_disable")
+        airflow_execution_disabled = self.get_config_value("airflow_disable")
         if airflow_execution_disabled == False:
             print("Airflow execution is enabled")
             self.common_config.remove_temporary_files()
@@ -265,18 +269,18 @@ class initialize:
             self.common_config.remove_temporary_files()
             sys.exit(1)
 
-    def getDBImportCommandPath(self, sudo_user=""):
+    def get_dbimport_command_path(self, sudo_user=""):
 
         if sudo_user == None or sudo_user == "":
             sudo_user = self.defaultSudoUser
 
         return self.dbimportCommandPath.replace("${SUDO_USER}", sudo_user)
 
-    def generateDAGfromREST(self, name, current_user):
+    def generate_dag_from_rest(self, name, current_user):
         log = logging.getLogger(self.logger)
 
         try:
-            self.generateDAG(name=name, write_dag=True)
+            self.generate_dag(name=name, write_dag=True)
         except (invalidConfiguration, SQLerror, RuntimeError) as errMsg:
             result = str(errMsg)
             return_code = 500
@@ -290,7 +294,7 @@ class initialize:
 
         return (result, return_code)
 
-    def generateDAG(
+    def generate_dag(
         self, name=None, write_dag=False, auto_dag_only=False, dag_folder=None
     ):
         log = logging.getLogger(self.logger)
@@ -299,7 +303,7 @@ class initialize:
         self.DAGFolder = dag_folder
 
         # session = self.configDBSession()
-        session = self.getDBImportSession()
+        session = self.get_dbimport_session()
         airflow_custom_dags = aliased(configSchema.airflowCustomDags)
         airflow_export_dags = aliased(configSchema.airflowExportDags)
         airflow_import_dags = aliased(configSchema.airflowImportDags)
@@ -421,17 +425,17 @@ class initialize:
         if name == None or len(import_dag) > 0:
             dag_found = True
             for index, row in import_dag.iterrows():
-                self.generateImportDAG(dag=row)
+                self.generate_import_dag(dag=row)
 
         if name == None or len(export_dag) > 0:
             dag_found = True
             for index, row in export_dag.iterrows():
-                self.generateExportDAG(dag=row)
+                self.generate_export_dag(dag=row)
 
         if name == None or len(custom_dag) > 0:
             dag_found = True
             for index, row in custom_dag.iterrows():
-                self.generateCustomDAG(dag=row)
+                self.generate_custom_dag(dag=row)
 
         if dag_found == False and name != None:
             raise invalidConfiguration("Can't find DAG with that name")
@@ -441,7 +445,7 @@ class initialize:
 
         session.close()
 
-    def getAirflowHostPoolName(self):
+    def get_airflow_host_pool_name(self):
         log = logging.getLogger(self.logger)
 
         if self.airflowMode == "aws_mwaa" and self.airflowAWSpoolToInstanceId == True:
@@ -463,7 +467,7 @@ class initialize:
 
         return pool_name[0:50]
 
-    def AWSappendInstanceIDasPools(self):
+    def aws_append_instance_id_as_pools(self):
         # This will split the instanceID configration setting based on , and append them all as pool names
         log = logging.getLogger(self.logger)
 
@@ -472,9 +476,9 @@ class initialize:
         for aws_pool in self.airflowAWSinstanceIds.split(","):
             used_pools.append(aws_pool.strip())
 
-        self.createAirflowPools(pools=used_pools)
+        self.create_airflow_pools(pools=used_pools)
 
-    def getAWSInstanceID(self, config_object):
+    def get_aws_instance_id(self, config_object):
         # Return one instanceID from a comma seperated list.
         log = logging.getLogger(self.logger)
 
@@ -489,7 +493,7 @@ class initialize:
 
         # return random.choice(self.airflowAWSinstanceIds.strip().split(','))
 
-    def generateExportDAG(self, dag):
+    def generate_export_dag(self, dag):
         """Generates a Import DAG"""
         log = logging.getLogger(self.logger)
 
@@ -499,8 +503,8 @@ class initialize:
         sudo_user = dag["sudo_user"]
         used_pools.append(default_pool)
 
-        cron_schedule = self.convertTimeToCron(dag["schedule_interval"])
-        self.createDAGfileWithHeader(
+        cron_schedule = self.convert_time_to_cron(dag["schedule_interval"])
+        self.create_dag_file_with_header(
             dag_name=dag["dag_name"],
             cron_schedule=cron_schedule,
             default_pool=default_pool,
@@ -516,7 +520,7 @@ class initialize:
         )
 
         # session = self.configDBSession()
-        session = self.getDBImportSession()
+        session = self.get_dbimport_session()
         export_tables = aliased(configSchema.exportTables)
 
         export_tables_query = Query(
@@ -571,7 +575,7 @@ class initialize:
             if row["dbalias"] != previous_connection_alias:
                 # We save the previousConnectionAlias just to avoid making lookups for every dbalias even if they are all the same
                 try:
-                    self.common_config.lookupConnectionAlias(
+                    self.common_config.lookup_connection_alias(
                         connection_alias=row["dbalias"], decryptCredentials=False
                     )
                     previous_connection_alias = row["dbalias"]
@@ -584,7 +588,7 @@ class initialize:
                     previous_connection_alias = None
                     continue
 
-            export_pool = self.getAirflowHostPoolName()
+            export_pool = self.get_airflow_host_pool_name()
 
             # usedPools is later used to check if the pools that we just are available in Airflow
             if export_pool not in used_pools:
@@ -592,10 +596,10 @@ class initialize:
 
             task_id = row["target_table"].replace(r"/", "_").replace(r".", "_")
             dbexport_cmd = "%sbin/export" % (
-                self.getDBImportCommandPath(sudo_user=sudo_user)
+                self.get_dbimport_command_path(sudo_user=sudo_user)
             )
             dbexport_clear_stage_cmd = "%sbin/manage --clearExportStage" % (
-                self.getDBImportCommandPath(sudo_user=sudo_user)
+                self.get_dbimport_command_path(sudo_user=sudo_user)
             )
 
             airflow_priority = 1  # Default Airflow Priority
@@ -663,20 +667,20 @@ class initialize:
                 )
             self.DAGfile.write("\n")
 
-        self.addTasksToDAGfile(
+        self.add_tasks_to_dag_file(
             dag_name=dag["dag_name"],
             main_dag_schedule=dag["schedule_interval"],
             default_retries=retries,
             default_sudo_user=sudo_user,
         )
-        self.addSensorsToDAGfile(
+        self.add_sensors_to_dag_file(
             dag_name=dag["dag_name"], main_dag_schedule=dag["schedule_interval"]
         )
-        self.createAirflowPools(pools=used_pools)
-        self.closeDAGfile()
+        self.create_airflow_pools(pools=used_pools)
+        self.close_dag_file()
         session.close()
 
-    def generateImportDAG(self, dag):
+    def generate_import_dag(self, dag):
         """Generates a Import DAG"""
         log = logging.getLogger(self.logger)
 
@@ -699,8 +703,8 @@ class initialize:
         else:
             meta_data_import_option = ""
 
-        cron_schedule = self.convertTimeToCron(dag["schedule_interval"])
-        self.createDAGfileWithHeader(
+        cron_schedule = self.convert_time_to_cron(dag["schedule_interval"])
+        self.create_dag_file_with_header(
             dag_name=dag["dag_name"],
             cron_schedule=cron_schedule,
             import_phase_finish_first=import_phase_finish_first,
@@ -717,7 +721,7 @@ class initialize:
         )
 
         # session = self.configDBSession()
-        session = self.getDBImportSession()
+        session = self.get_dbimport_session()
         import_tables = aliased(configSchema.importTables)
 
         import_tables_query = Query(
@@ -789,7 +793,7 @@ class initialize:
             try:
                 if row["dbalias"] != previous_connection_alias:
                     # We save the previousConnectionAlias just to avoid making lookups for every dbalias even if they are all the same
-                    self.common_config.lookupConnectionAlias(
+                    self.common_config.lookup_connection_alias(
                         connection_alias=row["dbalias"], decryptCredentials=False
                     )
                     previous_connection_alias = row["dbalias"]
@@ -806,11 +810,11 @@ class initialize:
                 and self.airflowAWSpoolToInstanceId == True
             ):
                 # We can choice to override the poolname and set it to the instance ID if we are running on AWS
-                instance_id = self.getAWSInstanceID(row["hive_table"])
+                instance_id = self.get_aws_instance_id(row["hive_table"])
                 import_phase_pool = instance_id
                 etl_phase_pool = instance_id
             else:
-                import_phase_pool = self.getAirflowHostPoolName()
+                import_phase_pool = self.get_airflow_host_pool_name()
                 etl_phase_pool = dag["dag_name"][0:50]
 
                 if dag["pool_stage1"] != "":
@@ -827,10 +831,10 @@ class initialize:
                 used_pools.append(etl_phase_pool)
 
             dbimport_cmd = "%sbin/import" % (
-                self.getDBImportCommandPath(sudo_user=sudo_user)
+                self.get_dbimport_command_path(sudo_user=sudo_user)
             )
             dbimport_clear_stage_cmd = "%sbin/manage --clearImportStage" % (
-                self.getDBImportCommandPath(sudo_user=sudo_user)
+                self.get_dbimport_command_path(sudo_user=sudo_user)
             )
 
             task_id = row["hive_table"].replace(r"/", "_").replace(r".", "_")
@@ -875,7 +879,7 @@ class initialize:
                     self.DAGfile.write("    dag=dag)\n")
                     self.DAGfile.write("\n")
                 elif self.airflowMode == "aws_mwaa":
-                    instance_id = self.getAWSInstanceID(row["hive_table"])
+                    instance_id = self.get_aws_instance_id(row["hive_table"])
                     self.DAGfile.write("%s_clearStage = PythonOperator(\n" % (task_id))
                     self.DAGfile.write("    task_id='%s_clearStage',\n" % (task_id))
                     self.DAGfile.write("    python_callable=startDBImportExecution,\n")
@@ -945,7 +949,7 @@ class initialize:
                     self.DAGfile.write("\n")
 
                 elif self.airflowMode == "aws_mwaa":
-                    instance_id = self.getAWSInstanceID(row["hive_table"])
+                    instance_id = self.get_aws_instance_id(row["hive_table"])
                     self.DAGfile.write("%s_import = PythonOperator(\n" % (task_id))
                     self.DAGfile.write("    task_id='%s_import',\n" % (task_id))
                     self.DAGfile.write("    python_callable=startDBImportExecution,\n")
@@ -1116,7 +1120,7 @@ class initialize:
                     self.DAGfile.write("    dag=dag)\n")
                     self.DAGfile.write("\n")
                 elif self.airflowMode == "aws_mwaa":
-                    instance_id = self.getAWSInstanceID(row["hive_table"])
+                    instance_id = self.get_aws_instance_id(row["hive_table"])
                     self.DAGfile.write("%s = PythonOperator(\n" % (task_id))
                     self.DAGfile.write("    task_id='%s',\n" % (task_id))
                     self.DAGfile.write("    python_callable=startDBImportExecution,\n")
@@ -1184,22 +1188,22 @@ class initialize:
                         )
                 self.DAGfile.write("\n")
 
-        self.addTasksToDAGfile(
+        self.add_tasks_to_dag_file(
             dag_name=dag["dag_name"],
             main_dag_schedule=dag["schedule_interval"],
             default_retries=retries,
             default_sudo_user=sudo_user,
         )
-        self.addSensorsToDAGfile(
+        self.add_sensors_to_dag_file(
             dag_name=dag["dag_name"], main_dag_schedule=dag["schedule_interval"]
         )
-        self.createAirflowPools(pools=used_pools)
+        self.create_airflow_pools(pools=used_pools)
         if self.airflowMode == "aws_mwaa" and self.airflowAWSpoolToInstanceId == True:
-            self.AWSappendInstanceIDasPools()
-        self.closeDAGfile()
+            self.aws_append_instance_id_as_pools()
+        self.close_dag_file()
         session.close()
 
-    def createAirflowPools(self, pools):
+    def create_airflow_pools(self, pools):
         """Creates the pools in Airflow database"""
         log = logging.getLogger(self.logger)
 
@@ -1271,12 +1275,12 @@ class initialize:
                 )
                 self.DAGfile.write("\n")
 
-    def generateCustomDAG(self, dag):
+    def generate_custom_dag(self, dag):
         """Generates a Custom DAG"""
         log = logging.getLogger(self.logger)
 
         # session = self.configDBSession()
-        session = self.getDBImportSession()
+        session = self.get_dbimport_session()
         airflow_tasks = aliased(configSchema.airflowTasks)
 
         tasks = (
@@ -1311,8 +1315,8 @@ class initialize:
         else:
             retries = int(dag["retries"])
 
-        cron_schedule = self.convertTimeToCron(dag["schedule_interval"])
-        self.createDAGfileWithHeader(
+        cron_schedule = self.convert_time_to_cron(dag["schedule_interval"])
+        self.create_dag_file_with_header(
             dag_name=dag["dag_name"],
             cron_schedule=cron_schedule,
             default_pool=default_pool,
@@ -1326,20 +1330,20 @@ class initialize:
             retry_exponential_backoff=dag["retry_exponential_backoff"],
             concurrency=dag["concurrency"],
         )
-        self.addTasksToDAGfile(
+        self.add_tasks_to_dag_file(
             dag_name=dag["dag_name"],
             main_dag_schedule=dag["schedule_interval"],
             default_retries=retries,
             default_sudo_user=sudo_user,
         )
-        self.addSensorsToDAGfile(
+        self.add_sensors_to_dag_file(
             dag_name=dag["dag_name"], main_dag_schedule=dag["schedule_interval"]
         )
-        self.createAirflowPools(pools=used_pools)
-        self.closeDAGfile()
+        self.create_airflow_pools(pools=used_pools)
+        self.close_dag_file()
         session.close()
 
-    def convertTimeToCron(self, time):
+    def convert_time_to_cron(self, time):
         """Converts a string in format HH:MM to a CRON time string based on 'minute hour day month weekday'"""
         log = logging.getLogger(self.logger)
         return_value = time
@@ -1351,7 +1355,7 @@ class initialize:
 
         return return_value
 
-    def validateTimeZone(self, time_zone):
+    def validate_time_zone(self, time_zone):
         log = logging.getLogger(self.logger)
         try:
             pendulum.timezone(time_zone)
@@ -1360,7 +1364,7 @@ class initialize:
         else:
             return True
 
-    def createDAGfileWithHeader(
+    def create_dag_file_with_header(
         self,
         dag_name,
         cron_schedule,
@@ -1378,7 +1382,7 @@ class initialize:
     ):
         log = logging.getLogger(self.logger)
         # session = self.configDBSession()
-        session = self.getDBImportSession()
+        session = self.get_dbimport_session()
 
         self.sensorStartTask = "start"
         self.sensorStopTask = "dag_sensors_finished"
@@ -1405,7 +1409,7 @@ class initialize:
         if (
             dag_time_zone != None
             and dag_time_zone != ""
-            and self.validateTimeZone(dag_time_zone) == False
+            and self.validate_time_zone(dag_time_zone) == False
         ):
             log.warning(
                 "Time zone value specified for DAG is not valid, (%s)" % (dag_time_zone)
@@ -1571,7 +1575,7 @@ class initialize:
             self.DAGfile.write("\n")
             # self.DAGfile.write("    instanceID = \"%s\"\n"%(self.airflowAWSinstanceIds))
             self.DAGfile.write(
-                '    commandPath = "%s"\n' % (self.getDBImportCommandPath())
+                '    commandPath = "%s"\n' % (self.get_dbimport_command_path())
             )
             self.DAGfile.write(
                 '    command = "%sbin/%s || echo ERROR; sleep 1"%(commandPath, command)\n'
@@ -2076,7 +2080,7 @@ class initialize:
                 )
             self.DAGfile.write(
                 "    bash_command='%sbin/manage --checkAirflowExecution --airflowDAG=%s',\n"
-                % (self.getDBImportCommandPath(sudo_user=sudo_user), dag_name)
+                % (self.get_dbimport_command_path(sudo_user=sudo_user), dag_name)
             )
             self.DAGfile.write("    priority_weight=100,\n")
             self.DAGfile.write("    weight_rule='absolute',\n")
@@ -2092,7 +2096,7 @@ class initialize:
                 )
             self.DAGfile.write(
                 "    bash_command='%sbin/manage --sendAirflowStopMessage --airflowDAG=%s',\n"
-                % (self.getDBImportCommandPath(sudo_user=sudo_user), dag_name)
+                % (self.get_dbimport_command_path(sudo_user=sudo_user), dag_name)
             )
             self.DAGfile.write("    priority_weight=100,\n")
             self.DAGfile.write("    weight_rule='absolute',\n")
@@ -2110,7 +2114,7 @@ class initialize:
             self.DAGfile.write("    python_callable=startDBImportExecution,\n")
             self.DAGfile.write(
                 '    op_kwargs={"command": "manage --checkAirflowExecution --airflowDAG=%s", "instanceID": "%s"},\n'
-                % (dag_name, self.getAWSInstanceID("start"))
+                % (dag_name, self.get_aws_instance_id("start"))
             )
             self.DAGfile.write("    priority_weight=100,\n")
             self.DAGfile.write("    weight_rule='absolute',\n")
@@ -2127,7 +2131,7 @@ class initialize:
             self.DAGfile.write("    python_callable=startDBImportExecution,\n")
             self.DAGfile.write(
                 '    op_kwargs={"command": "manage --checkAirflowExecution --airflowDAG=%s", "instanceID": "%s"},\n'
-                % (dag_name, self.getAWSInstanceID("stop"))
+                % (dag_name, self.get_aws_instance_id("stop"))
             )
             self.DAGfile.write("    priority_weight=100,\n")
             self.DAGfile.write("    weight_rule='absolute',\n")
@@ -2244,7 +2248,7 @@ class initialize:
         log.debug("postStartTask = %s" % (self.postStartTask))
         log.debug("postStopTask = %s" % (self.postStopTask))
 
-    def closeDAGfile(self):
+    def close_dag_file(self):
         log = logging.getLogger(self.logger)
         self.DAGfile.close()
 
@@ -2301,7 +2305,7 @@ class initialize:
         else:
             print("DAG file written to %s" % (self.DAGfilename))
 
-    def addFailureTask(self, task_name):
+    def add_failure_task(self, task_name):
         log = logging.getLogger(self.logger)
         self.DAGfile.write("%s = BashOperator(\n" % (task_name))
         self.DAGfile.write("    task_id='%s',\n" % (task_name))
@@ -2311,13 +2315,13 @@ class initialize:
         self.DAGfile.write("    dag=dag)\n")
         self.DAGfile.write("\n")
 
-    def addTasksToDAGfile(
+    def add_tasks_to_dag_file(
         self, dag_name, main_dag_schedule, default_retries=0, default_sudo_user=""
     ):
         log = logging.getLogger(self.logger)
 
         # session = self.configDBSession()
-        session = self.getDBImportSession()
+        session = self.get_dbimport_session()
 
         if default_sudo_user == None:
             default_sudo_user = ""
@@ -2436,7 +2440,7 @@ class initialize:
                     )
 
                     row["task_name"] = "%s_FAILURE" % (row["task_name"])
-                    self.addFailureTask(row["task_name"])
+                    self.add_failure_task(row["task_name"])
                     add_dag_sensor = False
                 # 					continue
                 # 					log.error("Cant find schedule interval for DAG to wait for")
@@ -2466,7 +2470,7 @@ class initialize:
                         "The DAG Sensor will not be added to the DAG. Instead, there will be a Task that always failes. The DAG will never execute"
                     )
                     row["task_name"] = "%s_FAILURE" % (row["task_name"])
-                    self.addFailureTask(row["task_name"])
+                    self.add_failure_task(row["task_name"])
                     add_dag_sensor = False
 
                 if main_dag_match_hour_min != None and add_dag_sensor == True:
@@ -2520,7 +2524,7 @@ class initialize:
                             "The DAG Sensor will not be added to the DAG. Instead, there will be a Task that always failes. The DAG will never execute"
                         )
                         row["task_name"] = "%s_FAILURE" % (row["task_name"])
-                        self.addFailureTask(row["task_name"])
+                        self.add_failure_task(row["task_name"])
                         add_dag_sensor = False
 
                 if add_dag_sensor == True:
@@ -2651,7 +2655,7 @@ class initialize:
                     self.DAGfile.write(
                         "    bash_command='%sbin/manage --runHiveScript=%s --hiveDB=%s ',\n"
                         % (
-                            self.getDBImportCommandPath(sudo_user=sudo_user),
+                            self.get_dbimport_command_path(sudo_user=sudo_user),
                             row["task_config"],
                             row["hive_db"],
                         )
@@ -2660,7 +2664,7 @@ class initialize:
                     self.DAGfile.write(
                         "    bash_command='%sbin/manage --runHiveScript=%s ',\n"
                         % (
-                            self.getDBImportCommandPath(sudo_user=sudo_user),
+                            self.get_dbimport_command_path(sudo_user=sudo_user),
                             row["task_config"],
                         )
                     )
@@ -2685,7 +2689,7 @@ class initialize:
                 self.DAGfile.write("    retries=%s,\n" % (default_retries))
                 self.DAGfile.write(
                     "    bash_command='%sbin/manage --runHiveQuery=\"%s\" ',\n"
-                    % (self.getDBImportCommandPath(sudo_user=sudo_user), jdbc_sql)
+                    % (self.get_dbimport_command_path(sudo_user=sudo_user), jdbc_sql)
                 )
                 if row["airflow_pool"] != "":
                     self.DAGfile.write("    pool='%s',\n" % (row["airflow_pool"]))
@@ -2708,7 +2712,7 @@ class initialize:
                 self.DAGfile.write(
                     "    bash_command='%sbin/manage --dbAlias=%s --runJDBCQuery=\"%s\" ',\n"
                     % (
-                        self.getDBImportCommandPath(sudo_user=sudo_user),
+                        self.get_dbimport_command_path(sudo_user=sudo_user),
                         row["jdbc_dbalias"],
                         jdbc_sql,
                     )
@@ -2735,7 +2739,7 @@ class initialize:
                     self.DAGfile.write(
                         "    bash_command='%sbin/%s',\n"
                         % (
-                            self.getDBImportCommandPath(sudo_user=sudo_user),
+                            self.get_dbimport_command_path(sudo_user=sudo_user),
                             dbimport_command,
                         )
                     )
@@ -2752,7 +2756,7 @@ class initialize:
                     self.DAGfile.write("    dag=dag)\n")
                     self.DAGfile.write("\n")
                 elif self.airflowMode == "aws_mwaa":
-                    instance_id = self.getAWSInstanceID(row["task_name"])
+                    instance_id = self.get_aws_instance_id(row["task_name"])
                     self.DAGfile.write("%s = PythonOperator(\n" % (row["task_name"]))
                     self.DAGfile.write("    task_id='%s',\n" % (row["task_name"]))
                     self.DAGfile.write("    retries=%s,\n" % (default_retries))
@@ -2949,10 +2953,10 @@ class initialize:
         self.DAGfile.write(task_dependencies)
         session.close()
 
-    def addSensorsToDAGfile(self, dag_name, main_dag_schedule):
+    def add_sensors_to_dag_file(self, dag_name, main_dag_schedule):
         log = logging.getLogger(self.logger)
         # session = self.configDBSession()
-        session = self.getDBImportSession()
+        session = self.get_dbimport_session()
 
         airflow_dag_sensors = aliased(configSchema.airflowDagSensors, name="ads")
         airflow_custom_dags = aliased(configSchema.airflowCustomDags, name="acd")
@@ -3015,7 +3019,7 @@ class initialize:
                 log.warning(
                     "The DAG Sensor will not be added to the DAG. Instead, there will be a Task that always failes. The DAG will never execute"
                 )
-                self.addFailureTask("%s_FAILURE" % (row["sensor_name"]))
+                self.add_failure_task("%s_FAILURE" % (row["sensor_name"]))
                 self.DAGfile.write(
                     "%s.set_downstream(%s_FAILURE)\n"
                     % (self.sensorStartTask, row["sensor_name"])
@@ -3066,7 +3070,7 @@ class initialize:
                 log.warning(
                     "The DAG Sensor will not be added to the DAG. Instead, there will be a Task that always failes. The DAG will never execute"
                 )
-                self.addFailureTask("%s_FAILURE" % (row["sensor_name"]))
+                self.add_failure_task("%s_FAILURE" % (row["sensor_name"]))
                 self.DAGfile.write(
                     "%s.set_downstream(%s_FAILURE)\n"
                     % (self.sensorStartTask, row["sensor_name"])
@@ -3135,7 +3139,7 @@ class initialize:
                     log.warning(
                         "The DAG Sensor will not be added to the DAG. Instead, there will be a Task that always failes. The DAG will never execute"
                     )
-                    self.addFailureTask("%s_FAILURE" % (row["sensor_name"]))
+                    self.add_failure_task("%s_FAILURE" % (row["sensor_name"]))
                     self.DAGfile.write(
                         "%s.set_downstream(%s_FAILURE)\n"
                         % (self.sensorStartTask, row["sensor_name"])
@@ -3176,16 +3180,18 @@ class initialize:
 
         session.close()
 
-    def sendJSON(self, airflow_dag, status):
+    def send_json(self, airflow_dag, status):
         """Sends a start JSON document to REST and/or Kafka"""
         log = logging.getLogger(self.logger)
-        log.debug("Executing Airflow.sendStartJSON()")
+        log.debug("Executing Airflow.send_start_json()")
 
-        self.postAirflowDAGoperations = self.common_config.getConfigValue(
+        self.postAirflowDAGoperations = self.common_config.get_config_value(
             key="post_airflow_dag_operations"
         )
-        self.postDataToREST = self.common_config.getConfigValue(key="post_data_to_rest")
-        self.postDataToKafka = self.common_config.getConfigValue(
+        self.postDataToREST = self.common_config.get_config_value(
+            key="post_data_to_rest"
+        )
+        self.postDataToKafka = self.common_config.get_config_value(
             key="post_data_to_kafka"
         )
 
@@ -3207,13 +3213,13 @@ class initialize:
         json_data["airflow_timestamp"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
 
         if self.postDataToKafka == True:
-            result = self.sendStatistics.publishKafkaData(json.dumps(json_data))
+            result = self.sendStatistics.publish_kafka_data(json.dumps(json_data))
             if result == False:
                 log.warning("Kafka publish failed! No start message posted")
 
         if self.postDataToREST == True:
-            response = self.sendStatistics.sendRESTdata(json.dumps(json_data))
+            response = self.sendStatistics.send_rest_data(json.dumps(json_data))
             if response != 200:
                 log.warn("REST call failed! No start message posted")
 
-        log.debug("Executing Airflow.sendStartJSON() - Finished")
+        log.debug("Executing Airflow.send_start_json() - Finished")

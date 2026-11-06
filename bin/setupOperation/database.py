@@ -54,7 +54,7 @@ class initialize:
         self.common_config = common_config.config()
 
         # Fetch configuration about MySQL database and how to connect to it
-        self.databaseCredentials = self.common_config.getMysqlCredentials()
+        self.databaseCredentials = self.common_config.get_mysql_credentials()
         self.configHostname = self.databaseCredentials["mysql_hostname"]
         self.configPort = self.databaseCredentials["mysql_port"]
         self.configDatabase = self.databaseCredentials["mysql_database"]
@@ -122,7 +122,7 @@ class initialize:
 
         logging.debug("Executing database.__init__() - Finished")
 
-    def generateSchemaRst(self):
+    def generate_schema_rst(self):
 
         query = "select max(length(c.column_name)), max(length(c.column_comment)) "
         query += "from information_schema.columns c "
@@ -231,8 +231,8 @@ class initialize:
             print(line)
             print(line_single)
 
-    def getListOfConfigTables(self):
-        logging.debug("Executing common_config.getListOfConfigTables()")
+    def get_list_of_config_tables(self):
+        logging.debug("Executing common_config.get_list_of_config_tables()")
 
         query = "select "
         query += "   table_name "
@@ -248,10 +248,10 @@ class initialize:
         if len(tables_df) > 0:
             tables_df.columns = ["table"]
 
-        logging.debug("Executing common_config.getListOfConfigTables() - Finished")
+        logging.debug("Executing common_config.get_list_of_config_tables() - Finished")
         return tables_df
 
-    def createDB(self, create_only_table=None):
+    def create_db(self, create_only_table=None):
 
         inspector = sa.inspect(self.configDB)
         all_tables = inspector.get_table_names()
@@ -262,19 +262,19 @@ class initialize:
             return
 
         alembicCommand.upgrade(self.alembicConfig, "head")
-        self.createDefaultEnvironmentTypes()
-        self.updateConfigurationValues()
+        self.create_default_environment_types()
+        self.update_configuration_values()
 
         print("DBImport configuration database is created successfully")
 
-    def upgradeDB(self):
+    def upgrade_db(self):
 
         print("Upgrading database to latest level")
         alembicCommand.upgrade(self.alembicConfig, "head")
-        self.createDefaultEnvironmentTypes()
-        self.updateConfigurationValues()
+        self.create_default_environment_types()
+        self.update_configuration_values()
 
-    def createDefaultEnvironmentTypes(self):
+    def create_default_environment_types(self):
         session = self.configDBSession()
 
         number_of_environemnt_types = session.query(
@@ -293,7 +293,7 @@ class initialize:
             session.add_all(objects_to_add)
             session.commit()
 
-    def updateConfigurationValues(self):
+    def update_configuration_values(self):
         session = self.configDBSession()
 
         # Create a list of all available JDBC drivers

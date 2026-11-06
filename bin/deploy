@@ -60,7 +60,7 @@ def printHeader():
     print("")
 
 
-def printMainHelp():
+def print_main_help():
     printHeader()
     print("Options:")
     print(
@@ -84,7 +84,7 @@ def printMainHelp():
     sys.exit(1)
 
 
-def print_deployAirflowImportDAG_help():
+def print_deploy_airflow_import_dag_help():
     printHeader()
     print(
         "Deploy the DAG definition and all involved databases, tables and connection aliases to a remote DBImport instance"
@@ -105,7 +105,7 @@ def print_deployAirflowImportDAG_help():
     sys.exit(1)
 
 
-def print_deployAirflowExportDAG_help():
+def print_deploy_airflow_export_dag_help():
     printHeader()
     print(
         "Deploy the DAG definition and all involved databases, tables and connection aliases to a remote DBImport instance"
@@ -152,7 +152,7 @@ def main(argv):
             ],
         )
     except getopt.GetoptError:
-        printMainHelp()
+        print_main_help()
 
     hive_db = None
     hive_table = None
@@ -165,7 +165,7 @@ def main(argv):
     quiet_mode = False
 
     if len(opts) == 0:
-        printMainHelp()
+        print_main_help()
 
     for opt, arg in opts:
         if opt in ("-?", "--help"):
@@ -198,17 +198,17 @@ def main(argv):
     # 			operation = "deployExportTable"
 
     if operation == None:
-        printMainHelp()
+        print_main_help()
 
     if operation == "deployAirflowImportDAG" and (
         airflow_dag == None or deploy_target == None or display_help == True
     ):
-        print_deployAirflowImportDAG_help()
+        print_deploy_airflow_import_dag_help()
 
     if operation == "deployAirflowExportDAG" and (
         airflow_dag == None or deploy_target == None or display_help == True
     ):
-        print_deployAirflowExportDAG_help()
+        print_deploy_airflow_export_dag_help()
 
     if quiet_mode == False:
         printHeader()
@@ -227,8 +227,8 @@ def main(argv):
 
     if operation == "deployAirflowImportDAG":
         copy_operation = copy_operations.operation()
-        copy_operation.checkRemoteInstanceSchema(remote_instance=deploy_target)
-        copy_operation.copyAirflowImportDAG(
+        copy_operation.check_remote_instance_schema(remote_instance=deploy_target)
+        copy_operation.copy_airflow_import_dag(
             airflow_dag_name=airflow_dag,
             copy_destination=deploy_target,
             deploy_mode=True,
@@ -237,8 +237,8 @@ def main(argv):
 
     if operation == "deployAirflowExportDAG":
         copy_operation = copy_operations.operation()
-        copy_operation.checkRemoteInstanceSchema(remote_instance=deploy_target)
-        copy_operation.copyAirflowExportDAG(
+        copy_operation.check_remote_instance_schema(remote_instance=deploy_target)
+        copy_operation.copy_airflow_export_dag(
             airflow_dag_name=airflow_dag,
             copy_destination=deploy_target,
             deploy_mode=True,

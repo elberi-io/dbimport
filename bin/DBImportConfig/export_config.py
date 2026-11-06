@@ -103,10 +103,10 @@ class config(metaclass=Singleton):
 
         logging.debug("Executing export_config.__init__() - Finished")
 
-    def logHiveColumnAdd(
+    def log_hive_column_add(
         self, column, columnType, description=None, hiveDB=None, hiveTable=None
     ):
-        self.common_config.logHiveColumnAdd(
+        self.common_config.log_hive_column_add(
             column=column,
             columnType=columnType,
             description=description,
@@ -114,7 +114,7 @@ class config(metaclass=Singleton):
             hiveTable=hiveTable,
         )
 
-    def logHiveColumnTypeChange(
+    def log_hive_column_type_change(
         self,
         column,
         columnType,
@@ -123,7 +123,7 @@ class config(metaclass=Singleton):
         hiveDB=None,
         hiveTable=None,
     ):
-        self.common_config.logHiveColumnTypeChange(
+        self.common_config.log_hive_column_type_change(
             column,
             columnType,
             previous_columnType=previous_columnType,
@@ -132,7 +132,7 @@ class config(metaclass=Singleton):
             hiveTable=hiveTable,
         )
 
-    def logHiveColumnRename(
+    def log_hive_column_rename(
         self,
         columnName,
         previous_columnName,
@@ -140,7 +140,7 @@ class config(metaclass=Singleton):
         hiveDB=None,
         hiveTable=None,
     ):
-        self.common_config.logHiveColumnRename(
+        self.common_config.log_hive_column_rename(
             columnName,
             previous_columnName,
             description=description,
@@ -148,7 +148,7 @@ class config(metaclass=Singleton):
             hiveTable=hiveTable,
         )
 
-    def logTargetColumnAdd(
+    def log_target_column_add(
         self,
         column,
         column_type,
@@ -158,7 +158,7 @@ class config(metaclass=Singleton):
         schema=None,
         table=None,
     ):
-        self.common_config.logJDBCColumnAdd(
+        self.common_config.log_jdbc_column_add(
             column=column,
             column_type=column_type,
             description=description,
@@ -168,7 +168,7 @@ class config(metaclass=Singleton):
             table=table,
         )
 
-    def logTargetColumnTypeChange(
+    def log_target_column_type_change(
         self,
         column,
         column_type,
@@ -179,7 +179,7 @@ class config(metaclass=Singleton):
         schema=None,
         table=None,
     ):
-        self.common_config.logJDBCColumnTypeChange(
+        self.common_config.log_jdbc_column_type_change(
             column,
             column_type,
             previous_column_type=previous_column_type,
@@ -190,7 +190,7 @@ class config(metaclass=Singleton):
             table=table,
         )
 
-    def logTargetColumnRename(
+    def log_target_column_rename(
         self,
         column_name,
         previous_column_name,
@@ -200,7 +200,7 @@ class config(metaclass=Singleton):
         schema=None,
         table=None,
     ):
-        self.common_config.logJDBCColumnRename(
+        self.common_config.log_jdbc_column_rename(
             column_name,
             previous_column_name,
             description=description,
@@ -213,23 +213,23 @@ class config(metaclass=Singleton):
     def remove_temporary_files(self):
         self.common_config.remove_temporary_files()
 
-    def setStage(self, stage, force=False):
-        self.stage.setStage(stage, force=force)
+    def set_stage(self, stage, force=False):
+        self.stage.set_stage(stage, force=force)
 
-    def getStage(self):
-        return self.stage.getStage()
+    def get_stage(self):
+        return self.stage.get_stage()
 
-    def clearStage(self):
-        self.stage.clearStage()
+    def clear_stage(self):
+        self.stage.clear_stage()
 
-    def saveRetryAttempt(self, stage):
-        self.stage.saveRetryAttempt(stage)
+    def save_retry_attempt(self, stage):
+        self.stage.save_retry_attempt(stage)
 
-    def setStageOnlyInMemory(self):
-        self.stage.setStageOnlyInMemory()
+    def set_stage_only_in_memory(self):
+        self.stage.set_stage_only_in_memory()
 
-    def saveStageStatistics(self):
-        self.stage.saveStageStatistics(
+    def save_stage_statistics(self):
+        self.stage.save_stage_statistics(
             dbalias=self.connectionAlias,
             target_database=self.common_config.jdbc_database,
             target_schema=self.targetSchema,
@@ -243,8 +243,8 @@ class config(metaclass=Singleton):
             sessions=self.sqoop_last_mappers,
         )
 
-    def convertStageStatisticsToJSON(self):
-        self.stage.convertStageStatisticsToJSON(
+    def convert_stage_statistics_to_json(self):
+        self.stage.convert_stage_statistics_to_json(
             dbalias=self.connectionAlias,
             target_database=self.common_config.jdbc_database,
             target_schema=self.targetSchema,
@@ -257,15 +257,17 @@ class config(metaclass=Singleton):
             sessions=self.sqoop_last_mappers,
         )
 
-    def sendStartJSON(self):
+    def send_start_json(self):
         """Sends a start JSON document to REST and/or Kafka"""
-        logging.debug("Executing export_config.sendStartJSON()")
+        logging.debug("Executing export_config.send_start_json()")
 
-        self.postDataToREST = self.common_config.getConfigValue(key="post_data_to_rest")
-        self.postDataToKafka = self.common_config.getConfigValue(
+        self.postDataToREST = self.common_config.get_config_value(
+            key="post_data_to_rest"
+        )
+        self.postDataToKafka = self.common_config.get_config_value(
             key="post_data_to_kafka"
         )
-        self.postDataToAWSSNS = self.common_config.getConfigValue(
+        self.postDataToAWSSNS = self.common_config.get_config_value(
             key="post_data_to_awssns"
         )
 
@@ -290,32 +292,32 @@ class config(metaclass=Singleton):
         json_data["incremental"] = self.exportIsIncremental
 
         if self.postDataToKafka == True:
-            result = self.sendStatistics.publishKafkaData(json.dumps(json_data))
+            result = self.sendStatistics.publish_kafka_data(json.dumps(json_data))
             if result == False:
                 logging.warning("Kafka publish failed! No start message posted")
 
         if self.postDataToREST == True:
-            response = self.sendStatistics.sendRESTdata(json.dumps(json_data))
+            response = self.sendStatistics.send_rest_data(json.dumps(json_data))
             if response != 200:
                 logging.warn("REST call failed! No start message posted")
 
         if self.postDataToAWSSNS == True:
-            result = self.sendStatistics.sendAWSSNSdata(json.dumps(json_data))
+            result = self.sendStatistics.send_aws_sns_data(json.dumps(json_data))
             if result == False:
                 logging.warning("AWS SNS publish failed! No start message posted")
 
-        logging.debug("Executing export_config.sendStartJSON() - Finished")
+        logging.debug("Executing export_config.send_start_json() - Finished")
 
-    def checkTimeWindow(self):
-        self.common_config.checkTimeWindow(self.connectionAlias)
+    def check_time_window(self):
+        self.common_config.check_time_window(self.connectionAlias)
 
-    def checkJDBCTable(self):
-        return self.common_config.checkJDBCTable(
+    def check_jdbc_table(self):
+        return self.common_config.check_jdbc_table(
             schema=self.targetSchema, table=self.targetTable
         )
 
-    def getExportConfig(self):
-        logging.debug("Executing export_config.getExportConfig()")
+    def get_export_config(self):
+        logging.debug("Executing export_config.get_export_config()")
 
         query = "select "
         query += "    table_id, "
@@ -431,7 +433,7 @@ class config(metaclass=Singleton):
                 )
 
         # Get the connection details. This is needed in order to determine what kind of connection we talk about.
-        self.lookupConnectionAlias()
+        self.lookup_connection_alias()
 
         if self.exportType == "full" and self.common_config.db_awss3 == False:
             self.exportPhase = constant.EXPORT_PHASE_FULL
@@ -499,7 +501,7 @@ class config(metaclass=Singleton):
         self.datalakeSourceConnection = row[0]
 
         # Set the name of the history tables, temporary tables and such
-        self.hiveExportTempDB = self.common_config.getConfigValue(
+        self.hiveExportTempDB = self.common_config.get_config_value(
             key="export_staging_database"
         )
         if self.targetSchema == "-":
@@ -520,7 +522,7 @@ class config(metaclass=Singleton):
             )
         self.hiveExportTempTable = self.hiveExportTempTable.lower()
 
-        logging.debug("Settings from export_config.getExportConfig()")
+        logging.debug("Settings from export_config.get_export_config()")
         logging.debug("    tableID = %s" % (self.tableID))
         logging.debug("    exportType = %s" % (self.exportType))
         logging.debug("    hiveJavaHeap = %s" % (self.hiveJavaHeap))
@@ -535,16 +537,16 @@ class config(metaclass=Singleton):
         logging.debug("    exportPhase = %s" % (self.exportPhase))
         logging.debug("    hiveExportTempDB = %s" % (self.hiveExportTempDB))
         logging.debug("    hiveExportTempTable = %s" % (self.hiveExportTempTable))
-        logging.debug("Executing export_config.getExportConfig() - Finished")
+        logging.debug("Executing export_config.get_export_config() - Finished")
 
-    def lookupConnectionAlias(self, connectionAlias=None):
+    def lookup_connection_alias(self, connectionAlias=None):
 
         if connectionAlias == None:
             connectionAlias = self.connectionAlias
 
-        self.common_config.lookupConnectionAlias(connectionAlias)
+        self.common_config.lookup_connection_alias(connectionAlias)
 
-    def validateCustomQuery(self):
+    def validate_custom_query(self):
         """Validates the custom queries"""
         if (
             self.validationCustomQueryTargetValue == None
@@ -576,8 +578,8 @@ class config(metaclass=Singleton):
         logging.info("Custom query validation successful!")
         return True
 
-    def saveCustomSQLValidationHiveValue(self, jsonValue, printInfo=True):
-        logging.debug("Executing export_config.saveCustomSQLValidationHiveValue()")
+    def save_custom_sql_validation_hive_value(self, jsonValue, printInfo=True):
+        logging.debug("Executing export_config.save_custom_sql_validation_hive_value()")
         if printInfo == True:
             logging.info(
                 "Saving the custom SQL validation data from Hive table to the configuration database"
@@ -590,11 +592,13 @@ class config(metaclass=Singleton):
         logging.debug("SQL Statement executed: %s" % (self.mysql_cursor01.statement))
 
         logging.debug(
-            "Executing export_config.saveCustomSQLValidationHiveValue() - Finished"
+            "Executing export_config.save_custom_sql_validation_hive_value() - Finished"
         )
 
-    def saveCustomSQLValidationTargetValue(self, json_value, print_info=True):
-        logging.debug("Executing export_config.saveCustomSQLValidationTargetValue()")
+    def save_custom_sql_validation_target_value(self, json_value, print_info=True):
+        logging.debug(
+            "Executing export_config.save_custom_sql_validation_target_value()"
+        )
         if print_info == True:
             logging.info(
                 "Saving the custom SQL validation data from target table to the configuration database"
@@ -607,15 +611,15 @@ class config(metaclass=Singleton):
         logging.debug("SQL Statement executed: %s" % (self.mysql_cursor01.statement))
 
         logging.debug(
-            "Executing export_config.saveCustomSQLValidationTargetValue() - Finished"
+            "Executing export_config.save_custom_sql_validation_target_value() - Finished"
         )
 
-    def updateLastUpdateFromHive(self):
+    def update_last_update_from_hive(self):
         # This function will update the import_tables.last_update_from_source to the startDate from the common class. This will later
         # be used to determine if all the columns exists in the source system as we set the same datatime on all columns
         # that we read from the source system
         logging.debug("")
-        logging.debug("Executing export_config.updateLastUpdateFromHive()")
+        logging.debug("Executing export_config.update_last_update_from_hive()")
 
         # Update the import_tables.last_update_from_source with the current date
         query = (
@@ -633,16 +637,20 @@ class config(metaclass=Singleton):
         row = self.mysql_cursor01.fetchone()
         self.common_config.operationTimestamp = row[0]
 
-        logging.debug("Executing export_config.updateLastUpdateFromHive() - Finished")
+        logging.debug(
+            "Executing export_config.update_last_update_from_hive() - Finished"
+        )
 
-    def saveColumnData(self, columnsDF=None):
-        logging.debug("Executing export_config.saveColumnData()")
+    def save_column_data(self, columnsDF=None):
+        logging.debug("Executing export_config.save_column_data()")
         logging.info("Saving column data to MySQL table - export_columns")
 
         for index, row in columnsDF.iterrows():
             column_name = row["name"]
             column_type = row["type"]
-            column_comment = self.common_config.stripUnwantedCharComment(row["comment"])
+            column_comment = self.common_config.strip_unwanted_char_comment(
+                row["comment"]
+            )
             column_order = row["idx"]
 
             query = "select column_id from export_columns where table_id = %s and column_name = %s "
@@ -715,10 +723,10 @@ class config(metaclass=Singleton):
             )
             self.mysql_conn.commit()
 
-        logging.debug("Executing export_config.saveColumnData() - Finished")
+        logging.debug("Executing export_config.save_column_data() - Finished")
 
-    def clearValidationData(self):
-        logging.debug("Executing export_config.clearValidationData()")
+    def clear_validation_data(self):
+        logging.debug("Executing export_config.clear_validation_data()")
         logging.info("Clearing rowcounts from previous exports")
 
         self.validationCustomQueryHiveValue = None
@@ -729,11 +737,11 @@ class config(metaclass=Singleton):
         self.mysql_conn.commit()
         logging.debug("SQL Statement executed: %s" % (self.mysql_cursor01.statement))
 
-        logging.debug("Executing export_config.clearValidationData() - Finished")
+        logging.debug("Executing export_config.clear_validation_data() - Finished")
 
-    def isExportTempTableNeeded(self, hiveTableIsTransactional, hiveTableIsView):
+    def is_export_temp_table_needed(self, hiveTableIsTransactional, hiveTableIsView):
         """This function return True or False if a temptable is needed to export from"""
-        logging.debug("Executing export_config.isExportTempTableNeeded()")
+        logging.debug("Executing export_config.is_export_temp_table_needed()")
 
         self.tempTableNeeded = False
 
@@ -762,34 +770,38 @@ class config(metaclass=Singleton):
             self.tempTableNeeded = True
 
         logging.debug("tempTableNeeded: %s" % (self.tempTableNeeded))
-        logging.debug("Executing export_config.isExportTempTableNeeded() - Finished")
+        logging.debug(
+            "Executing export_config.is_export_temp_table_needed() - Finished"
+        )
         return self.tempTableNeeded
 
-    def resetMaxValueFromTarget(self):
-        logging.debug("Executing export_config.resetMaxValueFromTarget()")
+    def reset_max_value_from_target(self):
+        logging.debug("Executing export_config.reset_max_value_from_target()")
 
-        colum_quotation = self.common_config.getQuoteAroundColumn()
+        colum_quotation = self.common_config.get_quote_around_column()
         column = self.incr_column
-        if self.common_config.getJDBCUpperCase() == True:
+        if self.common_config.get_jdbc_upper_case() == True:
             column = column.upper()
         query = "select max(%s%s%s) from " % (colum_quotation, column, colum_quotation)
-        query += self.common_config.getJDBCsqlFromTable(
+        query += self.common_config.get_jdbc_sql_from_table(
             schema=self.targetSchema, table=self.targetTable
         )
-        result_df = self.common_config.executeJDBCquery(query)
+        result_df = self.common_config.execute_jdbc_query(query)
         max_value = max_value = result_df.loc[0][0]
-        self.resetIncrMinMaxValues(maxValue=max_value)
+        self.reset_incr_min_max_values(maxValue=max_value)
 
-        logging.debug("Executing export_config.resetMaxValueFromTarget() - Finished")
+        logging.debug(
+            "Executing export_config.reset_max_value_from_target() - Finished"
+        )
 
-    def getColumnsFromConfigDatabase(
+    def get_columns_from_config_database(
         self,
         excludeColumns=False,
         forceColumnUppercase=False,
         getReplacedColumnTypes=True,
     ):
         """Reads the columns from the configuration database and returns the information in a Pandas DF with the columns name, type and comment"""
-        logging.debug("Executing export_config.getColumnsFromConfigDatabase()")
+        logging.debug("Executing export_config.get_columns_from_config_database()")
         hive_column_definition = ""
 
         query = "select "
@@ -825,13 +837,13 @@ class config(metaclass=Singleton):
         result_df.columns = result_df_columns
 
         logging.debug(
-            "Executing export_config.getColumnsFromConfigDatabase() - Finished"
+            "Executing export_config.get_columns_from_config_database() - Finished"
         )
         return result_df
 
-    def convertColumnTypeForTargetTable(self, column_name, column_type):
+    def convert_column_type_for_target_table(self, column_name, column_type):
         """Converts the column type to a type that is supported by the Target database type"""
-        logging.debug("Executing export_config.convertColumnTypeForTargetTable()")
+        logging.debug("Executing export_config.convert_column_type_for_target_table()")
 
         map_column_java = None
         source_database_type = ""
@@ -995,16 +1007,16 @@ class config(metaclass=Singleton):
             column_type = re.sub(r"^varchar\(", "TEXT(", column_type)
 
         logging.debug(
-            "Executing export_config.convertColumnTypeForTargetTable() - Finished"
+            "Executing export_config.convert_column_type_for_target_table() - Finished"
         )
         return column_type, map_column_java
 
-    def updateTargetTable(self):
+    def update_target_table(self):
         """Updates the target table with new column definitions"""
-        logging.debug("Executing export_config.updateTargetTable()")
+        logging.debug("Executing export_config.update_target_table()")
         logging.info("Updating the Target Table")
 
-        columns_source = self.getColumnsFromConfigDatabase(excludeColumns=True)
+        columns_source = self.get_columns_from_config_database(excludeColumns=True)
         force_uppercase = False
 
         target_schema = self.targetSchema
@@ -1037,9 +1049,9 @@ class config(metaclass=Singleton):
             else:
                 column_name = hive_column_name
 
-            # Need to force it to lower so the self.convertColumnTypeForTargetTable works
+            # Need to force it to lower so the self.convert_column_type_for_target_table works
             column_type = column_type.lower()
-            column_type, mapcolumnjava = self.convertColumnTypeForTargetTable(
+            column_type, mapcolumnjava = self.convert_column_type_for_target_table(
                 hive_column_name, column_type
             )
 
@@ -1062,7 +1074,7 @@ class config(metaclass=Singleton):
             columns={"targetColumnName": "name", "columnType": "type"}, inplace=True
         )
 
-        self.common_config.getJDBCTableDefinition(
+        self.common_config.get_jdbc_table_definition(
             source_schema=target_schema, source_table=target_table, printInfo=False
         )
         columns_target = self.common_config.source_columns_df
@@ -1207,14 +1219,14 @@ class config(metaclass=Singleton):
                             row_in_source["name"],
                         )
 
-                    self.common_config.executeJDBCquery(query)
+                    self.common_config.execute_jdbc_query(query)
                     alter_table_executed = True
 
                     logging.info(
                         "Column %s renamed to %s in Target Table"
                         % (row_in_target["name"], row_in_source["name"])
                     )
-                    self.logTargetColumnRename(
+                    self.log_target_column_rename(
                         row_in_source["name"],
                         row_in_target["name"],
                         db_alias=self.connectionAlias,
@@ -1232,7 +1244,7 @@ class config(metaclass=Singleton):
                                 row_in_source["type"],
                             )
                         )
-                        self.logTargetColumnTypeChange(
+                        self.log_target_column_type_change(
                             row_in_source["name"],
                             row_in_source["type"],
                             previous_column_type=row_in_target["type"],
@@ -1319,15 +1331,15 @@ class config(metaclass=Singleton):
                                 )
                             )
 
-                        self.common_config.executeJDBCquery(query)
-                        self.common_config.executeJDBCquery(query)
+                        self.common_config.execute_jdbc_query(query)
+                        self.common_config.execute_jdbc_query(query)
                         alter_table_executed = True
 
                         logging.info(
                             "Column %s renamed to %s in Target Table"
                             % (row_in_target["name"], row_in_source["name"])
                         )
-                        self.logTargetColumnRename(
+                        self.log_target_column_rename(
                             row_in_source["name"],
                             row_in_target["name"],
                             db_alias=self.connectionAlias,
@@ -1347,7 +1359,7 @@ class config(metaclass=Singleton):
                                     row_in_source["type"],
                                 )
                             )
-                            self.logTargetColumnTypeChange(
+                            self.log_target_column_type_change(
                                 row_in_source["name"],
                                 row_in_source["type"],
                                 previous_column_type=row_in_target["type"],
@@ -1358,7 +1370,7 @@ class config(metaclass=Singleton):
                             )
 
             # Update the DF because the target table was changed
-            self.common_config.getJDBCTableDefinition(
+            self.common_config.get_jdbc_table_definition(
                 source_schema=target_schema, source_table=target_table, printInfo=False
             )
             columns_target = self.common_config.source_columns_df
@@ -1438,14 +1450,14 @@ class config(metaclass=Singleton):
                     full_row["type"],
                 )
 
-            self.common_config.executeJDBCquery(query)
+            self.common_config.execute_jdbc_query(query)
             alter_table_executed = True
 
             logging.info(
                 "Column %s (%s) added to Target Table"
                 % (full_row["name"], full_row["type"])
             )
-            self.logTargetColumnAdd(
+            self.log_target_column_add(
                 full_row["name"],
                 column_type=full_row["type"],
                 db_alias=self.connectionAlias,
@@ -1455,7 +1467,7 @@ class config(metaclass=Singleton):
             )
 
         # Update the DF because the target table was changed
-        self.common_config.getJDBCTableDefinition(
+        self.common_config.get_jdbc_table_definition(
             source_schema=target_schema, source_table=target_table, printInfo=False
         )
         columns_target = self.common_config.source_columns_df
@@ -1575,7 +1587,7 @@ class config(metaclass=Singleton):
                     row["type"],
                 )
 
-            self.common_config.executeJDBCquery(query)
+            self.common_config.execute_jdbc_query(query)
             alter_table_executed = True
 
             # Get the previous column type from the Pandas DF with right_only in Exist column
@@ -1594,7 +1606,7 @@ class config(metaclass=Singleton):
                 "Column %s changed type from '%s' to '%s'"
                 % (row["name"], previous_column_type, row["type"])
             )
-            self.logTargetColumnTypeChange(
+            self.log_target_column_type_change(
                 row["name"],
                 column_type=row["type"],
                 previous_column_type=previous_column_type,
@@ -1606,7 +1618,7 @@ class config(metaclass=Singleton):
 
         # Check for comment changes
         # Update the DF because the target table was changed
-        self.common_config.getJDBCTableDefinition(
+        self.common_config.get_jdbc_table_definition(
             source_schema=target_schema, source_table=target_table, printInfo=False
         )
         columns_target = self.common_config.source_columns_df
@@ -1639,7 +1651,7 @@ class config(metaclass=Singleton):
                 target_schema,
                 target_table,
             )
-            self.common_config.executeJDBCquery(query)
+            self.common_config.execute_jdbc_query(query)
 
         # print(columnsSource)
         # print(columnsTarget)
@@ -1715,16 +1727,16 @@ class config(metaclass=Singleton):
                     row["comment"],
                 )
 
-            self.common_config.executeJDBCquery(query)
+            self.common_config.execute_jdbc_query(query)
             alter_table_executed = True
 
-        logging.debug("Executing export_config.updateTargetTable() - Finished")
+        logging.debug("Executing export_config.update_target_table() - Finished")
 
-    def getSqoopMapColumnJava(self):
+    def get_sqoop_map_column_java(self):
         """Returns the generated mapColumnJava settngs for all columns"""
-        logging.debug("Executing export_config.getSqoopMapColumnJava()")
+        logging.debug("Executing export_config.get_sqoop_map_column_java()")
 
-        columns_df = self.getColumnsFromConfigDatabase(excludeColumns=True)
+        columns_df = self.get_columns_from_config_database(excludeColumns=True)
         self.sqoop_mapcolumnjava = []
         force_column_uppercase = False
 
@@ -1743,21 +1755,21 @@ class config(metaclass=Singleton):
             if force_column_uppercase == True:
                 column_name = column_name.upper()
 
-            column_type, map_column_java = self.convertColumnTypeForTargetTable(
+            column_type, map_column_java = self.convert_column_type_for_target_table(
                 hive_column_name, column_type
             )
             if map_column_java != None:
                 self.sqoop_mapcolumnjava.append(column_name + "=" + map_column_java)
 
-        logging.debug("Executing export_config.getSqoopMapColumnJava() - Finished")
+        logging.debug("Executing export_config.get_sqoop_map_column_java() - Finished")
         return self.sqoop_mapcolumnjava
 
-    def createTargetTable(self):
+    def create_target_table(self):
         """Creates the target table on the JDBC connection. This is the table we will export to"""
-        logging.debug("Executing export_config.createTargetTable()")
+        logging.debug("Executing export_config.create_target_table()")
         logging.info("Creating the Target Table")
 
-        columns_df = self.getColumnsFromConfigDatabase(excludeColumns=True)
+        columns_df = self.get_columns_from_config_database(excludeColumns=True)
         force_column_uppercase = False
         column_quote = ""
 
@@ -1808,7 +1820,7 @@ class config(metaclass=Singleton):
             else:
                 first_loop = False
 
-            column_type, map_column_java = self.convertColumnTypeForTargetTable(
+            column_type, map_column_java = self.convert_column_type_for_target_table(
                 hive_column_name, column_type
             )
             if map_column_java != None:
@@ -1834,11 +1846,11 @@ class config(metaclass=Singleton):
 
         query += ")"
 
-        self.common_config.executeJDBCquery(query)
+        self.common_config.execute_jdbc_query(query)
 
-        logging.debug("Executing export_config.createTargetTable() - Finished")
+        logging.debug("Executing export_config.create_target_table() - Finished")
 
-    def saveExportStatistics(
+    def save_export_statistics(
         self,
         sqoop_start_uts=None,
         sqoop_size=None,
@@ -1846,7 +1858,7 @@ class config(metaclass=Singleton):
         sqoop_incr_maxvalue_pending=None,
         sqoop_mappers=None,
     ):
-        logging.debug("Executing export_config.saveExportStatistics()")
+        logging.debug("Executing export_config.save_export_statistics()")
         logging.info("Saving export statistics")
 
         self.sqoopStartUTS = sqoop_start_uts
@@ -1912,10 +1924,10 @@ class config(metaclass=Singleton):
             )
             self.mysql_conn.commit()
 
-        logging.debug("Executing export_config.saveExportStatistics() - Finished")
+        logging.debug("Executing export_config.save_export_statistics() - Finished")
 
-    def saveHiveTableRowCount(self, rowCount):
-        logging.debug("Executing export_config.saveHiveTableRowCount()")
+    def save_hive_table_row_count(self, rowCount):
+        logging.debug("Executing export_config.save_hive_table_row_count()")
         logging.info(
             "Saving the number of rows in the Hive Table to the configuration database"
         )
@@ -1926,10 +1938,12 @@ class config(metaclass=Singleton):
         self.mysql_conn.commit()
         logging.debug("SQL Statement executed: %s" % (self.mysql_cursor01.statement))
 
-        logging.debug("Executing export_config.saveHiveTableRowCount() - Finished")
+        logging.debug("Executing export_config.save_hive_table_row_count() - Finished")
 
-    def runCustomValidationQueryOnJDBCTable(self):
-        logging.debug("Executing export_config.runCustomValidationQueryOnJDBCTable()")
+    def run_custom_validation_query_on_jdbc_table(self):
+        logging.debug(
+            "Executing export_config.run_custom_validation_query_on_jdbc_table()"
+        )
 
         logging.info("Executing custom validation query on target table.")
 
@@ -1939,11 +1953,11 @@ class config(metaclass=Singleton):
 
         logging.debug("Validation Query on JDBC table: %s" % (query))
 
-        result_df = self.common_config.executeJDBCquery(query)
+        result_df = self.common_config.execute_jdbc_query(query)
         result_json = result_df.to_json(orient="values")
         self.validationCustomQueryTargetValue = result_json
 
-        self.saveCustomSQLValidationTargetValue(
+        self.save_custom_sql_validation_target_value(
             json_value=result_json, print_info=False
         )
 
@@ -1960,18 +1974,18 @@ class config(metaclass=Singleton):
         logging.debug("resultJSON: %s" % (result_json))
 
         logging.debug(
-            "Executing export_config.runCustomValidationQueryOnJDBCTable() - Finished"
+            "Executing export_config.run_custom_validation_query_on_jdbc_table() - Finished"
         )
 
-    def getJDBCTableRowCount(self, whereStatement=None):
-        logging.debug("Executing export_config.getJDBCTableRowCount()")
+    def get_jdbc_table_row_count(self, whereStatement=None):
+        logging.debug("Executing export_config.get_jdbc_table_row_count()")
 
         logging.info(
             "Reading and saving number of rows in target table. This will later be used for validating the export"
         )
 
         jdbc_rows_full = None
-        jdbc_rows_full = self.common_config.getJDBCTableRowCount(
+        jdbc_rows_full = self.common_config.get_jdbc_table_row_count(
             self.targetSchema, self.targetTable, whereStatement
         )
 
@@ -1989,10 +2003,10 @@ class config(metaclass=Singleton):
         self.mysql_conn.commit()
         logging.debug("SQL Statement executed: %s" % (self.mysql_cursor01.statement))
 
-        logging.debug("Executing export_config.getJDBCTableRowCount() - Finished")
+        logging.debug("Executing export_config.get_jdbc_table_row_count() - Finished")
 
-    def resetIncrMinMaxValues(self, maxValue):
-        logging.debug("Executing export_config.resetIncrMinMaxValues()")
+    def reset_incr_min_max_values(self, maxValue):
+        logging.debug("Executing export_config.reset_incr_min_max_values()")
         if maxValue != None:
             logging.info(
                 "Reseting incremental values for exports. New max value is: %s"
@@ -2012,13 +2026,13 @@ class config(metaclass=Singleton):
         logging.debug("SQL Statement executed: %s" % (self.mysql_cursor01.statement))
         self.mysql_conn.commit()
 
-        logging.debug("Executing export_config.resetIncrMinMaxValues() - Finished")
+        logging.debug("Executing export_config.reset_incr_min_max_values() - Finished")
 
-    def validateRowCount(self, validateSqoop=False, incremental=False):
+    def validate_row_count(self, validateSqoop=False, incremental=False):
         """Validates the rows based on values stored in export_tables -> hive_rowcount and target_rowcount. Returns True or False"""
         # incremental=True is used for normal validations but only on incremented rows, regardless if we are going to validate full or incr.
 
-        logging.debug("Executing export_config.validateRowCount()")
+        logging.debug("Executing export_config.validate_row_count()")
         return_value = None
 
         if self.validateExport == True:
@@ -2088,13 +2102,13 @@ class config(metaclass=Singleton):
         else:
             return_value = True
 
-        logging.debug("Executing export_config.validateRowCount() - Finished")
+        logging.debug("Executing export_config.validate_row_count() - Finished")
         return return_value
 
-    def calculateJobMappers(self):
+    def calculate_job_mappers(self):
         """Based on previous sqoop size, the number of mappers for sqoop will be calculated. Formula is sqoop_size / 128MB."""
 
-        logging.debug("Executing export_config.calculateJobMappers()")
+        logging.debug("Executing export_config.calculate_job_mappers()")
         logging.info(
             "Calculating the number of SQL sessions in the source system that the export will use"
         )
@@ -2119,10 +2133,10 @@ class config(metaclass=Singleton):
             )
 
         sql_sessions_max_from_config = int(
-            self.common_config.getConfigValue(key="export_max_sessions")
+            self.common_config.get_config_value(key="export_max_sessions")
         )
         sql_sessions_default = int(
-            self.common_config.getConfigValue(key="export_default_sessions")
+            self.common_config.get_config_value(key="export_default_sessions")
         )
 
         if sql_sessions_max == None:
@@ -2196,11 +2210,11 @@ class config(metaclass=Singleton):
                 # If 'mappers' is set to -1, we just use the value from the default configuration
                 self.sqlSessions = self.sparkMaxExecutors
 
-        logging.debug("Executing export_config.calculateJobMappers() - Finished")
+        logging.debug("Executing export_config.calculate_job_mappers() - Finished")
 
-    def saveIncrMinMaxValue(self, min_value, max_value):
+    def save_incr_min_max_value(self, min_value, max_value):
         """Save the min value in the pendings column"""
-        logging.debug("Executing export_config.saveIncrMinValue()")
+        logging.debug("Executing export_config.save_incr_min_value()")
 
         query = "update export_tables set "
         query += "	incr_minvalue_pending = %s, "
@@ -2218,9 +2232,9 @@ class config(metaclass=Singleton):
         logging.debug("SQL Statement executed: %s" % (self.mysql_cursor01.statement))
         self.mysql_conn.commit()
 
-        logging.debug("Executing export_config.saveIncrMinValue() - Finished")
+        logging.debug("Executing export_config.save_incr_min_value() - Finished")
 
-    def saveIncrPendingValues(self):
+    def save_incr_pending_values(self):
         """After the incremental export is completed, we save the pending values so the next export starts from the correct spot"""
         logging.debug("Executing export_config.savePendingIncrValues()")
 
@@ -2244,9 +2258,9 @@ class config(metaclass=Singleton):
 
         logging.debug("Executing export_config.savePendingIncrValues() - Finished")
 
-    def isThereIncrDataToExport(self):
+    def is_there_incr_data_to_export(self):
         """Returns False if minvalue_pending = maxvalue_pending. That means that there is no new data in Hive to export"""
-        logging.debug("Executing export_config.isThereIncrDataToExport()")
+        logging.debug("Executing export_config.is_there_incr_data_to_export()")
 
         data_to_export = True
 
@@ -2261,12 +2275,14 @@ class config(metaclass=Singleton):
             data_to_export = False
 
         logging.debug("dataToExport: %s" % (data_to_export))
-        logging.debug("Executing export_config.isThereIncrDataToExport() - Finished")
+        logging.debug(
+            "Executing export_config.is_there_incr_data_to_export() - Finished"
+        )
         return data_to_export
 
-    def getIncrWhereStatement(self, excludeMinValue=False, whereForTarget=False):
+    def get_incr_where_statement(self, excludeMinValue=False, whereForTarget=False):
         """Returns the where statement that is needed to only work on the rows that was loaded incr"""
-        logging.debug("Executing export_config.getIncrWhereStatement()")
+        logging.debug("Executing export_config.get_incr_where_statement()")
 
         column_name = self.incr_column
         column_quotation = ""
@@ -2380,12 +2396,12 @@ class config(metaclass=Singleton):
 
         print(where_statement)
 
-        logging.debug("Executing export_config.getIncrWhereStatement() - Finished")
+        logging.debug("Executing export_config.get_incr_where_statement() - Finished")
         return where_statement
 
-    def getExportTables(self, dbalias, schema):
+    def get_export_tables(self, dbalias, schema):
         """Return all tables that are exported to a specific connection and schema"""
-        logging.debug("Executing export_config.getExportTables()")
+        logging.debug("Executing export_config.get_export_tables()")
 
         query = "select hive_db as hiveDB, hive_table as hiveTable from export_tables where dbalias = %s and target_schema = %s "
         self.mysql_cursor01.execute(query, (dbalias, schema))
@@ -2408,12 +2424,12 @@ class config(metaclass=Singleton):
             )  # Name of the column is in the first position
         result_df.columns = result_df_columns
 
-        logging.debug("Executing export_config.getExportTables() - Finished")
+        logging.debug("Executing export_config.get_export_tables() - Finished")
         return result_df
 
-    def addExportTable(self, hive_db, hive_table, dbalias, schema, table):
+    def add_export_table(self, hive_db, hive_table, dbalias, schema, table):
         """Add source table to export_tables"""
-        logging.debug("Executing export_config.addExportTable()")
+        logging.debug("Executing export_config.add_export_table()")
         return_value = True
 
         query = (
@@ -2445,5 +2461,5 @@ class config(metaclass=Singleton):
             )
             return_value = False
 
-        logging.debug("Executing export_config.addExportTable() - Finished")
+        logging.debug("Executing export_config.add_export_table() - Finished")
         return return_value

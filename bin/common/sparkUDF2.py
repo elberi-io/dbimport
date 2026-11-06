@@ -35,25 +35,25 @@ class sparkUDFClass:
         except ValueError:
             return False
 
-    def base64EncodeArray(self, s):
+    def base64_encode_array(self, s):
         try:
             s_new = []
             for struct in s:
-                s_new.append(list(map(self._base64EncodeBinary, struct)))
+                s_new.append(list(map(self._base64_encode_binary, struct)))
             return s_new
 
         except TypeError:
-            return self._base64EncodeBinary(s)
+            return self._base64_encode_binary(s)
 
-    def _checkBinary(self, s):
+    def _check_binary(self, s):
         for b in s:
             if not self._is_bin(b):
                 return False
         return True
 
-    def _base64EncodeBinary(self, s):
+    def _base64_encode_binary(self, s):
         try:
-            if self._is_bin(s[0]) and self._checkBinary(s[1]):
+            if self._is_bin(s[0]) and self._check_binary(s[1]):
                 base_64 = base64.b64encode(s[1]).decode("UTF-8")
                 return [s[0], base_64]
         except:
@@ -61,7 +61,7 @@ class sparkUDFClass:
 
         return s
 
-    def parseStructDate(self, timestampString):
+    def parse_struct_date(self, timestampString):
         timestampString = str(timestampString)
         m = re.match(r'\{ *"\$date" *: *(-?\d+)\ *}', timestampString)
         if m:
@@ -70,10 +70,10 @@ class sparkUDFClass:
             return timestamp.strftime("%Y-%m-%d %H:%M:%S.%f")
         return timestampString
 
-    def setSeedString(self, setValue):
+    def set_seed_string(self, setValue):
         self.seedStringEncoded = setValue.encode()
 
-    def hashColumn(self, columnValue):
+    def hash_column(self, columnValue):
         if columnValue == None:
             return None
 
@@ -83,7 +83,7 @@ class sparkUDFClass:
         hashed_column_content = h.hexdigest()
         return hashed_column_content
 
-    def replaceCharWithStar(self, column_value):
+    def replace_char_with_star(self, column_value):
         if column_value == None:
             return None
 
@@ -96,7 +96,7 @@ class sparkUDFClass:
 
         return return_string
 
-    def showFirstFourCharacters(self, column_value):
+    def show_first_four_characters(self, column_value):
         if column_value == None:
             return None
 

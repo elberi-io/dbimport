@@ -161,7 +161,7 @@ class distCP(threading.Thread):
 
 
 class serverDaemon(run.RunDaemon):
-    def setConfig(self, action, log_format):
+    def set_config(self, action, log_format):
         self.action = action
         self.logFormat = log_format
 
@@ -182,8 +182,10 @@ class serverDaemon(run.RunDaemon):
         self.logdir = configuration.get("Server", "logdir")
 
         self.crypto = self.common_config.crypto
-        self.crypto.setPrivateKeyFile(configuration.get("Credentials", "private_key"))
-        self.crypto.setPublicKeyFile(configuration.get("Credentials", "public_key"))
+        self.crypto.set_private_key_file(
+            configuration.get("Credentials", "private_key")
+        )
+        self.crypto.set_public_key_file(configuration.get("Credentials", "public_key"))
 
         self.remoteDBImportEngines = {}
         self.remoteDBImportSessions = {}
@@ -248,7 +250,7 @@ class serverDaemon(run.RunDaemon):
                 )
                 update_dict["copy_status"] = 0
 
-                session = self.getDBImportSession()
+                session = self.get_dbimport_session()
 
                 (
                     session.query(configSchema.copyASyncStatus)
@@ -265,7 +267,7 @@ class serverDaemon(run.RunDaemon):
             except SQLAlchemyError as e:
                 log.error(str(e.__dict__["orig"]))
                 log.error("Server startup failed")
-                self.disconnectDBImportDB()
+                self.disconnect_dbimport_db()
 
                 # As we require this operation to be completed successful before entering the main loop, we will exit if there is a problem
                 self.common_config.remove_temporary_files()
@@ -273,7 +275,7 @@ class serverDaemon(run.RunDaemon):
 
             except SQLerror:
                 log.error("Server startup failed. Cant connect to config database")
-                self.disconnectDBImportDB()
+                self.disconnect_dbimport_db()
                 self.common_config.remove_temporary_files()
                 sys.exit(1)
 
@@ -288,7 +290,7 @@ class serverDaemon(run.RunDaemon):
 
             if dist_cp_threads > 0:
                 try:
-                    session = self.getDBImportSession()
+                    session = self.get_dbimport_session()
 
                     # status 0 = New data from import
                     # status 1 = Data sent to distCP thread
@@ -377,10 +379,10 @@ class serverDaemon(run.RunDaemon):
                 except SQLAlchemyError as e:
                     log.error(str(e.__dict__["orig"]))
                     session.rollback()
-                    self.disconnectDBImportDB()
+                    self.disconnect_dbimport_db()
 
                 except SQLerror:
-                    self.disconnectDBImportDB()
+                    self.disconnect_dbimport_db()
 
                 # ------------------------------------------
                 # Read the response from the distCP threads
@@ -403,7 +405,7 @@ class serverDaemon(run.RunDaemon):
                         update_dict["copy_status"] = 2
 
                     try:
-                        session = self.getDBImportSession()
+                        session = self.get_dbimport_session()
                         (
                             session.query(configSchema.copyASyncStatus)
                             .filter(
@@ -422,10 +424,10 @@ class serverDaemon(run.RunDaemon):
                     except SQLAlchemyError as e:
                         log.error(str(e.__dict__["orig"]))
                         session.rollback()
-                        self.disconnectDBImportDB()
+                        self.disconnect_dbimport_db()
 
                     except SQLerror:
-                        self.disconnectDBImportDB()
+                        self.disconnect_dbimport_db()
 
                 # ------------------------------------------
                 # Fetch all rows from copyASyncStatus that contains the status 3 and update the remote DBImport instance database
@@ -433,7 +435,7 @@ class serverDaemon(run.RunDaemon):
                 # ------------------------------------------
 
                 try:
-                    session = self.getDBImportSession()
+                    session = self.get_dbimport_session()
                     async_row = pd.DataFrame(
                         session.query(
                             copy_async_status.table_id,
@@ -453,10 +455,10 @@ class serverDaemon(run.RunDaemon):
                 except SQLAlchemyError as e:
                     log.error(str(e.__dict__["orig"]))
                     session.rollback()
-                    self.disconnectDBImportDB()
+                    self.disconnect_dbimport_db()
 
                 except SQLerror:
-                    self.disconnectDBImportDB()
+                    self.disconnect_dbimport_db()
 
                 else:
                     for index, row in async_row.iterrows():
@@ -469,7 +471,7 @@ class serverDaemon(run.RunDaemon):
                         hdfs_target_path = row["hdfs_target_path"]
 
                         # Get the remote sessions. if sessions is not available, we just continue to the next item in the database
-                        _remote_session = self.getDBImportRemoteSession(destination)
+                        _remote_session = self.get_dbimport_remote_session(destination)
                         if _remote_session == None:
                             continue
 
@@ -508,12 +510,12 @@ class serverDaemon(run.RunDaemon):
                         except SQLAlchemyError as e:
                             log.error(str(e.__dict__["orig"]))
                             remote_session.rollback()
-                            self.disconnectRemoteSession(destination)
+                            self.disconnect_remote_session(destination)
 
                         else:
                             # Delete the record from copyASyncStatus
                             try:
-                                session = self.getDBImportSession()
+                                session = self.get_dbimport_session()
                                 (
                                     session.query(configSchema.copyASyncStatus)
                                     .filter(
@@ -532,10 +534,10 @@ class serverDaemon(run.RunDaemon):
                             except SQLAlchemyError as e:
                                 log.error(str(e.__dict__["orig"]))
                                 session.rollback()
-                                self.disconnectDBImportDB()
+                                self.disconnect_dbimport_db()
 
                             except SQLerror:
-                                self.disconnectDBImportDB()
+                                self.disconnect_dbimport_db()
 
                             else:
                                 log.info(
@@ -555,7 +557,7 @@ class serverDaemon(run.RunDaemon):
         log.info("Server stopped")
         log.debug("Executing daemon.serverDaemon.run() - Finished")
 
-    def disconnectDBImportDB(self):
+    def disconnect_dbimport_db(self):
         """Disconnects from the database and removes all sessions and engine"""
         log = logging.getLogger("server")
 
@@ -566,15 +568,15 @@ class serverDaemon(run.RunDaemon):
 
         self.configDBSession = None
 
-    def getDBImportSession(self):
+    def get_dbimport_session(self):
         log = logging.getLogger("server")
         if self.configDBSession == None:
-            if self.connectDBImportDB() == False:
+            if self.connect_dbimport_db() == False:
                 raise SQLerror("Can't connect to DBImport database")
 
         return self.configDBSession()
 
-    def connectDBImportDB(self):
+    def connect_dbimport_db(self):
         # Esablish a SQLAlchemy connection to the DBImport database
         log = logging.getLogger("server")
         self.connectStr = "mysql+pymysql://%s:%s@%s:%s/%s" % (
@@ -612,7 +614,7 @@ class serverDaemon(run.RunDaemon):
         log.info("Connected successful against DBImport database")
         return True
 
-    def disconnectRemoteSession(self, instance):
+    def disconnect_remote_session(self, instance):
         """Disconnects from the remote database and removes all sessions and engine"""
         log = logging.getLogger("server")
 
@@ -628,7 +630,7 @@ class serverDaemon(run.RunDaemon):
         except KeyError:
             log.debug("Cant remove DBImport session or engine. Key does not exist")
 
-    def getDBImportRemoteSession(self, instance):
+    def get_dbimport_remote_session(self, instance):
         """Connects to the remote configuration database with SQLAlchemy"""
         log = logging.getLogger("server")
 
@@ -642,9 +644,9 @@ class serverDaemon(run.RunDaemon):
         connect_status = True
 
         try:
-            session = self.getDBImportSession()
+            session = self.get_dbimport_session()
         except SQLerror:
-            self.disconnectDBImportDB()
+            self.disconnect_dbimport_db()
             return None
 
         dbimport_instances = aliased(configSchema.dbimportInstances)

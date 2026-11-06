@@ -16,7 +16,7 @@ def _add_incremental_export(
 ) -> None:
     set_driver_path(conn, driver_type)
     insert_row(conn, "jdbc_connections", dbalias=DBALIAS, jdbc_url=jdbc_url)
-    common_config.config().encryptUserPassword(DBALIAS, "user", "secret")
+    common_config.config().encrypt_user_password(DBALIAS, "user", "secret")
     insert_row(
         conn,
         "export_tables",
@@ -71,10 +71,10 @@ def test_incr_where_for_target_timestamp_column_converts_values(
 ) -> None:
     _add_incremental_export(db_connection, jdbc_url, driver_type)
     config = export_config.config(DBALIAS, "dbo", "orders")
-    config.getExportConfig()
-    config.lookupConnectionAlias()
+    config.get_export_config()
+    config.lookup_connection_alias()
 
-    where = config.getIncrWhereStatement(whereForTarget=True)
+    where = config.get_incr_where_statement(whereForTarget=True)
 
     assert " ".join(where.split()) == (
         f"updated > {convert.format(MIN_VALUE)} "

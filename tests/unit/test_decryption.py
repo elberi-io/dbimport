@@ -8,8 +8,8 @@ from DBImportConfig import decryption
 def crypto() -> decryption.crypto:
     """crypto object with the key pair from the test configuration."""
     obj = decryption.crypto()
-    obj.setPrivateKeyFile(configuration.get("Credentials", "private_key"))
-    obj.setPublicKeyFile(configuration.get("Credentials", "public_key"))
+    obj.set_private_key_file(configuration.get("Credentials", "private_key"))
+    obj.set_public_key_file(configuration.get("Credentials", "public_key"))
     return obj
 
 

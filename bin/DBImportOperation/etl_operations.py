@@ -39,7 +39,7 @@ class operation(metaclass=Singleton):
         self.import_config = import_config.config(Hive_DB, Hive_Table)
 
         if Hive_DB != None and Hive_Table != None:
-            self.setHiveTable(Hive_DB, Hive_Table)
+            self.set_hive_table(Hive_DB, Hive_Table)
         else:
             # If the class already is initialized, we just pull the parameters and set them here
             self.Hive_DB = self.common_operations.Hive_DB
@@ -48,18 +48,18 @@ class operation(metaclass=Singleton):
 
         logging.debug("Executing etl_operations.__init__() - Finished")
 
-    def setHiveTable(self, Hive_DB, Hive_Table):
+    def set_hive_table(self, Hive_DB, Hive_Table):
         """Sets the parameters to work against a new Hive database and table"""
         self.Hive_DB = Hive_DB.lower()
         self.Hive_Table = Hive_Table.lower()
 
-        self.common_operations.setHiveTable(self.Hive_DB, self.Hive_Table)
-        self.import_config.setHiveTable(self.Hive_DB, self.Hive_Table)
+        self.common_operations.set_hive_table(self.Hive_DB, self.Hive_Table)
+        self.import_config.set_hive_table(self.Hive_DB, self.Hive_Table)
 
         try:
-            self.import_config.getImportConfig()
+            self.import_config.get_import_config()
             self.startDate = self.import_config.startDate
-            self.import_config.lookupConnectionAlias()
+            self.import_config.lookup_connection_alias()
         except:
             self.import_config.remove_temporary_files()
             sys.exit(1)
@@ -67,29 +67,29 @@ class operation(metaclass=Singleton):
     def remove_temporary_files(self):
         self.import_config.remove_temporary_files()
 
-    def connectToHive(
+    def connect_to_hive(
         self,
     ):
-        logging.debug("Executing etl_operations.connectToHive()")
+        logging.debug("Executing etl_operations.connect_to_hive()")
 
         try:
-            self.common_operations.connectToHive()
+            self.common_operations.connect_to_hive()
         except Exception as ex:
             logging.error(ex)
             self.import_config.remove_temporary_files()
             sys.exit(1)
 
-        logging.debug("Executing etl_operations.connectToHive() - Finished")
+        logging.debug("Executing etl_operations.connect_to_hive() - Finished")
 
-    def executeSQLQuery(self, query):
+    def execute_sql_query(self, query):
         if self.import_config.etlEngine == constant.ETL_ENGINE_HIVE:
-            self.common_operations.executeHiveQuery(query)
+            self.common_operations.execute_hive_query(query)
 
         if self.import_config.etlEngine == constant.ETL_ENGINE_SPARK:
             logging.info(query)
             self.import_operations.spark.sql(query)
 
-    def mergeHiveTables(
+    def merge_hive_tables(
         self,
         source_db,
         source_table,
@@ -114,15 +114,15 @@ class operation(metaclass=Singleton):
         change_data_tracking_initial_load=False,
     ):
         """Merge source table into Target table. Also populate a History Audit table if selected"""
-        logging.debug("Executing etl_operations.mergeHiveTables()")
+        logging.debug("Executing etl_operations.merge_hive_tables()")
 
-        target_columns = self.common_operations.getColumns(
+        target_columns = self.common_operations.get_columns(
             hiveDB=target_db,
             hiveTable=target_table,
             includeType=False,
             includeComment=False,
         )
-        column_merge = self.common_operations.getHiveColumnNameDiff(
+        column_merge = self.common_operations.get_hive_column_name_diff(
             source_db=source_db,
             source_table=source_table,
             target_db=target_db,
@@ -131,7 +131,7 @@ class operation(metaclass=Singleton):
             source_is_import_table=True,
         )
         if pk_columns == None:
-            pk_columns = self.common_operations.getPK(
+            pk_columns = self.common_operations.get_pk(
                 hiveDB=target_db, hiveTable=target_table, quotedColumns=False
             )
 
@@ -176,7 +176,7 @@ class operation(metaclass=Singleton):
                 self.common_operations.sparkCatalogName,
                 mssql_change_tracking_import_db_and_table,
             )
-            self.import_operations.startSpark()
+            self.import_operations.start_spark()
 
         datalake_iud_exists = False
         datalake_insert_exists = False
@@ -204,7 +204,7 @@ class operation(metaclass=Singleton):
         if self.import_config.etlEngine == constant.ETL_ENGINE_HIVE:
             if hive_merge_java_heap != None:
                 query = "set hive.tez.container.size=%s" % (hive_merge_java_heap)
-                self.common_operations.executeHiveQuery(query)
+                self.common_operations.execute_hive_query(query)
 
         query = "merge into %s as T \n" % (target_db_and_table)
         query += "using %s as S \n" % (source_db_and_table)
@@ -394,7 +394,7 @@ class operation(metaclass=Singleton):
 
         query += " \n) \n"
 
-        self.executeSQLQuery(query)
+        self.execute_sql_query(query)
 
         # If a row was previously deleted and now inserted again and we are using Soft Delete,
         # then the information in the datalake_iud, datalake_insert and datalake_delete is wrong.
@@ -417,7 +417,7 @@ class operation(metaclass=Singleton):
                 self.common_operations.Hive_ColumnName_Delete
             )
 
-            self.executeSQLQuery(query)
+            self.execute_sql_query(query)
 
         # Statement to select all rows that was changed in the Target table and insert them to the History table
         if (
@@ -481,7 +481,7 @@ class operation(metaclass=Singleton):
                 merge_time,
             )
 
-            self.executeSQLQuery(query)
+            self.execute_sql_query(query)
 
         if (
             source_is_incremental == False
@@ -490,7 +490,7 @@ class operation(metaclass=Singleton):
         ):
             # Start with truncating the History Delete table as we need to rebuild this one from scratch to determine what rows are deleted
             query = "truncate table %s" % (target_delete_db_and_table)
-            self.executeSQLQuery(query)
+            self.execute_sql_query(query)
 
             # Insert all rows (PK columns only) that exists in the Target Table but dont exists in the Import table (the ones that was deleted)
             query = "insert into table %s \n(`" % (target_delete_db_and_table)
@@ -526,7 +526,7 @@ class operation(metaclass=Singleton):
                     query += "and\n   S.`%s` is null " % (source_column)
             query += "\n"
 
-            self.executeSQLQuery(query)
+            self.execute_sql_query(query)
 
         if oracle_flashback_source == True and create_history_audit == True:
             # If it is a history merge with Oracle Flashback, we need to handle the deletes separatly
@@ -577,7 +577,7 @@ class operation(metaclass=Singleton):
             )
             query += "\nfrom %s \n" % (oracle_flashback_import_db_and_table)
 
-            self.executeSQLQuery(query)
+            self.execute_sql_query(query)
 
         if (
             mssql_change_tracking_source == True
@@ -634,7 +634,7 @@ class operation(metaclass=Singleton):
             query += "\nfrom %s " % (mssql_change_tracking_import_db_and_table)
             query += "\nwhere datalake_mssql_changetrack_operation != 'D' \n"
 
-            self.executeSQLQuery(query)
+            self.execute_sql_query(query)
 
             # This query inserts the deleted rows, including all columns into the History table.
             # Without it, the column not part of the PK would not be available in History table
@@ -694,7 +694,7 @@ class operation(metaclass=Singleton):
                     query += "and\n   T.`%s` = D.`%s` " % (column, column)
             query += "\nwhere D.datalake_mssql_changetrack_operation == 'D' \n"
 
-            self.executeSQLQuery(query)
+            self.execute_sql_query(query)
 
             # The last step is to delete the rows in the Target table based on what rows have D in the import table
             query = "merge into %s as T \n" % (target_db_and_table)
@@ -710,7 +710,7 @@ class operation(metaclass=Singleton):
             query += "and D.datalake_mssql_changetrack_operation == 'D' \n"
             query += "when matched then delete \n"
 
-            self.executeSQLQuery(query)
+            self.execute_sql_query(query)
 
         # Insert the deleted rows into the History table. Without this, it's impossible to see what values the column had before the delete
         if (
@@ -777,7 +777,7 @@ class operation(metaclass=Singleton):
                 else:
                     query += "and\n   T.`%s` = D.`%s` " % (column, column)
 
-            self.executeSQLQuery(query)
+            self.execute_sql_query(query)
 
         if (
             source_is_incremental == False
@@ -845,6 +845,6 @@ class operation(metaclass=Singleton):
                         merge_time,
                     )
 
-            self.executeSQLQuery(query)
+            self.execute_sql_query(query)
 
-        logging.debug("Executing etl_operations.mergeHiveTables() - Finished")
+        logging.debug("Executing etl_operations.merge_hive_tables() - Finished")

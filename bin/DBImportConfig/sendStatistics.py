@@ -33,24 +33,26 @@ class sendStatistics:
         self.common_config = common_config.config()
         self.RESTheaders = {"Content-type": "application/json"}
 
-        self.RESTendpoint = self.common_config.getConfigValue(key="rest_url")
-        self.RESTtimeout = self.common_config.getConfigValue(key="rest_timeout")
-        self.RESTverifySSL = self.common_config.getConfigValue(key="rest_verifyssl")
-        self.RESTtrustCAfile = self.common_config.getConfigValue(key="rest_trustcafile")
+        self.RESTendpoint = self.common_config.get_config_value(key="rest_url")
+        self.RESTtimeout = self.common_config.get_config_value(key="rest_timeout")
+        self.RESTverifySSL = self.common_config.get_config_value(key="rest_verifyssl")
+        self.RESTtrustCAfile = self.common_config.get_config_value(
+            key="rest_trustcafile"
+        )
 
-        self.kafkaBrokers = self.common_config.getConfigValue(key="kafka_brokers")
-        self.kafkaTrustCAFile = self.common_config.getConfigValue(
+        self.kafkaBrokers = self.common_config.get_config_value(key="kafka_brokers")
+        self.kafkaTrustCAFile = self.common_config.get_config_value(
             key="kafka_trustcafile"
         )
-        self.kafkaSecurityProtocol = self.common_config.getConfigValue(
+        self.kafkaSecurityProtocol = self.common_config.get_config_value(
             key="kafka_securityprotocol"
         )
-        self.kafkaSaslMechanism = self.common_config.getConfigValue(
+        self.kafkaSaslMechanism = self.common_config.get_config_value(
             key="kafka_saslmechanism"
         )
-        self.kafkaTopic = self.common_config.getConfigValue(key="kafka_topic")
+        self.kafkaTopic = self.common_config.get_config_value(key="kafka_topic")
 
-        self.awsSNStopic = self.common_config.getConfigValue(
+        self.awsSNStopic = self.common_config.get_config_value(
             key="post_data_to_awssns_topic"
         )
 
@@ -66,9 +68,9 @@ class sendStatistics:
             )
             sys.exit(1)
 
-    def sendRESTdata(self, json_data):
+    def send_rest_data(self, json_data):
         """Sending data to REST endpoint"""
-        logging.debug("Executing sendStatistics.sendRESTdata")
+        logging.debug("Executing sendStatistics.send_rest_data")
 
         logging.info("Sending data to REST interface")
         logging.debug(
@@ -109,12 +111,12 @@ class sendStatistics:
         if response_code != 200:
             logging.error("REST call unsuccessful! Return code %s" % (response_code))
 
-        logging.debug("Executing sendStatistics.sendRESTdata - Finished")
+        logging.debug("Executing sendStatistics.send_rest_data - Finished")
         return response_code
 
-    def publishKafkaData(self, json_data):
+    def publish_kafka_data(self, json_data):
         """Publish data to Kafka topic"""
-        logging.debug("Executing sendStatistics.publishKafkaData")
+        logging.debug("Executing sendStatistics.publish_kafka_data")
 
         logging.info("Sending statistics data to Kafka topic")
         logging.debug("Sending the following JSON to Kafka: %s" % (json_data))
@@ -173,12 +175,12 @@ class sendStatistics:
         if kafka_error == True:
             result = False
 
-        logging.debug("Executing sendStatistics.publishKafkaData - Finished")
+        logging.debug("Executing sendStatistics.publish_kafka_data - Finished")
         return result
 
-    def sendAWSSNSdata(self, json_data):
+    def send_aws_sns_data(self, json_data):
         """Publish data to AWS SNS topic"""
-        logging.debug("Executing sendStatistics.sendAWSSNSdata")
+        logging.debug("Executing sendStatistics.send_aws_sns_data")
 
         logging.info("Sending statistics data to AWS SNS topic")
         logging.debug("Sending the following JSON to AWS SNS: %s" % (json_data))
@@ -203,5 +205,5 @@ class sendStatistics:
             logging.error(e)
             result = False
 
-        logging.debug("Executing sendStatistics.sendAWSSNSdata - Finished")
+        logging.debug("Executing sendStatistics.send_aws_sns_data - Finished")
         return result
