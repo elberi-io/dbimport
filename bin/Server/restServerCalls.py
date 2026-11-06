@@ -65,14 +65,14 @@ class dbCalls:
         # self.common_config.reconnect_config_database(printReconnectMessage=True, buffered=False)
 
         self.logdir = configuration.get("Server", "logdir")
-        # self.adminUser = self.common_config.get_config_value("restserver_admin_user")
-        # log.warning(self.adminUser)
+        # self.admin_user = self.common_config.get_config_value("restserver_admin_user")
+        # log.warning(self.admin_user)
 
-        self.adminUser = self.get_config_value("restserver_admin_user")
+        self.admin_user = self.get_config_value("restserver_admin_user")
 
-        self.contentMaxRows = 1000
+        self.content_max_rows = 1000
 
-        self.allConfigKeys = [
+        self.all_config_keys = [
             "airflow_aws_instanceids",
             "airflow_aws_pool_to_instanceid",
             "airflow_create_pool_with_task",
@@ -178,7 +178,7 @@ class dbCalls:
 
         mysql_credentials = self.common_config.get_mysql_credentials()
 
-        self.connectStr = "mysql+pymysql://%s:%s@%s:%s/%s" % (
+        self.connect_str = "mysql+pymysql://%s:%s@%s:%s/%s" % (
             mysql_credentials["mysql_username"],
             quote(mysql_credentials["mysql_password"], safe=" +"),
             mysql_credentials["mysql_hostname"],
@@ -188,7 +188,7 @@ class dbCalls:
 
         try:
             self.configDB = sa.create_engine(
-                self.connectStr, echo=self.debugLogLevel, pool_pre_ping=True
+                self.connect_str, echo=self.debugLogLevel, pool_pre_ping=True
             )
             self.configDB.connect()
             self.configDBSession = sessionmaker(bind=self.configDB)
@@ -733,7 +733,7 @@ class dbCalls:
                 continue
 
             if row[0] == "restserver_admin_user":
-                self.adminUser = row[2]
+                self.admin_user = row[2]
 
             value_column, bool_value = self.common_config.get_config_value_column(
                 row[0], ignore_error_output=True
@@ -748,7 +748,7 @@ class dbCalls:
                 "restserver_authentication_method",
                 "restserver_token_ttl",
             ]:
-                if current_user != self.adminUser:
+                if current_user != self.admin_user:
                     continue
 
             if value_column == "valueInt":
@@ -777,7 +777,7 @@ class dbCalls:
 
         # First check to make sure we have valid options in the changed options
         try:
-            for key in self.allConfigKeys:
+            for key in self.all_config_keys:
                 if type(getattr(configuration, key)) in (str, bool, int):
                     # At this point, only configuration items that exists in the class is iterrated
                     if type(getattr(configuration, key)) == str:
@@ -811,7 +811,7 @@ class dbCalls:
                         "restserver_authentication_method",
                         "restserver_token_ttl",
                     ]:
-                        if current_user != self.adminUser:
+                        if current_user != self.admin_user:
                             raise HTTPException(
                                 status_code=status.HTTP_403_FORBIDDEN,
                                 detail="You are not allowed to update '%s'" % (key),
@@ -824,7 +824,7 @@ class dbCalls:
                 detail="invalid configuration option",
             )
 
-        for key in self.allConfigKeys:
+        for key in self.all_config_keys:
             if type(getattr(configuration, key)) in (str, bool, int):
                 # At this point, only configuration items that exists in the class is iterrated
                 log.info(
@@ -909,7 +909,7 @@ class dbCalls:
             )
             .select_from(table_jdbc_connections)
             .order_by(table_jdbc_connections.dbalias)
-            .limit(self.contentMaxRows)
+            .limit(self.content_max_rows)
         )
 
         list_of_connections = []
@@ -926,7 +926,7 @@ class dbCalls:
 
             list_of_connections.append(result_dict)
 
-            if count == self.contentMaxRows:
+            if count == self.content_max_rows:
                 break
 
         json_result = json.loads(json.dumps(list_of_connections))
@@ -934,7 +934,7 @@ class dbCalls:
 
         headers = {
             "content-rows": str(count),
-            "content-max-returned-rows": str(self.contentMaxRows),
+            "content-max-returned-rows": str(self.content_max_rows),
         }
         return JSONResponse(content=json_result, headers=headers, status_code=200)
 
@@ -1001,7 +1001,7 @@ class dbCalls:
                 )
 
         # Fetch all rows matching the filter
-        jdbc_connections_data = jdbc_connections_data.limit(self.contentMaxRows)
+        jdbc_connections_data = jdbc_connections_data.limit(self.content_max_rows)
         jdbc_connections_data_count = jdbc_connections_data_count.one()
 
         # Loop through result and create the return dict
@@ -1018,7 +1018,7 @@ class dbCalls:
 
             list_of_connections.append(result_dict)
 
-            if count == self.contentMaxRows:
+            if count == self.content_max_rows:
                 break
 
         json_result = json.loads(json.dumps(list_of_connections))
@@ -1027,7 +1027,7 @@ class dbCalls:
 
         headers = {
             "content-rows": str(count),
-            "content-max-returned-rows": str(self.contentMaxRows),
+            "content-max-returned-rows": str(self.content_max_rows),
             "content-total-rows": str(jdbc_connections_data_count[0]),
         }
         return JSONResponse(content=json_result, headers=headers, status_code=200)
@@ -1341,7 +1341,7 @@ class dbCalls:
             )
             .select_from(import_tables)
             .group_by(import_tables.hive_db)
-            .limit(self.contentMaxRows)
+            .limit(self.content_max_rows)
         )
 
         list_of_dbs = []
@@ -1367,7 +1367,7 @@ class dbCalls:
                 result_dict["lastRows"] = int(row[4])
             list_of_dbs.append(result_dict)
 
-            if count == self.contentMaxRows:
+            if count == self.content_max_rows:
                 break
 
         json_result = json.loads(json.dumps(list_of_dbs))
@@ -1375,7 +1375,7 @@ class dbCalls:
 
         headers = {
             "content-rows": str(count),
-            "content-max-returned-rows": str(self.contentMaxRows),
+            "content-max-returned-rows": str(self.content_max_rows),
         }
         return JSONResponse(content=json_result, headers=headers, status_code=200)
 
@@ -1542,7 +1542,7 @@ class dbCalls:
                 )
 
         # Fetch all rows matching the filter
-        import_tables_data = import_tables_data.limit(self.contentMaxRows)
+        import_tables_data = import_tables_data.limit(self.content_max_rows)
         import_tables_data_count = import_tables_data_count.one()
 
         # Loop through result and create the return dict
@@ -1574,7 +1574,7 @@ class dbCalls:
 
             list_of_tables.append(result_dict)
 
-            if count == self.contentMaxRows:
+            if count == self.content_max_rows:
                 break
 
         json_result = json.loads(json.dumps(list_of_tables))
@@ -1583,7 +1583,7 @@ class dbCalls:
 
         headers = {
             "content-rows": str(count),
-            "content-max-returned-rows": str(self.contentMaxRows),
+            "content-max-returned-rows": str(self.content_max_rows),
             "content-total-rows": str(import_tables_data_count[0]),
         }
         return JSONResponse(content=json_result, headers=headers, status_code=200)
@@ -2552,7 +2552,7 @@ class dbCalls:
             )
             .select_from(export_tables)
             .group_by(export_tables.dbalias)
-            .limit(self.contentMaxRows)
+            .limit(self.content_max_rows)
         )
 
         list_of_connections = []
@@ -2573,7 +2573,7 @@ class dbCalls:
                 connection["lastRows"] = int(row[3])
             list_of_connections.append(connection)
 
-            if count == self.contentMaxRows:
+            if count == self.content_max_rows:
                 break
 
         json_result = json.loads(json.dumps(list_of_connections))
@@ -2582,7 +2582,7 @@ class dbCalls:
 
         headers = {
             "content-rows": str(count),
-            "content-max-returned-rows": str(self.contentMaxRows),
+            "content-max-returned-rows": str(self.content_max_rows),
         }
         return JSONResponse(content=json_result, headers=headers, status_code=200)
 
@@ -2773,7 +2773,7 @@ class dbCalls:
                 )
 
         # Fetch all rows matching the filter
-        export_tables_data = export_tables_data.limit(self.contentMaxRows)
+        export_tables_data = export_tables_data.limit(self.content_max_rows)
         export_tables_data_count = export_tables_data_count.one()
 
         # Loop through result and create the return dict
@@ -2801,7 +2801,7 @@ class dbCalls:
 
             list_of_tables.append(result_dict)
 
-            if count == self.contentMaxRows:
+            if count == self.content_max_rows:
                 break
 
         json_result = json.loads(json.dumps(list_of_tables))
@@ -2809,7 +2809,7 @@ class dbCalls:
 
         headers = {
             "content-rows": str(count),
-            "content-max-returned-rows": str(self.contentMaxRows),
+            "content-max-returned-rows": str(self.content_max_rows),
             "content-total-rows": str(export_tables_data_count[0]),
         }
         return JSONResponse(content=json_result, headers=headers, status_code=200)
@@ -3459,7 +3459,7 @@ class dbCalls:
 
         airflow_dags_data = airflow_custom_dags_query.union(
             airflow_import_dags_query, airflow_export_dags_query
-        ).limit(self.contentMaxRows)
+        ).limit(self.content_max_rows)
 
         count = 0
         for row in airflow_dags_data:
@@ -3484,7 +3484,7 @@ class dbCalls:
             # 			resultDict['applicationNotes'] = row[5]
             list_of_dags.append(result_dict)
 
-            if count == self.contentMaxRows:
+            if count == self.content_max_rows:
                 break
 
         json_result = json.loads(json.dumps(list_of_dags))
@@ -3493,7 +3493,7 @@ class dbCalls:
 
         headers = {
             "content-rows": str(count),
-            "content-max-returned-rows": str(self.contentMaxRows),
+            "content-max-returned-rows": str(self.content_max_rows),
         }
         return JSONResponse(content=json_result, headers=headers, status_code=200)
 
@@ -3528,7 +3528,7 @@ class dbCalls:
                 airflow_import_dags.concurrency,
             )
             .select_from(airflow_import_dags)
-            .limit(self.contentMaxRows)
+            .limit(self.content_max_rows)
         )
 
         count = 0
@@ -3554,7 +3554,7 @@ class dbCalls:
             result_dict["concurrency"] = row[11]
             list_of_dags.append(result_dict)
 
-            if count == self.contentMaxRows:
+            if count == self.content_max_rows:
                 break
 
         json_result = json.loads(json.dumps(list_of_dags))
@@ -3563,7 +3563,7 @@ class dbCalls:
 
         headers = {
             "content-rows": str(count),
-            "content-max-returned-rows": str(self.contentMaxRows),
+            "content-max-returned-rows": str(self.content_max_rows),
         }
         return JSONResponse(content=json_result, headers=headers, status_code=200)
 
@@ -3600,7 +3600,7 @@ class dbCalls:
                 airflow_export_dags.concurrency,
             )
             .select_from(airflow_export_dags)
-            .limit(self.contentMaxRows)
+            .limit(self.content_max_rows)
         )
 
         count = 0
@@ -3635,7 +3635,7 @@ class dbCalls:
 
         headers = {
             "content-rows": str(count),
-            "content-max-returned-rows": str(self.contentMaxRows),
+            "content-max-returned-rows": str(self.content_max_rows),
         }
         return JSONResponse(content=json_result, headers=headers, status_code=200)
 
@@ -3669,7 +3669,7 @@ class dbCalls:
                 airflow_custom_dags.concurrency,
             )
             .select_from(airflow_custom_dags)
-            .limit(self.contentMaxRows)
+            .limit(self.content_max_rows)
         )
 
         count = 0
@@ -3694,7 +3694,7 @@ class dbCalls:
             result_dict["concurrency"] = row[10]
             list_of_dags.append(result_dict)
 
-            if count == self.contentMaxRows:
+            if count == self.content_max_rows:
                 break
 
         json_result = json.loads(json.dumps(list_of_dags))
@@ -3703,7 +3703,7 @@ class dbCalls:
 
         headers = {
             "content-rows": str(count),
-            "content-max-returned-rows": str(self.contentMaxRows),
+            "content-max-returned-rows": str(self.content_max_rows),
         }
         return JSONResponse(content=json_result, headers=headers, status_code=200)
 

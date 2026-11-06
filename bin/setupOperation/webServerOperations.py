@@ -41,25 +41,25 @@ class webServerOperations:
         self.common_config = common_config.config()
 
         # 		# Fetch configuration about MySQL database and how to connect to it
-        # 		self.databaseCredentials = self.common_config.get_mysql_credentials()
-        # 		self.configHostname = self.databaseCredentials["mysql_hostname"]
-        # 		self.configPort =     self.databaseCredentials["mysql_port"]
-        # 		self.configDatabase = self.databaseCredentials["mysql_database"]
-        # 		self.configUsername = self.databaseCredentials["mysql_username"]
-        # 		self.configPassword = self.databaseCredentials["mysql_password"]
-        # 		# self.configPassword = quote(self.databaseCredentials["mysql_password"], safe=" +")
+        # 		self.database_credentials = self.common_config.get_mysql_credentials()
+        # 		self.config_hostname = self.database_credentials["mysql_hostname"]
+        # 		self.config_port =     self.database_credentials["mysql_port"]
+        # 		self.config_database = self.database_credentials["mysql_database"]
+        # 		self.config_username = self.database_credentials["mysql_username"]
+        # 		self.config_password = self.database_credentials["mysql_password"]
+        # 		# self.config_password = quote(self.database_credentials["mysql_password"], safe=" +")
         #
-        # 		self.connectStr = "mysql+pymysql://%s:%s@%s:%s/%s"%(
-        # 			self.configUsername,
-        # 			# self.configPassword,
-        # 			quote(self.configPassword, safe=" +"),
-        # 			self.configHostname,
-        # 			self.configPort,
-        # 			self.configDatabase)
+        # 		self.connect_str = "mysql+pymysql://%s:%s@%s:%s/%s"%(
+        # 			self.config_username,
+        # 			# self.config_password,
+        # 			quote(self.config_password, safe=" +"),
+        # 			self.config_hostname,
+        # 			self.config_port,
+        # 			self.config_database)
         #
         # 		# Esablish a SQLAlchemy connection to the DBImport database
         # 		try:
-        # 			self.configDB = sa.create_engine(self.connectStr, echo = self.debugLogLevel)
+        # 			self.configDB = sa.create_engine(self.connect_str, echo = self.debugLogLevel)
         # 			self.configDB.connect()
         # 			self.configDBSession = sessionmaker(bind=self.configDB)
         #

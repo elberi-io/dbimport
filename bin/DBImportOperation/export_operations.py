@@ -52,7 +52,7 @@ class operation(metaclass=Singleton):
         self.sqoopRows = None
         self.sqoopMappers = None
 
-        self.globalHiveConfigurationSet = False
+        self.global_hive_configuration_set = False
 
         self.atlasOperation = atlas_operations.atlasOperation()
 
@@ -81,12 +81,12 @@ class operation(metaclass=Singleton):
                 self.common_operations.set_hive_table(
                     Hive_DB=self.hiveDB, Hive_Table=self.hiveTable
                 )
-                self.hiveTableIsTransactional = (
+                self.hive_table_is_transactional = (
                     self.common_operations.is_table_transactional(
                         hiveDB=self.hiveDB, hiveTable=self.hiveTable
                     )
                 )
-                self.hiveTableIsView = self.common_operations.is_table_view(
+                self.hive_table_is_view = self.common_operations.is_table_view(
                     hiveDB=self.hiveDB, hiveTable=self.hiveTable
                 )
 
@@ -518,8 +518,8 @@ class operation(metaclass=Singleton):
     def is_export_temp_table_needed(self):
         try:
             self.tempTableNeeded = self.export_config.is_export_temp_table_needed(
-                hiveTableIsTransactional=self.hiveTableIsTransactional,
-                hiveTableIsView=self.hiveTableIsView,
+                hiveTableIsTransactional=self.hive_table_is_transactional,
+                hiveTableIsView=self.hive_table_is_view,
             )
         except invalidConfiguration as errMsg:
             logging.error(errMsg)
@@ -633,8 +633,8 @@ class operation(metaclass=Singleton):
             self.export_config.remove_temporary_files()
             sys.exit(1)
 
-        if self.globalHiveConfigurationSet == False:
-            self.globalHiveConfigurationSet = True
+        if self.global_hive_configuration_set == False:
+            self.global_hive_configuration_set = True
             if self.export_config.hiveJavaHeap != None:
                 query = "set hive.tez.container.size=%s" % (
                     self.export_config.hiveJavaHeap
@@ -1035,7 +1035,7 @@ class operation(metaclass=Singleton):
         # Fetch the number of executors and sql splits that should be used
         self.export_config.calculate_job_mappers()
 
-        self.sparkStartUTS = int(time.time())
+        self.spark_start_uts = int(time.time())
 
         force_column_uppercase = False
         if self.export_config.common_config.jdbc_servertype in (
@@ -1568,7 +1568,7 @@ class operation(metaclass=Singleton):
 
         try:
             self.export_config.save_export_statistics(
-                self.sparkStartUTS, sqoop_mappers=self.sqoopMappers
+                self.spark_start_uts, sqoop_mappers=self.sqoopMappers
             )
         except:
             logging.error("Fatal error when saving spark statistics")
@@ -1581,7 +1581,7 @@ class operation(metaclass=Singleton):
     def run_sqoop_export(self):
         logging.debug("Executing export_operations.run_sqoop_export()")
 
-        self.sqoopStartTimestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
+        self.sqoop_start_timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
         self.sqoopStartUTS = int(time.time())
 
         force_column_uppercase = False

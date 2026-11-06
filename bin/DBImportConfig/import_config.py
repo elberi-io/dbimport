@@ -115,8 +115,8 @@ class config(metaclass=Singleton):
         self.splitAddedToSqoopOptions = False
         self.custom_max_query = None
         self.mergeCompactionMethod = None
-        self.printSQLWhereAddition = True
-        self.invalidateImpalaMetadata = False
+        self.print_sql_where_addition = True
+        self.invalidate_impala_metadata = False
 
         self.validationMethod = None
         self.validationCustomQuerySourceSQL = None
@@ -125,19 +125,19 @@ class config(metaclass=Singleton):
         self.validationCustomQueryHiveValue = None
         self.validationCustomQueryValidateImportTable = True
 
-        self.importDatabaseOverride = None
-        self.importTableOverride = None
-        self.historyDatabaseOverride = None
-        self.historyTableOverride = None
+        self.import_database_override = None
+        self.import_table_override = None
+        self.history_database_override = None
+        self.history_table_override = None
 
         self.importPhase = None
         self.importPhaseDescription = None
         self.copyPhase = None
-        self.copyPhaseDescription = None
+        self.copy_phase_description = None
         self.etlPhase = None
         self.etlPhaseDescription = None
 
-        self.phaseThree = None
+        self.phase_three = None
         self.sqlSessions = None
         self.fullExecutedCommand = None
         self.mongoImport = None
@@ -255,14 +255,14 @@ class config(metaclass=Singleton):
         self.postDataToKafka = self.common_config.get_config_value(
             key="post_data_to_kafka"
         )
-        self.postDataToAWSSNS = self.common_config.get_config_value(
+        self.post_data_to_aws_sns = self.common_config.get_config_value(
             key="post_data_to_awssns"
         )
 
         if (
             self.postDataToREST == False
             and self.postDataToKafka == False
-            and self.postDataToAWSSNS == False
+            and self.post_data_to_aws_sns == False
         ):
             return
 
@@ -298,7 +298,7 @@ class config(metaclass=Singleton):
             if response != 200:
                 logging.warn("REST call failed! No start message posted")
 
-        if self.postDataToAWSSNS == True:
+        if self.post_data_to_aws_sns == True:
             result = self.sendStatistics.send_aws_sns_data(json.dumps(json_data))
             if result == False:
                 logging.warning("AWS SNS publish failed! No start message posted")
@@ -540,10 +540,10 @@ class config(metaclass=Singleton):
 
         invalidate_impala_metadata_value = row[49]
 
-        self.importDatabaseOverride = row[50]
-        self.importTableOverride = row[51]
-        self.historyDatabaseOverride = row[52]
-        self.historyTableOverride = row[53]
+        self.import_database_override = row[50]
+        self.import_table_override = row[51]
+        self.history_database_override = row[52]
+        self.history_table_override = row[53]
 
         if (
             self.validationMethod != constant.VALIDATION_METHOD_CUSTOMQUERY
@@ -762,7 +762,7 @@ class config(metaclass=Singleton):
                 self.copyPhase = constant.COPY_PHASE_NONE
                 self.etlPhase = constant.ETL_PHASE_TRUNCATEINSERT
                 self.importPhaseDescription = "Full"
-                self.copyPhaseDescription = "No cluster copy"
+                self.copy_phase_description = "No cluster copy"
                 self.etlPhaseDescription = "Truncate and insert"
                 etl_engine_spark_supported = True
             else:
@@ -771,7 +771,7 @@ class config(metaclass=Singleton):
                 self.copyPhase = constant.COPY_PHASE_NONE
                 self.etlPhase = constant.ETL_PHASE_TRUNCATEINSERT
                 self.importPhaseDescription = "Full"
-                self.copyPhaseDescription = "No cluster copy"
+                self.copy_phase_description = "No cluster copy"
                 self.etlPhaseDescription = "Truncate and insert"
 
         if self.import_type == "full_insert" or (
@@ -784,7 +784,7 @@ class config(metaclass=Singleton):
             self.copyPhase = constant.COPY_PHASE_NONE
             self.etlPhase = constant.ETL_PHASE_INSERT
             self.importPhaseDescription = "Full"
-            self.copyPhaseDescription = "No cluster copy"
+            self.copy_phase_description = "No cluster copy"
             self.etlPhaseDescription = "Append"
             etl_engine_spark_supported = True
 
@@ -796,7 +796,7 @@ class config(metaclass=Singleton):
             self.copyPhase = constant.COPY_PHASE_NONE
             self.etlPhase = constant.ETL_PHASE_MERGEONLY
             self.importPhaseDescription = "Full"
-            self.copyPhaseDescription = "No cluster copy"
+            self.copy_phase_description = "No cluster copy"
             self.etlPhaseDescription = "Merge"
             etl_engine_spark_supported = True
 
@@ -806,7 +806,7 @@ class config(metaclass=Singleton):
             self.copyPhase = constant.COPY_PHASE_NONE
             self.etlPhase = constant.ETL_PHASE_NONE
             self.importPhaseDescription = "Full"
-            self.copyPhaseDescription = "No cluster copy"
+            self.copy_phase_description = "No cluster copy"
             self.etlPhaseDescription = "No ETL phase"
             etl_engine_spark_supported = True
 
@@ -816,7 +816,7 @@ class config(metaclass=Singleton):
             self.copyPhase = constant.COPY_PHASE_NONE
             self.etlPhase = constant.ETL_PHASE_EXTERNAL
             self.importPhaseDescription = "Full"
-            self.copyPhaseDescription = "No cluster copy"
+            self.copy_phase_description = "No cluster copy"
             self.etlPhaseDescription = "Only create an external table"
 
         if self.import_type == "full_merge_direct_history" or (
@@ -830,7 +830,7 @@ class config(metaclass=Singleton):
             self.copyPhase = constant.COPY_PHASE_NONE
             self.etlPhase = constant.ETL_PHASE_MERGEHISTORYAUDIT
             self.importPhaseDescription = "Full"
-            self.copyPhaseDescription = "No cluster copy"
+            self.copy_phase_description = "No cluster copy"
             self.etlPhaseDescription = "Merge History Audit"
             etl_engine_spark_supported = True
 
@@ -842,7 +842,7 @@ class config(metaclass=Singleton):
             self.copyPhase = constant.COPY_PHASE_NONE
             self.etlPhase = constant.ETL_PHASE_MERGEONLY
             self.importPhaseDescription = "Incremental"
-            self.copyPhaseDescription = "No cluster copy"
+            self.copy_phase_description = "No cluster copy"
             self.etlPhaseDescription = "Merge"
             etl_engine_spark_supported = True
 
@@ -855,7 +855,7 @@ class config(metaclass=Singleton):
             self.copyPhase = constant.COPY_PHASE_NONE
             self.etlPhase = constant.ETL_PHASE_MERGEHISTORYAUDIT
             self.importPhaseDescription = "Incremental"
-            self.copyPhaseDescription = "No cluster copy"
+            self.copy_phase_description = "No cluster copy"
             self.etlPhaseDescription = "Merge History Audit"
             etl_engine_spark_supported = True
 
@@ -867,7 +867,7 @@ class config(metaclass=Singleton):
             self.copyPhase = constant.COPY_PHASE_NONE
             self.etlPhase = constant.ETL_PHASE_INSERT
             self.importPhaseDescription = "Incremental"
-            self.copyPhaseDescription = "No cluster copy"
+            self.copy_phase_description = "No cluster copy"
             self.etlPhaseDescription = "Insert"
             etl_engine_spark_supported = True
 
@@ -880,7 +880,7 @@ class config(metaclass=Singleton):
             self.copyPhase = constant.COPY_PHASE_NONE
             self.etlPhase = constant.ETL_PHASE_MERGEONLY
             self.importPhaseDescription = "Oracle Flashback"
-            self.copyPhaseDescription = "No cluster copy"
+            self.copy_phase_description = "No cluster copy"
             self.etlPhaseDescription = "Merge"
 
             if self.soft_delete_during_merge == True:
@@ -902,7 +902,7 @@ class config(metaclass=Singleton):
             self.copyPhase = constant.COPY_PHASE_NONE
             self.etlPhase = constant.ETL_PHASE_MERGEHISTORYAUDIT
             self.importPhaseDescription = "Oracle Flashback"
-            self.copyPhaseDescription = "No cluster copy"
+            self.copy_phase_description = "No cluster copy"
             self.etlPhaseDescription = "Merge History Audit"
 
             if self.soft_delete_during_merge == True:
@@ -926,7 +926,7 @@ class config(metaclass=Singleton):
             self.copyPhase = constant.COPY_PHASE_NONE
             self.etlPhase = constant.ETL_PHASE_MERGEONLY
             self.importPhaseDescription = "Microsoft SQL Change Tracking"
-            self.copyPhaseDescription = "No cluster copy"
+            self.copy_phase_description = "No cluster copy"
             self.etlPhaseDescription = "Merge"
 
         if (
@@ -938,7 +938,7 @@ class config(metaclass=Singleton):
             self.copyPhase = constant.COPY_PHASE_NONE
             self.etlPhase = constant.ETL_PHASE_MERGEHISTORYAUDIT
             self.importPhaseDescription = "Microsoft SQL Change Tracking"
-            self.copyPhaseDescription = "No cluster copy"
+            self.copy_phase_description = "No cluster copy"
             self.etlPhaseDescription = "Merge History Audit"
 
         # If this is a slave table, we will disable the import phase as thats already done on the Master instance
@@ -1088,11 +1088,11 @@ class config(metaclass=Singleton):
 
         # Determine if we are going to invalidate the metadata in Impala or not
         if invalidate_impala_metadata_value == 0:
-            self.invalidateImpalaMetadata = False
+            self.invalidate_impala_metadata = False
         elif invalidate_impala_metadata_value == 1:
-            self.invalidateImpalaMetadata = True
+            self.invalidate_impala_metadata = True
         else:
-            self.invalidateImpalaMetadata = self.common_config.get_config_value(
+            self.invalidate_impala_metadata = self.common_config.get_config_value(
                 key="impala_invalidate_metadata"
             )
 
@@ -1250,18 +1250,18 @@ class config(metaclass=Singleton):
             self.Hive_Import_Table = self.Hive_Table
 
         # If the database or table for import or history have been overridden by setting the options in the import_table
-        if self.importDatabaseOverride != None:
-            self.Hive_Import_DB = self.importDatabaseOverride
+        if self.import_database_override != None:
+            self.Hive_Import_DB = self.import_database_override
 
-        if self.importTableOverride != None:
-            self.Hive_Import_Table = self.importTableOverride
-            self.Hive_Import_View = self.importTableOverride + "_view"
+        if self.import_table_override != None:
+            self.Hive_Import_Table = self.import_table_override
+            self.Hive_Import_View = self.import_table_override + "_view"
 
-        if self.historyDatabaseOverride != None:
-            self.Hive_History_DB = self.historyDatabaseOverride
+        if self.history_database_override != None:
+            self.Hive_History_DB = self.history_database_override
 
-        if self.historyTableOverride != None:
-            self.Hive_History_Table = self.historyTableOverride
+        if self.history_table_override != None:
+            self.Hive_History_Table = self.history_table_override
 
         self.Hive_ColumnName_Import = self.common_config.get_config_value(
             key="import_columnname_import"
@@ -3630,11 +3630,11 @@ class config(metaclass=Singleton):
                 "${MAX_VALUE}", str(self.sqoopIncrMaxvaluePending)
             )
 
-        if print_custom_sql == True and self.printSQLWhereAddition == True:
+        if print_custom_sql == True and self.print_sql_where_addition == True:
             logging.info(
                 "Values have been replaced in the SQL where addition. New value is:"
             )
-            self.printSQLWhereAddition = False
+            self.print_sql_where_addition = False
             print(sql_where)
 
         return sql_where
@@ -4435,7 +4435,7 @@ class config(metaclass=Singleton):
         """Connects to Impala and invalidates the metadata"""
         logging.debug("Executing import_config.invalidateImpala()")
 
-        if self.invalidateImpalaMetadata == False:
+        if self.invalidate_impala_metadata == False:
             return
 
         self.common_config.connect_to_impala()

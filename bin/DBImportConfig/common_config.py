@@ -99,7 +99,7 @@ class config(metaclass=Singleton):
         self.jdbc_force_column_lowercase = None
         self.jdbc_environment = None
         self.seedFile = None
-        self.mongoClient = None
+        self.mongo_client = None
         self.mongoDB = None
         self.mongoAuthSource = None
         self.awsS3assumeRole = None
@@ -109,12 +109,12 @@ class config(metaclass=Singleton):
         self.awsS3region = None
         self.awsS3externalId = None
         self.awsS3fileFormat = None
-        self.kerberosInitiated = False
+        self.kerberos_initiated = False
 
         self.impalaDriver = None
         self.impalaClasspath = None
         self.impalaAddress = None
-        self.impalaJDBCConn = None
+        self.impala_jdbc_conn = None
         self.impalaJDBCCursor = None
 
         self.sparkPathAppend = None
@@ -127,14 +127,14 @@ class config(metaclass=Singleton):
         self.sparkDeployMode = None
         self.sparkYarnQueue = None
         self.sparkDynamicAllocation = None
-        self.sparkMinExecutors = None
+        self.spark_min_executors = None
         self.sparkMaxExecutors = None
         self.sparkExecutorMemory = None
         self.sparkHiveLibrary = None
         self.sparkLogLevel = None
 
         self.operationTimestamp = None
-        self.yarnApplicationStart = None
+        self.yarn_application_start = None
 
         self.sourceSchema = None
         self.tableType = None
@@ -144,7 +144,7 @@ class config(metaclass=Singleton):
         self.source_columns_df = pd.DataFrame()
         self.source_keys_df = pd.DataFrame()
 
-        self.JDBCConn = None
+        self.jdbc_conn = None
         self.JDBCCursor = None
 
         self.sourceSchema = schemaReader.source()
@@ -152,7 +152,7 @@ class config(metaclass=Singleton):
         # SQLAlchemy connection variables
         self.configDB = None
         self.configDBSession = None
-        self.mysqlConnectionDetails = None
+        self.mysql_connection_details = None
 
         self.debugLogLevel = False
         if logging.root.level == 10:  # DEBUG
@@ -281,9 +281,9 @@ class config(metaclass=Singleton):
     def get_mysql_credentials(self):
         # Fetch configuration about MySQL database and how to connect to it
 
-        if self.mysqlConnectionDetails != None:
+        if self.mysql_connection_details != None:
             # This information is already fetched from the configuration. Just return the fetched values
-            return self.mysqlConnectionDetails
+            return self.mysql_connection_details
 
         mysql_hostname = configuration.get("Database", "mysql_hostname")
         mysql_port = configuration.get("Database", "mysql_port")
@@ -332,17 +332,17 @@ class config(metaclass=Singleton):
                 "Credentials configuration to configuration database in config file is incorrect. Either use username/password or a AWS Secret Manager name"
             )
 
-        self.mysqlConnectionDetails = {}
-        self.mysqlConnectionDetails["mysql_hostname"] = mysql_hostname
-        self.mysqlConnectionDetails["mysql_port"] = mysql_port
-        self.mysqlConnectionDetails["mysql_database"] = mysql_database
-        self.mysqlConnectionDetails["mysql_username"] = mysql_username
-        self.mysqlConnectionDetails["mysql_password"] = mysql_password
+        self.mysql_connection_details = {}
+        self.mysql_connection_details["mysql_hostname"] = mysql_hostname
+        self.mysql_connection_details["mysql_port"] = mysql_port
+        self.mysql_connection_details["mysql_database"] = mysql_database
+        self.mysql_connection_details["mysql_username"] = mysql_username
+        self.mysql_connection_details["mysql_password"] = mysql_password
 
         # print(mysql_username)
         # print(mysql_password)
 
-        return self.mysqlConnectionDetails
+        return self.mysql_connection_details
 
     def reconnect_config_database(self, printReconnectMessage=True):
         if self.mysql_conn == None or self.mysql_conn.is_connected() == False:
@@ -435,7 +435,7 @@ class config(metaclass=Singleton):
 
         mysql_credentials = self.get_mysql_credentials()
 
-        self.connectStr = "mysql+pymysql://%s:%s@%s:%s/%s" % (
+        self.connect_str = "mysql+pymysql://%s:%s@%s:%s/%s" % (
             mysql_credentials["mysql_username"],
             quote(mysql_credentials["mysql_password"], safe=" +"),
             mysql_credentials["mysql_hostname"],
@@ -445,7 +445,7 @@ class config(metaclass=Singleton):
 
         try:
             self.configDB = sa.create_engine(
-                self.connectStr, echo=self.debugLogLevel, pool_pre_ping=True
+                self.connect_str, echo=self.debugLogLevel, pool_pre_ping=True
             )
             self.configDB.connect()
             self.configDBSession = sessionmaker(bind=self.configDB)
@@ -488,7 +488,7 @@ class config(metaclass=Singleton):
         logging.debug("Executing common_config.remove_temporary_files()")
 
         # Remove the kerberos ticket file
-        if self.kerberosInitiated == True:
+        if self.kerberos_initiated == True:
             try:
                 klist_command_list = ["kdestroy"]
                 klist_proc = subprocess.Popen(
@@ -704,7 +704,7 @@ class config(metaclass=Singleton):
             sys.exit(1)
 
         logging.info("Initialize Kerberos ticket")
-        self.kerberosInitiated = True
+        self.kerberos_initiated = True
 
         kinit_command_list = [
             "kinit",
@@ -1771,7 +1771,7 @@ class config(metaclass=Singleton):
 
         try:
             self.JDBCCursor.close()
-            self.JDBCConn.close()
+            self.jdbc_conn.close()
 
         except AttributeError:
             pass
@@ -1799,10 +1799,10 @@ class config(metaclass=Singleton):
             try:
                 jdbc_credentials = [self.jdbc_username, self.jdbc_password]
 
-                self.impalaJDBCConn = jaydebeapi.connect(
+                self.impala_jdbc_conn = jaydebeapi.connect(
                     self.impalaClasspath, self.impalaAddress, [], self.impalaDriver
                 )
-                self.impalaJDBCCursor = self.impalaJDBCConn.cursor()
+                self.impalaJDBCCursor = self.impala_jdbc_conn.cursor()
                 log.info("Connected to Impala")
             except Exception as exception:
                 log.error("Connection to Impala failed with the following error:")
@@ -1814,7 +1814,7 @@ class config(metaclass=Singleton):
 
         try:
             self.impalaJDBCCursor.close()
-            self.impalaJDBCConn.close()
+            self.impala_jdbc_conn.close()
 
         except AttributeError:
             pass
@@ -1866,13 +1866,13 @@ class config(metaclass=Singleton):
 
             jdbc_credentials = [self.jdbc_username, self.jdbc_password]
             try:
-                self.JDBCConn = jaydebeapi.connect(
+                self.jdbc_conn = jaydebeapi.connect(
                     self.jdbc_driver,
                     self.jdbc_url,
                     jdbc_credentials,
                     self.jdbc_classpath_for_python,
                 )
-                self.JDBCCursor = self.JDBCConn.cursor()
+                self.JDBCCursor = self.jdbc_conn.cursor()
             except TypeError as exception:
                 if printError == True:
                     log.error(
@@ -2706,14 +2706,14 @@ class config(metaclass=Singleton):
         log = logging.getLogger(logger)
         log.debug("Executing common_config.connect_to_mongo()")
 
-        if self.mongoClient != None:
+        if self.mongo_client != None:
             return True
 
         try:
-            self.mongoClient = pymongo.MongoClient(
+            self.mongo_client = pymongo.MongoClient(
                 "mongodb://%s:%s/" % (self.jdbc_hostname, self.jdbc_port)
             )
-            self.mongoDB = self.mongoClient[self.jdbc_database.strip()]
+            self.mongoDB = self.mongo_client[self.jdbc_database.strip()]
             if self.mongoAuthSource == None:
                 self.mongoDB.authenticate(self.jdbc_username, self.jdbc_password)
             else:
@@ -2739,8 +2739,8 @@ class config(metaclass=Singleton):
     def disconnect_from_mongo(self):
         logging.debug("Executing common_config.disconnect_from_mongo()")
 
-        self.mongoClient.close()
-        self.mongoClient = None
+        self.mongo_client.close()
+        self.mongo_client = None
         self.mongoDB = None
 
         logging.debug("Executing common_config.disconnect_from_mongo() - Finished")
@@ -2917,7 +2917,7 @@ class config(metaclass=Singleton):
             # If it's None, it means that it was called when query was started. At this stage, we need to insert the data
 
             if self.operationType == "import":
-                self.yarnApplicationStart = start_stop_date
+                self.yarn_application_start = start_stop_date
 
                 query = "insert into yarn_statistics "
                 query += "( yarn_application_id, operation_timestamp, operation_tool, operation_type, hive_db, hive_table, application_start ) "
@@ -2939,7 +2939,7 @@ class config(metaclass=Singleton):
                 self.mysql_conn.commit()
 
             if self.operationType == "export":
-                self.yarnApplicationStart = start_stop_date
+                self.yarn_application_start = start_stop_date
 
                 query = "insert into yarn_statistics "
                 query += "( yarn_application_id, operation_timestamp, operation_tool, operation_type, dbalias, target_schema, target_table, application_start ) "
@@ -2962,7 +2962,7 @@ class config(metaclass=Singleton):
                 self.mysql_conn.commit()
 
         else:
-            if self.yarnApplicationStart == None:
+            if self.yarn_application_start == None:
                 # This is just a protection-function and should under normal operations never happen as a query must start before we get any data up update about.
                 return
 
@@ -2979,7 +2979,7 @@ class config(metaclass=Singleton):
                     yarn_containers_failed,
                     yarn_containers_killed,
                     yarn_application_id,
-                    self.yarnApplicationStart,
+                    self.yarn_application_start,
                 ),
             )
             self.mysql_conn.commit()

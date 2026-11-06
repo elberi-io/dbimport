@@ -31,32 +31,32 @@ class sendStatistics:
         logging.debug("Executing rest.__init__()")
 
         self.common_config = common_config.config()
-        self.RESTheaders = {"Content-type": "application/json"}
+        self.rest_headers = {"Content-type": "application/json"}
 
-        self.RESTendpoint = self.common_config.get_config_value(key="rest_url")
+        self.rest_endpoint = self.common_config.get_config_value(key="rest_url")
         self.RESTtimeout = self.common_config.get_config_value(key="rest_timeout")
-        self.RESTverifySSL = self.common_config.get_config_value(key="rest_verifyssl")
-        self.RESTtrustCAfile = self.common_config.get_config_value(
+        self.rest_verify_ssl = self.common_config.get_config_value(key="rest_verifyssl")
+        self.rest_trust_ca_file = self.common_config.get_config_value(
             key="rest_trustcafile"
         )
 
         self.kafkaBrokers = self.common_config.get_config_value(key="kafka_brokers")
-        self.kafkaTrustCAFile = self.common_config.get_config_value(
+        self.kafka_trust_ca_file = self.common_config.get_config_value(
             key="kafka_trustcafile"
         )
-        self.kafkaSecurityProtocol = self.common_config.get_config_value(
+        self.kafka_security_protocol = self.common_config.get_config_value(
             key="kafka_securityprotocol"
         )
-        self.kafkaSaslMechanism = self.common_config.get_config_value(
+        self.kafka_sasl_mechanism = self.common_config.get_config_value(
             key="kafka_saslmechanism"
         )
         self.kafkaTopic = self.common_config.get_config_value(key="kafka_topic")
 
-        self.awsSNStopic = self.common_config.get_config_value(
+        self.aws_sns_topic = self.common_config.get_config_value(
             key="post_data_to_awssns_topic"
         )
 
-        if self.RESTendpoint == "":
+        if self.rest_endpoint == "":
             logging.error(
                 "Cant find the REST endpoint. Please check configuration file"
             )
@@ -81,25 +81,25 @@ class sendStatistics:
         response_code = -1
 
         try:
-            rest_protocol = self.RESTendpoint.split(":")[0].lower()
+            rest_protocol = self.rest_endpoint.split(":")[0].lower()
 
             if rest_protocol == "http":
                 response = requests.post(
-                    self.RESTendpoint,
+                    self.rest_endpoint,
                     data=json_data,
-                    headers=self.RESTheaders,
+                    headers=self.rest_headers,
                     timeout=self.RESTtimeout,
                 )
             else:
-                if self.RESTverifySSL == True:
-                    rest_verify = self.RESTtrustCAfile
+                if self.rest_verify_ssl == True:
+                    rest_verify = self.rest_trust_ca_file
                 else:
                     rest_verify = False
 
                 response = requests.post(
-                    self.RESTendpoint,
+                    self.rest_endpoint,
                     data=json_data,
-                    headers=self.RESTheaders,
+                    headers=self.rest_headers,
                     timeout=self.RESTtimeout,
                     verify=rest_verify,
                 )
@@ -129,18 +129,21 @@ class sendStatistics:
         # 		return result
 
         try:
-            ssl_context = ssl.create_default_context(cafile=self.kafkaTrustCAFile)
+            ssl_context = ssl.create_default_context(cafile=self.kafka_trust_ca_file)
 
         except FileNotFoundError:
             logging.error("SSL CA file for Kafka cant be found")
             ssl_context = None
 
         try:
-            if self.kafkaSaslMechanism != None and self.kafkaSecurityProtocol != None:
+            if (
+                self.kafka_sasl_mechanism != None
+                and self.kafka_security_protocol != None
+            ):
                 producer = kafka.KafkaProducer(
                     bootstrap_servers=self.kafkaBrokers,
-                    security_protocol=self.kafkaSecurityProtocol,
-                    sasl_mechanism=self.kafkaSaslMechanism,
+                    security_protocol=self.kafka_security_protocol,
+                    sasl_mechanism=self.kafka_sasl_mechanism,
                     ssl_context=ssl_context,
                 )
             else:
@@ -198,7 +201,7 @@ class sendStatistics:
 
         try:
             publish_sns_response = client.publish(
-                TopicArn=self.awsSNStopic, Message=json_data
+                TopicArn=self.aws_sns_topic, Message=json_data
             )
         except ClientError as e:  # For a list of exceptions thrown, see
             # https://docs.aws.amazon.com/secretsmanager/latest/apireference/API_GetSecretValue.html

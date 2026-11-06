@@ -41,22 +41,22 @@ class hiveMetastoreDirect(metaclass=Singleton):
 
         self.common_config = common_config.config()
 
-        self.hiveConnectStr = configuration.get(
+        self.hive_connect_str = configuration.get(
             "Metastore", "hive_metastore_alchemy_conn"
         )
-        self.hiveMetaDB = None
-        self.hiveMetaSession = None
+        self.hive_meta_db = None
+        self.hive_meta_session = None
 
     def connect_to_hive_metastore_db(self):
 
         logging.info("Connecting to Hive Metastore with Direct DB connection")
 
         try:
-            self.hiveMetaDB = sa.create_engine(
-                self.hiveConnectStr, echo=self.debugLogLevel, pool_pre_ping=True
+            self.hive_meta_db = sa.create_engine(
+                self.hive_connect_str, echo=self.debugLogLevel, pool_pre_ping=True
             )
-            self.hiveMetaDB.connect()
-            self.hiveMetaSession = sessionmaker(bind=self.hiveMetaDB)
+            self.hive_meta_db.connect()
+            self.hive_meta_session = sessionmaker(bind=self.hive_meta_db)
         except sa.exc.OperationalError as err:
             logging.error("%s" % err)
             self.common_config.remove_temporary_files()
@@ -72,10 +72,10 @@ class hiveMetastoreDirect(metaclass=Singleton):
     def check_db(self, hiveDB):
         logging.debug("Executing hiveMetastoreDirect.check_db()")
 
-        if self.hiveMetaSession == None:
+        if self.hive_meta_session == None:
             self.connect_to_hive_metastore_db()
 
-        session = self.hiveMetaSession()
+        session = self.hive_meta_session()
         dbs = hiveSchema.DBS
 
         try:
@@ -88,10 +88,10 @@ class hiveMetastoreDirect(metaclass=Singleton):
     def check_table(self, hiveDB, hiveTable):
         logging.debug("Executing hiveMetastoreDirect.check_table()")
 
-        if self.hiveMetaSession == None:
+        if self.hive_meta_session == None:
             self.connect_to_hive_metastore_db()
 
-        session = self.hiveMetaSession()
+        session = self.hive_meta_session()
         tbls = aliased(hiveSchema.TBLS, name="T")
         dbs = aliased(hiveSchema.DBS, name="D")
 
@@ -114,10 +114,10 @@ class hiveMetastoreDirect(metaclass=Singleton):
     def get_table_location(self, hiveDB, hiveTable):
         logging.debug("Executing hiveMetastoreDirect.getExternalTableLocation()")
 
-        if self.hiveMetaSession == None:
+        if self.hive_meta_session == None:
             self.connect_to_hive_metastore_db()
 
-        session = self.hiveMetaSession()
+        session = self.hive_meta_session()
         tbls = aliased(hiveSchema.TBLS, name="T")
         dbs = aliased(hiveSchema.DBS, name="D")
         sds = aliased(hiveSchema.SDS, name="S")
@@ -145,13 +145,13 @@ class hiveMetastoreDirect(metaclass=Singleton):
     def is_table_external_orc_format(self, hiveDB, hiveTable):
         logging.debug("Executing hiveMetastoreDirect.is_table_external_orc_format()")
 
-        if self.hiveMetaSession == None:
+        if self.hive_meta_session == None:
             self.connect_to_hive_metastore_db()
 
         if self.is_table_external(hiveDB, hiveTable) == False:
             return False
 
-        session = self.hiveMetaSession()
+        session = self.hive_meta_session()
         tbls = aliased(hiveSchema.TBLS, name="T")
         dbs = aliased(hiveSchema.DBS, name="D")
         sds = aliased(hiveSchema.SDS, name="S")
@@ -184,13 +184,13 @@ class hiveMetastoreDirect(metaclass=Singleton):
             "Executing hiveMetastoreDirect.is_table_external_parquet_format()"
         )
 
-        if self.hiveMetaSession == None:
+        if self.hive_meta_session == None:
             self.connect_to_hive_metastore_db()
 
         if self.is_table_external(hiveDB, hiveTable) == False:
             return False
 
-        session = self.hiveMetaSession()
+        session = self.hive_meta_session()
         tbls = aliased(hiveSchema.TBLS, name="T")
         dbs = aliased(hiveSchema.DBS, name="D")
         sds = aliased(hiveSchema.SDS, name="S")
@@ -223,13 +223,13 @@ class hiveMetastoreDirect(metaclass=Singleton):
             "Executing hiveMetastoreDirect.is_table_external_iceberg_format()"
         )
 
-        if self.hiveMetaSession == None:
+        if self.hive_meta_session == None:
             self.connect_to_hive_metastore_db()
 
         if self.is_table_external(hiveDB, hiveTable) == False:
             return False
 
-        session = self.hiveMetaSession()
+        session = self.hive_meta_session()
         tbls = aliased(hiveSchema.TBLS, name="T")
         table_params = aliased(hiveSchema.TABLE_PARAMS, name="TP")
         dbs = aliased(hiveSchema.DBS, name="D")
@@ -260,10 +260,10 @@ class hiveMetastoreDirect(metaclass=Singleton):
     def is_table_external(self, hiveDB, hiveTable):
         logging.debug("Executing hiveMetastoreDirect.is_table_external()")
 
-        if self.hiveMetaSession == None:
+        if self.hive_meta_session == None:
             self.connect_to_hive_metastore_db()
 
-        session = self.hiveMetaSession()
+        session = self.hive_meta_session()
         tbls = aliased(hiveSchema.TBLS, name="T")
         dbs = aliased(hiveSchema.DBS, name="D")
 
@@ -288,14 +288,14 @@ class hiveMetastoreDirect(metaclass=Singleton):
         """Reads the PK from the Hive Metadatabase and return a comma separated string with the information"""
         logging.debug("Executing hiveMetastoreDirect.get_pk()")
 
-        if self.hiveMetaSession == None:
+        if self.hive_meta_session == None:
             self.connect_to_hive_metastore_db()
 
         result = ""
 
         pk_error_found = False
 
-        session = self.hiveMetaSession()
+        session = self.hive_meta_session()
         key_constraints = aliased(hiveSchema.KEY_CONSTRAINTS, name="K")
         tbls = aliased(hiveSchema.TBLS, name="T")
         columns_v2 = aliased(hiveSchema.COLUMNS_V2, name="C")
@@ -338,10 +338,10 @@ class hiveMetastoreDirect(metaclass=Singleton):
         """Returns the name of the Primary Key that exists on the table. Returns None if it doesnt exist"""
         logging.debug("Executing hiveMetastoreDirect.get_pk_name()")
 
-        if self.hiveMetaSession == None:
+        if self.hive_meta_session == None:
             self.connect_to_hive_metastore_db()
 
-        session = self.hiveMetaSession()
+        session = self.hive_meta_session()
         key = aliased(hiveSchema.KEY_CONSTRAINTS, name="K")
         tbls = aliased(hiveSchema.TBLS, name="T")
         dbs = aliased(hiveSchema.DBS, name="D")
@@ -371,12 +371,12 @@ class hiveMetastoreDirect(metaclass=Singleton):
         """Reads the ForeignKeys from the Hive Metastore tables and return the result in a Pandas DF"""
         logging.debug("Executing hiveMetastoreDirect.get_fks()")
 
-        if self.hiveMetaSession == None:
+        if self.hive_meta_session == None:
             self.connect_to_hive_metastore_db()
 
         result_df = None
 
-        session = self.hiveMetaSession()
+        session = self.hive_meta_session()
         key = aliased(hiveSchema.KEY_CONSTRAINTS, name="K")
         tbls_tp = aliased(hiveSchema.TBLS, name="TP")
         tbls_tc = aliased(hiveSchema.TBLS, name="TC")
@@ -459,10 +459,10 @@ class hiveMetastoreDirect(metaclass=Singleton):
         """Removes the locks on the Hive table from the Hive Metadatabase"""
         logging.debug("Executing hiveMetastoreDirect.remove_locks_by_force()")
 
-        if self.hiveMetaSession == None:
+        if self.hive_meta_session == None:
             self.connect_to_hive_metastore_db()
 
-        session = self.hiveMetaSession()
+        session = self.hive_meta_session()
 
         lock_count = (
             session.query(hiveSchema.HIVE_LOCKS)
@@ -508,10 +508,10 @@ class hiveMetastoreDirect(metaclass=Singleton):
         """Returns a pandas DataFrame with all columns in the specified Hive table"""
         logging.debug("Executing hiveMetastoreDirect.get_columns()")
 
-        if self.hiveMetaSession == None:
+        if self.hive_meta_session == None:
             self.connect_to_hive_metastore_db()
 
-        session = self.hiveMetaSession()
+        session = self.hive_meta_session()
         tbls = aliased(hiveSchema.TBLS, name="T")
         columns = aliased(hiveSchema.COLUMNS_V2, name="C")
         dbs = aliased(hiveSchema.DBS, name="D")
@@ -566,10 +566,10 @@ class hiveMetastoreDirect(metaclass=Singleton):
     def is_table_transactional(self, hiveDB, hiveTable):
         logging.debug("Executing hiveMetastoreDirect.is_table_transactional()")
 
-        if self.hiveMetaSession == None:
+        if self.hive_meta_session == None:
             self.connect_to_hive_metastore_db()
 
-        session = self.hiveMetaSession()
+        session = self.hive_meta_session()
         table_params = aliased(hiveSchema.TABLE_PARAMS, name="TP")
         tbls = aliased(hiveSchema.TBLS, name="T")
         dbs = aliased(hiveSchema.DBS, name="D")
@@ -599,10 +599,10 @@ class hiveMetastoreDirect(metaclass=Singleton):
     def is_table_view(self, hiveDB, hiveTable):
         logging.debug("Executing hiveMetastoreDirect.is_table_view()")
 
-        if self.hiveMetaSession == None:
+        if self.hive_meta_session == None:
             self.connect_to_hive_metastore_db()
 
-        session = self.hiveMetaSession()
+        session = self.hive_meta_session()
         tbls = aliased(hiveSchema.TBLS, name="T")
         dbs = aliased(hiveSchema.DBS, name="D")
 
@@ -628,7 +628,7 @@ class hiveMetastoreDirect(metaclass=Singleton):
         """Return all tables from specific Hive DB"""
         logging.debug("Executing hiveMetastoreDirect.get_tables()")
 
-        if self.hiveMetaSession == None:
+        if self.hive_meta_session == None:
             self.connect_to_hive_metastore_db()
 
         result_df = None
@@ -643,7 +643,7 @@ class hiveMetastoreDirect(metaclass=Singleton):
         else:
             tableFilter = "%"
 
-        session = self.hiveMetaSession()
+        session = self.hive_meta_session()
         tbls = aliased(hiveSchema.TBLS, name="T")
         dbs = aliased(hiveSchema.DBS, name="D")
 

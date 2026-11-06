@@ -267,14 +267,14 @@ class config(metaclass=Singleton):
         self.postDataToKafka = self.common_config.get_config_value(
             key="post_data_to_kafka"
         )
-        self.postDataToAWSSNS = self.common_config.get_config_value(
+        self.post_data_to_aws_sns = self.common_config.get_config_value(
             key="post_data_to_awssns"
         )
 
         if (
             self.postDataToREST == False
             and self.postDataToKafka == False
-            and self.postDataToAWSSNS == False
+            and self.post_data_to_aws_sns == False
         ):
             return
 
@@ -301,7 +301,7 @@ class config(metaclass=Singleton):
             if response != 200:
                 logging.warn("REST call failed! No start message posted")
 
-        if self.postDataToAWSSNS == True:
+        if self.post_data_to_aws_sns == True:
             result = self.sendStatistics.send_aws_sns_data(json.dumps(json_data))
             if result == False:
                 logging.warning("AWS SNS publish failed! No start message posted")

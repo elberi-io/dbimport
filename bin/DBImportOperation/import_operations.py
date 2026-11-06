@@ -54,27 +54,27 @@ class operation(metaclass=Singleton):
         self.import_config = None
         self.sqlGeneratedHiveColumnDefinition = None
         self.sqlGeneratedSqoopQuery = None
-        self.sqoopStartTimestamp = None
+        self.sqoop_start_timestamp = None
         self.sqoopStartUTS = None
         self.sqoopSize = None
         self.sqoopRows = None
-        self.sqoopIncrMaxValuePending = None
+        self.sqoop_incr_max_value_pending = None
         self.sqoopIncrNoNewRows = None
-        self.sqoopLaunchedMapTasks = None
-        self.sqoopFailedMapTasks = None
-        self.sqoopKilledMapTasks = None
-        self.sqoopLaunchedReduceTasks = None
-        self.sqoopFailedReduceTasks = None
-        self.sqoopKilledReduceTasks = None
-        self.sparkContext = None
+        self.sqoop_launched_map_tasks = None
+        self.sqoop_failed_map_tasks = None
+        self.sqoop_killed_map_tasks = None
+        self.sqoop_launched_reduce_tasks = None
+        self.sqoop_failed_reduce_tasks = None
+        self.sqoop_killed_reduce_tasks = None
+        self.spark_context = None
         self.spark = None
         self.sparkUDF = None
-        self.udfHashColumn = None
-        self.udfReplaceCharWithStar = None
-        self.udfShowFirstFourCharacters = None
+        self.udf_hash_column = None
+        self.udf_replace_char_with_star = None
+        self.udf_show_first_four_characters = None
         self.yarnApplicationID = None
 
-        self.globalHiveConfigurationSet = False
+        self.global_hive_configuration_set = False
 
         self.import_config = import_config.config(Hive_DB, Hive_Table)
         self.common_operations = common_operations.operation(Hive_DB, Hive_Table)
@@ -917,8 +917,8 @@ class operation(metaclass=Singleton):
     def run_spark_import_for_mongo(self):
         logging.debug("Executing import_operations.run_spark_import_for_mongo()")
 
-        self.sparkStartTimestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
-        self.sparkStartUTS = int(time.time())
+        self.spark_start_timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
+        self.spark_start_uts = int(time.time())
         spark_query = ""
 
         # Fetch the number of executors that should be used.
@@ -1283,7 +1283,7 @@ class operation(metaclass=Singleton):
 
         try:
             self.import_config.save_import_statistics(
-                self.sparkStartUTS,
+                self.spark_start_uts,
                 sqoop_size=size_written_by_spark,
                 sqoop_rows=rows_written_by_spark,
                 sqoop_mappers=self.import_config.sqlSessions,
@@ -1555,9 +1555,9 @@ class operation(metaclass=Singleton):
             conf.set("spark.sql.timestampType", "TIMESTAMP_NTZ")
 
         sys.stdout.flush()
-        self.sparkContext = pyspark.context.SparkContext(conf=conf)
+        self.spark_context = pyspark.context.SparkContext(conf=conf)
         sys.stdout.flush()
-        self.spark = pyspark.sql.SparkSession(self.sparkContext)
+        self.spark = pyspark.sql.SparkSession(self.spark_context)
         sys.stdout.flush()
 
         spark_version_split = self.spark.version.split(".")
@@ -1593,7 +1593,7 @@ class operation(metaclass=Singleton):
                     "true",
                 )
 
-        self.sparkContext.addPyFile(
+        self.spark_context.addPyFile(
             "%s/bin/common/sparkUDF2.py" % (os.environ["DBIMPORT_HOME"])
         )
         import sparkUDF2
@@ -1608,28 +1608,28 @@ class operation(metaclass=Singleton):
         if spark_major_version == 2:
             from pyspark.sql.functions import udf
 
-            self.udfHashColumn = udf(
+            self.udf_hash_column = udf(
                 spark_udf.hash_column, pyspark.sql.types.StringType()
             )
-            self.udfReplaceCharWithStar = udf(
+            self.udf_replace_char_with_star = udf(
                 spark_udf.replace_char_with_star, pyspark.sql.types.StringType()
             )
-            self.udfShowFirstFourCharacters = udf(
+            self.udf_show_first_four_characters = udf(
                 spark_udf.show_first_four_characters, pyspark.sql.types.StringType()
             )
         else:
-            self.udfHashColumn = pyspark.sql.functions.udf(
+            self.udf_hash_column = pyspark.sql.functions.udf(
                 spark_udf.hash_column, pyspark.sql.types.StringType()
             )
-            self.udfReplaceCharWithStar = pyspark.sql.functions.udf(
+            self.udf_replace_char_with_star = pyspark.sql.functions.udf(
                 spark_udf.replace_char_with_star, pyspark.sql.types.StringType()
             )
-            self.udfShowFirstFourCharacters = pyspark.sql.functions.udf(
+            self.udf_show_first_four_characters = pyspark.sql.functions.udf(
                 spark_udf.show_first_four_characters, pyspark.sql.types.StringType()
             )
 
         # get Yarn info
-        self.yarnApplicationID = self.sparkContext.applicationId
+        self.yarnApplicationID = self.spark_context.applicationId
         logging.info("Yarn application started with id %s" % (self.yarnApplicationID))
         self.import_config.common_config.update_yarn_statistics(
             self.yarnApplicationID, "spark"
@@ -1644,12 +1644,12 @@ class operation(metaclass=Singleton):
     def stop_spark(self):
 
         # This might be called multiple times. Just return in case it's already closed
-        if self.sparkContext == None:
+        if self.spark_context == None:
             return
 
         # Connect to the Spark UI and request the API to get the total number of Executors used. This will be saved in the 'yarn_statistics' table
         spark_url = "%s/api/v1/applications/%s/allexecutors" % (
-            self.sparkContext.uiWebUrl,
+            self.spark_context.uiWebUrl,
             self.yarnApplicationID,
         )
         self.kerberosPrincipal = configuration.get("Kerberos", "principal")
@@ -1673,15 +1673,15 @@ class operation(metaclass=Singleton):
         )
 
         logging.info("Stopping Spark context")
-        self.sparkContext.stop()
-        self.sparkContext = None
+        self.spark_context.stop()
+        self.spark_context = None
         self.spark = None
 
     def run_spark_import(self, pk_only_import, incremental_max=None):
         logging.debug("Executing import_operations.run_spark_import()")
 
-        self.sparkStartTimestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
-        self.sparkStartUTS = int(time.time())
+        self.spark_start_timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
+        self.spark_start_uts = int(time.time())
         spark_query = ""
 
         # Fetch the number of executors and sql splits that should be used
@@ -1895,11 +1895,13 @@ class operation(metaclass=Singleton):
                 sys.stdout.flush()
 
                 if c_function == "Hash":
-                    df = df.withColumn(c_name, self.udfHashColumn(c_name))
+                    df = df.withColumn(c_name, self.udf_hash_column(c_name))
                 elif c_function == "Replace with star":
-                    df = df.withColumn(c_name, self.udfReplaceCharWithStar(c_name))
+                    df = df.withColumn(c_name, self.udf_replace_char_with_star(c_name))
                 elif c_function == "Show first 4 chars":
-                    df = df.withColumn(c_name, self.udfShowFirstFourCharacters(c_name))
+                    df = df.withColumn(
+                        c_name, self.udf_show_first_four_characters(c_name)
+                    )
 
             # Write ORC files
             sys.stdout.flush()
@@ -2045,7 +2047,7 @@ class operation(metaclass=Singleton):
             if pk_only_import == False:
                 try:
                     self.import_config.save_import_statistics(
-                        self.sparkStartUTS,
+                        self.spark_start_uts,
                         sqoop_size=size_written_by_spark,
                         sqoop_rows=rows_written_by_spark,
                         sqoop_mappers=self.import_config.sqlSessions,
@@ -2158,7 +2160,7 @@ class operation(metaclass=Singleton):
     def run_sqoop_import(self, pk_only_import, incremental_max=None):
         logging.debug("Executing import_operations.run_sqoop_import()")
 
-        self.sqoopStartTimestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
+        self.sqoop_start_timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
         self.sqoopStartUTS = int(time.time())
 
         # Check if any column is anonymized. If it is, we need to exit as that is only supported with Spark
@@ -2172,12 +2174,12 @@ class operation(metaclass=Singleton):
         # Fetch the number of mappers that should be used
         self.import_config.calculate_job_mappers()
 
-        self.sqoopLaunchedMapTasks = None
-        self.sqoopFailedMapTasks = None
-        self.sqoopKilledMapTasks = None
-        self.sqoopLaunchedReduceTasks = None
-        self.sqoopFailedReduceTasks = None
-        self.sqoopKilledReduceTasks = None
+        self.sqoop_launched_map_tasks = None
+        self.sqoop_failed_map_tasks = None
+        self.sqoop_killed_map_tasks = None
+        self.sqoop_launched_reduce_tasks = None
+        self.sqoop_failed_reduce_tasks = None
+        self.sqoop_killed_reduce_tasks = None
 
         # Sets the correct sqoop table and schema that will be used if a custom SQL is not used
         sqoop_query = ""
@@ -2510,18 +2512,18 @@ class operation(metaclass=Singleton):
         yarn_containers_total = 0
         yarn_containers_failed = 0
         yarn_containers_killed = 0
-        if self.sqoopLaunchedMapTasks != None:
-            yarn_containers_total += self.sqoopLaunchedMapTasks
-        if self.sqoopLaunchedReduceTasks != None:
-            yarn_containers_total += self.sqoopLaunchedReduceTasks
-        if self.sqoopFailedMapTasks != None:
-            yarn_containers_failed += self.sqoopFailedMapTasks
-        if self.sqoopFailedReduceTasks != None:
-            yarn_containers_failed += self.sqoopFailedReduceTasks
-        if self.sqoopKilledMapTasks != None:
-            yarn_containers_killed += self.sqoopKilledMapTasks
-        if self.sqoopKilledReduceTasks != None:
-            yarn_containers_killed += self.sqoopKilledReduceTasks
+        if self.sqoop_launched_map_tasks != None:
+            yarn_containers_total += self.sqoop_launched_map_tasks
+        if self.sqoop_launched_reduce_tasks != None:
+            yarn_containers_total += self.sqoop_launched_reduce_tasks
+        if self.sqoop_failed_map_tasks != None:
+            yarn_containers_failed += self.sqoop_failed_map_tasks
+        if self.sqoop_failed_reduce_tasks != None:
+            yarn_containers_failed += self.sqoop_failed_reduce_tasks
+        if self.sqoop_killed_map_tasks != None:
+            yarn_containers_killed += self.sqoop_killed_map_tasks
+        if self.sqoop_killed_reduce_tasks != None:
+            yarn_containers_killed += self.sqoop_killed_reduce_tasks
 
         self.import_config.common_config.update_yarn_statistics(
             self.yarnApplicationID,
@@ -2593,7 +2595,7 @@ class operation(metaclass=Singleton):
         if self.sqoopIncrNoNewRows == True:
             # If there is no new rows, we cant get the MaxValue from the output.
             # So we need to set it to what we used to launch sqoop
-            self.sqoopIncrMaxValuePending = self.import_config.sqoop_incr_lastvalue
+            self.sqoop_incr_max_value_pending = self.import_config.sqoop_incr_lastvalue
             self.sqoopSize = 0
             self.sqoopRows = 0
             logging.warning("There are no new rows in the source table.")
@@ -2624,7 +2626,7 @@ class operation(metaclass=Singleton):
 
         # 19/04/23 17:19:58 INFO tool.ImportTool:   --last-value 34
         if "tool.ImportTool:   --last-value" in row:
-            self.sqoopIncrMaxValuePending = row.split("last-value ")[1].strip()
+            self.sqoop_incr_max_value_pending = row.split("last-value ")[1].strip()
 
         # 19/04/24 07:13:00 INFO tool.ImportTool: No new rows detected since last import.
         if "No new rows detected since last import" in row:
@@ -2639,17 +2641,17 @@ class operation(metaclass=Singleton):
 
         # Used for updating table 'yarn_statistics' after Sqoop is finished
         if "Launched map tasks=" in row:
-            self.sqoopLaunchedMapTasks = int(row.split("=")[1].strip())
+            self.sqoop_launched_map_tasks = int(row.split("=")[1].strip())
         if "Failed map tasks=" in row:
-            self.sqoopFailedMapTasks = int(row.split("=")[1].strip())
+            self.sqoop_failed_map_tasks = int(row.split("=")[1].strip())
         if "Killed map tasks=" in row:
-            self.sqoopKilledMapTasks = int(row.split("=")[1].strip())
+            self.sqoop_killed_map_tasks = int(row.split("=")[1].strip())
         if "Launched reduce tasks=" in row:
-            self.sqoopLaunchedReduceTasks = int(row.split("=")[1].strip())
+            self.sqoop_launched_reduce_tasks = int(row.split("=")[1].strip())
         if "Failed reduce tasks=" in row:
-            self.sqoopFailedReduceTasks = int(row.split("=")[1].strip())
+            self.sqoop_failed_reduce_tasks = int(row.split("=")[1].strip())
         if "Killed reduce tasks=" in row:
-            self.sqoopKilledReduceTasks = int(row.split("=")[1].strip())
+            self.sqoop_killed_reduce_tasks = int(row.split("=")[1].strip())
 
     def connect_to_hive(self, forceSkipTest=False):
         logging.debug("Executing import_operations.connect_to_hive()")
@@ -2665,8 +2667,8 @@ class operation(metaclass=Singleton):
             self.import_config.remove_temporary_files()
             sys.exit(1)
 
-        if self.globalHiveConfigurationSet == False:
-            self.globalHiveConfigurationSet = True
+        if self.global_hive_configuration_set == False:
+            self.global_hive_configuration_set = True
             if self.import_config.hiveJavaHeap != None:
                 query = "set hive.tez.container.size=%s" % (
                     self.import_config.hiveJavaHeap

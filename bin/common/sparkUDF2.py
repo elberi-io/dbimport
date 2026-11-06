@@ -24,7 +24,7 @@ from datetime import datetime
 class sparkUDFClass:
     def __init__(self):
 
-        self.seedStringEncoded = None
+        self.seed_string_encoded = None
 
     def _is_bin(self, ints):
         try:
@@ -71,14 +71,14 @@ class sparkUDFClass:
         return timestampString
 
     def set_seed_string(self, setValue):
-        self.seedStringEncoded = setValue.encode()
+        self.seed_string_encoded = setValue.encode()
 
     def hash_column(self, columnValue):
         if columnValue == None:
             return None
 
         # 		sha_value = hashlib.sha3_512(str(columnValue).encode()).hexdigest()
-        h = hashlib.blake2b(digest_size=32, person=self.seedStringEncoded)
+        h = hashlib.blake2b(digest_size=32, person=self.seed_string_encoded)
         h.update(str(columnValue).encode())
         hashed_column_content = h.hexdigest()
         return hashed_column_content

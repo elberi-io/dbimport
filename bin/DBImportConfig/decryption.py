@@ -31,8 +31,8 @@ class crypto:
         logging.debug("Executing crypto.__init__()")
         self.privateKeyFile = None
         self.publicKeyFile = None
-        self.privateKeyString = None
-        self.publicKeyString = None
+        self.private_key_string = None
+        self.public_key_string = None
         self.privateKey = None
         self.publicKey = None
 
@@ -50,8 +50,8 @@ class crypto:
                 + "Please check the path in the configuration file for settings Credentials/private_key"
             )
 
-        self.privateKeyString = open(self.privateKeyFile).read()
-        self.privateKey = RSA.importKey(self.privateKeyString)
+        self.private_key_string = open(self.privateKeyFile).read()
+        self.privateKey = RSA.importKey(self.private_key_string)
 
     def set_public_key_file(self, public_key_file):
         self.publicKeyFile = public_key_file
@@ -65,8 +65,8 @@ class crypto:
                 + "Please check the path in the configuration file for settings Credentials/public_key"
             )
 
-        self.publicKeyString = open(self.publicKeyFile).read()
-        self.publicKey = RSA.importKey(self.publicKeyString)
+        self.public_key_string = open(self.publicKeyFile).read()
+        self.publicKey = RSA.importKey(self.public_key_string)
 
     def decrypt(self, str_to_decrypt):
 

@@ -35,8 +35,8 @@ class stage:
 
         self.mysql_conn = mysql_conn
         self.mysql_cursor = self.mysql_conn.cursor(buffered=False)
-        self.currentStage = None
-        self.memoryStage = False
+        self.current_stage = None
+        self.memory_stage = False
         self.stageTimeStart = None
         self.stageTimeStop = None
         self.stageDurationStart = 0.0
@@ -239,7 +239,7 @@ class stage:
         self.postDataToKafkaExtended = self.common_config.get_config_value(
             key="post_data_to_kafka_extended"
         )
-        self.postDataToAWSSNS = self.common_config.get_config_value(
+        self.post_data_to_aws_sns = self.common_config.get_config_value(
             key="post_data_to_awssns"
         )
         self.postDataToAWSSNSExtended = self.common_config.get_config_value(
@@ -251,7 +251,7 @@ class stage:
         if (
             self.postDataToREST == False
             and self.postDataToKafka == False
-            and self.postDataToAWSSNS == False
+            and self.post_data_to_aws_sns == False
         ):
             return
 
@@ -355,7 +355,7 @@ class stage:
                     "import_statistics", "rest", json.dumps(json_data_rest)
                 )
 
-        if self.postDataToAWSSNS == True:
+        if self.post_data_to_aws_sns == True:
             result = self.sendStatistics.send_aws_sns_data(
                 json.dumps(json_data_aws_sns)
             )
@@ -505,13 +505,13 @@ class stage:
         logging.debug("Executing stage.get_stage_start_stop() - Finished")
 
     def set_stage_only_in_memory(self):
-        self.memoryStage = True
+        self.memory_stage = True
 
     def clear_stage(self):
         """Removes all stage information from the export_stage table"""
         logging.debug("Executing stage.clear_stage()")
 
-        if self.memoryStage == False:
+        if self.memory_stage == False:
             query = "delete from export_stage where dbalias = %s and target_schema = %s and target_table = %s"
             self.mysql_cursor.execute(
                 query, (self.connectionAlias, self.targetSchema, self.targetTable)
@@ -532,9 +532,9 @@ class stage:
         """Fetches the stage from export_stage table and return stage value. If no stage, 0 is returned"""
         logging.debug("Executing stage.get_stage()")
 
-        if self.currentStage == None:
-            if self.memoryStage == True:
-                self.currentStage = 0
+        if self.current_stage == None:
+            if self.memory_stage == True:
+                self.current_stage = 0
             else:
                 query = "select stage from export_stage where dbalias = %s and target_schema = %s and target_table = %s"
                 self.mysql_cursor.execute(
@@ -546,9 +546,9 @@ class stage:
 
                 row = self.mysql_cursor.fetchone()
                 if row == None:
-                    self.currentStage = 0
+                    self.current_stage = 0
                 else:
-                    self.currentStage = row[0]
+                    self.current_stage = row[0]
 
         self.stageTimeStart = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
         self.stageTimeStop = None
@@ -557,21 +557,21 @@ class stage:
         self.stageDurationTime = 0.0
 
         logging.debug("Executing stage.get_stage() - Finished")
-        return self.currentStage
+        return self.current_stage
 
     def set_stage(self, newStage, force=False):
         """Saves the stage information that is used for finding the correct step in the retries operations"""
         logging.debug("Executing stage.set_stage()")
 
         if force == True:
-            self.currentStage = 0
+            self.current_stage = 0
 
-        if self.currentStage != None and self.currentStage > newStage:
+        if self.current_stage != None and self.current_stage > newStage:
             logging.debug("Executing stage.set_stage() - Finished (no stage set)")
             return
 
-        if self.memoryStage == True:
-            self.currentStage = newStage
+        if self.memory_stage == True:
+            self.current_stage = newStage
             logging.debug(
                 "Executing stage.set_stage() - Finished (stage only in memory)"
             )
@@ -596,7 +596,7 @@ class stage:
                 self.connectionAlias,
                 self.targetSchema,
                 self.targetTable,
-                self.currentStage,
+                self.current_stage,
             ),
         )
         logging.debug("SQL Statement executed: %s" % (self.mysql_cursor.statement))
@@ -613,7 +613,7 @@ class stage:
             query += "	'%s', " % (self.connectionAlias)
             query += "	'%s', " % (self.targetSchema)
             query += "	'%s', " % (self.targetTable)
-            query += "	%s, " % (self.currentStage)
+            query += "	%s, " % (self.current_stage)
             query += "	'%s', " % (self.stageTimeStart)
             query += "	'%s', " % (self.stageTimeStop)
             query += "	%s " % (round(self.stageDurationTime))
@@ -627,7 +627,7 @@ class stage:
             query += "	dbalias = '%s' " % (self.connectionAlias)
             query += "	and target_schema = '%s' " % (self.targetSchema)
             query += "	and target_table = '%s' " % (self.targetTable)
-            query += "	and stage = '%s' " % (self.currentStage)
+            query += "	and stage = '%s' " % (self.current_stage)
 
         self.mysql_cursor.execute(query)
         self.mysql_conn.commit()
@@ -681,7 +681,7 @@ class stage:
         self.mysql_conn.commit()
         logging.debug("SQL Statement executed: %s" % (self.mysql_cursor.statement))
 
-        self.currentStage = newStage
+        self.current_stage = newStage
         self.stageTimeStart = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
         self.stageTimeStop = None
         self.stageDurationStart = time.monotonic()
@@ -694,7 +694,7 @@ class stage:
         """Saves the retry attempt in the export_retries_log table"""
         logging.debug("Executing stage.save_retry_attempt()")
 
-        if self.memoryStage == True:
+        if self.memory_stage == True:
             return
 
         stage_description = self.get_stage_description(stage)

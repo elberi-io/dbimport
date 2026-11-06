@@ -53,7 +53,7 @@ class operation(metaclass=Singleton):
 
         # Fetch and initialize the Kerberos configuration
         self.kerberosPrincipal = configuration.get("Kerberos", "principal")
-        self.webHCatAuth = HTTPKerberosAuth(
+        self.web_hcat_auth = HTTPKerberosAuth(
             force_preemptive=True, principal=self.kerberosPrincipal
         )
 
@@ -160,20 +160,20 @@ class operation(metaclass=Singleton):
         logging.debug("Executing common_operations.check_hive_meta_store()")
 
         # Loop through all Hive webHCat servers from the configuration and checks if one of them works
-        self.hiveMetaStore = None
+        self.hive_meta_store = None
         web_hcat_response = None
         for hive_url in self.hiveMetaStoreList:
             try:
                 url = hive_url.strip() + "/templeton/v1/status"
                 logging.debug("Testing status for webHCat on URL: %s" % (url))
-                web_hcat_response = requests.get(url, auth=self.webHCatAuth)
+                web_hcat_response = requests.get(url, auth=self.web_hcat_auth)
             except:
                 continue
             if web_hcat_response.status_code == 200:
-                self.hiveMetaStore = hive_url.strip()
+                self.hive_meta_store = hive_url.strip()
                 break
 
-        if self.hiveMetaStore == None:
+        if self.hive_meta_store == None:
             logging.error(
                 "Cant find a working Hive webHCat server. Please check configuration and server status"
             )

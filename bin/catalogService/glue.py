@@ -39,7 +39,9 @@ class glueCatalog(metaclass=Singleton):
 
         self.common_config = common_config.config()
 
-        self.glueClient = boto3.client("glue", region_name=self.common_config.awsRegion)
+        self.glue_client = boto3.client(
+            "glue", region_name=self.common_config.awsRegion
+        )
 
         # self.check_db("amwsktst_history_uat")
         # self.check_table("amwsktst_history_uat", "braks01")
@@ -56,7 +58,7 @@ class glueCatalog(metaclass=Singleton):
         logging.debug("Executing glueCatalog.check_db()")
 
         try:
-            response = self.glueClient.get_database(Name=hiveDB)
+            response = self.glue_client.get_database(Name=hiveDB)
         # 			print(response)
         except botocore.exceptions.ClientError as error:
             logging.error(error)
@@ -72,7 +74,7 @@ class glueCatalog(metaclass=Singleton):
 
         result = False
         try:
-            response = self.glueClient.get_table(DatabaseName=hiveDB, Name=hiveTable)
+            response = self.glue_client.get_table(DatabaseName=hiveDB, Name=hiveTable)
             # 			print(response)
             result = True
         except botocore.exceptions.ClientError as error:
@@ -86,7 +88,7 @@ class glueCatalog(metaclass=Singleton):
         logging.debug("Executing glueCatalog.get_table_location()")
 
         try:
-            response = self.glueClient.get_table(DatabaseName=hiveDB, Name=hiveTable)
+            response = self.glue_client.get_table(DatabaseName=hiveDB, Name=hiveTable)
             location = response["Table"]["StorageDescriptor"]["Location"]
         # 			print(location)
         except botocore.exceptions.ClientError as error:
@@ -117,7 +119,7 @@ class glueCatalog(metaclass=Singleton):
 
         return_value = False
         try:
-            response = self.glueClient.get_table(DatabaseName=hiveDB, Name=hiveTable)
+            response = self.glue_client.get_table(DatabaseName=hiveDB, Name=hiveTable)
             table_type = response["Table"]["TableType"]
             parameter_table_type = response["Table"]["Parameters"]["table_type"]
 
@@ -142,7 +144,7 @@ class glueCatalog(metaclass=Singleton):
 
         return_value = False
         try:
-            response = self.glueClient.get_table(DatabaseName=hiveDB, Name=hiveTable)
+            response = self.glue_client.get_table(DatabaseName=hiveDB, Name=hiveTable)
             table_type = response["Table"]["TableType"]
 
             if table_type == "EXTERNAL_TABLE":
@@ -166,14 +168,14 @@ class glueCatalog(metaclass=Singleton):
         logging.warning(
             "No support for Primary Key with Glue Catalog in current version of DBImport"
         )
-        # 		if self.hiveMetaSession == None:
+        # 		if self.hive_meta_session == None:
         # 			self.connect_to_hive_metastore_db()
         #
         result = ""
         #
         # 		PKerrorFound = False
         #
-        # 		session = self.hiveMetaSession()
+        # 		session = self.hive_meta_session()
         # 		KEY_CONSTRAINTS = aliased(hiveSchema.KEY_CONSTRAINTS, name="K")
         # 		TBLS = aliased(hiveSchema.TBLS, name="T")
         # 		COLUMNS_V2 = aliased(hiveSchema.COLUMNS_V2, name="C")
@@ -214,10 +216,10 @@ class glueCatalog(metaclass=Singleton):
             "No support for Primary Key with Glue Catalog in current version of DBImport"
         )
         #
-        # 		if self.hiveMetaSession == None:
+        # 		if self.hive_meta_session == None:
         # 			self.connect_to_hive_metastore_db()
         #
-        # 		session = self.hiveMetaSession()
+        # 		session = self.hive_meta_session()
         # 		KEY = aliased(hiveSchema.KEY_CONSTRAINTS, name="K")
         # 		TBLS = aliased(hiveSchema.TBLS, name="T")
         # 		DBS = aliased(hiveSchema.DBS, name="D")
@@ -249,12 +251,12 @@ class glueCatalog(metaclass=Singleton):
         logging.warning(
             "No support for Foreign Key with Glue Catalog in current version of DBImport"
         )
-        # 		if self.hiveMetaSession == None:
+        # 		if self.hive_meta_session == None:
         # 			self.connect_to_hive_metastore_db()
         #
         # 		result_df = None
         #
-        # 		session = self.hiveMetaSession()
+        # 		session = self.hive_meta_session()
         # 		KEY = aliased(hiveSchema.KEY_CONSTRAINTS, name="K")
         # 		TBLS_TP = aliased(hiveSchema.TBLS, name="TP")
         # 		TBLS_TC = aliased(hiveSchema.TBLS, name="TC")
@@ -336,7 +338,7 @@ class glueCatalog(metaclass=Singleton):
         # 		print(excludeDataLakeColumns)
 
         try:
-            response = self.glueClient.get_table(DatabaseName=hiveDB, Name=hiveTable)
+            response = self.glue_client.get_table(DatabaseName=hiveDB, Name=hiveTable)
             columns = response["Table"]["StorageDescriptor"]["Columns"]
             # 			print(columns)
 
@@ -423,7 +425,7 @@ class glueCatalog(metaclass=Singleton):
             "glueCatalog.get_tables() is undeveloped. Please contact the developers of DBImport"
         )
 
-        # 		if self.hiveMetaSession == None:
+        # 		if self.hive_meta_session == None:
         # 			self.connect_to_hive_metastore_db()
         #
         # 		result_df = None
@@ -438,7 +440,7 @@ class glueCatalog(metaclass=Singleton):
         # 		else:
         # 			tableFilter = "%"
         #
-        # 		session = self.hiveMetaSession()
+        # 		session = self.hive_meta_session()
         # 		TBLS = aliased(hiveSchema.TBLS, name="T")
         # 		DBS = aliased(hiveSchema.DBS, name="D")
         #
