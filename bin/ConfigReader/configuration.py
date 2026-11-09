@@ -22,7 +22,7 @@ import sys
 from common.Exceptions import invalidConfiguration
 
 
-def get(section, key, exit_on_error=True):
+def get(section: str, key: str, exit_on_error: bool = True) -> str:
     try:
         return config[section][key]
     except KeyError:

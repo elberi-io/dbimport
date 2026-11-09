@@ -140,8 +140,10 @@ that a rule reports is marked on its line with `noqa` and a `TODO` that
 names the issue. import-linter checks the package layering defined in
 `pyproject.toml`.
 
-`uv run mypy` checks `tests/` in strict mode. The code in `bin/` has
-almost no type annotations; `tests/unit/test_mypy_ratchet.py` checks it
+`uv run mypy` checks `tests/` and the typed packages `bin/common` and
+`bin/ConfigReader` in strict mode (`files` in `pyproject.toml`). The
+other code in `bin/` has almost no type annotations;
+`tests/unit/test_mypy_ratchet.py` checks it
 (packages and launchers, all function bodies, with the settings of its
 override in `pyproject.toml`) and fails when the number of errors per
 module and error code differs from `tests/fixtures/mypy_baseline.json`.

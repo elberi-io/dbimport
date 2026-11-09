@@ -20,13 +20,15 @@ import hashlib
 import re
 import sys
 from datetime import datetime
+from typing import Any
 
 this = sys.modules[__name__]
-this.seedString = None
+# seedString is set through the module object; mypy cannot see that attribute.
+this.seedString = None  # type: ignore[attr-defined]
 seedString = "testSeed"
 
 
-def _is_bin(ints):
+def _is_bin(ints: object) -> bool:
     try:
         i = int(str(ints))
         if 0 <= i and i < 256:
@@ -36,7 +38,7 @@ def _is_bin(ints):
         return False
 
 
-def base64_encode_array(s):
+def base64_encode_array(s: Any) -> Any:
     try:
         s_new = []
         for struct in s:
@@ -47,14 +49,14 @@ def base64_encode_array(s):
         return _base64_encode_binary(s)
 
 
-def _check_binary(s):
+def _check_binary(s: Any) -> bool:
     for b in s:
         if not _is_bin(b):
             return False
     return True
 
 
-def _base64_encode_binary(s):
+def _base64_encode_binary(s: Any) -> Any:
     try:
         if _is_bin(s[0]) and _check_binary(s[1]):
             base_64 = base64.b64encode(s[1]).decode("UTF-8")
@@ -65,7 +67,7 @@ def _base64_encode_binary(s):
     return s
 
 
-def parse_struct_date(timestampString):
+def parse_struct_date(timestampString: object) -> str:
     timestampString = str(timestampString)
     m = re.match(r'\{ *"\$date" *: *(-?\d+)\ *}', timestampString)
     if m:
@@ -75,15 +77,15 @@ def parse_struct_date(timestampString):
     return timestampString
 
 
-def set_seed_string(setValue):
+def set_seed_string(setValue: str) -> None:
     global seedString
     seedString = setValue
-    this.seedString = setValue
+    this.seedString = setValue  # type: ignore[attr-defined]
     print(seedString)
     print(this.seedString)
 
 
-def hash_column(columnValue):
+def hash_column(columnValue: str) -> Any:
     global seedString
     sha_value = hashlib.sha3_512(columnValue.encode()).hexdigest()
     # 	SeedString = None

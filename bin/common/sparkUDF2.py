@@ -19,14 +19,15 @@ import base64
 import hashlib
 import re
 from datetime import datetime
+from typing import Any
 
 
 class sparkUDFClass:
-    def __init__(self):
+    def __init__(self) -> None:
 
-        self.seed_string_encoded = None
+        self.seed_string_encoded: bytes | None = None
 
-    def _is_bin(self, ints):
+    def _is_bin(self, ints: object) -> bool:
         try:
             i = int(str(ints))
             if 0 <= i and i < 256:
@@ -35,7 +36,7 @@ class sparkUDFClass:
         except ValueError:
             return False
 
-    def base64_encode_array(self, s):
+    def base64_encode_array(self, s: Any) -> Any:
         try:
             s_new = []
             for struct in s:
@@ -45,13 +46,13 @@ class sparkUDFClass:
         except TypeError:
             return self._base64_encode_binary(s)
 
-    def _check_binary(self, s):
+    def _check_binary(self, s: Any) -> bool:
         for b in s:
             if not self._is_bin(b):
                 return False
         return True
 
-    def _base64_encode_binary(self, s):
+    def _base64_encode_binary(self, s: Any) -> Any:
         try:
             if self._is_bin(s[0]) and self._check_binary(s[1]):
                 base_64 = base64.b64encode(s[1]).decode("UTF-8")
@@ -61,7 +62,7 @@ class sparkUDFClass:
 
         return s
 
-    def parse_struct_date(self, timestampString):
+    def parse_struct_date(self, timestampString: object) -> str:
         timestampString = str(timestampString)
         m = re.match(r'\{ *"\$date" *: *(-?\d+)\ *}', timestampString)
         if m:
@@ -70,20 +71,24 @@ class sparkUDFClass:
             return timestamp.strftime("%Y-%m-%d %H:%M:%S.%f")
         return timestampString
 
-    def set_seed_string(self, setValue):
+    def set_seed_string(self, setValue: str) -> None:
         self.seed_string_encoded = setValue.encode()
 
-    def hash_column(self, columnValue):
+    def hash_column(self, columnValue: object) -> str | None:
         if columnValue == None:
             return None
 
         # 		sha_value = hashlib.sha3_512(str(columnValue).encode()).hexdigest()
-        h = hashlib.blake2b(digest_size=32, person=self.seed_string_encoded)
+        h = hashlib.blake2b(
+            digest_size=32,
+            # None only before set_seed_string(), which the import calls first.
+            person=self.seed_string_encoded,  # type: ignore[arg-type]
+        )
         h.update(str(columnValue).encode())
         hashed_column_content = h.hexdigest()
         return hashed_column_content
 
-    def replace_char_with_star(self, column_value):
+    def replace_char_with_star(self, column_value: object) -> str | None:
         if column_value == None:
             return None
 
@@ -96,7 +101,7 @@ class sparkUDFClass:
 
         return return_string
 
-    def show_first_four_characters(self, column_value):
+    def show_first_four_characters(self, column_value: object) -> str | None:
         if column_value == None:
             return None
 

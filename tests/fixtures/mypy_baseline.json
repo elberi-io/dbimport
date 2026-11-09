@@ -1,7 +1,7 @@
 {
   "bin/DBImportConfig/common_config.py": {
     "arg-type": 4,
-    "assignment": 8,
+    "assignment": 9,
     "attr-defined": 4,
     "operator": 7,
     "union-attr": 79
@@ -37,7 +37,7 @@
     "operator": 1
   },
   "bin/DBImportOperation/atlas_operations.py": {
-    "assignment": 7,
+    "assignment": 8,
     "attr-defined": 3,
     "index": 48,
     "misc": 1,
@@ -136,15 +136,6 @@
   "bin/catalogService/hiveDirect.py": {
     "attr-defined": 8,
     "misc": 15
-  },
-  "bin/common/Singleton.py": {
-    "var-annotated": 1
-  },
-  "bin/common/sparkUDF.py": {
-    "attr-defined": 2
-  },
-  "bin/common/sparkUDF2.py": {
-    "arg-type": 1
   },
   "bin/export": {
     "union-attr": 11
