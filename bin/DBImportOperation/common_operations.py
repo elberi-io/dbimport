@@ -803,7 +803,7 @@ class operation(metaclass=Singleton):
             self.common_config.remove_temporary_files()
             sys.exit(1)
 
-        for index, row in column_df.iterrows():
+        for _index, row in column_df.iterrows():
             column_name = row["name"]
             column_type = row["type"]
             column_comment = row["comment"]

@@ -1230,7 +1230,7 @@ class stage:
         insert_query += "`) values ("
 
         str_insert = ""
-        for i in values_part:
+        for _i in values_part:
             if str_insert != "":
                 str_insert += ", "
             str_insert += "%s"

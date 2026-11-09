@@ -332,7 +332,7 @@ class serverDaemon(run.RunDaemon):
                         .all()
                     )
 
-                    for index, row in async_row.iterrows():
+                    for _index, row in async_row.iterrows():
                         table_id = row["table_id"]
                         destination = row["destination"]
                         hive_db = row["hive_db"]
@@ -463,7 +463,7 @@ class serverDaemon(run.RunDaemon):
                     self.disconnect_dbimport_db()
 
                 else:
-                    for index, row in async_row.iterrows():
+                    for _index, row in async_row.iterrows():
                         table_id = row["table_id"]
                         destination = row["destination"]
                         hive_db = row["hive_db"]

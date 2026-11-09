@@ -104,7 +104,7 @@ def print_box(message_list):
         if len(message) > max_length:
             max_length = len(message)
 
-    for i in range(max_length):
+    for _i in range(max_length):
         start_line += "_"
         stop_line += "_"
 

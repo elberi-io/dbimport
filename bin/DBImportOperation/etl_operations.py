@@ -184,7 +184,7 @@ class operation(metaclass=Singleton):
         datalake_delete_exists = False
         datalake_source_exists = False
 
-        for index, row in target_columns.iterrows():
+        for _index, row in target_columns.iterrows():
             # if row['name'] == "datalake_iud":    datalakeIUDExists = True
             # if row['name'] == "datalake_insert": datalakeInsertExists = True
             # if row['name'] == "datalake_update": datalakeUpdateExists = True
@@ -244,7 +244,7 @@ class operation(metaclass=Singleton):
             # all columns as we dont know if the row have changed or not
             query += "and (\n"
             first_iteration = True
-            for index, row in column_merge.loc[
+            for _index, row in column_merge.loc[
                 column_merge["Exist"] == "both"
             ].iterrows():
                 found_pk_column = False
@@ -289,7 +289,7 @@ class operation(metaclass=Singleton):
         query += "then update set "
         first_iteration = True
         non_pk_column_found = False
-        for index, row in column_merge.loc[column_merge["Exist"] == "both"].iterrows():
+        for _index, row in column_merge.loc[column_merge["Exist"] == "both"].iterrows():
             found_pk_column = False
             for column in pk_columns.split(","):
                 if row["targetName"] == column:
@@ -350,7 +350,7 @@ class operation(metaclass=Singleton):
 
         query += "then insert ( "
         first_iteration = True
-        for index, row in target_columns.iterrows():
+        for _index, row in target_columns.iterrows():
             column_name = row["name"]
             if first_iteration == True:
                 first_iteration = False
@@ -361,7 +361,7 @@ class operation(metaclass=Singleton):
         query += " \n) values ("
 
         first_iteration = True
-        for index, row in target_columns.iterrows():
+        for _index, row in target_columns.iterrows():
             column_name = row["name"]
             source_column_name = (
                 column_merge.loc[column_merge["targetName"] == column_name][
@@ -436,7 +436,7 @@ class operation(metaclass=Singleton):
             query = "insert into table %s \n" % (history_db_and_table)
             query += "( "
             first_iteration = True
-            for index, row in column_merge.loc[
+            for _index, row in column_merge.loc[
                 column_merge["Exist"] == "both"
             ].iterrows():
                 if first_iteration == True:
@@ -458,7 +458,7 @@ class operation(metaclass=Singleton):
 
             query += "select "
             first_iteration = True
-            for index, row in column_merge.loc[
+            for _index, row in column_merge.loc[
                 column_merge["Exist"] == "both"
             ].iterrows():
                 if first_iteration == True:
@@ -533,7 +533,7 @@ class operation(metaclass=Singleton):
             query = "insert into table %s \n" % (history_db_and_table)
             query += "( "
             first_iteration = True
-            for index, row in column_merge.loc[
+            for _index, row in column_merge.loc[
                 column_merge["Exist"] == "both"
             ].iterrows():
                 if first_iteration == True:
@@ -555,7 +555,7 @@ class operation(metaclass=Singleton):
 
             query += "select "
             first_iteration = True
-            for index, row in column_merge.loc[
+            for _index, row in column_merge.loc[
                 column_merge["Exist"] == "both"
             ].iterrows():
                 if first_iteration == True:
@@ -589,7 +589,7 @@ class operation(metaclass=Singleton):
             query = "insert into table %s \n" % (history_db_and_table)
             query += "( "
             first_iteration = True
-            for index, row in column_merge.loc[
+            for _index, row in column_merge.loc[
                 column_merge["Exist"] == "both"
             ].iterrows():
                 if first_iteration == True:
@@ -611,7 +611,7 @@ class operation(metaclass=Singleton):
 
             query += "select "
             first_iteration = True
-            for index, row in column_merge.loc[
+            for _index, row in column_merge.loc[
                 column_merge["Exist"] == "both"
             ].iterrows():
                 if first_iteration == True:
@@ -641,7 +641,7 @@ class operation(metaclass=Singleton):
             query = "insert into table %s \n" % (history_db_and_table)
             query += "( "
             first_iteration = True
-            for index, row in column_merge.loc[
+            for _index, row in column_merge.loc[
                 column_merge["Exist"] == "both"
             ].iterrows():
                 if first_iteration == True:
@@ -663,7 +663,7 @@ class operation(metaclass=Singleton):
 
             query += "select "
             first_iteration = True
-            for index, row in column_merge.loc[
+            for _index, row in column_merge.loc[
                 column_merge["Exist"] == "both"
             ].iterrows():
                 if first_iteration == True:
@@ -724,7 +724,7 @@ class operation(metaclass=Singleton):
             query = "insert into table %s \n" % (history_db_and_table)
             query += "( "
             first_iteration = True
-            for index, row in column_merge.loc[
+            for _index, row in column_merge.loc[
                 column_merge["Exist"] == "both"
             ].iterrows():
                 if first_iteration == True:
@@ -746,7 +746,7 @@ class operation(metaclass=Singleton):
 
             query += "select "
             first_iteration = True
-            for index, row in column_merge.loc[
+            for _index, row in column_merge.loc[
                 column_merge["Exist"] == "both"
             ].iterrows():
                 if first_iteration == True:

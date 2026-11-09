@@ -1611,7 +1611,7 @@ class config(metaclass=Singleton):
         self.sqoop_use_generated_sql = False
         column_name_reserved = False
 
-        for index, row in self.common_config.source_columns_df.iterrows():
+        for _index, row in self.common_config.source_columns_df.iterrows():
             column_name = self.strip_unwanted_char_column_name(
                 row["SOURCE_COLUMN_NAME"]
             )
@@ -2211,7 +2211,7 @@ class config(metaclass=Singleton):
 
         self.generatedPKcolumns = ""
 
-        for index, row in self.common_config.source_keys_df.iterrows():
+        for _index, row in self.common_config.source_keys_df.iterrows():
             key_type = row["CONSTRAINT_TYPE"]
             key_id = row["COL_KEY_POSITION"]
             column_name = self.strip_unwanted_char_column_name(row["COL_NAME"])
@@ -2278,7 +2278,7 @@ class config(metaclass=Singleton):
             raise (e)
 
         try:
-            for index, row in self.common_config.source_index_df.sort_values(
+            for _index, row in self.common_config.source_index_df.sort_values(
                 by=["Name", "ColumnOrder"]
             ).iterrows():
                 # Save the Index data to the MySQL table
@@ -2387,7 +2387,7 @@ class config(metaclass=Singleton):
             logging.debug("Parsing FK with name '%s'" % (source_fk))
 
             # Iterate over the rows that matches the FK name
-            for index, row in source_fk_df[
+            for _index, row in source_fk_df[
                 source_fk_df["CONSTRAINT_NAME"] == source_fk
             ].iterrows():
                 source_fk_name = row["CONSTRAINT_NAME"]
@@ -3409,7 +3409,7 @@ class config(metaclass=Singleton):
             )
             pk_columns = self.get_pk_columns(convert_to_lower=False)
             join_columns = ""
-            for i, target_column in enumerate(pk_columns.split(",")):
+            for _i, target_column in enumerate(pk_columns.split(",")):
                 if join_columns == "":
                     join_columns = " ON "
                 else:
@@ -3433,12 +3433,12 @@ class config(metaclass=Singleton):
 
             # PK must come from the CHANGETABLE function. This is needed in case of deletes, as the column would be NULL otherwise and the merge
             # in Hive would not be able to match and remove the row
-            for i, target_column in enumerate(pk_columns.split(",")):
+            for _i, target_column in enumerate(pk_columns.split(",")):
                 query = re.sub(
                     '"ST"."%s"' % (target_column), '"CT"."%s"' % (target_column), query
                 )
 
-            for i, target_column in enumerate(pk_columns.split(",")):
+            for _i, target_column in enumerate(pk_columns.split(",")):
                 if join_columns == "":
                     join_columns = " ON "
                 else:
@@ -3483,7 +3483,7 @@ class config(metaclass=Singleton):
         result_df.columns = ["source_name", "name"]
 
         spark_query = ""
-        for index, row in result_df.iterrows():
+        for _index, row in result_df.iterrows():
             if len(spark_query) == 0:
                 spark_query = "select "
             else:

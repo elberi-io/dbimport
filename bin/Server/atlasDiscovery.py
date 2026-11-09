@@ -233,7 +233,7 @@ class atlasDiscovery(threading.Thread):
                     self.disconnect_dbimport_db()
 
                 else:
-                    for index, row in jdbc_connections_df.iterrows():
+                    for _index, row in jdbc_connections_df.iterrows():
                         db_alias = row["dbalias"]
 
                         # TODO: Flytta denna till thread

@@ -126,7 +126,7 @@ class operation(metaclass=Singleton):
                 copy_tables.data_transfer,
             ).all()
         ).fillna("")
-        for index, row in copy_tables_result.iterrows():
+        for _index, row in copy_tables_result.iterrows():
             if ";" in row["destination"]:
                 logging.error("';' not supported in the Copy Destination name")
                 self.remove_temporary_files()
@@ -568,7 +568,7 @@ class operation(metaclass=Singleton):
             .filter(import_tables.hive_table.like(hive_filter_table))
         )
 
-        for index, row in result.iterrows():
+        for _index, row in result.iterrows():
             logging.info(
                 "Schedule asynchronous copy for %s.%s"
                 % (row["hive_db"], row["hive_table"])
@@ -731,7 +731,7 @@ class operation(metaclass=Singleton):
                 .filter(import_tables.hive_table.like(hive_filter_table))
             )
 
-            for index, row in result.iterrows():
+            for _index, row in result.iterrows():
                 logging.info(
                     "Schedule asynchronous copy for %s.%s"
                     % (row["hive_db"], row["hive_table"])
@@ -937,7 +937,7 @@ class operation(metaclass=Singleton):
                 )
             )
 
-            for index, row in airflow_tasks_result.iterrows():
+            for _index, row in airflow_tasks_result.iterrows():
                 # Check if the Airflow Task exists on the remote DBImport instance
                 result = (
                     remote_session.query(airflow_tasks)
@@ -988,7 +988,7 @@ class operation(metaclass=Singleton):
                 )
             )
 
-            for index, row in airflow_dag_sensors_result.iterrows():
+            for _index, row in airflow_dag_sensors_result.iterrows():
                 # Check if the Airflow Task exists on the remote DBImport instance
                 result = (
                     remote_session.query(airflow_tasks)
@@ -1176,7 +1176,7 @@ class operation(metaclass=Singleton):
                     .filter(import_tables.hive_table.like(hive_filter_table))
                 )
 
-                for index, row in result.iterrows():
+                for _index, row in result.iterrows():
                     self.copy_import_schema_to_destinations(
                         table_id=row["table_id"],
                         hive_db=row["hive_db"],
@@ -1203,7 +1203,7 @@ class operation(metaclass=Singleton):
             )
 
             copied_jdbc_connections = []
-            for index, row in airflow_tasks_result.iterrows():
+            for _index, row in airflow_tasks_result.iterrows():
                 # Check if the Airflow Task exists on the remote DBImport instance
                 result = (
                     remote_session.query(airflow_tasks)
@@ -1309,7 +1309,7 @@ class operation(metaclass=Singleton):
                 .filter(export_tables.target_table.like(filter_table))
             )
 
-            for index, row in result.iterrows():
+            for _index, row in result.iterrows():
                 if deploy_mode == False:
                     logging.info(
                         "Copy schema definitions for %s.%s"
@@ -1469,7 +1469,7 @@ class operation(metaclass=Singleton):
                 )
 
                 for (
-                    column_index,
+                    _column_index,
                     column_row,
                 ) in source_all_column_definitions.iterrows():
                     # Check if the column exists on the remote DBImport instance
@@ -1740,7 +1740,7 @@ class operation(metaclass=Singleton):
                     )
 
                     for (
-                        column_index,
+                        _column_index,
                         column_row,
                     ) in column_difference_left_only.iterrows():
                         source_column_name = column_row["source_column_name"]

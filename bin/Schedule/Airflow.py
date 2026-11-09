@@ -426,17 +426,17 @@ class initialize:
 
         if name == None or len(import_dag) > 0:
             dag_found = True
-            for index, row in import_dag.iterrows():
+            for _index, row in import_dag.iterrows():
                 self.generate_import_dag(dag=row)
 
         if name == None or len(export_dag) > 0:
             dag_found = True
-            for index, row in export_dag.iterrows():
+            for _index, row in export_dag.iterrows():
                 self.generate_export_dag(dag=row)
 
         if name == None or len(custom_dag) > 0:
             dag_found = True
-            for index, row in custom_dag.iterrows():
+            for _index, row in custom_dag.iterrows():
                 self.generate_custom_dag(dag=row)
 
         if dag_found == False and name != None:
@@ -576,7 +576,7 @@ class initialize:
         # in 'tables' we now have all the tables that will be part of the DAG
         previous_connection_alias = ""
 
-        for index, row in tables.iterrows():
+        for _index, row in tables.iterrows():
             if row["dbalias"] != previous_connection_alias:
                 # We save the previousConnectionAlias just to avoid making lookups for every dbalias even if they are all the same
                 try:
@@ -794,7 +794,7 @@ class initialize:
         # in 'tables' we now have all the tables that will be part of the DAG
         previous_connection_alias = ""
 
-        for index, row in tables.iterrows():
+        for _index, row in tables.iterrows():
             try:
                 if row["dbalias"] != previous_connection_alias:
                     # We save the previousConnectionAlias just to avoid making lookups for every dbalias even if they are all the same
@@ -2407,7 +2407,7 @@ class initialize:
         # 		print(allTaskDependencies)
         # 		print(type(allTaskDependencies))
 
-        for index, row in tasks.iterrows():
+        for _index, row in tasks.iterrows():
             sensor_poke_interval = row["sensor_poke_interval"]
             task_name = row["task_name"]
 
@@ -2838,7 +2838,7 @@ class initialize:
                 temp_start_task = self.postStartTask
                 temp_stop_task = self.postStopTask
 
-            for dep_index, dep_row in all_task_dependencies.iterrows():
+            for _dep_index, dep_row in all_task_dependencies.iterrows():
                 if (
                     row["task_name"] == dep_row["task_dependency_upstream"]
                     or row["task_name"] == dep_row["task_dependency_downstream"]
@@ -2867,7 +2867,7 @@ class initialize:
                 down_stream_found = False
                 up_stream_found = False
 
-                for dep_index, dep_row in all_task_dependencies.iterrows():
+                for _dep_index, dep_row in all_task_dependencies.iterrows():
                     for dep_on_dep in dep_row["task_dependency_downstream"].split(","):
                         # depOnDep contains that tasks dependencies and we need to check if there is a dependency against the task we are working on
                         dep_on_dep = dep_on_dep.strip()
@@ -3045,7 +3045,7 @@ class initialize:
             .all()
         ).fillna("")
 
-        for index, row in sensors.iterrows():
+        for _index, row in sensors.iterrows():
             wait_dag_schedule = ""
             if row["import_schedule"] != "":
                 wait_dag_schedule = row["import_schedule"]
