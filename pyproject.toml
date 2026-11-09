@@ -181,41 +181,37 @@ exclude = ["docs/**"]
 
 [tool.mypy]
 python_version = "3.11"
-files = ["tests"]
+files = ["tests", "bin/common", "bin/ConfigReader"]
 mypy_path = ["bin", "."]
 explicit_package_bases = true
 strict = true
 enable_error_code = ["ignore-without-code"]
 # Calls from typed tests into the existing, untyped code are allowed.
 untyped_calls_exclude = [
-    "ConfigReader",
     "DBImportConfig",
     "DBImportOperation",
     "Schedule",
     "Server",
     "catalogService",
-    "common",
     "setupOperation",
     "sourceSchemaReader",
 ]
 
 [[tool.mypy.overrides]]
-# Existing code in bin/ (packages and launchers) has almost no type
-# annotations. tests/unit/test_mypy_ratchet.py checks it with these
+# Existing code in bin/ (packages and launchers) that has no type
+# annotations yet. tests/unit/test_mypy_ratchet.py checks it with these
 # settings and counts its errors against tests/fixtures/mypy_baseline.json
 # (#202); when tests/ are checked, errors in these modules are not shown.
 # The launchers are modules named after their file; bin/copy is checked
 # on its own as __main__, because a module named copy would shadow the
 # standard library.
 module = [
-    "ConfigReader.*",
     "DBImportConfig.*",
     "DBImportOperation.*",
     "Schedule.*",
     "SchemaUpgrade.*",
     "Server.*",
     "catalogService.*",
-    "common.*",
     "setupOperation.*",
     "sourceSchemaReader.*",
     "__main__",

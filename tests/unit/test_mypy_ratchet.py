@@ -1,8 +1,9 @@
 """The mypy errors in bin/ can only go down.
 
 The existing code in bin/ (packages and launchers) has almost no type
-annotations. mypy checks it with the settings of its override in
-pyproject.toml (#202), and the errors per module and error code must equal
+annotations. mypy checks it with the settings in pyproject.toml (#202):
+the relaxed override, or strict for the packages that are already typed.
+The errors per module and error code must equal
 tests/fixtures/mypy_baseline.json: a module that is not listed there must
 have none, a count that grows fails, and a count that drops must be
 locked in by updating the baseline.
