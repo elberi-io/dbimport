@@ -19,14 +19,19 @@ import json
 import logging
 import time
 from datetime import datetime
+from typing import Any
 
 from DBImportConfig import common_config, sendStatistics
 
 
 class stage:
     def __init__(
-        self, mysql_conn, connectionAlias=None, targetSchema=None, targetTable=None
-    ):
+        self,
+        mysql_conn: Any,
+        connectionAlias: str | None = None,
+        targetSchema: str | None = None,
+        targetTable: str | None = None,
+    ) -> None:
         logging.debug("Executing stage.__init__()")
 
         self.connectionAlias = connectionAlias
@@ -35,10 +40,10 @@ class stage:
 
         self.mysql_conn = mysql_conn
         self.mysql_cursor = self.mysql_conn.cursor(buffered=False)
-        self.current_stage = None
+        self.current_stage: int | None = None
         self.memory_stage = False
-        self.stageTimeStart = None
-        self.stageTimeStop = None
+        self.stageTimeStart: str | None = None
+        self.stageTimeStop: str | None = None
         self.stageDurationStart = 0.0
         self.stageDurationStop = 0.0
         self.stageDurationTime = 0.0
@@ -53,14 +58,16 @@ class stage:
     #
     # 		self.rest = rest.restInterface()
 
-    def set_target_table(self, connection_alias, target_schema, target_table):
+    def set_target_table(
+        self, connection_alias: str, target_schema: str, target_table: str
+    ) -> None:
         """Sets the parameters to work against a new Target table"""
 
         self.connectionAlias = connection_alias
         self.targetSchema = target_schema
         self.targetTable = target_table
 
-    def get_stage_description(self, stage):
+    def get_stage_description(self, stage: int) -> str:
         stage_description = ""
 
         # RULES FOR STAGE NUMBERS
@@ -146,7 +153,7 @@ class stage:
 
         return stage_description
 
-    def get_stage_short_name(self, stage):
+    def get_stage_short_name(self, stage: int) -> str:
 
         stage_short_name = ""
         if stage == 0:
@@ -223,7 +230,7 @@ class stage:
 
         return stage_short_name
 
-    def convert_stage_statistics_to_json(self, **kwargs):
+    def convert_stage_statistics_to_json(self, **kwargs: Any) -> None:
         """Reads the export_stage_statistics and convert the information to a JSON document"""
         logging.debug("Executing export_stage.convert_stage_statistics_to_json()")
 
@@ -366,7 +373,7 @@ class stage:
                     "import_statistics", "rest", json.dumps(json_data_rest)
                 )
 
-    def save_stage_statistics(self, **kwargs):
+    def save_stage_statistics(self, **kwargs: Any) -> None:
         """Reads the export_stage_statistics and insert it to the export_statistics table"""
         logging.debug("Executing stage.save_stage_statistics()")
 
@@ -474,8 +481,8 @@ class stage:
 
         logging.debug("Executing stage.save_stage_statistics() - Finished")
 
-    def get_stage_start_stop(self, stage):
-        """Returns the start and stop time for a specific stage. If no info can be found, None is returned"""
+    def get_stage_start_stop(self, stage: str | None) -> dict[str, str]:
+        """Returns the start and stop time for a specific stage. If no info can be found, 1970-01-01T00:00:00.000000Z is returned for both"""
         logging.debug("Executing stage.get_stage_start_stop()")
 
         query = "select stage, start, stop, duration from export_stage_statistics where dbalias = %s and target_schema = %s and target_table = %s"
@@ -504,10 +511,10 @@ class stage:
 
         logging.debug("Executing stage.get_stage_start_stop() - Finished")
 
-    def set_stage_only_in_memory(self):
+    def set_stage_only_in_memory(self) -> None:
         self.memory_stage = True
 
-    def clear_stage(self):
+    def clear_stage(self) -> None:
         """Removes all stage information from the export_stage table"""
         logging.debug("Executing stage.clear_stage()")
 
@@ -528,7 +535,7 @@ class stage:
 
         logging.debug("Executing stage.clear_stage() - Finished")
 
-    def get_stage(self):
+    def get_stage(self) -> int:
         """Fetches the stage from export_stage table and return stage value. If no stage, 0 is returned"""
         logging.debug("Executing stage.get_stage()")
 
@@ -559,7 +566,7 @@ class stage:
         logging.debug("Executing stage.get_stage() - Finished")
         return self.current_stage
 
-    def set_stage(self, newStage, force=False):
+    def set_stage(self, newStage: int, force: bool = False) -> None:
         """Saves the stage information that is used for finding the correct step in the retries operations"""
         logging.debug("Executing stage.set_stage()")
 
@@ -690,7 +697,7 @@ class stage:
 
         logging.debug("Executing stage.set_stage() - Finished")
 
-    def save_retry_attempt(self, stage):
+    def save_retry_attempt(self, stage: int) -> None:
         """Saves the retry attempt in the export_retries_log table"""
         logging.debug("Executing stage.save_retry_attempt()")
 

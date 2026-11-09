@@ -21,22 +21,23 @@ import os
 
 from Crypto.Cipher import PKCS1_v1_5
 from Crypto.PublicKey import RSA
+from Crypto.PublicKey.RSA import RsaKey
 from Crypto.Random import get_random_bytes
 
 from common.Exceptions import invalidConfiguration
 
 
 class crypto:
-    def __init__(self):
+    def __init__(self) -> None:
         logging.debug("Executing crypto.__init__()")
-        self.privateKeyFile = None
-        self.publicKeyFile = None
-        self.private_key_string = None
-        self.public_key_string = None
-        self.privateKey = None
-        self.publicKey = None
+        self.privateKeyFile: str | None = None
+        self.publicKeyFile: str | None = None
+        self.private_key_string: str | None = None
+        self.public_key_string: str | None = None
+        self.privateKey: RsaKey | None = None
+        self.publicKey: RsaKey | None = None
 
-    def set_private_key_file(self, private_key_file):
+    def set_private_key_file(self, private_key_file: str) -> None:
         self.privateKeyFile = private_key_file
 
         if self.privateKeyFile.startswith("/") == False:
@@ -53,7 +54,7 @@ class crypto:
         self.private_key_string = open(self.privateKeyFile).read()
         self.privateKey = RSA.importKey(self.private_key_string)
 
-    def set_public_key_file(self, public_key_file):
+    def set_public_key_file(self, public_key_file: str) -> None:
         self.publicKeyFile = public_key_file
 
         if self.publicKeyFile.startswith("/") == False:
@@ -68,7 +69,7 @@ class crypto:
         self.public_key_string = open(self.publicKeyFile).read()
         self.publicKey = RSA.importKey(self.public_key_string)
 
-    def decrypt(self, str_to_decrypt):
+    def decrypt(self, str_to_decrypt: str | None) -> str | None:
 
         if str_to_decrypt == None:
             return None
@@ -94,7 +95,7 @@ class crypto:
                 "Unable to decrypt using private/public keys. Are the keys setup correct?"
             )
 
-    def encrypt(self, str_to_encrypt):
+    def encrypt(self, str_to_encrypt: str) -> str:
 
         cipher = PKCS1_v1_5.new(self.publicKey)
 
