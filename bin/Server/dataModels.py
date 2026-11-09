@@ -577,21 +577,21 @@ class exportTableDetailsWrite(BaseModel):
     uppercaseColumns: int | None = None
     truncateTarget: bool | None = None
     sqlSessions: int | None = None
-    # 	tableRowcount: Union[int, None] = None
-    # 	targetRowcount: Union[int, None] = None
-    # 	validationCustomQueryHiveValue: Union[str, None] = None
-    # 	validationCustomQueryTargetValue: Union[str, None] = None
+    # 	tableRowcount: int | None = None
+    # 	targetRowcount: int | None = None
+    # 	validationCustomQueryHiveValue: str | None = None
+    # 	validationCustomQueryTargetValue: str | None = None
     incrColumn: str | None = None
     incrValidationMethod: str | None = None
-    # 	incrMinvalue: Union[str, None] = None
-    # 	incrMaxvalue: Union[str, None] = None
-    # 	incrMinvaluePending: Union[str, None] = None
-    # 	incrMaxvaluePending: Union[str, None] = None
+    # 	incrMinvalue: str | None = None
+    # 	incrMaxvalue: str | None = None
+    # 	incrMinvaluePending: str | None = None
+    # 	incrMaxvaluePending: str | None = None
     sqoopOptions: str | None = None
-    # 	lastSize: Union[int, None] = None
-    # 	lastRows: Union[int, None] = None
-    # 	lastSqlSessions: Union[int, None] = None
-    # 	lastExecution: Union[int, None] = None
+    # 	lastSize: int | None = None
+    # 	lastRows: int | None = None
+    # 	lastSqlSessions: int | None = None
+    # 	lastExecution: int | None = None
     hiveContainerSize: int | None = None
     createTargetTableSql: str | None = None
     operatorNotes: str | None = None
@@ -619,8 +619,8 @@ class airflowAllDags(BaseModel):
     autoRegenerateDag: bool
 
 
-# 	operatorNotes: Union[str, None] = None
-# 	applicationNotes: Union[str, None] = None
+# 	operatorNotes: str | None = None
+# 	applicationNotes: str | None = None
 
 
 class airflowImportDags(BaseModel):
@@ -629,8 +629,8 @@ class airflowImportDags(BaseModel):
     scheduleInterval: str | None = None
     autoRegenerateDag: bool
     airflowLink: str | None = None
-    # 	operatorNotes: Union[str, None] = None
-    # 	applicationNotes: Union[str, None] = None
+    # 	operatorNotes: str | None = None
+    # 	applicationNotes: str | None = None
     operatorNotes: str | None = None
     timezone: str | None = None
     email: str | None = None
@@ -648,8 +648,8 @@ class airflowExportDags(BaseModel):
     scheduleInterval: str | None = None
     autoRegenerateDag: bool
     airflowLink: str | None = None
-    # 	operatorNotes: Union[str, None] = None
-    # 	applicationNotes: Union[str, None] = None
+    # 	operatorNotes: str | None = None
+    # 	applicationNotes: str | None = None
     operatorNotes: str | None = None
     timezone: str | None = None
     email: str | None = None
@@ -664,8 +664,8 @@ class airflowCustomDags(BaseModel):
     scheduleInterval: str | None = None
     autoRegenerateDag: bool
     airflowLink: str | None = None
-    # 	operatorNotes: Union[str, None] = None
-    # 	applicationNotes: Union[str, None] = None
+    # 	operatorNotes: str | None = None
+    # 	applicationNotes: str | None = None
     operatorNotes: str | None = None
     timezone: str | None = None
     email: str | None = None
