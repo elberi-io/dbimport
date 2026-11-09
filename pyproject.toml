@@ -185,6 +185,7 @@ files = ["tests"]
 mypy_path = ["bin", "."]
 explicit_package_bases = true
 strict = true
+enable_error_code = ["ignore-without-code"]
 # Calls from typed tests into the existing, untyped code are allowed.
 untyped_calls_exclude = [
     "ConfigReader",
@@ -199,20 +200,71 @@ untyped_calls_exclude = [
 ]
 
 [[tool.mypy.overrides]]
-# Existing code has no type annotations; type errors in it are not
-# reported until a module is refactored.
+# Existing code in bin/ (packages and launchers) has almost no type
+# annotations. tests/unit/test_mypy_ratchet.py checks it with these
+# settings and counts its errors against tests/fixtures/mypy_baseline.json
+# (#202); when tests/ are checked, errors in these modules are not shown.
+# The launchers are modules named after their file; bin/copy is checked
+# on its own as __main__, because a module named copy would shadow the
+# standard library.
 module = [
     "ConfigReader.*",
     "DBImportConfig.*",
     "DBImportOperation.*",
     "Schedule.*",
+    "SchemaUpgrade.*",
     "Server.*",
     "catalogService.*",
     "common.*",
     "setupOperation.*",
     "sourceSchemaReader.*",
+    "__main__",
+    "deploy",
+    "export",
+    "import",
+    "mainServer",
+    "manage",
+    "restServer",
+    "setup",
 ]
-ignore_errors = true
+follow_imports = "silent"
+check_untyped_defs = true
+disallow_any_generics = false
+disallow_subclassing_any = false
+disallow_untyped_calls = false
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+disallow_untyped_decorators = false
+warn_return_any = false
+strict_equality = false
+extra_checks = false
+
+[[tool.mypy.overrides]]
+# Libraries without type information. pyspark and pyspark_llap are not
+# installed (they come with the cluster); sparkUDF and sparkUDF2 are
+# bin/common modules that Spark imports by file name.
+module = [
+    "TCLIService.*",
+    "boto3.*",
+    "botocore.*",
+    "daemons.*",
+    "gunicorn.*",
+    "jaydebeapi",
+    "jose.*",
+    "jpype.*",
+    "kafka.*",
+    "pam",
+    "pandas.*",
+    "psutil",
+    "puretransport.*",
+    "pyhive.*",
+    "pyspark.*",
+    "pyspark_llap.*",
+    "requests_kerberos",
+    "sparkUDF",
+    "sparkUDF2",
+]
+ignore_missing_imports = true
 
 [tool.importlinter]
 # The packages live in bin/, so run with bin/ on the path:
