@@ -780,7 +780,7 @@ class dbCalls:
             for key in self.all_config_keys:
                 if type(getattr(configuration, key)) in (str, bool, int):
                     # At this point, only configuration items that exists in the class is iterrated
-                    if type(getattr(configuration, key)) == str:
+                    if type(getattr(configuration, key)) is str:
                         if (
                             getattr(configuration, key) is None
                             or getattr(configuration, key).strip() == ""

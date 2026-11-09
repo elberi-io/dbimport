@@ -4932,7 +4932,7 @@ class operation(metaclass=Singleton):
             result_df = self.common_operations.execute_hive_query(query)
             max_value = result_df.loc[0][0]
 
-            if type(max_value) == pd._libs.tslibs.timestamps.Timestamp:
+            if type(max_value) is pd._libs.tslibs.timestamps.Timestamp:
                 (dt, micro) = max_value.strftime("%Y-%m-%d %H:%M:%S.%f").split(".")
                 max_value = "%s.%03d" % (dt, int(micro) / 1000)
             else:

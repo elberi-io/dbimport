@@ -2065,7 +2065,7 @@ class initialize:
         self.dag_file.write("    'pool': '%s',\n" % (default_pool))
         self.dag_file.write("    'retry_delay': timedelta(minutes=5),\n")
 
-        if sla_warning_time != None and type(sla_warning_time) == time:
+        if sla_warning_time != None and type(sla_warning_time) is time:
             self.dag_file.write(
                 "    'sla': timedelta(hours=%s, minutes=%s, seconds=%s),\n"
                 % (
@@ -2088,10 +2088,7 @@ class initialize:
                 "    tags=[%s],\n"
                 % (
                     ", ".join(
-                        [
-                            '"{}"'.format(value)
-                            for value in [x.strip() for x in tags.split(",")]
-                        ]
+                        [f'"{value}"' for value in [x.strip() for x in tags.split(",")]]
                     )
                 )
             )

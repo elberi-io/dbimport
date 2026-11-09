@@ -9,15 +9,11 @@
     "B904": 4,
     "E711": 84,
     "E712": 96,
-    "E713": 1,
     "E722": 40,
     "F841": 2,
     "N803": 28,
     "N806": 6,
     "UP031": 163
-  },
-  "bin/DBImportConfig/configSchema.py": {
-    "UP009": 1
   },
   "bin/DBImportConfig/decryption.py": {
     "B904": 1,
@@ -113,16 +109,12 @@
     "N803": 7,
     "UP031": 72
   },
-  "bin/DBImportOperation/hiveSchema.py": {
-    "UP009": 1
-  },
   "bin/DBImportOperation/import_operations.py": {
     "B007": 18,
     "B904": 3,
     "B905": 1,
     "E711": 66,
     "E712": 148,
-    "E721": 1,
     "E722": 17,
     "F841": 6,
     "N802": 4,
@@ -134,14 +126,9 @@
     "B904": 6,
     "E711": 50,
     "E712": 59,
-    "E721": 1,
     "E722": 5,
     "F841": 15,
-    "UP031": 280,
-    "UP032": 1
-  },
-  "bin/Schedule/airflowSchema.py": {
-    "UP009": 1
+    "UP031": 280
   },
   "bin/SchemaUpgrade/env.py": {
     "UP031": 1
@@ -176,7 +163,6 @@
     "B904": 3,
     "E711": 119,
     "E712": 27,
-    "E721": 1,
     "E722": 1,
     "F841": 59,
     "N802": 25,
