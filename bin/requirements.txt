@@ -375,7 +375,6 @@ python-dateutil==2.8.2 ; sys_platform == 'linux' \
     #   pandas
     #   pendulum
     #   pyhive
-    #   time-machine
 python-dotenv==1.2.4 ; sys_platform == 'linux' \
     --hash=sha256:42269a8a5b3fd54ffa6f3d84b18abed50064717576b4ecf03dc4a55d8aa04fdc \
     --hash=sha256:f0d53e69935a851c0dcc78f3ab7aaccd8cabef0b92382b576b824212902873c0
@@ -471,15 +470,6 @@ thrift-sasl==0.4.3 ; sys_platform == 'linux' \
     # via
     #   dbimport
     #   pure-transport
-time-machine==2.13.0 ; sys_platform == 'linux' \
-    --hash=sha256:19a3b10161c91ca8e0fd79348665cca711fd2eac6ce336ff9e6b447783817f93 \
-    --hash=sha256:1ac8ff145c63cd0dcfd9590fe694b5269aacbc130298dc7209b095d101f8cdde \
-    --hash=sha256:21bef5854d49b62e2c33848b5c3e8acf22a3b46af803ef6ff19529949cb7cf9f \
-    --hash=sha256:32b71e50b07f86916ac04bd1eefc2bd2c93706b81393748b08394509ee6585dc \
-    --hash=sha256:9f128db8997c3339f04f7f3946dd9bb2a83d15e0a40d35529774da1e9e501511 \
-    --hash=sha256:c23b2408e3adcedec84ea1131e238f0124a5bc0e491f60d1137ad7239b37c01a \
-    --hash=sha256:cfef4ebfb4f055ce3ebc7b6c1c4d0dbfcffdca0e783ad8c6986c992915a57ed3
-    # via dbimport
 typing-extensions==4.16.0 ; sys_platform == 'linux' \
     --hash=sha256:481caa481374e813c1b176ada14e97f1f67a4539ce9cfeb3f350d78d6370c2e8 \
     --hash=sha256:dc983d19a509c94dba722ee6abd33940f7c05a89e243c47e907eb4db6f1a43e5
