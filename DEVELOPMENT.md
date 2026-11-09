@@ -140,6 +140,18 @@ that a rule reports is marked on its line with `noqa` and a `TODO` that
 names the issue. import-linter checks the package layering defined in
 `pyproject.toml`.
 
+`uv run mypy` checks `tests/` in strict mode. The code in `bin/` has
+almost no type annotations; `tests/unit/test_mypy_ratchet.py` checks it
+(packages and launchers, all function bodies, with the settings of its
+override in `pyproject.toml`) and fails when the number of errors per
+module and error code differs from `tests/fixtures/mypy_baseline.json`.
+New modules must have no errors, and in listed modules the count per
+error code must not grow (it compares counts, so a change that fixes one
+error and adds another of the same code passes); after fixing old
+errors, regenerate the baseline (see below). A `# type: ignore` must
+name the error code. Libraries without type information are listed
+under `ignore_missing_imports`.
+
 The commits that reformatted `bin/` are listed in `.git-blame-ignore-revs`.
 GitHub skips them in the blame view; to skip them in `git blame` locally,
 run once:
@@ -158,6 +170,7 @@ Do not edit these by hand; regenerate them and review the diff:
 | `bin/requirements.txt` | `uv export --locked --no-dev --format requirements-txt -o bin/requirements.txt` |
 | `tests/fixtures/dags/*.py.txt` | `DBIMPORT_UPDATE_EXPECTED_DAGS=1 uv run pytest tests/integration/test_airflow_dag_generation.py` |
 | `tests/fixtures/ruff_baseline.json` | `DBIMPORT_UPDATE_RUFF_BASELINE=1 uv run pytest tests/unit/test_ruff_ratchet.py` |
+| `tests/fixtures/mypy_baseline.json` | `DBIMPORT_UPDATE_MYPY_BASELINE=1 uv run pytest tests/unit/test_mypy_ratchet.py` |
 
 `tests/fixtures/orm_schema_drift.txt` lists the known differences between
 the ORM and the migrated schema. When the ORM or the migrations change,
