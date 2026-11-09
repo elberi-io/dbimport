@@ -164,20 +164,13 @@
     "N803": 4,
     "UP031": 41
   },
-  "bin/Server/dataModels.py": {
-    "UP006": 10,
-    "UP007": 435,
-    "UP035": 1
-  },
   "bin/Server/restServer.py": {
     "B904": 1,
     "E711": 12,
     "E712": 3,
     "N803": 21,
     "N816": 1,
-    "UP006": 23,
-    "UP031": 7,
-    "UP035": 2
+    "UP031": 7
   },
   "bin/Server/restServerCalls.py": {
     "B904": 3,

@@ -1,5 +1,3 @@
-from typing import List, Union
-
 from pydantic import BaseModel
 
 
@@ -9,27 +7,27 @@ class Token(BaseModel):
 
 
 class TokenData(BaseModel):
-    username: Union[str, None] = None
+    username: str | None = None
 
 
 class User(BaseModel):
     username: str
     password: str
     disabled: bool
-    fullname: Union[str, None] = None
-    department: Union[str, None] = None
-    email: Union[str, None] = None
+    fullname: str | None = None
+    department: str | None = None
+    email: str | None = None
 
 
 class changeUser(BaseModel):
-    disabled: Union[bool, None] = None
-    fullname: Union[str, None] = None
-    department: Union[str, None] = None
-    email: Union[str, None] = None
+    disabled: bool | None = None
+    fullname: str | None = None
+    department: str | None = None
+    email: str | None = None
 
 
 class changePassword(BaseModel):
-    old_password: Union[str, None] = None
+    old_password: str | None = None
     new_password: str
 
 
@@ -41,9 +39,9 @@ class status(BaseModel):
 class importDBs(BaseModel):
     name: str
     tables: int
-    lastImport: Union[str, None] = None
-    lastSize: Union[int, None] = None
-    lastRows: Union[int, None] = None
+    lastImport: str | None = None
+    lastSize: int | None = None
+    lastRows: int | None = None
 
 
 # class testConnectionResponse(BaseModel):
@@ -51,45 +49,45 @@ class importDBs(BaseModel):
 
 
 class connectionSearch(BaseModel):
-    name: Union[str, None] = None
-    connectionString: Union[str, None] = None
-    timeWindowTimezone: Union[str, None] = None
-    operatorNotes: Union[str, None] = None
-    contactInformation: Union[str, None] = None
-    description: Union[str, None] = None
-    owner: Union[str, None] = None
+    name: str | None = None
+    connectionString: str | None = None
+    timeWindowTimezone: str | None = None
+    operatorNotes: str | None = None
+    contactInformation: str | None = None
+    description: str | None = None
+    owner: str | None = None
 
 
 class connection(BaseModel):
     name: str
-    connectionString: Union[str, None] = None
-    serverType: Union[str, None] = None
+    connectionString: str | None = None
+    serverType: str | None = None
 
 
 class connectionDetails(BaseModel):
     name: str
     connectionString: str
-    privateKeyPath: Union[str, None] = None
-    publicKeyPath: Union[str, None] = None
-    credentials: Union[str, None] = None
-    source: Union[str, None] = None
-    forceString: Union[int, None] = None
-    maxSessions: Union[int, None] = None
-    createDatalakeImport: Union[bool, None] = None
-    timeWindowStart: Union[str, None] = None
-    timeWindowStop: Union[str, None] = None
-    timeWindowTimezone: Union[str, None] = None
-    operatorNotes: Union[str, None] = None
-    contactInformation: Union[str, None] = None
-    description: Union[str, None] = None
-    owner: Union[str, None] = None
-    environment: Union[str, None] = None
-    seedFile: Union[str, None] = None
-    createForeignKey: Union[bool, None] = None
-    atlasDiscovery: Union[bool, None] = None
-    atlasIncludeFilter: Union[str, None] = None
-    atlasExcludeFilter: Union[str, None] = None
-    atlasLastDiscovery: Union[str, None] = None
+    privateKeyPath: str | None = None
+    publicKeyPath: str | None = None
+    credentials: str | None = None
+    source: str | None = None
+    forceString: int | None = None
+    maxSessions: int | None = None
+    createDatalakeImport: bool | None = None
+    timeWindowStart: str | None = None
+    timeWindowStop: str | None = None
+    timeWindowTimezone: str | None = None
+    operatorNotes: str | None = None
+    contactInformation: str | None = None
+    description: str | None = None
+    owner: str | None = None
+    environment: str | None = None
+    seedFile: str | None = None
+    createForeignKey: bool | None = None
+    atlasDiscovery: bool | None = None
+    atlasIncludeFilter: str | None = None
+    atlasExcludeFilter: str | None = None
+    atlasLastDiscovery: str | None = None
 
 
 # class encryptCredentialResult(BaseModel):
@@ -106,7 +104,7 @@ class generateJDBCconnectionString(BaseModel):
     databaseType: str
     version: str
     hostname: str
-    port: Union[int, None] = None
+    port: int | None = None
     database: str
 
 
@@ -122,79 +120,79 @@ class jdbcDriver(BaseModel):
 
 
 class configuration(BaseModel):
-    airflow_aws_instanceids: Union[str, None] = None
-    airflow_aws_pool_to_instanceid: Union[bool, None] = None
-    airflow_create_pool_with_task: Union[bool, None] = None
-    airflow_dag_directory: Union[str, None] = None
-    airflow_dag_file_group: Union[str, None] = None
-    airflow_dag_file_permission: Union[str, None] = None
-    airflow_dag_staging_directory: Union[str, None] = None
-    airflow_dbimport_commandpath: Union[str, None] = None
-    airflow_default_pool_size: Union[int, None] = None
-    airflow_disable: Union[bool, None] = None
-    airflow_dummy_task_queue: Union[str, None] = None
-    airflow_major_version: Union[int, None] = None
-    airflow_sudo_user: Union[str, None] = None
-    airflow_url: Union[str, None] = None
-    atlas_discovery_interval: Union[int, None] = None
-    cluster_name: Union[str, None] = None
-    export_default_sessions: Union[int, None] = None
-    export_max_sessions: Union[int, None] = None
-    export_stage_disable: Union[bool, None] = None
-    export_staging_database: Union[str, None] = None
-    export_start_disable: Union[bool, None] = None
-    hdfs_address: Union[str, None] = None
-    hdfs_basedir: Union[str, None] = None
-    hdfs_blocksize: Union[str, None] = None
-    hive_acid_with_clusteredby: Union[bool, None] = None
-    hive_insert_only_tables: Union[bool, None] = None
-    hive_major_compact_after_merge: Union[bool, None] = None
-    hive_print_messages: Union[bool, None] = None
-    hive_remove_locks_by_force: Union[bool, None] = None
-    hive_validate_before_execution: Union[bool, None] = None
-    hive_validate_table: Union[str, None] = None
-    impala_invalidate_metadata: Union[bool, None] = None
-    import_columnname_delete: Union[str, None] = None
-    import_columnname_histtime: Union[str, None] = None
-    import_columnname_import: Union[str, None] = None
-    import_columnname_insert: Union[str, None] = None
-    import_columnname_iud: Union[str, None] = None
-    import_columnname_source: Union[str, None] = None
-    import_columnname_update: Union[str, None] = None
-    import_default_sessions: Union[int, None] = None
-    import_history_database: Union[str, None] = None
-    import_history_table: Union[str, None] = None
-    import_max_sessions: Union[int, None] = None
-    import_process_empty: Union[bool, None] = None
-    import_stage_disable: Union[bool, None] = None
-    import_staging_database: Union[str, None] = None
-    import_staging_table: Union[str, None] = None
-    import_start_disable: Union[bool, None] = None
-    import_work_database: Union[str, None] = None
-    import_work_table: Union[str, None] = None
-    kafka_brokers: Union[str, None] = None
-    kafka_saslmechanism: Union[str, None] = None
-    kafka_securityprotocol: Union[str, None] = None
-    kafka_topic: Union[str, None] = None
-    kafka_trustcafile: Union[str, None] = None
-    post_airflow_dag_operations: Union[bool, None] = None
-    post_data_to_kafka_extended: Union[bool, None] = None
-    post_data_to_kafka: Union[bool, None] = None
-    post_data_to_rest_extended: Union[bool, None] = None
-    post_data_to_rest: Union[bool, None] = None
-    post_data_to_awssns_extended: Union[bool, None] = None
-    post_data_to_awssns: Union[bool, None] = None
-    post_data_to_awssns_topic: Union[str, None] = None
-    restserver_admin_user: Union[str, None] = None
-    restserver_authentication_method: Union[str, None] = None
-    restserver_token_ttl: Union[int, None] = None
-    rest_timeout: Union[int, None] = None
-    rest_trustcafile: Union[str, None] = None
-    rest_url: Union[str, None] = None
-    rest_verifyssl: Union[bool, None] = None
-    spark_max_executors: Union[int, None] = None
-    timezone: Union[str, None] = None
-    timestamp_with_timezone: Union[bool, None] = None
+    airflow_aws_instanceids: str | None = None
+    airflow_aws_pool_to_instanceid: bool | None = None
+    airflow_create_pool_with_task: bool | None = None
+    airflow_dag_directory: str | None = None
+    airflow_dag_file_group: str | None = None
+    airflow_dag_file_permission: str | None = None
+    airflow_dag_staging_directory: str | None = None
+    airflow_dbimport_commandpath: str | None = None
+    airflow_default_pool_size: int | None = None
+    airflow_disable: bool | None = None
+    airflow_dummy_task_queue: str | None = None
+    airflow_major_version: int | None = None
+    airflow_sudo_user: str | None = None
+    airflow_url: str | None = None
+    atlas_discovery_interval: int | None = None
+    cluster_name: str | None = None
+    export_default_sessions: int | None = None
+    export_max_sessions: int | None = None
+    export_stage_disable: bool | None = None
+    export_staging_database: str | None = None
+    export_start_disable: bool | None = None
+    hdfs_address: str | None = None
+    hdfs_basedir: str | None = None
+    hdfs_blocksize: str | None = None
+    hive_acid_with_clusteredby: bool | None = None
+    hive_insert_only_tables: bool | None = None
+    hive_major_compact_after_merge: bool | None = None
+    hive_print_messages: bool | None = None
+    hive_remove_locks_by_force: bool | None = None
+    hive_validate_before_execution: bool | None = None
+    hive_validate_table: str | None = None
+    impala_invalidate_metadata: bool | None = None
+    import_columnname_delete: str | None = None
+    import_columnname_histtime: str | None = None
+    import_columnname_import: str | None = None
+    import_columnname_insert: str | None = None
+    import_columnname_iud: str | None = None
+    import_columnname_source: str | None = None
+    import_columnname_update: str | None = None
+    import_default_sessions: int | None = None
+    import_history_database: str | None = None
+    import_history_table: str | None = None
+    import_max_sessions: int | None = None
+    import_process_empty: bool | None = None
+    import_stage_disable: bool | None = None
+    import_staging_database: str | None = None
+    import_staging_table: str | None = None
+    import_start_disable: bool | None = None
+    import_work_database: str | None = None
+    import_work_table: str | None = None
+    kafka_brokers: str | None = None
+    kafka_saslmechanism: str | None = None
+    kafka_securityprotocol: str | None = None
+    kafka_topic: str | None = None
+    kafka_trustcafile: str | None = None
+    post_airflow_dag_operations: bool | None = None
+    post_data_to_kafka_extended: bool | None = None
+    post_data_to_kafka: bool | None = None
+    post_data_to_rest_extended: bool | None = None
+    post_data_to_rest: bool | None = None
+    post_data_to_awssns_extended: bool | None = None
+    post_data_to_awssns: bool | None = None
+    post_data_to_awssns_topic: str | None = None
+    restserver_admin_user: str | None = None
+    restserver_authentication_method: str | None = None
+    restserver_token_ttl: int | None = None
+    rest_timeout: int | None = None
+    rest_trustcafile: str | None = None
+    rest_url: str | None = None
+    rest_verifyssl: bool | None = None
+    spark_max_executors: int | None = None
+    timezone: str | None = None
+    timestamp_with_timezone: bool | None = None
 
 
 class discoverImportTable(BaseModel):
@@ -208,12 +206,12 @@ class discoverImportTable(BaseModel):
 class discoverImportTableOptions(BaseModel):
     database: str
     connection: str
-    schemaFilter: Union[str, None]
-    tableFilter: Union[str, None]
+    schemaFilter: str | None
+    tableFilter: str | None
     addSchemaToTable: bool
     addCounterToTable: bool
-    counterStart: Union[int, None]
-    addCustomText: Union[str, None]
+    counterStart: int | None
+    addCustomText: str | None
 
 
 class importTable(BaseModel):
@@ -226,9 +224,9 @@ class importTable(BaseModel):
     etlPhaseType: str
     importTool: str
     etlEngine: str
-    lastUpdateFromSource: Union[str, None] = None
+    lastUpdateFromSource: str | None = None
     includeInAirflow: bool
-    operatorNotes: Union[str, None] = None
+    operatorNotes: str | None = None
 
 
 class importTableColumnsRead(BaseModel):
@@ -239,17 +237,17 @@ class importTableColumnsRead(BaseModel):
     sourceColumnName: str
     columnType: str
     sourceColumnType: str
-    sourceDatabaseType: Union[str, None] = None
-    columnNameOverride: Union[str, None] = None
-    columnTypeOverride: Union[str, None] = None
-    sqoopColumnType: Union[str, None] = None
-    sqoopColumnTypeOverride: Union[str, None] = None
+    sourceDatabaseType: str | None = None
+    columnNameOverride: str | None = None
+    columnTypeOverride: str | None = None
+    sqoopColumnType: str | None = None
+    sqoopColumnTypeOverride: str | None = None
     forceString: int
     includeInImport: bool
-    sourcePrimaryKey: Union[int, None] = None
+    sourcePrimaryKey: int | None = None
     lastUpdateFromSource: str
-    comment: Union[str, None] = None
-    operatorNotes: Union[str, None] = None
+    comment: str | None = None
+    operatorNotes: str | None = None
     anonymizationFunction: str
 
 
@@ -261,17 +259,17 @@ class importTableColumnsWrite(BaseModel):
     sourceColumnName: str
     columnType: str
     sourceColumnType: str
-    sourceDatabaseType: Union[str, None] = None
-    columnNameOverride: Union[str, None] = None
-    columnTypeOverride: Union[str, None] = None
-    sqoopColumnType: Union[str, None] = None
-    sqoopColumnTypeOverride: Union[str, None] = None
+    sourceDatabaseType: str | None = None
+    columnNameOverride: str | None = None
+    columnTypeOverride: str | None = None
+    sqoopColumnType: str | None = None
+    sqoopColumnTypeOverride: str | None = None
     forceString: int
     includeInImport: bool
-    sourcePrimaryKey: Union[int, None] = None
+    sourcePrimaryKey: int | None = None
     lastUpdateFromSource: str
-    comment: Union[str, None] = None
-    operatorNotes: Union[str, None] = None
+    comment: str | None = None
+    operatorNotes: str | None = None
     anonymizationFunction: str
 
 
@@ -285,67 +283,67 @@ class importTableDetailsRead(BaseModel):
     etlPhaseType: str
     importTool: str
     etlEngine: str
-    lastUpdateFromSource: Union[str, None] = None
-    sqlWhereAddition: Union[str, None] = None
-    nomergeIngestionSqlAddition: Union[str, None] = None
+    lastUpdateFromSource: str | None = None
+    sqlWhereAddition: str | None = None
+    nomergeIngestionSqlAddition: str | None = None
     includeInAirflow: bool
-    airflowPriority: Union[int, None] = None
+    airflowPriority: int | None = None
     validateImport: bool
     validationMethod: str
     validateSource: str
     validateDiffAllowed: int
-    validationCustomQuerySourceSQL: Union[str, None] = None
-    validationCustomQueryHiveSQL: Union[str, None] = None
+    validationCustomQuerySourceSQL: str | None = None
+    validationCustomQueryHiveSQL: str | None = None
     validationCustomQueryValidateImportTable: bool
     sqlSessions: int
     softDeleteDuringMerge: bool
-    sourceRowcount: Union[int, None] = None
-    sourceRowcountIncr: Union[int, None] = None
-    targetRowcount: Union[int, None] = None
-    validationCustomQuerySourceValue: Union[str, None] = None
-    validationCustomQueryHiveValue: Union[str, None] = None
-    incrMode: Union[str, None] = None
-    incrColumn: Union[str, None] = None
+    sourceRowcount: int | None = None
+    sourceRowcountIncr: int | None = None
+    targetRowcount: int | None = None
+    validationCustomQuerySourceValue: str | None = None
+    validationCustomQueryHiveValue: str | None = None
+    incrMode: str | None = None
+    incrColumn: str | None = None
     incrValidationMethod: str
-    incrMinvalue: Union[str, None] = None
-    incrMaxvalue: Union[str, None] = None
-    incrMinvaluePending: Union[str, None] = None
-    incrMaxvaluePending: Union[str, None] = None
-    pkColumnOverride: Union[str, None] = None
-    pkColumnOverrideMergeonly: Union[str, None] = None
-    hiveContainerSize: Union[int, None] = None
-    splitCount: Union[int, None] = None
-    sparkExecutorMemory: Union[str, None] = None
-    sparkExecutors: Union[int, None] = None
-    splitByColumn: Union[str, None] = None
-    sqoopCustomQuery: Union[str, None] = None
-    sqoopOptions: Union[str, None] = None
-    lastSize: Union[int, None] = None
-    lastRows: Union[int, None] = None
-    lastSqlSessions: Union[int, None] = None
-    lastExecution: Union[int, None] = None
+    incrMinvalue: str | None = None
+    incrMaxvalue: str | None = None
+    incrMinvaluePending: str | None = None
+    incrMaxvaluePending: str | None = None
+    pkColumnOverride: str | None = None
+    pkColumnOverrideMergeonly: str | None = None
+    hiveContainerSize: int | None = None
+    splitCount: int | None = None
+    sparkExecutorMemory: str | None = None
+    sparkExecutors: int | None = None
+    splitByColumn: str | None = None
+    sqoopCustomQuery: str | None = None
+    sqoopOptions: str | None = None
+    lastSize: int | None = None
+    lastRows: int | None = None
+    lastSqlSessions: int | None = None
+    lastExecution: int | None = None
     sqoopUseGeneratedSql: bool
     allowTextSplitter: bool
     forceString: int
-    comment: Union[str, None] = None
-    generatedHiveColumnDefinition: Union[str, None] = None
-    generatedSqoopQuery: Union[str, None] = None
-    generatedSqoopOptions: Union[str, None] = None
-    generatedPkColumns: Union[str, None] = None
-    datalakeSource: Union[str, None] = None
-    operatorNotes: Union[str, None] = None
-    copyFinished: Union[str, None] = None
+    comment: str | None = None
+    generatedHiveColumnDefinition: str | None = None
+    generatedSqoopQuery: str | None = None
+    generatedSqoopOptions: str | None = None
+    generatedPkColumns: str | None = None
+    datalakeSource: str | None = None
+    operatorNotes: str | None = None
+    copyFinished: str | None = None
     copySlave: bool
     createForeignKeys: int
     invalidateImpala: int
-    customMaxQuery: Union[str, None] = None
+    customMaxQuery: str | None = None
     mergeCompactionMethod: str
-    sourceTableType: Union[str, None] = None
-    importDatabase: Union[str, None] = None
-    importTable: Union[str, None] = None
-    historyDatabase: Union[str, None] = None
-    historyTable: Union[str, None] = None
-    columns: List[importTableColumnsRead] = []
+    sourceTableType: str | None = None
+    importDatabase: str | None = None
+    importTable: str | None = None
+    historyDatabase: str | None = None
+    historyTable: str | None = None
+    columns: list[importTableColumnsRead] = []
 
 
 class importTableDetailsWrite(BaseModel):
@@ -358,63 +356,63 @@ class importTableDetailsWrite(BaseModel):
     etlPhaseType: str
     importTool: str
     etlEngine: str
-    lastUpdateFromSource: Union[str, None] = None
-    sqlWhereAddition: Union[str, None] = None
-    nomergeIngestionSqlAddition: Union[str, None] = None
-    includeInAirflow: Union[bool, None] = None
-    airflowPriority: Union[int, None] = None
-    validateImport: Union[bool, None] = None
-    validationMethod: Union[str, None] = None
-    validateSource: Union[str, None] = None
-    validateDiffAllowed: Union[int, None] = None
-    validationCustomQuerySourceSQL: Union[str, None] = None
-    validationCustomQueryHiveSQL: Union[str, None] = None
-    validationCustomQueryValidateImportTable: Union[bool, None] = None
-    sqlSessions: Union[int, None] = None
-    softDeleteDuringMerge: Union[bool, None] = None
-    incrMode: Union[str, None] = None
-    incrColumn: Union[str, None] = None
-    incrValidationMethod: Union[str, None] = None
-    pkColumnOverride: Union[str, None] = None
-    pkColumnOverrideMergeonly: Union[str, None] = None
-    hiveContainerSize: Union[int, None] = None
-    splitCount: Union[int, None] = None
-    sparkExecutorMemory: Union[str, None] = None
-    sparkExecutors: Union[int, None] = None
-    splitByColumn: Union[str, None] = None
-    sqoopCustomQuery: Union[str, None] = None
-    sqoopOptions: Union[str, None] = None
-    sqoopUseGeneratedSql: Union[bool, None] = None
-    allowTextSplitter: Union[bool, None] = None
-    forceString: Union[int, None] = None
-    comment: Union[str, None] = None
-    datalakeSource: Union[str, None] = None
-    operatorNotes: Union[str, None] = None
-    copySlave: Union[bool, None] = None
-    createForeignKeys: Union[int, None] = None
-    invalidateImpala: Union[int, None] = None
-    customMaxQuery: Union[str, None] = None
-    mergeCompactionMethod: Union[str, None] = None
-    sourceTableType: Union[str, None] = None
-    importDatabase: Union[str, None] = None
-    importTable: Union[str, None] = None
-    historyDatabase: Union[str, None] = None
-    historyTable: Union[str, None] = None
-    columns: List[importTableColumnsWrite] = []
+    lastUpdateFromSource: str | None = None
+    sqlWhereAddition: str | None = None
+    nomergeIngestionSqlAddition: str | None = None
+    includeInAirflow: bool | None = None
+    airflowPriority: int | None = None
+    validateImport: bool | None = None
+    validationMethod: str | None = None
+    validateSource: str | None = None
+    validateDiffAllowed: int | None = None
+    validationCustomQuerySourceSQL: str | None = None
+    validationCustomQueryHiveSQL: str | None = None
+    validationCustomQueryValidateImportTable: bool | None = None
+    sqlSessions: int | None = None
+    softDeleteDuringMerge: bool | None = None
+    incrMode: str | None = None
+    incrColumn: str | None = None
+    incrValidationMethod: str | None = None
+    pkColumnOverride: str | None = None
+    pkColumnOverrideMergeonly: str | None = None
+    hiveContainerSize: int | None = None
+    splitCount: int | None = None
+    sparkExecutorMemory: str | None = None
+    sparkExecutors: int | None = None
+    splitByColumn: str | None = None
+    sqoopCustomQuery: str | None = None
+    sqoopOptions: str | None = None
+    sqoopUseGeneratedSql: bool | None = None
+    allowTextSplitter: bool | None = None
+    forceString: int | None = None
+    comment: str | None = None
+    datalakeSource: str | None = None
+    operatorNotes: str | None = None
+    copySlave: bool | None = None
+    createForeignKeys: int | None = None
+    invalidateImpala: int | None = None
+    customMaxQuery: str | None = None
+    mergeCompactionMethod: str | None = None
+    sourceTableType: str | None = None
+    importDatabase: str | None = None
+    importTable: str | None = None
+    historyDatabase: str | None = None
+    historyTable: str | None = None
+    columns: list[importTableColumnsWrite] = []
 
 
 class importTableSearch(BaseModel):
-    database: Union[str, None] = None
-    table: Union[str, None] = None
-    connection: Union[str, None] = None
-    sourceSchema: Union[str, None] = None
-    sourceTable: Union[str, None] = None
-    importPhaseType: Union[str, None] = None
-    etlPhaseType: Union[str, None] = None
-    importTool: Union[str, None] = None
-    etlEngine: Union[str, None] = None
-    includeInAirflow: Union[bool, None] = None
-    operatorNotes: Union[str, None] = None
+    database: str | None = None
+    table: str | None = None
+    connection: str | None = None
+    sourceSchema: str | None = None
+    sourceTable: str | None = None
+    importPhaseType: str | None = None
+    etlPhaseType: str | None = None
+    importTool: str | None = None
+    etlEngine: str | None = None
+    includeInAirflow: bool | None = None
+    operatorNotes: str | None = None
 
 
 class importTablePK(BaseModel):
@@ -423,14 +421,14 @@ class importTablePK(BaseModel):
 
 
 class importTableBulkUpdate(BaseModel):
-    connection: Union[str, None] = None
-    importPhaseType: Union[str, None] = None
-    etlPhaseType: Union[str, None] = None
-    importTool: Union[str, None] = None
-    etlEngine: Union[str, None] = None
-    includeInAirflow: Union[bool, None] = None
-    operatorNotes: Union[str, None] = None
-    importTables: List[importTablePK]
+    connection: str | None = None
+    importPhaseType: str | None = None
+    etlPhaseType: str | None = None
+    importTool: str | None = None
+    etlEngine: str | None = None
+    includeInAirflow: bool | None = None
+    operatorNotes: str | None = None
+    importTables: list[importTablePK]
 
 
 class defaultResultResponse(BaseModel):
@@ -440,20 +438,20 @@ class defaultResultResponse(BaseModel):
 class exportConnections(BaseModel):
     name: str
     tables: int
-    lastExport: Union[str, None] = None
-    lastRows: Union[int, None] = None
+    lastExport: str | None = None
+    lastRows: int | None = None
 
 
 class exportTableSearch(BaseModel):
-    connection: Union[str, None] = None
-    targetSchema: Union[str, None] = None
-    targetTable: Union[str, None] = None
-    database: Union[str, None] = None
-    table: Union[str, None] = None
-    exportType: Union[str, None] = None
-    exportTool: Union[str, None] = None
-    includeInAirflow: Union[bool, None] = None
-    operatorNotes: Union[str, None] = None
+    connection: str | None = None
+    targetSchema: str | None = None
+    targetTable: str | None = None
+    database: str | None = None
+    table: str | None = None
+    exportType: str | None = None
+    exportTool: str | None = None
+    includeInAirflow: bool | None = None
+    operatorNotes: str | None = None
 
 
 class discoverExportTable(BaseModel):
@@ -467,12 +465,12 @@ class discoverExportTable(BaseModel):
 class discoverExportTableOptions(BaseModel):
     connection: str
     targetSchema: str
-    databaseFilter: Union[str, None]
-    tableFilter: Union[str, None]
+    databaseFilter: str | None
+    tableFilter: str | None
     addDBToTable: bool
     addCounterToTable: bool
-    counterStart: Union[int, None]
-    addCustomText: Union[str, None]
+    counterStart: int | None
+    addCustomText: str | None
 
 
 class exportTable(BaseModel):
@@ -483,9 +481,9 @@ class exportTable(BaseModel):
     table: str
     exportType: str
     exportTool: str
-    lastUpdateFromHive: Union[str, None] = None
+    lastUpdateFromHive: str | None = None
     includeInAirflow: bool
-    operatorNotes: Union[str, None] = None
+    operatorNotes: str | None = None
 
 
 class exportTableColumnsRead(BaseModel):
@@ -494,13 +492,13 @@ class exportTableColumnsRead(BaseModel):
     # 	targetTable: str
     columnName: str
     columnType: str
-    columnOrder: Union[int, None] = None
-    targetColumnName: Union[str, None] = None
-    targetColumnType: Union[str, None] = None
-    lastUpdateFromHive: Union[str, None] = None
+    columnOrder: int | None = None
+    targetColumnName: str | None = None
+    targetColumnType: str | None = None
+    lastUpdateFromHive: str | None = None
     includeInExport: bool
-    comment: Union[str, None] = None
-    operatorNotes: Union[str, None] = None
+    comment: str | None = None
+    operatorNotes: str | None = None
 
 
 class exportTableColumnsWrite(BaseModel):
@@ -509,13 +507,13 @@ class exportTableColumnsWrite(BaseModel):
     # 	targetTable: str
     columnName: str
     columnType: str
-    columnOrder: Union[int, None] = None
-    targetColumnName: Union[str, None] = None
-    targetColumnType: Union[str, None] = None
-    lastUpdateFromHive: Union[str, None] = None
+    columnOrder: int | None = None
+    targetColumnName: str | None = None
+    targetColumnType: str | None = None
+    lastUpdateFromHive: str | None = None
     includeInExport: bool
-    comment: Union[str, None] = None
-    operatorNotes: Union[str, None] = None
+    comment: str | None = None
+    operatorNotes: str | None = None
 
 
 class exportTableDetailsRead(BaseModel):
@@ -526,37 +524,37 @@ class exportTableDetailsRead(BaseModel):
     exportTool: str
     database: str
     table: str
-    lastUpdateFromHive: Union[str, None] = None
-    sqlWhereAddition: Union[str, None] = None
-    includeInAirflow: Union[bool, None] = None
-    airflowPriority: Union[int, None] = None
-    forceCreateTempTable: Union[bool, None] = None
-    validateExport: Union[bool, None] = None
-    validationMethod: Union[str, None] = None
-    validationCustomQueryHiveSQL: Union[str, None] = None
-    validationCustomQueryTargetSQL: Union[str, None] = None
-    uppercaseColumns: Union[int, None] = None
-    truncateTarget: Union[bool, None] = None
-    sqlSessions: Union[int, None] = None
-    tableRowcount: Union[int, None] = None
-    targetRowcount: Union[int, None] = None
-    validationCustomQueryHiveValue: Union[str, None] = None
-    validationCustomQueryTargetValue: Union[str, None] = None
-    incrColumn: Union[str, None] = None
-    incrValidationMethod: Union[str, None] = None
-    incrMinvalue: Union[str, None] = None
-    incrMaxvalue: Union[str, None] = None
-    incrMinvaluePending: Union[str, None] = None
-    incrMaxvaluePending: Union[str, None] = None
-    sqoopOptions: Union[str, None] = None
-    lastSize: Union[int, None] = None
-    lastRows: Union[int, None] = None
-    lastSqlSessions: Union[int, None] = None
-    lastExecution: Union[int, None] = None
-    hiveContainerSize: Union[int, None] = None
-    createTargetTableSql: Union[str, None] = None
-    operatorNotes: Union[str, None] = None
-    columns: List[exportTableColumnsRead] = []
+    lastUpdateFromHive: str | None = None
+    sqlWhereAddition: str | None = None
+    includeInAirflow: bool | None = None
+    airflowPriority: int | None = None
+    forceCreateTempTable: bool | None = None
+    validateExport: bool | None = None
+    validationMethod: str | None = None
+    validationCustomQueryHiveSQL: str | None = None
+    validationCustomQueryTargetSQL: str | None = None
+    uppercaseColumns: int | None = None
+    truncateTarget: bool | None = None
+    sqlSessions: int | None = None
+    tableRowcount: int | None = None
+    targetRowcount: int | None = None
+    validationCustomQueryHiveValue: str | None = None
+    validationCustomQueryTargetValue: str | None = None
+    incrColumn: str | None = None
+    incrValidationMethod: str | None = None
+    incrMinvalue: str | None = None
+    incrMaxvalue: str | None = None
+    incrMinvaluePending: str | None = None
+    incrMaxvaluePending: str | None = None
+    sqoopOptions: str | None = None
+    lastSize: int | None = None
+    lastRows: int | None = None
+    lastSqlSessions: int | None = None
+    lastExecution: int | None = None
+    hiveContainerSize: int | None = None
+    createTargetTableSql: str | None = None
+    operatorNotes: str | None = None
+    columns: list[exportTableColumnsRead] = []
 
 
 class exportTableDetailsWrite(BaseModel):
@@ -567,37 +565,37 @@ class exportTableDetailsWrite(BaseModel):
     exportTool: str
     database: str
     table: str
-    lastUpdateFromHive: Union[str, None] = None
-    sqlWhereAddition: Union[str, None] = None
-    includeInAirflow: Union[bool, None] = None
-    airflowPriority: Union[int, None] = None
-    forceCreateTempTable: Union[bool, None] = None
-    validateExport: Union[bool, None] = None
-    validationMethod: Union[str, None] = None
-    validationCustomQueryHiveSQL: Union[str, None] = None
-    validationCustomQueryTargetSQL: Union[str, None] = None
-    uppercaseColumns: Union[int, None] = None
-    truncateTarget: Union[bool, None] = None
-    sqlSessions: Union[int, None] = None
+    lastUpdateFromHive: str | None = None
+    sqlWhereAddition: str | None = None
+    includeInAirflow: bool | None = None
+    airflowPriority: int | None = None
+    forceCreateTempTable: bool | None = None
+    validateExport: bool | None = None
+    validationMethod: str | None = None
+    validationCustomQueryHiveSQL: str | None = None
+    validationCustomQueryTargetSQL: str | None = None
+    uppercaseColumns: int | None = None
+    truncateTarget: bool | None = None
+    sqlSessions: int | None = None
     # 	tableRowcount: Union[int, None] = None
     # 	targetRowcount: Union[int, None] = None
     # 	validationCustomQueryHiveValue: Union[str, None] = None
     # 	validationCustomQueryTargetValue: Union[str, None] = None
-    incrColumn: Union[str, None] = None
-    incrValidationMethod: Union[str, None] = None
+    incrColumn: str | None = None
+    incrValidationMethod: str | None = None
     # 	incrMinvalue: Union[str, None] = None
     # 	incrMaxvalue: Union[str, None] = None
     # 	incrMinvaluePending: Union[str, None] = None
     # 	incrMaxvaluePending: Union[str, None] = None
-    sqoopOptions: Union[str, None] = None
+    sqoopOptions: str | None = None
     # 	lastSize: Union[int, None] = None
     # 	lastRows: Union[int, None] = None
     # 	lastSqlSessions: Union[int, None] = None
     # 	lastExecution: Union[int, None] = None
-    hiveContainerSize: Union[int, None] = None
-    createTargetTableSql: Union[str, None] = None
-    operatorNotes: Union[str, None] = None
-    columns: List[exportTableColumnsWrite] = []
+    hiveContainerSize: int | None = None
+    createTargetTableSql: str | None = None
+    operatorNotes: str | None = None
+    columns: list[exportTableColumnsWrite] = []
 
 
 class exportTablePK(BaseModel):
@@ -607,17 +605,17 @@ class exportTablePK(BaseModel):
 
 
 class exportTableBulkUpdate(BaseModel):
-    exportType: Union[str, None] = None
-    exportTool: Union[str, None] = None
-    includeInAirflow: Union[bool, None] = None
-    operatorNotes: Union[str, None] = None
-    exportTables: List[exportTablePK]
+    exportType: str | None = None
+    exportTool: str | None = None
+    includeInAirflow: bool | None = None
+    operatorNotes: str | None = None
+    exportTables: list[exportTablePK]
 
 
 class airflowAllDags(BaseModel):
     name: str
     type: str
-    scheduleInterval: Union[str, None] = None
+    scheduleInterval: str | None = None
     autoRegenerateDag: bool
 
 
@@ -627,146 +625,146 @@ class airflowAllDags(BaseModel):
 
 class airflowImportDags(BaseModel):
     name: str
-    filterTable: Union[str, None] = None
-    scheduleInterval: Union[str, None] = None
+    filterTable: str | None = None
+    scheduleInterval: str | None = None
     autoRegenerateDag: bool
-    airflowLink: Union[str, None] = None
+    airflowLink: str | None = None
     # 	operatorNotes: Union[str, None] = None
     # 	applicationNotes: Union[str, None] = None
-    operatorNotes: Union[str, None] = None
-    timezone: Union[str, None] = None
-    email: Union[str, None] = None
-    emailOnFailure: Union[bool, None] = None
-    emailOnRetries: Union[bool, None] = None
-    slaWarningTime: Union[str, None] = None
-    concurrency: Union[int, None] = None
+    operatorNotes: str | None = None
+    timezone: str | None = None
+    email: str | None = None
+    emailOnFailure: bool | None = None
+    emailOnRetries: bool | None = None
+    slaWarningTime: str | None = None
+    concurrency: int | None = None
 
 
 class airflowExportDags(BaseModel):
     name: str
-    filterConnection: Union[str, None] = None
-    filterTargetSchema: Union[str, None] = None
-    filterTargetTable: Union[str, None] = None
-    scheduleInterval: Union[str, None] = None
+    filterConnection: str | None = None
+    filterTargetSchema: str | None = None
+    filterTargetTable: str | None = None
+    scheduleInterval: str | None = None
     autoRegenerateDag: bool
-    airflowLink: Union[str, None] = None
+    airflowLink: str | None = None
     # 	operatorNotes: Union[str, None] = None
     # 	applicationNotes: Union[str, None] = None
-    operatorNotes: Union[str, None] = None
-    timezone: Union[str, None] = None
-    email: Union[str, None] = None
-    emailOnFailure: Union[bool, None] = None
-    emailOnRetries: Union[bool, None] = None
-    slaWarningTime: Union[str, None] = None
-    concurrency: Union[int, None] = None
+    operatorNotes: str | None = None
+    timezone: str | None = None
+    email: str | None = None
+    emailOnFailure: bool | None = None
+    emailOnRetries: bool | None = None
+    slaWarningTime: str | None = None
+    concurrency: int | None = None
 
 
 class airflowCustomDags(BaseModel):
     name: str
-    scheduleInterval: Union[str, None] = None
+    scheduleInterval: str | None = None
     autoRegenerateDag: bool
-    airflowLink: Union[str, None] = None
+    airflowLink: str | None = None
     # 	operatorNotes: Union[str, None] = None
     # 	applicationNotes: Union[str, None] = None
-    operatorNotes: Union[str, None] = None
-    timezone: Union[str, None] = None
-    email: Union[str, None] = None
-    emailOnFailure: Union[bool, None] = None
-    emailOnRetries: Union[bool, None] = None
-    slaWarningTime: Union[str, None] = None
-    concurrency: Union[int, None] = None
+    operatorNotes: str | None = None
+    timezone: str | None = None
+    email: str | None = None
+    emailOnFailure: bool | None = None
+    emailOnRetries: bool | None = None
+    slaWarningTime: str | None = None
+    concurrency: int | None = None
 
 
 class airflowTask(BaseModel):
     name: str
     type: str
     placement: str
-    connection: Union[str, None] = None
-    airflowPool: Union[str, None] = None
-    airflowPriority: Union[int, None] = None
+    connection: str | None = None
+    airflowPool: str | None = None
+    airflowPriority: int | None = None
     includeInAirflow: bool
-    taskDependencyDownstream: Union[str, None] = None
-    taskDependencyUpstream: Union[str, None] = None
-    taskConfig: Union[str, None] = None
-    sensorPokeInterval: Union[int, None] = None
-    sensorTimeoutMinutes: Union[int, None] = None
-    sensorConnection: Union[str, None] = None
-    sensorSoftFail: Union[int, None] = None
-    sudoUser: Union[str, None] = None
+    taskDependencyDownstream: str | None = None
+    taskDependencyUpstream: str | None = None
+    taskConfig: str | None = None
+    sensorPokeInterval: int | None = None
+    sensorTimeoutMinutes: int | None = None
+    sensorConnection: str | None = None
+    sensorSoftFail: int | None = None
+    sudoUser: str | None = None
 
 
 class airflowCustomDag(BaseModel):
     name: str
-    scheduleInterval: Union[str, None] = None
-    retries: Union[int, None] = None
-    operatorNotes: Union[str, None] = None
-    applicationNotes: Union[str, None] = None
-    airflowNotes: Union[str, None] = None
-    autoRegenerateDag: Union[bool, None] = None
-    sudoUser: Union[str, None] = None
-    timezone: Union[str, None] = None
-    email: Union[str, None] = None
-    emailOnFailure: Union[bool, None] = None
-    emailOnRetries: Union[bool, None] = None
-    tags: Union[str, None] = None
-    slaWarningTime: Union[str, None] = None
-    retryExponentialBackoff: Union[int, None] = None
-    concurrency: Union[int, None] = None
-    airflowLink: Union[str, None] = None
-    tasks: List[airflowTask] = []
+    scheduleInterval: str | None = None
+    retries: int | None = None
+    operatorNotes: str | None = None
+    applicationNotes: str | None = None
+    airflowNotes: str | None = None
+    autoRegenerateDag: bool | None = None
+    sudoUser: str | None = None
+    timezone: str | None = None
+    email: str | None = None
+    emailOnFailure: bool | None = None
+    emailOnRetries: bool | None = None
+    tags: str | None = None
+    slaWarningTime: str | None = None
+    retryExponentialBackoff: int | None = None
+    concurrency: int | None = None
+    airflowLink: str | None = None
+    tasks: list[airflowTask] = []
 
 
 class airflowExportDag(BaseModel):
     name: str
-    scheduleInterval: Union[str, None] = None
-    filterConnection: Union[str, None] = None
-    filterTargetSchema: Union[str, None] = None
-    filterTargetTable: Union[str, None] = None
-    retries: Union[int, None] = None
-    operatorNotes: Union[str, None] = None
-    applicationNotes: Union[str, None] = None
-    autoRegenerateDag: Union[bool, None] = None
-    airflowNotes: Union[str, None] = None
-    sudoUser: Union[str, None] = None
-    timezone: Union[str, None] = None
-    email: Union[str, None] = None
-    emailOnFailure: Union[bool, None] = None
-    emailOnRetries: Union[bool, None] = None
-    tags: Union[str, None] = None
-    slaWarningTime: Union[str, None] = None
-    retryExponentialBackoff: Union[int, None] = None
-    concurrency: Union[int, None] = None
-    airflowLink: Union[str, None] = None
-    tasks: List[airflowTask] = []
+    scheduleInterval: str | None = None
+    filterConnection: str | None = None
+    filterTargetSchema: str | None = None
+    filterTargetTable: str | None = None
+    retries: int | None = None
+    operatorNotes: str | None = None
+    applicationNotes: str | None = None
+    autoRegenerateDag: bool | None = None
+    airflowNotes: str | None = None
+    sudoUser: str | None = None
+    timezone: str | None = None
+    email: str | None = None
+    emailOnFailure: bool | None = None
+    emailOnRetries: bool | None = None
+    tags: str | None = None
+    slaWarningTime: str | None = None
+    retryExponentialBackoff: int | None = None
+    concurrency: int | None = None
+    airflowLink: str | None = None
+    tasks: list[airflowTask] = []
 
 
 class airflowImportDag(BaseModel):
     name: str
-    scheduleInterval: Union[str, None] = None
-    filterTable: Union[str, None] = None
-    finishAllStage1First: Union[bool, None] = None
-    runImportAndEtlSeparate: Union[bool, None] = None
-    retries: Union[int, None] = None
-    retriesStage1: Union[int, None] = None
-    retriesStage2: Union[int, None] = None
-    poolStage1: Union[str, None] = None
-    poolStage2: Union[str, None] = None
-    operatorNotes: Union[str, None] = None
-    applicationNotes: Union[str, None] = None
-    autoRegenerateDag: Union[bool, None] = None
-    airflowNotes: Union[str, None] = None
-    sudoUser: Union[str, None] = None
-    metadataImport: Union[bool, None] = None
-    timezone: Union[str, None] = None
-    email: Union[str, None] = None
-    emailOnFailure: Union[bool, None] = None
-    emailOnRetries: Union[bool, None] = None
-    tags: Union[str, None] = None
-    slaWarningTime: Union[str, None] = None
-    retryExponentialBackoff: Union[bool, None] = None
-    concurrency: Union[int, None] = None
-    airflowLink: Union[str, None] = None
-    tasks: List[airflowTask] = []
+    scheduleInterval: str | None = None
+    filterTable: str | None = None
+    finishAllStage1First: bool | None = None
+    runImportAndEtlSeparate: bool | None = None
+    retries: int | None = None
+    retriesStage1: int | None = None
+    retriesStage2: int | None = None
+    poolStage1: str | None = None
+    poolStage2: str | None = None
+    operatorNotes: str | None = None
+    applicationNotes: str | None = None
+    autoRegenerateDag: bool | None = None
+    airflowNotes: str | None = None
+    sudoUser: str | None = None
+    metadataImport: bool | None = None
+    timezone: str | None = None
+    email: str | None = None
+    emailOnFailure: bool | None = None
+    emailOnRetries: bool | None = None
+    tags: str | None = None
+    slaWarningTime: str | None = None
+    retryExponentialBackoff: bool | None = None
+    concurrency: int | None = None
+    airflowLink: str | None = None
+    tasks: list[airflowTask] = []
 
 
 class airflowDagPK(BaseModel):
@@ -774,14 +772,14 @@ class airflowDagPK(BaseModel):
 
 
 class airflowDagBulkUpdate(BaseModel):
-    scheduleInterval: Union[str, None] = None
-    autoRegenerateDag: Union[bool, None] = None
-    operatorNotes: Union[str, None] = None
-    sudoUser: Union[str, None] = None
-    timezone: Union[str, None] = None
-    email: Union[str, None] = None
-    emailOnFailure: Union[bool, None] = None
-    emailOnRetries: Union[bool, None] = None
-    slaWarningTime: Union[str, None] = None
-    concurrency: Union[int, None] = None
-    dags: List[airflowDagPK]
+    scheduleInterval: str | None = None
+    autoRegenerateDag: bool | None = None
+    operatorNotes: str | None = None
+    sudoUser: str | None = None
+    timezone: str | None = None
+    email: str | None = None
+    emailOnFailure: bool | None = None
+    emailOnRetries: bool | None = None
+    slaWarningTime: str | None = None
+    concurrency: int | None = None
+    dags: list[airflowDagPK]
