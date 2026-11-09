@@ -598,7 +598,7 @@ class operation(metaclass=Singleton):
             )
 
             first_loop = True
-            for index, row in columns_df.iterrows():
+            for _index, row in columns_df.iterrows():
                 target_column_name = row["targetColumnName"]
 
                 if target_column_name != None and target_column_name.strip() != "":
@@ -985,7 +985,7 @@ class operation(metaclass=Singleton):
         )
 
         first_loop = True
-        for index, row in columns_config.iterrows():
+        for _index, row in columns_config.iterrows():
             if first_loop == False:
                 query += ", "
             target_column_name = row["targetColumnName"]
@@ -998,7 +998,7 @@ class operation(metaclass=Singleton):
 
         query += ") select "
         first_loop = True
-        for index, row in columns_config.iterrows():
+        for _index, row in columns_config.iterrows():
             if first_loop == False:
                 query += ", "
             query += "`%s`" % (row["hiveColumnName"])
@@ -1062,7 +1062,7 @@ class operation(metaclass=Singleton):
             # Generate the SQL used to query Hive
             column_list = ""
             column_starting_with_underscore_found = False
-            for index, row in columns_config.iterrows():
+            for _index, row in columns_config.iterrows():
                 column_name = row["hiveColumnName"]
                 target_column_name = row["targetColumnName"]
 
@@ -1136,7 +1136,7 @@ class operation(metaclass=Singleton):
             # Generate the SQL used to query Hive
             column_list = ""
             column_starting_with_underscore_found = False
-            for index, row in columns_config.iterrows():
+            for _index, row in columns_config.iterrows():
                 column_name = row["hiveColumnName"]
                 target_column_name = row["targetColumnName"]
 

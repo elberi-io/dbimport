@@ -1884,7 +1884,7 @@ class operation(metaclass=Singleton):
             # Get a Pandas DF with columnames and anonymization function
             anonymization_function = self.import_config.get_anonymization_function()
 
-            for index, row in anonymization_function.iterrows():
+            for _index, row in anonymization_function.iterrows():
                 c_name = row["source_column_name"]
                 c_function = row["anonymization_function"]
 
@@ -2825,7 +2825,7 @@ class operation(metaclass=Singleton):
                 query += "`datalake_mssql_changetrack_version` bigint"
                 query += ", `datalake_mssql_changetrack_operation` varchar(2)"
 
-            for index, row in columns_df.iterrows():
+            for _index, row in columns_df.iterrows():
                 if first_loop == False:
                     query += ", "
 
@@ -3292,7 +3292,7 @@ class operation(metaclass=Singleton):
             restrict_columns_list = restrict_columns.split(",")
 
         first_loop = True
-        for index, row in columns_df.iterrows():
+        for _index, row in columns_df.iterrows():
             if restrict_columns_list != []:
                 if row["name"] not in restrict_columns_list:
                     continue
@@ -4005,7 +4005,7 @@ class operation(metaclass=Singleton):
             # 2. Get the position in configDF with that column name
             # 3. Get the column in the same position from HiveDF
             # 4. Check if that column name exists in the mergeDF with Right_Only. If it does, the column was just renamed
-            for index, row in columns_merge_only_name.loc[
+            for _index, row in columns_merge_only_name.loc[
                 columns_merge_only_name["Exist"] == "left_only"
             ].iterrows():
                 row_in_config = columns_config.loc[
@@ -4158,7 +4158,7 @@ class operation(metaclass=Singleton):
                 indicator="Exist",
             )
 
-        for index, row in columns_merge_only_name.loc[
+        for _index, row in columns_merge_only_name.loc[
             columns_merge_only_name["Exist"] == "left_only"
         ].iterrows():
             # This will iterate over columns that only exists in the config and not in Hive. We add these to Hive
@@ -4254,7 +4254,7 @@ class operation(metaclass=Singleton):
         # 					except pyspark.sql.utils.AnalysisException as e:
         # 						raise SQLerror(str(e))
 
-        for index, row in columns_merge_only_name_type.loc[
+        for _index, row in columns_merge_only_name_type.loc[
             columns_merge_only_name_type["Exist"] == "left_only"
         ].iterrows():
             # This will iterate over columns that had the type changed from the source
@@ -4384,7 +4384,7 @@ class operation(metaclass=Singleton):
             columns_config, columns_hive, on=None, how="outer", indicator="Exist"
         )
 
-        for index, row in columns_merge.loc[
+        for _index, row in columns_merge.loc[
             columns_merge["Exist"] == "left_only"
         ].iterrows():
             if row["comment"] == None:
@@ -4553,7 +4553,7 @@ class operation(metaclass=Singleton):
                 indicator="Exist",
             )
 
-            for index, row in foreign_keys_diff.loc[
+            for _index, row in foreign_keys_diff.loc[
                 foreign_keys_diff["Exist"] == "right_only"
             ].iterrows():
                 # This will iterate over ForeignKeys that only exists in Hive
@@ -4576,7 +4576,7 @@ class operation(metaclass=Singleton):
                     )
                     break
 
-            for index, row in foreign_keys_diff.loc[
+            for _index, row in foreign_keys_diff.loc[
                 foreign_keys_diff["Exist"] == "left_only"
             ].iterrows():
                 # This will iterate over ForeignKeys that only exists in the DBImport configuration database
@@ -4822,7 +4822,7 @@ class operation(metaclass=Singleton):
         first_loop = True
         column_definition_source = ""
         column_definition_target = ""
-        for index, row in column_merge.loc[column_merge["Exist"] == "both"].iterrows():
+        for _index, row in column_merge.loc[column_merge["Exist"] == "both"].iterrows():
             if first_loop == False:
                 column_definition_source += ", "
             if first_loop == False:
@@ -4932,7 +4932,7 @@ class operation(metaclass=Singleton):
             result_df = self.common_operations.execute_hive_query(query)
             max_value = result_df.loc[0][0]
 
-            if type(max_value) == pd._libs.tslibs.timestamps.Timestamp:
+            if type(max_value) is pd._libs.tslibs.timestamps.Timestamp:
                 (dt, micro) = max_value.strftime("%Y-%m-%d %H:%M:%S.%f").split(".")
                 max_value = "%s.%03d" % (dt, int(micro) / 1000)
             else:
@@ -4954,7 +4954,7 @@ class operation(metaclass=Singleton):
         result_df = self.import_config.get_all_active_incr_imports()
 
         tables_repaired = False
-        for index, row in result_df.iterrows():
+        for _index, row in result_df.iterrows():
             tables_repaired = True
             hive_db = row[0]
             hive_table = row[1]

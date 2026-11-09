@@ -103,7 +103,7 @@ class sparkUDFClass:
         return_string = str(column_value)[:4]
 
         if len(str(column_value)) > 4:
-            for i in range(len(str(column_value)) - 4):
+            for _i in range(len(str(column_value)) - 4):
                 return_string = return_string + "*"
 
         return return_string

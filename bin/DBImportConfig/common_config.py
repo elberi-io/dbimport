@@ -1602,7 +1602,7 @@ class config(metaclass=Singleton):
                     logging.error("Cant determine database based on jdbc_string")
                 exit_after_function = True
 
-            if not "delimident=" in self.jdbc_url.lower():
+            if "delimident=" not in self.jdbc_url.lower():
                 if quiet == False:
                     logging.error(
                         "Informix requires DELIMIDENT=Y setting on the JDBC connection string"

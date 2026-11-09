@@ -144,22 +144,22 @@ class initialize:
         line_header_column = "Column"
         line_header_desc = "Documentation"
 
-        for i in range(max_column_length + 2):
+        for _i in range(max_column_length + 2):
             line_single += "-"
             line_double += "="
         line_single += "+"
         line_double += "+"
-        for i in range(max_desc_length + 2):
+        for _i in range(max_desc_length + 2):
             line_single += "-"
             line_double += "="
         line_single += "+"
         line_double += "+"
 
         line_header = "| %s" % (line_header_column)
-        for i in range(max_column_length + 1 - len(line_header_column)):
+        for _i in range(max_column_length + 1 - len(line_header_column)):
             line_header += " "
         line_header += "| %s" % (line_header_desc)
-        for i in range(max_desc_length + 1 - len(line_header_desc)):
+        for _i in range(max_desc_length + 1 - len(line_header_desc)):
             line_header += " "
         line_header += "|"
 
@@ -210,7 +210,7 @@ class initialize:
                 print(" ")
                 print("Table - %s" % (table_name))
                 line = ""
-                for i in range(len(table_name) + 8):
+                for _i in range(len(table_name) + 8):
                     line += "-"
                 print(line)
                 print("")
@@ -222,10 +222,10 @@ class initialize:
                 print(line_double)
 
             line = "| %s" % (column_name)
-            for i in range(max_column_length + 1 - len(column_name)):
+            for _i in range(max_column_length + 1 - len(column_name)):
                 line += " "
             line += "| %s" % (column_comment)
-            for i in range(max_desc_length + 1 - len(column_comment)):
+            for _i in range(max_desc_length + 1 - len(column_comment)):
                 line += " "
             line += "|"
             print(line)

@@ -1686,7 +1686,7 @@ class source:
                 col_name_list = col_name.split(",")
                 ref_col_name_list = ref_col_name.split(",")
 
-                for i, column in enumerate(col_name_list):
+                for i, _column in enumerate(col_name_list):
                     col_name = col_name_list[i]
                     ref_col_name = ref_col_name_list[i]
 

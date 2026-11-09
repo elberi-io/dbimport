@@ -74,7 +74,7 @@ def main(argv):
     if len(opts) == 0:
         print_help()
 
-    for opt, arg in opts:
+    for opt, _arg in opts:
         if opt in ("-v", "--debug"):
             logging_level = logging.DEBUG
         elif opt == "--help":

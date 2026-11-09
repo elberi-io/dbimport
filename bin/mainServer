@@ -66,7 +66,7 @@ def main(argv):
     logging_level = logging.INFO
     display_version = False
 
-    for opt, arg in opts:
+    for opt, _arg in opts:
         if opt in ("-h", "--help"):
             print_help()
         elif opt in ("-V", "--version"):

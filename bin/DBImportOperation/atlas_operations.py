@@ -1497,7 +1497,7 @@ class atlasOperation:
         json_data["entities"] = []
 
         # Loop through the columns and add them to the JSON
-        for index, row in self.source_columns_df.iterrows():
+        for _index, row in self.source_columns_df.iterrows():
             column_data = {}
             column_data["typeName"] = "rdbms_column"
             column_data["createdBy"] = "DBImport"
@@ -1513,7 +1513,7 @@ class atlasOperation:
                 column_nullable = False
 
             column_is_primary_key = False
-            for keys_index, keys_row in self.source_keys_df.iterrows():
+            for _keys_index, keys_row in self.source_keys_df.iterrows():
                 if (
                     keys_row["COL_NAME"] == column_name
                     and keys_row["CONSTRAINT_TYPE"] == constant.PRIMARY_KEY
@@ -1608,7 +1608,7 @@ class atlasOperation:
 
                 # Loop through the source columns to see if it exists in there
                 found_source_column = False
-                for index, row in self.source_columns_df.iterrows():
+                for _index, row in self.source_columns_df.iterrows():
                     source_column_name = row["SOURCE_COLUMN_NAME"]
                     source_column_uri = self.get_atlas_rdbms_column_uri(
                         schema_name=schema_name,
@@ -1668,7 +1668,7 @@ class atlasOperation:
                 json_data = None
                 column_count = 0
 
-                for index, row in self.source_keys_df.loc[
+                for _index, row in self.source_keys_df.loc[
                     self.source_keys_df["CONSTRAINT_NAME"] == fk_name
                 ].iterrows():
                     # Each 'row' now contains information about the column in the FK

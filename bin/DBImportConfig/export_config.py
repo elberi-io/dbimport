@@ -645,7 +645,7 @@ class config(metaclass=Singleton):
         logging.debug("Executing export_config.save_column_data()")
         logging.info("Saving column data to MySQL table - export_columns")
 
-        for index, row in columnsDF.iterrows():
+        for _index, row in columnsDF.iterrows():
             column_name = row["name"]
             column_type = row["type"]
             column_comment = self.common_config.strip_unwanted_char_comment(
@@ -1743,7 +1743,7 @@ class config(metaclass=Singleton):
         if self.common_config.jdbc_servertype in (constant.ORACLE, constant.DB2_UDB):
             force_column_uppercase = True
 
-        for index, row in columns_df.iterrows():
+        for _index, row in columns_df.iterrows():
             column_type = row["columnType"]
             target_column_name = row["targetColumnName"]
             hive_column_name = row["hiveColumnName"]
@@ -1802,7 +1802,7 @@ class config(metaclass=Singleton):
         self.sqoop_mapcolumnjava = []
         first_loop = True
 
-        for index, row in columns_df.iterrows():
+        for _index, row in columns_df.iterrows():
             column_type = row["columnType"]
             column_comment = row["comment"]
             target_column_name = row["targetColumnName"]

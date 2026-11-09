@@ -9,15 +9,11 @@
     "B904": 4,
     "E711": 84,
     "E712": 96,
-    "E713": 1,
     "E722": 40,
     "F841": 2,
     "N803": 28,
     "N806": 6,
     "UP031": 163
-  },
-  "bin/DBImportConfig/configSchema.py": {
-    "UP009": 1
   },
   "bin/DBImportConfig/decryption.py": {
     "B904": 1,
@@ -25,7 +21,7 @@
     "E712": 4
   },
   "bin/DBImportConfig/export_config.py": {
-    "B007": 7,
+    "B007": 4,
     "E711": 28,
     "E712": 54,
     "F841": 7,
@@ -34,7 +30,6 @@
     "UP031": 147
   },
   "bin/DBImportConfig/export_stage.py": {
-    "B007": 1,
     "E711": 7,
     "E712": 21,
     "F841": 1,
@@ -42,7 +37,6 @@
     "UP031": 58
   },
   "bin/DBImportConfig/import_config.py": {
-    "B007": 8,
     "B904": 3,
     "E711": 92,
     "E712": 114,
@@ -52,7 +46,6 @@
     "UP031": 259
   },
   "bin/DBImportConfig/import_stage.py": {
-    "B007": 1,
     "E711": 7,
     "E712": 23,
     "F841": 1,
@@ -66,7 +59,7 @@
     "UP031": 5
   },
   "bin/DBImportOperation/atlas_operations.py": {
-    "B007": 6,
+    "B007": 2,
     "B904": 11,
     "E711": 41,
     "E712": 37,
@@ -76,7 +69,6 @@
     "UP031": 109
   },
   "bin/DBImportOperation/common_operations.py": {
-    "B007": 1,
     "B904": 2,
     "E711": 13,
     "E712": 25,
@@ -86,7 +78,6 @@
     "UP031": 44
   },
   "bin/DBImportOperation/copy_operations.py": {
-    "B007": 10,
     "E711": 26,
     "E712": 36,
     "E722": 3,
@@ -95,7 +86,6 @@
     "UP031": 79
   },
   "bin/DBImportOperation/etl_operations.py": {
-    "B007": 15,
     "E711": 18,
     "E712": 59,
     "E722": 1,
@@ -104,7 +94,7 @@
     "UP031": 120
   },
   "bin/DBImportOperation/export_operations.py": {
-    "B007": 16,
+    "B007": 11,
     "E711": 34,
     "E712": 48,
     "E722": 16,
@@ -113,16 +103,12 @@
     "N803": 7,
     "UP031": 72
   },
-  "bin/DBImportOperation/hiveSchema.py": {
-    "UP009": 1
-  },
   "bin/DBImportOperation/import_operations.py": {
-    "B007": 18,
+    "B007": 7,
     "B904": 3,
     "B905": 1,
     "E711": 66,
     "E712": 148,
-    "E721": 1,
     "E722": 17,
     "F841": 6,
     "N802": 4,
@@ -130,24 +116,17 @@
     "UP031": 215
   },
   "bin/Schedule/Airflow.py": {
-    "B007": 9,
     "B904": 6,
     "E711": 50,
     "E712": 59,
-    "E721": 1,
     "E722": 5,
     "F841": 15,
-    "UP031": 280,
-    "UP032": 1
-  },
-  "bin/Schedule/airflowSchema.py": {
-    "UP009": 1
+    "UP031": 280
   },
   "bin/SchemaUpgrade/env.py": {
     "UP031": 1
   },
   "bin/Server/atlasDiscovery.py": {
-    "B007": 1,
     "E711": 4,
     "E712": 13,
     "E722": 2,
@@ -156,7 +135,6 @@
     "UP031": 14
   },
   "bin/Server/daemon.py": {
-    "B007": 2,
     "E711": 7,
     "E712": 3,
     "E722": 3,
@@ -164,26 +142,18 @@
     "N803": 4,
     "UP031": 41
   },
-  "bin/Server/dataModels.py": {
-    "UP006": 10,
-    "UP007": 435,
-    "UP035": 1
-  },
   "bin/Server/restServer.py": {
     "B904": 1,
     "E711": 12,
     "E712": 3,
     "N803": 21,
     "N816": 1,
-    "UP006": 23,
-    "UP031": 7,
-    "UP035": 2
+    "UP031": 7
   },
   "bin/Server/restServerCalls.py": {
     "B904": 3,
     "E711": 119,
     "E712": 27,
-    "E721": 1,
     "E722": 1,
     "F841": 59,
     "N802": 25,
@@ -215,7 +185,6 @@
     "N816": 1
   },
   "bin/common/sparkUDF2.py": {
-    "B007": 1,
     "E711": 3,
     "E722": 1,
     "N803": 3,
@@ -241,14 +210,12 @@
     "UP031": 24
   },
   "bin/import": {
-    "B007": 1,
     "E711": 217,
     "E712": 328,
     "F841": 1,
     "UP031": 57
   },
   "bin/mainServer": {
-    "B007": 1,
     "E712": 2,
     "N803": 3,
     "UP031": 10
@@ -262,7 +229,6 @@
     "UP031": 3
   },
   "bin/restServer": {
-    "B007": 1,
     "E712": 5,
     "F841": 1,
     "N803": 3,
@@ -270,7 +236,6 @@
     "UP031": 5
   },
   "bin/setup": {
-    "B007": 1,
     "E711": 1,
     "E712": 1,
     "F841": 3,
@@ -278,14 +243,12 @@
     "UP031": 1
   },
   "bin/setupOperation/database.py": {
-    "B007": 7,
     "E711": 1,
     "E722": 1,
     "N812": 1,
     "UP031": 12
   },
   "bin/sourceSchemaReader/schemaReader.py": {
-    "B007": 1,
     "E711": 115,
     "E712": 3,
     "E722": 6,

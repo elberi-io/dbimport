@@ -92,7 +92,7 @@ def main(argv):
         except getopt.GetoptError:
             print_help()
 
-        for opt, arg in opts:
+        for opt, _arg in opts:
             if opt in ("-h", "--help"):
                 print_help()
             elif opt in ("-V", "--version"):
