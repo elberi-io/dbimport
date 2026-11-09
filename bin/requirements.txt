@@ -563,9 +563,9 @@ jpype1==1.5.0 ; sys_platform == 'linux' \
     # via
     #   dbimport
     #   jaydebeapi
-kafka-python==2.3.2 ; sys_platform == 'linux' \
-    --hash=sha256:2d2469bcabc2551be7eaf7fb512e1241484d358800f2665b90e7e24fea84259d \
-    --hash=sha256:e8a5e6f2c4ce13a8041669337038d5125e0e09e6d6f0911902ae5939e5b9595e
+kafka-python==2.3.3 ; sys_platform == 'linux' \
+    --hash=sha256:9ab1c473f0bc72c8db82ec77137f30691de42e68807a1933c3200b8771235ce1 \
+    --hash=sha256:c566a326161595d18e6a65069fb5cee8e389528529932b224ce57641ce49de1d
     # via dbimport
 krb5==0.10.0 ; sys_platform == 'linux' \
     --hash=sha256:07c2de3a4f99ddf53f022e66e66583cd5ec938a8c1690881ee95a3225cd8c7ca \
