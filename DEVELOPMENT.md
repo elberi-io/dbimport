@@ -150,7 +150,9 @@ module and error code differs from `tests/fixtures/mypy_baseline.json`.
 New modules must have no errors, and in listed modules the count per
 error code must not grow (it compares counts, so a change that fixes one
 error and adds another of the same code passes); after fixing old
-errors, regenerate the baseline (see below). A `# type: ignore` must
+errors, regenerate the baseline (see below). A change that adds type
+hints may raise counts where the new types expose existing type mixes;
+its commit message lists each one. A `# type: ignore` must
 name the error code. Libraries without type information are listed
 under `ignore_missing_imports`.
 
