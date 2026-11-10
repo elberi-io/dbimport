@@ -243,6 +243,7 @@ module = [
     "DBImportConfig.common_config",
     "DBImportConfig.decryption",
     "DBImportConfig.export_stage",
+    "DBImportConfig.import_config",
     "DBImportConfig.import_stage",
     "DBImportConfig.sendStatistics",
 ]
