@@ -23,6 +23,7 @@ import shutil
 import subprocess
 import sys
 from datetime import datetime, timedelta
+from typing import Any
 from urllib.parse import quote
 
 import jaydebeapi
@@ -43,7 +44,9 @@ from sourceSchemaReader import schemaReader
 
 
 class config(metaclass=Singleton):
-    def __init__(self, Hive_DB=None, Hive_Table=None):
+    def __init__(
+        self, Hive_DB: str | None = None, Hive_Table: str | None = None
+    ) -> None:
         logging.debug("Executing common_config.__init__()")
 
         self.Hive_DB = None
@@ -53,14 +56,14 @@ class config(metaclass=Singleton):
         if Hive_Table != None and self.Hive_Table == None:
             self.Hive_Table = Hive_Table
 
-        self.mysql_conn = None
-        self.mysql_cursor = None
+        self.mysql_conn: Any = None
+        self.mysql_cursor: Any = None
         self.tempdir = None
         self.startDate = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
-        self.operationType = None
-        self.dbAlias = None
-        self.targetSchema = None
-        self.targetTable = None
+        self.operationType: str | None = None
+        self.dbAlias: str | None = None
+        self.targetSchema: str | None = None
+        self.targetTable: str | None = None
 
         # Variables used in lookupConnectionAlias
         self.db_mssql = False
@@ -76,46 +79,46 @@ class config(metaclass=Singleton):
         self.db_awss3 = False
         self.db_informix = False
         self.db_sqlanywhere = False
-        self.jdbc_url = None
-        self.jdbc_hostname = None
-        self.jdbc_port = None
-        self.jdbc_database = None
-        self.jdbc_username = None
-        self.jdbc_password = None
-        self.jdbc_classpath = None
-        self.jdbc_driver = None
+        self.jdbc_url: str | None = None
+        self.jdbc_hostname: str | None = None
+        self.jdbc_port: str | None = None
+        self.jdbc_database: str | None = None
+        self.jdbc_username: str | None = None
+        self.jdbc_password: str | None = None
+        self.jdbc_classpath: str | None = None
+        self.jdbc_driver: str | None = None
         self.jdbc_driver_for_python = None
-        self.jdbc_classpath_for_python = None
+        self.jdbc_classpath_for_python: str | list[str] | None = None
         self.jdbc_ad_domain = None
-        self.jdbc_encrypt = None
-        self.jdbc_encrypt_string = None
-        self.jdbc_trustedservercert = None
-        self.jdbc_trustedservercert_password = None
-        self.jdbc_hostincert = None
-        self.jdbc_logintimeout = None
-        self.jdbc_servertype = None
-        self.jdbc_oracle_sid = None
-        self.jdbc_oracle_servicename = None
-        self.jdbc_force_column_lowercase = None
+        self.jdbc_encrypt: bool | str | None = None
+        self.jdbc_encrypt_string: str | None = None
+        self.jdbc_trustedservercert: str | bool | None = None
+        self.jdbc_trustedservercert_password: str | bool | None = None
+        self.jdbc_hostincert: str | None = None
+        self.jdbc_logintimeout: str | None = None
+        self.jdbc_servertype: str | None = None
+        self.jdbc_oracle_sid: str | None = None
+        self.jdbc_oracle_servicename: str | None = None
+        self.jdbc_force_column_lowercase: bool | None = None
         self.jdbc_environment = None
         self.seedFile = None
-        self.mongo_client = None
-        self.mongoDB = None
-        self.mongoAuthSource = None
-        self.awsS3assumeRole = None
-        self.awsS3assumeRoleDuration = None
-        self.awsS3proxyServer = None
-        self.awsS3bucket = None
-        self.awsS3region = None
-        self.awsS3externalId = None
-        self.awsS3fileFormat = None
+        self.mongo_client: Any = None
+        self.mongoDB: Any = None
+        self.mongoAuthSource: str | None = None
+        self.awsS3assumeRole: str | None = None
+        self.awsS3assumeRoleDuration: int | None = None
+        self.awsS3proxyServer: str | None = None
+        self.awsS3bucket: str | None = None
+        self.awsS3region: str | None = None
+        self.awsS3externalId: str | None = None
+        self.awsS3fileFormat: str | None = None
         self.kerberos_initiated = False
 
-        self.impalaDriver = None
-        self.impalaClasspath = None
-        self.impalaAddress = None
-        self.impala_jdbc_conn = None
-        self.impalaJDBCCursor = None
+        self.impalaDriver: str | None = None
+        self.impalaClasspath: str | None = None
+        self.impalaAddress: str | None = None
+        self.impala_jdbc_conn: Any = None
+        self.impalaJDBCCursor: Any = None
 
         self.sparkPathAppend = None
         self.sparkPysparkSubmitArgs = None
@@ -134,25 +137,25 @@ class config(metaclass=Singleton):
         self.sparkLogLevel = None
 
         self.operationTimestamp = None
-        self.yarn_application_start = None
+        self.yarn_application_start: str | None = None
 
         self.sourceSchema = None
-        self.tableType = None
+        self.tableType: str | None = None
 
-        self.custom_max_query = None
+        self.custom_max_query: str | None = None
 
         self.source_columns_df = pd.DataFrame()
         self.source_keys_df = pd.DataFrame()
 
-        self.jdbc_conn = None
-        self.JDBCCursor = None
+        self.jdbc_conn: Any = None
+        self.JDBCCursor: Any = None
 
         self.sourceSchema = schemaReader.source()
 
         # SQLAlchemy connection variables
-        self.configDB = None
-        self.configDBSession = None
-        self.mysql_connection_details = None
+        self.configDB: Any = None
+        self.configDBSession: Any = None
+        self.mysql_connection_details: dict[str, str] | None = None
 
         self.debugLogLevel = False
         if logging.root.level == 10:  # DEBUG
@@ -272,13 +275,13 @@ class config(metaclass=Singleton):
 
         logging.debug("Executing common_config.__init__() - Finished")
 
-    def disconnect_config_database(self):
+    def disconnect_config_database(self) -> None:
         """Closing connection against config database. Only used during debug and development"""
         logging.debug("Connection against MySQL Config database have been closed")
         self.mysql_cursor.close()
         self.mysql_conn.close()
 
-    def get_mysql_credentials(self):
+    def get_mysql_credentials(self) -> dict[str, str]:
         # Fetch configuration about MySQL database and how to connect to it
 
         if self.mysql_connection_details != None:
@@ -344,7 +347,7 @@ class config(metaclass=Singleton):
 
         return self.mysql_connection_details
 
-    def reconnect_config_database(self, printReconnectMessage=True):
+    def reconnect_config_database(self, printReconnectMessage: bool = True) -> None:
         if self.mysql_conn == None or self.mysql_conn.is_connected() == False:
             if printReconnectMessage == True:
                 logging.warn("Connection to MySQL have been lost. Reconnecting...")
@@ -375,7 +378,9 @@ class config(metaclass=Singleton):
             else:
                 self.mysql_cursor = self.mysql_conn.cursor(buffered=True)
 
-    def get_atlas_jdbc_connection_data(self, db_alias=None):
+    def get_atlas_jdbc_connection_data(
+        self, db_alias: str | None = None
+    ) -> dict[str, Any]:
         """Reads the extended information in jdbc_connections needed by Atlas (contact_info, owner and more)"""
         logging.debug("Executing common_config.get_atlas_jdbc_connection_data()")
 
@@ -414,7 +419,7 @@ class config(metaclass=Singleton):
         )
         return return_dict
 
-    def disconnect_sqlalchemy(self, logger=""):
+    def disconnect_sqlalchemy(self, logger: str = "") -> None:
         """Disconnects from the database and removes all sessions and engine"""
         log = logging.getLogger(logger)
 
@@ -425,7 +430,9 @@ class config(metaclass=Singleton):
 
         self.configDBSession = None
 
-    def connect_sqlalchemy(self, exit_if_failure=True, logger=""):
+    def connect_sqlalchemy(
+        self, exit_if_failure: bool = True, logger: str = ""
+    ) -> bool:
         log = logging.getLogger(logger)
         """ Connects to the configuration database with SQLAlchemy """
 
@@ -473,18 +480,18 @@ class config(metaclass=Singleton):
         else:
             return True
 
-    def set_hive_table(self, Hive_DB, Hive_Table):
+    def set_hive_table(self, Hive_DB: str, Hive_Table: str) -> None:
         """Sets the parameters to work against a new Hive database and table"""
         self.Hive_DB = Hive_DB.lower()
         self.Hive_Table = Hive_Table.lower()
 
-    def get_mysql_cursor(self):
+    def get_mysql_cursor(self) -> Any:
         return self.mysql_cursor
 
-    def get_mysql_connector(self):
+    def get_mysql_connector(self) -> Any:
         return self.mysql_conn
 
-    def remove_temporary_files(self):
+    def remove_temporary_files(self) -> None:
         logging.debug("Executing common_config.remove_temporary_files()")
 
         # Remove the kerberos ticket file
@@ -508,7 +515,9 @@ class config(metaclass=Singleton):
 
         logging.debug("Executing common_config.remove_temporary_files() - Finished")
 
-    def check_time_window(self, connection_alias, atlasDiscoveryMode=False):
+    def check_time_window(
+        self, connection_alias: str, atlasDiscoveryMode: bool = False
+    ) -> bool:
         logging.debug("Executing common_config.check_time_window()")
         if atlasDiscoveryMode == False:
             logging.info(
@@ -642,7 +651,7 @@ class config(metaclass=Singleton):
         logging.debug("Executing common_config.check_time_window() - Finished")
         return True
 
-    def check_connection_alias(self, connection_alias):
+    def check_connection_alias(self, connection_alias: str) -> bool:
         """Will check if the connection alias exists in the jdbc_connection table"""
         logging.debug("Executing common_config.check_connection_alias()")
 
@@ -659,7 +668,7 @@ class config(metaclass=Singleton):
         logging.debug("Executing common_config.check_connection_alias() - Finished")
         return rc
 
-    def check_kerberos_ticket(self):
+    def check_kerberos_ticket(self) -> bool:
         """Checks if there is a valid kerberos ticket or not. Runst 'klist -s' and checks the exitCode. Returns True or False"""
         logging.debug("Executing common_config.check_kerberos_ticket()")
 
@@ -734,7 +743,7 @@ class config(metaclass=Singleton):
 
         logging.debug("Executing common_config.check_kerberos_ticket() - Finished")
 
-    def encrypt_string(self, str_to_encrypt):
+    def encrypt_string(self, str_to_encrypt: str) -> str:
         self.crypto.set_private_key_file(
             configuration.get("Credentials", "private_key")
         )
@@ -743,7 +752,9 @@ class config(metaclass=Singleton):
         encrypted_str = self.crypto.encrypt(str_to_encrypt)
         return encrypted_str
 
-    def encrypt_user_password(self, connection_alias, username, password):
+    def encrypt_user_password(
+        self, connection_alias: str, username: str, password: str
+    ) -> None:
 
         # Fetch public/private key from jdbc_connection table if it exists
         query = "select private_key_path, public_key_path from jdbc_connections where dbalias = %s "
@@ -786,7 +797,9 @@ class config(metaclass=Singleton):
             self.mysql_cursor.execute(query, (encrypted_str, connection_alias))
             self.mysql_conn.commit()
 
-    def get_jdbc_driver_config(self, database_type, version):
+    def get_jdbc_driver_config(
+        self, database_type: str, version: str
+    ) -> tuple[str, str]:
         logging.debug("Executing common_config.get_jdbc_driver_config()")
         query = "select driver, classpath from jdbc_connections_drivers where database_type = %s and version = %s"
         logging.debug("Executing the following SQL: %s" % (query))
@@ -810,7 +823,7 @@ class config(metaclass=Singleton):
         logging.debug("Executing common_config.get_jdbc_driver_config() - Finished")
         return driver, class_path
 
-    def print_connection_alias_details(self):
+    def print_connection_alias_details(self) -> None:
         logging.debug("Executing common_config.print_connection_alias_details()")
 
         query = "select dbalias from jdbc_connections"
@@ -959,13 +972,13 @@ class config(metaclass=Singleton):
 
     def lookup_connection_alias(
         self,
-        connection_alias,
-        decryptCredentials=True,
-        copySlave=False,
-        exceptionIfFailureToDecrypt=True,
-        jdbcURL=None,
-        quiet=False,
-    ):
+        connection_alias: str,
+        decryptCredentials: bool = True,
+        copySlave: bool = False,
+        exceptionIfFailureToDecrypt: bool = True,
+        jdbcURL: str | None = None,
+        quiet: bool = False,
+    ) -> None:
         logging.debug("Executing common_config.lookup_connection_alias()")
 
         exit_after_function = False
@@ -1714,7 +1727,9 @@ class config(metaclass=Singleton):
         if exit_after_function == True:
             raise invalidConfiguration
 
-    def get_jdbc_table_definition(self, source_schema, source_table, printInfo=True):
+    def get_jdbc_table_definition(
+        self, source_schema: str, source_table: str, printInfo: bool = True
+    ) -> None:
         logging.debug("Executing common_config.get_jdbc_table_definition()")
         if printInfo == True:
             logging.info("Reading SQL table definitions from source database")
@@ -1757,11 +1772,11 @@ class config(metaclass=Singleton):
 
         logging.debug("Executing common_config.getSourceTableDefinition() - Finished")
 
-    def reconnect_jdbc(self, logger=""):
+    def reconnect_jdbc(self, logger: str = "") -> None:
         self.disconnect_from_jdbc(logger=logger)
         self.connect_to_jdbc(logger=logger)
 
-    def disconnect_from_jdbc(self, logger=""):
+    def disconnect_from_jdbc(self, logger: str = "") -> None:
         log = logging.getLogger(logger)
         log.debug("Disconnect from JDBC database")
 
@@ -1783,7 +1798,7 @@ class config(metaclass=Singleton):
 
         self.JDBCCursor = None
 
-    def connect_to_impala(self, logger=""):
+    def connect_to_impala(self, logger: str = "") -> None:
         log = logging.getLogger(logger)
         if self.impalaDriver == None:
             log.info("Impala is not configured")
@@ -1808,7 +1823,7 @@ class config(metaclass=Singleton):
                 log.error("Connection to Impala failed with the following error:")
                 log.error(exception.message())
 
-    def disconnect_from_impala(self, logger=""):
+    def disconnect_from_impala(self, logger: str = "") -> None:
         log = logging.getLogger(logger)
         log.info("Disconnecting from Impala")
 
@@ -1827,8 +1842,12 @@ class config(metaclass=Singleton):
         self.impalaJDBCCursor = None
 
     def connect_to_jdbc(
-        self, allJarFiles=False, exitIfFailure=True, logger="", printError=True
-    ):
+        self,
+        allJarFiles: bool = False,
+        exitIfFailure: bool = True,
+        logger: str = "",
+        printError: bool = True,
+    ) -> bool:
         log = logging.getLogger(logger)
 
         if self.db_mongodb == True:
@@ -1898,7 +1917,9 @@ class config(metaclass=Singleton):
 
         return True
 
-    def get_jdbc_column_max_value(self, source_schema, source_table, column):
+    def get_jdbc_column_max_value(
+        self, source_schema: str, source_table: str, column: str
+    ) -> Any:
         logging.debug("Executing common_config.get_jdbc_column_max_value()")
 
         self.connect_to_jdbc()
@@ -1983,7 +2004,7 @@ class config(metaclass=Singleton):
 
         logging.debug("Executing common_config.get_jdbc_column_max_value() - Finished")
 
-    def truncate_jdbc_table(self, schema, table):
+    def truncate_jdbc_table(self, schema: str, table: str) -> None:
         """Truncates a table on the JDBC connection"""
         logging.debug("Executing common_config.truncate_jdbc_table()")
         self.connect_to_jdbc()
@@ -2020,7 +2041,7 @@ class config(metaclass=Singleton):
 
         logging.debug("Executing common_config.truncate_jdbc_table() - Finished")
 
-    def check_jdbc_table(self, schema, table):
+    def check_jdbc_table(self, schema: str, table: str) -> bool:
         """Checks if a table exists on the JDBC connections. Return True or False"""
         logging.debug("Executing common_config.check_jdbc_table()")
         self.connect_to_jdbc()
@@ -2079,7 +2100,7 @@ class config(metaclass=Singleton):
         logging.debug("Executing common_config.check_jdbc_table() - Finished")
         return table_exists
 
-    def execute_jdbc_query(self, query):
+    def execute_jdbc_query(self, query: str) -> pd.DataFrame:
         """Executes a query against the JDBC database and return the values in a Pandas DF"""
         logging.debug("Executing common_config.execute_jdbc_query()")
 
@@ -2110,7 +2131,7 @@ class config(metaclass=Singleton):
         logging.debug("Executing common_config.execute_jdbc_query() - Finished")
         return result_df
 
-    def execute_impala_query(self, query):
+    def execute_impala_query(self, query: str) -> pd.DataFrame:
         """Executes a query against Impala and return the values in a Pandas DF"""
         logging.debug("Executing common_config.execute_impala_query()")
 
@@ -2142,8 +2163,8 @@ class config(metaclass=Singleton):
         return result_df
 
     def get_jdbc_table_row_count(
-        self, source_schema, source_table, whereStatement=None
-    ):
+        self, source_schema: str, source_table: str, whereStatement: str | None = None
+    ) -> int:
         logging.debug("Executing common_config.get_jdbc_table_row_count()")
 
         self.connect_to_jdbc()
@@ -2203,7 +2224,7 @@ class config(metaclass=Singleton):
 
         logging.debug("Executing common_config.get_jdbc_table_row_count() - Finished")
 
-    def drop_jdbc_table(self, schema, table):
+    def drop_jdbc_table(self, schema: str, table: str) -> None:
         logging.debug("Executing common_config.drop_jdbc_table()")
 
         self.connect_to_jdbc()
@@ -2215,8 +2236,13 @@ class config(metaclass=Singleton):
         logging.debug("Executing common_config.drop_jdbc_table() - Finished")
 
     def log_import_failure(
-        self, error_text, severity, import_type=None, hive_db=None, hive_table=None
-    ):
+        self,
+        error_text: str,
+        severity: str,
+        import_type: str | None = None,
+        hive_db: str | None = None,
+        hive_table: str | None = None,
+    ) -> None:
 
         if hive_db == None:
             hive_db = self.Hive_DB
@@ -2245,8 +2271,13 @@ class config(metaclass=Singleton):
         self.mysql_conn.commit()
 
     def log_hive_column_add(
-        self, column, columnType=None, description=None, hiveDB=None, hiveTable=None
-    ):
+        self,
+        column: str,
+        columnType: str | None = None,
+        description: str | None = None,
+        hiveDB: str | None = None,
+        hiveTable: str | None = None,
+    ) -> None:
         if description == None:
             description = "Column '%s' added to table with type '%s'" % (
                 column,
@@ -2279,13 +2310,13 @@ class config(metaclass=Singleton):
 
     def log_hive_column_type_change(
         self,
-        column,
-        columnType,
-        previous_columnType=None,
-        description=None,
-        hiveDB=None,
-        hiveTable=None,
-    ):
+        column: str,
+        columnType: str,
+        previous_columnType: str | None = None,
+        description: str | None = None,
+        hiveDB: str | None = None,
+        hiveTable: str | None = None,
+    ) -> None:
 
         if description == None:
             if previous_columnType == None:
@@ -2324,12 +2355,12 @@ class config(metaclass=Singleton):
 
     def log_hive_column_rename(
         self,
-        columnName,
-        previous_columnName,
-        description=None,
-        hiveDB=None,
-        hiveTable=None,
-    ):
+        columnName: str,
+        previous_columnName: str,
+        description: str | None = None,
+        hiveDB: str | None = None,
+        hiveTable: str | None = None,
+    ) -> None:
 
         if description == None:
             description = "Column '%s' renamed to %s" % (
@@ -2364,14 +2395,14 @@ class config(metaclass=Singleton):
 
     def log_jdbc_column_add(
         self,
-        column,
-        column_type=None,
-        description=None,
-        db_alias=None,
-        database=None,
-        schema=None,
-        table=None,
-    ):
+        column: str,
+        column_type: str | None = None,
+        description: str | None = None,
+        db_alias: str | None = None,
+        database: str | None = None,
+        schema: str | None = None,
+        table: str | None = None,
+    ) -> None:
         if description == None:
             description = "Column '%s' added to table with type '%s'" % (
                 column,
@@ -2401,15 +2432,15 @@ class config(metaclass=Singleton):
 
     def log_jdbc_column_type_change(
         self,
-        column,
-        column_type,
-        previous_column_type=None,
-        description=None,
-        db_alias=None,
-        database=None,
-        schema=None,
-        table=None,
-    ):
+        column: str,
+        column_type: str,
+        previous_column_type: str | None = None,
+        description: str | None = None,
+        db_alias: str | None = None,
+        database: str | None = None,
+        schema: str | None = None,
+        table: str | None = None,
+    ) -> None:
 
         if description == None:
             if previous_column_type == None:
@@ -2445,14 +2476,14 @@ class config(metaclass=Singleton):
 
     def log_jdbc_column_rename(
         self,
-        column_name,
-        previous_column_name,
-        description=None,
-        db_alias=None,
-        database=None,
-        schema=None,
-        table=None,
-    ):
+        column_name: str,
+        previous_column_name: str,
+        description: str | None = None,
+        db_alias: str | None = None,
+        database: str | None = None,
+        schema: str | None = None,
+        table: str | None = None,
+    ) -> None:
 
         if description == None:
             description = "Column '%s' renamed to %s" % (
@@ -2482,7 +2513,7 @@ class config(metaclass=Singleton):
         )
         self.mysql_conn.commit()
 
-    def get_quote_around_column(self):
+    def get_quote_around_column(self) -> str:
         quote_around_column = ""
         if self.jdbc_servertype == constant.MSSQL:
             quote_around_column = '"'
@@ -2507,7 +2538,7 @@ class config(metaclass=Singleton):
 
         return quote_around_column
 
-    def get_jdbc_upper_case(self):
+    def get_jdbc_upper_case(self) -> bool:
         upper_case = False
         if self.jdbc_servertype == constant.ORACLE:
             upper_case = True
@@ -2516,7 +2547,7 @@ class config(metaclass=Singleton):
 
         return upper_case
 
-    def get_jdbc_sql_from_table(self, schema, table):
+    def get_jdbc_sql_from_table(self, schema: str, table: str) -> str:
         logging.debug("Executing common_config.get_jdbc_sql_from_table()")
 
         from_table = ""
@@ -2544,7 +2575,9 @@ class config(metaclass=Singleton):
         logging.debug("Executing common_config.get_jdbc_sql_from_table() - Finished")
         return from_table
 
-    def get_config_value_column(self, key, ignore_error_output=False):
+    def get_config_value_column(
+        self, key: str, ignore_error_output: bool = False
+    ) -> tuple[str | None, bool | None]:
         """Return the type of the column that have the value for the specified key"""
 
         value_column = ""
@@ -2646,7 +2679,7 @@ class config(metaclass=Singleton):
 
         return (value_column, bool_value)
 
-    def get_config_value(self, key):
+    def get_config_value(self, key: str) -> Any:
         """Returns a value from the configuration table based on the supplied key. Value returned can be Int, Str or DateTime"""
         logging.debug("Executing common_config.get_config_value()")
         return_value = None
@@ -2702,7 +2735,7 @@ class config(metaclass=Singleton):
         logging.debug("Executing common_config.get_config_value() - Finished")
         return return_value
 
-    def connect_to_mongo(self, exit_if_failure=True, logger=""):
+    def connect_to_mongo(self, exit_if_failure: bool = True, logger: str = "") -> bool:
         log = logging.getLogger(logger)
         log.debug("Executing common_config.connect_to_mongo()")
 
@@ -2736,7 +2769,7 @@ class config(metaclass=Singleton):
 
         log.debug("Executing common_config.connect_to_mongo() - Finished")
 
-    def disconnect_from_mongo(self):
+    def disconnect_from_mongo(self) -> None:
         logging.debug("Executing common_config.disconnect_from_mongo()")
 
         self.mongo_client.close()
@@ -2745,7 +2778,9 @@ class config(metaclass=Singleton):
 
         logging.debug("Executing common_config.disconnect_from_mongo() - Finished")
 
-    def get_mongo_collections(self, collection_filter=None):
+    def get_mongo_collections(
+        self, collection_filter: str | None = None
+    ) -> pd.DataFrame:
         logging.debug("Executing common_config.getMongoTables()")
 
         # Connect to MongoDB and get a list of all collections
@@ -2769,7 +2804,9 @@ class config(metaclass=Singleton):
         logging.debug("Executing common_config.getMongoTables() - Finished")
         return result_df
 
-    def get_jdbc_tables_and_views(self, schemaFilter=None, tableFilter=None):
+    def get_jdbc_tables_and_views(
+        self, schemaFilter: str | None = None, tableFilter: str | None = None
+    ) -> pd.DataFrame:
         logging.debug("Executing common_config.get_jdbc_tables_and_views()")
         self.connect_to_jdbc()
 
@@ -2784,7 +2821,9 @@ class config(metaclass=Singleton):
         logging.debug("Executing common_config.get_jdbc_tables_and_views() - Finished")
         return result_df
 
-    def get_atlas_discover_config_object(self, db_alias=None, logger=""):
+    def get_atlas_discover_config_object(
+        self, db_alias: str | None = None, logger: str = ""
+    ) -> dict[str, Any]:
         """Discover all RDBMS objects on the 'dbAlias' and populate Atlas with them"""
         log = logging.getLogger(logger)
         log.debug("Executing common_config.get_atlas_discover_config_object()")
@@ -2826,7 +2865,7 @@ class config(metaclass=Singleton):
         )
         return config_object
 
-    def get_anonymization_seed(self):
+    def get_anonymization_seed(self) -> str:
         logging.debug("Executing common_config.get_anonymization_seed()")
 
         # Set the default seed from the configuration file
@@ -2858,7 +2897,7 @@ class config(metaclass=Singleton):
         logging.debug("Executing common_config.get_anonymization_seed() - Finished")
         return seed
 
-    def strip_unwanted_char_comment(self, work_string):
+    def strip_unwanted_char_comment(self, work_string: str | None) -> str | None:
         if work_string == None:
             return
         work_string = work_string.replace("`", "")
@@ -2870,7 +2909,7 @@ class config(metaclass=Singleton):
         work_string = work_string.replace('"', "")
         return work_string.strip()
 
-    def strip_unwanted_char_column_name(self, work_string):
+    def strip_unwanted_char_column_name(self, work_string: str | None) -> str | None:
         if work_string == None:
             return
         work_string = work_string.replace("`", "")
@@ -2885,7 +2924,7 @@ class config(metaclass=Singleton):
         work_string = work_string.replace('"', "")
         return work_string.strip()
 
-    def save_json_to_database(self, datatype, destination, json):
+    def save_json_to_database(self, datatype: str, destination: str, json: str) -> None:
         """Saves a json that was unable to be sent successfully to the 'json_to_send' table so it can be sent at a later time"""
         logging.debug("Executing common_config.save_json_to_database()")
 
@@ -2902,12 +2941,12 @@ class config(metaclass=Singleton):
 
     def update_yarn_statistics(
         self,
-        yarn_application_id,
-        operation_tool,
-        yarn_containers_total=None,
-        yarn_containers_failed=None,
-        yarn_containers_killed=None,
-    ):
+        yarn_application_id: str,
+        operation_tool: str,
+        yarn_containers_total: int | None = None,
+        yarn_containers_failed: int | None = None,
+        yarn_containers_killed: int | None = None,
+    ) -> None:
         """insert or update data to yarn_statistics"""
         logging.debug("Executing common_config.update_yarn_statistics()")
 
