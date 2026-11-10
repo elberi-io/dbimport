@@ -1,10 +1,11 @@
 {
   "bin/DBImportConfig/common_config.py": {
-    "arg-type": 4,
-    "assignment": 10,
+    "arg-type": 5,
+    "assignment": 12,
     "attr-defined": 4,
     "operator": 7,
-    "union-attr": 79
+    "return-value": 2,
+    "union-attr": 7
   },
   "bin/DBImportConfig/configSchema.py": {
     "misc": 38,
@@ -21,16 +22,16 @@
     "assignment": 5,
     "attr-defined": 1,
     "operator": 11,
-    "union-attr": 212
+    "union-attr": 210
   },
   "bin/DBImportConfig/export_stage.py": {
     "assignment": 3
   },
   "bin/DBImportConfig/import_config.py": {
+    "arg-type": 24,
     "assignment": 11,
-    "index": 1,
     "operator": 11,
-    "union-attr": 270,
+    "union-attr": 266,
     "var-annotated": 2
   },
   "bin/DBImportConfig/import_stage.py": {
@@ -72,7 +73,7 @@
     "var-annotated": 15
   },
   "bin/DBImportOperation/import_operations.py": {
-    "arg-type": 6,
+    "arg-type": 12,
     "assignment": 10,
     "attr-defined": 1,
     "list-item": 5,
@@ -84,7 +85,7 @@
   },
   "bin/Schedule/Airflow.py": {
     "arg-type": 5,
-    "assignment": 5,
+    "assignment": 6,
     "attr-defined": 2,
     "type-var": 1,
     "union-attr": 326,
@@ -109,7 +110,6 @@
   "bin/Server/atlasDiscovery.py": {
     "attr-defined": 1,
     "misc": 1,
-    "union-attr": 1,
     "var-annotated": 3
   },
   "bin/Server/daemon.py": {
@@ -126,7 +126,7 @@
   },
   "bin/Server/restServerCalls.py": {
     "arg-type": 3,
-    "assignment": 4,
+    "assignment": 5,
     "has-type": 4,
     "name-defined": 5,
     "used-before-def": 2
@@ -145,6 +145,7 @@
     "union-attr": 201
   },
   "bin/manage": {
+    "arg-type": 6,
     "union-attr": 13
   },
   "bin/setup": {

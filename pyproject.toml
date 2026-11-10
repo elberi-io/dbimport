@@ -240,6 +240,7 @@ extra_checks = false
 # without them fails. The other relaxed settings above still apply, and
 # database rows stay untyped (Any) until the data layer is rebuilt.
 module = [
+    "DBImportConfig.common_config",
     "DBImportConfig.decryption",
     "DBImportConfig.export_stage",
     "DBImportConfig.import_stage",
