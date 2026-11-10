@@ -28,11 +28,11 @@
     "assignment": 3
   },
   "bin/DBImportConfig/import_config.py": {
-    "arg-type": 24,
-    "assignment": 11,
-    "operator": 11,
-    "union-attr": 266,
-    "var-annotated": 2
+    "arg-type": 35,
+    "assignment": 2,
+    "operator": 17,
+    "return-value": 2,
+    "union-attr": 116
   },
   "bin/DBImportConfig/import_stage.py": {
     "assignment": 3,
@@ -73,14 +73,14 @@
     "var-annotated": 15
   },
   "bin/DBImportOperation/import_operations.py": {
-    "arg-type": 12,
-    "assignment": 10,
+    "arg-type": 15,
+    "assignment": 11,
     "attr-defined": 1,
-    "list-item": 5,
+    "list-item": 6,
     "misc": 5,
-    "operator": 9,
+    "operator": 13,
     "str-bytes-safe": 1,
-    "union-attr": 819,
+    "union-attr": 824,
     "var-annotated": 1
   },
   "bin/Schedule/Airflow.py": {
