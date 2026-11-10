@@ -509,8 +509,6 @@ class stage:
 
         return return_dict
 
-        logging.debug("Executing stage.get_stage_start_stop() - Finished")
-
     def set_stage_only_in_memory(self) -> None:
         self.memory_stage = True
 

@@ -741,8 +741,6 @@ class config(metaclass=Singleton):
         else:
             return False
 
-        logging.debug("Executing common_config.check_kerberos_ticket() - Finished")
-
     def encrypt_string(self, str_to_encrypt: str) -> str:
         self.crypto.set_private_key_file(
             configuration.get("Credentials", "private_key")
@@ -2002,8 +2000,6 @@ class config(metaclass=Singleton):
 
         return row[0]
 
-        logging.debug("Executing common_config.get_jdbc_column_max_value() - Finished")
-
     def truncate_jdbc_table(self, schema: str, table: str) -> None:
         """Truncates a table on the JDBC connection"""
         logging.debug("Executing common_config.truncate_jdbc_table()")
@@ -2221,8 +2217,6 @@ class config(metaclass=Singleton):
         row = self.JDBCCursor.fetchone()
 
         return int(row[0])
-
-        logging.debug("Executing common_config.get_jdbc_table_row_count() - Finished")
 
     def drop_jdbc_table(self, schema: str, table: str) -> None:
         logging.debug("Executing common_config.drop_jdbc_table()")
@@ -2766,8 +2760,6 @@ class config(metaclass=Singleton):
                 return False
 
         return True
-
-        log.debug("Executing common_config.connect_to_mongo() - Finished")
 
     def disconnect_from_mongo(self) -> None:
         logging.debug("Executing common_config.disconnect_from_mongo()")
