@@ -142,7 +142,7 @@ class config(metaclass=Singleton):
 
         self.phase_three = None
         self.sqlSessions: int | None = None
-        self.fullExecutedCommand = None
+        self.fullExecutedCommand: str | None = None
         self.mongoImport: bool | None = None
 
         self.common_config = common_config.config(Hive_DB, Hive_Table)
