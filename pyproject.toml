@@ -238,7 +238,7 @@ extra_checks = false
 [[tool.mypy.overrides]]
 # Modules in bin/ whose functions all have type hints (#202): a function
 # without them fails. The other relaxed settings above still apply, and
-# database rows stay untyped (Any) until the data layer is rebuilt.
+# query results stay untyped (Any) until the data layer is rebuilt.
 module = [
     "DBImportConfig.common_config",
     "DBImportConfig.decryption",
@@ -249,6 +249,7 @@ module = [
 ]
 disallow_untyped_defs = true
 disallow_incomplete_defs = true
+warn_unreachable = true
 
 [[tool.mypy.overrides]]
 # Libraries without type information. pyspark and pyspark_llap are not
