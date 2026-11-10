@@ -18,11 +18,11 @@
     "return-value": 3
   },
   "bin/DBImportConfig/export_config.py": {
-    "arg-type": 1,
-    "assignment": 5,
+    "arg-type": 21,
     "attr-defined": 1,
-    "operator": 11,
-    "union-attr": 210
+    "operator": 13,
+    "union-attr": 127,
+    "unreachable": 4
   },
   "bin/DBImportConfig/export_stage.py": {
     "assignment": 3
@@ -61,11 +61,12 @@
     "union-attr": 1
   },
   "bin/DBImportOperation/export_operations.py": {
+    "arg-type": 4,
     "attr-defined": 1,
     "list-item": 4,
     "misc": 1,
     "operator": 7,
-    "union-attr": 93
+    "union-attr": 97
   },
   "bin/DBImportOperation/hiveSchema.py": {
     "misc": 11,
