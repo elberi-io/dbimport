@@ -27,7 +27,7 @@ from DBImportConfig import common_config
 
 
 class sendStatistics:
-    def __init__(self):
+    def __init__(self) -> None:
         logging.debug("Executing rest.__init__()")
 
         self.common_config = common_config.config()
@@ -68,7 +68,7 @@ class sendStatistics:
             )
             sys.exit(1)
 
-    def send_rest_data(self, json_data):
+    def send_rest_data(self, json_data: str) -> int:
         """Sending data to REST endpoint"""
         logging.debug("Executing sendStatistics.send_rest_data")
 
@@ -114,7 +114,7 @@ class sendStatistics:
         logging.debug("Executing sendStatistics.send_rest_data - Finished")
         return response_code
 
-    def publish_kafka_data(self, json_data):
+    def publish_kafka_data(self, json_data: str) -> bool:
         """Publish data to Kafka topic"""
         logging.debug("Executing sendStatistics.publish_kafka_data")
 
@@ -181,7 +181,7 @@ class sendStatistics:
         logging.debug("Executing sendStatistics.publish_kafka_data - Finished")
         return result
 
-    def send_aws_sns_data(self, json_data):
+    def send_aws_sns_data(self, json_data: str) -> bool:
         """Publish data to AWS SNS topic"""
         logging.debug("Executing sendStatistics.send_aws_sns_data")
 

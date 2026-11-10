@@ -19,22 +19,28 @@ import json
 import logging
 import time
 from datetime import datetime
+from typing import Any
 
 from DBImportConfig import common_config, sendStatistics
 
 
 class stage:
-    def __init__(self, mysql_conn, Hive_DB, Hive_Table):
+    def __init__(
+        self,
+        mysql_conn: Any,
+        Hive_DB: str | None,
+        Hive_Table: str | None,
+    ) -> None:
         logging.debug("Executing stage.__init__()")
 
         self.Hive_DB = Hive_DB
         self.Hive_Table = Hive_Table
         self.mysql_conn = mysql_conn
         self.mysql_cursor = self.mysql_conn.cursor(buffered=False)
-        self.current_stage = None
+        self.current_stage: int | None = None
         self.memory_stage = False
-        self.stageTimeStart = None
-        self.stageTimeStop = None
+        self.stageTimeStart: str | None = None
+        self.stageTimeStop: str | None = None
         self.stageDurationStart = 0.0
         self.stageDurationStop = 0.0
         self.stageDurationTime = 0.0
@@ -47,16 +53,16 @@ class stage:
 
         self.sendStatistics = sendStatistics.sendStatistics()
 
-    def set_mysql_connection(self, mysql_conn):
+    def set_mysql_connection(self, mysql_conn: Any) -> None:
         self.mysql_conn = mysql_conn
         self.mysql_cursor = self.mysql_conn.cursor(buffered=False)
 
-    def set_hive_table(self, Hive_DB, Hive_Table):
+    def set_hive_table(self, Hive_DB: str, Hive_Table: str) -> None:
         """Sets the parameters to work against a new Hive database and table"""
         self.Hive_DB = Hive_DB.lower()
         self.Hive_Table = Hive_Table.lower()
 
-    def get_stage_description(self, stage):
+    def get_stage_description(self, stage: int) -> str:
         stage_description = ""
 
         # RULES FOR STAGE NUMBERS
@@ -526,7 +532,7 @@ class stage:
             stage_description = "DBImport completed successfully"
         return stage_description
 
-    def get_stage_short_name(self, stage):
+    def get_stage_short_name(self, stage: int) -> str:
 
         stage_short_name = ""
         if stage == 0:
@@ -1000,7 +1006,7 @@ class stage:
 
         return stage_short_name
 
-    def convert_stage_statistics_to_json(self, **kwargs):
+    def convert_stage_statistics_to_json(self, **kwargs: Any) -> None:
         """Reads the import_stage_statistics and convert the information to a JSON document"""
         logging.debug("Executing stage.convert_stage_statistics_to_json()")
 
@@ -1149,7 +1155,7 @@ class stage:
 
         logging.debug("Executing stage.convert_stage_statistics_to_json() - Finished")
 
-    def save_stage_statistics(self, **kwargs):
+    def save_stage_statistics(self, **kwargs: Any) -> None:
         """Reads the import_stage_statistics and insert it to the import_statistics table"""
         logging.debug("Executing stage.save_stage_statistics()")
 
@@ -1270,10 +1276,10 @@ class stage:
 
         logging.debug("Executing stage.save_stage_statistics() - Finished")
 
-    def set_stage_only_in_memory(self):
+    def set_stage_only_in_memory(self) -> None:
         self.memory_stage = True
 
-    def clear_stage(self):
+    def clear_stage(self) -> None:
         """Removes all stage information from the import_stage table"""
         logging.debug("Executing stage.clear_stage()")
 
@@ -1290,7 +1296,7 @@ class stage:
 
         logging.debug("Executing stage.clear_stage() - Finished")
 
-    def get_stage(self):
+    def get_stage(self) -> int:
         """Fetches the stage from import_stage table and return stage value. If no stage, 0 is returned"""
         logging.debug("Executing stage.get_stage()")
 
@@ -1319,8 +1325,8 @@ class stage:
         logging.debug("Executing stage.get_stage() - Finished")
         return self.current_stage
 
-    def get_stage_start_stop(self, stage):
-        """Returns the start and stop time for a specific stage. If no info can be found, None is returned"""
+    def get_stage_start_stop(self, stage: str | None) -> dict[str, str]:
+        """Returns the start and stop time for a specific stage. If no info can be found, 1970-01-01T00:00:00.000000Z is returned for both"""
         logging.debug("Executing stage.get_stage_start_stop()")
 
         query = "select stage, start, stop, duration from import_stage_statistics where hive_db = %s and hive_table = %s "
@@ -1347,7 +1353,7 @@ class stage:
 
         logging.debug("Executing stage.get_stage_start_stop() - Finished")
 
-    def set_stage(self, newStage, force=False):
+    def set_stage(self, newStage: int, force: bool = False) -> None:
         """Saves the stage information that is used for finding the correct step in the retries operations"""
         logging.debug("Executing stage.set_stage()")
 
@@ -1464,7 +1470,7 @@ class stage:
 
         logging.debug("Executing stage.set_stage() - Finished")
 
-    def save_retry_attempt(self, stage):
+    def save_retry_attempt(self, stage: int) -> None:
         """Saves the retry attempt in the import_retries_log table"""
         logging.debug("Executing stage.save_retry_attempt()")
 

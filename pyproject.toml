@@ -236,6 +236,19 @@ strict_equality = false
 extra_checks = false
 
 [[tool.mypy.overrides]]
+# Modules in bin/ whose functions all have type hints (#202): a function
+# without them fails. The other relaxed settings above still apply, and
+# database rows stay untyped (Any) until the data layer is rebuilt.
+module = [
+    "DBImportConfig.decryption",
+    "DBImportConfig.export_stage",
+    "DBImportConfig.import_stage",
+    "DBImportConfig.sendStatistics",
+]
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+
+[[tool.mypy.overrides]]
 # Libraries without type information. pyspark and pyspark_llap are not
 # installed (they come with the cluster); sparkUDF and sparkUDF2 are
 # bin/common modules that Spark imports by file name.
