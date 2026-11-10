@@ -1,7 +1,7 @@
 {
   "bin/DBImportConfig/common_config.py": {
     "arg-type": 5,
-    "assignment": 12,
+    "assignment": 11,
     "attr-defined": 4,
     "operator": 7,
     "return-value": 2,

@@ -100,7 +100,7 @@ class config(metaclass=Singleton):
         self.jdbc_oracle_sid: str | None = None
         self.jdbc_oracle_servicename: str | None = None
         self.jdbc_force_column_lowercase: bool | None = None
-        self.jdbc_environment = None
+        self.jdbc_environment: str | None = None
         self.seedFile = None
         self.mongo_client: Any = None
         self.mongoDB: Any = None
@@ -136,7 +136,7 @@ class config(metaclass=Singleton):
         self.sparkHiveLibrary = None
         self.sparkLogLevel = None
 
-        self.operationTimestamp = None
+        self.operationTimestamp: datetime | None = None
         self.yarn_application_start: str | None = None
 
         self.sourceSchema = None
@@ -1044,7 +1044,7 @@ class config(metaclass=Singleton):
                     raise e
 
                 jdbc_secrets = json.loads(get_secret_value_response["SecretString"])
-                credentials = "%s %s" % (
+                credentials: str | None = "%s %s" % (
                     jdbc_secrets["username"],
                     jdbc_secrets["password"],
                 )
