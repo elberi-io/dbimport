@@ -1351,8 +1351,6 @@ class stage:
 
         return return_dict
 
-        logging.debug("Executing stage.get_stage_start_stop() - Finished")
-
     def set_stage(self, newStage: int, force: bool = False) -> None:
         """Saves the stage information that is used for finding the correct step in the retries operations"""
         logging.debug("Executing stage.set_stage()")

@@ -3463,9 +3463,6 @@ class config(metaclass=Singleton):
             query += join_columns
 
         return query
-        logging.debug(
-            "Executing import_config.get_sql_to_read_from_source_with_mssql_change_tracking() - Finished"
-        )
 
     def get_sql_to_read_from_source(
         self, source_table_as_name: str | None = None
