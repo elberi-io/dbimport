@@ -4911,7 +4911,7 @@ class operation(metaclass=Singleton):
 
             if type(max_value) is pd._libs.tslibs.timestamps.Timestamp:
                 (dt, micro) = max_value.strftime("%Y-%m-%d %H:%M:%S.%f").split(".")
-                max_value = "%s.%03d" % (dt, int(micro) / 1000)
+                max_value = f"{dt}.{int(micro) // 1000:03d}"
             else:
                 if max_value != None:
                     max_value = int(max_value)

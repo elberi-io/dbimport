@@ -154,8 +154,8 @@ def main(argv):
         dist_cp_threads = int(configuration.get("Server", "distCP_threads"))
 
         for thread_id in range(0, dist_cp_threads):
-            dist_cp_log_name = f"distCP-thread{str(thread_id)}"
-            dist_cp_logfile = f"{logdir}/distCP-thread{str(thread_id)}.log"
+            dist_cp_log_name = f"distCP-thread{thread_id}"
+            dist_cp_logfile = f"{logdir}/distCP-thread{thread_id}.log"
             setup_logger(
                 name=dist_cp_log_name,
                 logfile=dist_cp_logfile,

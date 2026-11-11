@@ -121,7 +121,7 @@ src = ["bin", "."]
 # One rule set for all Python code (#159). RUF100 reports noqa comments
 # that are no longer needed, so a suppression is removed together with
 # the bug it hides.
-select = ["B", "E4", "E7", "E9", "F", "G", "I", "N", "UP", "W605", "RUF100"]
+select = ["B", "E4", "E7", "E9", "F", "G", "I", "N", "UP", "W605", "RUF010", "RUF100"]
 # Names that are contracts wait for the refactoring (#202): class names
 # (N801, N818), class-level fields, which include the REST model fields
 # and so the JSON field names of the API (N815), and module and package

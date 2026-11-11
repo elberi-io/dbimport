@@ -2134,16 +2134,16 @@ class operation(metaclass=Singleton):
 
         if from_cluster_mode == True:
             logging.info("Copy table directory from remote cluster")
-            hdfs_source_path = ("%s%s" % (remote_hdfs_address, remote_hdfs_path),)
-            hdfs_target_path = ("%s%s" % (local_hdfs_address, local_hdfs_path),)
+            hdfs_source_path = "%s%s" % (remote_hdfs_address, remote_hdfs_path)
+            hdfs_target_path = "%s%s" % (local_hdfs_address, local_hdfs_path)
 
         else:
             logging.info("Copy table directory to remote cluster")
-            hdfs_source_path = ("%s%s" % (local_hdfs_address, local_hdfs_path),)
-            hdfs_target_path = ("%s%s" % (remote_hdfs_address, remote_hdfs_path),)
+            hdfs_source_path = "%s%s" % (local_hdfs_address, local_hdfs_path)
+            hdfs_target_path = "%s%s" % (remote_hdfs_address, remote_hdfs_path)
 
-        logging.debug("HDFSsourcePath = %s" % (hdfs_source_path))
-        logging.debug("HDFStargetPath = %s" % (hdfs_target_path))
+        logging.debug("HDFSsourcePath = %s", hdfs_source_path)
+        logging.debug("HDFStargetPath = %s", hdfs_target_path)
 
         distcp_command = [
             "hadoop",
@@ -2152,8 +2152,8 @@ class operation(metaclass=Singleton):
             f"mapreduce.job.queuename={configuration.get('Sqoop', 'yarnqueue')}",
             "-overwrite",
             "-delete",
-            "%s" % (hdfs_source_path),
-            "%s" % (hdfs_target_path),
+            hdfs_source_path,
+            hdfs_target_path,
         ]
 
         # Start distcp

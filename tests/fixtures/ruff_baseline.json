@@ -44,7 +44,7 @@
     "G002": 89,
     "N802": 1,
     "N803": 29,
-    "UP031": 145
+    "UP031": 144
   },
   "bin/DBImportConfig/import_stage.py": {
     "E711": 7,
@@ -84,9 +84,9 @@
     "E712": 36,
     "E722": 3,
     "F841": 9,
-    "G002": 26,
+    "G002": 24,
     "N802": 1,
-    "UP031": 62
+    "UP031": 58
   },
   "bin/DBImportOperation/etl_operations.py": {
     "E711": 18,
@@ -117,7 +117,7 @@
     "G002": 20,
     "N802": 4,
     "N803": 10,
-    "UP031": 168
+    "UP031": 167
   },
   "bin/Schedule/Airflow.py": {
     "B904": 6,
@@ -241,7 +241,7 @@
   "bin/setupOperation/database.py": {
     "E711": 1,
     "E722": 1,
-    "UP031": 4
+    "UP031": 3
   },
   "bin/sourceSchemaReader/schemaReader.py": {
     "E711": 115,

@@ -222,7 +222,7 @@ class serverDaemon(run.RunDaemon):
             if dist_cp_separate_logs == False:
                 dist_cp_log_name = "distCP"
             else:
-                dist_cp_log_name = f"distCP-thread{str(thread_id)}"
+                dist_cp_log_name = f"distCP-thread{thread_id}"
 
             thread = distCP(
                 name=str(thread_id),

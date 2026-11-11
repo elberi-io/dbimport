@@ -2870,9 +2870,8 @@ class config(metaclass=Singleton):
                             (dt, micro) = self.sqoopIncrMaxvaluePending.strftime(
                                 "%Y-%m-%d %H:%M:%S.%f"
                             ).split(".")
-                            self.sqoopIncrMaxvaluePending = "%s.%03d" % (
-                                dt,
-                                int(micro) / 1000,
+                            self.sqoopIncrMaxvaluePending = (
+                                f"{dt}.{int(micro) // 1000:03d}"
                             )
                 except TypeError:
                     raise invalidConfiguration(

@@ -60,16 +60,8 @@ class initialize:
         self.config_database = self.database_credentials["mysql_database"]
         self.config_username = self.database_credentials["mysql_username"]
         self.config_password = self.database_credentials["mysql_password"]
-        # self.config_password = quote(self.database_credentials["mysql_password"], safe=" +")
 
-        self.connect_str = "mysql+pymysql://%s:%s@%s:%s/%s" % (
-            self.config_username,
-            # self.config_password,
-            quote(self.config_password, safe=" +"),
-            self.config_hostname,
-            self.config_port,
-            self.config_database,
-        )
+        self.connect_str = f"mysql+pymysql://{self.config_username}:{quote(self.config_password, safe=' +')}@{self.config_hostname}:{self.config_port}/{self.config_database}"
 
         # Esablish a SQLAlchemy connection to the DBImport database
         try:

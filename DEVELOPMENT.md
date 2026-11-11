@@ -124,7 +124,7 @@ All Python code is formatted with `ruff format` and checked with one
 rule set, `select` in `pyproject.toml` (pycodestyle E4, E7 and E9,
 pyflakes, bugbear, logging format, pyupgrade, import sorting with the
 packages in `bin/` as first party, PEP 8 naming, invalid escape
-sequences, unused `noqa`).
+sequences, explicit conversions in f-strings, unused `noqa`).
 Names that are contracts are not checked yet: class names, class-level
 fields (they include the JSON field names of the REST API) and module
 names. Existing modules that still break some of these rules are listed under
