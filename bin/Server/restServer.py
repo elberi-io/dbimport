@@ -93,13 +93,13 @@ tags_metadata = [
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/oauth2/access_token")
 app = FastAPI(openapi_tags=tags_metadata)
-dbCalls = restServerCalls.dbCalls()
+db_calls = restServerCalls.dbCalls()
 airflow = Airflow.initialize()
 airflow.logger = logger
 
 
 def get_user(username: str, format_password: bool = True):
-    user_dict = dbCalls.getUser(username)
+    user_dict = db_calls.getUser(username)
     if user_dict == None:
         return
 
@@ -278,7 +278,7 @@ async def create_a_user(
 
     # set the new password in the user object and save it
     user_data.password = get_password_hash(user_data.password)
-    dbCalls.create_user(user_data)
+    db_calls.create_user(user_data)
 
     return "User created successfully"
 
@@ -330,7 +330,7 @@ async def change_the_user_password(
 
     # set the new password in the user object and save it
     user["password"] = get_password_hash(password_data.new_password)
-    dbCalls.update_user(
+    db_calls.update_user(
         user, password_changed=True, current_user=current_user["username"]
     )
 
@@ -362,7 +362,7 @@ async def update_user_details(
             detail="You are not allowed to delete users",
         )
 
-    dbCalls.delete_user(username)
+    db_calls.delete_user(username)
 
     return "User deleted"
 
@@ -396,7 +396,7 @@ async def update_user_details(  # noqa: F811  # the delete handler above has thi
     if user_data.email != None:
         user["email"] = user_data.email
 
-    dbCalls.update_user(
+    db_calls.update_user(
         user, password_changed=False, current_user=current_user["username"]
     )
 
@@ -411,7 +411,7 @@ async def update_user_details(  # noqa: F811  # the delete handler above has thi
 async def get_all_configured_jdbc_drivers(
     current_user: Annotated[dataModels.User, Depends(get_current_user)],
 ):
-    return dbCalls.get_jdbc_drivers()
+    return db_calls.get_jdbc_drivers()
 
 
 @app.post("/config/updateJDBCdriver", tags=["Configuration"])
@@ -421,7 +421,7 @@ async def change_configuration_for_jdbc_drivers(
     response: Response,
 ):
     # response.status_code = status.HTTP_201_CREATED
-    return_msg, response.status_code = dbCalls.update_jdbc_driver(
+    return_msg, response.status_code = db_calls.update_jdbc_driver(
         jdbcDriver, current_user["username"]
     )
     return return_msg
@@ -433,7 +433,7 @@ async def change_configuration_for_jdbc_drivers(
 async def get_global_configuration(
     current_user: Annotated[dataModels.User, Depends(get_current_user)],
 ):
-    return dbCalls.get_configuration(current_user["username"])
+    return db_calls.get_configuration(current_user["username"])
 
 
 @app.post("/config/updateConfig", tags=["Configuration"])
@@ -442,7 +442,7 @@ async def update_global_configuration(
     current_user: Annotated[dataModels.User, Depends(get_current_user)],
     response: Response,
 ):
-    return_msg, response.status_code = dbCalls.update_configuration(
+    return_msg, response.status_code = db_calls.update_configuration(
         configuration, current_user["username"]
     )
     return return_msg
@@ -455,7 +455,7 @@ async def get_all_connections(
     current_user: Annotated[dataModels.User, Depends(get_current_user)],
     listOnlyName: bool = False,
 ):
-    return dbCalls.getAllConnections(listOnlyName)
+    return db_calls.getAllConnections(listOnlyName)
 
 
 @app.post("/connection", tags=["Connections"])
@@ -464,7 +464,7 @@ async def update_connection(
     current_user: Annotated[dataModels.User, Depends(get_current_user)],
     response: Response,
 ):
-    return_msg, response.status_code = dbCalls.updateConnection(
+    return_msg, response.status_code = db_calls.updateConnection(
         connection, current_user["username"]
     )
     return return_msg
@@ -478,7 +478,7 @@ async def update_connection(
 async def get_connection_details(
     connection: str, current_user: Annotated[dataModels.User, Depends(get_current_user)]
 ):
-    return dbCalls.getConnection(connection)
+    return db_calls.getConnection(connection)
 
 
 @app.delete("/connection/{connection}", tags=["Connections"])
@@ -487,7 +487,7 @@ async def delete_connection(
     current_user: Annotated[dataModels.User, Depends(get_current_user)],
     response: Response,
 ):
-    return_msg, response.status_code = dbCalls.deleteConnection(
+    return_msg, response.status_code = db_calls.deleteConnection(
         connection, current_user["username"]
     )
     return return_msg
@@ -504,7 +504,7 @@ async def encrypt_credentials_and_store_in_connection(
     current_user: Annotated[dataModels.User, Depends(get_current_user)],
     response: Response,
 ):
-    return_msg, response.status_code = dbCalls.encrypted_credentials(
+    return_msg, response.status_code = db_calls.encrypted_credentials(
         credentials, current_user["username"]
     )
     return return_msg
@@ -520,7 +520,7 @@ async def generate_a_jdbc_connection_string(
     current_user: Annotated[dataModels.User, Depends(get_current_user)],
     response: Response,
 ):
-    return_msg, response.status_code = dbCalls.generateJDBCconnectionString(
+    return_msg, response.status_code = db_calls.generateJDBCconnectionString(
         connectionValues, current_user["username"]
     )
     return return_msg
@@ -536,7 +536,7 @@ async def search_connections(
     current_user: Annotated[dataModels.User, Depends(get_current_user)],
     response: Response,
 ):
-    return dbCalls.searchConnections(searchValues, current_user["username"])
+    return db_calls.searchConnections(searchValues, current_user["username"])
 
 
 @app.get(
@@ -549,7 +549,7 @@ async def test_a_connection(
     current_user: Annotated[dataModels.User, Depends(get_current_user)],
     response: Response,
 ):
-    return_msg, response.status_code = dbCalls.test_connection(
+    return_msg, response.status_code = db_calls.test_connection(
         connection, current_user["username"]
     )
     return return_msg
@@ -559,7 +559,7 @@ async def test_a_connection(
 async def get_all_import_databases(
     current_user: Annotated[dataModels.User, Depends(get_current_user)],
 ):
-    return dbCalls.getAllImportDatabases()
+    return db_calls.getAllImportDatabases()
 
 
 @app.post(
@@ -572,7 +572,7 @@ async def discover_new_import_tables(
     current_user: Annotated[dataModels.User, Depends(get_current_user)],
     response: Response,
 ):
-    return_msg, response.status_code = dbCalls.discover_import_tables(
+    return_msg, response.status_code = db_calls.discover_import_tables(
         data, current_user["username"]
     )
     return return_msg
@@ -588,7 +588,7 @@ async def add_discovered_import_tables(
     current_user: Annotated[dataModels.User, Depends(get_current_user)],
     response: Response,
 ):
-    return_msg, response.status_code = dbCalls.addDiscoveredImportTables(
+    return_msg, response.status_code = db_calls.addDiscoveredImportTables(
         data, current_user["username"]
     )
     return return_msg
@@ -602,7 +602,7 @@ async def search_import_tables(
     current_user: Annotated[dataModels.User, Depends(get_current_user)],
     response: Response,
 ):
-    return dbCalls.searchImportTables(searchValues, current_user["username"])
+    return db_calls.searchImportTables(searchValues, current_user["username"])
 
 
 @app.post(
@@ -613,7 +613,7 @@ async def multi_record_update_import_table(
     current_user: Annotated[dataModels.User, Depends(get_current_user)],
     response: Response,
 ):
-    return_msg, response.status_code = dbCalls.bulk_update_import_table(
+    return_msg, response.status_code = db_calls.bulk_update_import_table(
         bulkData, current_user["username"]
     )
     return return_msg
@@ -627,7 +627,7 @@ async def multi_record_delete_import_table(
     current_user: Annotated[dataModels.User, Depends(get_current_user)],
     response: Response,
 ):
-    return_msg, response.status_code = dbCalls.bulk_delete_import_table(
+    return_msg, response.status_code = db_calls.bulk_delete_import_table(
         bulkData, current_user["username"]
     )
     return return_msg
@@ -641,7 +641,9 @@ async def multi_record_delete_import_table(
 async def get_import_tables_on_a_connection(
     connection: str, current_user: Annotated[dataModels.User, Depends(get_current_user)]
 ):
-    return dbCalls.get_import_tables_on_connection(connection, current_user["username"])
+    return db_calls.get_import_tables_on_connection(
+        connection, current_user["username"]
+    )
 
 
 @app.get(
@@ -652,7 +654,7 @@ async def get_import_tables_on_a_connection(
 async def get_import_tables_in_database(
     database: str, current_user: Annotated[dataModels.User, Depends(get_current_user)]
 ):
-    return dbCalls.getImportTablesInDatabase(database, current_user["username"])
+    return db_calls.getImportTablesInDatabase(database, current_user["username"])
 
 
 @app.get(
@@ -666,7 +668,7 @@ async def get_import_table_details(
     current_user: Annotated[dataModels.User, Depends(get_current_user)],
     includeColumns: bool = True,
 ):
-    return dbCalls.getImportTableDetails(
+    return db_calls.getImportTableDetails(
         database=database, table=table, include_columns=includeColumns
     )
 
@@ -678,7 +680,7 @@ async def delete_import_table(
     current_user: Annotated[dataModels.User, Depends(get_current_user)],
     response: Response,
 ):
-    return_msg, response.status_code = dbCalls.deleteImportTable(
+    return_msg, response.status_code = db_calls.deleteImportTable(
         database, table, current_user["username"]
     )
     return return_msg
@@ -695,7 +697,7 @@ async def repair_import_table(
     current_user: Annotated[dataModels.User, Depends(get_current_user)],
     response: Response,
 ):
-    return_msg, response.status_code = dbCalls.repairImportTable(
+    return_msg, response.status_code = db_calls.repairImportTable(
         database, table, current_user["username"]
     )
     return return_msg
@@ -712,7 +714,7 @@ async def reset_import_table(
     current_user: Annotated[dataModels.User, Depends(get_current_user)],
     response: Response,
 ):
-    return_msg, response.status_code = dbCalls.resetImportTable(
+    return_msg, response.status_code = db_calls.resetImportTable(
         database, table, current_user["username"]
     )
     return return_msg
@@ -726,7 +728,7 @@ async def create_or_update_import_table(
     current_user: Annotated[dataModels.User, Depends(get_current_user)],
     response: Response,
 ):
-    return_msg, response.status_code = dbCalls.update_import_table(
+    return_msg, response.status_code = db_calls.update_import_table(
         database, table, data, current_user["username"]
     )
     return return_msg
@@ -740,7 +742,7 @@ async def create_or_update_import_table(
 async def get_all_connections_with_exports(
     current_user: Annotated[dataModels.User, Depends(get_current_user)],
 ):
-    return dbCalls.get_export_connections()
+    return db_calls.get_export_connections()
 
 
 @app.post(
@@ -753,7 +755,7 @@ async def discover_new_export_tables(
     current_user: Annotated[dataModels.User, Depends(get_current_user)],
     response: Response,
 ):
-    return_msg, response.status_code = dbCalls.discover_export_tables(
+    return_msg, response.status_code = db_calls.discover_export_tables(
         data, current_user["username"]
     )
     return return_msg
@@ -769,7 +771,7 @@ async def add_discovered_export_tables(
     current_user: Annotated[dataModels.User, Depends(get_current_user)],
     response: Response,
 ):
-    return_msg, response.status_code = dbCalls.addDiscoveredExportTables(
+    return_msg, response.status_code = db_calls.addDiscoveredExportTables(
         data, current_user["username"]
     )
     return return_msg
@@ -783,7 +785,7 @@ async def search_export_tables(
     current_user: Annotated[dataModels.User, Depends(get_current_user)],
     response: Response,
 ):
-    return dbCalls.searchExportTables(searchValues, current_user["username"])
+    return db_calls.searchExportTables(searchValues, current_user["username"])
 
 
 @app.post(
@@ -794,7 +796,7 @@ async def multi_record_update_export_table(
     current_user: Annotated[dataModels.User, Depends(get_current_user)],
     response: Response,
 ):
-    return_msg, response.status_code = dbCalls.bulk_update_export_table(
+    return_msg, response.status_code = db_calls.bulk_update_export_table(
         bulkData, current_user["username"]
     )
     return return_msg
@@ -808,7 +810,7 @@ async def multi_record_delete_export_table(
     current_user: Annotated[dataModels.User, Depends(get_current_user)],
     response: Response,
 ):
-    return_msg, response.status_code = dbCalls.bulk_delete_export_table(
+    return_msg, response.status_code = db_calls.bulk_delete_export_table(
         bulkData, current_user["username"]
     )
     return return_msg
@@ -824,7 +826,7 @@ async def get_export_tables_on_connection(
     current_user: Annotated[dataModels.User, Depends(get_current_user)],
     response: Response,
 ):
-    return dbCalls.get_export_tables(
+    return db_calls.get_export_tables(
         connection=connection, schema=None, currentUser=current_user["username"]
     )
 
@@ -840,7 +842,7 @@ async def get_export_tables_on_connection_and_schema(
     current_user: Annotated[dataModels.User, Depends(get_current_user)],
     response: Response,
 ):
-    return dbCalls.get_export_tables(
+    return db_calls.get_export_tables(
         connection=connection, schema=schema, currentUser=current_user["username"]
     )
 
@@ -857,7 +859,7 @@ async def get_export_table_details(
     current_user: Annotated[dataModels.User, Depends(get_current_user)],
     includeColumns: bool = True,
 ):
-    return dbCalls.getExportTableDetails(
+    return db_calls.getExportTableDetails(
         connection=connection,
         schema=schema,
         table=table,
@@ -874,7 +876,7 @@ async def create_or_update_export_table(
     current_user: Annotated[dataModels.User, Depends(get_current_user)],
     response: Response,
 ):
-    return_msg, response.status_code = dbCalls.update_export_table(
+    return_msg, response.status_code = db_calls.update_export_table(
         connection, schema, table, data, current_user["username"]
     )
     return return_msg
@@ -888,7 +890,7 @@ async def delete_export_table(
     current_user: Annotated[dataModels.User, Depends(get_current_user)],
     response: Response,
 ):
-    return_msg, response.status_code = dbCalls.deleteExportTable(
+    return_msg, response.status_code = db_calls.deleteExportTable(
         connection, schema, table, current_user["username"]
     )
     return return_msg
@@ -906,7 +908,7 @@ async def repair_export_table(
     current_user: Annotated[dataModels.User, Depends(get_current_user)],
     response: Response,
 ):
-    return_msg, response.status_code = dbCalls.repairExportTable(
+    return_msg, response.status_code = db_calls.repairExportTable(
         connection, schema, table, current_user["username"]
     )
     return return_msg
@@ -924,7 +926,7 @@ async def reset_export_table(
     current_user: Annotated[dataModels.User, Depends(get_current_user)],
     response: Response,
 ):
-    return_msg, response.status_code = dbCalls.resetExportTable(
+    return_msg, response.status_code = db_calls.resetExportTable(
         connection, schema, table, current_user["username"]
     )
     return return_msg
@@ -936,7 +938,7 @@ async def reset_export_table(
 async def get_all_airflow_dags(
     current_user: Annotated[dataModels.User, Depends(get_current_user)],
 ):
-    return dbCalls.getAllAirflowDags()
+    return db_calls.getAllAirflowDags()
 
 
 @app.get("/airflow/generate_dag", tags=["Airflow"])
@@ -959,7 +961,7 @@ async def generate_airflow_dag(
 async def get_import_airflow_dags(
     current_user: Annotated[dataModels.User, Depends(get_current_user)],
 ):
-    return dbCalls.get_airflow_import_dags()
+    return db_calls.get_airflow_import_dags()
 
 
 @app.post(
@@ -972,7 +974,7 @@ async def multi_record_update_import_airflow_dag(
     current_user: Annotated[dataModels.User, Depends(get_current_user)],
     response: Response,
 ):
-    return_msg, response.status_code = dbCalls.bulk_update_import_airflow_dag(
+    return_msg, response.status_code = db_calls.bulk_update_import_airflow_dag(
         bulkData, current_user["username"]
     )
     return return_msg
@@ -988,7 +990,7 @@ async def multi_record_delete_import_airflow_dag(
     current_user: Annotated[dataModels.User, Depends(get_current_user)],
     response: Response,
 ):
-    return_msg, response.status_code = dbCalls.bulk_delete_import_airflow_dag(
+    return_msg, response.status_code = db_calls.bulk_delete_import_airflow_dag(
         bulkData, current_user["username"]
     )
     return return_msg
@@ -1002,7 +1004,7 @@ async def multi_record_delete_import_airflow_dag(
 async def get_import_airflow_dag(
     dagname: str, current_user: Annotated[dataModels.User, Depends(get_current_user)]
 ):
-    return dbCalls.get_airflow_import_dag(dagname)
+    return db_calls.get_airflow_import_dag(dagname)
 
 
 @app.post("/airflow/dags/import/{dagname}", tags=["Airflow"])
@@ -1012,7 +1014,7 @@ async def create_or_update_import_airflow_dag(
     current_user: Annotated[dataModels.User, Depends(get_current_user)],
     response: Response,
 ):
-    return_msg, response.status_code = dbCalls.update_import_airflow_dag(
+    return_msg, response.status_code = db_calls.update_import_airflow_dag(
         dagname, airflowDag, current_user["username"]
     )
     return return_msg
@@ -1024,7 +1026,7 @@ async def delete_import_airflow_dag(
     current_user: Annotated[dataModels.User, Depends(get_current_user)],
     response: Response,
 ):
-    return_msg, response.status_code = dbCalls.deleteImportAirflowDag(
+    return_msg, response.status_code = db_calls.deleteImportAirflowDag(
         dagname, current_user["username"]
     )
     return return_msg
@@ -1037,7 +1039,7 @@ async def delete_task_from_import_airflow_dag(
     current_user: Annotated[dataModels.User, Depends(get_current_user)],
     response: Response,
 ):
-    return_msg, response.status_code = dbCalls.delete_task_from_airflow_dag(
+    return_msg, response.status_code = db_calls.delete_task_from_airflow_dag(
         dagname, taskname, current_user["username"]
     )
     return return_msg
@@ -1051,7 +1053,7 @@ async def delete_task_from_import_airflow_dag(
 async def get_export_airflow_dags(
     current_user: Annotated[dataModels.User, Depends(get_current_user)],
 ):
-    return dbCalls.get_airflow_export_dags()
+    return db_calls.get_airflow_export_dags()
 
 
 @app.post(
@@ -1064,7 +1066,7 @@ async def multi_record_update_export_airflow_dag(
     current_user: Annotated[dataModels.User, Depends(get_current_user)],
     response: Response,
 ):
-    return_msg, response.status_code = dbCalls.bulk_update_export_airflow_dag(
+    return_msg, response.status_code = db_calls.bulk_update_export_airflow_dag(
         bulkData, current_user["username"]
     )
     return return_msg
@@ -1080,7 +1082,7 @@ async def multi_record_delete_export_airflow_dag(
     current_user: Annotated[dataModels.User, Depends(get_current_user)],
     response: Response,
 ):
-    return_msg, response.status_code = dbCalls.bulk_delete_export_airflow_dag(
+    return_msg, response.status_code = db_calls.bulk_delete_export_airflow_dag(
         bulkData, current_user["username"]
     )
     return return_msg
@@ -1094,7 +1096,7 @@ async def multi_record_delete_export_airflow_dag(
 async def get_export_airflow_dag(
     dagname: str, current_user: Annotated[dataModels.User, Depends(get_current_user)]
 ):
-    return dbCalls.get_airflow_export_dag(dagname)
+    return db_calls.get_airflow_export_dag(dagname)
 
 
 @app.post("/airflow/dags/export/{dagname}", tags=["Airflow"])
@@ -1104,7 +1106,7 @@ async def create_or_update_export_airflow_dag(
     current_user: Annotated[dataModels.User, Depends(get_current_user)],
     response: Response,
 ):
-    return_msg, response.status_code = dbCalls.update_export_airflow_dag(
+    return_msg, response.status_code = db_calls.update_export_airflow_dag(
         dagname, airflowDag, current_user["username"]
     )
     return return_msg
@@ -1116,7 +1118,7 @@ async def delete_export_airflow_dag(
     current_user: Annotated[dataModels.User, Depends(get_current_user)],
     response: Response,
 ):
-    return_msg, response.status_code = dbCalls.deleteExportAirflowDag(
+    return_msg, response.status_code = db_calls.deleteExportAirflowDag(
         dagname, current_user["username"]
     )
     return return_msg
@@ -1129,7 +1131,7 @@ async def delete_task_from_export_airflow_dag(
     current_user: Annotated[dataModels.User, Depends(get_current_user)],
     response: Response,
 ):
-    return_msg, response.status_code = dbCalls.delete_task_from_airflow_dag(
+    return_msg, response.status_code = db_calls.delete_task_from_airflow_dag(
         dagname, taskname, current_user["username"]
     )
     return return_msg
@@ -1143,7 +1145,7 @@ async def delete_task_from_export_airflow_dag(
 async def get_custom_airflow_dags(
     current_user: Annotated[dataModels.User, Depends(get_current_user)],
 ):
-    return dbCalls.get_airflow_custom_dags()
+    return db_calls.get_airflow_custom_dags()
 
 
 @app.post(
@@ -1156,7 +1158,7 @@ async def multi_record_update_custom_airflow_dag(
     current_user: Annotated[dataModels.User, Depends(get_current_user)],
     response: Response,
 ):
-    return_msg, response.status_code = dbCalls.bulk_update_custom_airflow_dag(
+    return_msg, response.status_code = db_calls.bulk_update_custom_airflow_dag(
         bulkData, current_user["username"]
     )
     return return_msg
@@ -1172,7 +1174,7 @@ async def multi_record_delete_custom_airflow_dag(
     current_user: Annotated[dataModels.User, Depends(get_current_user)],
     response: Response,
 ):
-    return_msg, response.status_code = dbCalls.bulk_delete_custom_airflow_dag(
+    return_msg, response.status_code = db_calls.bulk_delete_custom_airflow_dag(
         bulkData, current_user["username"]
     )
     return return_msg
@@ -1186,7 +1188,7 @@ async def multi_record_delete_custom_airflow_dag(
 async def get_custom_airflow_dag(
     dagname: str, current_user: Annotated[dataModels.User, Depends(get_current_user)]
 ):
-    return dbCalls.get_airflow_custom_dag(dagname)
+    return db_calls.get_airflow_custom_dag(dagname)
 
 
 @app.post("/airflow/dags/custom/{dagname}", tags=["Airflow"])
@@ -1196,7 +1198,7 @@ async def create_or_update_custom_airflow_dag(
     current_user: Annotated[dataModels.User, Depends(get_current_user)],
     response: Response,
 ):
-    return_msg, response.status_code = dbCalls.update_custom_airflow_dag(
+    return_msg, response.status_code = db_calls.update_custom_airflow_dag(
         dagname, airflowDag, current_user["username"]
     )
     return return_msg
@@ -1208,7 +1210,7 @@ async def delete_custom_airflow_dag(
     current_user: Annotated[dataModels.User, Depends(get_current_user)],
     response: Response,
 ):
-    return_msg, response.status_code = dbCalls.deleteCustomAirflowDag(
+    return_msg, response.status_code = db_calls.deleteCustomAirflowDag(
         dagname, current_user["username"]
     )
     return return_msg
@@ -1221,7 +1223,7 @@ async def delete_task_from_custom_airflow_dag(
     current_user: Annotated[dataModels.User, Depends(get_current_user)],
     response: Response,
 ):
-    return_msg, response.status_code = dbCalls.delete_task_from_airflow_dag(
+    return_msg, response.status_code = db_calls.delete_task_from_airflow_dag(
         dagname, taskname, current_user["username"]
     )
     return return_msg

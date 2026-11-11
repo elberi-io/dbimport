@@ -49,9 +49,6 @@ class StandaloneApplication(WSGIApplication):
         for key, value in config.items():
             self.cfg.set(key.lower(), value)
 
-    def on_starting(server):
-        print("PREHOOK - Server has started")
-
 
 def print_help():
     print("Usage: ./server <action> <options>")

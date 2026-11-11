@@ -23,9 +23,9 @@ from datetime import datetime
 from typing import Any
 
 this = sys.modules[__name__]
-# seedString is set through the module object; mypy cannot see that attribute.
-this.seedString = None  # type: ignore[attr-defined]
-seedString = "testSeed"
+# seed_string is set through the module object; mypy cannot see that attribute.
+this.seed_string = None  # type: ignore[attr-defined]
+seed_string = "testSeed"
 
 
 def _is_bin(ints: object) -> bool:
@@ -78,21 +78,21 @@ def parse_struct_date(timestampString: object) -> str:
 
 
 def set_seed_string(setValue: str) -> None:
-    global seedString
-    seedString = setValue
-    this.seedString = setValue  # type: ignore[attr-defined]
-    print(seedString)
-    print(this.seedString)
+    global seed_string
+    seed_string = setValue
+    this.seed_string = setValue  # type: ignore[attr-defined]
+    print(seed_string)
+    print(this.seed_string)
 
 
 def hash_column(columnValue: str) -> Any:
-    global seedString
+    global seed_string
     sha_value = hashlib.sha3_512(columnValue.encode()).hexdigest()
     # 	SeedString = None
     # 	SeedString = 'testSeed'
-    h = hashlib.blake2b(digest_size=32, person=seedString.encode())
+    h = hashlib.blake2b(digest_size=32, person=seed_string.encode())
     h.update(columnValue.encode())
     hashed_column_content = h.hexdigest()
     # 	sha_value = hashlib.blake2b(columnValue.encode()).hexdigest()
     # 	return sha_value
-    return this.seedString
+    return this.seed_string

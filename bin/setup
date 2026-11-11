@@ -21,7 +21,7 @@ import logging
 import sys
 
 from common import constants as constant
-from setupOperation import database as databaseOperations
+from setupOperation import database as database_operations
 from setupOperation import webServerOperations
 
 
@@ -143,19 +143,19 @@ def main(argv):
         )
 
     if operation == "createDB":
-        db_operations = databaseOperations.initialize()
+        db_operations = database_operations.initialize()
         db_operations.create_db()
 
     if operation == "upgradeDB":
-        db_operations = databaseOperations.initialize()
+        db_operations = database_operations.initialize()
         db_operations.upgrade_db()
 
     if operation == "downgradeDB":
-        db_operations = databaseOperations.initialize()
+        db_operations = database_operations.initialize()
         db_operations.downgradeDB()
 
     if operation == "createSchemaRst":
-        db_operations = databaseOperations.initialize()
+        db_operations = database_operations.initialize()
         db_operations.generate_schema_rst()
 
     if operation == "buildHTML":

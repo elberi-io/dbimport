@@ -25,7 +25,7 @@ from urllib.parse import quote
 import mysql.connector
 import pandas as pd
 import sqlalchemy as sa
-from alembic import command as alembicCommand
+from alembic import command as alembic_command
 from alembic.config import Config
 from mysql.connector import errorcode
 from sqlalchemy.orm import sessionmaker
@@ -261,7 +261,7 @@ class initialize:
             )
             return
 
-        alembicCommand.upgrade(self.alembic_config, "head")
+        alembic_command.upgrade(self.alembic_config, "head")
         self.create_default_environment_types()
         self.update_configuration_values()
 
@@ -270,7 +270,7 @@ class initialize:
     def upgrade_db(self):
 
         print("Upgrading database to latest level")
-        alembicCommand.upgrade(self.alembic_config, "head")
+        alembic_command.upgrade(self.alembic_config, "head")
         self.create_default_environment_types()
         self.update_configuration_values()
 
