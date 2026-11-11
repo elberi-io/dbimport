@@ -24,7 +24,7 @@ from common import constants as constant
 from DBImportOperation import copy_operations, import_operations
 
 
-def printHeader():
+def print_header():
     # Font created at http://patorjk.com/software/taag/#p=display&f=Big&t=DBImport%20-%20Copy
     sys.stdout.write("\u001b[35m")  # Magenta
     sys.stdout.flush()
@@ -61,7 +61,7 @@ def printHeader():
 
 
 def print_main_help():
-    printHeader()
+    print_header()
     print("Options:")
     print(
         "  --copyAirflowImportDAG            Copy an Airflow Import DAG to a remote DBImport instance"
@@ -97,7 +97,7 @@ def print_main_help():
 
 
 def print_copy_airflow_import_dag_help():
-    printHeader()
+    print_header()
     print(
         "Copy the DAG definition and all involved databases, tables and connection aliases to a remote DBImport instance"
     )
@@ -126,7 +126,7 @@ def print_copy_airflow_import_dag_help():
 
 
 def print_copy_airflow_export_dag_help():
-    printHeader()
+    print_header()
     print(
         "Copy the DAG definition and all involved databases, tables and connection aliases to a remote DBImport instance"
     )
@@ -152,7 +152,7 @@ def print_copy_airflow_export_dag_help():
 
 
 def print_schedule_dag_async_copy_help():
-    printHeader()
+    print_header()
     print(
         "Schedule an asynchronous copy of all tables that is handled by an Airflow DAG to a specific destination."
     )
@@ -175,7 +175,7 @@ def print_schedule_dag_async_copy_help():
 
 
 def print_schedule_table_async_copy_help():
-    printHeader()
+    print_header()
     print(
         "Schedule an asynchronous copy of one or more Hive tables to a specific destination."
     )
@@ -198,7 +198,7 @@ def print_schedule_table_async_copy_help():
 
 
 def print_export_table_help():
-    printHeader()
+    print_header()
     print(
         "Exports a Hive table to HDFS . This can be used regardless if table exists in the DBImport configuration database"
     )
@@ -219,7 +219,7 @@ def print_export_table_help():
 
 
 def print_copy_table_to_cluster_help():
-    printHeader()
+    print_header()
     print("DistCP files to another cluster")
     print("")
     print("Required parameters:")
@@ -239,7 +239,7 @@ def print_copy_table_to_cluster_help():
 
 
 def print_copy_table_from_cluster_help():
-    printHeader()
+    print_header()
     print("DistCP files from another cluster")
     print("")
     print("Required parameters:")
@@ -259,7 +259,7 @@ def print_copy_table_from_cluster_help():
 
 
 def print_import_table_help():
-    printHeader()
+    print_header()
     print("Imports a Hive table that was previous exported")
     print("")
     print("Required parameters:")
@@ -440,7 +440,7 @@ def main(argv):
         print_copy_table_from_cluster_help()
 
     if quiet_mode == False:
-        printHeader()
+        print_header()
 
     # Initiate the logging functions with the correct level
     if logging_level == logging.DEBUG:
@@ -458,9 +458,9 @@ def main(argv):
         copy_operation = copy_operations.operation()
         import_operation = import_operations.operation()
         if concatenate_table == True:
-            import_operation.concatenateTable(hive_db=hive_db, hive_table=hive_table)
+            import_operation.concatenate_table(hive_db=hive_db, hive_table=hive_table)
 
-        copy_operation.exportTable(
+        copy_operation.export_table(
             hive_db=hive_db, hive_table=hive_table, local_hdfs_path=local_hdfs_path
         )
         import_operation.remove_temporary_files()

@@ -398,7 +398,7 @@ def main(argv):
                     export_operation.connect_to_hive()
                     export_operation.get_hive_table_validation_data()
                     export_operation.get_target_table_validation_data()
-                    export_operation.validateExport()
+                    export_operation.validate_export()
 
             if run_only_function == None or run_only_function == "updateAtlas":
                 if export_operation.run_stage(950) == True:
@@ -512,7 +512,7 @@ def main(argv):
             # 					export_operation.connect_to_hive()
             # 					export_operation.get_hive_table_validation_data()
             # 					export_operation.get_target_table_validation_data()
-            # 					export_operation.validateExport()
+            # 					export_operation.validate_export()
             #
             # 			if runOnlyFunction == None or runOnlyFunction == "updateAtlas":
             # 				if export_operation.run_stage(950) == True:
@@ -629,7 +629,7 @@ def main(argv):
                     export_operation.connect_to_hive()
                     export_operation.get_hive_table_validation_data()
                     export_operation.get_target_table_validation_data()
-                    export_operation.validateExport()
+                    export_operation.validate_export()
 
             if run_only_function == None:
                 if export_operation.run_stage(162) == True:

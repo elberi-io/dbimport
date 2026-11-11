@@ -203,8 +203,8 @@ class operation(metaclass=Singleton):
     def send_start_json(self):
         self.import_config.send_start_json()
 
-    def invalidateImpala(self):
-        self.import_config.invalidateImpala()
+    def invalidate_impala(self):
+        self.import_config.invalidate_impala()
 
     def update_atlas_with_import_data(self):
         if self.atlasOperation.check_atlas_schema() == True:
@@ -826,7 +826,7 @@ class operation(metaclass=Singleton):
                 logging.warning("Reseting Oracle Flashback versions")
 
                 self.reset_incr_min_max_values(max_value=None)
-                self.truncateTargetTable()
+                self.truncate_target_table()
                 self.import_config.sqoopIncrMinvaluePending = None
                 self.import_config.sqoopIncrMaxvaluePending = None
                 self.import_config.incr_maxvalue = None
@@ -838,7 +838,7 @@ class operation(metaclass=Singleton):
                 logging.warning("Reseting Oracle Flashback versions")
 
                 self.reset_incr_min_max_values(max_value=None)
-                self.truncateTargetTable()
+                self.truncate_target_table()
                 self.import_config.sqoopIncrMinvaluePending = None
                 self.import_config.sqoopIncrMaxvaluePending = None
                 self.import_config.incr_maxvalue = None
@@ -3720,8 +3720,8 @@ class operation(metaclass=Singleton):
 
         logging.debug("Executing import_operations.create_target_table() - Finished")
 
-    def dropTargetTable(self):
-        logging.debug("Executing import_operations.dropTargetTable()")
+    def drop_target_table(self):
+        logging.debug("Executing import_operations.drop_target_table()")
         if self.common_operations.check_table(self.Hive_DB, self.Hive_Table) == True:
             logging.info("Dropping Target table %s.%s", self.Hive_DB, self.Hive_Table)
 
@@ -3745,7 +3745,7 @@ class operation(metaclass=Singleton):
                 logging.info(query)
                 self.spark.sql(query)
 
-        logging.debug("Executing import_operations.dropTargetTable() - Finished")
+        logging.debug("Executing import_operations.drop_target_table() - Finished")
 
     def update_target_table(self):
         if self.import_config.etlEngine == constant.ETL_ENGINE_HIVE:
@@ -4710,13 +4710,13 @@ class operation(metaclass=Singleton):
 
         logging.debug("Executing import_operations.run_hive_compaction() - Finished")
 
-    def truncateTargetTable(
+    def truncate_target_table(
         self,
     ):
         if self.import_config.etlEngine == constant.ETL_ENGINE_HIVE:
             logging.info("Truncating Target table in Hive")
             self.common_operations.connect_to_hive(force_skip_test=True)
-            self.common_operations.truncateHiveTable(self.Hive_DB, self.Hive_Table)
+            self.common_operations.truncate_hive_table(self.Hive_DB, self.Hive_Table)
 
         if self.import_config.etlEngine == constant.ETL_ENGINE_SPARK:
             logging.info("Truncating Target table in Spark")
@@ -4951,9 +4951,9 @@ class operation(metaclass=Singleton):
             "Executing import_operations.repair_all_incremental_imports() - Finished"
         )
 
-    def concatenateTable(self, hive_db=None, hive_table=None):
+    def concatenate_table(self, hive_db=None, hive_table=None):
         """Execute a concatenate table on the specified table, or what is already set in the class"""
-        logging.debug("Executing import_operations.concatenateTable()")
+        logging.debug("Executing import_operations.concatenate_table()")
 
         self.connect_to_hive(force_skip_test=True)
 
@@ -4973,4 +4973,4 @@ class operation(metaclass=Singleton):
         query = "alter table `%s`.`%s` concatenate" % (hive_db, hive_table)
         self.common_operations.execute_hive_query(query)
 
-        logging.debug("Executing import_operations.concatenateTable() - Finished")
+        logging.debug("Executing import_operations.concatenate_table() - Finished")

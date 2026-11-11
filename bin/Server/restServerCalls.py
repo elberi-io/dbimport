@@ -281,7 +281,7 @@ class dbCalls:
             return None
 
         default_admin_user = self.get_config_value("restserver_admin_user")
-        user_object = self.getUser(default_admin_user)
+        user_object = self.get_user(default_admin_user)
         if user_object == None:
             # User does not exists, so lets create it
             log.info(
@@ -329,7 +329,7 @@ class dbCalls:
         # session.close()
         session.remove()
 
-    def getUser(self, username):
+    def get_user(self, username):
         """Returns a dict with user information from the database"""
         log = logging.getLogger(self.logger)
 
@@ -434,7 +434,7 @@ class dbCalls:
         # session.close()
         session.remove()
 
-    def generateJDBCconnectionString(
+    def generate_jdbc_connection_string(
         self, connection_values: dataModels.generateJDBCconnectionString, current_user
     ):
         """Generates a JDBC connection string"""
@@ -897,7 +897,7 @@ class dbCalls:
 
         return server_type
 
-    def getAllConnections(self, list_only_name):
+    def get_all_connections(self, list_only_name):
         """Returns all Connections"""
         log = logging.getLogger(self.logger)
 
@@ -943,7 +943,7 @@ class dbCalls:
         }
         return JSONResponse(content=json_result, headers=headers, status_code=200)
 
-    def searchConnections(
+    def search_connections(
         self, search_values: dataModels.connectionSearch, current_user
     ):
         """Search for import tables"""
@@ -1039,7 +1039,7 @@ class dbCalls:
         }
         return JSONResponse(content=json_result, headers=headers, status_code=200)
 
-    def updateConnection(self, connection: dataModels.connectionDetails, current_user):
+    def update_connection(self, connection: dataModels.connectionDetails, current_user):
         """Update or create a Connections"""
         log = logging.getLogger(self.logger)
 
@@ -1133,7 +1133,7 @@ class dbCalls:
         session.remove()
         return (result, return_code)
 
-    def getConnection(self, connection):
+    def get_connection(self, connection):
         """Returns all Connections"""
         log = logging.getLogger(self.logger)
 
@@ -1227,7 +1227,7 @@ class dbCalls:
 
         return json_result
 
-    def deleteConnection(self, connection, current_user):
+    def delete_connection(self, connection, current_user):
         """Delete a connection"""
         log = logging.getLogger(self.logger)
 
@@ -1327,7 +1327,7 @@ class dbCalls:
 
         return (result_msg, return_code)
 
-    def getAllImportDatabases(self):
+    def get_all_import_databases(self):
         """Returns all databases that have imports configured in them"""
         log = logging.getLogger(self.logger)
 
@@ -1447,7 +1447,7 @@ class dbCalls:
 
         return (return_msg, return_code)
 
-    def addDiscoveredImportTables(
+    def add_discovered_import_tables(
         self, data: list[dataModels.discoverImportTable], current_user
     ):
         """Add discovered import tables"""
@@ -1476,7 +1476,7 @@ class dbCalls:
 
         return (result_msg, return_code)
 
-    def searchImportTables(
+    def search_import_tables(
         self, search_values: dataModels.importTableSearch, current_user
     ):
         """Search for import tables"""
@@ -1610,17 +1610,17 @@ class dbCalls:
             database="*", table="*", connection=connection
         )
 
-        return self.searchImportTables(search_values, current_user)
+        return self.search_import_tables(search_values, current_user)
 
-    def getImportTablesInDatabase(self, database, current_user):
+    def get_import_tables_in_database(self, database, current_user):
         """Returns all import tables in a specific database"""
         log = logging.getLogger(self.logger)
 
         search_values = dataModels.importTableSearch(database=database, table="*")
 
-        return self.searchImportTables(search_values, current_user)
+        return self.search_import_tables(search_values, current_user)
 
-    def getImportTableDetails(self, database, table, include_columns):
+    def get_import_table_details(self, database, table, include_columns):
         """Returns all import table details"""
         log = logging.getLogger(self.logger)
 
@@ -1826,7 +1826,7 @@ class dbCalls:
 
         return json_result
 
-    def deleteImportTable(self, database, table, current_user):
+    def delete_import_table(self, database, table, current_user):
         """Update or create an import table"""
         log = logging.getLogger(self.logger)
 
@@ -2381,7 +2381,7 @@ class dbCalls:
         # 		return jsonResult
         return list_of_columns
 
-    def repairImportTable(self, database, table, current_user):
+    def repair_import_table(self, database, table, current_user):
         """Repair Import table"""
         log = logging.getLogger(self.logger)
 
@@ -2423,7 +2423,7 @@ class dbCalls:
 
         return (result_msg, return_code)
 
-    def resetImportTable(self, database, table, current_user):
+    def reset_import_table(self, database, table, current_user):
         """Reset Import table"""
         log = logging.getLogger(self.logger)
 
@@ -2465,7 +2465,7 @@ class dbCalls:
 
         return (result_msg, return_code)
 
-    def repairExportTable(self, connection, schema, table, current_user):
+    def repair_export_table(self, connection, schema, table, current_user):
         """Repair Import table"""
         log = logging.getLogger(self.logger)
 
@@ -2509,7 +2509,7 @@ class dbCalls:
 
         return (result_msg, return_code)
 
-    def resetExportTable(self, connection, schema, table, current_user):
+    def reset_export_table(self, connection, schema, table, current_user):
         """Repair Import table"""
         log = logging.getLogger(self.logger)
 
@@ -2696,7 +2696,7 @@ class dbCalls:
 
         return (return_msg, return_code)
 
-    def addDiscoveredExportTables(
+    def add_discovered_export_tables(
         self, data: list[dataModels.discoverExportTable], current_user
     ):
         """Add discovered export tables"""
@@ -2725,7 +2725,7 @@ class dbCalls:
 
         return (result_msg, return_code)
 
-    def searchExportTables(
+    def search_export_tables(
         self, search_values: dataModels.exportTableSearch, current_user
     ):
         """Search for import tables"""
@@ -2852,9 +2852,9 @@ class dbCalls:
             connection=connection, targetSchema=schema, targetTable="*"
         )
 
-        return self.searchExportTables(search_values, current_user)
+        return self.search_export_tables(search_values, current_user)
 
-    def getExportTableDetails(self, connection, schema, table, include_columns):
+    def get_export_table_details(self, connection, schema, table, include_columns):
         """Returns all connections that have exports configured in them"""
         log = logging.getLogger(self.logger)
 
@@ -3062,7 +3062,7 @@ class dbCalls:
 
         return list_of_columns
 
-    def deleteExportTable(self, connection, schema, table, current_user):
+    def delete_export_table(self, connection, schema, table, current_user):
         """Update or create an export table"""
         log = logging.getLogger(self.logger)
 
@@ -3459,7 +3459,7 @@ class dbCalls:
         session.remove()
         return (result, return_code)
 
-    def getAllAirflowDags(self):
+    def get_all_airflow_dags(self):
         """Returns all Airflow DAGs"""
         log = logging.getLogger(self.logger)
 
@@ -4251,7 +4251,7 @@ class dbCalls:
         session.remove()
         return (result_msg, return_code)
 
-    def deleteImportAirflowDag(self, dagname, current_user):
+    def delete_import_airflow_dag(self, dagname, current_user):
         """Delete an Airflow import DAG"""
         log = logging.getLogger(self.logger)
 
@@ -4550,7 +4550,7 @@ class dbCalls:
 
         return (result, return_code)
 
-    def deleteExportAirflowDag(self, dagname, current_user):
+    def delete_export_airflow_dag(self, dagname, current_user):
         """Delete an Airflow export DAG"""
         log = logging.getLogger(self.logger)
 
@@ -4832,7 +4832,7 @@ class dbCalls:
 
         return (result, return_code)
 
-    def deleteCustomAirflowDag(self, dagname, current_user):
+    def delete_custom_airflow_dag(self, dagname, current_user):
         """Delete an Airflow import DAG"""
         log = logging.getLogger(self.logger)
 

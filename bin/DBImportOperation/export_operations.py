@@ -963,7 +963,7 @@ class operation(metaclass=Singleton):
         self,
     ):
         logging.info("Truncating Export Temp table in Hive")
-        self.common_operations.truncateHiveTable(
+        self.common_operations.truncate_hive_table(
             self.hiveExportTempDB, self.hiveExportTempTable
         )
 
@@ -1838,7 +1838,7 @@ class operation(metaclass=Singleton):
         else:
             self.export_config.run_custom_validation_query_on_jdbc_table()
 
-    def validateExport(self):
+    def validate_export(self):
         if self.export_config.validateExport == False:
             logging.info("Validation disabled for this export")
             return

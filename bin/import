@@ -1111,7 +1111,7 @@ def main(argv):
                 if import_operation.run_stage(3055) == True:
                     import_operation.connect_to_hive(force_skip_test=skip_hive_test)
                     if drop_target_table == True:
-                        import_operation.dropTargetTable()
+                        import_operation.drop_target_table()
                     import_operation.create_target_table()
                     import_operation.update_target_table()
                     import_operation.add_hive_dbimport_columns(merge_operation=False)
@@ -1121,7 +1121,7 @@ def main(argv):
             if run_only_function == None or run_only_function == "truncateTargetTable":
                 if import_operation.run_stage(3056) == True:
                     import_operation.connect_to_hive(force_skip_test=skip_hive_test)
-                    import_operation.truncateTargetTable()
+                    import_operation.truncate_target_table()
 
             if (
                 run_only_function == None
@@ -1151,7 +1151,7 @@ def main(argv):
 
             if run_only_function == None or run_only_function == "invalidateImpala":
                 if import_operation.run_stage(3095) == True:
-                    import_operation.invalidateImpala()
+                    import_operation.invalidate_impala()
 
             if run_only_function == None:
                 import_operation.set_stage(9999)
@@ -1240,7 +1240,7 @@ def main(argv):
                 if import_operation.run_stage(3105) == True:
                     import_operation.connect_to_hive(force_skip_test=skip_hive_test)
                     if drop_target_table == True:
-                        import_operation.dropTargetTable()
+                        import_operation.drop_target_table()
                     import_operation.create_target_table()
                     import_operation.update_target_table()
                     import_operation.add_hive_dbimport_columns(merge_operation=False)
@@ -1275,7 +1275,7 @@ def main(argv):
 
             if run_only_function == None or run_only_function == "invalidateImpala":
                 if import_operation.run_stage(3145) == True:
-                    import_operation.invalidateImpala()
+                    import_operation.invalidate_impala()
 
             if run_only_function == None:
                 import_operation.set_stage(9999)
@@ -1377,7 +1377,7 @@ def main(argv):
                 if import_operation.run_stage(3155) == True:
                     import_operation.connect_to_hive(force_skip_test=skip_hive_test)
                     if drop_target_table == True:
-                        import_operation.dropTargetTable()
+                        import_operation.drop_target_table()
                     import_operation.create_target_table()
                     import_operation.update_target_table()
                     import_operation.add_hive_dbimport_columns(merge_operation=False)
@@ -1418,7 +1418,7 @@ def main(argv):
 
             if run_only_function == None or run_only_function == "invalidateImpala":
                 if import_operation.run_stage(3195) == True:
-                    import_operation.invalidateImpala()
+                    import_operation.invalidate_impala()
 
             if run_only_function == None:
                 import_operation.set_stage(9999)
@@ -1512,7 +1512,7 @@ def main(argv):
                 if import_operation.run_stage(3205) == True:
                     import_operation.connect_to_hive(force_skip_test=skip_hive_test)
                     if drop_target_table == True:
-                        import_operation.dropTargetTable()
+                        import_operation.drop_target_table()
                     import_operation.create_target_table()
                     import_operation.convert_hive_table_to_acid()
                     import_operation.update_target_table()
@@ -1592,7 +1592,7 @@ def main(argv):
 
             if run_only_function == None or run_only_function == "invalidateImpala":
                 if import_operation.run_stage(3245) == True:
-                    import_operation.invalidateImpala()
+                    import_operation.invalidate_impala()
 
             if run_only_function == None:
                 import_operation.set_stage(9999)
@@ -1681,7 +1681,7 @@ def main(argv):
                 if import_operation.run_stage(3255) == True:
                     import_operation.connect_to_hive(force_skip_test=skip_hive_test)
                     if drop_target_table == True:
-                        import_operation.dropTargetTable()
+                        import_operation.drop_target_table()
                     import_operation.create_target_table()
                     import_operation.convert_hive_table_to_acid()
                     import_operation.update_target_table()
@@ -1752,7 +1752,7 @@ def main(argv):
 
             if run_only_function == None or run_only_function == "invalidateImpala":
                 if import_operation.run_stage(3295) == True:
-                    import_operation.invalidateImpala()
+                    import_operation.invalidate_impala()
 
             if run_only_function == None:
                 import_operation.set_stage(9999)
@@ -1857,7 +1857,7 @@ def main(argv):
                 if import_operation.run_stage(3305) == True:
                     import_operation.connect_to_hive(force_skip_test=skip_hive_test)
                     if drop_target_table == True:
-                        import_operation.dropTargetTable()
+                        import_operation.drop_target_table()
                     import_operation.create_target_table()
                     import_operation.convert_hive_table_to_acid()
                     import_operation.add_hive_dbimport_columns(merge_operation=True)
@@ -1926,7 +1926,7 @@ def main(argv):
 
             if run_only_function == None or run_only_function == "invalidateImpala":
                 if import_operation.run_stage(3345) == True:
-                    import_operation.invalidateImpala()
+                    import_operation.invalidate_impala()
 
             if run_only_function == None:
                 import_operation.set_stage(9999)
@@ -2027,7 +2027,7 @@ def main(argv):
                 if import_operation.run_stage(3355) == True:
                     import_operation.connect_to_hive(force_skip_test=skip_hive_test)
                     if drop_target_table == True:
-                        import_operation.dropTargetTable()
+                        import_operation.drop_target_table()
                     import_operation.create_target_table()
                     import_operation.convert_hive_table_to_acid()
                     import_operation.update_target_table()
@@ -2105,7 +2105,7 @@ def main(argv):
 
             if run_only_function == None or run_only_function == "invalidateImpala":
                 if import_operation.run_stage(3395) == True:
-                    import_operation.invalidateImpala()
+                    import_operation.invalidate_impala()
 
             if run_only_function == None:
                 import_operation.set_stage(9999)
@@ -2207,7 +2207,7 @@ def main(argv):
                 if import_operation.run_stage(3405) == True:
                     import_operation.connect_to_hive(force_skip_test=skip_hive_test)
                     if drop_target_table == True:
-                        import_operation.dropTargetTable()
+                        import_operation.drop_target_table()
                     import_operation.create_target_table()
                     import_operation.convert_hive_table_to_acid()
                     import_operation.update_target_table()
@@ -2285,7 +2285,7 @@ def main(argv):
 
             if run_only_function == None or run_only_function == "invalidateImpala":
                 if import_operation.run_stage(3445) == True:
-                    import_operation.invalidateImpala()
+                    import_operation.invalidate_impala()
 
             if run_only_function == None:
                 import_operation.set_stage(9999)
@@ -2368,7 +2368,7 @@ def main(argv):
 
             if run_only_function == None or run_only_function == "invalidateImpala":
                 if import_operation.run_stage(3495) == True:
-                    import_operation.invalidateImpala()
+                    import_operation.invalidate_impala()
 
             if run_only_function == None:
                 import_operation.set_stage(9999)
@@ -2457,7 +2457,7 @@ def main(argv):
                 if import_operation.run_stage(3505) == True:
                     import_operation.connect_to_hive(force_skip_test=skip_hive_test)
                     if drop_target_table == True:
-                        import_operation.dropTargetTable()
+                        import_operation.drop_target_table()
                     import_operation.create_target_table()
                     import_operation.update_target_table()
                     import_operation.add_hive_dbimport_columns(merge_operation=False)
@@ -2467,7 +2467,7 @@ def main(argv):
             if run_only_function == None or run_only_function == "truncateTargetTable":
                 if import_operation.run_stage(3506) == True:
                     import_operation.connect_to_hive(force_skip_test=skip_hive_test)
-                    import_operation.truncateTargetTable()
+                    import_operation.truncate_target_table()
 
             if (
                 run_only_function == None
@@ -2497,7 +2497,7 @@ def main(argv):
 
             if run_only_function == None or run_only_function == "invalidateImpala":
                 if import_operation.run_stage(3545) == True:
-                    import_operation.invalidateImpala()
+                    import_operation.invalidate_impala()
 
             if run_only_function == None:
                 import_operation.set_stage(9999)
@@ -2598,7 +2598,7 @@ def main(argv):
                 if import_operation.run_stage(3555) == True:
                     import_operation.connect_to_hive(force_skip_test=skip_hive_test)
                     if drop_target_table == True:
-                        import_operation.dropTargetTable()
+                        import_operation.drop_target_table()
                     import_operation.create_target_table()
                     import_operation.convert_hive_table_to_acid()
                     import_operation.update_target_table()
@@ -2682,7 +2682,7 @@ def main(argv):
 
             if run_only_function == None or run_only_function == "invalidateImpala":
                 if import_operation.run_stage(3595) == True:
-                    import_operation.invalidateImpala()
+                    import_operation.invalidate_impala()
 
             if run_only_function == None:
                 import_operation.set_stage(9999)
@@ -2783,7 +2783,7 @@ def main(argv):
                 if import_operation.run_stage(3605) == True:
                     import_operation.connect_to_hive(force_skip_test=skip_hive_test)
                     if drop_target_table == True:
-                        import_operation.dropTargetTable()
+                        import_operation.drop_target_table()
                     import_operation.create_target_table()
                     import_operation.convert_hive_table_to_acid()
                     import_operation.update_target_table()
@@ -2862,7 +2862,7 @@ def main(argv):
 
             if run_only_function == None or run_only_function == "invalidateImpala":
                 if import_operation.run_stage(3645) == True:
-                    import_operation.invalidateImpala()
+                    import_operation.invalidate_impala()
 
             if run_only_function == None:
                 import_operation.set_stage(9999)
@@ -2963,7 +2963,7 @@ def main(argv):
                 if import_operation.run_stage(3655) == True:
                     import_operation.connect_to_hive(force_skip_test=skip_hive_test)
                     if drop_target_table == True:
-                        import_operation.dropTargetTable()
+                        import_operation.drop_target_table()
                     import_operation.create_target_table()
                     import_operation.convert_hive_table_to_acid()
                     import_operation.update_target_table()
@@ -3060,7 +3060,7 @@ def main(argv):
 
             if run_only_function == None or run_only_function == "invalidateImpala":
                 if import_operation.run_stage(3695) == True:
-                    import_operation.invalidateImpala()
+                    import_operation.invalidate_impala()
 
             if run_only_function == None:
                 import_operation.set_stage(9999)

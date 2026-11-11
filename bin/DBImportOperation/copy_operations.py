@@ -2018,9 +2018,9 @@ class operation(metaclass=Singleton):
 
         logging.debug("Executing copy_operations.import_copied_table() - Finished")
 
-    def exportTable(self, local_hdfs_path, hive_db, hive_table):
+    def export_table(self, local_hdfs_path, hive_db, hive_table):
         """Export the Hive table"""
-        logging.debug("Executing copy_operations.exportTable()")
+        logging.debug("Executing copy_operations.export_table()")
 
         if local_hdfs_path == None:
             logging.error("You need to specify a local HDFS path")
@@ -2077,7 +2077,7 @@ class operation(metaclass=Singleton):
         query = "export table %s.%s to '%s'" % (hive_db, hive_table, local_hdfs_path)
         self.common_operations.execute_hive_query(query)
 
-        logging.debug("Executing copy_operations.exportTable() - Finished")
+        logging.debug("Executing copy_operations.export_table() - Finished")
 
     def copy_table_to_from_cluster(
         self,

@@ -24,7 +24,7 @@ from common import constants as constant
 from DBImportOperation import copy_operations
 
 
-def printHeader():
+def print_header():
     # Font created at http://patorjk.com/software/taag/#p=display&f=Big&t=DBImport%20-%20Deploy
     sys.stdout.write("\u001b[35m")  # Magenta
     sys.stdout.flush()
@@ -61,7 +61,7 @@ def printHeader():
 
 
 def print_main_help():
-    printHeader()
+    print_header()
     print("Options:")
     print(
         "  --deployAirflowImportDAG          Deploy an Airflow DAG and all import tables that goes with it"
@@ -85,7 +85,7 @@ def print_main_help():
 
 
 def print_deploy_airflow_import_dag_help():
-    printHeader()
+    print_header()
     print(
         "Deploy the DAG definition and all involved databases, tables and connection aliases to a remote DBImport instance"
     )
@@ -106,7 +106,7 @@ def print_deploy_airflow_import_dag_help():
 
 
 def print_deploy_airflow_export_dag_help():
-    printHeader()
+    print_header()
     print(
         "Deploy the DAG definition and all involved databases, tables and connection aliases to a remote DBImport instance"
     )
@@ -211,7 +211,7 @@ def main(argv):
         print_deploy_airflow_export_dag_help()
 
     if quiet_mode == False:
-        printHeader()
+        print_header()
 
     # Initiate the logging functions with the correct level
     if logging_level == logging.DEBUG:

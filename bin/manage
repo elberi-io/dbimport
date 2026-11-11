@@ -34,7 +34,7 @@ from DBImportOperation import (
 from Schedule import Airflow
 
 
-def printHeader():
+def print_header():
     # Font created at http://patorjk.com/software/taag/#p=display&f=Big&t=DBImport%20-%20setup
     sys.stdout.write("\u001b[35m")  # Magenta
     sys.stdout.flush()
@@ -71,7 +71,7 @@ def printHeader():
 
 
 def print_main_help():
-    printHeader()
+    print_header()
     print("Options:")
     print("  --clearImportStage                Clear an Import stage.")
     print("  --clearExportStage                Clear an Export stage.")
@@ -141,7 +141,7 @@ def print_main_help():
 
 
 def print_clear_import_stage_help():
-    printHeader()
+    print_header()
     print(
         "This will remove the staging information for a given import. The result will be that the next import will start"
     )
@@ -157,7 +157,7 @@ def print_clear_import_stage_help():
 
 
 def print_clear_export_stage_help():
-    printHeader()
+    print_header()
     print(
         "This will remove the staging information for a given export. The result will be that the next export will start"
     )
@@ -176,7 +176,7 @@ def print_clear_export_stage_help():
 
 
 def print_repair_incremental_import_help():
-    printHeader()
+    print_header()
     print(
         "Repairs an incremental import by getting the max value for the incremental column in the source system and set that"
     )
@@ -190,7 +190,7 @@ def print_repair_incremental_import_help():
 
 
 def print_reset_incremental_import_help():
-    printHeader()
+    print_header()
     print(
         "Resets an incremental import. This will truncate the Target table in Hive and force the next import"
     )
@@ -204,7 +204,7 @@ def print_reset_incremental_import_help():
 
 
 def print_reset_cdc_import_help():
-    printHeader()
+    print_header()
     print(
         "Resets an CDC import. This will truncate the Target table in Hive and force the next import"
     )
@@ -218,7 +218,7 @@ def print_reset_cdc_import_help():
 
 
 def print_repair_incremental_export_help():
-    printHeader()
+    print_header()
     print(
         "Repairs an incremental export by reading the max value for the incremental column from the "
     )
@@ -235,7 +235,7 @@ def print_repair_incremental_export_help():
 
 
 def print_reset_incremental_export_help():
-    printHeader()
+    print_header()
     print(
         "Resets an incremental export. This will truncate the Target table and force the next export"
     )
@@ -252,7 +252,7 @@ def print_reset_incremental_export_help():
 
 
 def print_drop_export_table_help():
-    printHeader()
+    print_header()
     print(
         "Drops an Export table and forces an incremental export to start from a full export."
     )
@@ -268,7 +268,7 @@ def print_drop_export_table_help():
 
 
 def print_add_import_table_help():
-    printHeader()
+    print_header()
     print(
         "Connects to the source database and reads all tables and view, or a selection if [Schema] or [Table]"
     )
@@ -307,7 +307,7 @@ def print_add_import_table_help():
 
 
 def print_add_export_table_help():
-    printHeader()
+    print_header()
     print(
         "Add export definitions for all tables in Hive, or just specific tables if filters for "
     )
@@ -345,7 +345,7 @@ def print_add_export_table_help():
 
 
 def print_test_connection_help():
-    printHeader()
+    print_header()
     print(
         "Connect to the [Connection] and verifies that DBImport can connect successfully"
     )
@@ -357,7 +357,7 @@ def print_test_connection_help():
 
 
 def print_discover_atlas_rdbms_help():
-    printHeader()
+    print_header()
     print(
         "Discover all object on a Database Connection and update Atlas with the information."
     )
@@ -369,7 +369,7 @@ def print_discover_atlas_rdbms_help():
 
 
 def print_run_jdbc_query_help():
-    printHeader()
+    print_header()
     print("Run the SQL defined in [SQL] against the specified [Connection].")
     print("")
     print("Required parameters:")
@@ -380,7 +380,7 @@ def print_run_jdbc_query_help():
 
 
 def print_run_hive_query_help():
-    printHeader()
+    print_header()
     print("Run the SQL defined in [SQL] against Hive")
     print("")
     print("Required parameters:")
@@ -390,7 +390,7 @@ def print_run_hive_query_help():
 
 
 def print_run_hive_script_help():
-    printHeader()
+    print_header()
     print(
         "Run the SQL's defined in [FILE]. This is actually executing beeline in the background and acts as a wrapper around it"
     )
@@ -409,7 +409,7 @@ def print_run_hive_script_help():
 
 
 def print_check_airflow_execution_help():
-    printHeader()
+    print_header()
     print(
         "Checks if the Airflow Execution is allowed or not. This is usually done first in each DAG and is used to globaly disable all DAG's that is controlled by DBImport"
     )
@@ -423,7 +423,7 @@ def print_check_airflow_execution_help():
 
 
 def print_send_airflow_stop_message_help():
-    printHeader()
+    print_header()
     print(
         "Sends a message to Kafka and/or Rest saying that the specified Airflow DAG have finished"
     )
@@ -435,7 +435,7 @@ def print_send_airflow_stop_message_help():
 
 
 def print_airflow_help():
-    printHeader()
+    print_header()
     print(
         "Generate the Airflow DAG file. If no DAG is specified, all configured DAG's are generated"
     )
@@ -755,7 +755,7 @@ def main(argv):
         print_send_airflow_stop_message_help()
 
     if quiet_mode == False:
-        printHeader()
+        print_header()
 
     # Initiate the logging functions with the correct level
     if logging_level == logging.DEBUG:
@@ -1099,7 +1099,7 @@ def main(argv):
 
             if answer.lower() == "y":
                 import_operation.reset_incr_min_max_values(max_value=None)
-                import_operation.truncateTargetTable()
+                import_operation.truncate_target_table()
                 import_operation.clear_stage()
                 import_operation.remove_temporary_files()
             else:
@@ -1135,7 +1135,7 @@ def main(argv):
 
             if answer.lower() == "y":
                 import_operation.reset_incr_min_max_values(max_value=None)
-                import_operation.truncateTargetTable()
+                import_operation.truncate_target_table()
                 import_operation.clear_stage()
                 import_operation.remove_temporary_files()
             else:

@@ -37,7 +37,6 @@
     "E712": 114,
     "F841": 4,
     "G002": 89,
-    "N802": 1,
     "UP031": 144
   },
   "bin/DBImportConfig/import_stage.py": {
@@ -67,7 +66,6 @@
     "E712": 25,
     "E722": 4,
     "G002": 4,
-    "N802": 1,
     "UP031": 32
   },
   "bin/DBImportOperation/copy_operations.py": {
@@ -76,7 +74,6 @@
     "E722": 3,
     "F841": 9,
     "G002": 24,
-    "N802": 1,
     "UP031": 58
   },
   "bin/DBImportOperation/etl_operations.py": {
@@ -93,7 +90,6 @@
     "E722": 16,
     "F841": 2,
     "G002": 8,
-    "N802": 1,
     "UP031": 49
   },
   "bin/DBImportOperation/import_operations.py": {
@@ -104,7 +100,6 @@
     "E722": 17,
     "F841": 6,
     "G002": 20,
-    "N802": 4,
     "UP031": 167
   },
   "bin/Schedule/Airflow.py": {
@@ -145,7 +140,6 @@
     "E722": 1,
     "F841": 59,
     "G002": 8,
-    "N802": 25,
     "UP031": 42
   },
   "bin/catalogService/glue.py": {
@@ -174,14 +168,12 @@
     "E711": 22,
     "E712": 10,
     "F841": 3,
-    "N802": 1,
     "UP031": 1
   },
   "bin/deploy": {
     "E711": 5,
     "E712": 3,
-    "F841": 3,
-    "N802": 1
+    "F841": 3
   },
   "bin/export": {
     "E711": 43,
@@ -201,7 +193,6 @@
     "E711": 50,
     "E712": 48,
     "F841": 2,
-    "N802": 1,
     "N806": 10
   },
   "bin/restServer": {

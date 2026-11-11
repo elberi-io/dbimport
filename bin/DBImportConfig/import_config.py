@@ -4439,9 +4439,9 @@ class config(metaclass=Singleton):
 
         logging.debug("Executing import_config.reset_incr_min_max_values() - Finished")
 
-    def invalidateImpala(self) -> None:
+    def invalidate_impala(self) -> None:
         """Connects to Impala and invalidates the metadata"""
-        logging.debug("Executing import_config.invalidateImpala()")
+        logging.debug("Executing import_config.invalidate_impala()")
 
         if self.invalidate_impala_metadata == False:
             return
@@ -4456,4 +4456,4 @@ class config(metaclass=Singleton):
 
         self.common_config.disconnect_from_impala()
 
-        logging.debug("Executing import_config.invalidateImpala() - Finished")
+        logging.debug("Executing import_config.invalidate_impala() - Finished")

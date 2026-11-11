@@ -697,12 +697,12 @@ class operation(metaclass=Singleton):
 
         logging.debug("Executing common_operations.drop_hive_table() - Finished")
 
-    def truncateHiveTable(self, hive_db, hive_table):
+    def truncate_hive_table(self, hive_db, hive_table):
         """Truncates a Hive table"""
-        logging.debug("Executing common_operations.truncateHiveTable()")
+        logging.debug("Executing common_operations.truncate_hive_table()")
 
         self.execute_hive_query("truncate table `%s`.`%s`" % (hive_db, hive_table))
-        logging.debug("Executing common_operations.truncateHiveTable() - Finished")
+        logging.debug("Executing common_operations.truncate_hive_table() - Finished")
 
     def update_hive_table_statistics(self, hive_db, hive_table):
         """Compute Hive statistics on a Hive table"""
