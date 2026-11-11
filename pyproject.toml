@@ -242,6 +242,7 @@ extra_checks = false
 module = [
     "DBImportConfig.common_config",
     "DBImportConfig.decryption",
+    "DBImportConfig.export_config",
     "DBImportConfig.export_stage",
     "DBImportConfig.import_config",
     "DBImportConfig.import_stage",
