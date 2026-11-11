@@ -583,7 +583,6 @@ class stage:
             return
 
         # Calculate time and save to export_stage_statistics
-        self.stage_duration_stop = time.monotonic()
         self.stageTimeStop = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
         self.stageDurationStop = time.monotonic()
         self.stageDurationTime = self.stageDurationStop - self.stageDurationStart
