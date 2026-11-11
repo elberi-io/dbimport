@@ -3323,7 +3323,7 @@ class operation(metaclass=Singleton):
                             query += ", "
                         query += "`" + column + "`"
                         first_column = False
-                    # TODO: Smarter calculation of the number of buckets
+                    # TODO(#229): Smarter calculation of the number of buckets
                     query += ") into %s buckets " % (buckets)
 
                 if acid_insert_only == False:

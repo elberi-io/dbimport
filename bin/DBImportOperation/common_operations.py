@@ -177,7 +177,7 @@ class operation(metaclass=Singleton):
             logging.error(
                 "Cant find a working Hive webHCat server. Please check configuration and server status"
             )
-            # TODO: Handle the exit here
+            # TODO(#229): Handle the exit here
 
         logging.debug("Executing common_operation.check_hive_meta_store() - Finished")
 
@@ -737,7 +737,7 @@ class operation(metaclass=Singleton):
         self, hiveDB, hiveTable, createDeleteColumn=False, createMergeColumns=False
     ):
         """Checks if a table is ACID or not, and it it isn't, it converts the table to an ACID table"""
-        # TODO: HDP3 shouldnt run this
+        # TODO(#229): HDP3 shouldnt run this
         logging.debug("Executing common_operations.convert_hive_table_to_acid()")
         logging.info("Converting table to an ACID & Transactional enabled table")
 

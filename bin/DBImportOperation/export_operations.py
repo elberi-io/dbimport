@@ -1674,7 +1674,7 @@ class operation(metaclass=Singleton):
         )
         sqoop_command.extend(["-D", "oraoop.disabled=true"])
         sqoop_command.extend(["-D", "yarn.timeline-service.enabled=false"])
-        # TODO: Add records to settings
+        # TODO(#229): Add records to settings
         sqoop_command.extend(["-D", "sqoop.export.records.per.statement=10000"])
         sqoop_command.extend(["-D", "sqoop.export.records.per.transaction=1"])
         sqoop_command.extend(["--class-name", "dbimport"])

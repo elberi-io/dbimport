@@ -1666,7 +1666,7 @@ class config(metaclass=Singleton):
             # Handle reserved column names in Hive
             column_name = self.convert_hive_column_name_reserved_words(column_name)
 
-            # TODO: Get the maximum column comment size from Hive Metastore and use that instead
+            # TODO(#229): Get the maximum column comment size from Hive Metastore and use that instead
             if source_column_comment != None and len(source_column_comment) > 256:
                 source_column_comment = source_column_comment[:256]
 
@@ -2221,8 +2221,6 @@ class config(metaclass=Singleton):
             if column_name == "interval":
                 column_name = column_name + "_HIVE"
 
-                # TODO: Loop through only PK's in the for loop when external Python code is completed. Same as we do for FK's
-                # Determine what the PK is called in the Pandas dataframe for each database type
             key_type_reference = constant.PRIMARY_KEY
 
             # As we only work with PK in this function, we ignore all other kind of keys (thats usually Foreign Keys we ignore)
@@ -2409,7 +2407,7 @@ class config(metaclass=Singleton):
                 # Select table_id's that matches the source based on dbalias, schema and table name
                 # This can be many table_id's as we might have imported the same source multiple times
                 # under different names.
-                # TODO: Right now, we only support reference to one table per FK. If we have imported the same table more than once
+                # Right now, we only support reference to one table per FK. If we have imported the same table more than once
                 # the FK will add with primary key validation. To get this error, remove the "limit 1" in the sql statement and import
                 # the same source table twice
                 query = "select table_id from import_tables where dbalias = %s and source_schema = %s and source_table = %s limit 1"
@@ -4377,7 +4375,7 @@ class config(metaclass=Singleton):
 
             # Handle reserved column names in Hive
 
-            # TODO: Get the maximum column comment size from Hive Metastore and use that instead
+            # TODO(#229): Get the maximum column comment size from Hive Metastore and use that instead
         select_query = "select %s" % (select_query)
 
         if self.importPhase == constant.IMPORT_PHASE_ORACLE_FLASHBACK:
@@ -4447,7 +4445,7 @@ class config(metaclass=Singleton):
 
         self.common_config.connect_to_impala()
 
-        # TODO: Add invalidation of history table as well
+        # TODO(#229): Add invalidation of history table as well
         # self.import_with_history_table = True
         logging.info("Invalidating Impala table")
         query = "invalidate metadata `%s`.`%s`" % (self.Hive_DB, self.Hive_Table)

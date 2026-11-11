@@ -180,9 +180,6 @@ class atlasOperation:
 
             ref_table_uri = return_dict["tableUri"]
 
-        # TODO: Get the following information from dbimport and source system
-        # Index
-
         json_data = {}
         json_data["referredEntities"] = {}
 
@@ -658,7 +655,7 @@ class atlasOperation:
                     self.dbAlias,
                 )
 
-            # TODO: Must check if the connection is still valid. Very large databases with many table will cause the connection to die
+            # TODO(#229): Must check if the connection is still valid. Very large databases with many table will cause the connection to die
 
             if self.jdbc_connection_mutex != None:
                 self.jdbc_connection_mutex.acquire()
@@ -671,7 +668,7 @@ class atlasOperation:
             try:
                 # Connect to the source database
                 self.connect_to_jdbc()
-                # TODO: Handle failures of the connection
+                # TODO(#229): Handle failures of the connection
 
                 full_schema_column_df = self.sourceSchema.read_table_columns(
                     self.JDBCCursor,
