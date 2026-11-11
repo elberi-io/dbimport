@@ -79,3 +79,24 @@ f99dbe9ca7fe8d7bd1bae8a2956c01958357905f
 
 # refactor: use f-strings where mypy proves the %-format operands
 9447bc11d94783d41b4c7a3f9a0b1dff5d764b22
+
+# refactor: rename the remaining arguments in common
+671ffc4df8444d6479e46d0393d0121182fe8de8
+
+# refactor: rename the remaining arguments in sourceSchemaReader
+3693ed3cac6ad1695d8c3337ad12ae9357b7a314
+
+# refactor: rename the remaining arguments in DBImportConfig
+d78d2bfe540cb6b3d9b54e25dbb79aec424b6698
+
+# refactor: rename the remaining arguments in catalogService
+4ab88bdb98ed6c9bcf1ffdaa23d0593282bfa204
+
+# refactor: rename the remaining arguments in DBImportOperation
+f0790f1b1e63f3c8bb9b220dc1169f7bd454b4e8
+
+# refactor: rename the remaining arguments in Server
+0be75059ae08631bade6dfafb033a534b34c1812
+
+# refactor: rename the remaining arguments in the launchers
+8ebde5e0bc157f74acd639edb48c88784547d1fc
