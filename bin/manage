@@ -548,8 +548,8 @@ def main(argv):
     json_output = False
     json_input = None
     hive_script = None
-    commonConfig = None
-    importConfig = None
+    common_config_obj = None
+    import_config_obj = None
     import_operation = None
     export_operation = None
     copy_operation = None
@@ -797,9 +797,9 @@ def main(argv):
             common_operation.common_config.remove_temporary_files()
 
         if operation == "discoverAtlasRdbms":
-            commonConfig = common_config.config()
+            common_config_obj = common_config.config()
             atlas_operation = atlas_operations.atlasOperation()
-            if commonConfig.check_connection_alias(connection_alias) == False:
+            if common_config_obj.check_connection_alias(connection_alias) == False:
                 logging.error("The specified database connection does not exist.")
                 sys.exit(1)
 
@@ -807,33 +807,33 @@ def main(argv):
             if atlas_operation.check_atlas_schema() == False:
                 sys.exit(1)
 
-            config_object = commonConfig.get_atlas_discover_config_object(
+            config_object = common_config_obj.get_atlas_discover_config_object(
                 connection_alias
             )
             atlas_operation.set_configuration(config_object)
             atlas_operation.discover_atlas_rdbms()
 
         if operation == "runJDBCQuery":
-            commonConfig = common_config.config()
-            if commonConfig.check_connection_alias(connection_alias) == False:
+            common_config_obj = common_config.config()
+            if common_config_obj.check_connection_alias(connection_alias) == False:
                 logging.error("The specified database connection does not exist.")
                 sys.exit(1)
-            commonConfig.lookup_connection_alias(connection_alias)
-            commonConfig.connect_to_jdbc()
-            result = commonConfig.execute_jdbc_query(query=jdbc_query)
+            common_config_obj.lookup_connection_alias(connection_alias)
+            common_config_obj.connect_to_jdbc()
+            result = common_config_obj.execute_jdbc_query(query=jdbc_query)
             if result.empty == True:
                 print("SQL generated no output")
             else:
                 blank_index = [""] * len(result)
                 result.index = blank_index
                 print(result.to_string())
-            commonConfig.remove_temporary_files()
+            common_config_obj.remove_temporary_files()
 
         if operation == "clearImportStage":
-            importConfig = import_config.config(hive_db, hive_table)
-            importConfig.clear_stage()
+            import_config_obj = import_config.config(hive_db, hive_table)
+            import_config_obj.clear_stage()
             logging.info("Stage information cleared for %s.%s", hive_db, hive_table)
-            importConfig.remove_temporary_files()
+            import_config_obj.remove_temporary_files()
 
         if operation == "checkAirflowExecution":
             common_operation = common_operations.operation()
@@ -893,9 +893,9 @@ def main(argv):
                 logging.warning("Aborting command by user request")
                 sys.exit(1)
 
-            copyOperation = copy_operations.operation()
+            copy_operation_obj = copy_operations.operation()
             if (
-                copyOperation.check_dbimport_instance(instance=dbimport_instance)
+                copy_operation_obj.check_dbimport_instance(instance=dbimport_instance)
                 == False
             ):
                 logging.error("The specified DBImport instance does not exist.")
@@ -909,10 +909,10 @@ def main(argv):
                 logging.warning("Aborting command by user request")
                 sys.exit(1)
 
-            copyOperation.encrypt_user_password(
+            copy_operation_obj.encrypt_user_password(
                 instance=dbimport_instance, username=username, password=password
             )
-            copyOperation.remove_temporary_files()
+            copy_operation_obj.remove_temporary_files()
 
         if operation == "encryptCredentials":
             if json_input == None:
@@ -930,17 +930,17 @@ def main(argv):
                         logging.warning("Aborting command by user request")
                         sys.exit(1)
 
-                commonConfig = common_config.config()
-                if commonConfig.check_connection_alias(connection_alias) == False:
+                common_config_obj = common_config.config()
+                if common_config_obj.check_connection_alias(connection_alias) == False:
                     logging.error("The specified database connection does not exist.")
                     sys.exit(1)
 
-                commonConfig.lookup_connection_alias(
+                common_config_obj.lookup_connection_alias(
                     connection_alias=connection_alias, decrypt_credentials=False
                 )
 
                 try:
-                    if commonConfig.db_awss3 == True:
+                    if common_config_obj.db_awss3 == True:
                         username = input("AccessKeyId: ")
                         password = input("SecretAccessKey: ")
                     else:
@@ -974,17 +974,19 @@ def main(argv):
                     )
                     sys.exit(1)
 
-                commonConfig = common_config.config()
-                if commonConfig.check_connection_alias(connection_alias) == False:
+                common_config_obj = common_config.config()
+                if common_config_obj.check_connection_alias(connection_alias) == False:
                     logging.error("The specified database connection does not exist.")
                     sys.exit(1)
 
-                commonConfig.lookup_connection_alias(
+                common_config_obj.lookup_connection_alias(
                     connection_alias=connection_alias, decrypt_credentials=False
                 )
 
-            commonConfig.encrypt_user_password(connection_alias, username, password)
-            commonConfig.remove_temporary_files()
+            common_config_obj.encrypt_user_password(
+                connection_alias, username, password
+            )
+            common_config_obj.remove_temporary_files()
 
         if operation == "encryptString":
             print(
@@ -997,11 +999,11 @@ def main(argv):
                 logging.warning("Aborting command by user request")
                 sys.exit(1)
 
-            commonConfig = common_config.config()
+            common_config_obj = common_config.config()
             print(str_to_encrypt)
-            encrypted_str = commonConfig.encrypt_string(str_to_encrypt)
+            encrypted_str = common_config_obj.encrypt_string(str_to_encrypt)
             print(encrypted_str)
-            commonConfig.remove_temporary_files()
+            common_config_obj.remove_temporary_files()
 
         if operation == "repairAllIncrementalImports":
             print(
@@ -1268,33 +1270,33 @@ def main(argv):
             )
 
         if operation == "testConnection":
-            commonConfig = common_config.config()
-            if commonConfig.check_connection_alias(connection_alias) == False:
+            common_config_obj = common_config.config()
+            if common_config_obj.check_connection_alias(connection_alias) == False:
                 logging.error("The specified database connection does not exist.")
                 sys.exit(1)
-            commonConfig.lookup_connection_alias(connection_alias)
-            if commonConfig.db_awss3 == True:
+            common_config_obj.lookup_connection_alias(connection_alias)
+            if common_config_obj.db_awss3 == True:
                 logging.error(
                     "AWS S3 is not supported for '--testConnection' operations"
                 )
             else:
-                commonConfig.connect_to_jdbc()
+                common_config_obj.connect_to_jdbc()
                 print("Connected successfully")
 
-            commonConfig.disconnect_from_jdbc()
-            # 			commonConfig.connect_to_impala()
-            # 			commonConfig.disconnect_from_impala()
+            common_config_obj.disconnect_from_jdbc()
+            # 			common_config_obj.connect_to_impala()
+            # 			common_config_obj.disconnect_from_impala()
 
-            commonConfig.remove_temporary_files()
+            common_config_obj.remove_temporary_files()
 
     # Error handling for the entire stage block
     except invalidConfiguration as errMsg:
         if str(errMsg) != "":
             logging.error(errMsg)
-        if commonConfig != None:
-            commonConfig.remove_temporary_files()
-        if importConfig != None:
-            importConfig.remove_temporary_files()
+        if common_config_obj != None:
+            common_config_obj.remove_temporary_files()
+        if import_config_obj != None:
+            import_config_obj.remove_temporary_files()
         elif import_operation != None:
             import_operation.import_config.remove_temporary_files()
         elif export_operation != None:
@@ -1314,10 +1316,10 @@ def main(argv):
     except SQLerror as errMsg:
         logging.error("SQL Error detected")
         logging.error(errMsg)
-        if commonConfig != None:
-            commonConfig.remove_temporary_files()
-        if importConfig != None:
-            importConfig.remove_temporary_files()
+        if common_config_obj != None:
+            common_config_obj.remove_temporary_files()
+        if import_config_obj != None:
+            import_config_obj.remove_temporary_files()
         elif import_operation != None:
             import_operation.import_config.remove_temporary_files()
         elif export_operation != None:
@@ -1326,10 +1328,10 @@ def main(argv):
             copy_operation.import_config.remove_temporary_files()
         sys.exit(1)
     except:
-        if commonConfig != None:
-            commonConfig.remove_temporary_files()
-        if importConfig != None:
-            importConfig.remove_temporary_files()
+        if common_config_obj != None:
+            common_config_obj.remove_temporary_files()
+        if import_config_obj != None:
+            import_config_obj.remove_temporary_files()
         elif import_operation != None:
             import_operation.import_config.remove_temporary_files()
         elif export_operation != None:
