@@ -2223,10 +2223,7 @@ class config(metaclass=Singleton):
 
                 # TODO: Loop through only PK's in the for loop when external Python code is completed. Same as we do for FK's
                 # Determine what the PK is called in the Pandas dataframe for each database type
-            key_type_reference = None
-
-            if key_type_reference == None:
-                key_type_reference = constant.PRIMARY_KEY
+            key_type_reference = constant.PRIMARY_KEY
 
             # As we only work with PK in this function, we ignore all other kind of keys (thats usually Foreign Keys we ignore)
             if key_type != key_type_reference:

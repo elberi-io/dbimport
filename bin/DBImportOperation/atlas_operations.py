@@ -961,29 +961,6 @@ class atlasOperation:
                 schema = row["schema"].strip()
                 table = row["table"].strip()
 
-                if 0 == 1:
-                    # Used for debugging
-                    if cache_source_column_df.equals(source_column_df):
-                        print("columns equal")
-                    if cache_source_key_df.equals(source_key_df):
-                        print("keys equal")
-                    pd.set_option("display.max_columns", None)
-                    pd.set_option("display.max_rows", None)
-
-                    print(source_column_df)
-                    print(
-                        "**********************************************************************"
-                    )
-                    print(cache_source_column_df)
-                    print(
-                        "**********************************************************************"
-                    )
-                    print(source_key_df)
-                    print(
-                        "**********************************************************************"
-                    )
-                    print(cache_source_key_df)
-
                 cache_operation = None
                 if len(source_column_df) > 0:
                     if len(cache_source_column_df) == 0:
@@ -1024,29 +1001,6 @@ class atlasOperation:
                         table,
                         self.dbAlias,
                     )
-
-                if 0 == 1:
-                    # Used for debugging
-                    if cache_source_column_df.equals(source_column_df):
-                        print("columns equal")
-                    if cache_source_key_df.equals(source_key_df):
-                        print("keys equal")
-                    pd.set_option("display.max_columns", None)
-                    pd.set_option("display.max_rows", None)
-
-                    print(source_column_df)
-                    print(
-                        "**********************************************************************"
-                    )
-                    print(cache_source_column_df)
-                    print(
-                        "**********************************************************************"
-                    )
-                    print(source_key_df)
-                    print(
-                        "**********************************************************************"
-                    )
-                    print(cache_source_key_df)
 
                 # We need to save if there is an error and raise them after all tables are processed. If not, tables with foreign keys that dont have
                 # the refered table in Atlas will never be able to be created correctly

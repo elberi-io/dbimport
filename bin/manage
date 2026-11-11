@@ -637,8 +637,6 @@ def main(argv):
             operation = "resetIncrementalExport"
         elif opt == "--repairIncrementalExport":
             operation = "repairIncrementalExport"
-        # 		elif opt == "--getAllConnectionPasswords":
-        # 			operation = "getAllConnectionPasswords"
         elif opt == "--dropExportTable":
             operation = "dropExportTable"
         elif opt == "--addImportTable":
@@ -1004,10 +1002,6 @@ def main(argv):
             encrypted_str = commonConfig.encrypt_string(str_to_encrypt)
             print(encrypted_str)
             commonConfig.remove_temporary_files()
-
-        # 		if operation == "getAllConnectionPasswords":
-        # 			commonConfig = common_config.config()
-        # 			commonConfig.print_connection_alias_details()
 
         if operation == "repairAllIncrementalImports":
             print(

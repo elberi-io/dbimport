@@ -5,9 +5,9 @@
   },
   "bin/DBImportConfig/common_config.py": {
     "B904": 4,
-    "E711": 84,
+    "E711": 82,
     "E712": 96,
-    "E722": 40,
+    "E722": 39,
     "F841": 2,
     "G002": 2,
     "N803": 28,
@@ -20,13 +20,13 @@
     "E712": 4
   },
   "bin/DBImportConfig/export_config.py": {
-    "E711": 28,
+    "E711": 25,
     "E712": 54,
     "F841": 7,
-    "G002": 42,
+    "G002": 41,
     "N803": 29,
     "N806": 2,
-    "UP031": 103
+    "UP031": 102
   },
   "bin/DBImportConfig/export_stage.py": {
     "E711": 7,
@@ -38,7 +38,7 @@
   },
   "bin/DBImportConfig/import_config.py": {
     "B904": 3,
-    "E711": 92,
+    "E711": 91,
     "E712": 114,
     "F841": 4,
     "G002": 89,
@@ -183,8 +183,7 @@
   },
   "bin/common/sparkUDF.py": {
     "E722": 1,
-    "F841": 2,
-    "N803": 3,
+    "N803": 1,
     "N806": 1
   },
   "bin/common/sparkUDF2.py": {

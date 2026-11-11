@@ -2121,35 +2121,13 @@ class config(metaclass=Singleton):
         )
 
         sql_sessions_min = 1
-        sql_sessions_max = None
-
-        # TODO: Add max_export_sessions to jdbc_connections
-
-        row = None
-
-        if row != None and row[0] > 0:
-            sql_sessions_max = row[0]
-            logging.info(
-                "\u001b[33mThis connection is limited to a maximum of %s parallel sessions during export\u001b[0m"
-                % (sql_sessions_max)
-            )
-
-        if row != None and row[0] == 0:
-            logging.warning(
-                "Unsupported value of 0 in column 'max_export_sessions' in table 'jdbc_connections'"
-            )
-
-        sql_sessions_max_from_config = int(
+        sql_sessions_max = int(
             self.common_config.get_config_value(key="export_max_sessions")
         )
         sql_sessions_default = int(
             self.common_config.get_config_value(key="export_default_sessions")
         )
 
-        if sql_sessions_max == None:
-            sql_sessions_max = sql_sessions_max_from_config
-        if sql_sessions_max_from_config < sql_sessions_max:
-            sql_sessions_max = sql_sessions_max_from_config
         if sql_sessions_default > sql_sessions_max:
             sql_sessions_default = sql_sessions_max
 
