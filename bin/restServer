@@ -66,12 +66,12 @@ def print_help():
     sys.exit(1)
 
 
-def setup_logger(name, logfile, logFormat, loggingLevel, logPropagate=True):
+def setup_logger(name, logfile, log_format, logging_level, log_propagate=True):
     new_logger = logging.getLogger(name)
-    new_logger.propagate = logPropagate
+    new_logger.propagate = log_propagate
     log_handler = logging.FileHandler(logfile)
-    log_handler.setFormatter(logging.Formatter(logFormat))
-    log_handler.setLevel(loggingLevel)
+    log_handler.setFormatter(logging.Formatter(log_format))
+    log_handler.setLevel(logging_level)
     new_logger.addHandler(log_handler)
 
 
@@ -149,9 +149,9 @@ def main(argv):
     setup_logger(
         name="server",
         logfile=f"{logdir}/restServer.log",
-        logFormat=log_format,
-        loggingLevel=logging_level,
-        logPropagate=log_propagate,
+        log_format=log_format,
+        logging_level=logging_level,
+        log_propagate=log_propagate,
     )
 
     glogging.Logger.datefmt = ""
