@@ -65,7 +65,6 @@ class atlasCrawler(threading.Thread):
     def run(self):
         log = logging.getLogger(self.logger_name)
         log.info("Atlas crawler thread %s started", self.name)
-        self.atlas_operation.testVariable = self.name
         self.atlas_crawler_request = None
 
         if self.atlas_operation.check_atlas_schema(logger=self.logger_name) == False:
