@@ -310,7 +310,7 @@ class config(metaclass=Singleton):
         if self.postDataToREST == True:
             response = self.sendStatistics.send_rest_data(json.dumps(json_data))
             if response != 200:
-                logging.warn("REST call failed! No start message posted")
+                logging.warning("REST call failed! No start message posted")
 
         if self.post_data_to_aws_sns == True:
             result = self.sendStatistics.send_aws_sns_data(json.dumps(json_data))

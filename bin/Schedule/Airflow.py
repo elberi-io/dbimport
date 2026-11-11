@@ -3268,6 +3268,6 @@ class initialize:
         if self.postDataToREST == True:
             response = self.sendStatistics.send_rest_data(json.dumps(json_data))
             if response != 200:
-                log.warn("REST call failed! No start message posted")
+                log.warning("REST call failed! No start message posted")
 
         log.debug("Executing Airflow.send_start_json() - Finished")

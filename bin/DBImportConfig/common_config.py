@@ -348,7 +348,7 @@ class config(metaclass=Singleton):
     def reconnect_config_database(self, printReconnectMessage: bool = True) -> None:
         if self.mysql_conn == None or self.mysql_conn.is_connected() == False:
             if printReconnectMessage == True:
-                logging.warn("Connection to MySQL have been lost. Reconnecting...")
+                logging.warning("Connection to MySQL have been lost. Reconnecting...")
 
             mysql_credentials = self.get_mysql_credentials()
 
