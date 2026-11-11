@@ -160,7 +160,6 @@
     "B904": 5,
     "E712": 3,
     "F841": 2,
-    "N803": 35,
     "UP031": 1
   },
   "bin/catalogService/hiveDirect.py": {
@@ -170,8 +169,6 @@
     "E722": 1,
     "F841": 3,
     "G002": 1,
-    "N803": 35,
-    "N806": 4,
     "UP031": 4
   },
   "bin/common/sparkUDF.py": {

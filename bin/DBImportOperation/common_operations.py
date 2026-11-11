@@ -186,67 +186,67 @@ class operation(metaclass=Singleton):
         return result
 
     def check_table(self, hiveDB, hiveTable):
-        result = self.metastore.check_table(hiveDB=hiveDB, hiveTable=hiveTable)
+        result = self.metastore.check_table(hive_db=hiveDB, hive_table=hiveTable)
         return result
 
     def get_table_location(self, hiveDB, hiveTable):
-        result = self.metastore.get_table_location(hiveDB=hiveDB, hiveTable=hiveTable)
+        result = self.metastore.get_table_location(hive_db=hiveDB, hive_table=hiveTable)
         return result
 
     def is_table_external_orc_format(self, hiveDB, hiveTable):
         result = self.metastore.is_table_external_orc_format(
-            hiveDB=hiveDB, hiveTable=hiveTable
+            hive_db=hiveDB, hive_table=hiveTable
         )
         return result
 
     def is_table_external_parquet_format(self, hiveDB, hiveTable):
         result = self.metastore.is_table_external_parquet_format(
-            hiveDB=hiveDB, hiveTable=hiveTable
+            hive_db=hiveDB, hive_table=hiveTable
         )
         return result
 
     def is_table_external_iceberg_format(self, hiveDB, hiveTable):
         result = self.metastore.is_table_external_iceberg_format(
-            hiveDB=hiveDB, hiveTable=hiveTable
+            hive_db=hiveDB, hive_table=hiveTable
         )
         return result
 
     def is_table_external(self, hiveDB, hiveTable):
-        result = self.metastore.is_table_external(hiveDB=hiveDB, hiveTable=hiveTable)
+        result = self.metastore.is_table_external(hive_db=hiveDB, hive_table=hiveTable)
         return result
 
     def is_table_transactional(self, hiveDB, hiveTable):
         result = self.metastore.is_table_transactional(
-            hiveDB=hiveDB, hiveTable=hiveTable
+            hive_db=hiveDB, hive_table=hiveTable
         )
         return result
 
     def is_table_view(self, hiveDB, hiveTable):
-        result = self.metastore.is_table_view(hiveDB=hiveDB, hiveTable=hiveTable)
+        result = self.metastore.is_table_view(hive_db=hiveDB, hive_table=hiveTable)
         return result
 
     def get_pk(self, hiveDB, hiveTable, quotedColumns=False):
         result = self.metastore.get_pk(
-            hiveDB=hiveDB, hiveTable=hiveTable, quotedColumns=quotedColumns
+            hive_db=hiveDB, hive_table=hiveTable, quoted_columns=quotedColumns
         )
         return result
 
     def get_pk_name(self, hiveDB, hiveTable):
-        result = self.metastore.get_pk_name(hiveDB=hiveDB, hiveTable=hiveTable)
+        result = self.metastore.get_pk_name(hive_db=hiveDB, hive_table=hiveTable)
         return result
 
     def get_fks(self, hiveDB, hiveTable):
-        result = self.metastore.get_fks(hiveDB=hiveDB, hiveTable=hiveTable)
+        result = self.metastore.get_fks(hive_db=hiveDB, hive_table=hiveTable)
         return result
 
     def remove_locks_by_force(self, hiveDB, hiveTable):
         result = self.metastore.remove_locks_by_force(
-            hiveDB=hiveDB, hiveTable=hiveTable
+            hive_db=hiveDB, hive_table=hiveTable
         )
         return result
 
     def get_tables(self, dbFilter=None, tableFilter=None):
-        result = self.metastore.get_tables(dbFilter=dbFilter, tableFilter=tableFilter)
+        result = self.metastore.get_tables(db_filter=dbFilter, table_filter=tableFilter)
         return result
 
     def get_columns(
@@ -260,12 +260,12 @@ class operation(metaclass=Singleton):
         excludeDataLakeColumns=False,
     ):
         result = self.metastore.get_columns(
-            hiveDB=hiveDB,
-            hiveTable=hiveTable,
-            includeType=includeType,
-            includeComment=includeComment,
-            includeIdx=includeIdx,
-            forceColumnUppercase=forceColumnUppercase,
+            hive_db=hiveDB,
+            hive_table=hiveTable,
+            include_type=includeType,
+            include_comment=includeComment,
+            include_idx=includeIdx,
+            force_column_uppercase=forceColumnUppercase,
         )
 
         if excludeDataLakeColumns == True:
