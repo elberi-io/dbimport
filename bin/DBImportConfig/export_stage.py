@@ -306,19 +306,19 @@ class stage:
                 stage_short_name = str(stage)
 
             if stage_short_name != "skip" and self.postDataToRESTextended == True:
-                json_data_rest["%s_start" % (stage_short_name)] = str(stage_start)
-                json_data_rest["%s_stop" % (stage_short_name)] = str(stage_stop)
-                json_data_rest["%s_duration" % (stage_short_name)] = stage_duration
+                json_data_rest[f"{stage_short_name}_start"] = str(stage_start)
+                json_data_rest[f"{stage_short_name}_stop"] = str(stage_stop)
+                json_data_rest[f"{stage_short_name}_duration"] = stage_duration
 
             if stage_short_name != "skip" and self.postDataToKafkaExtended == True:
-                json_data_kafka["%s_start" % (stage_short_name)] = str(stage_start)
-                json_data_kafka["%s_stop" % (stage_short_name)] = str(stage_stop)
-                json_data_kafka["%s_duration" % (stage_short_name)] = stage_duration
+                json_data_kafka[f"{stage_short_name}_start"] = str(stage_start)
+                json_data_kafka[f"{stage_short_name}_stop"] = str(stage_stop)
+                json_data_kafka[f"{stage_short_name}_duration"] = stage_duration
 
             if stage_short_name != "skip" and self.postDataToAWSSNSExtended == True:
-                json_data_aws_sns["%s_start" % (stage_short_name)] = str(stage_start)
-                json_data_aws_sns["%s_stop" % (stage_short_name)] = str(stage_stop)
-                json_data_aws_sns["%s_duration" % (stage_short_name)] = stage_duration
+                json_data_aws_sns[f"{stage_short_name}_start"] = str(stage_start)
+                json_data_aws_sns[f"{stage_short_name}_stop"] = str(stage_stop)
+                json_data_aws_sns[f"{stage_short_name}_duration"] = stage_duration
 
             if stage == 0:
                 export_start = stage_start
@@ -408,13 +408,13 @@ class stage:
             stage_short_name = self.get_stage_short_name(stage)
 
             if stage_short_name != "" and stage_short_name != "skip":
-                columns_part.append("%s_start" % (stage_short_name))
+                columns_part.append(f"{stage_short_name}_start")
                 values_part.append(str(stage_start))
 
-                columns_part.append("%s_stop" % (stage_short_name))
+                columns_part.append(f"{stage_short_name}_stop")
                 values_part.append(str(stage_stop))
 
-                columns_part.append("%s_duration" % (stage_short_name))
+                columns_part.append(f"{stage_short_name}_duration")
                 values_part.append(str(stage_duration))
 
             if stage == 0:
@@ -588,11 +588,11 @@ class stage:
         self.stageDurationStop = time.monotonic()
         self.stageDurationTime = self.stageDurationStop - self.stageDurationStart
 
-        logging.debug("stageTimeStart: %s" % (self.stageTimeStart))
-        logging.debug("stageTimeStop:  %s" % (self.stageTimeStop))
-        logging.debug("stageDurationStart: %s" % (self.stageDurationStart))
-        logging.debug("stageDurationStop:  %s" % (self.stageDurationStop))
-        logging.debug("stageDurationTime:  %s" % (self.stageDurationTime))
+        logging.debug("stageTimeStart: %s", self.stageTimeStart)
+        logging.debug("stageTimeStop:  %s", self.stageTimeStop)
+        logging.debug("stageDurationStart: %s", self.stageDurationStart)
+        logging.debug("stageDurationStop:  %s", self.stageDurationStop)
+        logging.debug("stageDurationTime:  %s", self.stageDurationTime)
 
         query = "select count(stage) from export_stage_statistics where dbalias = %s and target_schema = %s and target_table = %s and stage = %s"
         self.mysql_cursor.execute(

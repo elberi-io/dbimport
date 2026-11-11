@@ -75,7 +75,7 @@ def main(argv):
             logging_level = logging.DEBUG
 
     if display_version == True:
-        print("DBImport version: %s" % (constant.VERSION))
+        print(f"DBImport version: {constant.VERSION}")
         sys.exit(0)
 
     logdir = configuration.get("Server", "logdir")
@@ -108,42 +108,42 @@ def main(argv):
     # Setup the loggers
     setup_logger(
         name="server",
-        logfile="%s/dbimport_server.log" % (logdir),
+        logfile=f"{logdir}/dbimport_server.log",
         logFormat=log_format,
         loggingLevel=logging_level,
         logPropagate=log_propagate,
     )
     setup_logger(
         name="atlasDiscovery",
-        logfile="%s/atlasDiscovery.log" % (logdir),
+        logfile=f"{logdir}/atlasDiscovery.log",
         logFormat=log_format,
         loggingLevel=logging_level,
         logPropagate=log_propagate,
     )
     setup_logger(
         name="restServer",
-        logfile="%s/restServer.log" % (logdir),
+        logfile=f"{logdir}/restServer.log",
         logFormat=log_format,
         loggingLevel=logging_level,
         logPropagate=log_propagate,
     )
     setup_logger(
         name="werkzeug",
-        logfile="%s/restServer.log" % (logdir),
+        logfile=f"{logdir}/restServer.log",
         logFormat=log_format,
         loggingLevel=logging_level,
         logPropagate=log_propagate,
     )
     setup_logger(
         name="waitress",
-        logfile="%s/restServer.log" % (logdir),
+        logfile=f"{logdir}/restServer.log",
         logFormat=log_format,
         loggingLevel=logging_level,
         logPropagate=log_propagate,
     )
 
     if dist_cp_separate_logs == False:
-        dist_cp_logfile = "%s/distCP.log" % (logdir)
+        dist_cp_logfile = f"{logdir}/distCP.log"
         setup_logger(
             name="distCP",
             logfile=dist_cp_logfile,
@@ -154,8 +154,8 @@ def main(argv):
         dist_cp_threads = int(configuration.get("Server", "distCP_threads"))
 
         for thread_id in range(0, dist_cp_threads):
-            dist_cp_log_name = "distCP-thread%s" % (str(thread_id))
-            dist_cp_logfile = "%s/distCP-thread%s.log" % (logdir, str(thread_id))
+            dist_cp_log_name = f"distCP-thread{str(thread_id)}"
+            dist_cp_logfile = f"{logdir}/distCP-thread{str(thread_id)}.log"
             setup_logger(
                 name=dist_cp_log_name,
                 logfile=dist_cp_logfile,
@@ -182,7 +182,7 @@ def main(argv):
                 pid = int(f.readline().strip())
 
             if psutil.pid_exists(pid):
-                print("DBImport Main Server is running with pid %s" % (pid))
+                print(f"DBImport Main Server is running with pid {pid}")
                 sys.exit(0)
             else:
                 print("DBImport Main Server is not running")

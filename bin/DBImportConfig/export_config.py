@@ -310,7 +310,7 @@ class config(metaclass=Singleton):
         if self.postDataToREST == True:
             response = self.sendStatistics.send_rest_data(json.dumps(json_data))
             if response != 200:
-                logging.warn("REST call failed! No start message posted")
+                logging.warning("REST call failed! No start message posted")
 
         if self.post_data_to_aws_sns == True:
             result = self.sendStatistics.send_aws_sns_data(json.dumps(json_data))
@@ -414,11 +414,7 @@ class config(metaclass=Singleton):
             and self.validationMethod != constant.VALIDATION_METHOD_ROWCOUNT
         ):
             raise invalidConfiguration(
-                "Only the values '%s' or '%s' is valid for column validationMethod in export_tables."
-                % (
-                    constant.VALIDATION_METHOD_ROWCOUNT,
-                    constant.VALIDATION_METHOD_CUSTOMQUERY,
-                )
+                f"Only the values '{constant.VALIDATION_METHOD_ROWCOUNT}' or '{constant.VALIDATION_METHOD_CUSTOMQUERY}' is valid for column validationMethod in export_tables."
             )
 
         if (
@@ -503,8 +499,7 @@ class config(metaclass=Singleton):
 
         if self.mysql_cursor01.rowcount != 1:
             raise invalidConfiguration(
-                "There is no JDBC Connection defined with the alias '%s'"
-                % (self.connectionAlias)
+                f"There is no JDBC Connection defined with the alias '{self.connectionAlias}'"
             )
 
         row = self.mysql_cursor01.fetchone()
@@ -534,20 +529,20 @@ class config(metaclass=Singleton):
         self.hiveExportTempTable = self.hiveExportTempTable.lower()
 
         logging.debug("Settings from export_config.get_export_config()")
-        logging.debug("    tableID = %s" % (self.tableID))
-        logging.debug("    exportType = %s" % (self.exportType))
-        logging.debug("    hiveJavaHeap = %s" % (self.hiveJavaHeap))
-        logging.debug("    hiveDB = %s" % (self.hiveDB))
-        logging.debug("    hiveTable = %s" % (self.hiveTable))
-        logging.debug("    sqlWhereAddition = %s" % (self.sqlWhereAddition))
-        logging.debug("    exportIsIncremental = %s" % (self.exportIsIncremental))
+        logging.debug("    tableID = %s", self.tableID)
+        logging.debug("    exportType = %s", self.exportType)
+        logging.debug("    hiveJavaHeap = %s", self.hiveJavaHeap)
+        logging.debug("    hiveDB = %s", self.hiveDB)
+        logging.debug("    hiveTable = %s", self.hiveTable)
+        logging.debug("    sqlWhereAddition = %s", self.sqlWhereAddition)
+        logging.debug("    exportIsIncremental = %s", self.exportIsIncremental)
         logging.debug(
-            "    datalakeSourceConnection = %s" % (self.datalakeSourceConnection)
+            "    datalakeSourceConnection = %s", self.datalakeSourceConnection
         )
-        logging.debug("    exportPhaseDescription = %s" % (self.exportPhaseDescription))
-        logging.debug("    exportPhase = %s" % (self.exportPhase))
+        logging.debug("    exportPhaseDescription = %s", self.exportPhaseDescription)
+        logging.debug("    exportPhase = %s", self.exportPhase)
         logging.debug("    hiveExportTempDB = %s" % (self.hiveExportTempDB))
-        logging.debug("    hiveExportTempTable = %s" % (self.hiveExportTempTable))
+        logging.debug("    hiveExportTempTable = %s", self.hiveExportTempTable)
         logging.debug("Executing export_config.get_export_config() - Finished")
 
     def lookup_connection_alias(self, connectionAlias: str | None = None) -> None:
@@ -567,10 +562,10 @@ class config(metaclass=Singleton):
                 "Validation failed! One of the custom queries did not return a result"
             )
             logging.info(
-                "Result from Hive query:   %s" % (self.validationCustomQueryHiveValue)
+                "Result from Hive query:   %s", self.validationCustomQueryHiveValue
             )
             logging.info(
-                "Result from target query: %s" % (self.validationCustomQueryTargetValue)
+                "Result from target query: %s", self.validationCustomQueryTargetValue
             )
             raise validationError()
 
@@ -579,10 +574,10 @@ class config(metaclass=Singleton):
                 "Validation failed! The custom queries did not return the same result"
             )
             logging.info(
-                "Result from Hive query:   %s" % (self.validationCustomQueryHiveValue)
+                "Result from Hive query:   %s", self.validationCustomQueryHiveValue
             )
             logging.info(
-                "Result from target query: %s" % (self.validationCustomQueryTargetValue)
+                "Result from target query: %s", self.validationCustomQueryTargetValue
             )
             raise validationError()
 
@@ -786,7 +781,7 @@ class config(metaclass=Singleton):
         if row[0] > 0:
             self.tempTableNeeded = True
 
-        logging.debug("tempTableNeeded: %s" % (self.tempTableNeeded))
+        logging.debug("tempTableNeeded: %s", self.tempTableNeeded)
         logging.debug(
             "Executing export_config.is_export_temp_table_needed() - Finished"
         )
@@ -994,8 +989,7 @@ class config(metaclass=Singleton):
 
             if column_type == "string":
                 raise invalidConfiguration(
-                    "Error: Exports of column '%s' with type 'string' to Oracle is not supported. Please set another columntype in 'target_column_type' or ignore this column in the export."
-                    % (column_name)
+                    f"Error: Exports of column '{column_name}' with type 'string' to Oracle is not supported. Please set another columntype in 'target_column_type' or ignore this column in the export."
                 )
 
         if self.common_config.db_mysql == True:
@@ -1242,8 +1236,9 @@ class config(metaclass=Singleton):
                     alter_table_executed = True
 
                     logging.info(
-                        "Column %s renamed to %s in Target Table"
-                        % (row_in_target["name"], row_in_source["name"])
+                        "Column %s renamed to %s in Target Table",
+                        row_in_target["name"],
+                        row_in_source["name"],
                     )
                     self.log_target_column_rename(
                         row_in_source["name"],
@@ -1256,12 +1251,10 @@ class config(metaclass=Singleton):
 
                     if row_in_source["type"] != row_in_target["type"]:
                         logging.info(
-                            "Column %s changed type from %s to %s"
-                            % (
-                                row_in_source["name"],
-                                row_in_target["type"],
-                                row_in_source["type"],
-                            )
+                            "Column %s changed type from %s to %s",
+                            row_in_source["name"],
+                            row_in_target["type"],
+                            row_in_source["type"],
                         )
                         self.log_target_column_type_change(
                             row_in_source["name"],
@@ -1355,8 +1348,9 @@ class config(metaclass=Singleton):
                         alter_table_executed = True
 
                         logging.info(
-                            "Column %s renamed to %s in Target Table"
-                            % (row_in_target["name"], row_in_source["name"])
+                            "Column %s renamed to %s in Target Table",
+                            row_in_target["name"],
+                            row_in_source["name"],
                         )
                         self.log_target_column_rename(
                             row_in_source["name"],
@@ -1371,12 +1365,10 @@ class config(metaclass=Singleton):
                             "type"
                         ] and self.common_config.jdbc_servertype in (constant.MYSQL):
                             logging.info(
-                                "Column %s changed type from %s to %s"
-                                % (
-                                    row_in_source["name"],
-                                    row_in_target["type"],
-                                    row_in_source["type"],
-                                )
+                                "Column %s changed type from %s to %s",
+                                row_in_source["name"],
+                                row_in_target["type"],
+                                row_in_source["type"],
                             )
                             self.log_target_column_type_change(
                                 row_in_source["name"],
@@ -1473,8 +1465,9 @@ class config(metaclass=Singleton):
             alter_table_executed = True
 
             logging.info(
-                "Column %s (%s) added to Target Table"
-                % (full_row["name"], full_row["type"])
+                "Column %s (%s) added to Target Table",
+                full_row["name"],
+                full_row["type"],
             )
             self.log_target_column_add(
                 full_row["name"],
@@ -1622,8 +1615,10 @@ class config(metaclass=Singleton):
             )
 
             logging.info(
-                "Column %s changed type from '%s' to '%s'"
-                % (row["name"], previous_column_type, row["type"])
+                "Column %s changed type from '%s' to '%s'",
+                row["name"],
+                previous_column_type,
+                row["type"],
             )
             self.log_target_column_type_change(
                 row["name"],
@@ -1970,7 +1965,7 @@ class config(metaclass=Singleton):
         query = query.replace("${TARGET_SCHEMA}", self.targetSchema)
         query = query.replace("${TARGET_TABLE}", self.targetTable)
 
-        logging.debug("Validation Query on JDBC table: %s" % (query))
+        logging.debug("Validation Query on JDBC table: %s", query)
 
         result_df = self.common_config.execute_jdbc_query(query)
         result_json = result_df.to_json(orient="values")
@@ -1981,9 +1976,7 @@ class config(metaclass=Singleton):
         )
 
         if len(self.validationCustomQueryTargetValue) > 1024:
-            logging.warning(
-                "'%s' is to large." % (self.validationCustomQueryTargetValue)
-            )
+            logging.warning("'%s' is to large.", self.validationCustomQueryTargetValue)
             raise invalidConfiguration(
                 "The size of the json document on the custom query exceeds 1024 bytes. Change the query to create a result with less than 512 bytes"
             )
@@ -2091,8 +2084,9 @@ class config(metaclass=Singleton):
 
             if source_rowcount != target_rowcount:
                 logging.error(
-                    "Validation failed! The %s exceedes the allowed limit compared to the %s table"
-                    % (validate_text_source, validate_text_target)
+                    "Validation failed! The %s exceedes the allowed limit compared to the %s table",
+                    validate_text_source,
+                    validate_text_target,
                 )
                 if target_rowcount > source_rowcount:
                     logging.info(
@@ -2102,21 +2096,13 @@ class config(metaclass=Singleton):
                     logging.info(
                         "Diff between tables: %s" % (source_rowcount - target_rowcount)
                     )
-                logging.info(
-                    "%s rowcount: %s" % (validate_text_source, source_rowcount)
-                )
-                logging.info(
-                    "%s rowcount: %s" % (validate_text_target, target_rowcount)
-                )
+                logging.info("%s rowcount: %s", validate_text_source, source_rowcount)
+                logging.info("%s rowcount: %s", validate_text_target, target_rowcount)
                 return_value = False
             else:
-                logging.info("%s validation successful!" % (validate_text))
-                logging.info(
-                    "%s rowcount: %s" % (validate_text_source, source_rowcount)
-                )
-                logging.info(
-                    "%s rowcount: %s" % (validate_text_target, target_rowcount)
-                )
+                logging.info("%s validation successful!", validate_text)
+                logging.info("%s rowcount: %s", validate_text_source, source_rowcount)
+                logging.info("%s rowcount: %s", validate_text_target, target_rowcount)
                 logging.info("")
                 return_value = True
 
@@ -2203,8 +2189,8 @@ class config(metaclass=Singleton):
 
             if self.sqlSessions == None:
                 logging.info(
-                    "Cant find the previous number of SQL sessions used. Will default to %s"
-                    % (sql_sessions_default)
+                    "Cant find the previous number of SQL sessions used. Will default to %s",
+                    sql_sessions_default,
                 )
                 self.sqlSessions = sql_sessions_default
             else:
@@ -2214,16 +2200,16 @@ class config(metaclass=Singleton):
                     self.sqlSessions = sql_sessions_max
 
                 logging.info(
-                    "The export will use %s parallell SQL sessions in the source system."
-                    % (self.sqlSessions)
+                    "The export will use %s parallell SQL sessions in the source system.",
+                    self.sqlSessions,
                 )
 
         elif self.exportTool == "spark":
             if self.sqoopMappers > 0:
                 logging.info("Setting the number of executors to a fixed value")
                 logging.info(
-                    "The export will use %s parallell SQL sessions in the source system."
-                    % (self.sqoopMappers)
+                    "The export will use %s parallell SQL sessions in the source system.",
+                    self.sqoopMappers,
                 )
                 self.sparkMaxExecutors = self.sqoopMappers
                 self.sqlSessions = self.sqoopMappers
@@ -2295,7 +2281,7 @@ class config(metaclass=Singleton):
         if min_value == max_value:
             data_to_export = False
 
-        logging.debug("dataToExport: %s" % (data_to_export))
+        logging.debug("dataToExport: %s", data_to_export)
         logging.debug(
             "Executing export_config.is_there_incr_data_to_export() - Finished"
         )
@@ -2433,8 +2419,7 @@ class config(metaclass=Singleton):
         result_df = pd.DataFrame(self.mysql_cursor01.fetchall())
         if len(result_df) == 0:
             print(
-                "Error: No data returned when searching for tables that are exported to dbalias '%s' and schema '%s'"
-                % (dbalias, schema)
+                f"Error: No data returned when searching for tables that are exported to dbalias '{dbalias}' and schema '{schema}'"
             )
             self.remove_temporary_files()
             sys.exit(1)
@@ -2468,11 +2453,11 @@ class config(metaclass=Singleton):
             ") values ( %s, %s, %s, %s, %s )"
         )
 
-        logging.debug("hiveDB:    %s" % (hive_db))
-        logging.debug("hiveTable: %s" % (hive_table))
-        logging.debug("dbalias:   %s" % (dbalias))
-        logging.debug("schema:    %s" % (schema))
-        logging.debug("table:     %s" % (table))
+        logging.debug("hiveDB:    %s", hive_db)
+        logging.debug("hiveTable: %s", hive_table)
+        logging.debug("dbalias:   %s", dbalias)
+        logging.debug("schema:    %s", schema)
+        logging.debug("table:     %s", table)
 
         try:
             self.mysql_cursor01.execute(
@@ -2481,8 +2466,9 @@ class config(metaclass=Singleton):
             self.mysql_conn.commit()
         except mysql.connector.errors.IntegrityError:
             logging.warning(
-                "Hive table %s.%s cant be added. The Connection name, Schema and Table already exists"
-                % (hive_db, hive_table)
+                "Hive table %s.%s cant be added. The Connection name, Schema and Table already exists",
+                hive_db,
+                hive_table,
             )
             return_value = False
 

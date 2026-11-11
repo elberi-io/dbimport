@@ -304,7 +304,7 @@ class config(metaclass=Singleton):
         if self.postDataToREST == True:
             response = self.sendStatistics.send_rest_data(json.dumps(json_data))
             if response != 200:
-                logging.warn("REST call failed! No start message posted")
+                logging.warning("REST call failed! No start message posted")
 
         if self.post_data_to_aws_sns == True:
             result = self.sendStatistics.send_aws_sns_data(json.dumps(json_data))
@@ -558,11 +558,7 @@ class config(metaclass=Singleton):
             and self.validationMethod != constant.VALIDATION_METHOD_ROWCOUNT
         ):
             raise invalidConfiguration(
-                "Only the values '%s' or '%s' is valid for column validationMethod in import_tables."
-                % (
-                    constant.VALIDATION_METHOD_ROWCOUNT,
-                    constant.VALIDATION_METHOD_CUSTOMQUERY,
-                )
+                f"Only the values '{constant.VALIDATION_METHOD_ROWCOUNT}' or '{constant.VALIDATION_METHOD_CUSTOMQUERY}' is valid for column validationMethod in import_tables."
             )
 
         if self.validationMethod == "customQuery":
@@ -996,8 +992,7 @@ class config(metaclass=Singleton):
             and self.validationMethod == constant.VALIDATION_METHOD_CUSTOMQUERY
         ):
             raise invalidConfiguration(
-                "Mongo Import only supports %s as a validation method"
-                % (constant.VALIDATION_METHOD_ROWCOUNT)
+                f"Mongo Import only supports {constant.VALIDATION_METHOD_ROWCOUNT} as a validation method"
             )
 
         # Check to see that we have a valid import type
@@ -1294,84 +1289,80 @@ class config(metaclass=Singleton):
         )
 
         logging.debug("Settings from import_config.get_import_config()")
-        logging.debug("    connection_alias = %s" % (self.connection_alias))
-        logging.debug("    source_schema = %s" % (self.source_schema))
-        logging.debug("    source_table = %s" % (self.source_table))
-        logging.debug("    table_id = %s" % (self.table_id))
-        logging.debug("    import_type = %s" % (self.import_type))
-        logging.debug("    validate_import = %s" % (self.validate_import))
-        logging.debug("    truncate_hive_table = %s" % (self.truncate_hive_table))
-        logging.debug("    incr_mode = %s" % (self.incr_mode))
-        logging.debug("    incr_column = %s" % (self.incr_column))
-        logging.debug("    incr_maxvalue = %s" % (self.incr_maxvalue))
-        logging.debug("    validate_diff_allowed = %s" % (self.validate_diff_allowed))
+        logging.debug("    connection_alias = %s", self.connection_alias)
+        logging.debug("    source_schema = %s", self.source_schema)
+        logging.debug("    source_table = %s", self.source_table)
+        logging.debug("    table_id = %s", self.table_id)
+        logging.debug("    import_type = %s", self.import_type)
+        logging.debug("    validate_import = %s", self.validate_import)
+        logging.debug("    truncate_hive_table = %s", self.truncate_hive_table)
+        logging.debug("    incr_mode = %s", self.incr_mode)
+        logging.debug("    incr_column = %s", self.incr_column)
+        logging.debug("    incr_maxvalue = %s", self.incr_maxvalue)
+        logging.debug("    validate_diff_allowed = %s", self.validate_diff_allowed)
         logging.debug(
-            "    soft_delete_during_merge = %s" % (self.soft_delete_during_merge)
+            "    soft_delete_during_merge = %s", self.soft_delete_during_merge
         )
-        logging.debug("    datalake_source = %s" % (self.datalake_source))
-        logging.debug("    datalake_source_table = %s" % (self.datalake_source_table))
+        logging.debug("    datalake_source = %s", self.datalake_source)
+        logging.debug("    datalake_source_table = %s", self.datalake_source_table)
         logging.debug(
-            "    datalake_source_connection = %s" % (self.datalake_source_connection)
+            "    datalake_source_connection = %s", self.datalake_source_connection
         )
-        logging.debug("    hiveJavaHeap = %s" % (self.hiveJavaHeap))
-        logging.debug("    hiveSplitCount = %s" % (self.hiveSplitCount))
+        logging.debug("    hiveJavaHeap = %s", self.hiveJavaHeap)
+        logging.debug("    hiveSplitCount = %s", self.hiveSplitCount)
+        logging.debug("    sqoop_use_generated_sql = %s", self.sqoop_use_generated_sql)
+        logging.debug("    sqoop_mappers = %s", self.sqoop_mappers)
+        logging.debug("    sqoop_last_size = %s", self.sqoop_last_size)
+        logging.debug("    sqoop_last_rows = %s", self.sqoop_last_rows)
         logging.debug(
-            "    sqoop_use_generated_sql = %s" % (self.sqoop_use_generated_sql)
+            "    sqoop_allow_text_splitter = %s", self.sqoop_allow_text_splitter
         )
-        logging.debug("    sqoop_mappers = %s" % (self.sqoop_mappers))
-        logging.debug("    sqoop_last_size = %s" % (self.sqoop_last_size))
-        logging.debug("    sqoop_last_rows = %s" % (self.sqoop_last_rows))
+        logging.debug("    sqoop_last_execution = %s", self.sqoop_last_execution)
         logging.debug(
-            "    sqoop_allow_text_splitter = %s" % (self.sqoop_allow_text_splitter)
+            "    sqoop_last_execution_timestamp = %s",
+            self.sqoop_last_execution_timestamp,
         )
-        logging.debug("    sqoop_last_execution = %s" % (self.sqoop_last_execution))
+        logging.debug("    sqoop_hdfs_location = %s", self.sqoop_hdfs_location)
         logging.debug(
-            "    sqoop_last_execution_timestamp = %s"
-            % (self.sqoop_last_execution_timestamp)
-        )
-        logging.debug("    sqoop_hdfs_location = %s" % (self.sqoop_hdfs_location))
-        logging.debug(
-            "    sqoop_hdfs_location_pkonly = %s" % (self.sqoop_hdfs_location_pkonly)
+            "    sqoop_hdfs_location_pkonly = %s", self.sqoop_hdfs_location_pkonly
         )
         logging.debug(
-            "    sqoop_hdfs_location_sparkETL = %s"
-            % (self.sqoop_hdfs_location_sparkETL)
+            "    sqoop_hdfs_location_sparkETL = %s", self.sqoop_hdfs_location_sparkETL
         )
-        logging.debug("    sqoop_incr_mode = %s" % (self.sqoop_incr_mode))
-        logging.debug("    sqoop_incr_column = %s" % (self.sqoop_incr_column))
+        logging.debug("    sqoop_incr_mode = %s", self.sqoop_incr_mode)
+        logging.debug("    sqoop_incr_column = %s", self.sqoop_incr_column)
         logging.debug("    sqoop_incr_lastvalue = %s" % (self.sqoop_incr_lastvalue))
-        logging.debug("    sqoop_options = %s" % (self.sqoop_options))
-        logging.debug("    import_is_incremental = %s" % (self.import_is_incremental))
-        logging.debug("    create_table_with_acid = %s" % (self.create_table_with_acid))
-        logging.debug("    import_with_merge = %s" % (self.import_with_merge))
+        logging.debug("    sqoop_options = %s", self.sqoop_options)
+        logging.debug("    import_is_incremental = %s", self.import_is_incremental)
+        logging.debug("    create_table_with_acid = %s", self.create_table_with_acid)
+        logging.debug("    import_with_merge = %s", self.import_with_merge)
         logging.debug(
-            "    import_with_history_table = %s" % (self.import_with_history_table)
+            "    import_with_history_table = %s", self.import_with_history_table
         )
-        logging.debug("    full_table_compare = %s" % (self.full_table_compare))
+        logging.debug("    full_table_compare = %s", self.full_table_compare)
         logging.debug(
-            "    create_datalake_import_column = %s"
-            % (self.create_datalake_import_column)
-        )
-        logging.debug(
-            "    nomerge_ingestion_sql_addition = %s"
-            % (self.nomerge_ingestion_sql_addition)
+            "    create_datalake_import_column = %s", self.create_datalake_import_column
         )
         logging.debug(
-            "    sqoop_sql_where_addition = %s" % (self.sqoop_sql_where_addition)
+            "    nomerge_ingestion_sql_addition = %s",
+            self.nomerge_ingestion_sql_addition,
         )
-        logging.debug("    Hive_Import_DB = %s" % (self.Hive_Import_DB))
-        logging.debug("    Hive_Import_Table = %s" % (self.Hive_Import_Table))
-        logging.debug("    Hive_Import_View = %s" % (self.Hive_Import_View))
-        logging.debug("    Hive_History_DB = %s" % (self.Hive_History_DB))
-        logging.debug("    Hive_History_Table = %s" % (self.Hive_History_Table))
-        logging.debug("    Hive_HistoryTemp_DB = %s" % (self.Hive_HistoryTemp_DB))
-        logging.debug("    Hive_HistoryTemp_Table = %s" % (self.Hive_HistoryTemp_Table))
-        logging.debug("    Hive_Import_PKonly_DB = %s" % (self.Hive_Import_PKonly_DB))
         logging.debug(
-            "    Hive_Import_PKonly_Table = %s" % (self.Hive_Import_PKonly_Table)
+            "    sqoop_sql_where_addition = %s", self.sqoop_sql_where_addition
         )
-        logging.debug("    Hive_Delete_DB = %s" % (self.Hive_Delete_DB))
-        logging.debug("    Hive_Delete_Table = %s" % (self.Hive_Delete_Table))
+        logging.debug("    Hive_Import_DB = %s", self.Hive_Import_DB)
+        logging.debug("    Hive_Import_Table = %s", self.Hive_Import_Table)
+        logging.debug("    Hive_Import_View = %s", self.Hive_Import_View)
+        logging.debug("    Hive_History_DB = %s", self.Hive_History_DB)
+        logging.debug("    Hive_History_Table = %s", self.Hive_History_Table)
+        logging.debug("    Hive_HistoryTemp_DB = %s", self.Hive_HistoryTemp_DB)
+        logging.debug("    Hive_HistoryTemp_Table = %s", self.Hive_HistoryTemp_Table)
+        logging.debug("    Hive_Import_PKonly_DB = %s", self.Hive_Import_PKonly_DB)
+        logging.debug(
+            "    Hive_Import_PKonly_Table = %s", self.Hive_Import_PKonly_Table
+        )
+        logging.debug("    Hive_Delete_DB = %s", self.Hive_Delete_DB)
+        logging.debug("    Hive_Delete_Table = %s", self.Hive_Delete_Table)
         logging.debug("    Hive_ColumnName_Import = %s" % (self.Hive_ColumnName_Import))
         logging.debug("    Hive_ColumnName_Insert = %s" % (self.Hive_ColumnName_Insert))
         logging.debug("    Hive_ColumnName_Update = %s" % (self.Hive_ColumnName_Update))
@@ -1549,13 +1540,13 @@ class config(metaclass=Singleton):
         logging.debug("force_string_connection: %s" % (force_string_connection))
         logging.debug("force_string_table: %s" % (force_string_table))
         logging.debug("force_string_column: %s" % (force_string_column))
-        logging.debug("forceString: %s" % (force_string))
+        logging.debug("forceString: %s", force_string)
         logging.debug("Executing import_config.get_column_force_string() - Finished")
         return force_string
 
     def convert_hive_column_name_reserved_words(self, column_name: str) -> str:
         if column_name.lower() in ("synchronized", "date", "interval", "int"):
-            column_name = "%s_hive" % (column_name)
+            column_name = f"{column_name}_hive"
 
         return column_name
 
@@ -2028,8 +2019,8 @@ class config(metaclass=Singleton):
                     ):
                         column_name_reserved = True
                         logging.warning(
-                            "The column '%s' is a reserved column namn in Sqoop. Please rename the column in 'column_name_override'"
-                            % (column_name_parquet_supported)
+                            "The column '%s' is a reserved column namn in Sqoop. Please rename the column in 'column_name_override'",
+                            column_name_parquet_supported,
                         )
 
                     self.sqoop_use_generated_sql = True
@@ -2148,10 +2139,10 @@ class config(metaclass=Singleton):
         )
 
         logging.debug("Settings from import_config.save_column_data()")
-        logging.debug("    sqlGeneratedSqoopQuery = %s" % (self.sqlGeneratedSqoopQuery))
+        logging.debug("    sqlGeneratedSqoopQuery = %s", self.sqlGeneratedSqoopQuery)
         logging.debug(
-            "    sqlGeneratedHiveColumnDefinition = %s"
-            % (self.sqlGeneratedHiveColumnDefinition)
+            "    sqlGeneratedHiveColumnDefinition = %s",
+            self.sqlGeneratedHiveColumnDefinition,
         )
         logging.debug("Executing import_config.save_column_data() - Finished")
 
@@ -2193,7 +2184,7 @@ class config(metaclass=Singleton):
 
         if column_name.startswith("_") == True:
             # 			column_name = column_name[1:]
-            column_name = "underscore%s" % (column_name)
+            column_name = f"underscore{column_name}"
 
         return column_name
 
@@ -2242,9 +2233,9 @@ class config(metaclass=Singleton):
                 continue
 
             logging.debug("	key_type: %s" % (key_type))
-            logging.debug("	key_type_reference: %s" % (key_type_reference))
+            logging.debug("	key_type_reference: %s", key_type_reference)
             logging.debug("	key_id: %s" % (key_id))
-            logging.debug("	column_name: %s" % (column_name))
+            logging.debug("	column_name: %s", column_name)
 
             # Append the column_name to the generated PK list.
             if len(self.generatedPKcolumns) > 0:
@@ -2434,8 +2425,10 @@ class config(metaclass=Singleton):
 
                 if self.mysql_cursor01.rowcount == 0:
                     logging.warning(
-                        "Reference table '%s.%s' on alias '%s' does not exist in MySQL. Skipping FK on this table"
-                        % (ref_schema_name, ref_table_name, self.connection_alias)
+                        "Reference table '%s.%s' on alias '%s' does not exist in MySQL. Skipping FK on this table",
+                        ref_schema_name,
+                        ref_table_name,
+                        self.connection_alias,
                     )
                 else:
                     rows = self.mysql_cursor01.fetchall()
@@ -2469,8 +2462,10 @@ class config(metaclass=Singleton):
 
                         if self.mysql_cursor02.rowcount == 0:
                             logging.warning(
-                                "Referenced column '%s' in '%s.%s' cant be found in MySQL. Skipping FK on this table"
-                                % (ref_column_name, ref_schema_name, ref_table_name)
+                                "Referenced column '%s' in '%s.%s' cant be found in MySQL. Skipping FK on this table",
+                                ref_column_name,
+                                ref_schema_name,
+                                ref_table_name,
                             )
                             ref_column_id = None
                         else:
@@ -2489,9 +2484,9 @@ class config(metaclass=Singleton):
                                 ") values ( %s, %s, %s, %s, %s, %s )"
                             )
 
-                            logging.debug("self.table_id:    %s" % (self.table_id))
+                            logging.debug("self.table_id:    %s", self.table_id)
                             logging.debug("source_column_id: %s" % (source_column_id))
-                            logging.debug("fk_index:         %s" % (fk_index))
+                            logging.debug("fk_index:         %s", fk_index)
                             logging.debug("ref_table_id[0]:  %s" % (ref_table_id[0]))
                             logging.debug("ref_column_id:    %s" % (ref_column_id))
                             logging.debug("key_position:     %s" % (key_position))
@@ -2545,9 +2540,8 @@ class config(metaclass=Singleton):
 
                 column = self.convert_hive_column_name_reserved_words(column)
 
-                self.generatedSqoopOptions += "%s=%s," % (
-                    self.get_parquet_column_name(column),
-                    value,
+                self.generatedSqoopOptions += (
+                    f"{self.get_parquet_column_name(column)}={value},"
                 )
             # Remove the last ","
             self.generatedSqoopOptions = self.generatedSqoopOptions[:-1]
@@ -2678,20 +2672,19 @@ class config(metaclass=Singleton):
         self.sqoop_mappers = row[2]
 
         logging.debug("sqlSessionsLast: %s" % (sql_sessions_last))
-        logging.debug("sqlSessions:     %s" % (self.sqlSessions))
-        logging.debug("sqoop_mappers:   %s" % (self.sqoop_mappers))
+        logging.debug("sqlSessions:     %s", self.sqlSessions)
+        logging.debug("sqoop_mappers:   %s", self.sqoop_mappers)
 
         if self.sqoop_mappers > 0:
             self.sqlSessions = self.sqoop_mappers
             logging.info(
-                "Setting the number of SQL splits to %s (fixed value)"
-                % (self.sqlSessions)
+                "Setting the number of SQL splits to %s (fixed value)", self.sqlSessions
             )
         else:
             if self.sqlSessions == None:
                 logging.info(
-                    "Cant find the previous import size so it's impossible to calculate the correct amount of SQL splits. Will default to %s"
-                    % (sql_sessions_default)
+                    "Cant find the previous import size so it's impossible to calculate the correct amount of SQL splits. Will default to %s",
+                    sql_sessions_default,
                 )
                 self.sqlSessions = sql_sessions_default
             else:
@@ -2700,8 +2693,8 @@ class config(metaclass=Singleton):
                 elif self.sqlSessions > sql_sessions_max:
                     self.sqlSessions = sql_sessions_max
                 logging.info(
-                    "The import will use %s SQL splits in the source system."
-                    % (self.sqlSessions)
+                    "The import will use %s SQL splits in the source system.",
+                    self.sqlSessions,
                 )
 
         logging.debug("Executing import_config.calculate_job_mappers() - Finished")
@@ -2731,14 +2724,14 @@ class config(metaclass=Singleton):
     ) -> str | None:
         """Returns the where statement that is needed to only work on the rows that was loaded incr"""
         logging.debug("Executing import_config.get_incr_where_statement()")
-        logging.debug("forceIncr = %s" % (forceIncr))
-        logging.debug("ignoreIfOnlyIncrMax = %s" % (ignoreIfOnlyIncrMax))
-        logging.debug("whereForSourceTable = %s" % (whereForSourceTable))
-        logging.debug("whereForSqoop = %s" % (whereForSqoop))
+        logging.debug("forceIncr = %s", forceIncr)
+        logging.debug("ignoreIfOnlyIncrMax = %s", ignoreIfOnlyIncrMax)
+        logging.debug("whereForSourceTable = %s", whereForSourceTable)
+        logging.debug("whereForSqoop = %s", whereForSqoop)
         logging.debug("sqoopIncrMaxvaluePending = %s" % (self.sqoopIncrMaxvaluePending))
-        logging.debug("sqoop_incr_mode = %s" % (self.sqoop_incr_mode))
+        logging.debug("sqoop_incr_mode = %s", self.sqoop_incr_mode)
         logging.debug(
-            "sqoop_incr_validation_method = %s" % (self.sqoop_incr_validation_method)
+            "sqoop_incr_validation_method = %s", self.sqoop_incr_validation_method
         )
         logging.debug("sqoop_incr_lastvalue = %s" % (self.sqoop_incr_lastvalue))
 
@@ -3020,12 +3013,12 @@ class config(metaclass=Singleton):
                             self.sqoop_incr_lastvalue,
                         )
 
-            logging.debug("whereStatement = %s" % (where_statement))
+            logging.debug("whereStatement = %s", where_statement)
             if where_statement_saved == where_statement and ignoreIfOnlyIncrMax == True:
                 # We have only added the MAX value to there WHERE statement and have a setting to ignore it if that is the only value
                 where_statement = None
 
-        logging.debug("whereStatement: %s" % (where_statement))
+        logging.debug("whereStatement: %s", where_statement)
         logging.debug("Executing import_config.get_incr_where_statement() - Finished")
         return where_statement
 
@@ -3040,16 +3033,14 @@ class config(metaclass=Singleton):
         query = query.replace("${SOURCE_SCHEMA}", self.source_schema)
         query = query.replace("${SOURCE_TABLE}", self.source_table)
 
-        logging.debug("Validation Query on JDBC table: %s" % (query))
+        logging.debug("Validation Query on JDBC table: %s", query)
 
         result_df = self.common_config.execute_jdbc_query(query)
         result_json = result_df.to_json(orient="values")
         self.validationCustomQuerySourceValue = result_json
 
         if len(self.validationCustomQuerySourceValue) > 1024:
-            logging.warning(
-                "'%s' is to large." % (self.validationCustomQuerySourceValue)
-            )
+            logging.warning("'%s' is to large.", self.validationCustomQuerySourceValue)
             raise invalidConfiguration(
                 "The size of the json document on the custom query exceeds 1024 bytes. Change the query to create a result with less than 512 bytes"
             )
@@ -3116,32 +3107,32 @@ class config(metaclass=Singleton):
                     forceIncr=False, whereForSourceTable=True
                 )
                 logging.debug(
-                    "Where statement for forceIncr = False: %s" % (where_statement)
+                    "Where statement for forceIncr = False: %s", where_statement
                 )
                 jdbc_rows_full = self.common_config.get_jdbc_table_row_count(
                     self.source_schema, self.source_table, where_statement
                 )
                 logging.debug(
-                    "Got %s rows from get_jdbc_table_row_count()" % (jdbc_rows_full)
+                    "Got %s rows from get_jdbc_table_row_count()", jdbc_rows_full
                 )
 
                 where_statement = self.get_incr_where_statement(
                     forceIncr=True, whereForSourceTable=True
                 )
                 logging.debug(
-                    "Where statement for forceIncr = True: %s" % (where_statement)
+                    "Where statement for forceIncr = True: %s", where_statement
                 )
                 jdbc_rows_incr = self.common_config.get_jdbc_table_row_count(
                     self.source_schema, self.source_table, where_statement
                 )
                 logging.debug(
-                    "Got %s rows from get_jdbc_table_row_count()" % (jdbc_rows_incr)
+                    "Got %s rows from get_jdbc_table_row_count()", jdbc_rows_incr
                 )
         else:
             if self.get_sql_where_addition() != None:
                 logging.debug(
-                    "Where statement for full imports: %s"
-                    % (self.get_sql_where_addition())
+                    "Where statement for full imports: %s",
+                    self.get_sql_where_addition(),
                 )
                 where_statement = self.get_sql_where_addition()
             else:
@@ -3157,15 +3148,14 @@ class config(metaclass=Singleton):
         if jdbc_rows_incr != None:
             query += "source_rowcount_incr = %s " % (jdbc_rows_incr)
             logging.debug(
-                "Source table contains %s rows for the incremental part"
-                % (jdbc_rows_incr)
+                "Source table contains %s rows for the incremental part", jdbc_rows_incr
             )
 
         if jdbc_rows_full != None:
             if jdbc_rows_incr != None:
                 query += ", "
             query += "source_rowcount = %s " % (jdbc_rows_full)
-            logging.debug("Source table contains %s rows" % (jdbc_rows_full))
+            logging.debug("Source table contains %s rows", jdbc_rows_full)
 
         query += "where table_id = %s" % (self.table_id)
 
@@ -3238,8 +3228,8 @@ class config(metaclass=Singleton):
 
         if self.validationMethod == constant.VALIDATION_METHOD_CUSTOMQUERY:
             logging.debug(
-                "Executing import_config.save_source_table_row_count() - Finished (Because self.validationMethod = %s"
-                % (constant.VALIDATION_METHOD_CUSTOMQUERY)
+                "Executing import_config.save_source_table_row_count() - Finished (Because self.validationMethod = %s",
+                constant.VALIDATION_METHOD_CUSTOMQUERY,
             )
             return
 
@@ -3303,7 +3293,7 @@ class config(metaclass=Singleton):
         sqoop_mappers: int | None = None,
     ) -> None:
         logging.debug("Executing import_config.save_import_statistics()")
-        logging.info("Saving %s statistics" % (self.importTool))
+        logging.info("Saving %s statistics", self.importTool)
 
         self.sqoopStartUTS = sqoop_start_uts
         try:
@@ -3689,10 +3679,10 @@ class config(metaclass=Singleton):
                 "Validation failed! One of the custom queries did not return a result"
             )
             logging.info(
-                "Result from source query: %s" % (self.validationCustomQuerySourceValue)
+                "Result from source query: %s", self.validationCustomQuerySourceValue
             )
             logging.info(
-                "Result from Hive query:   %s" % (self.validationCustomQueryHiveValue)
+                "Result from Hive query:   %s", self.validationCustomQueryHiveValue
             )
             raise validationError()
 
@@ -3701,10 +3691,10 @@ class config(metaclass=Singleton):
                 "Validation failed! The custom queries did not return the same result"
             )
             logging.info(
-                "Result from source query: %s" % (self.validationCustomQuerySourceValue)
+                "Result from source query: %s", self.validationCustomQuerySourceValue
             )
             logging.info(
-                "Result from Hive query:   %s" % (self.validationCustomQueryHiveValue)
+                "Result from Hive query:   %s", self.validationCustomQueryHiveValue
             )
             raise validationError()
 
@@ -3718,8 +3708,8 @@ class config(metaclass=Singleton):
         # This is used to validate the Import table if the validation method is full for incremental import
 
         logging.debug("Executing import_config.validate_row_count()")
-        logging.debug("validateSqoop = %s" % (validateSqoop))
-        logging.debug("incremental = %s" % (incremental))
+        logging.debug("validateSqoop = %s", validateSqoop)
+        logging.debug("incremental = %s", incremental)
         return_value = None
 
         if self.validate_import == True:
@@ -3818,10 +3808,10 @@ class config(metaclass=Singleton):
 
             logging.debug("upperValidationLimit: %s" % (upper_validation_limit))
             logging.debug("lowerValidationLimit: %s" % (lower_validation_limit))
-            logging.debug("diffAllowed: %s" % (diff_allowed))
+            logging.debug("diffAllowed: %s", diff_allowed)
 
             if target_rowcount == None:
-                logging.warn(
+                logging.warning(
                     "There is no information about rowcounts in target table. Skipping validation"
                 )
                 return True
@@ -3831,8 +3821,8 @@ class config(metaclass=Singleton):
                 or target_rowcount < lower_validation_limit
             ):
                 logging.error(
-                    "Validation failed! The %s exceedes the allowed limit compared top the source table"
-                    % (validate_text)
+                    "Validation failed! The %s exceedes the allowed limit compared top the source table",
+                    validate_text,
                 )
                 if target_rowcount > source_rowcount:
                     logging.info(
@@ -3844,24 +3834,16 @@ class config(metaclass=Singleton):
                         "Diff between source and target table: %s"
                         % (source_rowcount - target_rowcount)
                     )
-                logging.info(
-                    "%s rowcount: %s" % (validate_text_source, source_rowcount)
-                )
-                logging.info(
-                    "%s rowcount: %s" % (validate_text_target, target_rowcount)
-                )
-                logging.info("Validation diff allowed: %s" % (diff_allowed))
+                logging.info("%s rowcount: %s", validate_text_source, source_rowcount)
+                logging.info("%s rowcount: %s", validate_text_target, target_rowcount)
+                logging.info("Validation diff allowed: %s", diff_allowed)
                 logging.info("Upper limit: %s" % (upper_validation_limit))
                 logging.info("Lower limit: %s" % (lower_validation_limit))
                 return_value = False
             else:
-                logging.info("%s validation successful!" % (validate_text))
-                logging.info(
-                    "%s rowcount: %s" % (validate_text_source, source_rowcount)
-                )
-                logging.info(
-                    "%s rowcount: %s" % (validate_text_target, target_rowcount)
-                )
+                logging.info("%s validation successful!", validate_text)
+                logging.info("%s rowcount: %s", validate_text_source, source_rowcount)
+                logging.info("%s rowcount: %s", validate_text_target, target_rowcount)
                 print()
                 return_value = True
 
@@ -4091,11 +4073,11 @@ class config(metaclass=Singleton):
 
         self.get_pk_columns()
 
-        logging.debug("self.split_by_column: %s" % (self.split_by_column))
-        logging.debug("self.sqoop_options: %s" % (self.sqoop_options))
-        logging.debug("self.generatedPKcolumns: %s" % (self.generatedPKcolumns))
+        logging.debug("self.split_by_column: %s", self.split_by_column)
+        logging.debug("self.sqoop_options: %s", self.sqoop_options)
+        logging.debug("self.generatedPKcolumns: %s", self.generatedPKcolumns)
         logging.debug(
-            "self.splitAddedToSqoopOptions: %s" % (self.splitAddedToSqoopOptions)
+            "self.splitAddedToSqoopOptions: %s", self.splitAddedToSqoopOptions
         )
 
         # self.splitAddedToSqoopOptions is needed as this code is executed many times during an import. And the --split-by is inserted into self.sqoop_options
@@ -4174,8 +4156,8 @@ class config(metaclass=Singleton):
                 ),
             )
 
-        logging.debug("SplitByColumn = %s" % (self.splitByColumn))
-        logging.debug("sqoopBoundaryQuery = %s" % (self.sqoopBoundaryQuery))
+        logging.debug("SplitByColumn = %s", self.splitByColumn)
+        logging.debug("sqoopBoundaryQuery = %s", self.sqoopBoundaryQuery)
         logging.debug(
             "Executing import_config.generate_sqoop_boundary_query() - Finished"
         )
@@ -4315,11 +4297,11 @@ class config(metaclass=Singleton):
                 "catalog option supplied to import_config.add_import_table does not contain a valid option"
             )
 
-        logging.debug("hiveDB:    %s" % (hive_db))
-        logging.debug("hiveTable: %s" % (hive_table))
-        logging.debug("dbalias:   %s" % (dbalias))
-        logging.debug("schema:    %s" % (schema))
-        logging.debug("table:     %s" % (table))
+        logging.debug("hiveDB:    %s", hive_db)
+        logging.debug("hiveTable: %s", hive_table)
+        logging.debug("dbalias:   %s", dbalias)
+        logging.debug("schema:    %s", schema)
+        logging.debug("table:     %s", table)
 
         try:
             self.mysql_cursor01.execute(
@@ -4328,8 +4310,9 @@ class config(metaclass=Singleton):
             self.mysql_conn.commit()
         except mysql.connector.errors.IntegrityError:
             logging.warning(
-                "Hive table %s.%s cant be added as it's not unique in the configuration database"
-                % (hive_db, hive_table)
+                "Hive table %s.%s cant be added as it's not unique in the configuration database",
+                hive_db,
+                hive_table,
             )
             return_value = False
 

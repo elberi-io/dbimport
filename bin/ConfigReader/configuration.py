@@ -28,14 +28,12 @@ def get(section: str, key: str, exit_on_error: bool = True) -> str:
     except KeyError:
         if exit_on_error == True:
             print(
-                "[%s] '%s' Key was not found in configuration file. Please check settings"
-                % (section, key)
+                f"[{section}] '{key}' Key was not found in configuration file. Please check settings"
             )
             sys.exit(1)
         else:
             raise invalidConfiguration(
-                "[%s] '%s' Key was not found in configuration file. Please check settings"
-                % (section, key)
+                f"[{section}] '{key}' Key was not found in configuration file. Please check settings"
             )
 
 
@@ -52,7 +50,7 @@ except KeyError:
     pass
 
 if os.path.exists(configFile) == False:
-    print("Error: Configuration file can't be found on '%s'" % (configFile))
+    print(f"Error: Configuration file can't be found on '{configFile}'")
     sys.exit(1)
 
 config = configparser.ConfigParser()

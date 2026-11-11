@@ -1,5 +1,6 @@
-# Commits that only reformatted code (ruff format, #159) or only renamed
-# identifiers to snake_case (#202).
+# Commits that only reformatted code (ruff format, #159), only renamed
+# identifiers to snake_case (#202) or only changed how strings are
+# formatted (#202).
 # GitHub skips them in the blame view. Locally, run once:
 #   git config blame.ignoreRevsFile .git-blame-ignore-revs
 # Keep the hashes valid: merge with a merge commit, do not rebase or squash.
@@ -72,3 +73,9 @@ c8467324362089957634ab7baf02628a1654602c
 
 # refactor: rename attributes used only through self to snake_case
 91edbdc442e59d0cd58950a7c7a39ae11ee5c539
+
+# refactor: pass logging values as arguments instead of formatting them
+f99dbe9ca7fe8d7bd1bae8a2956c01958357905f
+
+# refactor: use f-strings where mypy proves the %-format operands
+9447bc11d94783d41b4c7a3f9a0b1dff5d764b22

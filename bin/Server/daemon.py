@@ -49,7 +49,7 @@ class distCP(threading.Thread):
 
     def run(self):
         log = logging.getLogger(self.logger_name)
-        log.info("distCP %s started" % (self.name))
+        log.info("distCP %s started", self.name)
 
         yarn_queue = configuration.get("Server", "distCP_yarnqueue")
 
@@ -68,22 +68,22 @@ class distCP(threading.Thread):
             hdfs_target_path = dist_cp_request.get("HDFStargetPath")
 
             log.info(
-                "Thread %s: Starting a new distCP copy with the following paramaters"
-                % (self.name)
+                "Thread %s: Starting a new distCP copy with the following paramaters",
+                self.name,
             )
             log.info(
-                "Thread %s: --------------------------------------------------------"
-                % (self.name)
+                "Thread %s: --------------------------------------------------------",
+                self.name,
             )
-            log.info("Thread %s: tableID = %s" % (self.name, table_id))
-            log.info("Thread %s: hiveDB = %s" % (self.name, hive_db))
-            log.info("Thread %s: hiveTable = %s" % (self.name, hive_table))
-            log.info("Thread %s: destination = %s" % (self.name, destination))
-            log.info("Thread %s: HDFSsourcePath = %s" % (self.name, hdfs_source_path))
-            log.info("Thread %s: HDFStargetPath = %s" % (self.name, hdfs_target_path))
+            log.info("Thread %s: tableID = %s", self.name, table_id)
+            log.info("Thread %s: hiveDB = %s", self.name, hive_db)
+            log.info("Thread %s: hiveTable = %s", self.name, hive_table)
+            log.info("Thread %s: destination = %s", self.name, destination)
+            log.info("Thread %s: HDFSsourcePath = %s", self.name, hdfs_source_path)
+            log.info("Thread %s: HDFStargetPath = %s", self.name, hdfs_target_path)
             log.info(
-                "Thread %s: --------------------------------------------------------"
-                % (self.name)
+                "Thread %s: --------------------------------------------------------",
+                self.name,
             )
 
             distcp_command = [
@@ -92,18 +92,18 @@ class distCP(threading.Thread):
                 "-D",
                 "yarn.timeline-service.enabled=false",
                 "-D",
-                "mapreduce.job.queuename=%s" % (yarn_queue),
+                f"mapreduce.job.queuename={yarn_queue}",
                 "-overwrite",
                 "-delete",
                 "%s" % (hdfs_source_path),
                 "%s" % (hdfs_target_path),
             ]
 
-            log.info("Thread %s:  ______________________ " % (self.name))
-            log.info("Thread %s: |                      |" % (self.name))
-            log.info("Thread %s: | Hadoop distCp starts |" % (self.name))
-            log.info("Thread %s: |______________________|" % (self.name))
-            log.info("Thread %s: " % (self.name))
+            log.info("Thread %s:  ______________________ ", self.name)
+            log.info("Thread %s: |                      |", self.name)
+            log.info("Thread %s: | Hadoop distCp starts |", self.name)
+            log.info("Thread %s: |______________________|", self.name)
+            log.info("Thread %s: ", self.name)
 
             # Start distcp
             sh_session = subprocess.Popen(
@@ -115,7 +115,7 @@ class distCP(threading.Thread):
             while sh_session.poll() == None:
                 row = sh_session.stdout.readline().decode("utf-8").rstrip()
                 if row != "":
-                    log.info("Thread %s: %s" % (self.name, row))
+                    log.info("Thread %s: %s", self.name, row)
                     dist_cp_output += row + "\n"
                     sys.stdout.flush()
 
@@ -123,27 +123,27 @@ class distCP(threading.Thread):
             for row in sh_session.stdout.readlines():
                 row = row.decode("utf-8").rstrip()
                 if row != "":
-                    log.info("Thread %s: %s" % (self.name, row))
+                    log.info("Thread %s: %s", self.name, row)
                     dist_cp_output += row + "\n"
                     sys.stdout.flush()
 
-            log.info("Thread %s:  _________________________ " % (self.name))
-            log.info("Thread %s: |                         |" % (self.name))
-            log.info("Thread %s: | Hadoop distCp completed |" % (self.name))
-            log.info("Thread %s: |_________________________|" % (self.name))
-            log.info("Thread %s: " % (self.name))
+            log.info("Thread %s:  _________________________ ", self.name)
+            log.info("Thread %s: |                         |", self.name)
+            log.info("Thread %s: | Hadoop distCp completed |", self.name)
+            log.info("Thread %s: |_________________________|", self.name)
+            log.info("Thread %s: ", self.name)
 
             dis_cp_result = False
             if " ERROR " in dist_cp_output:
-                log.error("Thread %s: ERROR detected during distCP copy." % (self.name))
+                log.error("Thread %s: ERROR detected during distCP copy.", self.name)
                 failures = failures + 1
             elif " completed successfully" in dist_cp_output:
                 dis_cp_result = True
                 failures = 0
             else:
                 log.error(
-                    "Thread %s: Unknown status of distCP. Marked as failure as it cant find that it was finished successful"
-                    % (self.name)
+                    "Thread %s: Unknown status of distCP. Marked as failure as it cant find that it was finished successful",
+                    self.name,
                 )
                 failures = failures + 1
 
@@ -157,7 +157,7 @@ class distCP(threading.Thread):
 
             self.dist_cp_res_queue.put(dist_cp_response)
 
-        log.info("distCP %s stopped" % (self.name))
+        log.info("distCP %s stopped", self.name)
 
 
 class serverDaemon(run.RunDaemon):
@@ -216,13 +216,13 @@ class serverDaemon(run.RunDaemon):
         if dist_cp_threads == 0:
             log.info("Distcp disabled as the number of threads is set to 0")
         else:
-            log.info("Starting %s distCp threads" % (dist_cp_threads))
+            log.info("Starting %s distCp threads", dist_cp_threads)
 
         for thread_id in range(0, dist_cp_threads):
             if dist_cp_separate_logs == False:
                 dist_cp_log_name = "distCP"
             else:
-                dist_cp_log_name = "distCP-thread%s" % (str(thread_id))
+                dist_cp_log_name = f"distCP-thread{str(thread_id)}"
 
             thread = distCP(
                 name=str(thread_id),
@@ -342,7 +342,7 @@ class serverDaemon(run.RunDaemon):
                         hdfs_target_path = row["hdfs_target_path"]
 
                         log.info(
-                            "New sync request for table %s.%s" % (hive_db, hive_table)
+                            "New sync request for table %s.%s", hive_db, hive_table
                         )
 
                         update_dict = {}
@@ -372,8 +372,9 @@ class serverDaemon(run.RunDaemon):
                         self.dist_cp_req_queue.put(dist_cp_request)
 
                         log.debug(
-                            "Status changed to 1 for table %s.%s and sent to distCP threads"
-                            % (hive_db, hive_table)
+                            "Status changed to 1 for table %s.%s and sent to distCP threads",
+                            hive_db,
+                            hive_table,
                         )
 
                     session.close()
@@ -543,8 +544,10 @@ class serverDaemon(run.RunDaemon):
 
                             else:
                                 log.info(
-                                    "Table %s.%s copied successfully to '%s'"
-                                    % (hive_db, hive_table, destination)
+                                    "Table %s.%s copied successfully to '%s'",
+                                    hive_db,
+                                    hive_table,
+                                    destination,
                                 )
 
                 session.close()
@@ -581,13 +584,7 @@ class serverDaemon(run.RunDaemon):
     def connect_dbimport_db(self):
         # Esablish a SQLAlchemy connection to the DBImport database
         log = logging.getLogger("server")
-        self.connect_str = "mysql+pymysql://%s:%s@%s:%s/%s" % (
-            self.config_username,
-            self.config_password,
-            self.config_hostname,
-            self.config_port,
-            self.config_database,
-        )
+        self.connect_str = f"mysql+pymysql://{self.config_username}:{self.config_password}@{self.config_hostname}:{self.config_port}/{self.config_database}"
 
         try:
             self.config_db_engine = sa.create_engine(
@@ -597,7 +594,7 @@ class serverDaemon(run.RunDaemon):
             self.configDBSession = sessionmaker(bind=self.config_db_engine)
 
         except sa.exc.OperationalError as err:
-            log.error("%s" % err)
+            log.error("%s", err)
             self.configDBSession = None
             self.config_db_engine = None
             return False
@@ -677,7 +674,7 @@ class serverDaemon(run.RunDaemon):
             db_credentials = self.crypto.decrypt(row[3])
         except binascii.Error as err:
             log.warning(
-                "Decryption of credentials resulted in error with text: '%s'" % err
+                "Decryption of credentials resulted in error with text: '%s'", err
             )
             return None
         except:
@@ -712,7 +709,7 @@ class serverDaemon(run.RunDaemon):
             )
 
         except sa.exc.OperationalError as err:
-            log.error("%s" % err)
+            log.error("%s", err)
             return None
         except:
             log.error("Unexpected error: ")

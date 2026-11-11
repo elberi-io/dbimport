@@ -90,7 +90,7 @@ class source:
                 query += "	AND COL.TABLE_NAME = '%s' " % (table)
             query += "ORDER BY TBL.TABLE_SCHEMA, TBL.TABLE_NAME,COL.ordinal_position"
 
-            logging.debug("SQL Statement executed: %s" % (query))
+            logging.debug("SQL Statement executed: %s", query)
             try:
                 jdbc_cursor.execute(query)
             except jaydebeapi.DatabaseError as errMsg:
@@ -244,7 +244,7 @@ class source:
                 query += "  AND ALL_TAB_COLUMNS.TABLE_NAME = '%s' " % (table)
             query += "ORDER BY SCHEMA_NAME, ALL_TAB_COLUMNS.TABLE_NAME, ALL_TAB_COLUMNS.COLUMN_ID"
 
-            logging.debug("SQL Statement executed: %s" % (query))
+            logging.debug("SQL Statement executed: %s", query)
             try:
                 jdbc_cursor.execute(query)
             except jaydebeapi.DatabaseError as errMsg:
@@ -369,7 +369,7 @@ class source:
                 query += "   and c.table_name = '%s' " % (table)
             query += "order by c.table_schema,c.table_name, c.ordinal_position "
 
-            logging.debug("SQL Statement executed: %s" % (query))
+            logging.debug("SQL Statement executed: %s", query)
             try:
                 jdbc_cursor.execute(query)
             except jaydebeapi.DatabaseError as errMsg:
@@ -458,7 +458,7 @@ class source:
                 query += "	AND ST.NAME = '%s' " % (table)
             query += "ORDER BY ST.CREATOR, ST.NAME"
 
-            logging.debug("SQL Statement executed: %s" % (query))
+            logging.debug("SQL Statement executed: %s", query)
             try:
                 jdbc_cursor.execute(query)
             except jaydebeapi.DatabaseError as errMsg:
@@ -559,7 +559,7 @@ class source:
                 query += "	AND SC.TABLE_NAME = '%s' " % (table)
             query += "ORDER BY ST.TABLE_SCHEMA, SC.TABLE_NAME, SC.ORDINAL_POSITION"
 
-            logging.debug("SQL Statement executed: %s" % (query))
+            logging.debug("SQL Statement executed: %s", query)
             try:
                 jdbc_cursor.execute(query)
             except jaydebeapi.DatabaseError as errMsg:
@@ -662,7 +662,7 @@ class source:
                 query += "	AND tab_columns.table_name = '%s' " % (table)
             query += "ORDER BY table_schema, table_name"
 
-            logging.debug("SQL Statement executed: %s" % (query))
+            logging.debug("SQL Statement executed: %s", query)
             try:
                 jdbc_cursor.execute(query)
             except jaydebeapi.DatabaseError as errMsg:
@@ -744,7 +744,7 @@ class source:
                 query += "	AND tab_columns.TBL = '%s' " % (table)
             query += "ORDER BY tab_tables.OWNER, tab_tables.TBL"
 
-            logging.debug("SQL Statement executed: %s" % (query))
+            logging.debug("SQL Statement executed: %s", query)
             try:
                 jdbc_cursor.execute(query)
             except jaydebeapi.DatabaseError as errMsg:
@@ -834,7 +834,7 @@ class source:
                 query += "	AND COL.TABLE_NAME = '%s' " % (table)
             query += "ORDER BY COL.TABLE_SCHEMA, COL.TABLE_NAME, COL.ORDINAL_POSITION"
 
-            logging.debug("SQL Statement executed: %s" % (query))
+            logging.debug("SQL Statement executed: %s", query)
             try:
                 jdbc_cursor.execute(query)
             except jaydebeapi.DatabaseError as errMsg:
@@ -910,7 +910,7 @@ class source:
                 query += "	and st.tabname = '%s' " % (table)
             query += "order by st.owner, st.tabname, sc.colno"
 
-            logging.debug("SQL Statement executed: %s" % (query))
+            logging.debug("SQL Statement executed: %s", query)
             try:
                 jdbc_cursor.execute(query)
             except jaydebeapi.DatabaseError as errMsg:
@@ -1074,7 +1074,7 @@ class source:
                 query += "where t.table_name = '%s' " % (table)
             query += "order by t.table_name, c.column_id "
 
-            logging.debug("SQL Statement executed: %s" % (query))
+            logging.debug("SQL Statement executed: %s", query)
             try:
                 jdbc_cursor.execute(query)
             except jaydebeapi.DatabaseError as errMsg:
@@ -1233,7 +1233,7 @@ class source:
             # 			print(query)
             # 			stageDurationStart = time.monotonic()
 
-            logging.debug("SQL Statement executed: %s" % (query))
+            logging.debug("SQL Statement executed: %s", query)
             try:
                 jdbc_cursor.execute(query)
             except jaydebeapi.DatabaseError as errMsg:
@@ -1325,7 +1325,7 @@ class source:
                 query += "  AND b.TABLE_NAME = '%s' " % (table)
             query += "ORDER BY SCHEMA_NAME, TABLE_NAME,CONSTRAINT_TYPE,CONSTRAINT_NAME,COL_KEY_POSITION"
 
-            logging.debug("SQL Statement executed: %s" % (query))
+            logging.debug("SQL Statement executed: %s", query)
             try:
                 jdbc_cursor.execute(query)
             except jaydebeapi.DatabaseError as errMsg:
@@ -1400,7 +1400,7 @@ class source:
                 "order by schema_name, table_name, CONSTRAINT_TYPE, COL_KEY_POSITION"
             )
 
-            logging.debug("SQL Statement executed: %s" % (query))
+            logging.debug("SQL Statement executed: %s", query)
             try:
                 jdbc_cursor.execute(query)
             except jaydebeapi.DatabaseError as errMsg:
@@ -1485,7 +1485,7 @@ class source:
                 "ORDER BY SCHEMA_NAME, TABLE_NAME, CONSTRAINT_TYPE, ORDINAL_POSITION "
             )
 
-            logging.debug("SQL Statement executed: %s" % (query))
+            logging.debug("SQL Statement executed: %s", query)
             try:
                 jdbc_cursor.execute(query)
             except jaydebeapi.DatabaseError as errMsg:
@@ -1566,7 +1566,7 @@ class source:
                 "ORDER BY SCHEMA_NAME, TABLE_NAME, CONSTRAINT_TYPE, ORDINAL_POSITION"
             )
 
-            logging.debug("SQL Statement executed: %s" % (query))
+            logging.debug("SQL Statement executed: %s", query)
             try:
                 jdbc_cursor.execute(query)
             except jaydebeapi.DatabaseError as errMsg:
@@ -1651,7 +1651,7 @@ class source:
                 query += "	AND kcu.table_name = '%s' " % (table)
             query += "ORDER BY SCHEMA_NAME, TABLE_NAME,CONSTRAINT_TYPE "
 
-            logging.debug("SQL Statement executed: %s" % (query))
+            logging.debug("SQL Statement executed: %s", query)
             try:
                 jdbc_cursor.execute(query)
             except jaydebeapi.DatabaseError as errMsg:
@@ -1714,7 +1714,7 @@ class source:
             else:
                 query = 'SHOW PRIMARY KEYS IN SCHEMA "%s"."%s"' % (database, schema)
 
-            logging.debug("SQL Statement executed: %s" % (query))
+            logging.debug("SQL Statement executed: %s", query)
             try:
                 jdbc_cursor.execute(query)
             except jaydebeapi.DatabaseError as errMsg:
@@ -1776,7 +1776,7 @@ class source:
                 query += "  and st.tabname = '%s' " % (table)
             query += "  and sc.constrtype = 'P' "
 
-            logging.debug("SQL Statement executed: %s" % (query))
+            logging.debug("SQL Statement executed: %s", query)
             try:
                 jdbc_cursor.execute(query)
             except jaydebeapi.DatabaseError as errMsg:
@@ -1876,7 +1876,7 @@ class source:
                 query += "and t.table_name = '%s' " % (table)
             query += "order by i.index_name, ic.sequence asc "
 
-            logging.debug("SQL Statement executed: %s" % (query))
+            logging.debug("SQL Statement executed: %s", query)
             try:
                 jdbc_cursor.execute(query)
             except jaydebeapi.DatabaseError as errMsg:
@@ -1905,7 +1905,7 @@ class source:
             query += "where foreign_creator = '%s' " % (schema)
             query += "and foreign_tname = '%s' " % (table)
 
-            logging.debug("SQL Statement executed: %s" % (query))
+            logging.debug("SQL Statement executed: %s", query)
             try:
                 jdbc_cursor.execute(query)
             except jaydebeapi.DatabaseError as errMsg:
@@ -1969,7 +1969,7 @@ class source:
             query += "and t.name = '%s' " % (table)
             query += "order by i.object_id, i.index_id"
 
-            logging.debug("SQL Statement executed: %s" % (query))
+            logging.debug("SQL Statement executed: %s", query)
             try:
                 jdbc_cursor.execute(query)
             except jaydebeapi.DatabaseError as errMsg:
@@ -2023,7 +2023,7 @@ class source:
             query += "  AND ai.table_name = UPPER('%s') " % (table)
             query += "ORDER BY aic.column_position"
 
-            logging.debug("SQL Statement executed: %s" % (query))
+            logging.debug("SQL Statement executed: %s", query)
             try:
                 jdbc_cursor.execute(query)
             except jaydebeapi.DatabaseError as errMsg:
@@ -2054,7 +2054,7 @@ class source:
         if server_type == constant.MYSQL:
             query = "SHOW INDEX FROM `%s`.`%s`" % (database, table)
 
-            logging.debug("SQL Statement executed: %s" % (query))
+            logging.debug("SQL Statement executed: %s", query)
             try:
                 jdbc_cursor.execute(query)
             except jaydebeapi.DatabaseError as errMsg:
@@ -2096,7 +2096,7 @@ class source:
             query += "where I.TABNAME = '%s' " % (table)
             query += "   and I.TABSCHEMA = '%s' " % (schema)
 
-            logging.debug("SQL Statement executed: %s" % (query))
+            logging.debug("SQL Statement executed: %s", query)
             try:
                 jdbc_cursor.execute(query)
             except jaydebeapi.DatabaseError as errMsg:
@@ -2159,7 +2159,7 @@ class source:
             query += "where st.owner = '%s' " % (schema)
             query += "  and st.tabname = '%s' " % (table)
 
-            logging.debug("SQL Statement executed: %s" % (query))
+            logging.debug("SQL Statement executed: %s", query)
             try:
                 jdbc_cursor.execute(query)
             except jaydebeapi.DatabaseError as errMsg:
@@ -2355,7 +2355,7 @@ class source:
                 query += "   and t.table_name like '%s' " % (tableFilter)
             query += "order by t.table_name"
 
-        logging.debug("SQL Statement executed: %s" % (query))
+        logging.debug("SQL Statement executed: %s", query)
         JDBCCursor.execute(query)
 
         result_df = pd.DataFrame(JDBCCursor.fetchall())

@@ -309,7 +309,7 @@ class operation(metaclass=Singleton):
         query = query.replace("${HIVE_DB}", self.import_config.Hive_Import_DB)
         query = query.replace("${HIVE_TABLE}", self.import_config.Hive_Import_Table)
 
-        logging.debug("Validation Query on Import table: %s" % (query))
+        logging.debug("Validation Query on Import table: %s", query)
 
         result_df = self.common_operations.execute_hive_query(query)
         result_json = result_df.to_json(orient="values")
@@ -317,8 +317,7 @@ class operation(metaclass=Singleton):
 
         if len(self.import_config.validationCustomQueryHiveValue) > 1024:
             logging.warning(
-                "'%s' is to large."
-                % (self.import_config.validationCustomQueryHiveValue)
+                "'%s' is to large.", self.import_config.validationCustomQueryHiveValue
             )
             raise invalidConfiguration(
                 "The size of the json document on the custom query exceeds 1024 bytes. Change the query to create a result with less than 512 bytes"
@@ -345,7 +344,7 @@ class operation(metaclass=Singleton):
         query = query.replace("${HIVE_DB}", self.import_config.Hive_DB)
         query = query.replace("${HIVE_TABLE}", self.import_config.Hive_Table)
 
-        logging.debug("Validation Query on Target table: %s" % (query))
+        logging.debug("Validation Query on Target table: %s", query)
 
         result_df = self.common_operations.execute_hive_query(query)
         result_json = result_df.to_json(orient="values")
@@ -353,8 +352,7 @@ class operation(metaclass=Singleton):
 
         if len(self.import_config.validationCustomQueryHiveValue) > 1024:
             logging.warning(
-                "'%s' is to large."
-                % (self.import_config.validationCustomQueryHiveValue)
+                "'%s' is to large.", self.import_config.validationCustomQueryHiveValue
             )
             raise invalidConfiguration(
                 "The size of the json document on the custom query exceeds 1024 bytes. Change the query to create a result with less than 512 bytes"
@@ -428,7 +426,7 @@ class operation(metaclass=Singleton):
 
     def get_spark_table_row_count(self, hive_db, hive_table, where_statement=None):
         logging.debug("Executing import_operations.get_spark_table_row_count()")
-        logging.info("Reading the number of rows from %s.%s" % (hive_db, hive_table))
+        logging.info("Reading the number of rows from %s.%s", hive_db, hive_table)
         row_count = 0
 
         query = "select count(1) as rowcount from %s.`%s`.`%s` " % (
@@ -446,7 +444,7 @@ class operation(metaclass=Singleton):
         table_size_result = self.spark.sql(query)
         row_count = int(table_size_result.first()["rowcount"])
 
-        logging.debug("Rowcount from %s.%s: %s" % (hive_db, hive_table, row_count))
+        logging.debug("Rowcount from %s.%s: %s", hive_db, hive_table, row_count)
         logging.debug(
             "Executing import_operations.get_spark_table_row_count() - Finished"
         )
@@ -482,7 +480,7 @@ class operation(metaclass=Singleton):
                     self.import_config.sqoop_last_execution_timestamp,
                 )
 
-            logging.debug("whereStatement: %s" % (where_statement))
+            logging.debug("whereStatement: %s", where_statement)
 
             if self.import_config.etlEngine == constant.ETL_ENGINE_HIVE:
                 target_table_row_count = (
@@ -729,8 +727,7 @@ class operation(metaclass=Singleton):
             )
             print("")
             print(
-                "%-20s%-40s%-30s%-20s%s"
-                % ("Hive DB", "Hive Table", "Connection Alias", "Schema", "Table/View")
+                f"{'Hive DB':<20}{'Hive Table':<40}{'Connection Alias':<30}{'Schema':<20}Table/View"
             )
             print(
                 "============================================================================================================================="
@@ -738,14 +735,7 @@ class operation(metaclass=Singleton):
 
             for index, row in merge_df.loc[merge_df["Exist"] == "left_only"].iterrows():
                 print(
-                    "%-20s%-40s%-30s%-20s%s"
-                    % (
-                        hive_db,
-                        row["hiveTable"].lower(),
-                        dbalias,
-                        row["schema"],
-                        row["table"],
-                    )
+                    f"{hive_db!s:<20}{row['hiveTable'].lower()!s:<40}{dbalias!s:<30}{row['schema']!s:<20}{row['table']!s}"
                 )
 
             answer = input("Do you want to add these imports to DBImport? (y/N): ")
@@ -939,17 +929,15 @@ class operation(metaclass=Singleton):
         logging.debug(
             "======================================================================="
         )
-        logging.debug("Target HDFS: %s" % (self.import_config.sqoop_hdfs_location))
+        logging.debug("Target HDFS: %s", self.import_config.sqoop_hdfs_location)
         logging.debug(
-            "Spark Executor Memory: %s"
-            % (self.import_config.common_config.sparkExecutorMemory)
+            "Spark Executor Memory: %s",
+            self.import_config.common_config.sparkExecutorMemory,
         )
+        logging.debug("Spark Max Executors: %s", self.import_config.sparkMaxExecutors)
         logging.debug(
-            "Spark Max Executors: %s" % (self.import_config.sparkMaxExecutors)
-        )
-        logging.debug(
-            "Spark Dynamic Executors: %s"
-            % (self.import_config.common_config.sparkDynamicAllocation)
+            "Spark Dynamic Executors: %s",
+            self.import_config.common_config.sparkDynamicAllocation,
         )
         logging.debug(
             "======================================================================="
@@ -1048,8 +1036,8 @@ class operation(metaclass=Singleton):
                 str(self.import_config.sparkMaxExecutors),
             )
             logging.info(
-                "Number of executors is dynamic with a max value of %s executors"
-                % (self.import_config.sparkMaxExecutors)
+                "Number of executors is dynamic with a max value of %s executors",
+                self.import_config.sparkMaxExecutors,
             )
         else:
             conf.set("spark.dynamicAllocation.enabled", "false")
@@ -1059,8 +1047,7 @@ class operation(metaclass=Singleton):
                     "spark.executor.instances", str(self.import_config.sqlSessions)
                 )
                 logging.info(
-                    "Number of executors is fixed at %s"
-                    % (self.import_config.sqlSessions)
+                    "Number of executors is fixed at %s", self.import_config.sqlSessions
                 )
             else:
                 conf.set(
@@ -1068,14 +1055,14 @@ class operation(metaclass=Singleton):
                     str(self.import_config.sparkMaxExecutors),
                 )
                 logging.info(
-                    "Number of executors is fixed at %s"
-                    % (self.import_config.sparkMaxExecutors)
+                    "Number of executors is fixed at %s",
+                    self.import_config.sparkMaxExecutors,
                 )
 
         sys.stdout.flush()
 
         sc = SparkContext(conf=conf)
-        sc.addPyFile("%s/bin/common/sparkUDF.py" % (os.environ["DBIMPORT_HOME"]))
+        sc.addPyFile(f"{os.environ['DBIMPORT_HOME']}/bin/common/sparkUDF.py")
         from sparkUDF import base64_encode_array, parse_struct_date
 
         sys.stdout.flush()
@@ -1226,9 +1213,7 @@ class operation(metaclass=Singleton):
         std_err = std_err.decode("utf-8").rstrip()
 
         size_written_by_spark = std_out.split()[0]
-        logging.info(
-            "Size of data written by spark = %s bytes" % (size_written_by_spark)
-        )
+        logging.info("Size of data written by spark = %s bytes", size_written_by_spark)
         sys.stdout.flush()
 
         sc.stop()
@@ -1317,22 +1302,18 @@ class operation(metaclass=Singleton):
         logging.debug(
             "======================================================================="
         )
-        logging.debug("splitByColumn: %s" % (self.import_config.splitByColumn))
+        logging.debug("splitByColumn: %s", self.import_config.splitByColumn)
+        logging.debug("sqoopBoundaryQuery: %s", self.import_config.sqoopBoundaryQuery)
+        logging.debug("parallell sessions: %s", self.import_config.sqlSessions)
+        logging.debug("Target HDFS: %s", self.import_config.sqoop_hdfs_location)
         logging.debug(
-            "sqoopBoundaryQuery: %s" % (self.import_config.sqoopBoundaryQuery)
+            "Spark Executor Memory: %s",
+            self.import_config.common_config.sparkExecutorMemory,
         )
-        logging.debug("parallell sessions: %s" % (self.import_config.sqlSessions))
-        logging.debug("Target HDFS: %s" % (self.import_config.sqoop_hdfs_location))
+        logging.debug("Spark Max Executors: %s", self.import_config.sparkMaxExecutors)
         logging.debug(
-            "Spark Executor Memory: %s"
-            % (self.import_config.common_config.sparkExecutorMemory)
-        )
-        logging.debug(
-            "Spark Max Executors: %s" % (self.import_config.sparkMaxExecutors)
-        )
-        logging.debug(
-            "Spark Dynamic Executors: %s"
-            % (self.import_config.common_config.sparkDynamicAllocation)
+            "Spark Dynamic Executors: %s",
+            self.import_config.common_config.sparkDynamicAllocation,
         )
         logging.debug(
             "======================================================================="
@@ -1520,8 +1501,8 @@ class operation(metaclass=Singleton):
                 str(self.import_config.sparkMaxExecutors),
             )
             logging.info(
-                "Number of executors is dynamic with a max value of %s executors"
-                % (self.import_config.sparkMaxExecutors)
+                "Number of executors is dynamic with a max value of %s executors",
+                self.import_config.sparkMaxExecutors,
             )
         else:
             conf.set("spark.dynamicAllocation.enabled", "false")
@@ -1531,8 +1512,7 @@ class operation(metaclass=Singleton):
                     "spark.executor.instances", str(self.import_config.sqlSessions)
                 )
                 logging.info(
-                    "Number of executors is fixed at %s"
-                    % (self.import_config.sqlSessions)
+                    "Number of executors is fixed at %s", self.import_config.sqlSessions
                 )
             else:
                 conf.set(
@@ -1540,8 +1520,8 @@ class operation(metaclass=Singleton):
                     str(self.import_config.sparkMaxExecutors),
                 )
                 logging.info(
-                    "Number of executors is fixed at %s"
-                    % (self.import_config.sparkMaxExecutors)
+                    "Number of executors is fixed at %s",
+                    self.import_config.sparkMaxExecutors,
                 )
 
         if (
@@ -1568,7 +1548,7 @@ class operation(metaclass=Singleton):
             spark_version_split[1],
             spark_version_split[2],
         )
-        logging.info("Running with Spark Version %s" % (spark_version))
+        logging.info("Running with Spark Version %s", spark_version)
 
         if (
             spark_major_version == 2
@@ -1594,7 +1574,7 @@ class operation(metaclass=Singleton):
                 )
 
         self.spark_context.addPyFile(
-            "%s/bin/common/sparkUDF2.py" % (os.environ["DBIMPORT_HOME"])
+            f"{os.environ['DBIMPORT_HOME']}/bin/common/sparkUDF2.py"
         )
         import sparkUDF2
 
@@ -1889,8 +1869,9 @@ class operation(metaclass=Singleton):
                 c_function = row["anonymization_function"]
 
                 logging.info(
-                    "Anonymizing data in column '%s' with function '%s'"
-                    % (c_name, c_function)
+                    "Anonymizing data in column '%s' with function '%s'",
+                    c_name,
+                    c_function,
                 )
                 sys.stdout.flush()
 
@@ -2263,8 +2244,7 @@ class operation(metaclass=Singleton):
         sqoop_command.extend(
             [
                 "-D",
-                "mapreduce.job.queuename=%s"
-                % (configuration.get("Sqoop", "yarnqueue")),
+                f"mapreduce.job.queuename={configuration.get('Sqoop', 'yarnqueue')}",
             ]
         )
         sqoop_command.extend(["-D", "oraoop.disabled=true"])
@@ -2461,7 +2441,7 @@ class operation(metaclass=Singleton):
                         ["--query", "%s where $CONDITIONS" % (sqoop_query)]
                     )
 
-        logging.info("Starting sqoop with the following command: %s" % (sqoop_command))
+        logging.info("Starting sqoop with the following command: %s", sqoop_command)
         sqoop_output = ""
 
         print(" _____________________ ")
@@ -3373,8 +3353,9 @@ class operation(metaclass=Singleton):
             ):
                 # Target table does not exist. We just create it in that case
                 logging.info(
-                    "Creating Delete table %s.%s in Hive"
-                    % (hive_delete_db, hive_delete_table)
+                    "Creating Delete table %s.%s in Hive",
+                    hive_delete_db,
+                    hive_delete_table,
                 )
                 if (
                     self.import_config.common_config.get_config_value(
@@ -3433,8 +3414,9 @@ class operation(metaclass=Singleton):
                 == False
             ):
                 logging.info(
-                    "Creating Delete table %s.%s in Spark"
-                    % (hive_delete_db, hive_delete_table)
+                    "Creating Delete table %s.%s in Spark",
+                    hive_delete_db,
+                    hive_delete_table,
                 )
 
                 # Create the Iceberg table
@@ -3469,8 +3451,9 @@ class operation(metaclass=Singleton):
             ):
                 # Target table does not exist. We just create it in that case
                 logging.info(
-                    "Creating History table %s.%s in Hive"
-                    % (hive_history_db, hive_history_table)
+                    "Creating History table %s.%s in Hive",
+                    hive_history_db,
+                    hive_history_table,
                 )
                 if (
                     self.import_config.common_config.get_config_value(
@@ -3534,8 +3517,9 @@ class operation(metaclass=Singleton):
                     return
             else:
                 logging.info(
-                    "Creating History table %s.%s in Spark"
-                    % (hive_history_db, hive_history_table)
+                    "Creating History table %s.%s in Spark",
+                    hive_history_db,
+                    hive_history_table,
                 )
 
                 # Create the Iceberg table
@@ -3598,8 +3582,7 @@ class operation(metaclass=Singleton):
             ):
                 # Target table does not exist. We just create it in that case
                 logging.info(
-                    "Creating Target table %s.%s in Hive"
-                    % (self.Hive_DB, self.Hive_Table)
+                    "Creating Target table %s.%s in Hive", self.Hive_DB, self.Hive_Table
                 )
 
                 query_list = self.generate_create_target_table_sql(
@@ -3683,8 +3666,9 @@ class operation(metaclass=Singleton):
             ):
                 # Target table does not exist. We just create it in that case
                 logging.info(
-                    "Creating Target table %s.%s in Spark"
-                    % (self.Hive_DB, self.Hive_Table)
+                    "Creating Target table %s.%s in Spark",
+                    self.Hive_DB,
+                    self.Hive_Table,
                 )
 
                 # Create the Iceberg table
@@ -3741,9 +3725,7 @@ class operation(metaclass=Singleton):
     def dropTargetTable(self):
         logging.debug("Executing import_operations.dropTargetTable()")
         if self.common_operations.check_table(self.Hive_DB, self.Hive_Table) == True:
-            logging.info(
-                "Dropping Target table %s.%s" % (self.Hive_DB, self.Hive_Table)
-            )
+            logging.info("Dropping Target table %s.%s", self.Hive_DB, self.Hive_Table)
 
             if self.import_config.etlEngine == constant.ETL_ENGINE_HIVE:
                 query = "drop table if exists `%s`.`%s`" % (
@@ -3838,7 +3820,7 @@ class operation(metaclass=Singleton):
                     "The configured location for the external table have changed. Updating the external table"
                 )
                 logging.debug("tableLocation:      %s" % (table_location))
-                logging.debug("configuredLocation: %s" % (configured_location))
+                logging.debug("configuredLocation: %s", configured_location)
 
                 query = 'alter table `%s`.`%s` set location "%s"' % (
                     self.import_config.Hive_Import_DB,
@@ -4457,12 +4439,12 @@ class operation(metaclass=Singleton):
             if pk_on_hive_table != pk_in_config_db:
                 # The PK information is not correct. We need to figure out what the problem is and alter the table to fix it
                 logging.debug("PK in Hive:   %s" % (pk_on_hive_table))
-                logging.debug("PK in Config: %s" % (pk_in_config_db))
+                logging.debug("PK in Config: %s", pk_in_config_db)
                 logging.info(
                     "PrimaryKey definition is not correct. If it exists, we will drop it and recreate"
                 )
                 logging.info("PrimaryKey on Hive table:     %s" % (pk_on_hive_table))
-                logging.info("PrimaryKey from source table: %s" % (pk_in_config_db))
+                logging.info("PrimaryKey from source table: %s", pk_in_config_db)
 
                 current_pk_name = self.common_operations.get_pk_name(
                     hive_db, hive_table
@@ -4705,7 +4687,7 @@ class operation(metaclass=Singleton):
 
         if compaction_method != "none":
             logging.info(
-                "Running a '%s' compaction on Hive table" % (compaction_description)
+                "Running a '%s' compaction on Hive table", compaction_description
             )
 
             try:
@@ -4772,19 +4754,16 @@ class operation(metaclass=Singleton):
 
         if import_table_exists == False:
             logging.error(
-                "The import table %s.%s does not exist"
-                % (
-                    self.import_config.Hive_Import_DB,
-                    self.import_config.Hive_Import_Table,
-                )
+                "The import table %s.%s does not exist",
+                self.import_config.Hive_Import_DB,
+                self.import_config.Hive_Import_Table,
             )
             self.import_config.remove_temporary_files()
             sys.exit(1)
 
         if target_table_exists == False:
             logging.error(
-                "The target table %s.%s does not exist"
-                % (self.Hive_DB, self.Hive_Table)
+                "The target table %s.%s does not exist", self.Hive_DB, self.Hive_Table
             )
             self.import_config.remove_temporary_files()
             sys.exit(1)
@@ -4959,7 +4938,7 @@ class operation(metaclass=Singleton):
             hive_db = row[0]
             hive_table = row[1]
             logging.info(
-                "Repairing table \u001b[33m%s.%s\u001b[0m" % (hive_db, hive_table)
+                "Repairing table \u001b[33m%s.%s\u001b[0m", hive_db, hive_table
             )
             self.set_hive_table(hive_db, hive_table)
             self.reset_incr_max_value(hive_db, hive_table)

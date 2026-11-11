@@ -64,7 +64,7 @@ class atlasCrawler(threading.Thread):
 
     def run(self):
         log = logging.getLogger(self.logger_name)
-        log.info("Atlas crawler thread %s started" % (self.name))
+        log.info("Atlas crawler thread %s started", self.name)
         self.atlasOperation.testVariable = self.name
         self.atlasCrawlerRequest = None
 
@@ -113,7 +113,7 @@ class atlasCrawler(threading.Thread):
 
             self.atlasCrawlerResultQueue.put(response)
 
-        log.info("Atlas crawler thread %s stopped" % (self.name))
+        log.info("Atlas crawler thread %s stopped", self.name)
 
 
 class atlasDiscovery(threading.Thread):
@@ -152,11 +152,11 @@ class atlasDiscovery(threading.Thread):
             log.info("Atlas discovery disabled as the number of threads is set to 0")
             atlas_enabled = False
         else:
-            log.info("Starting %s Atlas crawler threads" % (atlas_crawler_threads))
+            log.info("Starting %s Atlas crawler threads", atlas_crawler_threads)
 
         for thread_id in range(0, atlas_crawler_threads):
             # 			if distCP_separate_logs == False:
-            atlas_crawler_log_name = "atlasCrawler-thread%s" % (str(thread_id))
+            atlas_crawler_log_name = f"atlasCrawler-thread{str(thread_id)}"
             # 			else:
             # 				distCPlogName = "distCP-thread%s"%(str(threadID))
 
@@ -262,8 +262,9 @@ class atlasDiscovery(threading.Thread):
                         except invalidConfiguration as err:
                             if self.common_config.atlasJdbcSourceSupport == True:
                                 log.error(
-                                    "Connection '%s' have invalid configuration. Failed with '%s'"
-                                    % (db_alias, err)
+                                    "Connection '%s' have invalid configuration. Failed with '%s'",
+                                    db_alias,
+                                    err,
                                 )
                                 altas_operation_failed = True
 
@@ -449,8 +450,9 @@ class atlasDiscovery(threading.Thread):
 
         if print_black_list_warning == True:
             log.warning(
-                "Connection '%s' is blacklisted for %s hours"
-                % (db_alias, self.failure_log[db_alias]["blackListTime"])
+                "Connection '%s' is blacklisted for %s hours",
+                db_alias,
+                self.failure_log[db_alias]["blackListTime"],
             )
 
     def get_dbimport_session(self):
@@ -463,13 +465,7 @@ class atlasDiscovery(threading.Thread):
     def connect_dbimport_db(self):
         # Esablish a SQLAlchemy connection to the DBImport database
         log = logging.getLogger("atlasDiscovery")
-        self.connect_str = "mysql+pymysql://%s:%s@%s:%s/%s" % (
-            self.config_username,
-            self.config_password,
-            self.config_hostname,
-            self.config_port,
-            self.config_database,
-        )
+        self.connect_str = f"mysql+pymysql://{self.config_username}:{self.config_password}@{self.config_hostname}:{self.config_port}/{self.config_database}"
 
         try:
             self.config_db_engine = sa.create_engine(
@@ -479,7 +475,7 @@ class atlasDiscovery(threading.Thread):
             self.configDBSession = sessionmaker(bind=self.config_db_engine)
 
         except sa.exc.OperationalError as err:
-            log.error("%s" % err)
+            log.error("%s", err)
             self.common_config.remove_temporary_files()
             sys.exit(1)
         except:

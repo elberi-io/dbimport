@@ -66,7 +66,7 @@ def printHeader():
     sys.stdout.write("\u001b[0m")  # Reset
     sys.stdout.flush()
     print("")
-    print("Version: %s" % (constant.VERSION))
+    print(f"Version: {constant.VERSION}")
     print("")
 
 
@@ -834,7 +834,7 @@ def main(argv):
         if operation == "clearImportStage":
             importConfig = import_config.config(hive_db, hive_table)
             importConfig.clear_stage()
-            logging.info("Stage information cleared for %s.%s" % (hive_db, hive_table))
+            logging.info("Stage information cleared for %s.%s", hive_db, hive_table)
             importConfig.remove_temporary_files()
 
         if operation == "checkAirflowExecution":
@@ -1313,7 +1313,7 @@ def main(argv):
         sys.exit(1)
     except daemonExit as errMsg:
         logging.error(
-            "Program exit because requested to do so by developer. %s" % (errMsg)
+            "Program exit because requested to do so by developer. %s", errMsg
         )
         import_operation.import_config.remove_temporary_files()
         sys.exit(1)

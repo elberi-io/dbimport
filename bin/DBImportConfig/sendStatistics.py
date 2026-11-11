@@ -74,8 +74,8 @@ class sendStatistics:
 
         logging.info("Sending data to REST interface")
         logging.debug(
-            "Sending the following JSON to REST: %s"
-            % (json.dumps(json_data, sort_keys=True, indent=4))
+            "Sending the following JSON to REST: %s",
+            json.dumps(json_data, sort_keys=True, indent=4),
         )
 
         response_code = -1
@@ -109,7 +109,7 @@ class sendStatistics:
             logging.error(e)
 
         if response_code != 200:
-            logging.error("REST call unsuccessful! Return code %s" % (response_code))
+            logging.error("REST call unsuccessful! Return code %s", response_code)
 
         logging.debug("Executing sendStatistics.send_rest_data - Finished")
         return response_code
@@ -119,7 +119,7 @@ class sendStatistics:
         logging.debug("Executing sendStatistics.publish_kafka_data")
 
         logging.info("Sending statistics data to Kafka topic")
-        logging.debug("Sending the following JSON to Kafka: %s" % (json_data))
+        logging.debug("Sending the following JSON to Kafka: %s", json_data)
         kafka_logger = logging.getLogger("kafka")
         kafka_logger.setLevel(logging.ERROR)
 
@@ -154,7 +154,7 @@ class sendStatistics:
             producer.send(topic=self.kafkaTopic, value=json_data.encode("utf-8"))
 
         except AssertionError as e:
-            logging.error("Kafka Error: %s" % e)
+            logging.error("Kafka Error: %s", e)
             kafka_error = True
 
         except kafka.errors.NoBrokersAvailable:
@@ -186,7 +186,7 @@ class sendStatistics:
         logging.debug("Executing sendStatistics.send_aws_sns_data")
 
         logging.info("Sending statistics data to AWS SNS topic")
-        logging.debug("Sending the following JSON to AWS SNS: %s" % (json_data))
+        logging.debug("Sending the following JSON to AWS SNS: %s", json_data)
 
         result = True
 

@@ -161,13 +161,7 @@ class initialize:
 
         mysql_credentials = self.common_config.get_mysql_credentials()
 
-        self.connect_str = "mysql+pymysql://%s:%s@%s:%s/%s" % (
-            mysql_credentials["mysql_username"],
-            quote(mysql_credentials["mysql_password"], safe=" +"),
-            mysql_credentials["mysql_hostname"],
-            mysql_credentials["mysql_port"],
-            mysql_credentials["mysql_database"],
-        )
+        self.connect_str = f"mysql+pymysql://{mysql_credentials['mysql_username']}:{quote(mysql_credentials['mysql_password'], safe=' +')}@{mysql_credentials['mysql_hostname']}:{mysql_credentials['mysql_port']}/{mysql_credentials['mysql_database']}"
 
         try:
             self.configDB = sa.create_engine(
@@ -177,7 +171,7 @@ class initialize:
             self.configDBSession = sessionmaker(bind=self.configDB)
 
         except sa.exc.OperationalError as err:
-            log.error("%s" % err)
+            log.error("%s", err)
             self.configDBSession = None
             self.configDB = None
             raise SQLerror("Can't connect to DBImport database")
@@ -233,8 +227,9 @@ class initialize:
                 return_value = configuration[2]
                 if return_value == None or return_value.strip() == "":
                     log.error(
-                        "Configuration Key '%s' must have a value in '%s'"
-                        % (key, value_column)
+                        "Configuration Key '%s' must have a value in '%s'",
+                        key,
+                        value_column,
                     )
                     return_value = None
 
@@ -245,8 +240,9 @@ class initialize:
                     return_value = False
                 else:
                     log.error(
-                        "Configuration Key '%s' can only have 0 or 1 in column '%s'"
-                        % (key, value_column)
+                        "Configuration Key '%s' can only have 0 or 1 in column '%s'",
+                        key,
+                        value_column,
                     )
                     return_value = None
         except TypeError:
@@ -629,9 +625,9 @@ class initialize:
                         row["target_table"],
                     )
                 )
-                self.dag_file.write("    priority_weight=%s,\n" % (airflow_priority))
+                self.dag_file.write(f"    priority_weight={airflow_priority},\n")
                 self.dag_file.write("    weight_rule='absolute',\n")
-                self.dag_file.write("    retries=%s,\n" % (retries))
+                self.dag_file.write(f"    retries={retries},\n")
                 self.dag_file.write("    dag=dag)\n")
                 self.dag_file.write("\n")
 
@@ -647,9 +643,9 @@ class initialize:
                 )
             )
             self.dag_file.write("    pool='%s',\n" % (export_pool))
-            self.dag_file.write("    priority_weight=%s,\n" % (airflow_priority))
+            self.dag_file.write(f"    priority_weight={airflow_priority},\n")
             self.dag_file.write("    weight_rule='absolute',\n")
-            self.dag_file.write("    retries=%s,\n" % (retries))
+            self.dag_file.write(f"    retries={retries},\n")
             self.dag_file.write("    dag=dag)\n")
             self.dag_file.write("\n")
 
@@ -878,11 +874,9 @@ class initialize:
                         % (dbimport_clear_stage_cmd, row["hive_db"], row["hive_table"])
                     )
                     self.dag_file.write("    pool='%s',\n" % (import_phase_pool))
-                    self.dag_file.write(
-                        "    priority_weight=%s,\n" % (airflow_priority)
-                    )
+                    self.dag_file.write(f"    priority_weight={airflow_priority},\n")
                     self.dag_file.write("    weight_rule='absolute',\n")
-                    self.dag_file.write("    retries=%s,\n" % (retries))
+                    self.dag_file.write(f"    retries={retries},\n")
                     self.dag_file.write("    dag=dag)\n")
                     self.dag_file.write("\n")
                 elif self.airflow_mode == "aws_mwaa":
@@ -897,11 +891,9 @@ class initialize:
                     )
                     self.dag_file.write("    pool='%s',\n" % (import_phase_pool))
                     # self.dag_file.write("    pool='%s',\n"%(instanceID))
-                    self.dag_file.write(
-                        "    priority_weight=%s,\n" % (airflow_priority)
-                    )
+                    self.dag_file.write(f"    priority_weight={airflow_priority},\n")
                     self.dag_file.write("    weight_rule='absolute',\n")
-                    self.dag_file.write("    retries=%s,\n" % (retries))
+                    self.dag_file.write(f"    retries={retries},\n")
                     self.dag_file.write("    dag=dag)\n")
                     self.dag_file.write("\n")
 
@@ -922,9 +914,7 @@ class initialize:
                         "copy_finished >= '{{ next_execution_date.strftime('%Y-%m-%d %H:%M:%S.%f') }}'\"\"\",\n"
                     )
                     self.dag_file.write("    pool='%s',\n" % (import_phase_pool))
-                    self.dag_file.write(
-                        "    priority_weight=%s,\n" % (airflow_priority)
-                    )
+                    self.dag_file.write(f"    priority_weight={airflow_priority},\n")
                     self.dag_file.write("    weight_rule='absolute',\n")
                     self.dag_file.write("    timeout=18000,\n")
                     self.dag_file.write("    poke_interval=300,\n")
@@ -940,11 +930,9 @@ class initialize:
                         % (dbimport_cmd, row["hive_db"], row["hive_table"])
                     )
                     self.dag_file.write("    pool='%s',\n" % (import_phase_pool))
-                    self.dag_file.write(
-                        "    priority_weight=%s,\n" % (airflow_priority)
-                    )
+                    self.dag_file.write(f"    priority_weight={airflow_priority},\n")
                     self.dag_file.write("    weight_rule='absolute',\n")
-                    self.dag_file.write("    retries=%s,\n" % (retries_import_phase))
+                    self.dag_file.write(f"    retries={retries_import_phase},\n")
                     self.dag_file.write("    dag=dag)\n")
                     self.dag_file.write("\n")
 
@@ -955,11 +943,9 @@ class initialize:
                         % (dbimport_cmd, row["hive_db"], row["hive_table"])
                     )
                     self.dag_file.write("    pool='%s',\n" % (etl_phase_pool))
-                    self.dag_file.write(
-                        "    priority_weight=%s,\n" % (airflow_priority)
-                    )
+                    self.dag_file.write(f"    priority_weight={airflow_priority},\n")
                     self.dag_file.write("    weight_rule='absolute',\n")
-                    self.dag_file.write("    retries=%s,\n" % (retries_etl_phase))
+                    self.dag_file.write(f"    retries={retries_etl_phase},\n")
                     self.dag_file.write("    dag=dag)\n")
                     self.dag_file.write("\n")
 
@@ -973,11 +959,9 @@ class initialize:
                         % (row["hive_db"], row["hive_table"], instance_id)
                     )
                     self.dag_file.write("    pool='%s',\n" % (import_phase_pool))
-                    self.dag_file.write(
-                        "    priority_weight=%s,\n" % (airflow_priority)
-                    )
+                    self.dag_file.write(f"    priority_weight={airflow_priority},\n")
                     self.dag_file.write("    weight_rule='absolute',\n")
-                    self.dag_file.write("    retries=%s,\n" % (retries_import_phase))
+                    self.dag_file.write(f"    retries={retries_import_phase},\n")
                     self.dag_file.write("    dag=dag)\n")
                     self.dag_file.write("\n")
 
@@ -989,11 +973,9 @@ class initialize:
                         % (row["hive_db"], row["hive_table"], instance_id)
                     )
                     self.dag_file.write("    pool='%s',\n" % (etl_phase_pool))
-                    self.dag_file.write(
-                        "    priority_weight=%s,\n" % (airflow_priority)
-                    )
+                    self.dag_file.write(f"    priority_weight={airflow_priority},\n")
                     self.dag_file.write("    weight_rule='absolute',\n")
-                    self.dag_file.write("    retries=%s,\n" % (retries_etl_phase))
+                    self.dag_file.write(f"    retries={retries_etl_phase},\n")
                     self.dag_file.write("    dag=dag)\n")
                     self.dag_file.write("\n")
 
@@ -1112,9 +1094,7 @@ class initialize:
                         "copy_finished >= '{{ next_execution_date.strftime('%Y-%m-%d %H:%M:%S.%f') }}'\"\"\",\n"
                     )
                     self.dag_file.write("    pool='%s',\n" % (import_phase_pool))
-                    self.dag_file.write(
-                        "    priority_weight=%s,\n" % (airflow_priority)
-                    )
+                    self.dag_file.write(f"    priority_weight={airflow_priority},\n")
                     self.dag_file.write("    weight_rule='absolute',\n")
                     self.dag_file.write("    timeout=18000,\n")
                     self.dag_file.write("    poke_interval=300,\n")
@@ -1135,11 +1115,9 @@ class initialize:
                         )
                     )
                     self.dag_file.write("    pool='%s',\n" % (etl_phase_pool))
-                    self.dag_file.write(
-                        "    priority_weight=%s,\n" % (airflow_priority)
-                    )
+                    self.dag_file.write(f"    priority_weight={airflow_priority},\n")
                     self.dag_file.write("    weight_rule='absolute',\n")
-                    self.dag_file.write("    retries=%s,\n" % (retries))
+                    self.dag_file.write(f"    retries={retries},\n")
                     self.dag_file.write("    dag=dag)\n")
                     self.dag_file.write("\n")
                 elif self.airflow_mode == "aws_mwaa":
@@ -1157,11 +1135,9 @@ class initialize:
                         )
                     )
                     self.dag_file.write("    pool='%s',\n" % (etl_phase_pool))
-                    self.dag_file.write(
-                        "    priority_weight=%s,\n" % (airflow_priority)
-                    )
+                    self.dag_file.write(f"    priority_weight={airflow_priority},\n")
                     self.dag_file.write("    weight_rule='absolute',\n")
-                    self.dag_file.write("    retries=%s,\n" % (retries))
+                    self.dag_file.write(f"    retries={retries},\n")
                     self.dag_file.write("    dag=dag)\n")
                     self.dag_file.write("\n")
 
@@ -1258,8 +1234,9 @@ class initialize:
                 ):
                     try:
                         log.info(
-                            "Creating the Airflow pool '%s' with %s slots"
-                            % (pool, self.airflowDefaultPoolSize)
+                            "Creating the Airflow pool '%s' with %s slots",
+                            pool,
+                            self.airflowDefaultPoolSize,
                         )
                         new_pool = airflowSchema.slotPool(
                             pool=pool,
@@ -1287,7 +1264,7 @@ class initialize:
 
                 task_name = "createPool_%s" % (pool.replace(".", "_").replace("-", "_"))
                 self.dag_file.write("\n")
-                self.dag_file.write("%s = CreatePoolOperator(\n" % (task_name))
+                self.dag_file.write(f"{task_name} = CreatePoolOperator(\n")
                 self.dag_file.write("    name='%s',\n" % (pool))
                 self.dag_file.write("    slots=%s,\n" % (self.airflowDefaultPoolSize))
                 self.dag_file.write("    task_id='%s',\n" % (task_name))
@@ -1297,7 +1274,7 @@ class initialize:
                 self.dag_file.write("    pool=None,\n")
                 self.dag_file.write("    dag=dag)\n")
                 self.dag_file.write("\n")
-                self.dag_file.write("start.set_downstream(%s)\n" % (task_name))
+                self.dag_file.write(f"start.set_downstream({task_name})\n")
                 self.dag_file.write(
                     "%s.set_downstream(%s)\n" % (task_name, self.preStopTask)
                 )
@@ -1379,7 +1356,7 @@ class initialize:
         if re.search("^[0-2][0-9]:[0-5][0-9]$", time):
             hour = re.sub(":[0-5][0-9]$", "", time)
             minute = re.sub("^[0-2][0-9]:", "", time)
-            return_value = "'%s %s * * *'" % (int(minute), int(hour))
+            return_value = f"'{int(minute)} {int(hour)} * * *'"
 
         return return_value
 
@@ -1466,8 +1443,8 @@ class initialize:
             self.dag_file = open(self.dag_filename, "w")
         except FileNotFoundError:
             log.error(
-                "Cant open file '%s'. Please verify that the directory exists and that the configuration 'airflow_dbimport_commandpath' is correct"
-                % (self.dag_filename)
+                "Cant open file '%s'. Please verify that the directory exists and that the configuration 'airflow_dbimport_commandpath' is correct",
+                self.dag_filename,
             )
             raise RuntimeError
             # self.common_config.remove_temporary_files()
@@ -2067,12 +2044,7 @@ class initialize:
 
         if sla_warning_time != None and type(sla_warning_time) is time:
             self.dag_file.write(
-                "    'sla': timedelta(hours=%s, minutes=%s, seconds=%s),\n"
-                % (
-                    sla_warning_time.hour,
-                    sla_warning_time.minute,
-                    sla_warning_time.second,
-                )
+                f"    'sla': timedelta(hours={sla_warning_time.hour}, minutes={sla_warning_time.minute}, seconds={sla_warning_time.second}),\n"
             )
 
         self.dag_file.write("}\n")
@@ -2095,7 +2067,7 @@ class initialize:
 
         try:
             if int(concurrency) > 0:
-                self.dag_file.write("    concurrency=%s,\n" % (int(concurrency)))
+                self.dag_file.write(f"    concurrency={int(concurrency)},\n")
         except ValueError:
             pass
 
@@ -2220,7 +2192,7 @@ class initialize:
             tasks_after_main_exists = True
 
         if tasks_before_main_exists == True:
-            self.dag_file.write("%s = DummyOperator(\n" % (self.preStopTask))
+            self.dag_file.write(f"{self.preStopTask} = DummyOperator(\n")
             self.dag_file.write("    task_id='%s',\n" % (self.preStopTask))
             if self.task_queue_for_dummy != None:
                 self.dag_file.write(
@@ -2232,7 +2204,7 @@ class initialize:
             self.dag_file.write("\n")
 
         if tasks_after_main_exists == True:
-            self.dag_file.write("%s = DummyOperator(\n" % (self.postStartTask))
+            self.dag_file.write(f"{self.postStartTask} = DummyOperator(\n")
             self.dag_file.write("    task_id='%s',\n" % (self.postStartTask))
             if self.task_queue_for_dummy != None:
                 self.dag_file.write(
@@ -2244,7 +2216,7 @@ class initialize:
             self.dag_file.write("\n")
 
         if tasks_sensors_exists == True:
-            self.dag_file.write("%s = DummyOperator(\n" % (self.sensorStopTask))
+            self.dag_file.write(f"{self.sensorStopTask} = DummyOperator(\n")
             self.dag_file.write("    task_id='%s',\n" % (self.sensorStopTask))
             if self.task_queue_for_dummy != None:
                 self.dag_file.write(
@@ -2270,14 +2242,14 @@ class initialize:
 
         session.close()
 
-        log.debug("sensorStartTask = %s" % (self.sensorStartTask))
-        log.debug("sensorStopTask = %s" % (self.sensorStopTask))
-        log.debug("preStartTask = %s" % (self.preStartTask))
-        log.debug("preStopTask = %s" % (self.preStopTask))
-        log.debug("mainStartTask = %s" % (self.mainStartTask))
-        log.debug("mainStopTask = %s" % (self.mainStopTask))
-        log.debug("postStartTask = %s" % (self.postStartTask))
-        log.debug("postStopTask = %s" % (self.postStopTask))
+        log.debug("sensorStartTask = %s", self.sensorStartTask)
+        log.debug("sensorStopTask = %s", self.sensorStopTask)
+        log.debug("preStartTask = %s", self.preStartTask)
+        log.debug("preStopTask = %s", self.preStopTask)
+        log.debug("mainStartTask = %s", self.mainStartTask)
+        log.debug("mainStopTask = %s", self.mainStopTask)
+        log.debug("postStartTask = %s", self.postStartTask)
+        log.debug("postStopTask = %s", self.postStopTask)
 
     def close_dag_file(self):
         log = logging.getLogger(self.logger)
@@ -2315,8 +2287,8 @@ class initialize:
                     )
                 except PermissionError:
                     log.warning(
-                        "Could not copy and change permission of file '%s'. Permission Denied"
-                        % (self.dag_filename_in_airflow)
+                        "Could not copy and change permission of file '%s'. Permission Denied",
+                        self.dag_filename_in_airflow,
                     )
                 except LookupError:
                     pass
@@ -2577,23 +2549,21 @@ class initialize:
                     )
                     self.dag_file.write("    retries=0,\n")
                     self.dag_file.write(
-                        "    execution_delta=timedelta(seconds=%s),\n" % (time_diff)
+                        f"    execution_delta=timedelta(seconds={time_diff}),\n"
                     )
                     if row["airflow_pool"] != "":
                         self.dag_file.write("    pool='%s',\n" % (row["airflow_pool"]))
                     if row["airflow_priority"] != "":
                         self.dag_file.write(
-                            "    priority_weight=%s,\n" % (int(row["airflow_priority"]))
+                            f"    priority_weight={int(row['airflow_priority'])},\n"
                         )
                         self.dag_file.write("    weight_rule='absolute',\n")
                     else:
                         self.dag_file.write("    priority_weight=100,\n")
                         self.dag_file.write("    weight_rule='absolute',\n")
+                    self.dag_file.write(f"    timeout={int(sensor_timeout_seconds)},\n")
                     self.dag_file.write(
-                        "    timeout=%s,\n" % (int(sensor_timeout_seconds))
-                    )
-                    self.dag_file.write(
-                        "    poke_interval=%s,\n" % (int(sensor_poke_interval))
+                        f"    poke_interval={int(sensor_poke_interval)},\n"
                     )
                     self.dag_file.write("    mode='reschedule',\n")
                     if (
@@ -2629,17 +2599,15 @@ class initialize:
                         self.dag_file.write("    pool='%s',\n" % (row["airflow_pool"]))
                     if row["airflow_priority"] != "":
                         self.dag_file.write(
-                            "    priority_weight=%s,\n" % (int(row["airflow_priority"]))
+                            f"    priority_weight={int(row['airflow_priority'])},\n"
                         )
                         self.dag_file.write("    weight_rule='absolute',\n")
                     else:
                         self.dag_file.write("    priority_weight=100,\n")
                         self.dag_file.write("    weight_rule='absolute',\n")
+                    self.dag_file.write(f"    timeout={int(sensor_timeout_seconds)},\n")
                     self.dag_file.write(
-                        "    timeout=%s,\n" % (int(sensor_timeout_seconds))
-                    )
-                    self.dag_file.write(
-                        "    poke_interval=%s,\n" % (int(sensor_poke_interval))
+                        f"    poke_interval={int(sensor_poke_interval)},\n"
                     )
                     self.dag_file.write("    mode='reschedule',\n")
                     if (
@@ -2660,7 +2628,7 @@ class initialize:
                     self.dag_file.write("    pool='%s',\n" % (row["airflow_pool"]))
                 if row["airflow_priority"] != "":
                     self.dag_file.write(
-                        "    priority_weight=%s,\n" % (int(row["airflow_priority"]))
+                        f"    priority_weight={int(row['airflow_priority'])},\n"
                     )
                     self.dag_file.write("    weight_rule='absolute',\n")
                 else:
@@ -2680,7 +2648,7 @@ class initialize:
                     self.dag_file.write("    pool='%s',\n" % (row["airflow_pool"]))
                 if row["airflow_priority"] != "":
                     self.dag_file.write(
-                        "    priority_weight=%s,\n" % (int(row["airflow_priority"]))
+                        f"    priority_weight={int(row['airflow_priority'])},\n"
                     )
                     self.dag_file.write("    weight_rule='absolute',\n")
                 else:
@@ -2716,7 +2684,7 @@ class initialize:
                     self.dag_file.write("    pool='%s',\n" % (row["airflow_pool"]))
                 if row["airflow_priority"] != "":
                     self.dag_file.write(
-                        "    priority_weight=%s,\n" % (int(row["airflow_priority"]))
+                        f"    priority_weight={int(row['airflow_priority'])},\n"
                     )
                     self.dag_file.write("    weight_rule='absolute',\n")
                 else:
@@ -2738,7 +2706,7 @@ class initialize:
                     self.dag_file.write("    pool='%s',\n" % (row["airflow_pool"]))
                 if row["airflow_priority"] != "":
                     self.dag_file.write(
-                        "    priority_weight=%s,\n" % (int(row["airflow_priority"]))
+                        f"    priority_weight={int(row['airflow_priority'])},\n"
                     )
                     self.dag_file.write("    weight_rule='absolute',\n")
                 else:
@@ -2764,7 +2732,7 @@ class initialize:
                     self.dag_file.write("    pool='%s',\n" % (row["airflow_pool"]))
                 if row["airflow_priority"] != "":
                     self.dag_file.write(
-                        "    priority_weight=%s,\n" % (int(row["airflow_priority"]))
+                        f"    priority_weight={int(row['airflow_priority'])},\n"
                     )
                     self.dag_file.write("    weight_rule='absolute',\n")
                 else:
@@ -2790,7 +2758,7 @@ class initialize:
                         self.dag_file.write("    pool='%s',\n" % (row["airflow_pool"]))
                     if row["airflow_priority"] != "":
                         self.dag_file.write(
-                            "    priority_weight=%s,\n" % (int(row["airflow_priority"]))
+                            f"    priority_weight={int(row['airflow_priority'])},\n"
                         )
                         self.dag_file.write("    weight_rule='absolute',\n")
                     else:
@@ -2817,7 +2785,7 @@ class initialize:
                             self.dag_file.write("    pool='%s',\n" % (dag_name))
                     if row["airflow_priority"] != "":
                         self.dag_file.write(
-                            "    priority_weight=%s,\n" % (int(row["airflow_priority"]))
+                            f"    priority_weight={int(row['airflow_priority'])},\n"
                         )
                         self.dag_file.write("    weight_rule='absolute',\n")
                     else:
@@ -2906,8 +2874,9 @@ class initialize:
                             down_stream_found = True
                         else:
                             log.warning(
-                                "Downstream dependency against '%s' wont work as it's not in the same placement as '%s'."
-                                % (dep, row["task_name"])
+                                "Downstream dependency against '%s' wont work as it's not in the same placement as '%s'.",
+                                dep,
+                                row["task_name"],
                             )
                     else:
                         # The depRow dataframe is empty. So the dependent task is not a customTask, but instead from import_tables or export_tables. So we just add it as a dependency
@@ -2937,8 +2906,9 @@ class initialize:
                             up_stream_found = True
                         else:
                             log.warning(
-                                "Upstream dependency against '%s' wont work as it's not in the same placement as '%s'."
-                                % (dep, row["task_name"])
+                                "Upstream dependency against '%s' wont work as it's not in the same placement as '%s'.",
+                                dep,
+                                row["task_name"],
                             )
                     else:
                         # The depRow dataframe is empty. So the dependent task is not a customTask, but instead from import_tables or export_tables. So we just add it as a dependency
@@ -3204,9 +3174,9 @@ class initialize:
             self.dag_file.write("    retries=0,\n")
             # 			self.dag_file.write("    execution_timeout=timedelta(seconds=%s),\n"%(timeoutSeconds))
             self.dag_file.write(
-                "    execution_delta=timedelta(seconds=%s),\n" % (time_diff)
+                f"    execution_delta=timedelta(seconds={time_diff}),\n"
             )
-            self.dag_file.write("    timeout=%s,\n" % (int(timeout_seconds)))
+            self.dag_file.write(f"    timeout={int(timeout_seconds)},\n")
             self.dag_file.write("    poke_interval=300,\n")
             self.dag_file.write("    mode='reschedule',\n")
             if row["sensor_soft_fail"] is not None and row["sensor_soft_fail"] == 1:
@@ -3263,6 +3233,6 @@ class initialize:
         if self.postDataToREST == True:
             response = self.sendStatistics.send_rest_data(json.dumps(json_data))
             if response != 200:
-                log.warn("REST call failed! No start message posted")
+                log.warning("REST call failed! No start message posted")
 
         log.debug("Executing Airflow.send_start_json() - Finished")

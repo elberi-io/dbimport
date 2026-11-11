@@ -58,7 +58,7 @@ class hiveMetastoreDirect(metaclass=Singleton):
             self.hive_meta_db.connect()
             self.hive_meta_session = sessionmaker(bind=self.hive_meta_db)
         except sa.exc.OperationalError as err:
-            logging.error("%s" % err)
+            logging.error("%s", err)
             self.common_config.remove_temporary_files()
             sys.exit(1)
         except:
@@ -330,7 +330,7 @@ class hiveMetastoreDirect(metaclass=Singleton):
         if pk_error_found == True:
             result = ""
 
-        logging.debug("Primary Key columns: %s" % (result))
+        logging.debug("Primary Key columns: %s", result)
         logging.debug("Executing hiveMetastoreDirect.get_pk() - Finished")
         return result
 
@@ -473,8 +473,10 @@ class hiveMetastoreDirect(metaclass=Singleton):
 
         if lock_count > 0:
             logging.warning(
-                "Removing %s locks from table %s.%s by force"
-                % (lock_count, hiveDB, hiveTable)
+                "Removing %s locks from table %s.%s by force",
+                lock_count,
+                hiveDB,
+                hiveTable,
             )
             self.common_config.log_import_failure(
                 hive_db=hiveDB,
@@ -590,7 +592,7 @@ class hiveMetastoreDirect(metaclass=Singleton):
             if row[0].lower() == "true":
                 return_value = True
 
-        logging.debug("isTableTransactional = %s" % (return_value))
+        logging.debug("isTableTransactional = %s", return_value)
         logging.debug(
             "Executing hiveMetastoreDirect.is_table_transactional() - Finished"
         )
@@ -620,7 +622,7 @@ class hiveMetastoreDirect(metaclass=Singleton):
         if row[0] == "VIRTUAL_VIEW":
             return_value = True
 
-        logging.debug("isTableView = %s" % (return_value))
+        logging.debug("isTableView = %s", return_value)
         logging.debug("Executing hiveMetastoreDirect.is_table_view() - Finished")
         return return_value
 

@@ -315,7 +315,7 @@ class operation(metaclass=Singleton):
                 try:
                     if quiet == False:
                         logging.info(
-                            "Connecting to Hive at %s:%s" % (hive_hostname, hive_port)
+                            "Connecting to Hive at %s:%s", hive_hostname, hive_port
                         )
 
                     if self.hive_use_ssl == True:
@@ -351,18 +351,19 @@ class operation(metaclass=Singleton):
 
                 except TypeError:
                     logging.warning(
-                        "Could not connect to Hive at %s:%s. This might be because the address was not resolvable in the DNS"
-                        % (hive_hostname, hive_port)
+                        "Could not connect to Hive at %s:%s. This might be because the address was not resolvable in the DNS",
+                        hive_hostname,
+                        hive_port,
                     )
                 except hive.thrift.transport.TTransport.TTransportException:
                     logging.warning(
-                        "Could not connect to Hive at %s:%s."
-                        % (hive_hostname, hive_port)
+                        "Could not connect to Hive at %s:%s.", hive_hostname, hive_port
                     )
                 except:
                     logging.warning(
-                        "General connection error to Hive at %s:%s."
-                        % (hive_hostname, hive_port)
+                        "General connection error to Hive at %s:%s.",
+                        hive_hostname,
+                        hive_port,
                     )
                     logging.warning(sys.exc_info())
 
@@ -489,18 +490,7 @@ class operation(metaclass=Singleton):
                     print("\u001b[36m")  # Cyan
                     try:
                         print(
-                            "%-16s %12s %12s %11s %11s %9s %9s %8s %8s"
-                            % (
-                                headers[0],
-                                headers[1],
-                                headers[2],
-                                headers[3],
-                                headers[4],
-                                headers[5],
-                                headers[6],
-                                headers[7],
-                                headers[8],
-                            )
+                            f"{headers[0]!s:<16} {headers[1]!s:>12} {headers[2]!s:>12} {headers[3]!s:>11} {headers[4]!s:>11} {headers[5]!s:>9} {headers[6]!s:>9} {headers[7]!s:>8} {headers[8]!s:>8}"
                         )
                     except IndexError:
                         print(headers)
@@ -511,18 +501,7 @@ class operation(metaclass=Singleton):
                 # Print the actual vertex information of the query
                 try:
                     print(
-                        "%-16s %12s %12s %11s %11s %9s %9s %8s %8s"
-                        % (
-                            row[0],
-                            row[1],
-                            row[2],
-                            row[3],
-                            row[4],
-                            row[5],
-                            row[6],
-                            row[7],
-                            row[8],
-                        )
+                        f"{row[0]!s:<16} {row[1]!s:>12} {row[2]!s:>12} {row[3]!s:>11} {row[4]!s:>11} {row[5]!s:>9} {row[6]!s:>9} {row[7]!s:>8} {row[8]!s:>8}"
                     )
                 except IndexError:
                     print(headers)
@@ -530,8 +509,7 @@ class operation(metaclass=Singleton):
             sys.stdout.write("\u001b[31m")  # Red
             sys.stdout.flush()
             print(
-                "ELAPSED TIME: %.2f seconds"
-                % (time.monotonic() - hive_query_start_time)
+                f"ELAPSED TIME: {time.monotonic() - hive_query_start_time:.2f} seconds"
             )
             sys.stdout.write("\u001b[0m")  # Reset
             sys.stdout.flush()
@@ -554,18 +532,7 @@ class operation(metaclass=Singleton):
         for row in self.hive_cursor.poll().progressUpdateResponse.rows:
             try:
                 print(
-                    "%-16s %12s %12s %11s %11s %9s %9s %8s %8s"
-                    % (
-                        row[0],
-                        row[1],
-                        row[2],
-                        row[3],
-                        row[4],
-                        row[5],
-                        row[6],
-                        row[7],
-                        row[8],
-                    )
+                    f"{row[0]!s:<16} {row[1]!s:>12} {row[2]!s:>12} {row[3]!s:>11} {row[4]!s:>11} {row[5]!s:>9} {row[6]!s:>9} {row[7]!s:>8} {row[8]!s:>8}"
                 )
                 if row[2] == "SUCCEEDED":
                     yarn_containers_total += int(row[3])
@@ -659,7 +626,7 @@ class operation(metaclass=Singleton):
                 )
             )
 
-        logging.debug("JDBC Connection String: %s" % (beeline_connect_str))
+        logging.debug("JDBC Connection String: %s", beeline_connect_str)
 
         beeline_command = [
             "beeline",
@@ -695,7 +662,7 @@ class operation(metaclass=Singleton):
 
     def get_hive_table_row_count(self, hiveDB, hiveTable, whereStatement=None):
         logging.debug("Executing common_operations.get_hive_table_row_count()")
-        logging.info("Reading the number of rows from %s.%s" % (hiveDB, hiveTable))
+        logging.info("Reading the number of rows from %s.%s", hiveDB, hiveTable)
         row_count = 0
 
         query = "select count(1) as rowcount from `%s`.`%s` " % (hiveDB, hiveTable)
@@ -706,7 +673,7 @@ class operation(metaclass=Singleton):
 
         result_df = self.execute_hive_query(query)
         row_count = int(result_df["rowcount"].iloc[0])
-        logging.debug("Rowcount from %s.%s: %s" % (hiveDB, hiveTable, row_count))
+        logging.debug("Rowcount from %s.%s: %s", hiveDB, hiveTable, row_count)
 
         logging.debug(
             "Executing common_operations.get_hive_table_row_count() - Finished"
@@ -715,7 +682,7 @@ class operation(metaclass=Singleton):
 
     def drop_hive_table(self, hive_db, hive_table):
         logging.debug("Executing common_operations.drop_hive_table()")
-        logging.info("Dropping table %s.%s" % (hive_db, hive_table))
+        logging.info("Dropping table %s.%s", hive_db, hive_table)
 
         self.connect_to_hive(forceSkipTest=True, quiet=True)
         self.execute_hive_query(
@@ -776,7 +743,7 @@ class operation(metaclass=Singleton):
 
         buckets = 1
         hive_table_bucketed = "%s_hive_bucketed" % (hiveTable)
-        logging.info("The new table will use %s buckets" % (buckets))
+        logging.info("The new table will use %s buckets", buckets)
 
         if self.check_table(hiveDB=hiveDB, hiveTable=hive_table_bucketed) == True:
             logging.warning(

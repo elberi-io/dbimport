@@ -108,7 +108,7 @@ def main(argv):
         daemon_mode = True
 
     if display_version == True:
-        print("DBImport version: %s" % (constant.VERSION))
+        print(f"DBImport version: {constant.VERSION}")
         sys.exit(0)
 
     logdir = configuration.get("Server", "logdir")
@@ -151,7 +151,7 @@ def main(argv):
     # Setup the loggers
     setup_logger(
         name="server",
-        logfile="%s/restServer.log" % (logdir),
+        logfile=f"{logdir}/restServer.log",
         logFormat=log_format,
         loggingLevel=logging_level,
         logPropagate=log_propagate,
@@ -168,14 +168,14 @@ def main(argv):
         gunicorn_debug_level = "info"
 
     if daemon_mode == True:
-        gunicorn_access_log = "%s/restServer_access.log" % (logdir)
-        gunicorn_error_log = "%s/restServer.log" % (logdir)
+        gunicorn_access_log = f"{logdir}/restServer_access.log"
+        gunicorn_error_log = f"{logdir}/restServer.log"
     else:
         gunicorn_access_log = "-"
         gunicorn_error_log = "-"
 
     options = {
-        "bind": "%s:%s" % (rest_server_address, rest_server_port),
+        "bind": f"{rest_server_address}:{rest_server_port}",
         "workers": int(rest_server_workers),
         "worker_class": "uvicorn.workers.UvicornWorker",
         "loglevel": gunicorn_debug_level,

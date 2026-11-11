@@ -93,14 +93,11 @@ class atlasOperation:
         self.atlas_address = configuration.get("Atlas", "address")
         if self.atlas_address != None and self.atlas_address.strip() != "":
             self.atlas_rest_type_def_dbimport_process = (
-                "%s/api/atlas/v2/types/typedef/name/DBImport_Process"
-                % (self.atlas_address)
+                f"{self.atlas_address}/api/atlas/v2/types/typedef/name/DBImport_Process"
             )
-            self.atlas_rest_entities = "%s/api/atlas/v2/entity/bulk" % (
-                self.atlas_address
-            )
+            self.atlas_rest_entities = f"{self.atlas_address}/api/atlas/v2/entity/bulk"
             self.atlas_rest_unique_attribute_type = (
-                "%s/api/atlas/v2/entity/uniqueAttribute/type" % (self.atlas_address)
+                f"{self.atlas_address}/api/atlas/v2/entity/uniqueAttribute/type"
             )
             self.atlasEnabled = True
             self.atlas_headers = {
@@ -352,7 +349,7 @@ class atlasOperation:
             self.atlasEnabled = False
 
         elif self.atlasEnabled == True and status_code != 200:
-            log.warning("Atlas communication failed with response %s" % (status_code))
+            log.warning("Atlas communication failed with response %s", status_code)
             self.atlasEnabled = False
 
         if self.atlasEnabled == True:
@@ -432,8 +429,8 @@ class atlasOperation:
                     "data": response.text,
                 }
                 response.close()
-                log.debug("Atlas statusCode = %s" % (response.status_code))
-                log.debug("Atlas data = %s" % (response.text))
+                log.debug("Atlas statusCode = %s", response.status_code)
+                log.debug("Atlas data = %s", response.text)
 
             except requests.exceptions.SSLError:
                 log.error(
@@ -650,13 +647,15 @@ class atlasOperation:
 
             if self.jdbc_servertype == constant.MYSQL:
                 log.info(
-                    "Starting discovery of database '%s' on connection '%s'"
-                    % (self.jdbc_database, self.dbAlias)
+                    "Starting discovery of database '%s' on connection '%s'",
+                    self.jdbc_database,
+                    self.dbAlias,
                 )
             else:
                 log.info(
-                    "Starting discovery of schema '%s' on connection '%s'"
-                    % (schema.strip(), self.dbAlias)
+                    "Starting discovery of schema '%s' on connection '%s'",
+                    schema.strip(),
+                    self.dbAlias,
                 )
 
             # TODO: Must check if the connection is still valid. Very large databases with many table will cause the connection to die
@@ -664,8 +663,9 @@ class atlasOperation:
             if self.jdbc_connection_mutex != None:
                 self.jdbc_connection_mutex.acquire()
                 log.debug(
-                    "JDBC connection Mutex acquired for reading columns and keys in schema '%s' on '%s'"
-                    % (schema, self.dbAlias)
+                    "JDBC connection Mutex acquired for reading columns and keys in schema '%s' on '%s'",
+                    schema,
+                    self.dbAlias,
                 )
 
             try:
@@ -695,8 +695,9 @@ class atlasOperation:
                 raise connectionError
             except:
                 log.error(
-                    "Unknown error during reading of columns and keys for schema '%s' on '%s'"
-                    % (schema, self.dbAlias)
+                    "Unknown error during reading of columns and keys for schema '%s' on '%s'",
+                    schema,
+                    self.dbAlias,
                 )
                 if self.jdbc_connection_mutex != None:
                     self.jdbc_connection_mutex.release()
@@ -713,7 +714,7 @@ class atlasOperation:
                 schema = "-"
 
             log.debug(
-                "DataFrame for schema '%s' was received from the database" % (schema)
+                "DataFrame for schema '%s' was received from the database", schema
             )
 
             try:
@@ -761,7 +762,7 @@ class atlasOperation:
                 )
 
             log.debug(
-                "Column cache for schema '%s' was received from the database" % (schema)
+                "Column cache for schema '%s' was received from the database", schema
             )
 
             try:
@@ -799,7 +800,7 @@ class atlasOperation:
                 raise SQLerror
 
             log.debug(
-                "Key cache for schema '%s' was received from the database" % (schema)
+                "Key cache for schema '%s' was received from the database", schema
             )
 
             # If the database is empty, we need this objects later when we search for tables to delete
@@ -995,13 +996,16 @@ class atlasOperation:
                         ) and cache_source_key_df.equals(source_key_df):
                             if row["schema"] != "-":
                                 log.debug(
-                                    "Atlas table schema for %s.%s on dbalias %s match cached values. No update required"
-                                    % (schema, table, self.dbAlias)
+                                    "Atlas table schema for %s.%s on dbalias %s match cached values. No update required",
+                                    schema,
+                                    table,
+                                    self.dbAlias,
                                 )
                             else:
                                 log.debug(
-                                    "Atlas table schema for %s on dbalias %s match cached values. No update required"
-                                    % (table, self.dbAlias)
+                                    "Atlas table schema for %s on dbalias %s match cached values. No update required",
+                                    table,
+                                    self.dbAlias,
                                 )
                             continue
 
@@ -1009,13 +1013,16 @@ class atlasOperation:
 
                 if row["schema"] != "-":
                     log.info(
-                        "Creating/updating Atlas information for table '%s.%s' on connection '%s'"
-                        % (schema, table, self.dbAlias)
+                        "Creating/updating Atlas information for table '%s.%s' on connection '%s'",
+                        schema,
+                        table,
+                        self.dbAlias,
                     )
                 else:
                     log.info(
-                        "Creating/updating Atlas information for table '%s' on connection '%s'"
-                        % (table, self.dbAlias)
+                        "Creating/updating Atlas information for table '%s' on connection '%s'",
+                        table,
+                        self.dbAlias,
                     )
 
                 if 0 == 1:
@@ -1312,13 +1319,16 @@ class atlasOperation:
         for index, row in merge_df.loc[merge_df["Exist"] == "right_only"].iterrows():
             if row["schema"] != "-":
                 log.info(
-                    "Deleting Atlas table for %s.%s on dbalias %s"
-                    % (row["schema"], row["table"], self.dbAlias)
+                    "Deleting Atlas table for %s.%s on dbalias %s",
+                    row["schema"],
+                    row["table"],
+                    self.dbAlias,
                 )
             else:
                 log.info(
-                    "Deleting Atlas table for %s on dbalias %s"
-                    % (row["table"], self.dbAlias)
+                    "Deleting Atlas table for %s on dbalias %s",
+                    row["table"],
+                    self.dbAlias,
                 )
 
             atlas_rest_url = "%s/rdbms_table?attr:qualifiedName=%s" % (
@@ -1411,13 +1421,7 @@ class atlasOperation:
     def connect_dbimport_db(self):
         # Esablish a SQLAlchemy connection to the DBImport database
         log = logging.getLogger(self.logger_name)
-        self.connect_str = "mysql+pymysql://%s:%s@%s:%s/%s" % (
-            self.config_username,
-            self.config_password,
-            self.config_hostname,
-            self.config_port,
-            self.config_database,
-        )
+        self.connect_str = f"mysql+pymysql://{self.config_username}:{self.config_password}@{self.config_hostname}:{self.config_port}/{self.config_database}"
 
         try:
             self.config_db_engine = sa.create_engine(
@@ -1822,13 +1826,15 @@ class atlasOperation:
                         foreign_key_error_found = True
                     else:
                         log.debug(
-                            "Creating/updating Atlas ForeignKey against %s.%s"
-                            % (ref_schema_name, ref_table_name)
+                            "Creating/updating Atlas ForeignKey against %s.%s",
+                            ref_schema_name,
+                            ref_table_name,
                         )
                 else:
                     log.warning(
-                        "Foreign Key cant be created as refered table(%s.%s) does not exists in Atlas"
-                        % (ref_schema_name, ref_table_name)
+                        "Foreign Key cant be created as refered table(%s.%s) does not exists in Atlas",
+                        ref_schema_name,
+                        ref_table_name,
                     )
                     foreign_key_error_found = True
 

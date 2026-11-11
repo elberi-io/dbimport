@@ -251,23 +251,21 @@ class config(metaclass=Singleton):
             pass
         except PermissionError:
             logging.error(
-                "The temporary directory (%s) already exists but cant be removed due to permission error"
-                % (self.tempdir)
+                "The temporary directory (%s) already exists but cant be removed due to permission error",
+                self.tempdir,
             )
             sys.exit(1)
 
         try:
             os.mkdir(self.tempdir)
         except OSError:
-            logging.error(
-                "Creation of the temporary directory %s failed" % self.tempdir
-            )
+            logging.error("Creation of the temporary directory %s failed", self.tempdir)
             sys.exit(1)
 
         try:
             os.chmod(self.tempdir, 0o700)
         except OSError:
-            logging.error("Error while changing permission on %s to 700" % self.tempdir)
+            logging.error("Error while changing permission on %s to 700", self.tempdir)
             self.remove_temporary_files()
             sys.exit(1)
 
@@ -350,7 +348,7 @@ class config(metaclass=Singleton):
     def reconnect_config_database(self, printReconnectMessage: bool = True) -> None:
         if self.mysql_conn == None or self.mysql_conn.is_connected() == False:
             if printReconnectMessage == True:
-                logging.warn("Connection to MySQL have been lost. Reconnecting...")
+                logging.warning("Connection to MySQL have been lost. Reconnecting...")
 
             mysql_credentials = self.get_mysql_credentials()
 
@@ -369,7 +367,7 @@ class config(metaclass=Singleton):
                 elif err.errno == errorcode.ER_BAD_DB_ERROR:
                     logging.error("Database does not exist")
                 else:
-                    logging.error("%s" % err)
+                    logging.error("%s", err)
                 logging.error(
                     "Error: There was a problem connecting to the MySQL database. Please check configuration and serverstatus and try again"
                 )
@@ -389,7 +387,7 @@ class config(metaclass=Singleton):
 
         # Fetch data from jdbc_connection table
         query = "select contact_info, description, owner, atlas_discovery, atlas_include_filter, atlas_exclude_filter, atlas_last_discovery from jdbc_connections where dbalias = %s "
-        logging.debug("Executing the following SQL: %s" % (query))
+        logging.debug("Executing the following SQL: %s", query)
         self.mysql_cursor.execute(query, (db_alias,))
 
         if self.mysql_cursor.rowcount != 1:
@@ -442,13 +440,7 @@ class config(metaclass=Singleton):
 
         mysql_credentials = self.get_mysql_credentials()
 
-        self.connect_str = "mysql+pymysql://%s:%s@%s:%s/%s" % (
-            mysql_credentials["mysql_username"],
-            quote(mysql_credentials["mysql_password"], safe=" +"),
-            mysql_credentials["mysql_hostname"],
-            mysql_credentials["mysql_port"],
-            mysql_credentials["mysql_database"],
-        )
+        self.connect_str = f"mysql+pymysql://{mysql_credentials['mysql_username']}:{quote(mysql_credentials['mysql_password'], safe=' +')}@{mysql_credentials['mysql_hostname']}:{mysql_credentials['mysql_port']}/{mysql_credentials['mysql_database']}"
 
         try:
             self.configDB = sa.create_engine(
@@ -458,7 +450,7 @@ class config(metaclass=Singleton):
             self.configDBSession = sessionmaker(bind=self.configDB)
 
         except sa.exc.OperationalError as err:
-            logging.error("%s" % err)
+            logging.error("%s", err)
             if exit_if_failure == True:
                 self.remove_temporary_files()
                 sys.exit(1)
@@ -569,8 +561,8 @@ class config(metaclass=Singleton):
             time_window_stop = time_window_stop.add(days=1)
             passed_midnight = True
 
-        logging.debug("timeWindowStart: %s" % (time_window_start))
-        logging.debug("timeWindowStop: %s" % (time_window_stop))
+        logging.debug("timeWindowStart: %s", time_window_start)
+        logging.debug("timeWindowStop: %s", time_window_stop)
 
         if time_window_start == None and time_window_stop == None:
             if atlasDiscoveryMode == False:
@@ -613,8 +605,8 @@ class config(metaclass=Singleton):
                 # window starts, we might be on the previous days window and should be allowed to run. So we need to test for that aswell
                 time_window_start = time_window_start.add(days=-1)
                 time_window_stop = time_window_stop.add(days=-1)
-                logging.debug("timeWindowStart: %s" % (time_window_start))
-                logging.debug("timeWindowStop: %s" % (time_window_stop))
+                logging.debug("timeWindowStart: %s", time_window_start)
+                logging.debug("timeWindowStop: %s", time_window_stop)
 
                 if current_time > time_window_start and current_time < time_window_stop:
                     allowed_time = True
@@ -625,15 +617,15 @@ class config(metaclass=Singleton):
                         "We are not allowed to run this import outside the configured Time Window"
                     )
                     logging.info(
-                        "    Current time:     %s (%s)"
-                        % (current_time.to_time_string(), self.timeZone)
+                        "    Current time:     %s (%s)",
+                        current_time.to_time_string(),
+                        self.timeZone,
                     )
                     logging.info(
-                        "    TimeWindow Start: %s"
-                        % (time_window_start.to_time_string())
+                        "    TimeWindow Start: %s", time_window_start.to_time_string()
                     )
                     logging.info(
-                        "    TimeWindow Stop:  %s" % (time_window_stop.to_time_string())
+                        "    TimeWindow Stop:  %s", time_window_stop.to_time_string()
                     )
                     self.remove_temporary_files()
                     sys.exit(1)
@@ -645,9 +637,9 @@ class config(metaclass=Singleton):
                         "SUCCESSFUL: There is a configured Time Window for this operation, and we are running inside that window."
                     )
 
-        logging.debug("    currentTime = %s" % (current_time.to_time_string()))
-        logging.debug("    timeWindowStart = %s" % (time_window_start.to_time_string()))
-        logging.debug("    timeWindowStop = %s" % (time_window_stop.to_time_string()))
+        logging.debug("    currentTime = %s", current_time.to_time_string())
+        logging.debug("    timeWindowStart = %s", time_window_start.to_time_string())
+        logging.debug("    timeWindowStop = %s", time_window_stop.to_time_string())
         logging.debug("Executing common_config.check_time_window() - Finished")
         return True
 
@@ -658,7 +650,7 @@ class config(metaclass=Singleton):
         rc = False
 
         query = "select count(1) from jdbc_connections where dbalias = %s "
-        logging.debug("Executing the following SQL: %s" % (query))
+        logging.debug("Executing the following SQL: %s", query)
         self.mysql_cursor.execute(query, (connection_alias,))
 
         row = self.mysql_cursor.fetchone()
@@ -672,7 +664,7 @@ class config(metaclass=Singleton):
         """Checks if there is a valid kerberos ticket or not. Runst 'klist -s' and checks the exitCode. Returns True or False"""
         logging.debug("Executing common_config.check_kerberos_ticket()")
 
-        os.environ["KRB5CCNAME"] = "FILE:/tmp/krb5cc_%s_%s" % (os.getuid(), os.getpid())
+        os.environ["KRB5CCNAME"] = f"FILE:/tmp/krb5cc_{os.getuid()}_{os.getpid()}"
 
         if self.kerberosPrincipal == "" and self.kerberosKeytab != "":
             # There is information about a keytab, but not the principal. So lets grab the first from the file
@@ -756,7 +748,7 @@ class config(metaclass=Singleton):
 
         # Fetch public/private key from jdbc_connection table if it exists
         query = "select private_key_path, public_key_path from jdbc_connections where dbalias = %s "
-        logging.debug("Executing the following SQL: %s" % (query))
+        logging.debug("Executing the following SQL: %s", query)
         self.mysql_cursor.execute(query, (connection_alias,))
 
         if self.mysql_cursor.rowcount != 1:
@@ -785,13 +777,13 @@ class config(metaclass=Singleton):
                 configuration.get("Credentials", "public_key")
             )
 
-        str_to_encrypt = "%s %s\n" % (username, password)
+        str_to_encrypt = f"{username} {password}\n"
 
         encrypted_str = self.crypto.encrypt(str_to_encrypt)
 
         if encrypted_str != None and encrypted_str != "":
             query = "update jdbc_connections set credentials = %s where dbalias = %s "
-            logging.debug("Executing the following SQL: %s" % (query))
+            logging.debug("Executing the following SQL: %s", query)
             self.mysql_cursor.execute(query, (encrypted_str, connection_alias))
             self.mysql_conn.commit()
 
@@ -800,13 +792,12 @@ class config(metaclass=Singleton):
     ) -> tuple[str, str]:
         logging.debug("Executing common_config.get_jdbc_driver_config()")
         query = "select driver, classpath from jdbc_connections_drivers where database_type = %s and version = %s"
-        logging.debug("Executing the following SQL: %s" % (query))
+        logging.debug("Executing the following SQL: %s", query)
         self.mysql_cursor.execute(query, (database_type, version))
 
         if self.mysql_cursor.rowcount != 1:
             raise invalidConfiguration(
-                "Error: Cant find JDBC driver with database_type as '%s' and version as '%s'"
-                % (database_type, version)
+                f"Error: Cant find JDBC driver with database_type as '{database_type}' and version as '{version}'"
             )
 
         row = self.mysql_cursor.fetchone()
@@ -825,7 +816,7 @@ class config(metaclass=Singleton):
         logging.debug("Executing common_config.print_connection_alias_details()")
 
         query = "select dbalias from jdbc_connections"
-        logging.debug("Executing the following SQL: %s" % (query))
+        logging.debug("Executing the following SQL: %s", query)
         self.mysql_cursor.execute(query, [])
 
         counter = 0
@@ -844,122 +835,61 @@ class config(metaclass=Singleton):
                     self.jdbc_password = ""
 
                 print(
-                    "£%s£¤£%s£¤£%s£¤£DBImport£"
-                    % (self.dbAlias, self.jdbc_username, self.jdbc_password)
+                    f"£{self.dbAlias}£¤£{self.jdbc_username}£¤£{self.jdbc_password}£¤£DBImport£"
                 )
 
                 if 0 == 1:
                     if "," in self.jdbc_username:
                         print("self.jdbc_username contains ,")
                         print(
-                            "'%s','%s','%s','%s'"
-                            % (
-                                self.dbAlias,
-                                self.jdbc_username,
-                                self.jdbc_password,
-                                self.jdbc_url,
-                            )
+                            f"'{self.dbAlias}','{self.jdbc_username}','{self.jdbc_password}','{self.jdbc_url}'"
                         )
                     if "'" in self.jdbc_username:
                         print("self.jdbc_username contains '")
                         print(
-                            "'%s','%s','%s','%s'"
-                            % (
-                                self.dbAlias,
-                                self.jdbc_username,
-                                self.jdbc_password,
-                                self.jdbc_url,
-                            )
+                            f"'{self.dbAlias}','{self.jdbc_username}','{self.jdbc_password}','{self.jdbc_url}'"
                         )
                     if "£" in self.jdbc_username:
                         print("self.jdbc_username contains £")
                         print(
-                            "'%s','%s','%s','%s'"
-                            % (
-                                self.dbAlias,
-                                self.jdbc_username,
-                                self.jdbc_password,
-                                self.jdbc_url,
-                            )
+                            f"'{self.dbAlias}','{self.jdbc_username}','{self.jdbc_password}','{self.jdbc_url}'"
                         )
                     if "¤" in self.jdbc_username:
                         print("self.jdbc_username contains ¤")
                         print(
-                            "'%s','%s','%s','%s'"
-                            % (
-                                self.dbAlias,
-                                self.jdbc_username,
-                                self.jdbc_password,
-                                self.jdbc_url,
-                            )
+                            f"'{self.dbAlias}','{self.jdbc_username}','{self.jdbc_password}','{self.jdbc_url}'"
                         )
 
                     if "'" in self.jdbc_password:
                         print("self.jdbc_password contains '")
                         print(
-                            "'%s','%s','%s','%s'"
-                            % (
-                                self.dbAlias,
-                                self.jdbc_username,
-                                self.jdbc_password,
-                                self.jdbc_url,
-                            )
+                            f"'{self.dbAlias}','{self.jdbc_username}','{self.jdbc_password}','{self.jdbc_url}'"
                         )
                     if "£" in self.jdbc_password:
                         print("self.jdbc_password contains £")
                         print(
-                            "'%s','%s','%s','%s'"
-                            % (
-                                self.dbAlias,
-                                self.jdbc_username,
-                                self.jdbc_password,
-                                self.jdbc_url,
-                            )
+                            f"'{self.dbAlias}','{self.jdbc_username}','{self.jdbc_password}','{self.jdbc_url}'"
                         )
                     if "¤" in self.jdbc_username:
                         print("self.jdbc_username contains ¤")
                         print(
-                            "'%s','%s','%s','%s'"
-                            % (
-                                self.dbAlias,
-                                self.jdbc_username,
-                                self.jdbc_password,
-                                self.jdbc_url,
-                            )
+                            f"'{self.dbAlias}','{self.jdbc_username}','{self.jdbc_password}','{self.jdbc_url}'"
                         )
 
                     if "," in self.jdbc_url:
                         print("self.jdbc_url contains ,")
                         print(
-                            "'%s','%s','%s','%s'"
-                            % (
-                                self.dbAlias,
-                                self.jdbc_username,
-                                self.jdbc_password,
-                                self.jdbc_url,
-                            )
+                            f"'{self.dbAlias}','{self.jdbc_username}','{self.jdbc_password}','{self.jdbc_url}'"
                         )
                     if "£" in self.jdbc_url:
                         print("self.jdbc_url contains £")
                         print(
-                            "'%s','%s','%s','%s'"
-                            % (
-                                self.dbAlias,
-                                self.jdbc_username,
-                                self.jdbc_password,
-                                self.jdbc_url,
-                            )
+                            f"'{self.dbAlias}','{self.jdbc_username}','{self.jdbc_password}','{self.jdbc_url}'"
                         )
                     if "¤" in self.jdbc_url:
                         print("self.jdbc_url contains ¤")
                         print(
-                            "'%s','%s','%s','%s'"
-                            % (
-                                self.dbAlias,
-                                self.jdbc_username,
-                                self.jdbc_password,
-                                self.jdbc_url,
-                            )
+                            f"'{self.dbAlias}','{self.jdbc_username}','{self.jdbc_password}','{self.jdbc_url}'"
                         )
 
         print()
@@ -1002,7 +932,7 @@ class config(metaclass=Singleton):
             self.jdbc_url = jdbcURL
         else:
             query = "select jdbc_url, credentials, private_key_path, public_key_path, environment from jdbc_connections where dbalias = %s "
-            logging.debug("Executing the following SQL: %s" % (query))
+            logging.debug("Executing the following SQL: %s", query)
             self.mysql_cursor.execute(query, (connection_alias,))
 
             if self.mysql_cursor.rowcount != 1:
@@ -1657,7 +1587,7 @@ class config(metaclass=Singleton):
                 self.impalaDriver != None
                 and self.impalaDriver.startswith("/path/to/") == False
             ):
-                self.jdbc_classpath += ":%s" % (self.impalaDriver)
+                self.jdbc_classpath += f":{self.impalaDriver}"
                 self.jdbc_classpath_for_python = self.jdbc_classpath
         except:
             pass
@@ -1665,9 +1595,7 @@ class config(metaclass=Singleton):
         # Check to make sure that we have a supported JDBC string
         if self.jdbc_servertype == "":
             if quiet == False:
-                logging.error(
-                    "JDBC Connection '%s' is not supported." % (self.jdbc_url)
-                )
+                logging.error("JDBC Connection '%s' is not supported.", self.jdbc_url)
             exit_after_function = True
 
         if copySlave == True:
@@ -1675,51 +1603,49 @@ class config(metaclass=Singleton):
             self.jdbc_port = None
             self.jdbc_database = None
 
-        logging.debug("    db_mssql = %s" % (self.db_mssql))
-        logging.debug("    db_oracle = %s" % (self.db_oracle))
-        logging.debug("    db_mysql = %s" % (self.db_mysql))
-        logging.debug("    db_postgresql = %s" % (self.db_postgresql))
-        logging.debug("    db_progress = %s" % (self.db_progress))
-        logging.debug("    db_db2udb = %s" % (self.db_db2udb))
-        logging.debug("    db_db2as400 = %s" % (self.db_db2as400))
-        logging.debug("    db_mongodb = %s" % (self.db_mongodb))
-        logging.debug("    db_cachedb = %s" % (self.db_cachedb))
-        logging.debug("    db_snowflake = %s" % (self.db_snowflake))
-        logging.debug("    db_informix = %s" % (self.db_informix))
-        logging.debug("    jdbc_servertype = %s" % (self.jdbc_servertype))
-        logging.debug("    jdbc_url = %s" % (self.jdbc_url))
-        logging.debug("    jdbc_username = %s" % (self.jdbc_username))
+        logging.debug("    db_mssql = %s", self.db_mssql)
+        logging.debug("    db_oracle = %s", self.db_oracle)
+        logging.debug("    db_mysql = %s", self.db_mysql)
+        logging.debug("    db_postgresql = %s", self.db_postgresql)
+        logging.debug("    db_progress = %s", self.db_progress)
+        logging.debug("    db_db2udb = %s", self.db_db2udb)
+        logging.debug("    db_db2as400 = %s", self.db_db2as400)
+        logging.debug("    db_mongodb = %s", self.db_mongodb)
+        logging.debug("    db_cachedb = %s", self.db_cachedb)
+        logging.debug("    db_snowflake = %s", self.db_snowflake)
+        logging.debug("    db_informix = %s", self.db_informix)
+        logging.debug("    jdbc_servertype = %s", self.jdbc_servertype)
+        logging.debug("    jdbc_url = %s", self.jdbc_url)
+        logging.debug("    jdbc_username = %s", self.jdbc_username)
         logging.debug("    jdbc_password = <ENCRYPTED>")
-        logging.debug("    jdbc_hostname = %s" % (self.jdbc_hostname))
-        logging.debug("    jdbc_port = %s" % (self.jdbc_port))
-        logging.debug("    jdbc_database = %s" % (self.jdbc_database))
-        logging.debug("    jdbc_classpath = %s" % (self.jdbc_classpath))
+        logging.debug("    jdbc_hostname = %s", self.jdbc_hostname)
+        logging.debug("    jdbc_port = %s", self.jdbc_port)
+        logging.debug("    jdbc_database = %s", self.jdbc_database)
+        logging.debug("    jdbc_classpath = %s", self.jdbc_classpath)
         logging.debug(
-            "    jdbc_classpath_for_python = %s" % (self.jdbc_classpath_for_python)
+            "    jdbc_classpath_for_python = %s", self.jdbc_classpath_for_python
         )
-        logging.debug("    jdbc_driver = %s" % (self.jdbc_driver))
-        logging.debug("    jdbc_driver_for_python = %s" % (self.jdbc_driver_for_python))
-        logging.debug("    jdbc_ad_domain = %s" % (self.jdbc_ad_domain))
-        logging.debug("    jdbc_encrypt = %s" % (self.jdbc_encrypt))
-        logging.debug("    jdbc_encrypt_string = %s" % (self.jdbc_encrypt_string))
-        logging.debug("    jdbc_trustedservercert = %s" % (self.jdbc_trustedservercert))
+        logging.debug("    jdbc_driver = %s", self.jdbc_driver)
+        logging.debug("    jdbc_driver_for_python = %s", self.jdbc_driver_for_python)
+        logging.debug("    jdbc_ad_domain = %s", self.jdbc_ad_domain)
+        logging.debug("    jdbc_encrypt = %s", self.jdbc_encrypt)
+        logging.debug("    jdbc_encrypt_string = %s", self.jdbc_encrypt_string)
+        logging.debug("    jdbc_trustedservercert = %s", self.jdbc_trustedservercert)
         logging.debug(
-            "    jdbc_trustedservercert_password = %s"
-            % (self.jdbc_trustedservercert_password)
+            "    jdbc_trustedservercert_password = %s",
+            self.jdbc_trustedservercert_password,
         )
-        logging.debug("    jdbc_hostincert = %s" % (self.jdbc_hostincert))
-        logging.debug("    jdbc_logintimeout = %s" % (self.jdbc_logintimeout))
-        logging.debug("    jdbc_oracle_sid = %s" % (self.jdbc_oracle_sid))
+        logging.debug("    jdbc_hostincert = %s", self.jdbc_hostincert)
+        logging.debug("    jdbc_logintimeout = %s", self.jdbc_logintimeout)
+        logging.debug("    jdbc_oracle_sid = %s", self.jdbc_oracle_sid)
+        logging.debug("    jdbc_oracle_servicename = %s", self.jdbc_oracle_servicename)
+        logging.debug("    self.awsS3assumeRole = %s", self.awsS3assumeRole)
         logging.debug(
-            "    jdbc_oracle_servicename = %s" % (self.jdbc_oracle_servicename)
+            "    self.awsS3assumeRoleDuration = %s", self.awsS3assumeRoleDuration
         )
-        logging.debug("    self.awsS3assumeRole = %s" % (self.awsS3assumeRole))
-        logging.debug(
-            "    self.awsS3assumeRoleDuration = %s" % (self.awsS3assumeRoleDuration)
-        )
-        logging.debug("    self.awsS3proxyServer = %s" % (self.awsS3proxyServer))
-        logging.debug("    self.awsS3externalId = %s" % (self.awsS3externalId))
-        logging.debug("    self.awsS3region = %s" % (self.awsS3region))
+        logging.debug("    self.awsS3proxyServer = %s", self.awsS3proxyServer)
+        logging.debug("    self.awsS3externalId = %s", self.awsS3externalId)
+        logging.debug("    self.awsS3region = %s", self.awsS3region)
         logging.debug("Executing common_config.lookup_connection_alias() - Finished")
 
         if exit_after_function == True:
@@ -1805,9 +1731,9 @@ class config(metaclass=Singleton):
         if self.impalaJDBCCursor == None:
             log.info("Connecting to Impala")
             log.debug("Connecting to Impala over JDBC")
-            log.debug("   impalaDriver = %s" % (self.impalaDriver))
-            log.debug("   impalaClasspath = %s" % (self.impalaClasspath))
-            log.debug("   impalaAddress = %s" % (self.impalaAddress))
+            log.debug("   impalaDriver = %s", self.impalaDriver)
+            log.debug("   impalaClasspath = %s", self.impalaClasspath)
+            log.debug("   impalaAddress = %s", self.impalaAddress)
 
             try:
                 jdbc_credentials = [self.jdbc_username, self.jdbc_password]
@@ -1854,7 +1780,7 @@ class config(metaclass=Singleton):
 
         if allJarFiles == True:
             query = "select classpath from jdbc_connections_drivers"
-            log.debug("Executing the following SQL: %s" % (query))
+            log.debug("Executing the following SQL: %s", query)
             self.mysql_cursor.execute(
                 query,
             )
@@ -1873,12 +1799,12 @@ class config(metaclass=Singleton):
 
         if self.JDBCCursor == None:
             log.debug("Connecting to database over JDBC")
-            log.debug("   jdbc_username = %s" % (self.jdbc_username))
+            log.debug("   jdbc_username = %s", self.jdbc_username)
             log.debug("   jdbc_password = <ENCRYPTED>")
-            log.debug("   jdbc_driver = %s" % (self.jdbc_driver))
-            log.debug("   jdbc_url = %s" % (self.jdbc_url))
+            log.debug("   jdbc_driver = %s", self.jdbc_driver)
+            log.debug("   jdbc_url = %s", self.jdbc_url)
             log.debug(
-                "   jdbc_classpath_for_python = %s" % (self.jdbc_classpath_for_python)
+                "   jdbc_classpath_for_python = %s", self.jdbc_classpath_for_python
             )
 
             jdbc_credentials = [self.jdbc_username, self.jdbc_password]
@@ -1987,11 +1913,11 @@ class config(metaclass=Singleton):
             # If a custom query is configured, we just use that instead and ignore the config above
             query = self.custom_max_query
             logging.info(
-                "Using a custom query to get Max value from source table (%s)" % (query)
+                "Using a custom query to get Max value from source table (%s)", query
             )
 
         self.JDBCCursor.execute(query)
-        logging.debug("SQL Statement executed: %s" % (query))
+        logging.debug("SQL Statement executed: %s", query)
         row = self.JDBCCursor.fetchone()
 
         logging.info(
@@ -2032,7 +1958,7 @@ class config(metaclass=Singleton):
                 "There is no support for this database type in common_config.truncate_jdbc_table()"
             )
 
-        logging.debug("SQL Statement executed: %s" % (query))
+        logging.debug("SQL Statement executed: %s", query)
         self.JDBCCursor.execute(query)
 
         logging.debug("Executing common_config.truncate_jdbc_table() - Finished")
@@ -2084,7 +2010,7 @@ class config(metaclass=Singleton):
                 "There is no support for this database type in common_config.check_jdbc_table()"
             )
 
-        logging.debug("SQL Statement executed: %s" % (query))
+        logging.debug("SQL Statement executed: %s", query)
         self.JDBCCursor.execute(query)
         row = self.JDBCCursor.fetchone()
 
@@ -2100,7 +2026,7 @@ class config(metaclass=Singleton):
         """Executes a query against the JDBC database and return the values in a Pandas DF"""
         logging.debug("Executing common_config.execute_jdbc_query()")
 
-        logging.debug("Query to execute: %s" % (query))
+        logging.debug("Query to execute: %s", query)
         try:
             self.connect_to_jdbc()
             self.JDBCCursor.execute(query)
@@ -2131,7 +2057,7 @@ class config(metaclass=Singleton):
         """Executes a query against Impala and return the values in a Pandas DF"""
         logging.debug("Executing common_config.execute_impala_query()")
 
-        logging.debug("Query to execute: %s" % (query))
+        logging.debug("Query to execute: %s", query)
         try:
             self.connect_to_impala()
             self.impalaJDBCCursor.execute(query)
@@ -2212,7 +2138,7 @@ class config(metaclass=Singleton):
         if whereStatement != None and whereStatement != "":
             query = query + " where " + whereStatement
 
-        logging.debug("SQL Statement executed: %s" % (query))
+        logging.debug("SQL Statement executed: %s", query)
         self.JDBCCursor.execute(query)
         row = self.JDBCCursor.fetchone()
 
@@ -2250,7 +2176,7 @@ class config(metaclass=Singleton):
         query += "values "
         query += "( %s, %s, %s, %s, %s, %s )"
 
-        logging.debug("SQL Statement executed: %s" % (query))
+        logging.debug("SQL Statement executed: %s", query)
         self.mysql_cursor.execute(
             query,
             (
@@ -2288,7 +2214,7 @@ class config(metaclass=Singleton):
         query += "values "
         query += "( %s, %s, %s, %s, 'column_added', %s, %s )"
 
-        logging.debug("SQL Statement executed: %s" % (query))
+        logging.debug("SQL Statement executed: %s", query)
         self.mysql_cursor.execute(
             query,
             (
@@ -2332,7 +2258,7 @@ class config(metaclass=Singleton):
         query += "values "
         query += "( %s, %s, %s, %s, 'column_type_change', %s, %s, %s )"
 
-        logging.debug("SQL Statement executed: %s" % (query))
+        logging.debug("SQL Statement executed: %s", query)
         self.mysql_cursor.execute(
             query,
             (
@@ -2372,7 +2298,7 @@ class config(metaclass=Singleton):
         query += "values "
         query += "( %s, %s, %s, %s, 'column_rename', %s, %s, %s )"
 
-        logging.debug("SQL Statement executed: %s" % (query))
+        logging.debug("SQL Statement executed: %s", query)
         self.mysql_cursor.execute(
             query,
             (
@@ -2408,7 +2334,7 @@ class config(metaclass=Singleton):
         query += "values "
         query += "( %s, %s, %s, %s, %s, %s, 'column_added', %s, %s )"
 
-        logging.debug("SQL Statement executed: %s" % (query))
+        logging.debug("SQL Statement executed: %s", query)
         self.mysql_cursor.execute(
             query,
             (
@@ -2451,7 +2377,7 @@ class config(metaclass=Singleton):
         query += "values "
         query += "( %s, %s, %s, %s, %s, %s, 'column_type_change', %s, %s, %s )"
 
-        logging.debug("SQL Statement executed: %s" % (query))
+        logging.debug("SQL Statement executed: %s", query)
         self.mysql_cursor.execute(
             query,
             (
@@ -2490,7 +2416,7 @@ class config(metaclass=Singleton):
         query += "values "
         query += "( %s, %s, %s, %s, %s, %s, 'column_rename', %s, %s, %s )"
 
-        logging.debug("SQL Statement executed: %s" % (query))
+        logging.debug("SQL Statement executed: %s", query)
         self.mysql_cursor.execute(
             query,
             (
@@ -2664,7 +2590,7 @@ class config(metaclass=Singleton):
         else:
             if ignore_error_output == False:
                 # This is needed from the REST interface, as it's parsing everything in the database. And entries may exists that isnt a valid config anymore
-                logging.error("There is no configuration with the name '%s'" % (key))
+                logging.error("There is no configuration with the name '%s'", key)
                 self.remove_temporary_files()
                 sys.exit(1)
             else:
@@ -2686,7 +2612,7 @@ class config(metaclass=Singleton):
             key,
         )
 
-        logging.debug("SQL Statement executed: %s" % (query))
+        logging.debug("SQL Statement executed: %s", query)
         self.mysql_cursor.execute(query)
         row = self.mysql_cursor.fetchone()
         self.mysql_conn.commit()
@@ -2699,8 +2625,9 @@ class config(metaclass=Singleton):
                 return_value = row[0]
                 if return_value == None or return_value.strip() == "":
                     logging.error(
-                        "Configuration Key '%s' must have a value in '%s'"
-                        % (key, value_column)
+                        "Configuration Key '%s' must have a value in '%s'",
+                        key,
+                        value_column,
                     )
                     self.remove_temporary_files()
                     sys.exit(1)
@@ -2712,20 +2639,21 @@ class config(metaclass=Singleton):
                     return_value = False
                 else:
                     logging.error(
-                        "Configuration Key '%s' can only have 0 or 1 in column '%s'"
-                        % (key, value_column)
+                        "Configuration Key '%s' can only have 0 or 1 in column '%s'",
+                        key,
+                        value_column,
                     )
                     self.remove_temporary_files()
                     sys.exit(1)
         except TypeError:
             logging.error(
-                "Configuration key '%s' cant be found. Have you upgraded the database schema to the latest version?"
-                % (key)
+                "Configuration key '%s' cant be found. Have you upgraded the database schema to the latest version?",
+                key,
             )
             self.remove_temporary_files()
             sys.exit(1)
 
-        logging.debug("Fetched configuration '%s' as '%s'" % (key, return_value))
+        logging.debug("Fetched configuration '%s' as '%s'", key, return_value)
         logging.debug("Executing common_config.get_config_value() - Finished")
         return return_value
 
@@ -2738,7 +2666,7 @@ class config(metaclass=Singleton):
 
         try:
             self.mongo_client = pymongo.MongoClient(
-                "mongodb://%s:%s/" % (self.jdbc_hostname, self.jdbc_port)
+                f"mongodb://{self.jdbc_hostname}:{self.jdbc_port}/"
             )
             self.mongoDB = self.mongo_client[self.jdbc_database.strip()]
             if self.mongoAuthSource == None:
@@ -2750,8 +2678,9 @@ class config(metaclass=Singleton):
 
         except pymongo.errors.ServerSelectionTimeoutError:
             log.error(
-                "Timeout Error when connecting to Mongo at %s.%s"
-                % (self.jdbc_hostname, self.jdbc_port)
+                "Timeout Error when connecting to Mongo at %s.%s",
+                self.jdbc_hostname,
+                self.jdbc_port,
             )
             if exit_if_failure == True:
                 self.remove_temporary_files()
@@ -2864,7 +2793,7 @@ class config(metaclass=Singleton):
         seed = configuration.get("Anonymization", "seed")
 
         query = "select seed_file from jdbc_connections where dbalias = %s "
-        logging.debug("Executing the following SQL: %s" % (query))
+        logging.debug("Executing the following SQL: %s", query)
         self.mysql_cursor.execute(query, (self.dbAlias,))
 
         row = self.mysql_cursor.fetchone()
@@ -2925,7 +2854,7 @@ class config(metaclass=Singleton):
         query += "values "
         query += "( %s, 0, %s, %s )"
 
-        logging.debug("SQL Statement executed: %s" % (query))
+        logging.debug("SQL Statement executed: %s", query)
         self.mysql_cursor.execute(query, (datatype, destination, json))
         self.mysql_conn.commit()
 
@@ -2955,7 +2884,7 @@ class config(metaclass=Singleton):
                 query += "values "
                 query += "( %s, %s, %s, 'import', %s, %s, %s )"
 
-                logging.debug("SQL Statement executed: %s" % (query))
+                logging.debug("SQL Statement executed: %s", query)
                 self.mysql_cursor.execute(
                     query,
                     (
@@ -2977,7 +2906,7 @@ class config(metaclass=Singleton):
                 query += "values "
                 query += "( %s, %s, %s, 'export', %s, %s, %s, %s )"
 
-                logging.debug("SQL Statement executed: %s" % (query))
+                logging.debug("SQL Statement executed: %s", query)
                 self.mysql_cursor.execute(
                     query,
                     (
@@ -3001,7 +2930,7 @@ class config(metaclass=Singleton):
             query += "set application_stop = %s, yarn_containers_total = %s, yarn_containers_failed = %s, yarn_containers_killed = %s "
             query += "where yarn_application_id = %s and application_start = %s"
 
-            logging.debug("SQL Statement executed: %s" % (query))
+            logging.debug("SQL Statement executed: %s", query)
             self.mysql_cursor.execute(
                 query,
                 (

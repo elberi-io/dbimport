@@ -24,7 +24,7 @@ except KeyError:
     print("Error: System Environment Variable DBIMPORT_HOME is not set")
     sys.exit(1)
 
-sys.path.append("%s/bin" % (DBImport_Home))
+sys.path.append(f"{DBImport_Home}/bin")
 from DBImportConfig.configSchema import Base  # noqa: E402  # sys.path must point to bin/ first
 
 target_metadata = Base.metadata
