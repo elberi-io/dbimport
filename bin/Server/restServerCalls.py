@@ -2816,7 +2816,7 @@ class dbCalls:
         }
         return JSONResponse(content=json_result, headers=headers, status_code=200)
 
-    def get_export_tables(self, connection, schema, currentUser):
+    def get_export_tables(self, connection, schema, current_user):
         """Returns all connections that have exports configured in them"""
         log = logging.getLogger(self.logger)
 
@@ -2826,7 +2826,7 @@ class dbCalls:
             connection=connection, targetSchema=schema, targetTable="*"
         )
 
-        return self.searchExportTables(search_values, currentUser)
+        return self.searchExportTables(search_values, current_user)
 
     def getExportTableDetails(self, connection, schema, table, include_columns):
         """Returns all connections that have exports configured in them"""

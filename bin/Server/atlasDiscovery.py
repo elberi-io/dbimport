@@ -43,20 +43,20 @@ class atlasCrawler(threading.Thread):
     def __init__(
         self,
         name,
-        atlasCrawlerProcessQueue,
-        atlasCrawlerResultQueue,
-        threadStopEvent,
-        loggerName,
+        atlas_crawler_process_queue,
+        atlas_crawler_result_queue,
+        thread_stop_event,
+        logger_name,
         mutex,
     ):
         threading.Thread.__init__(self)
         self.name = name
         self.jdbc_connection_mutex = mutex
-        self.atlas_crawler_process_queue = atlasCrawlerProcessQueue
-        self.atlasCrawlerResultQueue = atlasCrawlerResultQueue
-        self.thread_stop_event = threadStopEvent
-        self.logger_name = loggerName
-        self.atlasOperation = atlas_operations.atlasOperation(loggerName)
+        self.atlas_crawler_process_queue = atlas_crawler_process_queue
+        self.atlasCrawlerResultQueue = atlas_crawler_result_queue
+        self.thread_stop_event = thread_stop_event
+        self.logger_name = logger_name
+        self.atlasOperation = atlas_operations.atlasOperation(logger_name)
 
     # 		self.sourceSchema = schemaReader.source()
     # 		self.jdbc_conn = None
@@ -117,9 +117,9 @@ class atlasCrawler(threading.Thread):
 
 
 class atlasDiscovery(threading.Thread):
-    def __init__(self, threadStopEvent):
+    def __init__(self, thread_stop_event):
         threading.Thread.__init__(self)
-        self.thread_stop_event = threadStopEvent
+        self.thread_stop_event = thread_stop_event
 
     def run(self):
         logger = "atlasDiscovery"
@@ -162,10 +162,10 @@ class atlasDiscovery(threading.Thread):
 
             thread = atlasCrawler(
                 name=str(thread_id),
-                atlasCrawlerProcessQueue=self.atlas_crawler_process_queue,
-                atlasCrawlerResultQueue=self.atlasCrawlerResultQueue,
-                threadStopEvent=self.thread_stop_event,
-                loggerName=atlas_crawler_log_name,
+                atlas_crawler_process_queue=self.atlas_crawler_process_queue,
+                atlas_crawler_result_queue=self.atlasCrawlerResultQueue,
+                thread_stop_event=self.thread_stop_event,
+                logger_name=atlas_crawler_log_name,
                 mutex=self.jdbc_connection_mutex,
             )
             thread.daemon = True

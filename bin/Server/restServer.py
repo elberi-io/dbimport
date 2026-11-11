@@ -827,7 +827,7 @@ async def get_export_tables_on_connection(
     response: Response,
 ):
     return db_calls.get_export_tables(
-        connection=connection, schema=None, currentUser=current_user["username"]
+        connection=connection, schema=None, current_user=current_user["username"]
     )
 
 
@@ -843,7 +843,7 @@ async def get_export_tables_on_connection_and_schema(
     response: Response,
 ):
     return db_calls.get_export_tables(
-        connection=connection, schema=schema, currentUser=current_user["username"]
+        connection=connection, schema=schema, current_user=current_user["username"]
     )
 
 
