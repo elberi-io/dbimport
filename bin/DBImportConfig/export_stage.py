@@ -588,11 +588,11 @@ class stage:
         self.stageDurationStop = time.monotonic()
         self.stageDurationTime = self.stageDurationStop - self.stageDurationStart
 
-        logging.debug("stageTimeStart: %s" % (self.stageTimeStart))
-        logging.debug("stageTimeStop:  %s" % (self.stageTimeStop))
-        logging.debug("stageDurationStart: %s" % (self.stageDurationStart))
-        logging.debug("stageDurationStop:  %s" % (self.stageDurationStop))
-        logging.debug("stageDurationTime:  %s" % (self.stageDurationTime))
+        logging.debug("stageTimeStart: %s", self.stageTimeStart)
+        logging.debug("stageTimeStop:  %s", self.stageTimeStop)
+        logging.debug("stageDurationStart: %s", self.stageDurationStart)
+        logging.debug("stageDurationStop:  %s", self.stageDurationStop)
+        logging.debug("stageDurationTime:  %s", self.stageDurationTime)
 
         query = "select count(stage) from export_stage_statistics where dbalias = %s and target_schema = %s and target_table = %s and stage = %s"
         self.mysql_cursor.execute(

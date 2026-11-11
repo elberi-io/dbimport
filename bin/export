@@ -682,7 +682,7 @@ def main(argv):
         sys.exit(1)
     except daemonExit as errMsg:
         logging.error(
-            "Program exit because requested to do so by developer. %s" % (errMsg)
+            "Program exit because requested to do so by developer. %s", errMsg
         )
         export_operation.export_config.remove_temporary_files()
         sys.exit(1)

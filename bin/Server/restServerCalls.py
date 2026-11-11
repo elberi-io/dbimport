@@ -194,7 +194,7 @@ class dbCalls:
             self.configDBSession = sessionmaker(bind=self.configDB)
 
         except sa.exc.OperationalError as err:
-            logging.error("%s" % err)
+            logging.error("%s", err)
             self.configDBSession = None
             self.configDB = None
             raise SQLerror("Can't connect to DBImport database")
@@ -249,8 +249,9 @@ class dbCalls:
                 return_value = configuration[2]
                 if return_value == None or return_value.strip() == "":
                     log.error(
-                        "Configuration Key '%s' must have a value in '%s'"
-                        % (key, value_column)
+                        "Configuration Key '%s' must have a value in '%s'",
+                        key,
+                        value_column,
                     )
                     return_value = None
 
@@ -261,8 +262,9 @@ class dbCalls:
                     return_value = False
                 else:
                     log.error(
-                        "Configuration Key '%s' can only have 0 or 1 in column '%s'"
-                        % (key, value_column)
+                        "Configuration Key '%s' can only have 0 or 1 in column '%s'",
+                        key,
+                        value_column,
                     )
                     return_value = None
         except TypeError:
@@ -386,13 +388,15 @@ class dbCalls:
 
         if password_changed == False:
             log.info(
-                "User '%s' updated details for user '%s'"
-                % (current_user, user["username"])
+                "User '%s' updated details for user '%s'",
+                current_user,
+                user["username"],
             )
         else:
             log.info(
-                "User '%s' changed the password for user '%s'"
-                % (current_user, user["username"])
+                "User '%s' changed the password for user '%s'",
+                current_user,
+                user["username"],
             )
 
         table_auth_users = aliased(configSchema.authUsers)
@@ -659,8 +663,9 @@ class dbCalls:
             return None
 
         log.info(
-            "User '%s' updated JDBC driver configuration for '%s'"
-            % (current_user, jdbc_driver.databaseType)
+            "User '%s' updated JDBC driver configuration for '%s'",
+            current_user,
+            jdbc_driver.databaseType,
         )
 
         log.debug("databaseType: %s" % jdbc_driver.databaseType)
@@ -828,8 +833,10 @@ class dbCalls:
             if type(getattr(configuration, key)) in (str, bool, int):
                 # At this point, only configuration items that exists in the class is iterrated
                 log.info(
-                    "User '%s' updated global configuration. %s = %s"
-                    % (current_user, key, getattr(configuration, key))
+                    "User '%s' updated global configuration. %s = %s",
+                    current_user,
+                    key,
+                    getattr(configuration, key),
                 )
 
                 value_column, bool_value = self.common_config.get_config_value_column(
@@ -983,7 +990,7 @@ class dbCalls:
                     value = value.replace("*", "%")
                     like_search = True
 
-            log.debug("search filter: %s = %s" % (column, value))
+            log.debug("search filter: %s = %s", column, value)
 
             if like_search == True:
                 jdbc_connections_data = jdbc_connections_data.filter(
@@ -1048,8 +1055,7 @@ class dbCalls:
 
         log.debug(connection)
         log.info(
-            "User '%s' updated/created connection '%s'"
-            % (current_user, connection.name)
+            "User '%s' updated/created connection '%s'", current_user, connection.name
         )
 
         if connection.forceString == None:
@@ -1234,7 +1240,7 @@ class dbCalls:
         result = "ok"
         return_code = 200
 
-        log.info("User '%s' deleted connection '%s'" % (current_user, connection))
+        log.info("User '%s' deleted connection '%s'", current_user, connection)
 
         # Fetch the tableID as that is required to update/create data in import_columns
         row = (
@@ -1524,7 +1530,7 @@ class dbCalls:
                     value = value.replace("*", "%")
                     like_search = True
 
-            log.debug("search filter: %s = %s" % (column, value))
+            log.debug("search filter: %s = %s", column, value)
 
             if like_search == True:
                 import_tables_data = import_tables_data.filter(
@@ -1828,7 +1834,7 @@ class dbCalls:
         return_code = 200
 
         log.info(
-            "User '%s' deleted import table '%s.%s'" % (current_user, database, table)
+            "User '%s' deleted import table '%s.%s'", current_user, database, table
         )
 
         # Fetch the tableID as that is required to update/create data in import_columns
@@ -1986,8 +1992,10 @@ class dbCalls:
         log.debug(data)
         # log.info("User '%s' updated/created import table '%s.%s'"%(currentUser, getattr(data, "database"), getattr(data, "table")))
         log.info(
-            "User '%s' updated/created import table '%s.%s'"
-            % (current_user, database, table)
+            "User '%s' updated/created import table '%s.%s'",
+            current_user,
+            database,
+            table,
         )
 
         # Set default values
@@ -2755,7 +2763,7 @@ class dbCalls:
                     value = value.replace("*", "%")
                     like_search = True
 
-            log.debug("search filter: %s = %s" % (column, value))
+            log.debug("search filter: %s = %s", column, value)
 
             if like_search == True:
                 export_tables_data = export_tables_data.filter(
@@ -3050,8 +3058,11 @@ class dbCalls:
         return_code = 200
 
         log.info(
-            "User '%s' deleted export table '%s.%s' on connection '%s'"
-            % (current_user, schema, table, connection)
+            "User '%s' deleted export table '%s.%s' on connection '%s'",
+            current_user,
+            schema,
+            table,
+            connection,
         )
 
         # Fetch the tableID as that is required to update/create data in import_columns
@@ -3213,8 +3224,11 @@ class dbCalls:
 
         log.debug(table)
         log.info(
-            "User '%s' updated/created export table '%s.%s' on connection '%s'"
-            % (current_user, schema, table, connection)
+            "User '%s' updated/created export table '%s.%s' on connection '%s'",
+            current_user,
+            schema,
+            table,
+            connection,
         )
 
         # Set default values
@@ -4171,8 +4185,10 @@ class dbCalls:
         return_code = 200
 
         log.info(
-            "User '%s' deleted Airflow task '%s' from DAG '%s'"
-            % (current_user, taskname, dagname)
+            "User '%s' deleted Airflow task '%s' from DAG '%s'",
+            current_user,
+            taskname,
+            dagname,
         )
 
         # Fetch the tableID as that is required to update/create data in import_columns
@@ -4218,7 +4234,7 @@ class dbCalls:
         result = "ok"
         return_code = 200
 
-        log.info("User '%s' deleted Airflow import DAG '%s'" % (current_user, dagname))
+        log.info("User '%s' deleted Airflow import DAG '%s'", current_user, dagname)
 
         # Fetch the tableID as that is required to update/create data in import_columns
         row = (
@@ -4387,8 +4403,7 @@ class dbCalls:
 
         log.debug(airflow_dag)
         log.info(
-            "User '%s' updated/created Airflow import DAG '%s'"
-            % (current_user, dagname)
+            "User '%s' updated/created Airflow import DAG '%s'", current_user, dagname
         )
 
         # Set default values
@@ -4511,7 +4526,7 @@ class dbCalls:
         result = "ok"
         return_code = 200
 
-        log.info("User '%s' deleted Airflow export DAG '%s'" % (current_user, dagname))
+        log.info("User '%s' deleted Airflow export DAG '%s'", current_user, dagname)
 
         # Fetch the tableID as that is required to update/create data in import_columns
         row = (
@@ -4680,8 +4695,7 @@ class dbCalls:
 
         log.debug(airflow_dag)
         log.info(
-            "User '%s' updated/created Airflow export DAG '%s'"
-            % (current_user, dagname)
+            "User '%s' updated/created Airflow export DAG '%s'", current_user, dagname
         )
 
         # Set default values
@@ -4788,7 +4802,7 @@ class dbCalls:
         result = "ok"
         return_code = 200
 
-        log.info("User '%s' deleted Airflow import DAG '%s'" % (current_user, dagname))
+        log.info("User '%s' deleted Airflow import DAG '%s'", current_user, dagname)
 
         # Fetch the tableID as that is required to update/create data in import_columns
         row = (
@@ -4957,8 +4971,7 @@ class dbCalls:
 
         log.debug(airflow_dag)
         log.info(
-            "User '%s' updated/created Airflow custom DAG '%s'"
-            % (current_user, dagname)
+            "User '%s' updated/created Airflow custom DAG '%s'", current_user, dagname
         )
 
         # Set default values

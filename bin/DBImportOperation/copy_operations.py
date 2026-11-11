@@ -202,7 +202,7 @@ class operation(metaclass=Singleton):
             db_credentials = self.crypto.decrypt(row[3])
         except binascii.Error as err:
             logging.warning(
-                "Decryption of credentials resulted in error with text: '%s'" % err
+                "Decryption of credentials resulted in error with text: '%s'", err
             )
             return False
         except:
@@ -246,7 +246,7 @@ class operation(metaclass=Singleton):
             )
 
         except sa.exc.OperationalError as err:
-            logging.warning("%s" % err)
+            logging.warning("%s", err)
             connect_status = False
         # 			self.remove_temporary_files()
         # 			sys.exit(1)
@@ -570,8 +570,9 @@ class operation(metaclass=Singleton):
 
         for _index, row in result.iterrows():
             logging.info(
-                "Schedule asynchronous copy for %s.%s"
-                % (row["hive_db"], row["hive_table"])
+                "Schedule asynchronous copy for %s.%s",
+                row["hive_db"],
+                row["hive_table"],
             )
             self.import_config.Hive_DB = row["hive_db"]
             self.import_config.Hive_Table = row["hive_table"]
@@ -583,9 +584,9 @@ class operation(metaclass=Singleton):
                 self.import_config.remove_temporary_files()
                 sys.exit(1)
 
-            logging.debug("table_id: %s" % (self.import_config.table_id))
+            logging.debug("table_id: %s", self.import_config.table_id)
             logging.debug(
-                "import_is_incremental: %s" % (self.import_config.import_is_incremental)
+                "import_is_incremental: %s", self.import_config.import_is_incremental
             )
 
             if (
@@ -593,8 +594,9 @@ class operation(metaclass=Singleton):
                 and includeIncrImports == False  # noqa: F821  # TODO(#163): not a parameter of this method
             ):
                 logging.warning(
-                    "Asynchronous copy for incremental table %s.%s skipped"
-                    % (row["hive_db"], row["hive_table"])
+                    "Asynchronous copy for incremental table %s.%s skipped",
+                    row["hive_db"],
+                    row["hive_table"],
                 )
                 continue
 
@@ -733,8 +735,9 @@ class operation(metaclass=Singleton):
 
             for _index, row in result.iterrows():
                 logging.info(
-                    "Schedule asynchronous copy for %s.%s"
-                    % (row["hive_db"], row["hive_table"])
+                    "Schedule asynchronous copy for %s.%s",
+                    row["hive_db"],
+                    row["hive_table"],
                 )
                 self.import_config.Hive_DB = row["hive_db"]
                 self.import_config.Hive_Table = row["hive_table"]
@@ -746,10 +749,10 @@ class operation(metaclass=Singleton):
                     self.import_config.remove_temporary_files()
                     sys.exit(1)
 
-                logging.debug("table_id: %s" % (self.import_config.table_id))
+                logging.debug("table_id: %s", self.import_config.table_id)
                 logging.debug(
-                    "import_is_incremental: %s"
-                    % (self.import_config.import_is_incremental)
+                    "import_is_incremental: %s",
+                    self.import_config.import_is_incremental,
                 )
 
                 if (
@@ -757,8 +760,9 @@ class operation(metaclass=Singleton):
                     and include_incr_imports == False
                 ):
                     logging.warning(
-                        "Asynchronous copy for incremental table %s.%s skipped"
-                        % (row["hive_db"], row["hive_table"])
+                        "Asynchronous copy for incremental table %s.%s skipped",
+                        row["hive_db"],
+                        row["hive_table"],
                     )
                     continue
 
@@ -1312,13 +1316,15 @@ class operation(metaclass=Singleton):
             for _index, row in result.iterrows():
                 if deploy_mode == False:
                     logging.info(
-                        "Copy schema definitions for %s.%s"
-                        % (row["hive_db"], row["hive_table"])
+                        "Copy schema definitions for %s.%s",
+                        row["hive_db"],
+                        row["hive_table"],
                     )
                 else:
                     logging.info(
-                        "Deploying schema definitions for %s.%s"
-                        % (row["hive_db"], row["hive_table"])
+                        "Deploying schema definitions for %s.%s",
+                        row["hive_db"],
+                        row["hive_table"],
                     )
 
                 ##################################
@@ -1597,18 +1603,21 @@ class operation(metaclass=Singleton):
             if self.connect_remote_dbimport_instance(instance=destination):
                 if print_destination == True:
                     logging.info(
-                        "Copy schema definitions for %s.%s to instance '%s'"
-                        % (hive_db, hive_table, destination)
+                        "Copy schema definitions for %s.%s to instance '%s'",
+                        hive_db,
+                        hive_table,
+                        destination,
                     )
                 else:
                     if deploy_mode == False:
                         logging.info(
-                            "Copy schema definitions for %s.%s" % (hive_db, hive_table)
+                            "Copy schema definitions for %s.%s", hive_db, hive_table
                         )
                     else:
                         logging.info(
-                            "Deploying schema definitions for %s.%s"
-                            % (hive_db, hive_table)
+                            "Deploying schema definitions for %s.%s",
+                            hive_db,
+                            hive_table,
                         )
                 remote_session = self.remoteInstanceConfigDBSession()
 

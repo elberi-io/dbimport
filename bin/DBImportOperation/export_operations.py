@@ -170,7 +170,7 @@ class operation(metaclass=Singleton):
     def check_table(self, hiveDB, hiveTable):
         if self.common_operations.check_table(hiveDB, hiveTable) == False:
             logging.error(
-                "Hive table '%s' cant be found in '%s' database" % (hiveTable, hiveDB)
+                "Hive table '%s' cant be found in '%s' database", hiveTable, hiveDB
             )
             self.export_config.remove_temporary_files()
             sys.exit(1)
@@ -579,8 +579,9 @@ class operation(metaclass=Singleton):
         ):
             # Target table does not exist. We just create it in that case
             logging.info(
-                "Creating Export Temp table %s.%s in Hive"
-                % (self.hiveExportTempDB, self.hiveExportTempTable)
+                "Creating Export Temp table %s.%s in Hive",
+                self.hiveExportTempDB,
+                self.hiveExportTempTable,
             )
 
             if self.export_config.exportTool == "sqoop":
@@ -1243,18 +1244,16 @@ class operation(metaclass=Singleton):
         logging.debug(
             "======================================================================="
         )
-        logging.debug("sparkQuery: %s" % (spark_query))
-        logging.debug("parallell sessions: %s" % (self.export_config.sqlSessions))
+        logging.debug("sparkQuery: %s", spark_query)
+        logging.debug("parallell sessions: %s", self.export_config.sqlSessions)
         logging.debug(
-            "Spark Executor Memory: %s"
-            % (self.export_config.common_config.sparkExecutorMemory)
+            "Spark Executor Memory: %s",
+            self.export_config.common_config.sparkExecutorMemory,
         )
+        logging.debug("Spark Max Executors: %s", self.export_config.sparkMaxExecutors)
         logging.debug(
-            "Spark Max Executors: %s" % (self.export_config.sparkMaxExecutors)
-        )
-        logging.debug(
-            "Spark Dynamic Executors: %s"
-            % (self.export_config.common_config.sparkDynamicAllocation)
+            "Spark Dynamic Executors: %s",
+            self.export_config.common_config.sparkDynamicAllocation,
         )
         logging.debug(
             "======================================================================="
@@ -1265,7 +1264,7 @@ class operation(metaclass=Singleton):
         print("| Spark Export starts |")
         print("|_____________________|")
         print("")
-        logging.info("Exporting Hive table `%s`.`%s`" % (hive_db, hive_table))
+        logging.info("Exporting Hive table `%s`.`%s`", hive_db, hive_table)
         sys.stdout.flush()
 
         # import all packages after the environment is set
@@ -1300,8 +1299,8 @@ class operation(metaclass=Singleton):
                 str(self.export_config.sparkMaxExecutors),
             )
             logging.info(
-                "Number of executors is dynamic with a max value of %s executors"
-                % (self.export_config.sparkMaxExecutors)
+                "Number of executors is dynamic with a max value of %s executors",
+                self.export_config.sparkMaxExecutors,
             )
             self.sqoopMappers = -1
         else:
@@ -1312,8 +1311,7 @@ class operation(metaclass=Singleton):
                     "spark.executor.instances", str(self.export_config.sqlSessions)
                 )
                 logging.info(
-                    "Number of executors is fixed at %s"
-                    % (self.export_config.sqlSessions)
+                    "Number of executors is fixed at %s", self.export_config.sqlSessions
                 )
                 self.sqoopMappers = self.export_config.sqlSessions
             else:
@@ -1322,8 +1320,8 @@ class operation(metaclass=Singleton):
                     str(self.export_config.sparkMaxExecutors),
                 )
                 logging.info(
-                    "Number of executors is fixed at %s"
-                    % (self.export_config.sparkMaxExecutors)
+                    "Number of executors is fixed at %s",
+                    self.export_config.sparkMaxExecutors,
                 )
                 self.sqoopMappers = self.export_config.sparkMaxExecutors
 
@@ -1346,8 +1344,8 @@ class operation(metaclass=Singleton):
                 )
                 conf.set("spark.hadoop.fs.s3a.proxy.host", aws_s3_proxy_host)
                 conf.set("spark.hadoop.fs.s3a.proxy.port", aws_s3_proxy_port)
-                logging.debug("awsS3proxyHost: %s" % aws_s3_proxy_host)
-                logging.debug("awsS3proxyPort: %s" % aws_s3_proxy_port)
+                logging.debug("awsS3proxyHost: %s", aws_s3_proxy_host)
+                logging.debug("awsS3proxyPort: %s", aws_s3_proxy_port)
 
             if self.export_config.common_config.awsS3assumeRole != None:
                 session = boto3.Session(
@@ -1482,12 +1480,12 @@ class operation(metaclass=Singleton):
             spark_version_split[1],
             spark_version_split[2],
         )
-        logging.info("Running with Spark Version %s" % (spark_version))
+        logging.info("Running with Spark Version %s", spark_version)
 
         if spark_version < "2.3.2" and column_starting_with_underscore_found == True:
             logging.error(
-                "Spark version 2.3.2 or higher is required to export columns starting with '_'. This export is running with version %s"
-                % (spark_version)
+                "Spark version 2.3.2 or higher is required to export columns starting with '_'. This export is running with version %s",
+                spark_version,
             )
             sc.stop()
             self.remove_temporary_files()
@@ -1620,7 +1618,7 @@ class operation(metaclass=Singleton):
             hive_db = self.hiveDB
             hive_table = self.hiveTable
 
-        logging.debug("forceColumnUppercase: %s" % (force_column_uppercase))
+        logging.debug("forceColumnUppercase: %s", force_column_uppercase)
 
         columns_config = self.export_config.get_columns_from_config_database(
             excludeColumns=True, forceColumnUppercase=force_column_uppercase
@@ -1717,7 +1715,7 @@ class operation(metaclass=Singleton):
 
         sqoop_command.extend(sqoop_target_schema)
 
-        logging.info("Starting sqoop with the following command: %s" % (sqoop_command))
+        logging.info("Starting sqoop with the following command: %s", sqoop_command)
         sqoop_output = ""
 
         print(" _____________________ ")
@@ -1899,7 +1897,7 @@ class operation(metaclass=Singleton):
             else:
                 query += " where %s" % (self.export_config.sqlWhereAddition)
 
-        logging.debug("Validation Query on Hive table: %s" % (query))
+        logging.debug("Validation Query on Hive table: %s", query)
 
         result_df = self.common_operations.execute_hive_query(query)
         result_json = result_df.to_json(orient="values")
@@ -1907,8 +1905,7 @@ class operation(metaclass=Singleton):
 
         if len(self.export_config.validationCustomQueryHiveValue) > 1024:
             logging.warning(
-                "'%s' is to large."
-                % (self.export_config.validationCustomQueryHiveValue)
+                "'%s' is to large.", self.export_config.validationCustomQueryHiveValue
             )
             raise invalidConfiguration(
                 "The size of the json document on the custom query exceeds 1024 bytes. Change the query to create a result with less than 512 bytes"

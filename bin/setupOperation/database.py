@@ -78,7 +78,7 @@ class initialize:
             self.configDBSession = sessionmaker(bind=self.configDB)
 
         except sa.exc.OperationalError as err:
-            logging.error("%s" % err)
+            logging.error("%s", err)
             sys.exit(1)
         except:
             print("Unexpected error: ")
@@ -102,7 +102,7 @@ class initialize:
                 password=self.config_password,
             )
         except mysql.connector.errors.ProgrammingError as err:
-            logging.error("%s" % err)
+            logging.error("%s", err)
             # 			self.remove_temporary_files()
             sys.exit(1)
         except mysql.connector.Error as err:
@@ -111,7 +111,7 @@ class initialize:
             elif err.errno == errorcode.ER_BAD_DB_ERROR:
                 logging.error("Database does not exist")
             else:
-                logging.error("%s" % err)
+                logging.error("%s", err)
             logging.error(
                 "Error: There was a problem connecting to the MySQL database. Please check configuration and serverstatus and try again"
             )
@@ -132,7 +132,7 @@ class initialize:
         )
         query += "where c.table_schema = 'DBImport' "
 
-        logging.debug("SQL Statement executed: %s" % (query))
+        logging.debug("SQL Statement executed: %s", query)
         self.mysql_cursor.execute(query)
 
         row = self.mysql_cursor.fetchone()
@@ -194,7 +194,7 @@ class initialize:
         query += "   and c.table_name != 'alembic_version' "
         query += "order by c.table_name, c.ordinal_position "
 
-        logging.debug("SQL Statement executed: %s" % (query))
+        logging.debug("SQL Statement executed: %s", query)
         self.mysql_cursor.execute(query)
 
         previous_table = ""
@@ -240,7 +240,7 @@ class initialize:
         query += "where table_schema = %s "
         query += "order by table_name "
 
-        logging.debug("SQL Statement executed: %s" % (query))
+        logging.debug("SQL Statement executed: %s", query)
         self.mysql_cursor.execute(query, (self.config_database,))
 
         tables_df = pd.DataFrame(self.mysql_cursor.fetchall())

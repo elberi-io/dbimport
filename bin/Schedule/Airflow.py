@@ -177,7 +177,7 @@ class initialize:
             self.configDBSession = sessionmaker(bind=self.configDB)
 
         except sa.exc.OperationalError as err:
-            log.error("%s" % err)
+            log.error("%s", err)
             self.configDBSession = None
             self.configDB = None
             raise SQLerror("Can't connect to DBImport database")
@@ -233,8 +233,9 @@ class initialize:
                 return_value = configuration[2]
                 if return_value == None or return_value.strip() == "":
                     log.error(
-                        "Configuration Key '%s' must have a value in '%s'"
-                        % (key, value_column)
+                        "Configuration Key '%s' must have a value in '%s'",
+                        key,
+                        value_column,
                     )
                     return_value = None
 
@@ -245,8 +246,9 @@ class initialize:
                     return_value = False
                 else:
                     log.error(
-                        "Configuration Key '%s' can only have 0 or 1 in column '%s'"
-                        % (key, value_column)
+                        "Configuration Key '%s' can only have 0 or 1 in column '%s'",
+                        key,
+                        value_column,
                     )
                     return_value = None
         except TypeError:
@@ -1258,8 +1260,9 @@ class initialize:
                 ):
                     try:
                         log.info(
-                            "Creating the Airflow pool '%s' with %s slots"
-                            % (pool, self.airflowDefaultPoolSize)
+                            "Creating the Airflow pool '%s' with %s slots",
+                            pool,
+                            self.airflowDefaultPoolSize,
                         )
                         new_pool = airflowSchema.slotPool(
                             pool=pool,
@@ -1466,8 +1469,8 @@ class initialize:
             self.dag_file = open(self.dag_filename, "w")
         except FileNotFoundError:
             log.error(
-                "Cant open file '%s'. Please verify that the directory exists and that the configuration 'airflow_dbimport_commandpath' is correct"
-                % (self.dag_filename)
+                "Cant open file '%s'. Please verify that the directory exists and that the configuration 'airflow_dbimport_commandpath' is correct",
+                self.dag_filename,
             )
             raise RuntimeError
             # self.common_config.remove_temporary_files()
@@ -2270,14 +2273,14 @@ class initialize:
 
         session.close()
 
-        log.debug("sensorStartTask = %s" % (self.sensorStartTask))
-        log.debug("sensorStopTask = %s" % (self.sensorStopTask))
-        log.debug("preStartTask = %s" % (self.preStartTask))
-        log.debug("preStopTask = %s" % (self.preStopTask))
-        log.debug("mainStartTask = %s" % (self.mainStartTask))
-        log.debug("mainStopTask = %s" % (self.mainStopTask))
-        log.debug("postStartTask = %s" % (self.postStartTask))
-        log.debug("postStopTask = %s" % (self.postStopTask))
+        log.debug("sensorStartTask = %s", self.sensorStartTask)
+        log.debug("sensorStopTask = %s", self.sensorStopTask)
+        log.debug("preStartTask = %s", self.preStartTask)
+        log.debug("preStopTask = %s", self.preStopTask)
+        log.debug("mainStartTask = %s", self.mainStartTask)
+        log.debug("mainStopTask = %s", self.mainStopTask)
+        log.debug("postStartTask = %s", self.postStartTask)
+        log.debug("postStopTask = %s", self.postStopTask)
 
     def close_dag_file(self):
         log = logging.getLogger(self.logger)
@@ -2315,8 +2318,8 @@ class initialize:
                     )
                 except PermissionError:
                     log.warning(
-                        "Could not copy and change permission of file '%s'. Permission Denied"
-                        % (self.dag_filename_in_airflow)
+                        "Could not copy and change permission of file '%s'. Permission Denied",
+                        self.dag_filename_in_airflow,
                     )
                 except LookupError:
                     pass
@@ -2906,8 +2909,9 @@ class initialize:
                             down_stream_found = True
                         else:
                             log.warning(
-                                "Downstream dependency against '%s' wont work as it's not in the same placement as '%s'."
-                                % (dep, row["task_name"])
+                                "Downstream dependency against '%s' wont work as it's not in the same placement as '%s'.",
+                                dep,
+                                row["task_name"],
                             )
                     else:
                         # The depRow dataframe is empty. So the dependent task is not a customTask, but instead from import_tables or export_tables. So we just add it as a dependency
@@ -2937,8 +2941,9 @@ class initialize:
                             up_stream_found = True
                         else:
                             log.warning(
-                                "Upstream dependency against '%s' wont work as it's not in the same placement as '%s'."
-                                % (dep, row["task_name"])
+                                "Upstream dependency against '%s' wont work as it's not in the same placement as '%s'.",
+                                dep,
+                                row["task_name"],
                             )
                     else:
                         # The depRow dataframe is empty. So the dependent task is not a customTask, but instead from import_tables or export_tables. So we just add it as a dependency

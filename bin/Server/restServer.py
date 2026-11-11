@@ -121,7 +121,7 @@ def authenticate_user(username: str, password: str):
     if AUTHENTICATION_METHOD == "local":
         if user["password"] == None:
             log.warning(
-                "User '%s' made an unsuccessful authentication attempt" % (username)
+                "User '%s' made an unsuccessful authentication attempt", username
             )
             return False
 
@@ -129,11 +129,11 @@ def authenticate_user(username: str, password: str):
             log.debug("Authenticate with LOCAL")
             if not verify_password(password, user["password"]):
                 log.warning(
-                    "User '%s' made an unsuccessful authentication attempt" % (username)
+                    "User '%s' made an unsuccessful authentication attempt", username
                 )
                 return False
             else:
-                log.info("User '%s' authenticated successfully" % (username))
+                log.info("User '%s' authenticated successfully", username)
                 return True
         else:
             log.debug("Authenticate with LOCAL using AWS credentials")
@@ -172,11 +172,11 @@ def authenticate_user(username: str, password: str):
             )["password"]
 
             if password == secrets_manager_password:
-                log.info("User '%s' authenticated successfully" % (username))
+                log.info("User '%s' authenticated successfully", username)
                 return True
             else:
                 log.warning(
-                    "User '%s' made an unsuccessful authentication attempt" % (username)
+                    "User '%s' made an unsuccessful authentication attempt", username
                 )
                 return False
 
@@ -184,11 +184,11 @@ def authenticate_user(username: str, password: str):
         log.debug("Authenticate with PAM")
         if not pam.authenticate(username, password, service="login"):
             log.warning(
-                "User '%s' made an unsuccessful authentication attempt" % (username)
+                "User '%s' made an unsuccessful authentication attempt", username
             )
             return False
         else:
-            log.info("User '%s' authenticated successfully" % (username))
+            log.info("User '%s' authenticated successfully", username)
             return True
 
     else:

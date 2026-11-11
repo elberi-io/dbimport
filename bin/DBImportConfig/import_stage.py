@@ -1375,12 +1375,12 @@ class stage:
         self.stageDurationStop = time.monotonic()
         self.stageDurationTime = self.stageDurationStop - self.stageDurationStart
 
-        logging.debug("Setting stage to %s" % (newStage))
-        logging.debug("stageTimeStart: %s" % (self.stageTimeStart))
-        logging.debug("stageTimeStop:  %s" % (self.stageTimeStop))
-        logging.debug("stageDurationStart: %s" % (self.stageDurationStart))
-        logging.debug("stageDurationStop:  %s" % (self.stageDurationStop))
-        logging.debug("stageDurationTime:  %s" % (self.stageDurationTime))
+        logging.debug("Setting stage to %s", newStage)
+        logging.debug("stageTimeStart: %s", self.stageTimeStart)
+        logging.debug("stageTimeStop:  %s", self.stageTimeStop)
+        logging.debug("stageDurationStart: %s", self.stageDurationStart)
+        logging.debug("stageDurationStop:  %s", self.stageDurationStop)
+        logging.debug("stageDurationTime:  %s", self.stageDurationTime)
 
         query = "select count(stage) from import_stage_statistics where hive_db = %s and hive_table = %s and stage = %s"
         self.mysql_cursor.execute(

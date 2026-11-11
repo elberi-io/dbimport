@@ -80,7 +80,6 @@
     "list-item": 6,
     "misc": 5,
     "operator": 13,
-    "str-bytes-safe": 1,
     "union-attr": 824,
     "var-annotated": 1
   },

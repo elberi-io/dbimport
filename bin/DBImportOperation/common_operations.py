@@ -315,7 +315,7 @@ class operation(metaclass=Singleton):
                 try:
                     if quiet == False:
                         logging.info(
-                            "Connecting to Hive at %s:%s" % (hive_hostname, hive_port)
+                            "Connecting to Hive at %s:%s", hive_hostname, hive_port
                         )
 
                     if self.hive_use_ssl == True:
@@ -351,18 +351,19 @@ class operation(metaclass=Singleton):
 
                 except TypeError:
                     logging.warning(
-                        "Could not connect to Hive at %s:%s. This might be because the address was not resolvable in the DNS"
-                        % (hive_hostname, hive_port)
+                        "Could not connect to Hive at %s:%s. This might be because the address was not resolvable in the DNS",
+                        hive_hostname,
+                        hive_port,
                     )
                 except hive.thrift.transport.TTransport.TTransportException:
                     logging.warning(
-                        "Could not connect to Hive at %s:%s."
-                        % (hive_hostname, hive_port)
+                        "Could not connect to Hive at %s:%s.", hive_hostname, hive_port
                     )
                 except:
                     logging.warning(
-                        "General connection error to Hive at %s:%s."
-                        % (hive_hostname, hive_port)
+                        "General connection error to Hive at %s:%s.",
+                        hive_hostname,
+                        hive_port,
                     )
                     logging.warning(sys.exc_info())
 
@@ -659,7 +660,7 @@ class operation(metaclass=Singleton):
                 )
             )
 
-        logging.debug("JDBC Connection String: %s" % (beeline_connect_str))
+        logging.debug("JDBC Connection String: %s", beeline_connect_str)
 
         beeline_command = [
             "beeline",
@@ -695,7 +696,7 @@ class operation(metaclass=Singleton):
 
     def get_hive_table_row_count(self, hiveDB, hiveTable, whereStatement=None):
         logging.debug("Executing common_operations.get_hive_table_row_count()")
-        logging.info("Reading the number of rows from %s.%s" % (hiveDB, hiveTable))
+        logging.info("Reading the number of rows from %s.%s", hiveDB, hiveTable)
         row_count = 0
 
         query = "select count(1) as rowcount from `%s`.`%s` " % (hiveDB, hiveTable)
@@ -706,7 +707,7 @@ class operation(metaclass=Singleton):
 
         result_df = self.execute_hive_query(query)
         row_count = int(result_df["rowcount"].iloc[0])
-        logging.debug("Rowcount from %s.%s: %s" % (hiveDB, hiveTable, row_count))
+        logging.debug("Rowcount from %s.%s: %s", hiveDB, hiveTable, row_count)
 
         logging.debug(
             "Executing common_operations.get_hive_table_row_count() - Finished"
@@ -715,7 +716,7 @@ class operation(metaclass=Singleton):
 
     def drop_hive_table(self, hive_db, hive_table):
         logging.debug("Executing common_operations.drop_hive_table()")
-        logging.info("Dropping table %s.%s" % (hive_db, hive_table))
+        logging.info("Dropping table %s.%s", hive_db, hive_table)
 
         self.connect_to_hive(forceSkipTest=True, quiet=True)
         self.execute_hive_query(
@@ -776,7 +777,7 @@ class operation(metaclass=Singleton):
 
         buckets = 1
         hive_table_bucketed = "%s_hive_bucketed" % (hiveTable)
-        logging.info("The new table will use %s buckets" % (buckets))
+        logging.info("The new table will use %s buckets", buckets)
 
         if self.check_table(hiveDB=hiveDB, hiveTable=hive_table_bucketed) == True:
             logging.warning(
