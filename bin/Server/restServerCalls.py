@@ -303,7 +303,7 @@ class dbCalls:
         # session.close()
         session.remove()
 
-    def create_user(self, user):
+    def create_user(self, user: dataModels.User):
         """Creates a user in the auth_users table"""
         log = logging.getLogger(self.logger)
 
@@ -434,7 +434,9 @@ class dbCalls:
         # session.close()
         session.remove()
 
-    def generateJDBCconnectionString(self, connection_values, current_user):
+    def generateJDBCconnectionString(
+        self, connection_values: dataModels.generateJDBCconnectionString, current_user
+    ):
         """Generates a JDBC connection string"""
         log = logging.getLogger(self.logger)
 
@@ -646,7 +648,7 @@ class dbCalls:
 
         return json_result
 
-    def update_jdbc_driver(self, jdbc_driver, current_user):
+    def update_jdbc_driver(self, jdbc_driver: dataModels.jdbcDriver, current_user):
         """Returns all configuration items from the configuration table"""
         log = logging.getLogger(self.logger)
 
@@ -762,7 +764,9 @@ class dbCalls:
         json_result = json.loads(json.dumps(result_dict))
         return json_result
 
-    def update_configuration(self, configuration, current_user):
+    def update_configuration(
+        self, configuration: dataModels.configuration, current_user
+    ):
         """Update configuration items in the configuration table"""
         log = logging.getLogger(self.logger)
 
@@ -939,7 +943,9 @@ class dbCalls:
         }
         return JSONResponse(content=json_result, headers=headers, status_code=200)
 
-    def searchConnections(self, search_values, current_user):
+    def searchConnections(
+        self, search_values: dataModels.connectionSearch, current_user
+    ):
         """Search for import tables"""
         log = logging.getLogger(self.logger)
 
@@ -1033,7 +1039,7 @@ class dbCalls:
         }
         return JSONResponse(content=json_result, headers=headers, status_code=200)
 
-    def updateConnection(self, connection, current_user):
+    def updateConnection(self, connection: dataModels.connectionDetails, current_user):
         """Update or create a Connections"""
         log = logging.getLogger(self.logger)
 
@@ -1260,7 +1266,9 @@ class dbCalls:
         session.remove()
         return (result, return_code)
 
-    def encrypted_credentials(self, credentials, current_user):
+    def encrypted_credentials(
+        self, credentials: dataModels.encryptCredential, current_user
+    ):
         """Encrypt username and password with private key and store in connection"""
         log = logging.getLogger(self.logger)
 
@@ -1379,7 +1387,9 @@ class dbCalls:
         }
         return JSONResponse(content=json_result, headers=headers, status_code=200)
 
-    def discover_import_tables(self, data, current_user):
+    def discover_import_tables(
+        self, data: dataModels.discoverImportTableOptions, current_user
+    ):
         """Search for import tables"""
         log = logging.getLogger(self.logger)
 
@@ -1437,7 +1447,9 @@ class dbCalls:
 
         return (return_msg, return_code)
 
-    def addDiscoveredImportTables(self, data, current_user):
+    def addDiscoveredImportTables(
+        self, data: list[dataModels.discoverImportTable], current_user
+    ):
         """Add discovered import tables"""
         log = logging.getLogger(self.logger)
 
@@ -1464,7 +1476,9 @@ class dbCalls:
 
         return (result_msg, return_code)
 
-    def searchImportTables(self, search_values, current_user):
+    def searchImportTables(
+        self, search_values: dataModels.importTableSearch, current_user
+    ):
         """Search for import tables"""
         log = logging.getLogger(self.logger)
 
@@ -1860,7 +1874,9 @@ class dbCalls:
         session.remove()
         return (result, return_code)
 
-    def bulk_delete_import_table(self, bulk_data, current_user):
+    def bulk_delete_import_table(
+        self, bulk_data: list[dataModels.importTablePK], current_user
+    ):
         """Bulk delete of import tables"""
         log = logging.getLogger(self.logger)
 
@@ -1897,7 +1913,9 @@ class dbCalls:
 
         return (result_msg, return_code)
 
-    def bulk_update_import_table(self, bulk_data, current_user):
+    def bulk_update_import_table(
+        self, bulk_data: dataModels.importTableBulkUpdate, current_user
+    ):
         """Bulk update of import tables"""
         log = logging.getLogger(self.logger)
 
@@ -1968,7 +1986,9 @@ class dbCalls:
 
         return (result_msg, return_code)
 
-    def update_import_table(self, database, table, data, current_user):
+    def update_import_table(
+        self, database, table, data: dataModels.importTableDetailsWrite, current_user
+    ):
         """Update or create an import table"""
         log = logging.getLogger(self.logger)
 
@@ -2588,7 +2608,9 @@ class dbCalls:
         }
         return JSONResponse(content=json_result, headers=headers, status_code=200)
 
-    def discover_export_tables(self, data, current_user):
+    def discover_export_tables(
+        self, data: dataModels.discoverExportTableOptions, current_user
+    ):
         """Search for import tables"""
         log = logging.getLogger(self.logger)
 
@@ -2674,7 +2696,9 @@ class dbCalls:
 
         return (return_msg, return_code)
 
-    def addDiscoveredExportTables(self, data, current_user):
+    def addDiscoveredExportTables(
+        self, data: list[dataModels.discoverExportTable], current_user
+    ):
         """Add discovered export tables"""
         log = logging.getLogger(self.logger)
 
@@ -2701,7 +2725,9 @@ class dbCalls:
 
         return (result_msg, return_code)
 
-    def searchExportTables(self, search_values, current_user):
+    def searchExportTables(
+        self, search_values: dataModels.exportTableSearch, current_user
+    ):
         """Search for import tables"""
         log = logging.getLogger(self.logger)
 
@@ -3089,7 +3115,9 @@ class dbCalls:
         session.remove()
         return (result, return_code)
 
-    def bulk_delete_export_table(self, bulk_data, current_user):
+    def bulk_delete_export_table(
+        self, bulk_data: list[dataModels.exportTablePK], current_user
+    ):
         """Bulk delete of export tables"""
         log = logging.getLogger(self.logger)
 
@@ -3133,7 +3161,9 @@ class dbCalls:
 
         return (result_msg, return_code)
 
-    def bulk_update_export_table(self, bulk_data, current_user):
+    def bulk_update_export_table(
+        self, bulk_data: dataModels.exportTableBulkUpdate, current_user
+    ):
         """Bulk update of export tables"""
         log = logging.getLogger(self.logger)
 
@@ -3201,7 +3231,14 @@ class dbCalls:
 
         return (result_msg, return_code)
 
-    def update_export_table(self, connection, schema, table, data, current_user):
+    def update_export_table(
+        self,
+        connection,
+        schema,
+        table,
+        data: dataModels.exportTableDetailsWrite,
+        current_user,
+    ):
         """Update or create an export table"""
         log = logging.getLogger(self.logger)
 
@@ -4256,7 +4293,9 @@ class dbCalls:
         session.remove()
         return (result, return_code)
 
-    def bulk_delete_import_airflow_dag(self, bulk_data, current_user):
+    def bulk_delete_import_airflow_dag(
+        self, bulk_data: list[dataModels.airflowDagPK], current_user
+    ):
         """Bulk delete of Airflow import Dags"""
         log = logging.getLogger(self.logger)
 
@@ -4292,7 +4331,9 @@ class dbCalls:
 
         return (result_msg, return_code)
 
-    def bulk_update_import_airflow_dag(self, bulk_data, current_user):
+    def bulk_update_import_airflow_dag(
+        self, bulk_data: dataModels.airflowDagBulkUpdate, current_user
+    ):
         """Bulk update of Airflow import Dags"""
         log = logging.getLogger(self.logger)
 
@@ -4371,7 +4412,9 @@ class dbCalls:
 
         return (result_msg, return_code)
 
-    def update_import_airflow_dag(self, dagname, airflow_dag, current_user):
+    def update_import_airflow_dag(
+        self, dagname, airflow_dag: dataModels.airflowImportDag, current_user
+    ):
         """Update or create an Airflow import DAG"""
         log = logging.getLogger(self.logger)
 
@@ -4548,7 +4591,9 @@ class dbCalls:
         session.remove()
         return (result, return_code)
 
-    def bulk_delete_export_airflow_dag(self, bulk_data, current_user):
+    def bulk_delete_export_airflow_dag(
+        self, bulk_data: list[dataModels.airflowDagPK], current_user
+    ):
         """Bulk delete of Airflow import Dags"""
         log = logging.getLogger(self.logger)
 
@@ -4584,7 +4629,9 @@ class dbCalls:
 
         return (result_msg, return_code)
 
-    def bulk_update_export_airflow_dag(self, bulk_data, current_user):
+    def bulk_update_export_airflow_dag(
+        self, bulk_data: dataModels.airflowDagBulkUpdate, current_user
+    ):
         """Bulk update of Airflow export Dags"""
         log = logging.getLogger(self.logger)
 
@@ -4663,7 +4710,9 @@ class dbCalls:
 
         return (result_msg, return_code)
 
-    def update_export_airflow_dag(self, dagname, airflow_dag, current_user):
+    def update_export_airflow_dag(
+        self, dagname, airflow_dag: dataModels.airflowExportDag, current_user
+    ):
         """Update or create an Airflow export DAG"""
         log = logging.getLogger(self.logger)
 
@@ -4824,7 +4873,9 @@ class dbCalls:
         session.remove()
         return (result, return_code)
 
-    def bulk_delete_custom_airflow_dag(self, bulk_data, current_user):
+    def bulk_delete_custom_airflow_dag(
+        self, bulk_data: list[dataModels.airflowDagPK], current_user
+    ):
         """Bulk delete of Airflow custom Dags"""
         log = logging.getLogger(self.logger)
 
@@ -4860,7 +4911,9 @@ class dbCalls:
 
         return (result_msg, return_code)
 
-    def bulk_update_custom_airflow_dag(self, bulk_data, current_user):
+    def bulk_update_custom_airflow_dag(
+        self, bulk_data: dataModels.airflowDagBulkUpdate, current_user
+    ):
         """Bulk update of Airflow custom Dags"""
         log = logging.getLogger(self.logger)
 
@@ -4939,7 +4992,9 @@ class dbCalls:
 
         return (result_msg, return_code)
 
-    def update_custom_airflow_dag(self, dagname, airflow_dag, current_user):
+    def update_custom_airflow_dag(
+        self, dagname, airflow_dag: dataModels.airflowCustomDag, current_user
+    ):
         """Update or create an Airflow custom DAG"""
         log = logging.getLogger(self.logger)
 
