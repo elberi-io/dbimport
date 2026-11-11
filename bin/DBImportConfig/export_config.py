@@ -414,11 +414,7 @@ class config(metaclass=Singleton):
             and self.validationMethod != constant.VALIDATION_METHOD_ROWCOUNT
         ):
             raise invalidConfiguration(
-                "Only the values '%s' or '%s' is valid for column validationMethod in export_tables."
-                % (
-                    constant.VALIDATION_METHOD_ROWCOUNT,
-                    constant.VALIDATION_METHOD_CUSTOMQUERY,
-                )
+                f"Only the values '{constant.VALIDATION_METHOD_ROWCOUNT}' or '{constant.VALIDATION_METHOD_CUSTOMQUERY}' is valid for column validationMethod in export_tables."
             )
 
         if (
@@ -503,8 +499,7 @@ class config(metaclass=Singleton):
 
         if self.mysql_cursor01.rowcount != 1:
             raise invalidConfiguration(
-                "There is no JDBC Connection defined with the alias '%s'"
-                % (self.connectionAlias)
+                f"There is no JDBC Connection defined with the alias '{self.connectionAlias}'"
             )
 
         row = self.mysql_cursor01.fetchone()
@@ -994,8 +989,7 @@ class config(metaclass=Singleton):
 
             if column_type == "string":
                 raise invalidConfiguration(
-                    "Error: Exports of column '%s' with type 'string' to Oracle is not supported. Please set another columntype in 'target_column_type' or ignore this column in the export."
-                    % (column_name)
+                    f"Error: Exports of column '{column_name}' with type 'string' to Oracle is not supported. Please set another columntype in 'target_column_type' or ignore this column in the export."
                 )
 
         if self.common_config.db_mysql == True:
@@ -2425,8 +2419,7 @@ class config(metaclass=Singleton):
         result_df = pd.DataFrame(self.mysql_cursor01.fetchall())
         if len(result_df) == 0:
             print(
-                "Error: No data returned when searching for tables that are exported to dbalias '%s' and schema '%s'"
-                % (dbalias, schema)
+                f"Error: No data returned when searching for tables that are exported to dbalias '{dbalias}' and schema '{schema}'"
             )
             self.remove_temporary_files()
             sys.exit(1)

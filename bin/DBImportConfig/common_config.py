@@ -440,13 +440,7 @@ class config(metaclass=Singleton):
 
         mysql_credentials = self.get_mysql_credentials()
 
-        self.connect_str = "mysql+pymysql://%s:%s@%s:%s/%s" % (
-            mysql_credentials["mysql_username"],
-            quote(mysql_credentials["mysql_password"], safe=" +"),
-            mysql_credentials["mysql_hostname"],
-            mysql_credentials["mysql_port"],
-            mysql_credentials["mysql_database"],
-        )
+        self.connect_str = f"mysql+pymysql://{mysql_credentials['mysql_username']}:{quote(mysql_credentials['mysql_password'], safe=' +')}@{mysql_credentials['mysql_hostname']}:{mysql_credentials['mysql_port']}/{mysql_credentials['mysql_database']}"
 
         try:
             self.configDB = sa.create_engine(
@@ -670,7 +664,7 @@ class config(metaclass=Singleton):
         """Checks if there is a valid kerberos ticket or not. Runst 'klist -s' and checks the exitCode. Returns True or False"""
         logging.debug("Executing common_config.check_kerberos_ticket()")
 
-        os.environ["KRB5CCNAME"] = "FILE:/tmp/krb5cc_%s_%s" % (os.getuid(), os.getpid())
+        os.environ["KRB5CCNAME"] = f"FILE:/tmp/krb5cc_{os.getuid()}_{os.getpid()}"
 
         if self.kerberosPrincipal == "" and self.kerberosKeytab != "":
             # There is information about a keytab, but not the principal. So lets grab the first from the file
@@ -783,7 +777,7 @@ class config(metaclass=Singleton):
                 configuration.get("Credentials", "public_key")
             )
 
-        str_to_encrypt = "%s %s\n" % (username, password)
+        str_to_encrypt = f"{username} {password}\n"
 
         encrypted_str = self.crypto.encrypt(str_to_encrypt)
 
@@ -803,8 +797,7 @@ class config(metaclass=Singleton):
 
         if self.mysql_cursor.rowcount != 1:
             raise invalidConfiguration(
-                "Error: Cant find JDBC driver with database_type as '%s' and version as '%s'"
-                % (database_type, version)
+                f"Error: Cant find JDBC driver with database_type as '{database_type}' and version as '{version}'"
             )
 
         row = self.mysql_cursor.fetchone()
@@ -842,122 +835,61 @@ class config(metaclass=Singleton):
                     self.jdbc_password = ""
 
                 print(
-                    "£%s£¤£%s£¤£%s£¤£DBImport£"
-                    % (self.dbAlias, self.jdbc_username, self.jdbc_password)
+                    f"£{self.dbAlias}£¤£{self.jdbc_username}£¤£{self.jdbc_password}£¤£DBImport£"
                 )
 
                 if 0 == 1:
                     if "," in self.jdbc_username:
                         print("self.jdbc_username contains ,")
                         print(
-                            "'%s','%s','%s','%s'"
-                            % (
-                                self.dbAlias,
-                                self.jdbc_username,
-                                self.jdbc_password,
-                                self.jdbc_url,
-                            )
+                            f"'{self.dbAlias}','{self.jdbc_username}','{self.jdbc_password}','{self.jdbc_url}'"
                         )
                     if "'" in self.jdbc_username:
                         print("self.jdbc_username contains '")
                         print(
-                            "'%s','%s','%s','%s'"
-                            % (
-                                self.dbAlias,
-                                self.jdbc_username,
-                                self.jdbc_password,
-                                self.jdbc_url,
-                            )
+                            f"'{self.dbAlias}','{self.jdbc_username}','{self.jdbc_password}','{self.jdbc_url}'"
                         )
                     if "£" in self.jdbc_username:
                         print("self.jdbc_username contains £")
                         print(
-                            "'%s','%s','%s','%s'"
-                            % (
-                                self.dbAlias,
-                                self.jdbc_username,
-                                self.jdbc_password,
-                                self.jdbc_url,
-                            )
+                            f"'{self.dbAlias}','{self.jdbc_username}','{self.jdbc_password}','{self.jdbc_url}'"
                         )
                     if "¤" in self.jdbc_username:
                         print("self.jdbc_username contains ¤")
                         print(
-                            "'%s','%s','%s','%s'"
-                            % (
-                                self.dbAlias,
-                                self.jdbc_username,
-                                self.jdbc_password,
-                                self.jdbc_url,
-                            )
+                            f"'{self.dbAlias}','{self.jdbc_username}','{self.jdbc_password}','{self.jdbc_url}'"
                         )
 
                     if "'" in self.jdbc_password:
                         print("self.jdbc_password contains '")
                         print(
-                            "'%s','%s','%s','%s'"
-                            % (
-                                self.dbAlias,
-                                self.jdbc_username,
-                                self.jdbc_password,
-                                self.jdbc_url,
-                            )
+                            f"'{self.dbAlias}','{self.jdbc_username}','{self.jdbc_password}','{self.jdbc_url}'"
                         )
                     if "£" in self.jdbc_password:
                         print("self.jdbc_password contains £")
                         print(
-                            "'%s','%s','%s','%s'"
-                            % (
-                                self.dbAlias,
-                                self.jdbc_username,
-                                self.jdbc_password,
-                                self.jdbc_url,
-                            )
+                            f"'{self.dbAlias}','{self.jdbc_username}','{self.jdbc_password}','{self.jdbc_url}'"
                         )
                     if "¤" in self.jdbc_username:
                         print("self.jdbc_username contains ¤")
                         print(
-                            "'%s','%s','%s','%s'"
-                            % (
-                                self.dbAlias,
-                                self.jdbc_username,
-                                self.jdbc_password,
-                                self.jdbc_url,
-                            )
+                            f"'{self.dbAlias}','{self.jdbc_username}','{self.jdbc_password}','{self.jdbc_url}'"
                         )
 
                     if "," in self.jdbc_url:
                         print("self.jdbc_url contains ,")
                         print(
-                            "'%s','%s','%s','%s'"
-                            % (
-                                self.dbAlias,
-                                self.jdbc_username,
-                                self.jdbc_password,
-                                self.jdbc_url,
-                            )
+                            f"'{self.dbAlias}','{self.jdbc_username}','{self.jdbc_password}','{self.jdbc_url}'"
                         )
                     if "£" in self.jdbc_url:
                         print("self.jdbc_url contains £")
                         print(
-                            "'%s','%s','%s','%s'"
-                            % (
-                                self.dbAlias,
-                                self.jdbc_username,
-                                self.jdbc_password,
-                                self.jdbc_url,
-                            )
+                            f"'{self.dbAlias}','{self.jdbc_username}','{self.jdbc_password}','{self.jdbc_url}'"
                         )
                     if "¤" in self.jdbc_url:
                         print("self.jdbc_url contains ¤")
                         print(
-                            "'%s','%s','%s','%s'"
-                            % (
-                                self.dbAlias,
-                                self.jdbc_username,
-                                self.jdbc_password,
-                                self.jdbc_url,
-                            )
+                            f"'{self.dbAlias}','{self.jdbc_username}','{self.jdbc_password}','{self.jdbc_url}'"
                         )
 
         print()
@@ -1655,7 +1587,7 @@ class config(metaclass=Singleton):
                 self.impalaDriver != None
                 and self.impalaDriver.startswith("/path/to/") == False
             ):
-                self.jdbc_classpath += ":%s" % (self.impalaDriver)
+                self.jdbc_classpath += f":{self.impalaDriver}"
                 self.jdbc_classpath_for_python = self.jdbc_classpath
         except:
             pass
@@ -2734,7 +2666,7 @@ class config(metaclass=Singleton):
 
         try:
             self.mongo_client = pymongo.MongoClient(
-                "mongodb://%s:%s/" % (self.jdbc_hostname, self.jdbc_port)
+                f"mongodb://{self.jdbc_hostname}:{self.jdbc_port}/"
             )
             self.mongoDB = self.mongo_client[self.jdbc_database.strip()]
             if self.mongoAuthSource == None:

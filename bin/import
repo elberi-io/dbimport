@@ -143,7 +143,7 @@ def main(argv):
     except getopt.GetoptError:
         print_help()
 
-    full_executed_command = "%s %s" % (os.path.basename(__file__), " ".join(argv))
+    full_executed_command = f"{os.path.basename(__file__)} {' '.join(argv)}"
     hive_db = None
     hive_table = None
     run_only_function = None
@@ -212,7 +212,7 @@ def main(argv):
             drop_target_table = True
 
     if display_version == True:
-        print("DBImport version: %s" % (constant.VERSION))
+        print(f"DBImport version: {constant.VERSION}")
         sys.exit(0)
 
     if hive_db == None or hive_table == None:
@@ -313,7 +313,7 @@ def main(argv):
     sys.stdout.write("\u001b[0m")  # Reset
     sys.stdout.flush()
     print("")
-    print("Version: %s" % (constant.VERSION))
+    print(f"Version: {constant.VERSION}")
     print("")
     print("")
 
@@ -611,8 +611,7 @@ def main(argv):
                 )
                 if new_stage != 0:
                     print(
-                        "| Will restart from stage %s                           |"
-                        % (new_stage)
+                        f"| Will restart from stage {new_stage}                           |"
                     )
                     import_operation.set_stage(new_stage, force=True)
                 print("|________________________________________________________|")
@@ -689,8 +688,7 @@ def main(argv):
                 )
                 if new_stage != 0:
                     print(
-                        "| Will restart from stage %s                           |"
-                        % (new_stage)
+                        f"| Will restart from stage {new_stage}                           |"
                     )
                     import_operation.set_stage(new_stage, force=True)
                 print("|________________________________________________________|")
@@ -782,8 +780,7 @@ def main(argv):
                 )
                 if new_stage != 0:
                     print(
-                        "| Will restart from stage %s                           |"
-                        % (new_stage)
+                        f"| Will restart from stage {new_stage}                           |"
                     )
                     import_operation.set_stage(new_stage, force=True)
                 print("|________________________________________________________|")
@@ -874,8 +871,7 @@ def main(argv):
                 )
                 if new_stage != 0:
                     print(
-                        "| Will restart from stage %s                           |"
-                        % (new_stage)
+                        f"| Will restart from stage {new_stage}                           |"
                     )
                     import_operation.set_stage(new_stage, force=True)
                 print("|________________________________________________________|")
@@ -956,8 +952,7 @@ def main(argv):
                 )
                 if new_stage != 0:
                     print(
-                        "| Will restart from stage %s                           |"
-                        % (new_stage)
+                        f"| Will restart from stage {new_stage}                           |"
                     )
                     import_operation.set_stage(new_stage, force=True)
                 print("|________________________________________________________|")
@@ -1069,8 +1064,7 @@ def main(argv):
                 )
                 if new_stage != 0:
                     print(
-                        "| Will restart from stage %s                           |"
-                        % (new_stage)
+                        f"| Will restart from stage {new_stage}                           |"
                     )
                     import_operation.set_stage(new_stage, force=True)
                 print("|________________________________________________________|")
@@ -1198,8 +1192,7 @@ def main(argv):
                 )
                 if new_stage != 0:
                     print(
-                        "| Will restart from stage %s                           |"
-                        % (new_stage)
+                        f"| Will restart from stage {new_stage}                           |"
                     )
                     import_operation.set_stage(new_stage, force=True)
                 print("|________________________________________________________|")
@@ -1322,8 +1315,7 @@ def main(argv):
                 )
                 if new_stage != 0:
                     print(
-                        "| Will restart from stage %s                           |"
-                        % (new_stage)
+                        f"| Will restart from stage {new_stage}                           |"
                     )
                     import_operation.set_stage(new_stage, force=True)
                 print("|________________________________________________________|")
@@ -1467,8 +1459,7 @@ def main(argv):
                 )
                 if new_stage != 0:
                     print(
-                        "| Will restart from stage %s                           |"
-                        % (new_stage)
+                        f"| Will restart from stage {new_stage}                           |"
                     )
                     import_operation.set_stage(new_stage, force=True)
                 print("|________________________________________________________|")
@@ -1640,8 +1631,7 @@ def main(argv):
                 )
                 if new_stage != 0:
                     print(
-                        "| Will restart from stage %s                           |"
-                        % (new_stage)
+                        f"| Will restart from stage {new_stage}                           |"
                     )
                     import_operation.set_stage(new_stage, force=True)
                 print("|________________________________________________________|")
@@ -1806,8 +1796,7 @@ def main(argv):
                 )
                 if new_stage != 0:
                     print(
-                        "| Will restart from stage %s                           |"
-                        % (new_stage)
+                        f"| Will restart from stage {new_stage}                           |"
                     )
                     import_operation.set_stage(new_stage, force=True)
                 print("|________________________________________________________|")
@@ -1977,8 +1966,7 @@ def main(argv):
                 )
                 if new_stage != 0:
                     print(
-                        "| Will restart from stage %s                           |"
-                        % (new_stage)
+                        f"| Will restart from stage {new_stage}                           |"
                     )
                     import_operation.set_stage(new_stage, force=True)
                 print("|________________________________________________________|")
@@ -2157,8 +2145,7 @@ def main(argv):
                 )
                 if new_stage != 0:
                     print(
-                        "| Will restart from stage %s                           |"
-                        % (new_stage)
+                        f"| Will restart from stage {new_stage}                           |"
                     )
                     import_operation.set_stage(new_stage, force=True)
                 print("|________________________________________________________|")
@@ -2340,8 +2327,7 @@ def main(argv):
                 )
                 if new_stage != 0:
                     print(
-                        "| Will restart from stage %s                           |"
-                        % (new_stage)
+                        f"| Will restart from stage {new_stage}                           |"
                     )
                     import_operation.set_stage(new_stage, force=True)
                 print("|________________________________________________________|")
@@ -2423,8 +2409,7 @@ def main(argv):
                 )
                 if new_stage != 0:
                     print(
-                        "| Will restart from stage %s                           |"
-                        % (new_stage)
+                        f"| Will restart from stage {new_stage}                           |"
                     )
                     import_operation.set_stage(new_stage, force=True)
                 print("|________________________________________________________|")
@@ -2552,8 +2537,7 @@ def main(argv):
                 )
                 if new_stage != 0:
                     print(
-                        "| Will restart from stage %s                           |"
-                        % (new_stage)
+                        f"| Will restart from stage {new_stage}                           |"
                     )
                     import_operation.set_stage(new_stage, force=True)
                 print("|________________________________________________________|")
@@ -2740,8 +2724,7 @@ def main(argv):
                 )
                 if new_stage != 0:
                     print(
-                        "| Will restart from stage %s                           |"
-                        % (new_stage)
+                        f"| Will restart from stage {new_stage}                           |"
                     )
                     import_operation.set_stage(new_stage, force=True)
                 print("|________________________________________________________|")
@@ -2921,8 +2904,7 @@ def main(argv):
                 )
                 if new_stage != 0:
                     print(
-                        "| Will restart from stage %s                           |"
-                        % (new_stage)
+                        f"| Will restart from stage {new_stage}                           |"
                     )
                     import_operation.set_stage(new_stage, force=True)
                 print("|________________________________________________________|")

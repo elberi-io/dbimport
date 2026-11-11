@@ -178,13 +178,7 @@ class dbCalls:
 
         mysql_credentials = self.common_config.get_mysql_credentials()
 
-        self.connect_str = "mysql+pymysql://%s:%s@%s:%s/%s" % (
-            mysql_credentials["mysql_username"],
-            quote(mysql_credentials["mysql_password"], safe=" +"),
-            mysql_credentials["mysql_hostname"],
-            mysql_credentials["mysql_port"],
-            mysql_credentials["mysql_database"],
-        )
+        self.connect_str = f"mysql+pymysql://{mysql_credentials['mysql_username']}:{quote(mysql_credentials['mysql_password'], safe=' +')}@{mysql_credentials['mysql_hostname']}:{mysql_credentials['mysql_port']}/{mysql_credentials['mysql_database']}"
 
         try:
             self.configDB = sa.create_engine(
@@ -1270,7 +1264,7 @@ class dbCalls:
         """Encrypt username and password with private key and store in connection"""
         log = logging.getLogger(self.logger)
 
-        manage_cmd = "%s/bin/manage" % (os.environ["DBIMPORT_HOME"])
+        manage_cmd = f"{os.environ['DBIMPORT_HOME']}/bin/manage"
 
         json_input = {}
         json_input["connection"] = credentials.connection
@@ -1309,7 +1303,7 @@ class dbCalls:
         """Make a test connection to a JDBC source and return result"""
         log = logging.getLogger(self.logger)
 
-        manage_cmd = "%s/bin/manage" % (os.environ["DBIMPORT_HOME"])
+        manage_cmd = f"{os.environ['DBIMPORT_HOME']}/bin/manage"
 
         result = subprocess.run(
             [manage_cmd, "--testConnection", "-a", connection, "--quiet"],
@@ -1389,7 +1383,7 @@ class dbCalls:
         """Search for import tables"""
         log = logging.getLogger(self.logger)
 
-        manage_cmd = "%s/bin/manage" % (os.environ["DBIMPORT_HOME"])
+        manage_cmd = f"{os.environ['DBIMPORT_HOME']}/bin/manage"
 
         command_arg = []
         command_arg.append(manage_cmd)
@@ -1466,7 +1460,7 @@ class dbCalls:
             self.update_import_table(database, table, create_data, current_user)
 
         return_code = 200
-        result_msg = {"result": "%s tables created" % (create_counter)}
+        result_msg = {"result": f"{create_counter} tables created"}
 
         return (result_msg, return_code)
 
@@ -2371,7 +2365,7 @@ class dbCalls:
         """Repair Import table"""
         log = logging.getLogger(self.logger)
 
-        manage_cmd = "%s/bin/manage" % (os.environ["DBIMPORT_HOME"])
+        manage_cmd = f"{os.environ['DBIMPORT_HOME']}/bin/manage"
 
         command_arg = []
         command_arg.append(manage_cmd)
@@ -2413,7 +2407,7 @@ class dbCalls:
         """Reset Import table"""
         log = logging.getLogger(self.logger)
 
-        manage_cmd = "%s/bin/manage" % (os.environ["DBIMPORT_HOME"])
+        manage_cmd = f"{os.environ['DBIMPORT_HOME']}/bin/manage"
 
         command_arg = []
         command_arg.append(manage_cmd)
@@ -2455,7 +2449,7 @@ class dbCalls:
         """Repair Import table"""
         log = logging.getLogger(self.logger)
 
-        manage_cmd = "%s/bin/manage" % (os.environ["DBIMPORT_HOME"])
+        manage_cmd = f"{os.environ['DBIMPORT_HOME']}/bin/manage"
 
         command_arg = []
         command_arg.append(manage_cmd)
@@ -2499,7 +2493,7 @@ class dbCalls:
         """Repair Import table"""
         log = logging.getLogger(self.logger)
 
-        manage_cmd = "%s/bin/manage" % (os.environ["DBIMPORT_HOME"])
+        manage_cmd = f"{os.environ['DBIMPORT_HOME']}/bin/manage"
 
         command_arg = []
         command_arg.append(manage_cmd)
@@ -2703,7 +2697,7 @@ class dbCalls:
             )
 
         return_code = 200
-        result_msg = {"result": "%s tables created" % (create_counter)}
+        result_msg = {"result": f"{create_counter} tables created"}
 
         return (result_msg, return_code)
 

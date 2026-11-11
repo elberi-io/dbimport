@@ -93,14 +93,11 @@ class atlasOperation:
         self.atlas_address = configuration.get("Atlas", "address")
         if self.atlas_address != None and self.atlas_address.strip() != "":
             self.atlas_rest_type_def_dbimport_process = (
-                "%s/api/atlas/v2/types/typedef/name/DBImport_Process"
-                % (self.atlas_address)
+                f"{self.atlas_address}/api/atlas/v2/types/typedef/name/DBImport_Process"
             )
-            self.atlas_rest_entities = "%s/api/atlas/v2/entity/bulk" % (
-                self.atlas_address
-            )
+            self.atlas_rest_entities = f"{self.atlas_address}/api/atlas/v2/entity/bulk"
             self.atlas_rest_unique_attribute_type = (
-                "%s/api/atlas/v2/entity/uniqueAttribute/type" % (self.atlas_address)
+                f"{self.atlas_address}/api/atlas/v2/entity/uniqueAttribute/type"
             )
             self.atlasEnabled = True
             self.atlas_headers = {
@@ -1424,13 +1421,7 @@ class atlasOperation:
     def connect_dbimport_db(self):
         # Esablish a SQLAlchemy connection to the DBImport database
         log = logging.getLogger(self.logger_name)
-        self.connect_str = "mysql+pymysql://%s:%s@%s:%s/%s" % (
-            self.config_username,
-            self.config_password,
-            self.config_hostname,
-            self.config_port,
-            self.config_database,
-        )
+        self.connect_str = f"mysql+pymysql://{self.config_username}:{self.config_password}@{self.config_hostname}:{self.config_port}/{self.config_database}"
 
         try:
             self.config_db_engine = sa.create_engine(

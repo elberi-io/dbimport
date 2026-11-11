@@ -82,7 +82,7 @@ def main(argv):
     except getopt.GetoptError:
         print_help()
 
-    full_executed_command = "%s %s" % (os.path.basename(__file__), " ".join(argv))
+    full_executed_command = f"{os.path.basename(__file__)} {' '.join(argv)}"
     connection_alias = None
     target_schema = None
     target_table = None
@@ -131,7 +131,7 @@ def main(argv):
             print_help()
 
     if display_version == True:
-        print("DBImport version: %s" % (constant.VERSION))
+        print(f"DBImport version: {constant.VERSION}")
         sys.exit(0)
 
     # Font created at http://patorjk.com/software/taag/#p=display&f=Big&t=DBImport%20-%20Export
@@ -165,7 +165,7 @@ def main(argv):
     sys.stdout.write("\u001b[0m")  # Reset
     sys.stdout.flush()
     print("")
-    print("Version: %s" % (constant.VERSION))
+    print(f"Version: {constant.VERSION}")
     print("")
     print("")
 
@@ -202,7 +202,7 @@ def main(argv):
         "______________________________________________________________________________"
     )
     print("")
-    print("Export Phase:             %s" % (export_phase_description))
+    print(f"Export Phase:             {export_phase_description}")
     print("Export Tool:              %s" % (export_operation.export_config.exportTool))
     if export_operation.export_config.common_config.db_awss3 == True:
         print(
@@ -214,16 +214,15 @@ def main(argv):
             "JDBC Connection name:     %s"
             % (export_operation.export_config.common_config.dbAlias)
         )
-    print("Hive database:            %s" % (export_operation.export_config.hiveDB))
-    print("Hive table:               %s" % (export_operation.export_config.hiveTable))
+    print(f"Hive database:            {export_operation.export_config.hiveDB}")
+    print(f"Hive table:               {export_operation.export_config.hiveTable}")
     if export_operation.export_config.common_config.db_awss3 == True:
         print(
             "AWS Assume Role:          %s"
             % (export_operation.export_config.common_config.awsS3assumeRole)
         )
         print(
-            "AWS Bucket and folder:    %s"
-            % (export_operation.export_config.awsS3bucketPath)
+            f"AWS Bucket and folder:    {export_operation.export_config.awsS3bucketPath}"
         )
         print(
             "AWS Fileformat:           %s"
@@ -244,13 +243,9 @@ def main(argv):
         )
         if export_operation.export_config.targetSchema != "-":
             print(
-                "Target schema:            %s"
-                % (export_operation.export_config.targetSchema)
+                f"Target schema:            {export_operation.export_config.targetSchema}"
             )
-        print(
-            "Target table:             %s"
-            % (export_operation.export_config.targetTable)
-        )
+        print(f"Target table:             {export_operation.export_config.targetTable}")
     print(
         "______________________________________________________________________________"
     )
@@ -325,8 +320,7 @@ def main(argv):
                 )
                 if new_stage != 0:
                     print(
-                        "| Will restart from stage %s                            |"
-                        % (new_stage)
+                        f"| Will restart from stage {new_stage}                            |"
                     )
                     export_operation.set_stage(new_stage, force=True)
                 print("|________________________________________________________|")
@@ -444,8 +438,7 @@ def main(argv):
                 )
                 if new_stage != 0:
                     print(
-                        "| Will restart from stage %s                            |"
-                        % (new_stage)
+                        f"| Will restart from stage {new_stage}                            |"
                     )
                     export_operation.set_stage(new_stage, force=True)
                 print("|________________________________________________________|")
@@ -557,8 +550,7 @@ def main(argv):
                 )
                 if new_stage != 0:
                     print(
-                        "| Will restart from stage %s                            |"
-                        % (new_stage)
+                        f"| Will restart from stage {new_stage}                            |"
                     )
                     export_operation.set_stage(new_stage, force=True)
                 print("|________________________________________________________|")

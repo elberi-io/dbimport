@@ -155,10 +155,10 @@ class initialize:
         line_single += "+"
         line_double += "+"
 
-        line_header = "| %s" % (line_header_column)
+        line_header = f"| {line_header_column}"
         for _i in range(max_column_length + 1 - len(line_header_column)):
             line_header += " "
-        line_header += "| %s" % (line_header_desc)
+        line_header += f"| {line_header_desc}"
         for _i in range(max_desc_length + 1 - len(line_header_desc)):
             line_header += " "
         line_header += "|"

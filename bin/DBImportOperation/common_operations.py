@@ -490,18 +490,7 @@ class operation(metaclass=Singleton):
                     print("\u001b[36m")  # Cyan
                     try:
                         print(
-                            "%-16s %12s %12s %11s %11s %9s %9s %8s %8s"
-                            % (
-                                headers[0],
-                                headers[1],
-                                headers[2],
-                                headers[3],
-                                headers[4],
-                                headers[5],
-                                headers[6],
-                                headers[7],
-                                headers[8],
-                            )
+                            f"{headers[0]!s:<16} {headers[1]!s:>12} {headers[2]!s:>12} {headers[3]!s:>11} {headers[4]!s:>11} {headers[5]!s:>9} {headers[6]!s:>9} {headers[7]!s:>8} {headers[8]!s:>8}"
                         )
                     except IndexError:
                         print(headers)
@@ -512,18 +501,7 @@ class operation(metaclass=Singleton):
                 # Print the actual vertex information of the query
                 try:
                     print(
-                        "%-16s %12s %12s %11s %11s %9s %9s %8s %8s"
-                        % (
-                            row[0],
-                            row[1],
-                            row[2],
-                            row[3],
-                            row[4],
-                            row[5],
-                            row[6],
-                            row[7],
-                            row[8],
-                        )
+                        f"{row[0]!s:<16} {row[1]!s:>12} {row[2]!s:>12} {row[3]!s:>11} {row[4]!s:>11} {row[5]!s:>9} {row[6]!s:>9} {row[7]!s:>8} {row[8]!s:>8}"
                     )
                 except IndexError:
                     print(headers)
@@ -531,8 +509,7 @@ class operation(metaclass=Singleton):
             sys.stdout.write("\u001b[31m")  # Red
             sys.stdout.flush()
             print(
-                "ELAPSED TIME: %.2f seconds"
-                % (time.monotonic() - hive_query_start_time)
+                f"ELAPSED TIME: {time.monotonic() - hive_query_start_time:.2f} seconds"
             )
             sys.stdout.write("\u001b[0m")  # Reset
             sys.stdout.flush()
@@ -555,18 +532,7 @@ class operation(metaclass=Singleton):
         for row in self.hive_cursor.poll().progressUpdateResponse.rows:
             try:
                 print(
-                    "%-16s %12s %12s %11s %11s %9s %9s %8s %8s"
-                    % (
-                        row[0],
-                        row[1],
-                        row[2],
-                        row[3],
-                        row[4],
-                        row[5],
-                        row[6],
-                        row[7],
-                        row[8],
-                    )
+                    f"{row[0]!s:<16} {row[1]!s:>12} {row[2]!s:>12} {row[3]!s:>11} {row[4]!s:>11} {row[5]!s:>9} {row[6]!s:>9} {row[7]!s:>8} {row[8]!s:>8}"
                 )
                 if row[2] == "SUCCEEDED":
                     yarn_containers_total += int(row[3])

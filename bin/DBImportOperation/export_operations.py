@@ -458,8 +458,7 @@ class operation(metaclass=Singleton):
         )
         print("")
         print(
-            "%-20s %-40s %-30s %-20s %s"
-            % ("Hive DB", "Hive Table", "Connection Alias", "Schema", "Table/View")
+            f"{'Hive DB':<20} {'Hive Table':<40} {'Connection Alias':<30} {'Schema':<20} Table/View"
         )
         print(
             "============================================================================================================================="
@@ -467,8 +466,7 @@ class operation(metaclass=Singleton):
 
         for index, row in merge_df.loc[merge_df["Exist"] == "left_only"].iterrows():
             print(
-                "%-20s %-40s %-30s %-20s %s"
-                % (row["hiveDB"], row["hiveTable"], dbalias, schema, row["targetTable"])
+                f"{row['hiveDB']!s:<20} {row['hiveTable']!s:<40} {dbalias!s:<30} {schema!s:<20} {row['targetTable']!s}"
             )
 
         answer = input("Do you want to add these exports to DBImport? (y/N): ")
@@ -1518,7 +1516,7 @@ class operation(metaclass=Singleton):
             df_schema = df.schema.json().encode("ascii")
             s3client.Object(
                 self.export_config.awsS3bucket,
-                "%s/_schema.json" % (self.export_config.awsS3path),
+                f"{self.export_config.awsS3path}/_schema.json",
             ).put(Body=df_schema)
 
         else:
@@ -1673,8 +1671,7 @@ class operation(metaclass=Singleton):
         sqoop_command.extend(
             [
                 "-D",
-                "mapreduce.job.queuename=%s"
-                % (configuration.get("Sqoop", "yarnqueue")),
+                f"mapreduce.job.queuename={configuration.get('Sqoop', 'yarnqueue')}",
             ]
         )
         sqoop_command.extend(["-D", "oraoop.disabled=true"])

@@ -727,8 +727,7 @@ class operation(metaclass=Singleton):
             )
             print("")
             print(
-                "%-20s%-40s%-30s%-20s%s"
-                % ("Hive DB", "Hive Table", "Connection Alias", "Schema", "Table/View")
+                f"{'Hive DB':<20}{'Hive Table':<40}{'Connection Alias':<30}{'Schema':<20}Table/View"
             )
             print(
                 "============================================================================================================================="
@@ -736,14 +735,7 @@ class operation(metaclass=Singleton):
 
             for index, row in merge_df.loc[merge_df["Exist"] == "left_only"].iterrows():
                 print(
-                    "%-20s%-40s%-30s%-20s%s"
-                    % (
-                        hive_db,
-                        row["hiveTable"].lower(),
-                        dbalias,
-                        row["schema"],
-                        row["table"],
-                    )
+                    f"{hive_db!s:<20}{row['hiveTable'].lower()!s:<40}{dbalias!s:<30}{row['schema']!s:<20}{row['table']!s}"
                 )
 
             answer = input("Do you want to add these imports to DBImport? (y/N): ")
@@ -1070,7 +1062,7 @@ class operation(metaclass=Singleton):
         sys.stdout.flush()
 
         sc = SparkContext(conf=conf)
-        sc.addPyFile("%s/bin/common/sparkUDF.py" % (os.environ["DBIMPORT_HOME"]))
+        sc.addPyFile(f"{os.environ['DBIMPORT_HOME']}/bin/common/sparkUDF.py")
         from sparkUDF import base64_encode_array, parse_struct_date
 
         sys.stdout.flush()
@@ -1582,7 +1574,7 @@ class operation(metaclass=Singleton):
                 )
 
         self.spark_context.addPyFile(
-            "%s/bin/common/sparkUDF2.py" % (os.environ["DBIMPORT_HOME"])
+            f"{os.environ['DBIMPORT_HOME']}/bin/common/sparkUDF2.py"
         )
         import sparkUDF2
 
@@ -2252,8 +2244,7 @@ class operation(metaclass=Singleton):
         sqoop_command.extend(
             [
                 "-D",
-                "mapreduce.job.queuename=%s"
-                % (configuration.get("Sqoop", "yarnqueue")),
+                f"mapreduce.job.queuename={configuration.get('Sqoop', 'yarnqueue')}",
             ]
         )
         sqoop_command.extend(["-D", "oraoop.disabled=true"])

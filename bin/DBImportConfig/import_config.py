@@ -558,11 +558,7 @@ class config(metaclass=Singleton):
             and self.validationMethod != constant.VALIDATION_METHOD_ROWCOUNT
         ):
             raise invalidConfiguration(
-                "Only the values '%s' or '%s' is valid for column validationMethod in import_tables."
-                % (
-                    constant.VALIDATION_METHOD_ROWCOUNT,
-                    constant.VALIDATION_METHOD_CUSTOMQUERY,
-                )
+                f"Only the values '{constant.VALIDATION_METHOD_ROWCOUNT}' or '{constant.VALIDATION_METHOD_CUSTOMQUERY}' is valid for column validationMethod in import_tables."
             )
 
         if self.validationMethod == "customQuery":
@@ -996,8 +992,7 @@ class config(metaclass=Singleton):
             and self.validationMethod == constant.VALIDATION_METHOD_CUSTOMQUERY
         ):
             raise invalidConfiguration(
-                "Mongo Import only supports %s as a validation method"
-                % (constant.VALIDATION_METHOD_ROWCOUNT)
+                f"Mongo Import only supports {constant.VALIDATION_METHOD_ROWCOUNT} as a validation method"
             )
 
         # Check to see that we have a valid import type
@@ -1551,7 +1546,7 @@ class config(metaclass=Singleton):
 
     def convert_hive_column_name_reserved_words(self, column_name: str) -> str:
         if column_name.lower() in ("synchronized", "date", "interval", "int"):
-            column_name = "%s_hive" % (column_name)
+            column_name = f"{column_name}_hive"
 
         return column_name
 
@@ -2189,7 +2184,7 @@ class config(metaclass=Singleton):
 
         if column_name.startswith("_") == True:
             # 			column_name = column_name[1:]
-            column_name = "underscore%s" % (column_name)
+            column_name = f"underscore{column_name}"
 
         return column_name
 
@@ -2545,9 +2540,8 @@ class config(metaclass=Singleton):
 
                 column = self.convert_hive_column_name_reserved_words(column)
 
-                self.generatedSqoopOptions += "%s=%s," % (
-                    self.get_parquet_column_name(column),
-                    value,
+                self.generatedSqoopOptions += (
+                    f"{self.get_parquet_column_name(column)}={value},"
                 )
             # Remove the last ","
             self.generatedSqoopOptions = self.generatedSqoopOptions[:-1]

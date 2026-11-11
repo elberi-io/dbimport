@@ -92,7 +92,7 @@ class distCP(threading.Thread):
                 "-D",
                 "yarn.timeline-service.enabled=false",
                 "-D",
-                "mapreduce.job.queuename=%s" % (yarn_queue),
+                f"mapreduce.job.queuename={yarn_queue}",
                 "-overwrite",
                 "-delete",
                 "%s" % (hdfs_source_path),
@@ -222,7 +222,7 @@ class serverDaemon(run.RunDaemon):
             if dist_cp_separate_logs == False:
                 dist_cp_log_name = "distCP"
             else:
-                dist_cp_log_name = "distCP-thread%s" % (str(thread_id))
+                dist_cp_log_name = f"distCP-thread{str(thread_id)}"
 
             thread = distCP(
                 name=str(thread_id),
@@ -584,13 +584,7 @@ class serverDaemon(run.RunDaemon):
     def connect_dbimport_db(self):
         # Esablish a SQLAlchemy connection to the DBImport database
         log = logging.getLogger("server")
-        self.connect_str = "mysql+pymysql://%s:%s@%s:%s/%s" % (
-            self.config_username,
-            self.config_password,
-            self.config_hostname,
-            self.config_port,
-            self.config_database,
-        )
+        self.connect_str = f"mysql+pymysql://{self.config_username}:{self.config_password}@{self.config_hostname}:{self.config_port}/{self.config_database}"
 
         try:
             self.config_db_engine = sa.create_engine(

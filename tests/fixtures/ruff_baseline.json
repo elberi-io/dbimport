@@ -2,8 +2,7 @@
   "bin/ConfigReader/configuration.py": {
     "B904": 1,
     "E712": 2,
-    "N816": 2,
-    "UP031": 3
+    "N816": 2
   },
   "bin/DBImportConfig/common_config.py": {
     "B904": 4,
@@ -14,7 +13,7 @@
     "G002": 2,
     "N803": 28,
     "N806": 6,
-    "UP031": 71
+    "UP031": 54
   },
   "bin/DBImportConfig/decryption.py": {
     "B904": 1,
@@ -29,7 +28,7 @@
     "G002": 42,
     "N803": 29,
     "N806": 2,
-    "UP031": 107
+    "UP031": 103
   },
   "bin/DBImportConfig/export_stage.py": {
     "E711": 7,
@@ -37,7 +36,7 @@
     "F841": 1,
     "G002": 15,
     "N803": 4,
-    "UP031": 53
+    "UP031": 41
   },
   "bin/DBImportConfig/import_config.py": {
     "B904": 3,
@@ -47,7 +46,7 @@
     "G002": 89,
     "N802": 1,
     "N803": 29,
-    "UP031": 150
+    "UP031": 145
   },
   "bin/DBImportConfig/import_stage.py": {
     "E711": 7,
@@ -55,7 +54,7 @@
     "F841": 1,
     "G002": 15,
     "N803": 5,
-    "UP031": 50
+    "UP031": 37
   },
   "bin/DBImportConfig/sendStatistics.py": {
     "E711": 2,
@@ -71,7 +70,7 @@
     "F841": 23,
     "G002": 41,
     "N803": 1,
-    "UP031": 91
+    "UP031": 87
   },
   "bin/DBImportOperation/common_operations.py": {
     "B904": 2,
@@ -81,7 +80,7 @@
     "G002": 4,
     "N802": 1,
     "N803": 49,
-    "UP031": 35
+    "UP031": 32
   },
   "bin/DBImportOperation/copy_operations.py": {
     "E711": 26,
@@ -90,7 +89,7 @@
     "F841": 9,
     "G002": 26,
     "N802": 1,
-    "UP031": 64
+    "UP031": 62
   },
   "bin/DBImportOperation/etl_operations.py": {
     "E711": 18,
@@ -110,7 +109,7 @@
     "G002": 8,
     "N802": 1,
     "N803": 7,
-    "UP031": 53
+    "UP031": 49
   },
   "bin/DBImportOperation/import_operations.py": {
     "B007": 7,
@@ -123,7 +122,7 @@
     "G002": 20,
     "N802": 4,
     "N803": 10,
-    "UP031": 173
+    "UP031": 168
   },
   "bin/Schedule/Airflow.py": {
     "B904": 6,
@@ -132,10 +131,7 @@
     "E722": 5,
     "F841": 15,
     "G002": 16,
-    "UP031": 264
-  },
-  "bin/SchemaUpgrade/env.py": {
-    "UP031": 1
+    "UP031": 217
   },
   "bin/Server/atlasDiscovery.py": {
     "E711": 4,
@@ -144,7 +140,7 @@
     "F841": 3,
     "G002": 6,
     "N803": 5,
-    "UP031": 8
+    "UP031": 6
   },
   "bin/Server/daemon.py": {
     "E711": 7,
@@ -153,7 +149,7 @@
     "F841": 3,
     "G002": 3,
     "N803": 4,
-    "UP031": 9
+    "UP031": 6
   },
   "bin/Server/restServer.py": {
     "B904": 1,
@@ -171,7 +167,7 @@
     "G002": 8,
     "N802": 25,
     "N803": 1,
-    "UP031": 52
+    "UP031": 42
   },
   "bin/catalogService/glue.py": {
     "B904": 5,
@@ -215,52 +211,47 @@
     "E711": 5,
     "E712": 3,
     "F841": 3,
-    "N802": 1,
-    "UP031": 1
+    "N802": 1
   },
   "bin/export": {
     "E711": 43,
     "E712": 49,
-    "UP031": 23
+    "UP031": 11
   },
   "bin/import": {
     "E711": 217,
     "E712": 328,
     "F841": 1,
-    "UP031": 55
+    "UP031": 34
   },
   "bin/mainServer": {
     "E712": 2,
-    "N803": 3,
-    "UP031": 10
+    "N803": 3
   },
   "bin/manage": {
     "E711": 50,
     "E712": 48,
     "F841": 2,
     "N802": 1,
-    "N806": 10,
-    "UP031": 1
+    "N806": 10
   },
   "bin/restServer": {
     "E712": 5,
     "F841": 1,
     "N803": 3,
-    "N805": 1,
-    "UP031": 5
+    "N805": 1
   },
   "bin/setup": {
     "E711": 1,
     "E712": 1,
     "F841": 3,
-    "N812": 1,
-    "UP031": 1
+    "N812": 1
   },
   "bin/setupOperation/database.py": {
     "E711": 1,
     "E722": 1,
     "N812": 1,
-    "UP031": 6
+    "UP031": 4
   },
   "bin/sourceSchemaReader/schemaReader.py": {
     "E711": 115,

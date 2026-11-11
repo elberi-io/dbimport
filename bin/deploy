@@ -56,7 +56,7 @@ def printHeader():
     sys.stdout.write("\u001b[0m")  # Reset
     sys.stdout.flush()
     print("")
-    print("Version: %s" % (constant.VERSION))
+    print(f"Version: {constant.VERSION}")
     print("")
 
 

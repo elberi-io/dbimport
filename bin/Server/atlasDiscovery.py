@@ -156,7 +156,7 @@ class atlasDiscovery(threading.Thread):
 
         for thread_id in range(0, atlas_crawler_threads):
             # 			if distCP_separate_logs == False:
-            atlas_crawler_log_name = "atlasCrawler-thread%s" % (str(thread_id))
+            atlas_crawler_log_name = f"atlasCrawler-thread{str(thread_id)}"
             # 			else:
             # 				distCPlogName = "distCP-thread%s"%(str(threadID))
 
@@ -465,13 +465,7 @@ class atlasDiscovery(threading.Thread):
     def connect_dbimport_db(self):
         # Esablish a SQLAlchemy connection to the DBImport database
         log = logging.getLogger("atlasDiscovery")
-        self.connect_str = "mysql+pymysql://%s:%s@%s:%s/%s" % (
-            self.config_username,
-            self.config_password,
-            self.config_hostname,
-            self.config_port,
-            self.config_database,
-        )
+        self.connect_str = f"mysql+pymysql://{self.config_username}:{self.config_password}@{self.config_hostname}:{self.config_port}/{self.config_database}"
 
         try:
             self.config_db_engine = sa.create_engine(

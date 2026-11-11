@@ -458,8 +458,7 @@ class operation(metaclass=Singleton):
                         "-D",
                         "yarn.timeline-service.enabled=false",
                         "-D",
-                        "mapreduce.job.queuename=%s"
-                        % (configuration.get("Sqoop", "yarnqueue")),
+                        f"mapreduce.job.queuename={configuration.get('Sqoop', 'yarnqueue')}",
                         "-overwrite",
                         "-delete",
                         "%s%s" % (source_hdfs_address, source_hdfs_dir),
@@ -2150,7 +2149,7 @@ class operation(metaclass=Singleton):
             "hadoop",
             "distcp",
             "-D",
-            "mapreduce.job.queuename=%s" % (configuration.get("Sqoop", "yarnqueue")),
+            f"mapreduce.job.queuename={configuration.get('Sqoop', 'yarnqueue')}",
             "-overwrite",
             "-delete",
             "%s" % (hdfs_source_path),
