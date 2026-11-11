@@ -60,11 +60,11 @@ def _base64_encode_binary(s: Any) -> Any:
     return s
 
 
-def parse_struct_date(timestampString: object) -> str:
-    timestampString = str(timestampString)
-    m = re.match(r'\{ *"\$date" *: *(-?\d+)\ *}', timestampString)
+def parse_struct_date(timestamp_string: object) -> str:
+    timestamp_string = str(timestamp_string)
+    m = re.match(r'\{ *"\$date" *: *(-?\d+)\ *}', timestamp_string)
     if m:
         num = m.group(1)
         timestamp = datetime.utcfromtimestamp(int(num) / 1000)
         return timestamp.strftime("%Y-%m-%d %H:%M:%S.%f")
-    return timestampString
+    return timestamp_string
