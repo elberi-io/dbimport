@@ -19,12 +19,12 @@ config = context.config
 # target_metadata = None
 
 try:
-    DBImport_Home = os.environ["DBIMPORT_HOME"]
+    dbimport_home = os.environ["DBIMPORT_HOME"]
 except KeyError:
     print("Error: System Environment Variable DBIMPORT_HOME is not set")
     sys.exit(1)
 
-sys.path.append(f"{DBImport_Home}/bin")
+sys.path.append(f"{dbimport_home}/bin")
 from DBImportConfig.configSchema import Base  # noqa: E402  # sys.path must point to bin/ first
 
 target_metadata = Base.metadata
