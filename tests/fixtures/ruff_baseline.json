@@ -21,7 +21,6 @@
     "E712": 4
   },
   "bin/DBImportConfig/export_config.py": {
-    "B007": 4,
     "E711": 28,
     "E712": 54,
     "F841": 7,
@@ -62,7 +61,6 @@
     "F841": 1
   },
   "bin/DBImportOperation/atlas_operations.py": {
-    "B007": 2,
     "B904": 11,
     "E711": 41,
     "E712": 37,
@@ -101,7 +99,6 @@
     "UP031": 120
   },
   "bin/DBImportOperation/export_operations.py": {
-    "B007": 11,
     "E711": 34,
     "E712": 48,
     "E722": 16,
@@ -112,7 +109,6 @@
     "UP031": 49
   },
   "bin/DBImportOperation/import_operations.py": {
-    "B007": 7,
     "B904": 3,
     "B905": 1,
     "E711": 66,

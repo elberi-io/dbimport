@@ -812,7 +812,7 @@ class atlasOperation:
 
             # Loop through all tables and find if there is a difference between values from database and values in cache
             # If there is a difference, we update atlas and update the cache tables
-            for index, row in tables_and_views_df[
+            for _, row in tables_and_views_df[
                 tables_and_views_df["schema"] == schema
             ].iterrows():
                 schema = row["schema"]
@@ -1316,7 +1316,7 @@ class atlasOperation:
             how="outer",
             indicator="Exist",
         )
-        for index, row in merge_df.loc[merge_df["Exist"] == "right_only"].iterrows():
+        for _, row in merge_df.loc[merge_df["Exist"] == "right_only"].iterrows():
             if row["schema"] != "-":
                 log.info(
                     "Deleting Atlas table for %s.%s on dbalias %s",

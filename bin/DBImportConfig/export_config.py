@@ -1154,7 +1154,7 @@ class config(metaclass=Singleton):
             # 2. Get the position in configDF with that column name
             # 3. Get the column in the same position from HiveDF
             # 4. Check if that column name exists in the mergeDF with Right_Only. If it does, the column was just renamed
-            for index, row in columns_merge_only_name.loc[
+            for _, row in columns_merge_only_name.loc[
                 columns_merge_only_name["Exist"] == "left_only"
             ].iterrows():
                 row_in_source = columns_source.loc[
@@ -1408,7 +1408,7 @@ class config(metaclass=Singleton):
                 indicator="Exist",
             )
 
-        for index, row in columns_merge_only_name.loc[
+        for _, row in columns_merge_only_name.loc[
             columns_merge_only_name["Exist"] == "left_only"
         ].iterrows():
             # This will iterate over columns that only exists in the config and not in Target table. We add these to the table
@@ -1547,7 +1547,7 @@ class config(metaclass=Singleton):
         logging.debug(columns_merge_only_name_type)
         logging.debug("")
 
-        for index, row in columns_merge_only_name_type.loc[
+        for _, row in columns_merge_only_name_type.loc[
             columns_merge_only_name_type["Exist"] == "left_only"
         ].iterrows():
             # This will iterate over columns that had the type changed from the source
@@ -1673,7 +1673,7 @@ class config(metaclass=Singleton):
             columns_source, columns_target, on=None, how="outer", indicator="Exist"
         )
         # print(columnsMerge)
-        for index, row in columns_merge.loc[
+        for _, row in columns_merge.loc[
             columns_merge["Exist"] == "left_only"
         ].iterrows():
             if row["comment"] == None:
