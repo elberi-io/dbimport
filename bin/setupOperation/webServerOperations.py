@@ -27,13 +27,13 @@ class webServerOperations:
     def __init__(self):
         logging.debug("Executing webServerOperations.__init__()")
 
-        self.debugLogLevel = False
+        self.debug_log_level = False
 
         if logging.root.level == 10:  # DEBUG
-            self.debugLogLevel = True
+            self.debug_log_level = True
 
         try:
-            self.DBImport_Home = os.environ["DBIMPORT_HOME"]
+            self.dbimport_home = os.environ["DBIMPORT_HOME"]
         except KeyError:
             logging.error("System Environment Variable DBIMPORT_HOME is not set")
             sys.exit(1)
@@ -59,9 +59,9 @@ class webServerOperations:
         #
         # 		# Esablish a SQLAlchemy connection to the DBImport database
         # 		try:
-        # 			self.configDB = sa.create_engine(self.connect_str, echo = self.debugLogLevel)
-        # 			self.configDB.connect()
-        # 			self.configDBSession = sessionmaker(bind=self.configDB)
+        # 			self.config_db = sa.create_engine(self.connect_str, echo = self.debug_log_level)
+        # 			self.config_db.connect()
+        # 			self.config_db_session = sessionmaker(bind=self.config_db)
         #
         # 		except sa.exc.OperationalError as err:
         # 			logging.error("%s"%err)
@@ -87,7 +87,7 @@ class webServerOperations:
         logging.debug("Executing webServerOperations.run_npm_install()")
         logging.info("Installing NPM Packages")
 
-        prefix_dir = self.DBImport_Home + "/bin/Server/html"
+        prefix_dir = self.dbimport_home + "/bin/Server/html"
 
         result = subprocess.run(["npm", "config", "set", "fund", "false"])
         if result.returncode != 0:
@@ -109,7 +109,7 @@ class webServerOperations:
         logging.debug("Executing webServerOperations.run_npm_build()")
         logging.info("Building HTML files")
 
-        prefix_dir = self.DBImport_Home + "/bin/Server/html"
+        prefix_dir = self.dbimport_home + "/bin/Server/html"
         env_file = prefix_dir + "/.env"
 
         if not os.path.isfile(env_file):

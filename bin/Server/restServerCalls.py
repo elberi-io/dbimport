@@ -54,11 +54,11 @@ class dbCalls:
 
         self.mysql_conn = None
         self.mysql_cursor = None
-        self.debugLogLevel = False
-        self.configDBSession = None
+        self.debug_log_level = False
+        self.config_db_session = None
 
         if logging.root.level == 10:  # DEBUG
-            self.debugLogLevel = True
+            self.debug_log_level = True
 
         self.common_config = common_config.config()
         # self.common_config.disconnect_config_database() # This is needed as we must connect with buffered=False and that is only available during reconnect
@@ -160,49 +160,49 @@ class dbCalls:
         """Disconnects from the database and removes all sessions and engine"""
         log = logging.getLogger(self.logger)
 
-        if self.configDB != None:
+        if self.config_db != None:
             log.info("Disconnecting from DBImport database")
-            self.configDB.dispose()
-            self.configDB = None
+            self.config_db.dispose()
+            self.config_db = None
 
-        self.configDBSession = None
+        self.config_db_session = None
 
     def get_dbimport_session(self):
         """Connects to the configuration database with SQLAlchemy and return a session"""
         log = logging.getLogger(self.logger)
 
-        if self.configDBSession != None:
+        if self.config_db_session != None:
             # If we already have a connection, we just return the session
-            # return self.configDBSession()
-            return scoped_session(self.configDBSession)
+            # return self.config_db_session()
+            return scoped_session(self.config_db_session)
 
         mysql_credentials = self.common_config.get_mysql_credentials()
 
         self.connect_str = f"mysql+pymysql://{mysql_credentials['mysql_username']}:{quote(mysql_credentials['mysql_password'], safe=' +')}@{mysql_credentials['mysql_hostname']}:{mysql_credentials['mysql_port']}/{mysql_credentials['mysql_database']}"
 
         try:
-            self.configDB = sa.create_engine(
-                self.connect_str, echo=self.debugLogLevel, pool_pre_ping=True
+            self.config_db = sa.create_engine(
+                self.connect_str, echo=self.debug_log_level, pool_pre_ping=True
             )
-            self.configDB.connect()
-            self.configDBSession = sessionmaker(bind=self.configDB)
+            self.config_db.connect()
+            self.config_db_session = sessionmaker(bind=self.config_db)
 
         except sa.exc.OperationalError as err:
             logging.error("%s", err)
-            self.configDBSession = None
-            self.configDB = None
+            self.config_db_session = None
+            self.config_db = None
             raise SQLerror("Can't connect to DBImport database")
 
         except:
             print("Unexpected error: ")
             print(sys.exc_info())
-            self.configDBSession = None
-            self.configDB = None
+            self.config_db_session = None
+            self.config_db = None
             raise SQLerror("Can't connect to DBImport database")
 
         else:
-            # return self.configDBSession()
-            return scoped_session(self.configDBSession)
+            # return self.config_db_session()
+            return scoped_session(self.config_db_session)
 
     def get_config_value(self, key):
         """Returns a value from the configuration table based on the supplied key. Value returned can be Int, Str or DateTime"""

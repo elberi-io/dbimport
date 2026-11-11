@@ -28,11 +28,11 @@ from DBImportOperation import common_operations, import_operations
 class operation(metaclass=Singleton):
     def __init__(self, hive_db=None, hive_table=None):
         logging.debug("Executing etl_operations.__init__()")
-        self.Hive_DB = None
-        self.Hive_Table = None
+        self.hive_db = None
+        self.hive_table = None
         self.mysql_conn = None
         self.mysql_cursor = None
-        self.startDate = None
+        self.start_date = None
 
         self.common_operations = common_operations.operation(hive_db, hive_table)
         self.import_operations = import_operations.operation(hive_db, hive_table)
@@ -42,23 +42,23 @@ class operation(metaclass=Singleton):
             self.set_hive_table(hive_db, hive_table)
         else:
             # If the class already is initialized, we just pull the parameters and set them here
-            self.Hive_DB = self.common_operations.Hive_DB
-            self.Hive_Table = self.common_operations.Hive_Table
-            self.startDate = self.import_config.startDate
+            self.hive_db = self.common_operations.hive_db
+            self.hive_table = self.common_operations.hive_table
+            self.start_date = self.import_config.start_date
 
         logging.debug("Executing etl_operations.__init__() - Finished")
 
     def set_hive_table(self, hive_db, hive_table):
         """Sets the parameters to work against a new Hive database and table"""
-        self.Hive_DB = hive_db.lower()
-        self.Hive_Table = hive_table.lower()
+        self.hive_db = hive_db.lower()
+        self.hive_table = hive_table.lower()
 
-        self.common_operations.set_hive_table(self.Hive_DB, self.Hive_Table)
-        self.import_config.set_hive_table(self.Hive_DB, self.Hive_Table)
+        self.common_operations.set_hive_table(self.hive_db, self.hive_table)
+        self.import_config.set_hive_table(self.hive_db, self.hive_table)
 
         try:
             self.import_config.get_import_config()
-            self.startDate = self.import_config.startDate
+            self.start_date = self.import_config.start_date
             self.import_config.lookup_connection_alias()
         except:
             self.import_config.remove_temporary_files()
@@ -82,10 +82,10 @@ class operation(metaclass=Singleton):
         logging.debug("Executing etl_operations.connect_to_hive() - Finished")
 
     def execute_sql_query(self, query):
-        if self.import_config.etlEngine == constant.ETL_ENGINE_HIVE:
+        if self.import_config.etl_engine == constant.ETL_ENGINE_HIVE:
             self.common_operations.execute_hive_query(query)
 
-        if self.import_config.etlEngine == constant.ETL_ENGINE_SPARK:
+        if self.import_config.etl_engine == constant.ETL_ENGINE_SPARK:
             logging.info(query)
             self.import_operations.spark.sql(query)
 
@@ -127,7 +127,7 @@ class operation(metaclass=Singleton):
             source_table=source_table,
             target_db=target_db,
             target_table=target_table,
-            import_tool=self.import_config.importTool,
+            import_tool=self.import_config.import_tool,
             source_is_import_table=True,
         )
         if pk_columns == None:
@@ -151,29 +151,29 @@ class operation(metaclass=Singleton):
             mssql_change_tracking_import_table,
         )
 
-        if self.import_config.etlEngine == constant.ETL_ENGINE_SPARK:
+        if self.import_config.etl_engine == constant.ETL_ENGINE_SPARK:
             source_db_and_table = "%s.%s" % (
-                self.common_operations.sparkCatalogName,
+                self.common_operations.spark_catalog_name,
                 source_db_and_table,
             )
             target_db_and_table = "%s.%s" % (
-                self.common_operations.sparkCatalogName,
+                self.common_operations.spark_catalog_name,
                 target_db_and_table,
             )
             history_db_and_table = "%s.%s" % (
-                self.common_operations.sparkCatalogName,
+                self.common_operations.spark_catalog_name,
                 history_db_and_table,
             )
             target_delete_db_and_table = "%s.%s" % (
-                self.common_operations.sparkCatalogName,
+                self.common_operations.spark_catalog_name,
                 target_delete_db_and_table,
             )
             oracle_flashback_import_db_and_table = "%s.%s" % (
-                self.common_operations.sparkCatalogName,
+                self.common_operations.spark_catalog_name,
                 oracle_flashback_import_db_and_table,
             )
             mssql_change_tracking_import_db_and_table = "%s.%s" % (
-                self.common_operations.sparkCatalogName,
+                self.common_operations.spark_catalog_name,
                 mssql_change_tracking_import_db_and_table,
             )
             self.import_operations.start_spark()
@@ -190,18 +190,18 @@ class operation(metaclass=Singleton):
             # if row['name'] == "datalake_update": datalakeUpdateExists = True
             # if row['name'] == "datalake_delete": datalakeDeleteExists = True
             # if row['name'] == "datalake_source": datalakeSourceExists = True
-            if row["name"] == self.common_operations.Hive_ColumnName_IUD:
+            if row["name"] == self.common_operations.hive_column_name_iud:
                 datalake_iud_exists = True
-            if row["name"] == self.common_operations.Hive_ColumnName_Insert:
+            if row["name"] == self.common_operations.hive_column_name_insert:
                 datalake_insert_exists = True
-            if row["name"] == self.common_operations.Hive_ColumnName_Update:
+            if row["name"] == self.common_operations.hive_column_name_update:
                 datalake_update_exists = True
-            if row["name"] == self.common_operations.Hive_ColumnName_Delete:
+            if row["name"] == self.common_operations.hive_column_name_delete:
                 datalake_delete_exists = True
-            if row["name"] == self.common_operations.Hive_ColumnName_Source:
+            if row["name"] == self.common_operations.hive_column_name_source:
                 datalake_source_exists = True
 
-        if self.import_config.etlEngine == constant.ETL_ENGINE_HIVE:
+        if self.import_config.etl_engine == constant.ETL_ENGINE_HIVE:
             if hive_merge_java_heap != None:
                 query = "set hive.tez.container.size=%s" % (hive_merge_java_heap)
                 self.common_operations.execute_hive_query(query)
@@ -275,7 +275,7 @@ class operation(metaclass=Singleton):
                 # If a row is deleted and then inserted again with the same values in all fields, this will still trigger an update
                 # query += "   or T.datalake_iud = 'D' \n"
                 query += "   or T.%s = 'D' \n" % (
-                    self.common_operations.Hive_ColumnName_IUD
+                    self.common_operations.hive_column_name_iud
                 )
 
             query += ") \n"
@@ -313,19 +313,19 @@ class operation(metaclass=Singleton):
 
         if datalake_iud_exists == True:
             # query += ", \n   `datalake_iud` = 'U'"
-            query += ", \n   `%s` = 'U'" % (self.common_operations.Hive_ColumnName_IUD)
+            query += ", \n   `%s` = 'U'" % (self.common_operations.hive_column_name_iud)
 
         if datalake_update_exists == True:
             # query += ", \n   `datalake_update` = TIMESTAMP('%s')"%(mergeTime)
             query += ", \n   `%s` = TIMESTAMP('%s')" % (
-                self.common_operations.Hive_ColumnName_Update,
+                self.common_operations.hive_column_name_update,
                 merge_time,
             )
 
         if datalake_source_exists == True and datalake_source != None:
             # query += ", \n   `datalake_source` = '%s'"%(datalakeSource)
             query += ", \n   `%s` = '%s'" % (
-                self.common_operations.Hive_ColumnName_Source,
+                self.common_operations.hive_column_name_source,
                 datalake_source,
             )
 
@@ -378,16 +378,16 @@ class operation(metaclass=Singleton):
             if source_column_name != "":
                 query += "   S.`%s`" % (source_column_name)
             # elif ColumnName == "datalake_iud":
-            elif column_name == self.common_operations.Hive_ColumnName_IUD:
+            elif column_name == self.common_operations.hive_column_name_iud:
                 query += "   'I'"
             # elif ColumnName == "datalake_insert":
-            elif column_name == self.common_operations.Hive_ColumnName_Insert:
+            elif column_name == self.common_operations.hive_column_name_insert:
                 query += "   TIMESTAMP('%s')" % (merge_time)
             # elif ColumnName == "datalake_update":
-            elif column_name == self.common_operations.Hive_ColumnName_Update:
+            elif column_name == self.common_operations.hive_column_name_update:
                 query += "   TIMESTAMP('%s')" % (merge_time)
             # elif ColumnName == "datalake_source":
-            elif column_name == self.common_operations.Hive_ColumnName_Source:
+            elif column_name == self.common_operations.hive_column_name_source:
                 query += "   '%s'" % (datalake_source)
             else:
                 query += "   NULL"
@@ -403,18 +403,18 @@ class operation(metaclass=Singleton):
             # query += "   datalake_iud = 'I', "
             # query += "   datalake_insert = datalake_update, "
             # query += "   datalake_delete = null "
-            query += "   %s = 'I', " % (self.common_operations.Hive_ColumnName_IUD)
+            query += "   %s = 'I', " % (self.common_operations.hive_column_name_iud)
             query += "   %s = %s, " % (
-                self.common_operations.Hive_ColumnName_Insert,
-                self.common_operations.Hive_ColumnName_Update,
+                self.common_operations.hive_column_name_insert,
+                self.common_operations.hive_column_name_update,
             )
-            query += "   %s = null " % (self.common_operations.Hive_ColumnName_Delete)
+            query += "   %s = null " % (self.common_operations.hive_column_name_delete)
             query += "where "
             # query += "   datalake_iud = 'U' and "
             # query += "   datalake_delete is not null \n"
-            query += "   %s = 'U' and " % (self.common_operations.Hive_ColumnName_IUD)
+            query += "   %s = 'U' and " % (self.common_operations.hive_column_name_iud)
             query += "   %s is not null \n" % (
-                self.common_operations.Hive_ColumnName_Delete
+                self.common_operations.hive_column_name_delete
             )
 
             self.execute_sql_query(query)
@@ -447,12 +447,12 @@ class operation(metaclass=Singleton):
                 query += "   `%s`" % (row["targetName"])
             if datalake_source_exists == True:
                 # query += ",\n   `datalake_source`"
-                query += ",\n   `%s`" % (self.common_operations.Hive_ColumnName_Source)
+                query += ",\n   `%s`" % (self.common_operations.hive_column_name_source)
             # query += ",\n   `datalake_iud`"
             # query += ",\n   `datalake_timestamp`"
-            query += ",\n   `%s`" % (self.common_operations.Hive_ColumnName_IUD)
+            query += ",\n   `%s`" % (self.common_operations.hive_column_name_iud)
             query += ",\n   `%s`" % (
-                self.common_operations.Hive_ColumnName_HistoryTimestamp
+                self.common_operations.hive_column_name_history_timestamp
             )
             query += "\n) \n"
 
@@ -473,11 +473,11 @@ class operation(metaclass=Singleton):
             # query += ",\n   `datalake_update`"
             # query += "\nfrom %s \n"%(targetDBandTable)
             # query += "where datalake_update = TIMESTAMP('%s') \n"%(mergeTime)
-            query += ",\n   `%s`" % (self.common_operations.Hive_ColumnName_IUD)
-            query += ",\n   `%s`" % (self.common_operations.Hive_ColumnName_Update)
+            query += ",\n   `%s`" % (self.common_operations.hive_column_name_iud)
+            query += ",\n   `%s`" % (self.common_operations.hive_column_name_update)
             query += "\nfrom %s \n" % (target_db_and_table)
             query += "where %s = TIMESTAMP('%s') \n" % (
-                self.common_operations.Hive_ColumnName_Update,
+                self.common_operations.hive_column_name_update,
                 merge_time,
             )
 
@@ -544,12 +544,12 @@ class operation(metaclass=Singleton):
                 query += "   `%s`" % (row["targetName"])
             if datalake_source_exists == True:
                 # query += ",\n   `datalake_source`"
-                query += ",\n   `%s`" % (self.common_operations.Hive_ColumnName_Source)
+                query += ",\n   `%s`" % (self.common_operations.hive_column_name_source)
             # query += ",\n   `datalake_iud`"
             # query += ",\n   `datalake_timestamp`"
-            query += ",\n   `%s`" % (self.common_operations.Hive_ColumnName_IUD)
+            query += ",\n   `%s`" % (self.common_operations.hive_column_name_iud)
             query += ",\n   `%s`" % (
-                self.common_operations.Hive_ColumnName_HistoryTimestamp
+                self.common_operations.hive_column_name_history_timestamp
             )
             query += "\n) \n"
 
@@ -569,11 +569,11 @@ class operation(metaclass=Singleton):
             # query += ",\n   `datalake_flashback_operation` as `datalake_iud`"
             # query += ",\n   timestamp('%s') as `datalake_timestamp`"%(mergeTime)
             query += ",\n   `datalake_flashback_operation` as `%s`" % (
-                self.common_operations.Hive_ColumnName_IUD
+                self.common_operations.hive_column_name_iud
             )
             query += ",\n   timestamp('%s') as `%s`" % (
                 merge_time,
-                self.common_operations.Hive_ColumnName_HistoryTimestamp,
+                self.common_operations.hive_column_name_history_timestamp,
             )
             query += "\nfrom %s \n" % (oracle_flashback_import_db_and_table)
 
@@ -600,12 +600,12 @@ class operation(metaclass=Singleton):
                 query += "   `%s`" % (row["targetName"])
             if datalake_source_exists == True:
                 # query += ",\n   `datalake_source`"
-                query += ",\n   `%s`" % (self.common_operations.Hive_ColumnName_Source)
+                query += ",\n   `%s`" % (self.common_operations.hive_column_name_source)
             # query += ",\n   `datalake_iud`"
             # query += ",\n   `datalake_timestamp`"
-            query += ",\n   `%s`" % (self.common_operations.Hive_ColumnName_IUD)
+            query += ",\n   `%s`" % (self.common_operations.hive_column_name_iud)
             query += ",\n   `%s`" % (
-                self.common_operations.Hive_ColumnName_HistoryTimestamp
+                self.common_operations.hive_column_name_history_timestamp
             )
             query += "\n) \n"
 
@@ -625,11 +625,11 @@ class operation(metaclass=Singleton):
             # query += ",\n   `datalake_mssql_changetrack_operation` as `datalake_iud`"
             # query += ",\n   timestamp('%s') as `datalake_timestamp`"%(mergeTime)
             query += ",\n   `datalake_mssql_changetrack_operation` as `%s`" % (
-                self.common_operations.Hive_ColumnName_IUD
+                self.common_operations.hive_column_name_iud
             )
             query += ",\n   timestamp('%s') as `%s`" % (
                 merge_time,
-                self.common_operations.Hive_ColumnName_HistoryTimestamp,
+                self.common_operations.hive_column_name_history_timestamp,
             )
             query += "\nfrom %s " % (mssql_change_tracking_import_db_and_table)
             query += "\nwhere datalake_mssql_changetrack_operation != 'D' \n"
@@ -652,12 +652,12 @@ class operation(metaclass=Singleton):
                 query += "   `%s`" % (row["targetName"])
             if datalake_source_exists == True:
                 # query += ",\n   `datalake_source`"
-                query += ",\n   `%s`" % (self.common_operations.Hive_ColumnName_Source)
+                query += ",\n   `%s`" % (self.common_operations.hive_column_name_source)
             # query += ",\n   `datalake_iud`"
             # query += ",\n   `datalake_timestamp`"
-            query += ",\n   `%s`" % (self.common_operations.Hive_ColumnName_IUD)
+            query += ",\n   `%s`" % (self.common_operations.hive_column_name_iud)
             query += ",\n   `%s`" % (
-                self.common_operations.Hive_ColumnName_HistoryTimestamp
+                self.common_operations.hive_column_name_history_timestamp
             )
             query += "\n) \n"
 
@@ -675,14 +675,14 @@ class operation(metaclass=Singleton):
             if datalake_source_exists == True:
                 query += ",\n   '%s' as `%s`" % (
                     datalake_source,
-                    self.common_operations.Hive_ColumnName_Source,
+                    self.common_operations.hive_column_name_source,
                 )
             # query += ",\n   'D' as `datalake_iud`"
             # query += ",\n   timestamp('%s') as `datalake_timestamp`"%(mergeTime)
-            query += ",\n   'D' as `%s`" % (self.common_operations.Hive_ColumnName_IUD)
+            query += ",\n   'D' as `%s`" % (self.common_operations.hive_column_name_iud)
             query += ",\n   timestamp('%s') as `%s`" % (
                 merge_time,
-                self.common_operations.Hive_ColumnName_HistoryTimestamp,
+                self.common_operations.hive_column_name_history_timestamp,
             )
             query += "\nfrom %s as D \n" % (mssql_change_tracking_import_db_and_table)
             query += "inner join %s as T \n" % (target_db_and_table)
@@ -735,12 +735,12 @@ class operation(metaclass=Singleton):
                 query += "   `%s`" % (row["targetName"])
             if datalake_source_exists == True:
                 # query += ",\n   `datalake_source`"
-                query += ",\n   `%s`" % (self.common_operations.Hive_ColumnName_Source)
+                query += ",\n   `%s`" % (self.common_operations.hive_column_name_source)
             # query += ",\n   `datalake_iud`"
             # query += ",\n   `datalake_timestamp`"
-            query += ",\n   `%s`" % (self.common_operations.Hive_ColumnName_IUD)
+            query += ",\n   `%s`" % (self.common_operations.hive_column_name_iud)
             query += ",\n   `%s`" % (
-                self.common_operations.Hive_ColumnName_HistoryTimestamp
+                self.common_operations.hive_column_name_history_timestamp
             )
             query += "\n) \n"
 
@@ -759,14 +759,14 @@ class operation(metaclass=Singleton):
                 # query += ",\n   '%s' as `datalake_source`"%(datalakeSource)
                 query += ",\n   '%s' as `%s`" % (
                     datalake_source,
-                    self.common_operations.Hive_ColumnName_Source,
+                    self.common_operations.hive_column_name_source,
                 )
             # query += ",\n   'D' as `datalake_iud`"
             # query += ",\n   timestamp('%s') as `datalake_timestamp`"%(mergeTime)
-            query += ",\n   'D' as `%s`" % (self.common_operations.Hive_ColumnName_IUD)
+            query += ",\n   'D' as `%s`" % (self.common_operations.hive_column_name_iud)
             query += ",\n   timestamp('%s') as `%s`" % (
                 merge_time,
-                self.common_operations.Hive_ColumnName_HistoryTimestamp,
+                self.common_operations.hive_column_name_history_timestamp,
             )
             query += "\nfrom %s as D \n" % (target_delete_db_and_table)
             query += "left join %s as T \n" % (target_db_and_table)
@@ -786,7 +786,7 @@ class operation(metaclass=Singleton):
         ):
             # Use the merge command to delete found rows between the Delete Table and the History Table
             if (
-                self.import_config.etlEngine == constant.ETL_ENGINE_SPARK
+                self.import_config.etl_engine == constant.ETL_ENGINE_SPARK
                 and soft_delete == False
             ):
                 # Due to Iceberg bug #8126 (https://github.com/apache/iceberg/issues/8126), we need to do a workaround for deletes without soft delete
@@ -822,7 +822,7 @@ class operation(metaclass=Singleton):
                 if soft_delete == True:
                     # query += "and\n   T.`datalake_delete` != 'D' "
                     query += "and\n   T.`%s` != 'D' " % (
-                        self.common_operations.Hive_ColumnName_Delete
+                        self.common_operations.hive_column_name_delete
                     )
                 query += "\n"
 
@@ -834,14 +834,14 @@ class operation(metaclass=Singleton):
                     # query += "datalake_update = timestamp('%s'), \n"%(mergeTime)
                     # query += "datalake_delete = timestamp('%s') "%(mergeTime)
                     query += "%s  = 'D', \n" % (
-                        self.common_operations.Hive_ColumnName_IUD
+                        self.common_operations.hive_column_name_iud
                     )
                     query += "%s = timestamp('%s'), \n" % (
-                        self.common_operations.Hive_ColumnName_Update,
+                        self.common_operations.hive_column_name_update,
                         merge_time,
                     )
                     query += "%s = timestamp('%s') " % (
-                        self.common_operations.Hive_ColumnName_Delete,
+                        self.common_operations.hive_column_name_delete,
                         merge_time,
                     )
 

@@ -44,24 +44,24 @@ class initialize:
 
         self.mysql_conn = None
         self.mysql_cursor = None
-        self.debugLogLevel = False
+        self.debug_log_level = False
 
         self.logger = "root"
         log = logging.getLogger(self.logger)
 
-        self.configDBSession = None
-        self.configDB = None
+        self.config_db_session = None
+        self.config_db = None
 
         if logging.root.level == 10:  # DEBUG
-            self.debugLogLevel = True
+            self.debug_log_level = True
 
         self.common_config = common_config.config()
-        self.sendStatistics = sendStatistics.sendStatistics()
+        self.send_statistics = sendStatistics.sendStatistics()
 
         self.dbimport_command_path = self.get_config_value(
             "airflow_dbimport_commandpath"
         )
-        self.defaultSudoUser = self.get_config_value("airflow_sudo_user")
+        self.default_sudo_user = self.get_config_value("airflow_sudo_user")
         self.dag_directory = self.get_config_value("airflow_dag_directory")
         self.dag_staging_directory = self.get_config_value(
             "airflow_dag_staging_directory"
@@ -69,13 +69,15 @@ class initialize:
         self.dag_file_group = self.get_config_value("airflow_dag_file_group")
         self.dag_file_permission = self.get_config_value("airflow_dag_file_permission")
         self.task_queue_for_dummy = self.get_config_value("airflow_dummy_task_queue")
-        self.airflowMajorVersion = self.get_config_value("airflow_major_version")
+        self.airflow_major_version = self.get_config_value("airflow_major_version")
         self.default_time_zone = self.get_config_value("timezone")
         self.airflow_aws_instance_ids = self.get_config_value("airflow_aws_instanceids")
         self.airflow_aws_pool_to_instance_id = self.get_config_value(
             "airflow_aws_pool_to_instanceid"
         )
-        self.airflowDefaultPoolSize = self.get_config_value("airflow_default_pool_size")
+        self.airflow_default_pool_size = self.get_config_value(
+            "airflow_default_pool_size"
+        )
         self.create_pools_with_tasks = self.get_config_value(
             "airflow_create_pool_with_task"
         )
@@ -84,16 +86,16 @@ class initialize:
         self.dag_filename = None
         self.dag_filename_in_airflow = None
         self.dag_filename_in_aws_mwaa = None
-        self.writeDAG = None
+        self.write_dag = None
 
-        self.sensorStartTask = None
-        self.sensorStopTask = None
-        self.preStartTask = None
-        self.preStopTask = None
-        self.mainStartTask = None
-        self.mainStopTask = None
-        self.postStartTask = None
-        self.postStopTask = None
+        self.sensor_start_task = None
+        self.sensor_stop_task = None
+        self.pre_start_task = None
+        self.pre_stop_task = None
+        self.main_start_task = None
+        self.main_stop_task = None
+        self.post_start_task = None
+        self.post_stop_task = None
 
         self.airflow_mode = "default"
 
@@ -120,7 +122,7 @@ class initialize:
             airflow_connect_str = configuration.get("Airflow", "airflow_alchemy_conn")
             try:
                 self.airflow_db = sa.create_engine(
-                    airflow_connect_str, echo=self.debugLogLevel
+                    airflow_connect_str, echo=self.debug_log_level
                 )
                 self.airflow_db.connect()
                 self.airflow_db_session = sessionmaker(bind=self.airflow_db)
@@ -143,49 +145,49 @@ class initialize:
         """Disconnects from the database and removes all sessions and engine"""
         log = logging.getLogger(self.logger)
 
-        if self.configDB != None:
+        if self.config_db != None:
             log.info("Disconnecting from DBImport database")
-            self.configDB.dispose()
-            self.configDB = None
+            self.config_db.dispose()
+            self.config_db = None
 
-        self.configDBSession = None
+        self.config_db_session = None
 
     def get_dbimport_session(self):
         """Connects to the configuration database with SQLAlchemy and return a session"""
         log = logging.getLogger(self.logger)
 
-        if self.configDBSession != None:
+        if self.config_db_session != None:
             # If we already have a connection, we just return the session
-            # return self.configDBSession()
-            return scoped_session(self.configDBSession)
+            # return self.config_db_session()
+            return scoped_session(self.config_db_session)
 
         mysql_credentials = self.common_config.get_mysql_credentials()
 
         self.connect_str = f"mysql+pymysql://{mysql_credentials['mysql_username']}:{quote(mysql_credentials['mysql_password'], safe=' +')}@{mysql_credentials['mysql_hostname']}:{mysql_credentials['mysql_port']}/{mysql_credentials['mysql_database']}"
 
         try:
-            self.configDB = sa.create_engine(
-                self.connect_str, echo=self.debugLogLevel, pool_pre_ping=True
+            self.config_db = sa.create_engine(
+                self.connect_str, echo=self.debug_log_level, pool_pre_ping=True
             )
-            self.configDB.connect()
-            self.configDBSession = sessionmaker(bind=self.configDB)
+            self.config_db.connect()
+            self.config_db_session = sessionmaker(bind=self.config_db)
 
         except sa.exc.OperationalError as err:
             log.error("%s", err)
-            self.configDBSession = None
-            self.configDB = None
+            self.config_db_session = None
+            self.config_db = None
             raise SQLerror("Can't connect to DBImport database")
 
         except:
             print("Unexpected error: ")
             print(sys.exc_info())
-            self.configDBSession = None
-            self.configDB = None
+            self.config_db_session = None
+            self.config_db = None
             raise SQLerror("Can't connect to DBImport database")
 
         else:
-            # return self.configDBSession()
-            return scoped_session(self.configDBSession)
+            # return self.config_db_session()
+            return scoped_session(self.config_db_session)
 
     def get_config_value(self, key):
         """Returns a value from the configuration table based on the supplied key. Value returned can be Int, Str or DateTime"""
@@ -270,7 +272,7 @@ class initialize:
     def get_dbimport_command_path(self, sudo_user=""):
 
         if sudo_user == None or sudo_user == "":
-            sudo_user = self.defaultSudoUser
+            sudo_user = self.default_sudo_user
 
         return self.dbimport_command_path.replace("${SUDO_USER}", sudo_user)
 
@@ -297,10 +299,10 @@ class initialize:
     ):
         log = logging.getLogger(self.logger)
 
-        self.writeDAG = write_dag
-        self.DAGFolder = dag_folder
+        self.write_dag = write_dag
+        self.dag_folder = dag_folder
 
-        # session = self.configDBSession()
+        # session = self.config_db_session()
         session = self.get_dbimport_session()
         airflow_custom_dags = aliased(configSchema.airflowCustomDags)
         airflow_export_dags = aliased(configSchema.airflowExportDags)
@@ -520,7 +522,7 @@ class initialize:
             concurrency=dag["concurrency"],
         )
 
-        # session = self.configDBSession()
+        # session = self.config_db_session()
         session = self.get_dbimport_session()
         export_tables = aliased(configSchema.exportTables)
 
@@ -651,20 +653,21 @@ class initialize:
 
             if clear_stage_required == True:
                 self.dag_file.write(
-                    "%s.set_downstream(%s_clearStage)\n" % (self.mainStartTask, task_id)
+                    "%s.set_downstream(%s_clearStage)\n"
+                    % (self.main_start_task, task_id)
                 )
                 self.dag_file.write(
                     "%s_clearStage.set_downstream(%s)\n" % (task_id, task_id)
                 )
                 self.dag_file.write(
-                    "%s.set_downstream(%s)\n" % (task_id, self.mainStopTask)
+                    "%s.set_downstream(%s)\n" % (task_id, self.main_stop_task)
                 )
             else:
                 self.dag_file.write(
-                    "%s.set_downstream(%s)\n" % (self.mainStartTask, task_id)
+                    "%s.set_downstream(%s)\n" % (self.main_start_task, task_id)
                 )
                 self.dag_file.write(
-                    "%s.set_downstream(%s)\n" % (task_id, self.mainStopTask)
+                    "%s.set_downstream(%s)\n" % (task_id, self.main_stop_task)
                 )
             self.dag_file.write("\n")
 
@@ -721,7 +724,7 @@ class initialize:
             concurrency=dag["concurrency"],
         )
 
-        # session = self.configDBSession()
+        # session = self.config_db_session()
         session = self.get_dbimport_session()
         import_tables = aliased(configSchema.importTables)
 
@@ -982,7 +985,7 @@ class initialize:
                 if clear_stage_required == True and dag["finish_all_stage1_first"] == 1:
                     self.dag_file.write(
                         "%s.set_downstream(%s_clearStage)\n"
-                        % (self.mainStartTask, task_id)
+                        % (self.main_start_task, task_id)
                     )
                     if import_phase_as_sensor == True:
                         self.dag_file.write(
@@ -1004,14 +1007,14 @@ class initialize:
                         "Import_Phase_Finished.set_downstream(%s_etl)\n" % (task_id)
                     )
                     self.dag_file.write(
-                        "%s_etl.set_downstream(%s)\n" % (task_id, self.mainStopTask)
+                        "%s_etl.set_downstream(%s)\n" % (task_id, self.main_stop_task)
                     )
                 elif (
                     clear_stage_required == True and dag["finish_all_stage1_first"] == 0
                 ):  # This means that runImportAndEtlSeparate == True
                     self.dag_file.write(
                         "%s.set_downstream(%s_clearStage)\n"
-                        % (self.mainStartTask, task_id)
+                        % (self.main_start_task, task_id)
                     )
                     if import_phase_as_sensor == True:
                         self.dag_file.write(
@@ -1030,7 +1033,7 @@ class initialize:
                         "%s_import.set_downstream(%s_etl)\n" % (task_id, task_id)
                     )
                     self.dag_file.write(
-                        "%s_etl.set_downstream(%s)\n" % (task_id, self.mainStopTask)
+                        "%s_etl.set_downstream(%s)\n" % (task_id, self.main_stop_task)
                     )
                 elif (
                     clear_stage_required == False
@@ -1039,7 +1042,7 @@ class initialize:
                     if import_phase_as_sensor == True:
                         self.dag_file.write(
                             "%s.set_downstream(%s_sensor)\n"
-                            % (self.mainStartTask, task_id)
+                            % (self.main_start_task, task_id)
                         )
                         self.dag_file.write(
                             "%s_sensor.set_downstream(%s_import)\n" % (task_id, task_id)
@@ -1047,7 +1050,7 @@ class initialize:
                     else:
                         self.dag_file.write(
                             "%s.set_downstream(%s_import)\n"
-                            % (self.mainStartTask, task_id)
+                            % (self.main_start_task, task_id)
                         )
                     self.dag_file.write(
                         "%s_import.set_downstream(Import_Phase_Finished)\n" % (task_id)
@@ -1056,13 +1059,13 @@ class initialize:
                         "Import_Phase_Finished.set_downstream(%s_etl)\n" % (task_id)
                     )
                     self.dag_file.write(
-                        "%s_etl.set_downstream(%s)\n" % (task_id, self.mainStopTask)
+                        "%s_etl.set_downstream(%s)\n" % (task_id, self.main_stop_task)
                     )
                 else:
                     if import_phase_as_sensor == True:
                         self.dag_file.write(
                             "%s.set_downstream(%s_sensor)\n"
-                            % (self.mainStartTask, task_id)
+                            % (self.main_start_task, task_id)
                         )
                         self.dag_file.write(
                             "%s_sensor.set_downstream(%s_import)\n" % (task_id, task_id)
@@ -1070,13 +1073,13 @@ class initialize:
                     else:
                         self.dag_file.write(
                             "%s.set_downstream(%s_import)\n"
-                            % (self.mainStartTask, task_id)
+                            % (self.main_start_task, task_id)
                         )
                     self.dag_file.write(
                         "%s_import.set_downstream(%s_etl)\n" % (task_id, task_id)
                     )
                     self.dag_file.write(
-                        "%s_etl.set_downstream(%s)\n" % (task_id, self.mainStopTask)
+                        "%s_etl.set_downstream(%s)\n" % (task_id, self.main_stop_task)
                     )
                 self.dag_file.write("\n")
 
@@ -1145,7 +1148,7 @@ class initialize:
                     if import_phase_as_sensor == True:
                         self.dag_file.write(
                             "%s.set_downstream(%s_clearStage)\n"
-                            % (self.mainStartTask, task_id)
+                            % (self.main_start_task, task_id)
                         )
                         self.dag_file.write(
                             "%s_clearStage.set_downstream(%s_sensor)\n"
@@ -1155,37 +1158,37 @@ class initialize:
                             "%s_sensor.set_downstream(%s)\n" % (task_id, task_id)
                         )
                         self.dag_file.write(
-                            "%s.set_downstream(%s)\n" % (task_id, self.mainStopTask)
+                            "%s.set_downstream(%s)\n" % (task_id, self.main_stop_task)
                         )
                     else:
                         self.dag_file.write(
                             "%s.set_downstream(%s_clearStage)\n"
-                            % (self.mainStartTask, task_id)
+                            % (self.main_start_task, task_id)
                         )
                         self.dag_file.write(
                             "%s_clearStage.set_downstream(%s)\n" % (task_id, task_id)
                         )
                         self.dag_file.write(
-                            "%s.set_downstream(%s)\n" % (task_id, self.mainStopTask)
+                            "%s.set_downstream(%s)\n" % (task_id, self.main_stop_task)
                         )
                 else:
                     if import_phase_as_sensor == True:
                         self.dag_file.write(
                             "%s.set_downstream(%s_sensor)\n"
-                            % (self.mainStartTask, task_id)
+                            % (self.main_start_task, task_id)
                         )
                         self.dag_file.write(
                             "%s_sensor.set_downstream(%s)\n" % (task_id, task_id)
                         )
                         self.dag_file.write(
-                            "%s.set_downstream(%s)\n" % (task_id, self.mainStopTask)
+                            "%s.set_downstream(%s)\n" % (task_id, self.main_stop_task)
                         )
                     else:
                         self.dag_file.write(
-                            "%s.set_downstream(%s)\n" % (self.mainStartTask, task_id)
+                            "%s.set_downstream(%s)\n" % (self.main_start_task, task_id)
                         )
                         self.dag_file.write(
-                            "%s.set_downstream(%s)\n" % (task_id, self.mainStopTask)
+                            "%s.set_downstream(%s)\n" % (task_id, self.main_stop_task)
                         )
                 self.dag_file.write("\n")
 
@@ -1236,11 +1239,11 @@ class initialize:
                         log.info(
                             "Creating the Airflow pool '%s' with %s slots",
                             pool,
-                            self.airflowDefaultPoolSize,
+                            self.airflow_default_pool_size,
                         )
                         new_pool = airflowSchema.slotPool(
                             pool=pool,
-                            slots=self.airflowDefaultPoolSize,
+                            slots=self.airflow_default_pool_size,
                             include_deferred=0,
                         )
                         session.add(new_pool)
@@ -1266,7 +1269,9 @@ class initialize:
                 self.dag_file.write("\n")
                 self.dag_file.write(f"{task_name} = CreatePoolOperator(\n")
                 self.dag_file.write("    name='%s',\n" % (pool))
-                self.dag_file.write("    slots=%s,\n" % (self.airflowDefaultPoolSize))
+                self.dag_file.write(
+                    "    slots=%s,\n" % (self.airflow_default_pool_size)
+                )
                 self.dag_file.write("    task_id='%s',\n" % (task_name))
                 self.dag_file.write("    retries=5,\n")
                 self.dag_file.write("    priority_weight=1,\n")
@@ -1276,7 +1281,7 @@ class initialize:
                 self.dag_file.write("\n")
                 self.dag_file.write(f"start.set_downstream({task_name})\n")
                 self.dag_file.write(
-                    "%s.set_downstream(%s)\n" % (task_name, self.preStopTask)
+                    "%s.set_downstream(%s)\n" % (task_name, self.pre_stop_task)
                 )
                 self.dag_file.write("\n")
 
@@ -1284,7 +1289,7 @@ class initialize:
         """Generates a Custom DAG"""
         log = logging.getLogger(self.logger)
 
-        # session = self.configDBSession()
+        # session = self.config_db_session()
         session = self.get_dbimport_session()
         airflow_tasks = aliased(configSchema.airflowTasks)
 
@@ -1386,17 +1391,17 @@ class initialize:
         concurrency=None,
     ):
         log = logging.getLogger(self.logger)
-        # session = self.configDBSession()
+        # session = self.config_db_session()
         session = self.get_dbimport_session()
 
-        self.sensorStartTask = "start"
-        self.sensorStopTask = "dag_sensors_finished"
-        self.preStartTask = "start"
-        self.preStopTask = "before_tasks_finished"
-        self.mainStartTask = "start"
-        self.mainStopTask = "stop"
-        self.postStartTask = "main_tasks_finished"
-        self.postStopTask = "stop"
+        self.sensor_start_task = "start"
+        self.sensor_stop_task = "dag_sensors_finished"
+        self.pre_start_task = "start"
+        self.pre_stop_task = "before_tasks_finished"
+        self.main_start_task = "start"
+        self.main_stop_task = "stop"
+        self.post_start_task = "main_tasks_finished"
+        self.post_stop_task = "stop"
 
         if (
             self.task_queue_for_dummy != None
@@ -1422,7 +1427,7 @@ class initialize:
             log.warning("Using default time zone value instead")
             dag_time_zone = None
 
-        if self.DAGFolder == None:
+        if self.dag_folder == None:
             self.dag_filename = "%s/%s.py" % (self.dag_staging_directory, dag_name)
             if not os.path.exists(self.dag_staging_directory):
                 try:
@@ -1434,7 +1439,7 @@ class initialize:
                 except:
                     pass
         else:
-            self.dag_filename = "%s/%s.py" % (self.DAGFolder, dag_name)
+            self.dag_filename = "%s/%s.py" % (self.dag_folder, dag_name)
 
         self.dag_filename_in_aws_mwaa = "dags/%s.py" % (dag_name)
         self.dag_filename_in_airflow = "%s/%s.py" % (self.dag_directory, dag_name)
@@ -1455,7 +1460,7 @@ class initialize:
         self.dag_file.write("from airflow import DAG\n")
         self.dag_file.write("from airflow.models import Variable\n")
 
-        if self.airflowMajorVersion == 2:
+        if self.airflow_major_version == 2:
             self.dag_file.write(
                 "from airflow.sensors.external_task import ExternalTaskSensor\n"
             )
@@ -2142,7 +2147,7 @@ class initialize:
             self.dag_file.write("    dag=dag)\n")
             self.dag_file.write("\n")
 
-        if self.airflowMajorVersion == 1:
+        if self.airflow_major_version == 1:
             self.dag_file.write("def always_trigger(context, dag_run_obj):\n")
             self.dag_file.write("    return dag_run_obj\n")
             self.dag_file.write("\n")
@@ -2192,8 +2197,8 @@ class initialize:
             tasks_after_main_exists = True
 
         if tasks_before_main_exists == True:
-            self.dag_file.write(f"{self.preStopTask} = DummyOperator(\n")
-            self.dag_file.write("    task_id='%s',\n" % (self.preStopTask))
+            self.dag_file.write(f"{self.pre_stop_task} = DummyOperator(\n")
+            self.dag_file.write("    task_id='%s',\n" % (self.pre_stop_task))
             if self.task_queue_for_dummy != None:
                 self.dag_file.write(
                     "    queue='%s',\n" % (self.task_queue_for_dummy.strip())
@@ -2204,8 +2209,8 @@ class initialize:
             self.dag_file.write("\n")
 
         if tasks_after_main_exists == True:
-            self.dag_file.write(f"{self.postStartTask} = DummyOperator(\n")
-            self.dag_file.write("    task_id='%s',\n" % (self.postStartTask))
+            self.dag_file.write(f"{self.post_start_task} = DummyOperator(\n")
+            self.dag_file.write("    task_id='%s',\n" % (self.post_start_task))
             if self.task_queue_for_dummy != None:
                 self.dag_file.write(
                     "    queue='%s',\n" % (self.task_queue_for_dummy.strip())
@@ -2216,8 +2221,8 @@ class initialize:
             self.dag_file.write("\n")
 
         if tasks_sensors_exists == True:
-            self.dag_file.write(f"{self.sensorStopTask} = DummyOperator(\n")
-            self.dag_file.write("    task_id='%s',\n" % (self.sensorStopTask))
+            self.dag_file.write(f"{self.sensor_stop_task} = DummyOperator(\n")
+            self.dag_file.write("    task_id='%s',\n" % (self.sensor_stop_task))
             if self.task_queue_for_dummy != None:
                 self.dag_file.write(
                     "    queue='%s',\n" % (self.task_queue_for_dummy.strip())
@@ -2228,28 +2233,28 @@ class initialize:
             self.dag_file.write("\n")
 
         if tasks_sensors_exists == False and tasks_before_main_exists == True:
-            self.mainStartTask = self.preStopTask
+            self.main_start_task = self.pre_stop_task
 
         if tasks_sensors_exists == True and tasks_before_main_exists == False:
-            self.mainStartTask = self.sensorStopTask
+            self.main_start_task = self.sensor_stop_task
 
         if tasks_sensors_exists == True and tasks_before_main_exists == True:
-            self.preStartTask = self.sensorStopTask
-            self.mainStartTask = self.preStopTask
+            self.pre_start_task = self.sensor_stop_task
+            self.main_start_task = self.pre_stop_task
 
         if tasks_after_main_exists == True:
-            self.mainStopTask = self.postStartTask
+            self.main_stop_task = self.post_start_task
 
         session.close()
 
-        log.debug("sensorStartTask = %s", self.sensorStartTask)
-        log.debug("sensorStopTask = %s", self.sensorStopTask)
-        log.debug("preStartTask = %s", self.preStartTask)
-        log.debug("preStopTask = %s", self.preStopTask)
-        log.debug("mainStartTask = %s", self.mainStartTask)
-        log.debug("mainStopTask = %s", self.mainStopTask)
-        log.debug("postStartTask = %s", self.postStartTask)
-        log.debug("postStopTask = %s", self.postStopTask)
+        log.debug("sensorStartTask = %s", self.sensor_start_task)
+        log.debug("sensorStopTask = %s", self.sensor_stop_task)
+        log.debug("preStartTask = %s", self.pre_start_task)
+        log.debug("preStopTask = %s", self.pre_stop_task)
+        log.debug("mainStartTask = %s", self.main_start_task)
+        log.debug("mainStopTask = %s", self.main_stop_task)
+        log.debug("postStartTask = %s", self.post_start_task)
+        log.debug("postStopTask = %s", self.post_stop_task)
 
     def close_dag_file(self):
         log = logging.getLogger(self.logger)
@@ -2275,7 +2280,7 @@ class initialize:
                 % (self.dag_file_group)
             )
 
-        if self.writeDAG == True:
+        if self.write_dag == True:
             if self.airflow_mode == "default":
                 try:
                     shutil.copy(self.dag_filename, self.dag_filename_in_airflow)
@@ -2298,7 +2303,7 @@ class initialize:
             elif self.airflow_mode == "aws_mwaa":
                 try:
                     s3client = boto3.client(
-                        "s3", region_name=self.common_config.awsRegion
+                        "s3", region_name=self.common_config.aws_region
                     )
                     # response = s3client.upload_file(self.dag_filename, "dl-mwaa-artifacts-uat-eu-west-1-176686534647", self.dag_filename_in_aws_mwaa)
                     response = s3client.upload_file(
@@ -2331,7 +2336,7 @@ class initialize:
     ):
         log = logging.getLogger(self.logger)
 
-        # session = self.configDBSession()
+        # session = self.config_db_session()
         session = self.get_dbimport_session()
 
         if default_sudo_user == None:
@@ -2634,7 +2639,7 @@ class initialize:
                 else:
                     self.dag_file.write("    priority_weight=100,\n")
                     self.dag_file.write("    weight_rule='absolute',\n")
-                if self.airflowMajorVersion == 1:
+                if self.airflow_major_version == 1:
                     self.dag_file.write("    python_callable=always_trigger,\n")
                 self.dag_file.write("    dag=dag)\n")
                 self.dag_file.write("\n")
@@ -2795,16 +2800,16 @@ class initialize:
                     self.dag_file.write("\n")
 
             if row["placement"] == "before main":
-                temp_start_task = self.preStartTask
-                temp_stop_task = self.preStopTask
+                temp_start_task = self.pre_start_task
+                temp_stop_task = self.pre_stop_task
 
             if row["placement"] == "in main":
-                temp_start_task = self.mainStartTask
-                temp_stop_task = self.mainStopTask
+                temp_start_task = self.main_start_task
+                temp_stop_task = self.main_stop_task
 
             if row["placement"] == "after main":
-                temp_start_task = self.postStartTask
-                temp_stop_task = self.postStopTask
+                temp_start_task = self.post_start_task
+                temp_stop_task = self.post_stop_task
 
             for _dep_index, dep_row in all_task_dependencies.iterrows():
                 if (
@@ -2822,13 +2827,13 @@ class initialize:
             if 1 == 1:
                 # 				if row['task_dependency_in_main_downstream'] == '':
                 # 					# No dependency, set to "mainStart" task, what ever that might be
-                # 					taskDependencies += "%s.set_downstream(%s)\n"%(self.mainStartTask, row['task_name'])
+                # 					taskDependencies += "%s.set_downstream(%s)\n"%(self.main_start_task, row['task_name'])
                 # 				else:
                 # 					# Check if there is any dependencies for this task
                 # 					for dep in row['task_dependency_in_main_downstream'].split(','):
                 # 						dep = dep.strip()
                 # 						if dep == "main_start":
-                # 							dep = self.mainStartTask
+                # 							dep = self.main_start_task
                 #
                 # 						taskDependencies += "%s.set_downstream(%s)\n"%(dep, row['task_name'])
 
@@ -2936,7 +2941,7 @@ class initialize:
 
                 # 				if row['task_dependency_in_main_upstream'] == '':
                 # 					# No dependency, set to "mainStart" task, what ever that might be
-                # 					# taskDependencies += "%s.set_upstream(%s)\n"%(row['task_name'], self.mainStartTask)
+                # 					# taskDependencies += "%s.set_upstream(%s)\n"%(row['task_name'], self.main_start_task)
                 # 					taskDependencies += "%s.set_upstream(%s)\n"%(row['task_name'], tempStartTask)
                 # 				else:
                 # 					# Check if there is any dependencies for this task
@@ -2958,7 +2963,7 @@ class initialize:
                 # 							foundDependency = True
                 #
                 # 				if foundDependency == False and row['task_dependency_downstream'] == '':
-                # 					# taskDependencies += "%s.set_downstream(%s)\n"%(row['task_name'], self.mainStopTask)
+                # 					# taskDependencies += "%s.set_downstream(%s)\n"%(row['task_name'], self.main_stop_task)
                 # 					taskDependencies += "%s.set_downstream(%s)\n"%(row['task_name'], tempStopTask)
 
                 task_dependencies += "\n"
@@ -2968,7 +2973,7 @@ class initialize:
 
     def add_sensors_to_dag_file(self, dag_name, main_dag_schedule):
         log = logging.getLogger(self.logger)
-        # session = self.configDBSession()
+        # session = self.config_db_session()
         session = self.get_dbimport_session()
 
         airflow_dag_sensors = aliased(configSchema.airflowDagSensors, name="ads")
@@ -3035,11 +3040,11 @@ class initialize:
                 self.add_failure_task("%s_FAILURE" % (row["sensor_name"]))
                 self.dag_file.write(
                     "%s.set_downstream(%s_FAILURE)\n"
-                    % (self.sensorStartTask, row["sensor_name"])
+                    % (self.sensor_start_task, row["sensor_name"])
                 )
                 self.dag_file.write(
                     "%s_FAILURE.set_downstream(%s)\n"
-                    % (row["sensor_name"], self.sensorStopTask)
+                    % (row["sensor_name"], self.sensor_stop_task)
                 )
                 self.dag_file.write("\n")
                 continue
@@ -3086,11 +3091,11 @@ class initialize:
                 self.add_failure_task("%s_FAILURE" % (row["sensor_name"]))
                 self.dag_file.write(
                     "%s.set_downstream(%s_FAILURE)\n"
-                    % (self.sensorStartTask, row["sensor_name"])
+                    % (self.sensor_start_task, row["sensor_name"])
                 )
                 self.dag_file.write(
                     "%s_FAILURE.set_downstream(%s)\n"
-                    % (row["sensor_name"], self.sensorStopTask)
+                    % (row["sensor_name"], self.sensor_stop_task)
                 )
                 self.dag_file.write("\n")
                 continue
@@ -3155,11 +3160,11 @@ class initialize:
                     self.add_failure_task("%s_FAILURE" % (row["sensor_name"]))
                     self.dag_file.write(
                         "%s.set_downstream(%s_FAILURE)\n"
-                        % (self.sensorStartTask, row["sensor_name"])
+                        % (self.sensor_start_task, row["sensor_name"])
                     )
                     self.dag_file.write(
                         "%s_FAILURE.set_downstream(%s)\n"
-                        % (row["sensor_name"], self.sensorStopTask)
+                        % (row["sensor_name"], self.sensor_stop_task)
                     )
                     self.dag_file.write("\n")
                     continue
@@ -3184,10 +3189,10 @@ class initialize:
             self.dag_file.write("    dag=dag)\n")
             self.dag_file.write("\n")
             self.dag_file.write(
-                "%s.set_downstream(%s)\n" % (self.sensorStartTask, row["sensor_name"])
+                "%s.set_downstream(%s)\n" % (self.sensor_start_task, row["sensor_name"])
             )
             self.dag_file.write(
-                "%s.set_downstream(%s)\n" % (row["sensor_name"], self.sensorStopTask)
+                "%s.set_downstream(%s)\n" % (row["sensor_name"], self.sensor_stop_task)
             )
             self.dag_file.write("\n")
 
@@ -3198,22 +3203,22 @@ class initialize:
         log = logging.getLogger(self.logger)
         log.debug("Executing Airflow.send_start_json()")
 
-        self.postAirflowDAGoperations = self.common_config.get_config_value(
+        self.post_airflow_dag_operations = self.common_config.get_config_value(
             key="post_airflow_dag_operations"
         )
-        self.postDataToREST = self.common_config.get_config_value(
+        self.post_data_to_rest = self.common_config.get_config_value(
             key="post_data_to_rest"
         )
-        self.postDataToKafka = self.common_config.get_config_value(
+        self.post_data_to_kafka = self.common_config.get_config_value(
             key="post_data_to_kafka"
         )
 
-        # 		self.postDataToREST = True
+        # 		self.post_data_to_rest = True
 
         if airflow_dag == None:
             return
 
-        if self.postAirflowDAGoperations == False:
+        if self.post_airflow_dag_operations == False:
             log.info(
                 "Airflow DAG post to Kafka and/or Rest have been disabled. No message will be sent"
             )
@@ -3225,13 +3230,13 @@ class initialize:
         json_data["dag"] = airflow_dag
         json_data["airflow_timestamp"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
 
-        if self.postDataToKafka == True:
-            result = self.sendStatistics.publish_kafka_data(json.dumps(json_data))
+        if self.post_data_to_kafka == True:
+            result = self.send_statistics.publish_kafka_data(json.dumps(json_data))
             if result == False:
                 log.warning("Kafka publish failed! No start message posted")
 
-        if self.postDataToREST == True:
-            response = self.sendStatistics.send_rest_data(json.dumps(json_data))
+        if self.post_data_to_rest == True:
+            response = self.send_statistics.send_rest_data(json.dumps(json_data))
             if response != 200:
                 log.warning("REST call failed! No start message posted")
 

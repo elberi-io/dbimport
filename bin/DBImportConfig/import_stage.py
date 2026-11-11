@@ -33,17 +33,17 @@ class stage:
     ) -> None:
         logging.debug("Executing stage.__init__()")
 
-        self.Hive_DB = hive_db
-        self.Hive_Table = hive_table
+        self.hive_db = hive_db
+        self.hive_table = hive_table
         self.mysql_conn = mysql_conn
         self.mysql_cursor = self.mysql_conn.cursor(buffered=False)
         self.current_stage: int | None = None
         self.memory_stage = False
-        self.stageTimeStart: str | None = None
-        self.stageTimeStop: str | None = None
-        self.stageDurationStart = 0.0
-        self.stageDurationStop = 0.0
-        self.stageDurationTime = 0.0
+        self.stage_time_start: str | None = None
+        self.stage_time_stop: str | None = None
+        self.stage_duration_start = 0.0
+        self.stage_duration_stop = 0.0
+        self.stage_duration_time = 0.0
 
         self.common_config = common_config.config(hive_db, hive_table)
         # 		if configuration.get("REST_statistics", "post_import_data").lower() == "true":
@@ -51,7 +51,7 @@ class stage:
         # 		else:
         # 			self.post_import_data = False
 
-        self.sendStatistics = sendStatistics.sendStatistics()
+        self.send_statistics = sendStatistics.sendStatistics()
 
     def set_mysql_connection(self, mysql_conn: Any) -> None:
         self.mysql_conn = mysql_conn
@@ -59,8 +59,8 @@ class stage:
 
     def set_hive_table(self, hive_db: str, hive_table: str) -> None:
         """Sets the parameters to work against a new Hive database and table"""
-        self.Hive_DB = hive_db.lower()
-        self.Hive_Table = hive_table.lower()
+        self.hive_db = hive_db.lower()
+        self.hive_table = hive_table.lower()
 
     def get_stage_description(self, stage: int) -> str:
         stage_description = ""
@@ -1010,32 +1010,32 @@ class stage:
         """Reads the import_stage_statistics and convert the information to a JSON document"""
         logging.debug("Executing stage.convert_stage_statistics_to_json()")
 
-        self.postDataToREST = self.common_config.get_config_value(
+        self.post_data_to_rest = self.common_config.get_config_value(
             key="post_data_to_rest"
         )
-        self.postDataToRESTextended = self.common_config.get_config_value(
+        self.post_data_to_rest_extended = self.common_config.get_config_value(
             key="post_data_to_rest_extended"
         )
-        self.postDataToKafka = self.common_config.get_config_value(
+        self.post_data_to_kafka = self.common_config.get_config_value(
             key="post_data_to_kafka"
         )
-        self.postDataToKafkaExtended = self.common_config.get_config_value(
+        self.post_data_to_kafka_extended = self.common_config.get_config_value(
             key="post_data_to_kafka_extended"
         )
         self.post_data_to_aws_sns = self.common_config.get_config_value(
             key="post_data_to_awssns"
         )
-        self.postDataToAWSSNSExtended = self.common_config.get_config_value(
+        self.post_data_to_aws_sns_extended = self.common_config.get_config_value(
             key="post_data_to_awssns_extended"
         )
 
-        # 		self.postDataToREST = True
-        # 		self.postDataToKafka = True
-        # 		self.postDataToKafkaExtended = True
+        # 		self.post_data_to_rest = True
+        # 		self.post_data_to_kafka = True
+        # 		self.post_data_to_kafka_extended = True
 
         if (
-            self.postDataToREST == False
-            and self.postDataToKafka == False
+            self.post_data_to_rest == False
+            and self.post_data_to_kafka == False
             and self.post_data_to_aws_sns == False
         ):
             return
@@ -1052,20 +1052,20 @@ class stage:
             json_data_rest[key] = value
             json_data_aws_sns[key] = value
 
-        if self.postDataToKafkaExtended == False:
+        if self.post_data_to_kafka_extended == False:
             json_data_kafka.pop("sessions")
             json_data_kafka.pop("copy_phase")
 
-        if self.postDataToRESTextended == False:
+        if self.post_data_to_rest_extended == False:
             json_data_rest.pop("sessions")
             json_data_rest.pop("copy_phase")
 
-        if self.postDataToAWSSNSExtended == False:
+        if self.post_data_to_aws_sns_extended == False:
             json_data_aws_sns.pop("sessions")
             json_data_aws_sns.pop("copy_phase")
 
         query = "select stage, start, stop, duration from import_stage_statistics where hive_db = %s and hive_table = %s"
-        self.mysql_cursor.execute(query, (self.Hive_DB, self.Hive_Table))
+        self.mysql_cursor.execute(query, (self.hive_db, self.hive_table))
         logging.debug("SQL Statement executed: %s" % (self.mysql_cursor.statement))
 
         for row in self.mysql_cursor.fetchall():
@@ -1084,17 +1084,20 @@ class stage:
                 logging.error("Will put the raw stage number into the JSON document")
                 stage_short_name = str(stage)
 
-            if stage_short_name != "skip" and self.postDataToRESTextended == True:
+            if stage_short_name != "skip" and self.post_data_to_rest_extended == True:
                 json_data_rest[f"{stage_short_name}_start"] = str(stage_start)
                 json_data_rest[f"{stage_short_name}_stop"] = str(stage_stop)
                 json_data_rest[f"{stage_short_name}_duration"] = stage_duration
 
-            if stage_short_name != "skip" and self.postDataToKafkaExtended == True:
+            if stage_short_name != "skip" and self.post_data_to_kafka_extended == True:
                 json_data_kafka[f"{stage_short_name}_start"] = str(stage_start)
                 json_data_kafka[f"{stage_short_name}_stop"] = str(stage_stop)
                 json_data_kafka[f"{stage_short_name}_duration"] = stage_duration
 
-            if stage_short_name != "skip" and self.postDataToAWSSNSExtended == True:
+            if (
+                stage_short_name != "skip"
+                and self.post_data_to_aws_sns_extended == True
+            ):
                 json_data_aws_sns[f"{stage_short_name}_start"] = str(stage_start)
                 json_data_aws_sns[f"{stage_short_name}_stop"] = str(stage_stop)
                 json_data_aws_sns[f"{stage_short_name}_duration"] = stage_duration
@@ -1124,8 +1127,10 @@ class stage:
         json_data_aws_sns["stop"] = str(import_stop)
         json_data_aws_sns["duration"] = import_duration
 
-        if self.postDataToKafka == True:
-            result = self.sendStatistics.publish_kafka_data(json.dumps(json_data_kafka))
+        if self.post_data_to_kafka == True:
+            result = self.send_statistics.publish_kafka_data(
+                json.dumps(json_data_kafka)
+            )
             if result == False:
                 logging.info("Kafka publish failed!")
                 logging.info("Saving the JSON to the json_to_send table instead")
@@ -1133,8 +1138,8 @@ class stage:
                     "import_statistics", "kafka", json.dumps(json_data_kafka)
                 )
 
-        if self.postDataToREST == True:
-            response = self.sendStatistics.send_rest_data(json.dumps(json_data_rest))
+        if self.post_data_to_rest == True:
+            response = self.send_statistics.send_rest_data(json.dumps(json_data_rest))
             if response != 200:
                 logging.info("REST call failed!")
                 logging.info("Saving the JSON to the json_to_send table instead")
@@ -1143,7 +1148,7 @@ class stage:
                 )
 
         if self.post_data_to_aws_sns == True:
-            result = self.sendStatistics.send_aws_sns_data(
+            result = self.send_statistics.send_aws_sns_data(
                 json.dumps(json_data_aws_sns)
             )
             if result == False:
@@ -1174,7 +1179,7 @@ class stage:
             values_part.append(value)
 
         query = "select stage, start, stop, duration from import_stage_statistics where hive_db = %s and hive_table = %s"
-        self.mysql_cursor.execute(query, (self.Hive_DB, self.Hive_Table))
+        self.mysql_cursor.execute(query, (self.hive_db, self.hive_table))
         logging.debug("SQL Statement executed: %s" % (self.mysql_cursor.statement))
 
         duplicate_columns = False
@@ -1263,7 +1268,7 @@ class stage:
         query = (
             "delete from import_statistics_last where hive_db = %s and hive_table = %s"
         )
-        self.mysql_cursor.execute(query, (self.Hive_DB, self.Hive_Table))
+        self.mysql_cursor.execute(query, (self.hive_db, self.hive_table))
         self.mysql_conn.commit()
         logging.debug("SQL Statement executed: %s" % (self.mysql_cursor.statement))
 
@@ -1285,12 +1290,12 @@ class stage:
 
         if self.memory_stage == False:
             query = "delete from import_stage where hive_db = %s and hive_table = %s"
-            self.mysql_cursor.execute(query, (self.Hive_DB, self.Hive_Table))
+            self.mysql_cursor.execute(query, (self.hive_db, self.hive_table))
             self.mysql_conn.commit()
             logging.debug("SQL Statement executed: %s" % (self.mysql_cursor.statement))
 
             query = "delete from import_stage_statistics where hive_db = %s and hive_table = %s"
-            self.mysql_cursor.execute(query, (self.Hive_DB, self.Hive_Table))
+            self.mysql_cursor.execute(query, (self.hive_db, self.hive_table))
             self.mysql_conn.commit()
             logging.debug("SQL Statement executed: %s" % (self.mysql_cursor.statement))
 
@@ -1305,7 +1310,7 @@ class stage:
                 self.current_stage = 0
             else:
                 query = "select stage from import_stage where hive_db = %s and hive_table = %s"
-                self.mysql_cursor.execute(query, (self.Hive_DB, self.Hive_Table))
+                self.mysql_cursor.execute(query, (self.hive_db, self.hive_table))
                 logging.debug(
                     "SQL Statement executed: %s" % (self.mysql_cursor.statement)
                 )
@@ -1316,11 +1321,11 @@ class stage:
                 else:
                     self.current_stage = row[0]
 
-        self.stageTimeStart = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
-        self.stageTimeStop = None
-        self.stageDurationStart = time.monotonic()
-        self.stageDurationStop = 0.0
-        self.stageDurationTime = 0.0
+        self.stage_time_start = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
+        self.stage_time_stop = None
+        self.stage_duration_start = time.monotonic()
+        self.stage_duration_stop = 0.0
+        self.stage_duration_time = 0.0
 
         logging.debug("Executing stage.get_stage() - Finished")
         return self.current_stage
@@ -1330,7 +1335,7 @@ class stage:
         logging.debug("Executing stage.get_stage_start_stop()")
 
         query = "select stage, start, stop, duration from import_stage_statistics where hive_db = %s and hive_table = %s "
-        self.mysql_cursor.execute(query, (self.Hive_DB, self.Hive_Table))
+        self.mysql_cursor.execute(query, (self.hive_db, self.hive_table))
         logging.debug("SQL Statement executed: %s" % (self.mysql_cursor.statement))
 
         return_dict = {}
@@ -1370,20 +1375,20 @@ class stage:
             return
 
         # Calculate time and save to import_stage_statistics
-        self.stageTimeStop = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
-        self.stageDurationStop = time.monotonic()
-        self.stageDurationTime = self.stageDurationStop - self.stageDurationStart
+        self.stage_time_stop = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
+        self.stage_duration_stop = time.monotonic()
+        self.stage_duration_time = self.stage_duration_stop - self.stage_duration_start
 
         logging.debug("Setting stage to %s", new_stage)
-        logging.debug("stageTimeStart: %s", self.stageTimeStart)
-        logging.debug("stageTimeStop:  %s", self.stageTimeStop)
-        logging.debug("stageDurationStart: %s", self.stageDurationStart)
-        logging.debug("stageDurationStop:  %s", self.stageDurationStop)
-        logging.debug("stageDurationTime:  %s", self.stageDurationTime)
+        logging.debug("stageTimeStart: %s", self.stage_time_start)
+        logging.debug("stageTimeStop:  %s", self.stage_time_stop)
+        logging.debug("stageDurationStart: %s", self.stage_duration_start)
+        logging.debug("stageDurationStop:  %s", self.stage_duration_stop)
+        logging.debug("stageDurationTime:  %s", self.stage_duration_time)
 
         query = "select count(stage) from import_stage_statistics where hive_db = %s and hive_table = %s and stage = %s"
         self.mysql_cursor.execute(
-            query, (self.Hive_DB, self.Hive_Table, self.current_stage)
+            query, (self.hive_db, self.hive_table, self.current_stage)
         )
         logging.debug("SQL Statement executed: %s" % (self.mysql_cursor.statement))
 
@@ -1394,21 +1399,21 @@ class stage:
             query += "( hive_db, hive_table, stage, start, stop, duration )"
             query += "values "
             query += "( "
-            query += "	'%s', " % (self.Hive_DB)
-            query += "	'%s', " % (self.Hive_Table)
+            query += "	'%s', " % (self.hive_db)
+            query += "	'%s', " % (self.hive_table)
             query += "	%s, " % (self.current_stage)
-            query += "	'%s', " % (self.stageTimeStart)
-            query += "	'%s', " % (self.stageTimeStop)
-            query += "	%s " % (round(self.stageDurationTime))
+            query += "	'%s', " % (self.stage_time_start)
+            query += "	'%s', " % (self.stage_time_stop)
+            query += "	%s " % (round(self.stage_duration_time))
             query += ") "
         else:
             query = "update import_stage_statistics set"
-            query += "	start = '%s', " % (self.stageTimeStart)
-            query += "	stop = '%s', " % (self.stageTimeStop)
-            query += "	duration = %s " % (round(self.stageDurationTime))
+            query += "	start = '%s', " % (self.stage_time_start)
+            query += "	stop = '%s', " % (self.stage_time_stop)
+            query += "	duration = %s " % (round(self.stage_duration_time))
             query += "where "
-            query += "	hive_db = '%s' " % (self.Hive_DB)
-            query += "	and hive_table = '%s' " % (self.Hive_Table)
+            query += "	hive_db = '%s' " % (self.hive_db)
+            query += "	and hive_table = '%s' " % (self.hive_table)
             query += "	and stage = '%s' " % (self.current_stage)
 
         self.mysql_cursor.execute(query)
@@ -1419,7 +1424,7 @@ class stage:
 
         # Save stage information in import_stage
         query = "select count(stage) from import_stage where hive_db = %s and hive_table = %s"
-        self.mysql_cursor.execute(query, (self.Hive_DB, self.Hive_Table))
+        self.mysql_cursor.execute(query, (self.hive_db, self.hive_table))
         logging.debug("SQL Statement executed: %s" % (self.mysql_cursor.statement))
 
         row = self.mysql_cursor.fetchone()
@@ -1436,8 +1441,8 @@ class stage:
             query += ") "
             query += "values "
             query += "( "
-            query += "	'%s', " % (self.Hive_DB)
-            query += "	'%s', " % (self.Hive_Table)
+            query += "	'%s', " % (self.hive_db)
+            query += "	'%s', " % (self.hive_table)
             query += "	%s, " % (new_stage)
             query += "	'%s', " % (stage_description)
             query += "	'%s' " % (datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f"))
@@ -1451,19 +1456,19 @@ class stage:
                 datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
             )
             query += "where "
-            query += "	hive_db = '%s' " % (self.Hive_DB)
-            query += "	and hive_table = '%s' " % (self.Hive_Table)
+            query += "	hive_db = '%s' " % (self.hive_db)
+            query += "	and hive_table = '%s' " % (self.hive_table)
 
         self.mysql_cursor.execute(query)
         self.mysql_conn.commit()
         logging.debug("SQL Statement executed: %s" % (self.mysql_cursor.statement))
 
         self.current_stage = new_stage
-        self.stageTimeStart = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
-        self.stageTimeStop = None
-        self.stageDurationStart = time.monotonic()
-        self.stageDurationStop = 0.0
-        self.stageDurationTime = 0.0
+        self.stage_time_start = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
+        self.stage_time_stop = None
+        self.stage_duration_start = time.monotonic()
+        self.stage_duration_stop = 0.0
+        self.stage_duration_time = 0.0
 
         logging.debug("Executing stage.set_stage() - Finished")
 
@@ -1489,8 +1494,8 @@ class stage:
         self.mysql_cursor.execute(
             query,
             (
-                self.Hive_DB,
-                self.Hive_Table,
+                self.hive_db,
+                self.hive_table,
                 datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f"),
                 stage,
                 stage_description,

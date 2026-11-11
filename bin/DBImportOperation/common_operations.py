@@ -41,20 +41,20 @@ class operation(metaclass=Singleton):
     def __init__(self, hive_db=None, hive_table=None):
         logging.debug("Executing common_operation.__init__()")
 
-        self.Hive_DB = hive_db
-        self.Hive_Table = hive_table
+        self.hive_db = hive_db
+        self.hive_table = hive_table
         self.hive_conn = None
         self.hive_cursor = None
-        self.sparkCatalogName = None
-        self.debugLogLevel = False
+        self.spark_catalog_name = None
+        self.debug_log_level = False
 
         if logging.root.level == 10:  # DEBUG
-            self.debugLogLevel = True
+            self.debug_log_level = True
 
         # Fetch and initialize the Kerberos configuration
-        self.kerberosPrincipal = configuration.get("Kerberos", "principal")
+        self.kerberos_principal = configuration.get("Kerberos", "principal")
         self.web_hcat_auth = HTTPKerberosAuth(
-            force_preemptive=True, principal=self.kerberosPrincipal
+            force_preemptive=True, principal=self.kerberos_principal
         )
 
         self.common_config = common_config.config()
@@ -82,10 +82,10 @@ class operation(metaclass=Singleton):
         self.metastore_type = configuration.get("Metastore", "metastore_type")
         if self.metastore_type == constant.CATALOG_HIVE_DIRECT:
             self.metastore = hiveDirect.hiveMetastoreDirect()
-            self.sparkCatalogName = "hive"
+            self.spark_catalog_name = "hive"
         elif self.metastore_type == constant.CATALOG_GLUE:
             self.metastore = glue.glueCatalog()
-            self.sparkCatalogName = "glue"
+            self.spark_catalog_name = "glue"
         else:
             raise invalidConfiguration(
                 "Configuration 'metastore_type' under [Metastore] in the configuration file contains an invalid option"
@@ -111,8 +111,8 @@ class operation(metaclass=Singleton):
 
     def set_hive_table(self, hive_db, hive_table):
         """Sets the parameters to work against a new Hive database and table"""
-        self.Hive_DB = hive_db.lower()
-        self.Hive_Table = hive_table.lower()
+        self.hive_db = hive_db.lower()
+        self.hive_table = hive_table.lower()
 
     def set_table_and_column_names(
         self,
@@ -137,24 +137,24 @@ class operation(metaclass=Singleton):
     ):
         """Sets the name of the databases, tables and columns"""
 
-        self.Hive_Import_DB = hive_import_db
-        self.Hive_Import_Table = hive_import_table
-        self.Hive_Import_View = hive_import_view
-        self.Hive_History_DB = hive_history_db
-        self.Hive_History_Table = hive_history_table
-        self.Hive_HistoryTemp_DB = hive_history_temp_db
-        self.Hive_HistoryTemp_Table = hive_history_temp_table
-        self.Hive_Import_PKonly_DB = hive_import_pk_only_db
-        self.Hive_Import_PKonly_Table = hive_import_pk_only_table
-        self.Hive_Delete_DB = hive_delete_db
-        self.Hive_Delete_Table = hive_delete_table
-        self.Hive_ColumnName_Import = hive_column_name_import
-        self.Hive_ColumnName_Insert = hive_column_name_insert
-        self.Hive_ColumnName_Update = hive_column_name_update
-        self.Hive_ColumnName_Delete = hive_column_name_delete
-        self.Hive_ColumnName_IUD = hive_column_name_iud
-        self.Hive_ColumnName_HistoryTimestamp = hive_column_name_history_timestamp
-        self.Hive_ColumnName_Source = hive_column_name_source
+        self.hive_import_db = hive_import_db
+        self.hive_import_table = hive_import_table
+        self.hive_import_view = hive_import_view
+        self.hive_history_db = hive_history_db
+        self.hive_history_table = hive_history_table
+        self.hive_history_temp_db = hive_history_temp_db
+        self.hive_history_temp_table = hive_history_temp_table
+        self.hive_import_pk_only_db = hive_import_pk_only_db
+        self.hive_import_pk_only_table = hive_import_pk_only_table
+        self.hive_delete_db = hive_delete_db
+        self.hive_delete_table = hive_delete_table
+        self.hive_column_name_import = hive_column_name_import
+        self.hive_column_name_insert = hive_column_name_insert
+        self.hive_column_name_update = hive_column_name_update
+        self.hive_column_name_delete = hive_column_name_delete
+        self.hive_column_name_iud = hive_column_name_iud
+        self.hive_column_name_history_timestamp = hive_column_name_history_timestamp
+        self.hive_column_name_source = hive_column_name_source
 
     def check_hive_meta_store(self):
         logging.debug("Executing common_operations.check_hive_meta_store()")
@@ -278,13 +278,13 @@ class operation(metaclass=Singleton):
             result = result[
                 ~result["name"].isin(
                     [
-                        self.Hive_ColumnName_Import,
-                        self.Hive_ColumnName_Insert,
-                        self.Hive_ColumnName_Update,
-                        self.Hive_ColumnName_Delete,
-                        self.Hive_ColumnName_IUD,
-                        self.Hive_ColumnName_HistoryTimestamp,
-                        self.Hive_ColumnName_Source,
+                        self.hive_column_name_import,
+                        self.hive_column_name_insert,
+                        self.hive_column_name_update,
+                        self.hive_column_name_delete,
+                        self.hive_column_name_iud,
+                        self.hive_column_name_history_timestamp,
+                        self.hive_column_name_source,
                     ]
                 )
             ]
@@ -792,7 +792,7 @@ class operation(metaclass=Singleton):
 
             # if columnName in ["datalake_import"] and createMergeColumns == True:
             if (
-                column_name in [self.Hive_ColumnName_Import]
+                column_name in [self.hive_column_name_import]
                 and create_merge_columns == True
             ):
                 datalake_import_exists = True
@@ -815,28 +815,28 @@ class operation(metaclass=Singleton):
             # hiveColumnsInsertAdding.append("datalake_update")
             hive_columns_create_adding.append(
                 '%s char(1) COMMENT "Last operation of this record was I=Insert, U=Update or D=Delete"'
-                % (self.Hive_ColumnName_IUD)
+                % (self.hive_column_name_iud)
             )
             hive_columns_create_adding.append(
                 '%s timestamp COMMENT "Timestamp for insert in Datalake"'
-                % (self.Hive_ColumnName_Insert)
+                % (self.hive_column_name_insert)
             )
             hive_columns_create_adding.append(
                 '%s timestamp COMMENT "Timestamp for last update in Datalake"'
-                % (self.Hive_ColumnName_Update)
+                % (self.hive_column_name_update)
             )
-            hive_columns_insert_adding.append(self.Hive_ColumnName_IUD)
-            hive_columns_insert_adding.append(self.Hive_ColumnName_Insert)
-            hive_columns_insert_adding.append(self.Hive_ColumnName_Update)
+            hive_columns_insert_adding.append(self.hive_column_name_iud)
+            hive_columns_insert_adding.append(self.hive_column_name_insert)
+            hive_columns_insert_adding.append(self.hive_column_name_update)
 
             if create_delete_column == True:
                 # hiveColumnsCreateAdding.append("datalake_delete timestamp COMMENT \"Timestamp for soft delete in Datalake\"")
                 # hiveColumnsInsertAdding.append("datalake_delete")
                 hive_columns_create_adding.append(
                     '%s timestamp COMMENT "Timestamp for soft delete in Datalake"'
-                    % (self.Hive_ColumnName_Delete)
+                    % (self.hive_column_name_delete)
                 )
-                hive_columns_insert_adding.append(self.Hive_ColumnName_Delete)
+                hive_columns_insert_adding.append(self.hive_column_name_delete)
 
         # Create the Bucketed table
         query = "create table `%s`.`%s` " % (hive_db, hive_table_bucketed)
@@ -861,8 +861,8 @@ class operation(metaclass=Singleton):
             if datalake_import_exists == True:
                 # query += ", 'I', datalake_import, datalake_import"
                 query += ", 'I', %s, %s" % (
-                    self.Hive_ColumnName_Import,
-                    self.Hive_ColumnName_Import,
+                    self.hive_column_name_import,
+                    self.hive_column_name_import,
                 )
             else:
                 query += ', \'I\', timestamp("1900-01-01 00:00:00.000"), timestamp("1900-01-01 00:00:00.000")'

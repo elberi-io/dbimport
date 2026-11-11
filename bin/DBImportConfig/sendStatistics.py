@@ -34,13 +34,13 @@ class sendStatistics:
         self.rest_headers = {"Content-type": "application/json"}
 
         self.rest_endpoint = self.common_config.get_config_value(key="rest_url")
-        self.RESTtimeout = self.common_config.get_config_value(key="rest_timeout")
+        self.rest_timeout = self.common_config.get_config_value(key="rest_timeout")
         self.rest_verify_ssl = self.common_config.get_config_value(key="rest_verifyssl")
         self.rest_trust_ca_file = self.common_config.get_config_value(
             key="rest_trustcafile"
         )
 
-        self.kafkaBrokers = self.common_config.get_config_value(key="kafka_brokers")
+        self.kafka_brokers = self.common_config.get_config_value(key="kafka_brokers")
         self.kafka_trust_ca_file = self.common_config.get_config_value(
             key="kafka_trustcafile"
         )
@@ -50,7 +50,7 @@ class sendStatistics:
         self.kafka_sasl_mechanism = self.common_config.get_config_value(
             key="kafka_saslmechanism"
         )
-        self.kafkaTopic = self.common_config.get_config_value(key="kafka_topic")
+        self.kafka_topic = self.common_config.get_config_value(key="kafka_topic")
 
         self.aws_sns_topic = self.common_config.get_config_value(
             key="post_data_to_awssns_topic"
@@ -62,7 +62,7 @@ class sendStatistics:
             )
             sys.exit(1)
 
-        if self.RESTtimeout == "":
+        if self.rest_timeout == "":
             logging.error(
                 "Cant find the REST endpoint timeout. Please check configuration file"
             )
@@ -88,7 +88,7 @@ class sendStatistics:
                     self.rest_endpoint,
                     data=json_data,
                     headers=self.rest_headers,
-                    timeout=self.RESTtimeout,
+                    timeout=self.rest_timeout,
                 )
             else:
                 if self.rest_verify_ssl == True:
@@ -100,7 +100,7 @@ class sendStatistics:
                     self.rest_endpoint,
                     data=json_data,
                     headers=self.rest_headers,
-                    timeout=self.RESTtimeout,
+                    timeout=self.rest_timeout,
                     verify=rest_verify,
                 )
 
@@ -141,17 +141,17 @@ class sendStatistics:
                 and self.kafka_security_protocol != None
             ):
                 producer = kafka.KafkaProducer(
-                    bootstrap_servers=self.kafkaBrokers,
+                    bootstrap_servers=self.kafka_brokers,
                     security_protocol=self.kafka_security_protocol,
                     sasl_mechanism=self.kafka_sasl_mechanism,
                     ssl_context=ssl_context,
                 )
             else:
                 producer = kafka.KafkaProducer(
-                    bootstrap_servers=self.kafkaBrokers, ssl_context=ssl_context
+                    bootstrap_servers=self.kafka_brokers, ssl_context=ssl_context
                 )
 
-            producer.send(topic=self.kafkaTopic, value=json_data.encode("utf-8"))
+            producer.send(topic=self.kafka_topic, value=json_data.encode("utf-8"))
 
         except AssertionError as e:
             logging.error("Kafka Error: %s", e)
@@ -196,7 +196,7 @@ class sendStatistics:
         # Create a Secrets Manager client
         session = boto3.session.Session()
         client = session.client(
-            service_name="sns", region_name=self.common_config.awsRegion
+            service_name="sns", region_name=self.common_config.aws_region
         )
 
         try:

@@ -53,44 +53,44 @@ class atlasCrawler(threading.Thread):
         self.name = name
         self.jdbc_connection_mutex = mutex
         self.atlas_crawler_process_queue = atlas_crawler_process_queue
-        self.atlasCrawlerResultQueue = atlas_crawler_result_queue
+        self.atlas_crawler_result_queue = atlas_crawler_result_queue
         self.thread_stop_event = thread_stop_event
         self.logger_name = logger_name
-        self.atlasOperation = atlas_operations.atlasOperation(logger_name)
+        self.atlas_operation = atlas_operations.atlasOperation(logger_name)
 
-    # 		self.sourceSchema = schemaReader.source()
+    # 		self.schema_reader = schemaReader.source()
     # 		self.jdbc_conn = None
-    # 		self.JDBCCursor = None
+    # 		self.jdbc_cursor = None
 
     def run(self):
         log = logging.getLogger(self.logger_name)
         log.info("Atlas crawler thread %s started", self.name)
-        self.atlasOperation.testVariable = self.name
-        self.atlasCrawlerRequest = None
+        self.atlas_operation.testVariable = self.name
+        self.atlas_crawler_request = None
 
-        if self.atlasOperation.check_atlas_schema(logger=self.logger_name) == False:
+        if self.atlas_operation.check_atlas_schema(logger=self.logger_name) == False:
             return False
 
         while not self.thread_stop_event.isSet():
             try:
-                self.atlasCrawlerRequest = self.atlas_crawler_process_queue.get(
+                self.atlas_crawler_request = self.atlas_crawler_process_queue.get(
                     block=True, timeout=None
                 )
             except Empty:
-                self.atlasCrawlerRequest = None
+                self.atlas_crawler_request = None
 
-            if self.atlasCrawlerRequest is None:
+            if self.atlas_crawler_request is None:
                 time.sleep(1)
                 continue
 
             response = {}
-            response["dbAlias"] = self.atlasCrawlerRequest.get("dbAlias")
+            response["dbAlias"] = self.atlas_crawler_request.get("dbAlias")
 
             try:
-                self.atlasOperation.set_configuration(
-                    self.atlasCrawlerRequest, self.jdbc_connection_mutex
+                self.atlas_operation.set_configuration(
+                    self.atlas_crawler_request, self.jdbc_connection_mutex
                 )
-                atlas_operation_result = self.atlasOperation.discover_atlas_rdbms()
+                atlas_operation_result = self.atlas_operation.discover_atlas_rdbms()
             except invalidConfiguration:
                 response["result"] = False
                 response["blacklist"] = True
@@ -111,7 +111,7 @@ class atlasCrawler(threading.Thread):
                 response["result"] = True
                 response["blacklist"] = False
 
-            self.atlasCrawlerResultQueue.put(response)
+            self.atlas_crawler_result_queue.put(response)
 
         log.info("Atlas crawler thread %s stopped", self.name)
 
@@ -126,17 +126,17 @@ class atlasDiscovery(threading.Thread):
         log = logging.getLogger(logger)
         self.mysql_conn = None
         self.mysql_cursor = None
-        self.configDBSession = None
+        self.config_db_session = None
         self.config_db_engine = None
-        self.debugLogLevel = False
+        self.debug_log_level = False
         atlas_enabled = True
-        # 		self.atlasOperation = atlas_operations.atlasOperation(logger)
+        # 		self.atlas_operation = atlas_operations.atlasOperation(logger)
 
         if logging.root.level == 10:  # DEBUG
-            self.debugLogLevel = True
+            self.debug_log_level = True
 
         self.atlas_crawler_process_queue = Queue()
-        self.atlasCrawlerResultQueue = Queue()
+        self.atlas_crawler_result_queue = Queue()
         self.jdbc_connection_mutex = threading.Lock()
 
         # Fetch configuration about MySQL database and how to connect to it
@@ -163,7 +163,7 @@ class atlasDiscovery(threading.Thread):
             thread = atlasCrawler(
                 name=str(thread_id),
                 atlas_crawler_process_queue=self.atlas_crawler_process_queue,
-                atlas_crawler_result_queue=self.atlasCrawlerResultQueue,
+                atlas_crawler_result_queue=self.atlas_crawler_result_queue,
                 thread_stop_event=self.thread_stop_event,
                 logger_name=atlas_crawler_log_name,
                 mutex=self.jdbc_connection_mutex,
@@ -183,7 +183,7 @@ class atlasDiscovery(threading.Thread):
         )
 
         # 		if atlasEnabled == True:
-        # 			atlasEnabled = self.atlasOperation.check_atlas_schema(logger=logger)
+        # 			atlasEnabled = self.atlas_operation.check_atlas_schema(logger=logger)
 
         if atlas_enabled == True:
             log.info("atlasDiscovery started")
@@ -260,7 +260,7 @@ class atlasDiscovery(threading.Thread):
                         try:
                             self.common_config.lookup_connection_alias(db_alias)
                         except invalidConfiguration as err:
-                            if self.common_config.atlasJdbcSourceSupport == True:
+                            if self.common_config.atlas_jdbc_source_support == True:
                                 log.error(
                                     "Connection '%s' have invalid configuration. Failed with '%s'",
                                     db_alias,
@@ -268,7 +268,7 @@ class atlasDiscovery(threading.Thread):
                                 )
                                 altas_operation_failed = True
 
-                        if self.common_config.atlasJdbcSourceSupport == False:
+                        if self.common_config.atlas_jdbc_source_support == False:
                             # This source type does not support Atlas discovery
                             log.debug(
                                 "Connection '%s' does not support Atlas discovery. Skipping..."
@@ -290,7 +290,7 @@ class atlasDiscovery(threading.Thread):
 
                         # 						if altasOperationFailed == False and self.common_config.connect_to_jdbc(allJarFiles=True, exitIfFailure=False, logger=logger) == True:
                         if altas_operation_failed == False:
-                            # 							self.common_config.atlasEnabled = True
+                            # 							self.common_config.atlas_enabled = True
                             self.connections_sent_to_crawlers.append(db_alias)
 
                             log.debug("Sending alias '%s' to queue" % (db_alias))
@@ -359,7 +359,7 @@ class atlasDiscovery(threading.Thread):
             # ********************************
 
             try:
-                atlas_crawler_result = self.atlasCrawlerResultQueue.get(
+                atlas_crawler_result = self.atlas_crawler_result_queue.get(
                     block=False, timeout=1
                 )
             except Empty:
@@ -457,10 +457,10 @@ class atlasDiscovery(threading.Thread):
 
     def get_dbimport_session(self):
         log = logging.getLogger("atlasDiscovery")
-        if self.configDBSession == None:
+        if self.config_db_session == None:
             self.connect_dbimport_db()
 
-        return self.configDBSession()
+        return self.config_db_session()
 
     def connect_dbimport_db(self):
         # Esablish a SQLAlchemy connection to the DBImport database
@@ -469,10 +469,10 @@ class atlasDiscovery(threading.Thread):
 
         try:
             self.config_db_engine = sa.create_engine(
-                self.connect_str, echo=self.debugLogLevel
+                self.connect_str, echo=self.debug_log_level
             )
             self.config_db_engine.connect()
-            self.configDBSession = sessionmaker(bind=self.config_db_engine)
+            self.config_db_session = sessionmaker(bind=self.config_db_engine)
 
         except sa.exc.OperationalError as err:
             log.error("%s", err)
@@ -495,4 +495,4 @@ class atlasDiscovery(threading.Thread):
             self.config_db_engine.dispose()
             self.config_db_engine = None
 
-        self.configDBSession = None
+        self.config_db_session = None

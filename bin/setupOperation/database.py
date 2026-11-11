@@ -39,10 +39,10 @@ class initialize:
 
         self.mysql_conn = None
         self.mysql_cursor = None
-        self.debugLogLevel = False
+        self.debug_log_level = False
 
         if logging.root.level == 10:  # DEBUG
-            self.debugLogLevel = True
+            self.debug_log_level = True
 
         try:
             dbimport_home = os.environ["DBIMPORT_HOME"]
@@ -65,9 +65,11 @@ class initialize:
 
         # Esablish a SQLAlchemy connection to the DBImport database
         try:
-            self.configDB = sa.create_engine(self.connect_str, echo=self.debugLogLevel)
-            self.configDB.connect()
-            self.configDBSession = sessionmaker(bind=self.configDB)
+            self.config_db = sa.create_engine(
+                self.connect_str, echo=self.debug_log_level
+            )
+            self.config_db.connect()
+            self.config_db_session = sessionmaker(bind=self.config_db)
 
         except sa.exc.OperationalError as err:
             logging.error("%s", err)
@@ -245,7 +247,7 @@ class initialize:
 
     def create_db(self, create_only_table=None):
 
-        inspector = sa.inspect(self.configDB)
+        inspector = sa.inspect(self.config_db)
         all_tables = inspector.get_table_names()
         if "alembic_version" in all_tables:
             print(
@@ -267,7 +269,7 @@ class initialize:
         self.update_configuration_values()
 
     def create_default_environment_types(self):
-        session = self.configDBSession()
+        session = self.config_db_session()
 
         number_of_environemnt_types = session.query(
             configSchema.jdbcConnectionsEnvironments.__table__
@@ -286,7 +288,7 @@ class initialize:
             session.commit()
 
     def update_configuration_values(self):
-        session = self.configDBSession()
+        session = self.config_db_session()
 
         # Create a list of all available JDBC drivers
         result_df = (

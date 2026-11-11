@@ -37,25 +37,25 @@ from DBImportOperation import common_operations
 class operation(metaclass=Singleton):
     def __init__(self):
         logging.debug("Executing copy_operations.__init__()")
-        self.Hive_DB = None
-        self.Hive_Table = None
-        self.startDate = None
-        self.configDBSession = None
-        self.remoteInstanceConfigDBEngine = None
-        self.remoteInstanceConfigDBSession = None
-        self.copyDestinations = None
+        self.hive_db = None
+        self.hive_table = None
+        self.start_date = None
+        self.config_db_session = None
+        self.remote_instance_config_db_engine = None
+        self.remote_instance_config_db_session = None
+        self.copy_destinations = None
 
         self.common_operations = common_operations.operation()
         self.import_config = import_config.config()
 
-        self.Hive_DB = self.common_operations.Hive_DB
-        self.Hive_Table = self.common_operations.Hive_Table
-        self.startDate = self.import_config.startDate
+        self.hive_db = self.common_operations.hive_db
+        self.hive_table = self.common_operations.hive_table
+        self.start_date = self.import_config.start_date
 
         self.import_config.common_config.connect_sqlalchemy()
-        self.configDBSession = self.import_config.common_config.configDBSession
+        self.config_db_session = self.import_config.common_config.config_db_session
         self.crypto = self.import_config.common_config.crypto
-        self.debugLogLevel = self.import_config.common_config.debugLogLevel
+        self.debug_log_level = self.import_config.common_config.debug_log_level
 
         logging.debug("Executing copy_operations.__init__() - Finished")
 
@@ -65,7 +65,7 @@ class operation(metaclass=Singleton):
     def check_dbimport_instance(self, instance):
         """Checks if instance exists in the dbimport_instances table"""
 
-        session = self.configDBSession()
+        session = self.config_db_session()
         dbimport_instances = aliased(configSchema.dbimportInstances)
 
         result = (
@@ -98,7 +98,7 @@ class operation(metaclass=Singleton):
             self.remove_temporary_files()
             sys.exit(1)
 
-        session = self.configDBSession()
+        session = self.config_db_session()
         dbimport_instances = aliased(configSchema.dbimportInstances)
 
         dbimport_instance = (
@@ -113,10 +113,10 @@ class operation(metaclass=Singleton):
     def get_copy_destinations(self, hive_db, hive_table):
         """Return the Copy Phase that the specified table have"""
 
-        session = self.configDBSession()
+        session = self.config_db_session()
         copy_tables = aliased(configSchema.copyTables)
 
-        self.copyDestinations = []
+        self.copy_destinations = []
 
         copy_tables_result = pd.DataFrame(
             session.query(
@@ -152,26 +152,26 @@ class operation(metaclass=Singleton):
                         dest_string_async = "%s;Asynchronous" % (row["destination"])
                         dest_string_sync = "%s;Synchronous" % (row["destination"])
                         if (
-                            dest_string_sync in self.copyDestinations
+                            dest_string_sync in self.copy_destinations
                             and dest_string == dest_string_async
                         ):
                             # ASync have priority. So if sync is already in there, we remove it and add async
-                            self.copyDestinations.remove(dest_string_sync)
+                            self.copy_destinations.remove(dest_string_sync)
                         if (
-                            dest_string_async not in self.copyDestinations
-                            and dest_string_sync not in self.copyDestinations
+                            dest_string_async not in self.copy_destinations
+                            and dest_string_sync not in self.copy_destinations
                         ):
-                            self.copyDestinations.append(dest_string)
+                            self.copy_destinations.append(dest_string)
 
-        if self.copyDestinations == []:
-            self.copyDestinations = None
-        return self.copyDestinations
+        if self.copy_destinations == []:
+            self.copy_destinations = None
+        return self.copy_destinations
 
     def connect_remote_dbimport_instance(self, instance):
         """Connects to the configuration database with SQLAlchemy"""
 
         connect_status = True
-        session = self.configDBSession()
+        session = self.config_db_session()
         dbimport_instances = aliased(configSchema.dbimportInstances)
 
         row = (
@@ -227,9 +227,9 @@ class operation(metaclass=Singleton):
             row[2],
         )
 
-        if self.remoteInstanceConfigDBEngine != None:
+        if self.remote_instance_config_db_engine != None:
             try:
-                self.remoteInstanceConfigDBEngine.dispose()
+                self.remote_instance_config_db_engine.dispose()
             except:
                 print(
                     "Unexpected warning when closing connection to DBImport Instance database: "
@@ -237,12 +237,12 @@ class operation(metaclass=Singleton):
                 print(sys.exc_info())
 
         try:
-            self.remoteInstanceConfigDBEngine = sa.create_engine(
-                instance_connect_str, echo=self.debugLogLevel, pool_pre_ping=True
+            self.remote_instance_config_db_engine = sa.create_engine(
+                instance_connect_str, echo=self.debug_log_level, pool_pre_ping=True
             )
-            self.remoteInstanceConfigDBEngine.connect()
-            self.remoteInstanceConfigDBSession = sessionmaker(
-                bind=self.remoteInstanceConfigDBEngine
+            self.remote_instance_config_db_engine.connect()
+            self.remote_instance_config_db_session = sessionmaker(
+                bind=self.remote_instance_config_db_engine
             )
 
         except sa.exc.OperationalError as err:
@@ -263,15 +263,15 @@ class operation(metaclass=Singleton):
         """Returns True or False if the previous copy was completed. Returns True if there is nothing to copy.
         If it is a full import, then it will return True if the previous copy have status 0 (not started)."""
 
-        session = self.configDBSession()
+        session = self.config_db_session()
         copy_async_status = aliased(configSchema.copyASyncStatus)
 
-        if self.copyDestinations == None:
+        if self.copy_destinations == None:
             return True
 
         ongoing_copy = False
 
-        for dest_and_method in self.copyDestinations:
+        for dest_and_method in self.copy_destinations:
             destination = dest_and_method.split(";")[0]
             method = dest_and_method.split(";")[1]
 
@@ -302,16 +302,16 @@ class operation(metaclass=Singleton):
             return True
 
     def copy_data_to_destinations(self):
-        session = self.configDBSession()
+        session = self.config_db_session()
 
         source_hdfs_address = self.common_operations.hdfs_address
         source_hdfs_basedir = self.common_operations.hdfs_basedir
 
-        if self.copyDestinations == None:
+        if self.copy_destinations == None:
             logging.warning("There are no destination for this table to receive a copy")
             return
 
-        for dest_and_method in self.copyDestinations:
+        for dest_and_method in self.copy_destinations:
             destination = dest_and_method.split(";")[0]
             method = dest_and_method.split(";")[1]
 
@@ -330,12 +330,12 @@ class operation(metaclass=Singleton):
             target_hdfs_basedir = row[1]
 
             source_hdfs_dir = (
-                (source_hdfs_basedir + "/" + self.Hive_DB + "/" + self.Hive_Table)
+                (source_hdfs_basedir + "/" + self.hive_db + "/" + self.hive_table)
                 .replace("$", "")
                 .replace(" ", "")
             )
             target_hdfs_dir = (
-                (target_hdfs_basedir + "/" + self.Hive_DB + "/" + self.Hive_Table)
+                (target_hdfs_basedir + "/" + self.hive_db + "/" + self.hive_table)
                 .replace("$", "")
                 .replace(" ", "")
             )
@@ -354,8 +354,8 @@ class operation(metaclass=Singleton):
                     # No current copy ongoing for this table. Just insert it into the table
                     newcopy_async_status = configSchema.copyASyncStatus(
                         table_id=self.import_config.table_id,
-                        hive_db=self.import_config.Hive_DB,
-                        hive_table=self.import_config.Hive_Table,
+                        hive_db=self.import_config.hive_db,
+                        hive_table=self.import_config.hive_table,
                         destination=destination,
                         hdfs_source_path="%s%s"
                         % (source_hdfs_address, source_hdfs_dir),
@@ -510,7 +510,7 @@ class operation(metaclass=Singleton):
         hive_filter_db = hive_filter_db.replace("*", "%").strip()
         hive_filter_table = hive_filter_table.replace("*", "%").strip()
 
-        local_session = self.configDBSession()
+        local_session = self.config_db_session()
         import_tables = aliased(configSchema.importTables)
         copy_async_status = aliased(configSchema.copyASyncStatus)
 
@@ -573,8 +573,8 @@ class operation(metaclass=Singleton):
                 row["hive_db"],
                 row["hive_table"],
             )
-            self.import_config.Hive_DB = row["hive_db"]
-            self.import_config.Hive_Table = row["hive_table"]
+            self.import_config.hive_db = row["hive_db"]
+            self.import_config.hive_table = row["hive_table"]
 
             try:
                 self.import_config.get_import_config()
@@ -648,7 +648,7 @@ class operation(metaclass=Singleton):
             self.remove_temporary_files()
             sys.exit(1)
 
-        local_session = self.configDBSession()
+        local_session = self.config_db_session()
         airflow_import_dags = aliased(configSchema.airflowImportDags)
         import_tables = aliased(configSchema.importTables)
         copy_async_status = aliased(configSchema.copyASyncStatus)
@@ -738,8 +738,8 @@ class operation(metaclass=Singleton):
                     row["hive_db"],
                     row["hive_table"],
                 )
-                self.import_config.Hive_DB = row["hive_db"]
-                self.import_config.Hive_Table = row["hive_table"]
+                self.import_config.hive_db = row["hive_db"]
+                self.import_config.hive_table = row["hive_table"]
 
                 try:
                     self.import_config.get_import_config()
@@ -828,7 +828,7 @@ class operation(metaclass=Singleton):
             self.remove_temporary_files()
             sys.exit(1)
 
-        local_session = self.configDBSession()
+        local_session = self.config_db_session()
         airflow_export_dags = aliased(configSchema.airflowExportDags)
         airflow_tasks = aliased(configSchema.airflowTasks)
         export_tables = aliased(configSchema.exportTables)
@@ -847,7 +847,7 @@ class operation(metaclass=Singleton):
 
         # airflowDAG now contains a Pandas DF with the complete DAG configuraiton. This needs to be synced to the remote DBImport instance
         if self.connect_remote_dbimport_instance(instance=copy_destination):
-            remote_session = self.remoteInstanceConfigDBSession()
+            remote_session = self.remote_instance_config_db_session()
 
             # Check if the DAG exists on the remote DBImport instance
             result = (
@@ -1041,11 +1041,11 @@ class operation(metaclass=Singleton):
             self.remove_temporary_files()
             sys.exit(1)
 
-        local_session = self.configDBSession()
+        local_session = self.config_db_session()
         alembic_version = aliased(configSchema.alembicVersion)
 
         if self.connect_remote_dbimport_instance(instance=remote_instance):
-            remote_session = self.remoteInstanceConfigDBSession()
+            remote_session = self.remote_instance_config_db_session()
 
             local_version = local_session.query(
                 alembic_version.version_num
@@ -1084,7 +1084,7 @@ class operation(metaclass=Singleton):
             self.remove_temporary_files()
             sys.exit(1)
 
-        local_session = self.configDBSession()
+        local_session = self.config_db_session()
         airflow_import_dags = aliased(configSchema.airflowImportDags)
         airflow_tasks = aliased(configSchema.airflowTasks)
         import_tables = aliased(configSchema.importTables)
@@ -1103,7 +1103,7 @@ class operation(metaclass=Singleton):
 
         # airflowDAG now contains a Pandas DF with the complete DAG configuraiton. This needs to be synced to the remote DBImport instance
         if self.connect_remote_dbimport_instance(instance=copy_destination):
-            remote_session = self.remoteInstanceConfigDBSession()
+            remote_session = self.remote_instance_config_db_session()
 
             # Check if the DAG exists on the remote DBImport instance
             result = (
@@ -1157,9 +1157,9 @@ class operation(metaclass=Singleton):
             # **************************
             # Prepair and trigger a copy of all schemas to the other cluster
             # **************************
-            self.copyDestinations = []
+            self.copy_destinations = []
             dest_string = "%s;Asynchronous" % (copy_destination)
-            self.copyDestinations.append(dest_string)
+            self.copy_destinations.append(dest_string)
 
             for hive_filter in hive_filter_str.split(";"):
                 hive_filter_db = hive_filter.split(".")[0]
@@ -1272,14 +1272,14 @@ class operation(metaclass=Singleton):
         deploy_mode=False,
     ):
         """Copy the schema definitions to the target instances"""
-        local_session = self.configDBSession()
+        local_session = self.config_db_session()
         export_tables = aliased(configSchema.exportTables)
         export_columns = aliased(configSchema.exportColumns)
         jdbc_connections = aliased(configSchema.jdbcConnections)
         dbimport_instances = aliased(configSchema.dbimportInstances)
 
         if self.connect_remote_dbimport_instance(instance=destination):
-            remote_session = self.remoteInstanceConfigDBSession()
+            remote_session = self.remote_instance_config_db_session()
 
             # Check if if we are going to sync the credentials for this destination
             result = (
@@ -1568,9 +1568,9 @@ class operation(metaclass=Singleton):
         deploy_mode=False,
     ):
         """Copy the schema definitions to the target instances"""
-        local_session = self.configDBSession()
+        local_session = self.config_db_session()
 
-        if self.copyDestinations == None:
+        if self.copy_destinations == None:
             if deploy_mode == False:
                 logging.warning(
                     "There are no destination for this table to receive a copy"
@@ -1587,8 +1587,8 @@ class operation(metaclass=Singleton):
         ):
             # This happens during a normal import
             table_id = self.import_config.table_id
-            hive_db = self.import_config.Hive_DB
-            hive_table = self.import_config.Hive_Table
+            hive_db = self.import_config.hive_db
+            hive_table = self.import_config.hive_table
             connection_alias = self.import_config.connection_alias
             print_destination = True
         else:
@@ -1596,7 +1596,7 @@ class operation(metaclass=Singleton):
             # And then the destination is specified in cmd and not needed to be printed
             print_destination = False
 
-        for dest_and_method in self.copyDestinations:
+        for dest_and_method in self.copy_destinations:
             destination = dest_and_method.split(";")[0]
             method = dest_and_method.split(";")[1]
             if self.connect_remote_dbimport_instance(instance=destination):
@@ -1618,7 +1618,7 @@ class operation(metaclass=Singleton):
                             hive_db,
                             hive_table,
                         )
-                remote_session = self.remoteInstanceConfigDBSession()
+                remote_session = self.remote_instance_config_db_session()
 
                 jdbc_connections = aliased(configSchema.jdbcConnections)
                 import_tables = aliased(configSchema.importTables)
@@ -1904,9 +1904,9 @@ class operation(metaclass=Singleton):
         self, jdbc_connection, destination, deploy_mode=False
     ):
         """Copy the JDBC Connection to the target instances"""
-        local_session = self.configDBSession()
+        local_session = self.config_db_session()
 
-        if self.copyDestinations == None:
+        if self.copy_destinations == None:
             if deploy_mode == False:
                 logging.warning(
                     "There are no destination for this table to receive a copy"
@@ -1915,7 +1915,7 @@ class operation(metaclass=Singleton):
                 logging.warning("There are no destination for this deployment")
             return
 
-        remote_session = self.remoteInstanceConfigDBSession()
+        remote_session = self.remote_instance_config_db_session()
 
         jdbc_connections = aliased(configSchema.jdbcConnections)
         dbimport_instances = aliased(configSchema.dbimportInstances)
@@ -2028,9 +2028,9 @@ class operation(metaclass=Singleton):
             sys.exit(1)
 
         if hive_db == None:
-            hive_db = self.Hive_DB
+            hive_db = self.hive_db
         if hive_table == None:
-            hive_table = self.Hive_Table
+            hive_table = self.hive_table
 
         local_hdfs_path = (
             (local_hdfs_path + "/" + hive_db + "/" + hive_table)
@@ -2104,9 +2104,9 @@ class operation(metaclass=Singleton):
             sys.exit(1)
 
         if hive_db == None:
-            hive_db = self.Hive_DB
+            hive_db = self.hive_db
         if hive_table == None:
-            hive_table = self.Hive_Table
+            hive_table = self.hive_table
 
         local_hdfs_path = (
             (local_hdfs_path + "/" + hive_db + "/" + hive_table)
@@ -2120,7 +2120,7 @@ class operation(metaclass=Singleton):
         )
 
         # Calculate the source and target HDFS directories
-        session = self.configDBSession()
+        session = self.config_db_session()
         dbimport_instances = aliased(configSchema.dbimportInstances)
 
         row = (

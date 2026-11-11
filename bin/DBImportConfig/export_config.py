@@ -41,39 +41,39 @@ class config(metaclass=Singleton):
         logging.debug("Executing export_config.__init__()")
         self.mysql_conn: Any = None
         self.mysql_cursor01: Any = None
-        self.startDate: str | None = None
+        self.start_date: str | None = None
         self.common_config = None
 
-        self.connectionAlias = connection_alias
-        self.targetSchema = target_schema
-        self.targetTable = target_table
+        self.connection_alias = connection_alias
+        self.target_schema = target_schema
+        self.target_table = target_table
 
         self.common_config = common_config.config()
-        self.common_config.operationType = "export"
-        self.common_config.targetSchema = target_schema
-        self.common_config.targetTable = target_table
+        self.common_config.operation_type = "export"
+        self.common_config.target_schema = target_schema
+        self.common_config.target_table = target_table
 
-        self.sendStatistics = sendStatistics.sendStatistics()
+        self.send_statistics = sendStatistics.sendStatistics()
 
-        self.startDate = self.common_config.startDate
+        self.start_date = self.common_config.start_date
         self.mysql_conn = self.common_config.mysql_conn
         self.mysql_cursor01 = self.mysql_conn.cursor(buffered=True)
         self.mysql_cursor02 = self.mysql_conn.cursor(buffered=True)
 
-        self.tableID: int | None = None
-        self.exportType: str | None = None
-        self.hiveDB: str | None = None
-        self.hiveTable: str | None = None
-        self.exportPhase: str | None = None
-        self.exportPhaseDescription: str | None = None
-        self.datalakeSourceConnection: str | None = None
-        self.exportIsIncremental: bool | None = None
-        self.validateExport: bool | None = None
-        self.hiveJavaHeap: int | None = None
+        self.table_id: int | None = None
+        self.export_type: str | None = None
+        self.hive_db: str | None = None
+        self.hive_table: str | None = None
+        self.export_phase: str | None = None
+        self.export_phase_description: str | None = None
+        self.datalake_source_connection: str | None = None
+        self.export_is_incremental: bool | None = None
+        self.validate_export: bool | None = None
+        self.hive_java_heap: int | None = None
 
-        self.tempTableNeeded: bool | None = None
+        self.temp_table_needed: bool | None = None
 
-        self.fullExecutedCommand: str | None = None
+        self.full_executed_command: str | None = None
 
         self.sqoop_mapcolumnjava: list[str] | None = None
         self.sqoop_last_mappers: int | None = None
@@ -82,22 +82,22 @@ class config(metaclass=Singleton):
         self.incr_column: str | None = None
         self.incr_maxvalue: str | None = None
         self.incr_validation_method: str | None = None
-        self.sqlWhereAddition: str | None = None
-        self.truncateTargetTable: bool | None = None
-        self.sqlSessions: int | None = None
-        self.sqoopMappers: int | None = None
-        self.generatedSqoopOptions = None
-        self.forceCreateTempTable: bool | None = None
+        self.sql_where_addition: str | None = None
+        self.truncate_target_table: bool | None = None
+        self.sql_sessions: int | None = None
+        self.sqoop_mappers: int | None = None
+        self.generated_sqoop_options = None
+        self.force_create_temp_table: bool | None = None
 
-        self.awsS3bucket: str | None = None
-        self.awsS3path: str | None = None
-        self.awsS3bucketPath: str | None = None
+        self.aws_s3_bucket: str | None = None
+        self.aws_s3_path: str | None = None
+        self.aws_s3_bucket_path: str | None = None
 
-        self.validationMethod: str | None = None
-        self.validationCustomQueryHiveSQL: str | None = None
-        self.validationCustomQueryTargetSQL: str | None = None
-        self.validationCustomQueryHiveValue: str | None = None
-        self.validationCustomQueryTargetValue: str | None = None
+        self.validation_method: str | None = None
+        self.validation_custom_query_hive_sql: str | None = None
+        self.validation_custom_query_target_sql: str | None = None
+        self.validation_custom_query_hive_value: str | None = None
+        self.validation_custom_query_target_value: str | None = None
 
         # Initialize the stage class that will handle all stage operations for us
         self.stage = export_stage.stage(
@@ -241,14 +241,14 @@ class config(metaclass=Singleton):
 
     def save_stage_statistics(self) -> None:
         self.stage.save_stage_statistics(
-            dbalias=self.connectionAlias,
+            dbalias=self.connection_alias,
             target_database=self.common_config.jdbc_database,
-            target_schema=self.targetSchema,
-            target_table=self.targetTable,
-            hive_db=self.hiveDB,
-            hive_table=self.hiveTable,
-            export_phase=self.exportPhase,
-            incremental=self.exportIsIncremental,
+            target_schema=self.target_schema,
+            target_table=self.target_table,
+            hive_db=self.hive_db,
+            hive_table=self.hive_table,
+            export_phase=self.export_phase,
+            incremental=self.export_is_incremental,
             size=self.sqoop_last_size,
             rows=self.sqoop_last_rows,
             sessions=self.sqoop_last_mappers,
@@ -256,14 +256,14 @@ class config(metaclass=Singleton):
 
     def convert_stage_statistics_to_json(self) -> None:
         self.stage.convert_stage_statistics_to_json(
-            dbalias=self.connectionAlias,
+            dbalias=self.connection_alias,
             target_database=self.common_config.jdbc_database,
-            target_schema=self.targetSchema,
-            target_table=self.targetTable,
-            hive_db=self.hiveDB,
-            hive_table=self.hiveTable,
-            export_phase=self.exportPhase,
-            incremental=self.exportIsIncremental,
+            target_schema=self.target_schema,
+            target_table=self.target_table,
+            hive_db=self.hive_db,
+            hive_table=self.hive_table,
+            export_phase=self.export_phase,
+            incremental=self.export_is_incremental,
             rows=self.sqoop_last_rows,
             sessions=self.sqoop_last_mappers,
         )
@@ -272,10 +272,10 @@ class config(metaclass=Singleton):
         """Sends a start JSON document to REST and/or Kafka"""
         logging.debug("Executing export_config.send_start_json()")
 
-        self.postDataToREST = self.common_config.get_config_value(
+        self.post_data_to_rest = self.common_config.get_config_value(
             key="post_data_to_rest"
         )
-        self.postDataToKafka = self.common_config.get_config_value(
+        self.post_data_to_kafka = self.common_config.get_config_value(
             key="post_data_to_kafka"
         )
         self.post_data_to_aws_sns = self.common_config.get_config_value(
@@ -283,8 +283,8 @@ class config(metaclass=Singleton):
         )
 
         if (
-            self.postDataToREST == False
-            and self.postDataToKafka == False
+            self.post_data_to_rest == False
+            and self.post_data_to_kafka == False
             and self.post_data_to_aws_sns == False
         ):
             return
@@ -293,38 +293,38 @@ class config(metaclass=Singleton):
         json_data: dict[str, Any] = {}
         json_data["type"] = "export"
         json_data["status"] = "started"
-        json_data["dbalias"] = self.connectionAlias
+        json_data["dbalias"] = self.connection_alias
         json_data["target_database"] = self.common_config.jdbc_database
-        json_data["target_schema"] = self.targetSchema
-        json_data["target_table"] = self.targetTable
-        json_data["hive_db"] = self.hiveDB
-        json_data["hive_table"] = self.hiveTable
-        json_data["export_phase"] = self.exportPhase
-        json_data["incremental"] = self.exportIsIncremental
+        json_data["target_schema"] = self.target_schema
+        json_data["target_table"] = self.target_table
+        json_data["hive_db"] = self.hive_db
+        json_data["hive_table"] = self.hive_table
+        json_data["export_phase"] = self.export_phase
+        json_data["incremental"] = self.export_is_incremental
 
-        if self.postDataToKafka == True:
-            result = self.sendStatistics.publish_kafka_data(json.dumps(json_data))
+        if self.post_data_to_kafka == True:
+            result = self.send_statistics.publish_kafka_data(json.dumps(json_data))
             if result == False:
                 logging.warning("Kafka publish failed! No start message posted")
 
-        if self.postDataToREST == True:
-            response = self.sendStatistics.send_rest_data(json.dumps(json_data))
+        if self.post_data_to_rest == True:
+            response = self.send_statistics.send_rest_data(json.dumps(json_data))
             if response != 200:
                 logging.warning("REST call failed! No start message posted")
 
         if self.post_data_to_aws_sns == True:
-            result = self.sendStatistics.send_aws_sns_data(json.dumps(json_data))
+            result = self.send_statistics.send_aws_sns_data(json.dumps(json_data))
             if result == False:
                 logging.warning("AWS SNS publish failed! No start message posted")
 
         logging.debug("Executing export_config.send_start_json() - Finished")
 
     def check_time_window(self) -> None:
-        self.common_config.check_time_window(self.connectionAlias)
+        self.common_config.check_time_window(self.connection_alias)
 
     def check_jdbc_table(self) -> bool:
         return self.common_config.check_jdbc_table(
-            schema=self.targetSchema, table=self.targetTable
+            schema=self.target_schema, table=self.target_table
         )
 
     def get_export_config(self) -> None:
@@ -360,7 +360,7 @@ class config(metaclass=Singleton):
         query += "    and target_table = %s "
 
         self.mysql_cursor01.execute(
-            query, (self.connectionAlias, self.targetSchema, self.targetTable)
+            query, (self.connection_alias, self.target_schema, self.target_table)
         )
         logging.debug("SQL Statement executed: %s" % (self.mysql_cursor01.statement))
 
@@ -371,11 +371,11 @@ class config(metaclass=Singleton):
 
         row = self.mysql_cursor01.fetchone()
 
-        self.tableID = row[0]
-        self.exportType = row[1]
-        self.hiveDB = row[2]
-        self.hiveTable = row[3]
-        self.validateExport = row[4]
+        self.table_id = row[0]
+        self.export_type = row[1]
+        self.hive_db = row[2]
+        self.hive_table = row[3]
+        self.validate_export = row[4]
         self.sqoop_last_size = row[5]
         self.sqoop_last_rows = row[6]
         self.sqoop_last_mappers = row[7]
@@ -383,35 +383,35 @@ class config(metaclass=Singleton):
         self.incr_maxvalue = row[9]
         truncate_target_table = row[10]
         self.incr_validation_method = row[11]
-        self.hiveJavaHeap = row[12]
-        self.exportTool = row[13]
-        self.sqlWhereAddition = row[14]
-        self.validationMethod = row[15]
-        self.validationCustomQueryHiveSQL = row[16]
-        self.validationCustomQueryTargetSQL = row[17]
-        self.validationCustomQueryHiveValue = row[18]
-        self.validationCustomQueryTargetValue = row[19]
-        self.forceCreateTempTable = row[20]
-        self.common_config.operationTimestamp = row[21]
+        self.hive_java_heap = row[12]
+        self.export_tool = row[13]
+        self.sql_where_addition = row[14]
+        self.validation_method = row[15]
+        self.validation_custom_query_hive_sql = row[16]
+        self.validation_custom_query_target_sql = row[17]
+        self.validation_custom_query_hive_value = row[18]
+        self.validation_custom_query_target_value = row[19]
+        self.force_create_temp_table = row[20]
+        self.common_config.operation_timestamp = row[21]
 
-        if self.validateExport == 0:
-            self.validateExport = False
+        if self.validate_export == 0:
+            self.validate_export = False
         else:
-            self.validateExport = True
+            self.validate_export = True
 
         if truncate_target_table == 1:
-            self.truncateTargetTable = True
+            self.truncate_target_table = True
         else:
-            self.truncateTargetTable = False
+            self.truncate_target_table = False
 
-        if self.forceCreateTempTable == 1:
-            self.forceCreateTempTable = True
+        if self.force_create_temp_table == 1:
+            self.force_create_temp_table = True
         else:
-            self.forceCreateTempTable = False
+            self.force_create_temp_table = False
 
         if (
-            self.validationMethod != constant.VALIDATION_METHOD_CUSTOMQUERY
-            and self.validationMethod != constant.VALIDATION_METHOD_ROWCOUNT
+            self.validation_method != constant.VALIDATION_METHOD_CUSTOMQUERY
+            and self.validation_method != constant.VALIDATION_METHOD_ROWCOUNT
         ):
             raise invalidConfiguration(
                 f"Only the values '{constant.VALIDATION_METHOD_ROWCOUNT}' or '{constant.VALIDATION_METHOD_CUSTOMQUERY}' is valid for column validationMethod in export_tables."
@@ -425,15 +425,18 @@ class config(metaclass=Singleton):
                 "Only the values 'full' or 'incr' is valid for column incr_validation_method in export_tables."
             )
 
-        if self.exportTool != "sqoop" and self.exportTool != "spark":
+        if self.export_tool != "sqoop" and self.export_tool != "spark":
             logging.error("ERROR: Unsupported export Tool configured.")
             raise invalidConfiguration(
                 "Unsupported export Tool configured (%s). Please check configuration"
-                % (self.exportTool)
+                % (self.export_tool)
             )
 
-        if self.exportTool == "sqoop":
-            if self.sqlWhereAddition != None and self.sqlWhereAddition.strip() != "":
+        if self.export_tool == "sqoop":
+            if (
+                self.sql_where_addition != None
+                and self.sql_where_addition.strip() != ""
+            ):
                 logging.error("ERROR: Unsupported export configuration")
                 raise invalidConfiguration(
                     "Using a SQL Where configuration in 'sql_where_addition' column is not supported with sqoop exports"
@@ -442,142 +445,147 @@ class config(metaclass=Singleton):
         # Get the connection details. This is needed in order to determine what kind of connection we talk about.
         self.lookup_connection_alias()
 
-        if self.exportType == "full" and self.common_config.db_awss3 == False:
-            self.exportPhase = constant.EXPORT_PHASE_FULL
-            self.exportPhaseDescription = "Full Export"
+        if self.export_type == "full" and self.common_config.db_awss3 == False:
+            self.export_phase = constant.EXPORT_PHASE_FULL
+            self.export_phase_description = "Full Export"
 
-        if self.exportType == "full" and self.common_config.db_awss3 == True:
-            self.exportPhase = constant.EXPORT_PHASE_AWSS3_FULL
-            self.exportPhaseDescription = "Full Export"
+        if self.export_type == "full" and self.common_config.db_awss3 == True:
+            self.export_phase = constant.EXPORT_PHASE_AWSS3_FULL
+            self.export_phase_description = "Full Export"
 
-        if self.exportType == "incr" and self.common_config.db_awss3 == False:
-            self.exportPhase = constant.EXPORT_PHASE_INCR
-            self.exportPhaseDescription = "Incremental Export"
+        if self.export_type == "incr" and self.common_config.db_awss3 == False:
+            self.export_phase = constant.EXPORT_PHASE_INCR
+            self.export_phase_description = "Incremental Export"
 
-        if self.exportType == "incr" and self.common_config.db_awss3 == True:
+        if self.export_type == "incr" and self.common_config.db_awss3 == True:
             raise invalidConfiguration(
                 "Incremental exports to AWS S3 is not supported in this version of DBImport"
             )
 
         if self.common_config.db_awss3 == True:
-            if self.targetSchema == "-" or self.targetSchema == "":
-                self.awsS3bucketPath = "%s/%s" % (
-                    self.common_config.awsS3bucket,
-                    self.targetTable,
+            if self.target_schema == "-" or self.target_schema == "":
+                self.aws_s3_bucket_path = "%s/%s" % (
+                    self.common_config.aws_s3_bucket,
+                    self.target_table,
                 )
             else:
-                self.awsS3bucketPath = "%s/%s/%s" % (
-                    self.common_config.awsS3bucket,
-                    self.targetSchema,
-                    self.targetTable,
+                self.aws_s3_bucket_path = "%s/%s/%s" % (
+                    self.common_config.aws_s3_bucket,
+                    self.target_schema,
+                    self.target_table,
                 )
 
-            self.awsS3bucket = self.awsS3bucketPath.split("/")[
+            self.aws_s3_bucket = self.aws_s3_bucket_path.split("/")[
                 2
             ]  # Need to start on 2 as s3a:// is first
-            self.awsS3path = "/".join(self.awsS3bucketPath.split("/")[3:])
+            self.aws_s3_path = "/".join(self.aws_s3_bucket_path.split("/")[3:])
 
-        if self.exportPhase == None:
+        if self.export_phase == None:
             raise invalidConfiguration(
                 "Import type '%s' is not a valid type. Please check configuration"
                 % (self.import_type)
             )
 
-        if self.exportPhase == constant.EXPORT_PHASE_INCR:
-            self.exportIsIncremental = True
+        if self.export_phase == constant.EXPORT_PHASE_INCR:
+            self.export_is_incremental = True
             if self.incr_column == None:
                 raise invalidConfiguration(
                     "Incremental import requires a column configured in the 'incr_column' column"
                 )
         else:
-            self.exportIsIncremental = False
+            self.export_is_incremental = False
 
         # Fetch data from jdbc_connection table
         query = "select datalake_source from jdbc_connections where dbalias = %s "
-        self.mysql_cursor01.execute(query, (self.connectionAlias,))
+        self.mysql_cursor01.execute(query, (self.connection_alias,))
         logging.debug("SQL Statement executed: %s" % (self.mysql_cursor01.statement))
 
         if self.mysql_cursor01.rowcount != 1:
             raise invalidConfiguration(
-                f"There is no JDBC Connection defined with the alias '{self.connectionAlias}'"
+                f"There is no JDBC Connection defined with the alias '{self.connection_alias}'"
             )
 
         row = self.mysql_cursor01.fetchone()
 
-        self.datalakeSourceConnection = row[0]
+        self.datalake_source_connection = row[0]
 
         # Set the name of the history tables, temporary tables and such
-        self.hiveExportTempDB: str = self.common_config.get_config_value(
+        self.hive_export_temp_db: str = self.common_config.get_config_value(
             key="export_staging_database"
         )
-        if self.targetSchema == "-":
-            self.hiveExportTempTable: str = (
-                self.connectionAlias.replace("-", "_")
+        if self.target_schema == "-":
+            self.hive_export_temp_table: str = (
+                self.connection_alias.replace("-", "_")
                 + "__"
-                + self.targetTable
+                + self.target_table
                 + "__exporttemptable"
             )
         else:
-            self.hiveExportTempTable = (
-                self.connectionAlias.replace("-", "_")
+            self.hive_export_temp_table = (
+                self.connection_alias.replace("-", "_")
                 + "__"
-                + self.targetSchema
+                + self.target_schema
                 + "__"
-                + self.targetTable
+                + self.target_table
                 + "__exporttemptable"
             )
-        self.hiveExportTempTable = self.hiveExportTempTable.lower()
+        self.hive_export_temp_table = self.hive_export_temp_table.lower()
 
         logging.debug("Settings from export_config.get_export_config()")
-        logging.debug("    tableID = %s", self.tableID)
-        logging.debug("    exportType = %s", self.exportType)
-        logging.debug("    hiveJavaHeap = %s", self.hiveJavaHeap)
-        logging.debug("    hiveDB = %s", self.hiveDB)
-        logging.debug("    hiveTable = %s", self.hiveTable)
-        logging.debug("    sqlWhereAddition = %s", self.sqlWhereAddition)
-        logging.debug("    exportIsIncremental = %s", self.exportIsIncremental)
+        logging.debug("    tableID = %s", self.table_id)
+        logging.debug("    exportType = %s", self.export_type)
+        logging.debug("    hiveJavaHeap = %s", self.hive_java_heap)
+        logging.debug("    hiveDB = %s", self.hive_db)
+        logging.debug("    hiveTable = %s", self.hive_table)
+        logging.debug("    sqlWhereAddition = %s", self.sql_where_addition)
+        logging.debug("    exportIsIncremental = %s", self.export_is_incremental)
         logging.debug(
-            "    datalakeSourceConnection = %s", self.datalakeSourceConnection
+            "    datalakeSourceConnection = %s", self.datalake_source_connection
         )
-        logging.debug("    exportPhaseDescription = %s", self.exportPhaseDescription)
-        logging.debug("    exportPhase = %s", self.exportPhase)
-        logging.debug("    hiveExportTempDB = %s" % (self.hiveExportTempDB))
-        logging.debug("    hiveExportTempTable = %s", self.hiveExportTempTable)
+        logging.debug("    exportPhaseDescription = %s", self.export_phase_description)
+        logging.debug("    exportPhase = %s", self.export_phase)
+        logging.debug("    hiveExportTempDB = %s" % (self.hive_export_temp_db))
+        logging.debug("    hiveExportTempTable = %s", self.hive_export_temp_table)
         logging.debug("Executing export_config.get_export_config() - Finished")
 
     def lookup_connection_alias(self, connection_alias: str | None = None) -> None:
 
         if connection_alias == None:
-            connection_alias = self.connectionAlias
+            connection_alias = self.connection_alias
 
         self.common_config.lookup_connection_alias(connection_alias)
 
     def validate_custom_query(self) -> bool:
         """Validates the custom queries"""
         if (
-            self.validationCustomQueryTargetValue == None
-            or self.validationCustomQueryHiveValue == None
+            self.validation_custom_query_target_value == None
+            or self.validation_custom_query_hive_value == None
         ):
             logging.error(
                 "Validation failed! One of the custom queries did not return a result"
             )
             logging.info(
-                "Result from Hive query:   %s", self.validationCustomQueryHiveValue
+                "Result from Hive query:   %s", self.validation_custom_query_hive_value
             )
             logging.info(
-                "Result from target query: %s", self.validationCustomQueryTargetValue
+                "Result from target query: %s",
+                self.validation_custom_query_target_value,
             )
             raise validationError()
 
-        if self.validationCustomQueryTargetValue != self.validationCustomQueryHiveValue:
+        if (
+            self.validation_custom_query_target_value
+            != self.validation_custom_query_hive_value
+        ):
             logging.error(
                 "Validation failed! The custom queries did not return the same result"
             )
             logging.info(
-                "Result from Hive query:   %s", self.validationCustomQueryHiveValue
+                "Result from Hive query:   %s", self.validation_custom_query_hive_value
             )
             logging.info(
-                "Result from target query: %s", self.validationCustomQueryTargetValue
+                "Result from target query: %s",
+                self.validation_custom_query_target_value,
             )
             raise validationError()
 
@@ -595,7 +603,7 @@ class config(metaclass=Singleton):
 
         query = "update export_tables set validationCustomQueryHiveValue = %s where table_id = %s"
 
-        self.mysql_cursor01.execute(query, (json_value, self.tableID))
+        self.mysql_cursor01.execute(query, (json_value, self.table_id))
         self.mysql_conn.commit()
         logging.debug("SQL Statement executed: %s" % (self.mysql_cursor01.statement))
 
@@ -616,7 +624,7 @@ class config(metaclass=Singleton):
 
         query = "update export_tables set validationCustomQueryTargetValue = %s where table_id = %s"
 
-        self.mysql_cursor01.execute(query, (json_value, self.tableID))
+        self.mysql_cursor01.execute(query, (json_value, self.table_id))
         self.mysql_conn.commit()
         logging.debug("SQL Statement executed: %s" % (self.mysql_cursor01.statement))
 
@@ -635,17 +643,17 @@ class config(metaclass=Singleton):
         query = (
             "update export_tables set last_update_from_hive = %s where table_id = %s "
         )
-        self.mysql_cursor01.execute(query, (self.startDate, self.tableID))
+        self.mysql_cursor01.execute(query, (self.start_date, self.table_id))
         logging.debug("SQL Statement executed: %s" % (self.mysql_cursor01.statement))
         self.mysql_conn.commit()
 
         # We re-read the date just to make sure we have the exakt same in common_config. This will later be used to group yarn applications per import
         query = "select last_update_from_hive from export_tables where table_id = %s "
-        self.mysql_cursor01.execute(query, (self.tableID,))
+        self.mysql_cursor01.execute(query, (self.table_id,))
         logging.debug("SQL Statement executed: %s" % (self.mysql_cursor01.statement))
 
         row = self.mysql_cursor01.fetchone()
-        self.common_config.operationTimestamp = row[0]
+        self.common_config.operation_timestamp = row[0]
 
         logging.debug(
             "Executing export_config.update_last_update_from_hive() - Finished"
@@ -664,7 +672,7 @@ class config(metaclass=Singleton):
             column_order = row["idx"]
 
             query = "select column_id from export_columns where table_id = %s and column_name = %s "
-            self.mysql_cursor01.execute(query, (self.tableID, column_name))
+            self.mysql_cursor01.execute(query, (self.table_id, column_name))
             logging.debug(
                 "SQL Statement executed: %s" % (self.mysql_cursor01.statement)
             )
@@ -693,13 +701,13 @@ class config(metaclass=Singleton):
                 self.mysql_cursor01.execute(
                     query,
                     (
-                        self.tableID,
+                        self.table_id,
                         column_name,
                         column_type,
                         column_order,
-                        self.hiveDB,
-                        self.hiveTable,
-                        self.startDate,
+                        self.hive_db,
+                        self.hive_table,
+                        self.start_date,
                         column_comment,
                     ),
                 )
@@ -720,9 +728,9 @@ class config(metaclass=Singleton):
                     (
                         column_type,
                         column_order,
-                        self.hiveDB,
-                        self.hiveTable,
-                        self.startDate,
+                        self.hive_db,
+                        self.hive_table,
+                        self.start_date,
                         column_comment,
                         column_id,
                     ),
@@ -739,11 +747,11 @@ class config(metaclass=Singleton):
         logging.debug("Executing export_config.clear_validation_data()")
         logging.info("Clearing rowcounts from previous exports")
 
-        self.validationCustomQueryHiveValue = None
-        self.validationCustomQueryTargetValue = None
+        self.validation_custom_query_hive_value = None
+        self.validation_custom_query_target_value = None
 
         query = "update export_tables set hive_rowcount = NULL, target_rowcount = NULL, validationCustomQueryHiveValue = NULL, validationCustomQueryTargetValue = NULL where table_id = %s"
-        self.mysql_cursor01.execute(query, (self.tableID,))
+        self.mysql_cursor01.execute(query, (self.table_id,))
         self.mysql_conn.commit()
         logging.debug("SQL Statement executed: %s" % (self.mysql_cursor01.statement))
 
@@ -755,37 +763,37 @@ class config(metaclass=Singleton):
         """This function return True or False if a temptable is needed to export from"""
         logging.debug("Executing export_config.is_export_temp_table_needed()")
 
-        self.tempTableNeeded = False
+        self.temp_table_needed = False
 
-        if self.forceCreateTempTable == True:
+        if self.force_create_temp_table == True:
             logging.info("Temporary table usage is forced")
-            self.tempTableNeeded = True
-            return self.tempTableNeeded
+            self.temp_table_needed = True
+            return self.temp_table_needed
 
-        if self.exportTool == "spark":
-            return self.tempTableNeeded
+        if self.export_tool == "spark":
+            return self.temp_table_needed
 
         if (
             hive_table_is_transactional == True
             or hive_table_is_view == True
-            or self.exportIsIncremental == True
+            or self.export_is_incremental == True
         ):
-            self.tempTableNeeded = True
+            self.temp_table_needed = True
 
         query = "select count(column_id) from export_columns "
         query += "where table_id = %s and target_column_name is not null"
-        self.mysql_cursor01.execute(query, (self.tableID,))
+        self.mysql_cursor01.execute(query, (self.table_id,))
         logging.debug("SQL Statement executed: %s" % (self.mysql_cursor01.statement))
 
         row = self.mysql_cursor01.fetchone()
         if row[0] > 0:
-            self.tempTableNeeded = True
+            self.temp_table_needed = True
 
-        logging.debug("tempTableNeeded: %s", self.tempTableNeeded)
+        logging.debug("tempTableNeeded: %s", self.temp_table_needed)
         logging.debug(
             "Executing export_config.is_export_temp_table_needed() - Finished"
         )
-        return self.tempTableNeeded
+        return self.temp_table_needed
 
     def reset_max_value_from_target(self) -> None:
         logging.debug("Executing export_config.reset_max_value_from_target()")
@@ -796,7 +804,7 @@ class config(metaclass=Singleton):
             column = column.upper()
         query = "select max(%s%s%s) from " % (colum_quotation, column, colum_quotation)
         query += self.common_config.get_jdbc_sql_from_table(
-            schema=self.targetSchema, table=self.targetTable
+            schema=self.target_schema, table=self.target_table
         )
         result_df = self.common_config.execute_jdbc_query(query)
         max_value = max_value = result_df.loc[0][0]
@@ -835,7 +843,7 @@ class config(metaclass=Singleton):
             query += "   and c.include_in_export = 1 "
         query += "order by c.column_order"
 
-        self.mysql_cursor01.execute(query, (self.tableID,))
+        self.mysql_cursor01.execute(query, (self.table_id,))
         logging.debug("SQL Statement executed: %s" % (self.mysql_cursor01.statement))
 
         result_df = pd.DataFrame(self.mysql_cursor01.fetchall())
@@ -862,8 +870,8 @@ class config(metaclass=Singleton):
         map_column_java = None
         source_database_type = ""
 
-        source_db = self.hiveDB
-        source_table = self.hiveTable
+        source_db = self.hive_db
+        source_table = self.hive_table
         history_table_export = False
 
         if source_table.endswith("_history"):
@@ -886,7 +894,7 @@ class config(metaclass=Singleton):
                     # A table without _history exists. So lets use that to determine if we need force_string and such
                     history_table_export = True
                 else:
-                    source_table = self.hiveTable
+                    source_table = self.hive_table
 
         if column_type in ("string", "binary"):
             # If the columnType is "string", it might be because we are exporting a table that was imported with force_string = 1.
@@ -1032,21 +1040,21 @@ class config(metaclass=Singleton):
         columns_source = self.get_columns_from_config_database(exclude_columns=True)
         force_uppercase = False
 
-        target_schema = self.targetSchema
-        target_table = self.targetTable
+        target_schema = self.target_schema
+        target_table = self.target_table
 
         if self.common_config.jdbc_servertype in (constant.ORACLE, constant.DB2_UDB):
             force_uppercase = True
-            target_schema = self.targetSchema.upper()
-            target_table = self.targetTable.upper()
+            target_schema = self.target_schema.upper()
+            target_table = self.target_table.upper()
 
         elif self.common_config.jdbc_servertype in (constant.POSTGRESQL):
-            target_schema = self.targetSchema.lower()
-            target_table = self.targetTable.lower()
+            target_schema = self.target_schema.lower()
+            target_table = self.target_table.lower()
 
         elif self.common_config.jdbc_servertype in (constant.SNOWFLAKE):
-            target_schema = self.targetSchema
-            target_table = self.targetTable
+            target_schema = self.target_schema
+            target_table = self.target_table
 
         self.sqoop_mapcolumnjava = []
         first_loop = True
@@ -1243,7 +1251,7 @@ class config(metaclass=Singleton):
                     self.log_target_column_rename(
                         row_in_source["name"],
                         row_in_target["name"],
-                        db_alias=self.connectionAlias,
+                        db_alias=self.connection_alias,
                         database=self.common_config.jdbc_database,
                         schema=target_schema,
                         table=target_table,
@@ -1260,7 +1268,7 @@ class config(metaclass=Singleton):
                             row_in_source["name"],
                             row_in_source["type"],
                             previous_column_type=row_in_target["type"],
-                            db_alias=self.connectionAlias,
+                            db_alias=self.connection_alias,
                             database=self.common_config.jdbc_database,
                             schema=target_schema,
                             table=target_table,
@@ -1355,7 +1363,7 @@ class config(metaclass=Singleton):
                         self.log_target_column_rename(
                             row_in_source["name"],
                             row_in_target["name"],
-                            db_alias=self.connectionAlias,
+                            db_alias=self.connection_alias,
                             database=self.common_config.jdbc_database,
                             schema=target_schema,
                             table=target_table,
@@ -1374,7 +1382,7 @@ class config(metaclass=Singleton):
                                 row_in_source["name"],
                                 row_in_source["type"],
                                 previous_column_type=row_in_target["type"],
-                                db_alias=self.connectionAlias,
+                                db_alias=self.connection_alias,
                                 database=self.common_config.jdbc_database,
                                 schema=target_schema,
                                 table=target_table,
@@ -1472,7 +1480,7 @@ class config(metaclass=Singleton):
             self.log_target_column_add(
                 full_row["name"],
                 column_type=full_row["type"],
-                db_alias=self.connectionAlias,
+                db_alias=self.connection_alias,
                 database=self.common_config.jdbc_database,
                 schema=target_schema,
                 table=target_table,
@@ -1624,7 +1632,7 @@ class config(metaclass=Singleton):
                 row["name"],
                 column_type=row["type"],
                 previous_column_type=previous_column_type,
-                db_alias=self.connectionAlias,
+                db_alias=self.connection_alias,
                 database=self.common_config.jdbc_database,
                 schema=target_schema,
                 table=target_table,
@@ -1788,26 +1796,26 @@ class config(metaclass=Singleton):
         column_quote = ""
 
         if self.common_config.jdbc_servertype in (constant.ORACLE, constant.DB2_UDB):
-            target_schema = self.targetSchema.upper()
-            target_table = self.targetTable.upper()
+            target_schema = self.target_schema.upper()
+            target_table = self.target_table.upper()
             force_column_uppercase = True
             column_quote = '"'
             query = 'create table "%s"."%s" (' % (target_schema, target_table)
 
         elif self.common_config.jdbc_servertype in (constant.POSTGRESQL):
-            target_schema = self.targetSchema.lower()
-            target_table = self.targetTable.lower()
+            target_schema = self.target_schema.lower()
+            target_table = self.target_table.lower()
             query = "create table %s.%s (" % (target_schema, target_table)
 
         elif self.common_config.jdbc_servertype in (constant.SNOWFLAKE):
-            target_schema = self.targetSchema
-            target_table = self.targetTable
+            target_schema = self.target_schema
+            target_table = self.target_table
             query = 'create table "%s"."%s" (' % (target_schema, target_table)
             column_quote = '"'
 
         else:
-            target_schema = self.targetSchema
-            target_table = self.targetTable
+            target_schema = self.target_schema
+            target_table = self.target_table
             if target_schema == "-":
                 query = "create table %s (" % (target_table)
             else:
@@ -1875,7 +1883,7 @@ class config(metaclass=Singleton):
         logging.debug("Executing export_config.save_export_statistics()")
         logging.info("Saving export statistics")
 
-        self.sqoopStartUTS = sqoop_start_uts
+        self.sqoop_start_uts = sqoop_start_uts
         self.sqoop_last_execution_timestamp = datetime.utcfromtimestamp(
             sqoop_start_uts
         ).strftime("%Y-%m-%d %H:%M:%S.000")
@@ -1915,7 +1923,7 @@ class config(metaclass=Singleton):
                 first_set = False
 
             query += "incr_maxvalue_pending = %s"
-            self.sqoopIncrMaxvaluePending = sqoop_incr_maxvalue_pending
+            self.sqoop_incr_maxvalue_pending = sqoop_incr_maxvalue_pending
             query_param.append(sqoop_incr_maxvalue_pending)
 
         if sqoop_mappers != None:
@@ -1930,7 +1938,7 @@ class config(metaclass=Singleton):
         if first_set == False:
             # Only run this if any of the set columns are not None
             query += " where table_id = %s "
-            query_param.append(self.tableID)
+            query_param.append(self.table_id)
 
             self.mysql_cursor01.execute(query, query_param)
             logging.debug(
@@ -1948,7 +1956,7 @@ class config(metaclass=Singleton):
 
         # Save the value to the database
         query = "update export_tables set hive_rowcount = %s where table_id = %s"
-        self.mysql_cursor01.execute(query, (row_count, self.tableID))
+        self.mysql_cursor01.execute(query, (row_count, self.table_id))
         self.mysql_conn.commit()
         logging.debug("SQL Statement executed: %s" % (self.mysql_cursor01.statement))
 
@@ -1961,22 +1969,24 @@ class config(metaclass=Singleton):
 
         logging.info("Executing custom validation query on target table.")
 
-        query = self.validationCustomQueryTargetSQL
-        query = query.replace("${TARGET_SCHEMA}", self.targetSchema)
-        query = query.replace("${TARGET_TABLE}", self.targetTable)
+        query = self.validation_custom_query_target_sql
+        query = query.replace("${TARGET_SCHEMA}", self.target_schema)
+        query = query.replace("${TARGET_TABLE}", self.target_table)
 
         logging.debug("Validation Query on JDBC table: %s", query)
 
         result_df = self.common_config.execute_jdbc_query(query)
         result_json = result_df.to_json(orient="values")
-        self.validationCustomQueryTargetValue = result_json
+        self.validation_custom_query_target_value = result_json
 
         self.save_custom_sql_validation_target_value(
             json_value=result_json, print_info=False
         )
 
-        if len(self.validationCustomQueryTargetValue) > 1024:
-            logging.warning("'%s' is to large.", self.validationCustomQueryTargetValue)
+        if len(self.validation_custom_query_target_value) > 1024:
+            logging.warning(
+                "'%s' is to large.", self.validation_custom_query_target_value
+            )
             raise invalidConfiguration(
                 "The size of the json document on the custom query exceeds 1024 bytes. Change the query to create a result with less than 512 bytes"
             )
@@ -1998,18 +2008,18 @@ class config(metaclass=Singleton):
 
         jdbc_rows_full = None
         jdbc_rows_full = self.common_config.get_jdbc_table_row_count(
-            self.targetSchema, self.targetTable, where_statement
+            self.target_schema, self.target_table, where_statement
         )
 
         # Save the value to the database
         query = "update export_tables set "
         query += "target_rowcount = %s " % (jdbc_rows_full)
-        if self.exportTool == "spark":
+        if self.export_tool == "spark":
             # Need to save the sqoop_last_rows if the export tool is spark, as we dont get this from spark the same way as sqoop gives us
             self.sqoop_last_rows = jdbc_rows_full
             query += ",sqoop_last_rows = %s " % (jdbc_rows_full)
 
-        query += "where table_id = %s" % (self.tableID)
+        query += "where table_id = %s" % (self.table_id)
 
         self.mysql_cursor01.execute(query)
         self.mysql_conn.commit()
@@ -2034,7 +2044,7 @@ class config(metaclass=Singleton):
         query += "	incr_maxvalue_pending = NULL "
         query += "where table_id = %s "
 
-        self.mysql_cursor01.execute(query, (max_value, self.tableID))
+        self.mysql_cursor01.execute(query, (max_value, self.table_id))
         logging.debug("SQL Statement executed: %s" % (self.mysql_cursor01.statement))
         self.mysql_conn.commit()
 
@@ -2049,12 +2059,12 @@ class config(metaclass=Singleton):
         logging.debug("Executing export_config.validate_row_count()")
         return_value = None
 
-        if self.validateExport == True:
+        if self.validate_export == True:
             # Reading the saved number from the configurationdatabase
             # 			if validateSqoop == False:
             if 1 == 1:
-                if self.exportIsIncremental == False or (
-                    self.exportIsIncremental == True
+                if self.export_is_incremental == False or (
+                    self.export_is_incremental == True
                     and self.incr_validation_method == "full"
                 ):
                     # Standard full validation
@@ -2070,7 +2080,7 @@ class config(metaclass=Singleton):
             else:
                 raise undevelopedFeature("Unsupported validation")
 
-            self.mysql_cursor01.execute(query, (self.tableID,))
+            self.mysql_cursor01.execute(query, (self.table_id,))
             logging.debug(
                 "SQL Statement executed: %s" % (self.mysql_cursor01.statement)
             )
@@ -2131,7 +2141,7 @@ class config(metaclass=Singleton):
         if sql_sessions_default > sql_sessions_max:
             sql_sessions_default = sql_sessions_max
 
-        self.sparkMaxExecutors = sql_sessions_max
+        self.spark_max_executors = sql_sessions_max
 
         # Execute SQL query that calculates the value
         query = (
@@ -2141,7 +2151,7 @@ class config(metaclass=Singleton):
             "from export_tables where "
             "table_id = %s"
         )
-        self.mysql_cursor01.execute(query, (self.tableID,))
+        self.mysql_cursor01.execute(query, (self.table_id,))
         logging.debug("SQL Statement executed: %s" % (self.mysql_cursor01.statement))
 
         if self.mysql_cursor01.rowcount != 1:
@@ -2157,43 +2167,43 @@ class config(metaclass=Singleton):
 
         row = self.mysql_cursor01.fetchone()
         sql_sessions_last = row[0]
-        self.sqlSessions = row[1]
-        self.sqoopMappers = row[2]
+        self.sql_sessions = row[1]
+        self.sqoop_mappers = row[2]
 
-        if self.exportTool == "sqoop":
-            if self.sqoopMappers > 0:
+        if self.export_tool == "sqoop":
+            if self.sqoop_mappers > 0:
                 logging.info("Setting the number of mappers to a fixed value")
-                self.sqlSessions = self.sqoopMappers
+                self.sql_sessions = self.sqoop_mappers
 
-            if self.sqlSessions == None:
+            if self.sql_sessions == None:
                 logging.info(
                     "Cant find the previous number of SQL sessions used. Will default to %s",
                     sql_sessions_default,
                 )
-                self.sqlSessions = sql_sessions_default
+                self.sql_sessions = sql_sessions_default
             else:
-                if self.sqlSessions < sql_sessions_min:
-                    self.sqlSessions = sql_sessions_min
-                elif self.sqlSessions > sql_sessions_max:
-                    self.sqlSessions = sql_sessions_max
+                if self.sql_sessions < sql_sessions_min:
+                    self.sql_sessions = sql_sessions_min
+                elif self.sql_sessions > sql_sessions_max:
+                    self.sql_sessions = sql_sessions_max
 
                 logging.info(
                     "The export will use %s parallell SQL sessions in the source system.",
-                    self.sqlSessions,
+                    self.sql_sessions,
                 )
 
-        elif self.exportTool == "spark":
-            if self.sqoopMappers > 0:
+        elif self.export_tool == "spark":
+            if self.sqoop_mappers > 0:
                 logging.info("Setting the number of executors to a fixed value")
                 logging.info(
                     "The export will use %s parallell SQL sessions in the source system.",
-                    self.sqoopMappers,
+                    self.sqoop_mappers,
                 )
-                self.sparkMaxExecutors = self.sqoopMappers
-                self.sqlSessions = self.sqoopMappers
+                self.spark_max_executors = self.sqoop_mappers
+                self.sql_sessions = self.sqoop_mappers
             else:
                 # If 'mappers' is set to -1, we just use the value from the default configuration
-                self.sqlSessions = self.sparkMaxExecutors
+                self.sql_sessions = self.spark_max_executors
 
         logging.debug("Executing export_config.calculate_job_mappers() - Finished")
 
@@ -2211,7 +2221,7 @@ class config(metaclass=Singleton):
             (
                 min_value,
                 max_value,
-                self.tableID,
+                self.table_id,
             ),
         )
         logging.debug("SQL Statement executed: %s" % (self.mysql_cursor01.statement))
@@ -2228,7 +2238,7 @@ class config(metaclass=Singleton):
         query += "	incr_maxvalue = incr_maxvalue_pending "
         query += "where table_id = %s"
 
-        self.mysql_cursor01.execute(query, (self.tableID,))
+        self.mysql_cursor01.execute(query, (self.table_id,))
         logging.debug("SQL Statement executed: %s" % (self.mysql_cursor01.statement))
         self.mysql_conn.commit()
 
@@ -2237,7 +2247,7 @@ class config(metaclass=Singleton):
         query += "	incr_maxvalue_pending = NULL "
         query += "where table_id = %s"
 
-        self.mysql_cursor01.execute(query, (self.tableID,))
+        self.mysql_cursor01.execute(query, (self.table_id,))
         logging.debug("SQL Statement executed: %s" % (self.mysql_cursor01.statement))
         self.mysql_conn.commit()
 
@@ -2250,7 +2260,7 @@ class config(metaclass=Singleton):
         data_to_export = True
 
         query = "select incr_minvalue_pending, incr_maxvalue_pending from export_tables where table_id = %s "
-        self.mysql_cursor01.execute(query, (self.tableID,))
+        self.mysql_cursor01.execute(query, (self.table_id,))
         logging.debug("SQL Statement executed: %s" % (self.mysql_cursor01.statement))
         row = self.mysql_cursor01.fetchone()
         min_value = row[0]
@@ -2276,7 +2286,7 @@ class config(metaclass=Singleton):
         where_statement = ""
 
         query = "select column_type from export_columns where table_id = %s and column_name = %s "
-        self.mysql_cursor01.execute(query, (self.tableID, column_name))
+        self.mysql_cursor01.execute(query, (self.table_id, column_name))
         logging.debug("SQL Statement executed: %s" % (self.mysql_cursor01.statement))
         row = self.mysql_cursor01.fetchone()
         column_type = row[0]
@@ -2286,7 +2296,7 @@ class config(metaclass=Singleton):
         query += "   COALESCE(incr_minvalue_pending, incr_minvalue), "
         query += "   COALESCE(incr_maxvalue_pending, incr_maxvalue) "
         query += "from export_tables where table_id = %s "
-        self.mysql_cursor01.execute(query, (self.tableID,))
+        self.mysql_cursor01.execute(query, (self.table_id,))
         logging.debug("SQL Statement executed: %s" % (self.mysql_cursor01.statement))
         row = self.mysql_cursor01.fetchone()
         min_value = row[0]
