@@ -16,16 +16,9 @@
 # under the License.
 
 import base64
-import hashlib
 import re
-import sys
 from datetime import datetime
 from typing import Any
-
-this = sys.modules[__name__]
-# seedString is set through the module object; mypy cannot see that attribute.
-this.seedString = None  # type: ignore[attr-defined]
-seedString = "testSeed"
 
 
 def _is_bin(ints: object) -> bool:
@@ -75,24 +68,3 @@ def parse_struct_date(timestampString: object) -> str:
         timestamp = datetime.utcfromtimestamp(int(num) / 1000)
         return timestamp.strftime("%Y-%m-%d %H:%M:%S.%f")
     return timestampString
-
-
-def set_seed_string(setValue: str) -> None:
-    global seedString
-    seedString = setValue
-    this.seedString = setValue  # type: ignore[attr-defined]
-    print(seedString)
-    print(this.seedString)
-
-
-def hash_column(columnValue: str) -> Any:
-    global seedString
-    sha_value = hashlib.sha3_512(columnValue.encode()).hexdigest()
-    # 	SeedString = None
-    # 	SeedString = 'testSeed'
-    h = hashlib.blake2b(digest_size=32, person=seedString.encode())
-    h.update(columnValue.encode())
-    hashed_column_content = h.hexdigest()
-    # 	sha_value = hashlib.blake2b(columnValue.encode()).hexdigest()
-    # 	return sha_value
-    return this.seedString

@@ -399,7 +399,7 @@ class operation(metaclass=Singleton):
             or add_db_to_table == True
             or add_custom_text != None
         ):
-            for index, row in merge_df.iterrows():
+            for index, _ in merge_df.iterrows():
                 if merge_df.loc[index, "Exist"] == "left_only":
                     merge_df.loc[index, "targetTable"] = (
                         "_%s" % (merge_df.loc[index, "targetTable"])
@@ -416,7 +416,7 @@ class operation(metaclass=Singleton):
                 self.export_config.remove_temporary_files()
                 sys.exit(1)
 
-            for index, row in merge_df.iterrows():
+            for index, _ in merge_df.iterrows():
                 if merge_df.loc[index, "Exist"] == "left_only":
                     zero_to_add = ""
                     while len(zero_to_add) < (number_length - len(str(start_value))):
@@ -430,7 +430,7 @@ class operation(metaclass=Singleton):
                     start_value += 1
 
         if add_db_to_table == True:
-            for index, row in merge_df.iterrows():
+            for index, _ in merge_df.iterrows():
                 if merge_df.loc[index, "Exist"] == "left_only":
                     merge_df.loc[index, "targetTable"] = "%s%s" % (
                         merge_df.loc[index, "hiveDB"],
@@ -438,7 +438,7 @@ class operation(metaclass=Singleton):
                     )
 
         if add_custom_text != None:
-            for index, row in merge_df.iterrows():
+            for index, _ in merge_df.iterrows():
                 if merge_df.loc[index, "Exist"] == "left_only":
                     merge_df.loc[index, "targetTable"] = "%s%s" % (
                         add_custom_text.lower().strip(),
@@ -464,7 +464,7 @@ class operation(metaclass=Singleton):
             "============================================================================================================================="
         )
 
-        for index, row in merge_df.loc[merge_df["Exist"] == "left_only"].iterrows():
+        for _, row in merge_df.loc[merge_df["Exist"] == "left_only"].iterrows():
             print(
                 f"{row['hiveDB']!s:<20} {row['hiveTable']!s:<40} {dbalias!s:<30} {schema!s:<20} {row['targetTable']!s}"
             )
@@ -472,7 +472,7 @@ class operation(metaclass=Singleton):
         answer = input("Do you want to add these exports to DBImport? (y/N): ")
         if answer == "y":
             print("")
-            for index, row in merge_df.loc[merge_df["Exist"] == "left_only"].iterrows():
+            for _, row in merge_df.loc[merge_df["Exist"] == "left_only"].iterrows():
                 add_result = self.export_config.add_export_table(
                     dbalias=dbalias,
                     schema=schema,
@@ -725,7 +725,7 @@ class operation(metaclass=Singleton):
             # 2. Get the position in configDF with that column name
             # 3. Get the column in the same position from HiveDF
             # 4. Check if that column name exists in the mergeDF with Right_Only. If it does, the column was just renamed
-            for index, row in columns_merge_only_name.loc[
+            for _, row in columns_merge_only_name.loc[
                 columns_merge_only_name["Exist"] == "left_only"
             ].iterrows():
                 row_in_config = columns_config.loc[
@@ -832,7 +832,7 @@ class operation(metaclass=Singleton):
                 indicator="Exist",
             )
 
-        for index, row in columns_merge_only_name.loc[
+        for _, row in columns_merge_only_name.loc[
             columns_merge_only_name["Exist"] == "left_only"
         ].iterrows():
             # This will iterate over columns that only exists in the config and not in Hive. We add these to Hive
@@ -888,7 +888,7 @@ class operation(metaclass=Singleton):
         logging.debug(columns_merge_only_name_type)
         logging.debug("")
 
-        for index, row in columns_merge_only_name_type.loc[
+        for _, row in columns_merge_only_name_type.loc[
             columns_merge_only_name_type["Exist"] == "left_only"
         ].iterrows():
             # This will iterate over columns that had the type changed from the source
@@ -933,7 +933,7 @@ class operation(metaclass=Singleton):
             columns_config, columns_hive, on=None, how="outer", indicator="Exist"
         )
 
-        for index, row in columns_merge.loc[
+        for _, row in columns_merge.loc[
             columns_merge["Exist"] == "left_only"
         ].iterrows():
             if row["comment"] == None:
@@ -1634,9 +1634,7 @@ class operation(metaclass=Singleton):
         )
 
         column_list = []
-        for index, row in columns_merge.loc[
-            columns_merge["Exist"] == "both"
-        ].iterrows():
+        for _, row in columns_merge.loc[columns_merge["Exist"] == "both"].iterrows():
             if force_column_uppercase == True:
                 column_list.append(row["name"].upper())
             else:
@@ -1676,7 +1674,7 @@ class operation(metaclass=Singleton):
         )
         sqoop_command.extend(["-D", "oraoop.disabled=true"])
         sqoop_command.extend(["-D", "yarn.timeline-service.enabled=false"])
-        # TODO: Add records to settings
+        # TODO(#229): Add records to settings
         sqoop_command.extend(["-D", "sqoop.export.records.per.statement=10000"])
         sqoop_command.extend(["-D", "sqoop.export.records.per.transaction=1"])
         sqoop_command.extend(["--class-name", "dbimport"])

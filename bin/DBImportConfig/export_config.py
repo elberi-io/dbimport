@@ -1154,7 +1154,7 @@ class config(metaclass=Singleton):
             # 2. Get the position in configDF with that column name
             # 3. Get the column in the same position from HiveDF
             # 4. Check if that column name exists in the mergeDF with Right_Only. If it does, the column was just renamed
-            for index, row in columns_merge_only_name.loc[
+            for _, row in columns_merge_only_name.loc[
                 columns_merge_only_name["Exist"] == "left_only"
             ].iterrows():
                 row_in_source = columns_source.loc[
@@ -1408,7 +1408,7 @@ class config(metaclass=Singleton):
                 indicator="Exist",
             )
 
-        for index, row in columns_merge_only_name.loc[
+        for _, row in columns_merge_only_name.loc[
             columns_merge_only_name["Exist"] == "left_only"
         ].iterrows():
             # This will iterate over columns that only exists in the config and not in Target table. We add these to the table
@@ -1547,7 +1547,7 @@ class config(metaclass=Singleton):
         logging.debug(columns_merge_only_name_type)
         logging.debug("")
 
-        for index, row in columns_merge_only_name_type.loc[
+        for _, row in columns_merge_only_name_type.loc[
             columns_merge_only_name_type["Exist"] == "left_only"
         ].iterrows():
             # This will iterate over columns that had the type changed from the source
@@ -1673,7 +1673,7 @@ class config(metaclass=Singleton):
             columns_source, columns_target, on=None, how="outer", indicator="Exist"
         )
         # print(columnsMerge)
-        for index, row in columns_merge.loc[
+        for _, row in columns_merge.loc[
             columns_merge["Exist"] == "left_only"
         ].iterrows():
             if row["comment"] == None:
@@ -2121,35 +2121,13 @@ class config(metaclass=Singleton):
         )
 
         sql_sessions_min = 1
-        sql_sessions_max = None
-
-        # TODO: Add max_export_sessions to jdbc_connections
-
-        row = None
-
-        if row != None and row[0] > 0:
-            sql_sessions_max = row[0]
-            logging.info(
-                "\u001b[33mThis connection is limited to a maximum of %s parallel sessions during export\u001b[0m"
-                % (sql_sessions_max)
-            )
-
-        if row != None and row[0] == 0:
-            logging.warning(
-                "Unsupported value of 0 in column 'max_export_sessions' in table 'jdbc_connections'"
-            )
-
-        sql_sessions_max_from_config = int(
+        sql_sessions_max = int(
             self.common_config.get_config_value(key="export_max_sessions")
         )
         sql_sessions_default = int(
             self.common_config.get_config_value(key="export_default_sessions")
         )
 
-        if sql_sessions_max == None:
-            sql_sessions_max = sql_sessions_max_from_config
-        if sql_sessions_max_from_config < sql_sessions_max:
-            sql_sessions_max = sql_sessions_max_from_config
         if sql_sessions_default > sql_sessions_max:
             sql_sessions_default = sql_sessions_max
 

@@ -544,7 +544,7 @@ def main(argv):
         print("")
 
     if stage > 0 and stage < 1000:
-        # TODO: Remove this once everything is migrated to python version
+        # TODO(#229): Remove this once everything is migrated to python version
         print(" ________________________________________________________ ")
         print("|                                                        |")
         print("| ERROR: Stage information incorrect. Did you run the    |")
@@ -676,7 +676,7 @@ def main(argv):
                 import_operation.save_retry_attempt(stage)
 
                 new_stage = 0
-                # TODO: Add correct restart points once incremental imports are working
+                # TODO(#229): Add correct restart points once incremental imports are working
                 if stage == 1121:
                     new_stage = 1111
                 print(" ________________________________________________________ ")
@@ -1303,7 +1303,7 @@ def main(argv):
                 import_operation.save_retry_attempt(stage)
 
                 new_stage = 0
-                # TODO: Add correct restart points once incremental imports are working
+                # TODO(#229): Add correct restart points once incremental imports are working
                 if stage == 3153:
                     new_stage = 3150
                 print(" ________________________________________________________ ")
@@ -1780,7 +1780,7 @@ def main(argv):
                 import_operation.save_retry_attempt(stage)
 
                 new_stage = 0
-                # TODO: Add correct restart points once incremental imports are working
+                # TODO(#229): Add correct restart points once incremental imports are working
                 if stage == 3303:
                     new_stage = 3302
                 if stage == 3306:
@@ -2133,7 +2133,7 @@ def main(argv):
                 import_operation.save_retry_attempt(stage)
 
                 new_stage = 0
-                # TODO: Add correct restart points once incremental imports are working
+                # TODO(#229): Add correct restart points once incremental imports are working
                 if stage == 3409:
                     new_stage = 3404
                 print(" ________________________________________________________ ")
@@ -2525,7 +2525,7 @@ def main(argv):
                 import_operation.save_retry_attempt(stage)
 
                 new_stage = 0
-                # TODO: Add correct restart points once incremental imports are working
+                # TODO(#229): Add correct restart points once incremental imports are working
                 if stage == 3560:
                     new_stage = 3554
                 print(" ________________________________________________________ ")
@@ -2710,7 +2710,7 @@ def main(argv):
                 import_operation.save_retry_attempt(stage)
 
                 new_stage = 0
-                # TODO: Add correct restart points once incremental imports are working
+                # TODO(#229): Add correct restart points once incremental imports are working
                 if stage == 3603:
                     new_stage = 3600
                 if stage == 3607:
@@ -2890,7 +2890,7 @@ def main(argv):
                 import_operation.save_retry_attempt(stage)
 
                 new_stage = 0
-                # TODO: Add correct restart points once incremental imports are working
+                # TODO(#229): Add correct restart points once incremental imports are working
                 if stage == 3653:
                     new_stage = 3650
                 if stage == 3657:

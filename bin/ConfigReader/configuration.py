@@ -39,19 +39,19 @@ def get(section: str, key: str, exit_on_error: bool = True) -> str:
 
 try:
     DBImport_Home = os.environ["DBIMPORT_HOME"]
-    configFile = DBImport_Home + "/conf/dbimport.cfg.dist"
+    config_file = DBImport_Home + "/conf/dbimport.cfg.dist"
 except KeyError:
     print("Error: System Environment Variable DBIMPORT_HOME is not set")
     sys.exit(1)
 
 try:
-    configFile = os.environ["DBIMPORT_CONFIGFILE"]
+    config_file = os.environ["DBIMPORT_CONFIGFILE"]
 except KeyError:
     pass
 
-if os.path.exists(configFile) == False:
-    print(f"Error: Configuration file can't be found on '{configFile}'")
+if os.path.exists(config_file) == False:
+    print(f"Error: Configuration file can't be found on '{config_file}'")
     sys.exit(1)
 
 config = configparser.ConfigParser()
-config.read(configFile)
+config.read(config_file)

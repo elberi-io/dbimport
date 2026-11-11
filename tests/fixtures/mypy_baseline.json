@@ -3,7 +3,7 @@
     "arg-type": 5,
     "assignment": 11,
     "attr-defined": 4,
-    "operator": 7,
+    "operator": 4,
     "return-value": 2,
     "union-attr": 7
   },
@@ -21,8 +21,7 @@
     "arg-type": 21,
     "attr-defined": 1,
     "operator": 13,
-    "union-attr": 127,
-    "unreachable": 4
+    "union-attr": 127
   },
   "bin/DBImportConfig/export_stage.py": {
     "assignment": 3

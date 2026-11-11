@@ -222,7 +222,7 @@ class serverDaemon(run.RunDaemon):
             if dist_cp_separate_logs == False:
                 dist_cp_log_name = "distCP"
             else:
-                dist_cp_log_name = f"distCP-thread{str(thread_id)}"
+                dist_cp_log_name = f"distCP-thread{thread_id}"
 
             thread = distCP(
                 name=str(thread_id),
@@ -303,7 +303,7 @@ class serverDaemon(run.RunDaemon):
                     # Fetch all rows from copyASyncStatus that contains the status 0 and send them to distCP threads
                     # ------------------------------------------
 
-                    # TODO: make the 1 min interval a configured param
+                    # TODO(#229): make the 1 min interval a configured param
                     status2check_timestamp = (
                         datetime.now() - timedelta(minutes=1)
                     ).strftime("%Y-%m-%d %H:%M:%S.%f")

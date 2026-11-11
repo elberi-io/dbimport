@@ -1,14 +1,13 @@
 {
   "bin/ConfigReader/configuration.py": {
     "B904": 1,
-    "E712": 2,
-    "N816": 2
+    "E712": 2
   },
   "bin/DBImportConfig/common_config.py": {
     "B904": 4,
-    "E711": 84,
+    "E711": 82,
     "E712": 96,
-    "E722": 40,
+    "E722": 39,
     "F841": 2,
     "G002": 2,
     "N803": 28,
@@ -21,14 +20,13 @@
     "E712": 4
   },
   "bin/DBImportConfig/export_config.py": {
-    "B007": 4,
-    "E711": 28,
+    "E711": 25,
     "E712": 54,
     "F841": 7,
-    "G002": 42,
+    "G002": 41,
     "N803": 29,
     "N806": 2,
-    "UP031": 103
+    "UP031": 102
   },
   "bin/DBImportConfig/export_stage.py": {
     "E711": 7,
@@ -40,13 +38,13 @@
   },
   "bin/DBImportConfig/import_config.py": {
     "B904": 3,
-    "E711": 92,
+    "E711": 91,
     "E712": 114,
     "F841": 4,
     "G002": 89,
     "N802": 1,
     "N803": 29,
-    "UP031": 145
+    "UP031": 144
   },
   "bin/DBImportConfig/import_stage.py": {
     "E711": 7,
@@ -62,7 +60,6 @@
     "F841": 1
   },
   "bin/DBImportOperation/atlas_operations.py": {
-    "B007": 2,
     "B904": 11,
     "E711": 41,
     "E712": 37,
@@ -87,9 +84,9 @@
     "E712": 36,
     "E722": 3,
     "F841": 9,
-    "G002": 26,
+    "G002": 24,
     "N802": 1,
-    "UP031": 62
+    "UP031": 58
   },
   "bin/DBImportOperation/etl_operations.py": {
     "E711": 18,
@@ -101,7 +98,6 @@
     "UP031": 120
   },
   "bin/DBImportOperation/export_operations.py": {
-    "B007": 11,
     "E711": 34,
     "E712": 48,
     "E722": 16,
@@ -112,7 +108,6 @@
     "UP031": 49
   },
   "bin/DBImportOperation/import_operations.py": {
-    "B007": 7,
     "B904": 3,
     "B905": 1,
     "E711": 66,
@@ -122,7 +117,7 @@
     "G002": 20,
     "N802": 4,
     "N803": 10,
-    "UP031": 168
+    "UP031": 167
   },
   "bin/Schedule/Airflow.py": {
     "B904": 6,
@@ -155,8 +150,7 @@
     "B904": 1,
     "E711": 12,
     "E712": 3,
-    "N803": 21,
-    "N816": 1
+    "N803": 21
   },
   "bin/Server/restServerCalls.py": {
     "B904": 3,
@@ -189,10 +183,8 @@
   },
   "bin/common/sparkUDF.py": {
     "E722": 1,
-    "F841": 2,
-    "N803": 3,
-    "N806": 1,
-    "N816": 1
+    "N803": 1,
+    "N806": 1
   },
   "bin/common/sparkUDF2.py": {
     "E711": 3,
@@ -238,20 +230,17 @@
   "bin/restServer": {
     "E712": 5,
     "F841": 1,
-    "N803": 3,
-    "N805": 1
+    "N803": 3
   },
   "bin/setup": {
     "E711": 1,
     "E712": 1,
-    "F841": 3,
-    "N812": 1
+    "F841": 3
   },
   "bin/setupOperation/database.py": {
     "E711": 1,
     "E722": 1,
-    "N812": 1,
-    "UP031": 4
+    "UP031": 3
   },
   "bin/sourceSchemaReader/schemaReader.py": {
     "E711": 115,

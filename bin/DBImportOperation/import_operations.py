@@ -666,7 +666,7 @@ class operation(metaclass=Singleton):
             or add_schema_to_table == True
             or add_custom_text != None
         ):
-            for index, row in merge_df.iterrows():
+            for index, _ in merge_df.iterrows():
                 if merge_df.loc[index, "Exist"] == "left_only":
                     merge_df.loc[index, "hiveTable"] = "_%s" % (
                         merge_df.loc[index, "hiveTable"].strip()
@@ -683,7 +683,7 @@ class operation(metaclass=Singleton):
                 self.import_config.remove_temporary_files()
                 sys.exit(1)
 
-            for index, row in merge_df.iterrows():
+            for index, _ in merge_df.iterrows():
                 if merge_df.loc[index, "Exist"] == "left_only":
                     zero_to_add = ""
                     while len(zero_to_add) < (number_length - len(str(start_value))):
@@ -697,7 +697,7 @@ class operation(metaclass=Singleton):
                     start_value += 1
 
         if add_schema_to_table == True:
-            for index, row in merge_df.iterrows():
+            for index, _ in merge_df.iterrows():
                 if merge_df.loc[index, "Exist"] == "left_only":
                     merge_df.loc[index, "hiveTable"] = "%s%s" % (
                         merge_df.loc[index, "schema"].lower().strip(),
@@ -705,7 +705,7 @@ class operation(metaclass=Singleton):
                     )
 
         if add_custom_text != None:
-            for index, row in merge_df.iterrows():
+            for index, _ in merge_df.iterrows():
                 if merge_df.loc[index, "Exist"] == "left_only":
                     merge_df.loc[index, "hiveTable"] = "%s%s" % (
                         add_custom_text.lower().strip(),
@@ -733,7 +733,7 @@ class operation(metaclass=Singleton):
                 "============================================================================================================================="
             )
 
-            for index, row in merge_df.loc[merge_df["Exist"] == "left_only"].iterrows():
+            for _, row in merge_df.loc[merge_df["Exist"] == "left_only"].iterrows():
                 print(
                     f"{hive_db!s:<20}{row['hiveTable'].lower()!s:<40}{dbalias!s:<30}{row['schema']!s:<20}{row['table']!s}"
                 )
@@ -742,9 +742,7 @@ class operation(metaclass=Singleton):
             # 			answer = "N"
             if answer == "y":
                 print("")
-                for index, row in merge_df.loc[
-                    merge_df["Exist"] == "left_only"
-                ].iterrows():
+                for _, row in merge_df.loc[merge_df["Exist"] == "left_only"].iterrows():
                     if (
                         self.common_operations.metastore_type
                         == constant.CATALOG_HIVE_DIRECT
@@ -787,7 +785,7 @@ class operation(metaclass=Singleton):
             # This is used by the rest interface to return a list of tables to the webUI
 
             table_list = []
-            for index, row in merge_df.loc[merge_df["Exist"] == "left_only"].iterrows():
+            for _, row in merge_df.loc[merge_df["Exist"] == "left_only"].iterrows():
                 result_dict = {}
                 result_dict["database"] = hive_db
                 result_dict["table"] = row["hiveTable"].lower()
@@ -3325,7 +3323,7 @@ class operation(metaclass=Singleton):
                             query += ", "
                         query += "`" + column + "`"
                         first_column = False
-                    # TODO: Smarter calculation of the number of buckets
+                    # TODO(#229): Smarter calculation of the number of buckets
                     query += ") into %s buckets " % (buckets)
 
                 if acid_insert_only == False:
@@ -4913,7 +4911,7 @@ class operation(metaclass=Singleton):
 
             if type(max_value) is pd._libs.tslibs.timestamps.Timestamp:
                 (dt, micro) = max_value.strftime("%Y-%m-%d %H:%M:%S.%f").split(".")
-                max_value = "%s.%03d" % (dt, int(micro) / 1000)
+                max_value = f"{dt}.{int(micro) // 1000:03d}"
             else:
                 if max_value != None:
                     max_value = int(max_value)

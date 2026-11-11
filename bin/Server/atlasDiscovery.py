@@ -156,7 +156,7 @@ class atlasDiscovery(threading.Thread):
 
         for thread_id in range(0, atlas_crawler_threads):
             # 			if distCP_separate_logs == False:
-            atlas_crawler_log_name = f"atlasCrawler-thread{str(thread_id)}"
+            atlas_crawler_log_name = f"atlasCrawler-thread{thread_id}"
             # 			else:
             # 				distCPlogName = "distCP-thread%s"%(str(threadID))
 
@@ -207,7 +207,7 @@ class atlasDiscovery(threading.Thread):
                         hours=atlas_discovery_interval
                     )
 
-                    # TODO: Antagligen bara köra denna om jdbcConnectionsDf är tom från föregående körning
+                    # TODO(#229): Probably only run this if jdbc_connections_df is empty from the previous run
                     jdbc_connections_df = pd.DataFrame(
                         session.query(
                             jdbc_connections.dbalias,
@@ -236,7 +236,7 @@ class atlasDiscovery(threading.Thread):
                     for _index, row in jdbc_connections_df.iterrows():
                         db_alias = row["dbalias"]
 
-                        # TODO: Flytta denna till thread
+                        # TODO(#229): Move this into the thread
                         if (
                             self.common_config.check_time_window(
                                 db_alias, atlasDiscoveryMode=True
