@@ -2646,11 +2646,11 @@ class config(metaclass=Singleton):
         self.connect_to_jdbc()
 
         result_df = self.sourceSchema.get_jdbc_tables_and_views(
-            JDBCCursor=self.JDBCCursor,
-            serverType=self.jdbc_servertype,
+            jdbc_cursor=self.JDBCCursor,
+            server_type=self.jdbc_servertype,
             database=self.jdbc_database,
-            schemaFilter=schemaFilter,
-            tableFilter=tableFilter,
+            schema_filter=schemaFilter,
+            table_filter=tableFilter,
         )
 
         logging.debug("Executing common_config.get_jdbc_tables_and_views() - Finished")

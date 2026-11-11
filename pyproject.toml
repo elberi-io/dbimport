@@ -171,7 +171,7 @@ ignore = ["N801", "N815", "N818", "N999"]
 "bin/restServer" = ["E712", "F841", "N803"]
 "bin/setup" = ["E711", "E712", "F841"]
 "bin/setupOperation/database.py" = ["E711", "E722", "UP031"]
-"bin/sourceSchemaReader/schemaReader.py" = ["E711", "E712", "E722", "G002", "N803", "N806", "UP031"]
+"bin/sourceSchemaReader/schemaReader.py" = ["E711", "E712", "E722", "G002", "UP031"]
 
 [tool.ruff.format]
 # bin/ was formatted in one commit per package, listed in
