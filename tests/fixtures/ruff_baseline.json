@@ -10,8 +10,6 @@
     "E722": 39,
     "F841": 2,
     "G002": 2,
-    "N803": 28,
-    "N806": 6,
     "UP031": 54
   },
   "bin/DBImportConfig/decryption.py": {
@@ -24,8 +22,6 @@
     "E712": 54,
     "F841": 7,
     "G002": 41,
-    "N803": 29,
-    "N806": 2,
     "UP031": 102
   },
   "bin/DBImportConfig/export_stage.py": {
@@ -33,7 +29,6 @@
     "E712": 21,
     "F841": 1,
     "G002": 15,
-    "N803": 4,
     "UP031": 41
   },
   "bin/DBImportConfig/import_config.py": {
@@ -43,7 +38,6 @@
     "F841": 4,
     "G002": 89,
     "N802": 1,
-    "N803": 29,
     "UP031": 144
   },
   "bin/DBImportConfig/import_stage.py": {
@@ -51,7 +45,6 @@
     "E712": 23,
     "F841": 1,
     "G002": 15,
-    "N803": 5,
     "UP031": 37
   },
   "bin/DBImportConfig/sendStatistics.py": {
@@ -66,7 +59,6 @@
     "E722": 4,
     "F841": 23,
     "G002": 41,
-    "N803": 1,
     "UP031": 87
   },
   "bin/DBImportOperation/common_operations.py": {
@@ -76,7 +68,6 @@
     "E722": 4,
     "G002": 4,
     "N802": 1,
-    "N803": 49,
     "UP031": 32
   },
   "bin/DBImportOperation/copy_operations.py": {
@@ -94,7 +85,6 @@
     "E722": 1,
     "F841": 2,
     "G002": 1,
-    "N803": 4,
     "UP031": 120
   },
   "bin/DBImportOperation/export_operations.py": {
@@ -104,7 +94,6 @@
     "F841": 2,
     "G002": 8,
     "N802": 1,
-    "N803": 7,
     "UP031": 49
   },
   "bin/DBImportOperation/import_operations.py": {
@@ -116,7 +105,6 @@
     "F841": 6,
     "G002": 20,
     "N802": 4,
-    "N803": 10,
     "UP031": 167
   },
   "bin/Schedule/Airflow.py": {
@@ -134,7 +122,6 @@
     "E722": 2,
     "F841": 3,
     "G002": 6,
-    "N803": 5,
     "UP031": 6
   },
   "bin/Server/daemon.py": {
@@ -143,7 +130,6 @@
     "E722": 3,
     "F841": 3,
     "G002": 3,
-    "N803": 4,
     "UP031": 6
   },
   "bin/Server/restServer.py": {
@@ -160,14 +146,12 @@
     "F841": 59,
     "G002": 8,
     "N802": 25,
-    "N803": 1,
     "UP031": 42
   },
   "bin/catalogService/glue.py": {
     "B904": 5,
     "E712": 3,
     "F841": 2,
-    "N803": 35,
     "UP031": 1
   },
   "bin/catalogService/hiveDirect.py": {
@@ -177,20 +161,14 @@
     "E722": 1,
     "F841": 3,
     "G002": 1,
-    "N803": 35,
-    "N806": 4,
     "UP031": 4
   },
   "bin/common/sparkUDF.py": {
-    "E722": 1,
-    "N803": 1,
-    "N806": 1
+    "E722": 1
   },
   "bin/common/sparkUDF2.py": {
     "E711": 3,
-    "E722": 1,
-    "N803": 3,
-    "N806": 1
+    "E722": 1
   },
   "bin/copy": {
     "E711": 22,
@@ -217,8 +195,7 @@
     "UP031": 34
   },
   "bin/mainServer": {
-    "E712": 2,
-    "N803": 3
+    "E712": 2
   },
   "bin/manage": {
     "E711": 50,
@@ -229,8 +206,7 @@
   },
   "bin/restServer": {
     "E712": 5,
-    "F841": 1,
-    "N803": 3
+    "F841": 1
   },
   "bin/setup": {
     "E711": 1,
@@ -247,8 +223,6 @@
     "E712": 3,
     "E722": 6,
     "G002": 26,
-    "N803": 4,
-    "N806": 2,
     "UP031": 172
   },
   "docs/conf.py": {

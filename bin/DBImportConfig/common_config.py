@@ -45,16 +45,16 @@ from sourceSchemaReader import schemaReader
 
 class config(metaclass=Singleton):
     def __init__(
-        self, Hive_DB: str | None = None, Hive_Table: str | None = None
+        self, hive_db: str | None = None, hive_table: str | None = None
     ) -> None:
         logging.debug("Executing common_config.__init__()")
 
         self.Hive_DB = None
         self.Hive_Table = None
-        if Hive_DB != None and self.Hive_DB == None:
-            self.Hive_DB = Hive_DB
-        if Hive_Table != None and self.Hive_Table == None:
-            self.Hive_Table = Hive_Table
+        if hive_db != None and self.Hive_DB == None:
+            self.Hive_DB = hive_db
+        if hive_table != None and self.Hive_Table == None:
+            self.Hive_Table = hive_table
 
         self.mysql_conn: Any = None
         self.mysql_cursor: Any = None
@@ -269,7 +269,7 @@ class config(metaclass=Singleton):
             self.remove_temporary_files()
             sys.exit(1)
 
-        self.reconnect_config_database(printReconnectMessage=False)
+        self.reconnect_config_database(print_reconnect_message=False)
 
         logging.debug("Executing common_config.__init__() - Finished")
 
@@ -345,9 +345,9 @@ class config(metaclass=Singleton):
 
         return self.mysql_connection_details
 
-    def reconnect_config_database(self, printReconnectMessage: bool = True) -> None:
+    def reconnect_config_database(self, print_reconnect_message: bool = True) -> None:
         if self.mysql_conn == None or self.mysql_conn.is_connected() == False:
-            if printReconnectMessage == True:
+            if print_reconnect_message == True:
                 logging.warning("Connection to MySQL have been lost. Reconnecting...")
 
             mysql_credentials = self.get_mysql_credentials()
@@ -472,10 +472,10 @@ class config(metaclass=Singleton):
         else:
             return True
 
-    def set_hive_table(self, Hive_DB: str, Hive_Table: str) -> None:
+    def set_hive_table(self, hive_db: str, hive_table: str) -> None:
         """Sets the parameters to work against a new Hive database and table"""
-        self.Hive_DB = Hive_DB.lower()
-        self.Hive_Table = Hive_Table.lower()
+        self.Hive_DB = hive_db.lower()
+        self.Hive_Table = hive_table.lower()
 
     def get_mysql_cursor(self) -> Any:
         return self.mysql_cursor
@@ -508,10 +508,10 @@ class config(metaclass=Singleton):
         logging.debug("Executing common_config.remove_temporary_files() - Finished")
 
     def check_time_window(
-        self, connection_alias: str, atlasDiscoveryMode: bool = False
+        self, connection_alias: str, atlas_discovery_mode: bool = False
     ) -> bool:
         logging.debug("Executing common_config.check_time_window()")
-        if atlasDiscoveryMode == False:
+        if atlas_discovery_mode == False:
             logging.info(
                 "Checking if we are allowed to use this jdbc connection at this time"
             )
@@ -565,13 +565,13 @@ class config(metaclass=Singleton):
         logging.debug("timeWindowStop: %s", time_window_stop)
 
         if time_window_start == None and time_window_stop == None:
-            if atlasDiscoveryMode == False:
+            if atlas_discovery_mode == False:
                 logging.info(
                     "SUCCESSFUL: This import is allowed to run at any time during the day."
                 )
             return True
         elif time_window_start == None or time_window_stop == None:
-            if atlasDiscoveryMode == False:
+            if atlas_discovery_mode == False:
                 logging.error(
                     "Atleast one of the TimeWindow settings are NULL in the database. Only way to disable the Time Window"
                 )
@@ -585,7 +585,7 @@ class config(metaclass=Singleton):
             else:
                 return False
         elif time_window_start == time_window_stop:
-            if atlasDiscoveryMode == False:
+            if atlas_discovery_mode == False:
                 logging.error(
                     "The value in timewindow_start column is the same as the value in timewindow_stop."
                 )
@@ -612,7 +612,7 @@ class config(metaclass=Singleton):
                     allowed_time = True
 
             if allowed_time == False:
-                if atlasDiscoveryMode == False:
+                if atlas_discovery_mode == False:
                     logging.error(
                         "We are not allowed to run this import outside the configured Time Window"
                     )
@@ -632,7 +632,7 @@ class config(metaclass=Singleton):
                 else:
                     return False
             else:
-                if atlasDiscoveryMode == False:
+                if atlas_discovery_mode == False:
                     logging.info(
                         "SUCCESSFUL: There is a configured Time Window for this operation, and we are running inside that window."
                     )
@@ -815,10 +815,10 @@ class config(metaclass=Singleton):
     def lookup_connection_alias(
         self,
         connection_alias: str,
-        decryptCredentials: bool = True,
-        copySlave: bool = False,
-        exceptionIfFailureToDecrypt: bool = True,
-        jdbcURL: str | None = None,
+        decrypt_credentials: bool = True,
+        copy_slave: bool = False,
+        exception_if_failure_to_decrypt: bool = True,
+        jdbc_url: str | None = None,
         quiet: bool = False,
     ) -> None:
         logging.debug("Executing common_config.lookup_connection_alias()")
@@ -841,9 +841,9 @@ class config(metaclass=Singleton):
         self.jdbc_servertype = None
 
         # Fetch data from jdbc_connection table
-        if jdbcURL != None and decryptCredentials == False:
+        if jdbc_url != None and decrypt_credentials == False:
             # This is required from RestAPI when looking up all connections and returning a full list including database types. No need to do the lookup here as well
-            self.jdbc_url = jdbcURL
+            self.jdbc_url = jdbc_url
         else:
             query = "select jdbc_url, credentials, private_key_path, public_key_path, environment from jdbc_connections where dbalias = %s "
             logging.debug("Executing the following SQL: %s", query)
@@ -862,7 +862,7 @@ class config(metaclass=Singleton):
             public_key_file = row[3]
             self.jdbc_environment = row[4]
 
-        if decryptCredentials == True and copySlave == False:
+        if decrypt_credentials == True and copy_slave == False:
             if jdbc_credentials is not None and jdbc_credentials.startswith(
                 "arn:aws:secretsmanager:"
             ):
@@ -915,7 +915,7 @@ class config(metaclass=Singleton):
 
                 credentials = self.crypto.decrypt(jdbc_credentials)
 
-            if credentials == None and exceptionIfFailureToDecrypt == True:
+            if credentials == None and exception_if_failure_to_decrypt == True:
                 raise invalidConfiguration(
                     "Cant decrypt username and password. Check private/public key in config file"
                 )
@@ -949,7 +949,7 @@ class config(metaclass=Singleton):
             self.atlasJdbcSourceSupport = True
             self.db_mssql = True
             self.jdbc_servertype = constant.MSSQL
-            if jdbcURL == None:
+            if jdbc_url == None:
                 # jdbcURL have a value only when executed from restAPI server in order to get a full list of connection. Lookup of drivers is not needed in that case
                 self.jdbc_driver, self.jdbc_classpath = self.get_jdbc_driver_config(
                     "SQL Server", "default"
@@ -1022,7 +1022,7 @@ class config(metaclass=Singleton):
             self.db_mssql = True
             self.jdbc_servertype = constant.MSSQL
             self.jdbc_force_column_lowercase = True
-            if jdbcURL == None:
+            if jdbc_url == None:
                 # jdbcURL have a value only when executed from restAPI server in order to get a full list of connection. Lookup of drivers is not needed in that case
                 self.jdbc_driver, self.jdbc_classpath = self.get_jdbc_driver_config(
                     "SQL Server", "jTDS"
@@ -1050,7 +1050,7 @@ class config(metaclass=Singleton):
             self.db_oracle = True
             self.jdbc_servertype = constant.ORACLE
             self.jdbc_force_column_lowercase = False
-            if jdbcURL == None:
+            if jdbc_url == None:
                 # jdbcURL have a value only when executed from restAPI server in order to get a full list of connection. Lookup of drivers is not needed in that case
                 self.jdbc_driver, self.jdbc_classpath = self.get_jdbc_driver_config(
                     "Oracle", "default"
@@ -1109,7 +1109,7 @@ class config(metaclass=Singleton):
             self.db_mysql = True
             self.jdbc_servertype = constant.MYSQL
             self.jdbc_force_column_lowercase = True
-            if jdbcURL == None:
+            if jdbc_url == None:
                 # jdbcURL have a value only when executed from restAPI server in order to get a full list of connection. Lookup of drivers is not needed in that case
                 self.jdbc_driver, self.jdbc_classpath = self.get_jdbc_driver_config(
                     "MySQL", "default"
@@ -1140,7 +1140,7 @@ class config(metaclass=Singleton):
             self.db_postgresql = True
             self.jdbc_servertype = constant.POSTGRESQL
             self.jdbc_force_column_lowercase = True
-            if jdbcURL == None:
+            if jdbc_url == None:
                 # jdbcURL have a value only when executed from restAPI server in order to get a full list of connection. Lookup of drivers is not needed in that case
                 self.jdbc_driver, self.jdbc_classpath = self.get_jdbc_driver_config(
                     "PostgreSQL", "default"
@@ -1169,7 +1169,7 @@ class config(metaclass=Singleton):
             self.db_progress = True
             self.jdbc_servertype = constant.PROGRESS
             self.jdbc_force_column_lowercase = True
-            if jdbcURL == None:
+            if jdbc_url == None:
                 # jdbcURL have a value only when executed from restAPI server in order to get a full list of connection. Lookup of drivers is not needed in that case
                 self.jdbc_driver, self.jdbc_classpath = self.get_jdbc_driver_config(
                     "Progress DB", "default"
@@ -1198,7 +1198,7 @@ class config(metaclass=Singleton):
             self.db_db2udb = True
             self.jdbc_servertype = constant.DB2_UDB
             self.jdbc_force_column_lowercase = False
-            if jdbcURL == None:
+            if jdbc_url == None:
                 # jdbcURL have a value only when executed from restAPI server in order to get a full list of connection. Lookup of drivers is not needed in that case
                 self.jdbc_driver, self.jdbc_classpath = self.get_jdbc_driver_config(
                     "DB2 UDB", "default"
@@ -1252,7 +1252,7 @@ class config(metaclass=Singleton):
             self.db_db2as400 = True
             self.jdbc_servertype = constant.DB2_AS400
             self.jdbc_force_column_lowercase = False
-            if jdbcURL == None:
+            if jdbc_url == None:
                 # jdbcURL have a value only when executed from restAPI server in order to get a full list of connection. Lookup of drivers is not needed in that case
                 self.jdbc_driver, self.jdbc_classpath = self.get_jdbc_driver_config(
                     "DB2 AS400", "default"
@@ -1282,7 +1282,7 @@ class config(metaclass=Singleton):
             self.atlasJdbcSourceSupport = False
             self.db_mongodb = True
             self.jdbc_servertype = constant.MONGO
-            if jdbcURL == None:
+            if jdbc_url == None:
                 # jdbcURL have a value only when executed from restAPI server in order to get a full list of connection. Lookup of drivers is not needed in that case
                 self.jdbc_driver, self.jdbc_classpath = self.get_jdbc_driver_config(
                     "MongoDB", "default"
@@ -1309,7 +1309,7 @@ class config(metaclass=Singleton):
             self.db_cachedb = True
             self.jdbc_servertype = constant.CACHEDB
             self.jdbc_force_column_lowercase = False
-            if jdbcURL == None:
+            if jdbc_url == None:
                 # jdbcURL have a value only when executed from restAPI server in order to get a full list of connection. Lookup of drivers is not needed in that case
                 self.jdbc_driver, self.jdbc_classpath = self.get_jdbc_driver_config(
                     "CacheDB", "default"
@@ -1340,7 +1340,7 @@ class config(metaclass=Singleton):
             self.db_snowflake = True
             self.jdbc_servertype = constant.SNOWFLAKE
             self.jdbc_force_column_lowercase = False
-            if jdbcURL == None:
+            if jdbc_url == None:
                 # jdbcURL have a value only when executed from restAPI server in order to get a full list of connection. Lookup of drivers is not needed in that case
                 self.jdbc_driver, self.jdbc_classpath = self.get_jdbc_driver_config(
                     "SnowFlake", "default"
@@ -1431,7 +1431,7 @@ class config(metaclass=Singleton):
             self.db_informix = True
             self.jdbc_servertype = constant.INFORMIX
             self.jdbc_force_column_lowercase = False
-            if jdbcURL == None:
+            if jdbc_url == None:
                 # jdbcURL have a value only when executed from restAPI server in order to get a full list of connection. Lookup of drivers is not needed in that case
                 self.jdbc_driver, self.jdbc_classpath = self.get_jdbc_driver_config(
                     "Informix", "default"
@@ -1469,7 +1469,7 @@ class config(metaclass=Singleton):
             self.db_sqlanywhere = True
             self.jdbc_servertype = constant.SQLANYWHERE
             self.jdbc_force_column_lowercase = False
-            if jdbcURL == None:
+            if jdbc_url == None:
                 # jdbcURL have a value only when executed from restAPI server in order to get a full list of connection. Lookup of drivers is not needed in that case
                 self.jdbc_driver, self.jdbc_classpath = self.get_jdbc_driver_config(
                     "SQL Anywhere", "default"
@@ -1512,7 +1512,7 @@ class config(metaclass=Singleton):
                 logging.error("JDBC Connection '%s' is not supported.", self.jdbc_url)
             exit_after_function = True
 
-        if copySlave == True:
+        if copy_slave == True:
             self.jdbc_hostname = None
             self.jdbc_port = None
             self.jdbc_database = None
@@ -1566,10 +1566,10 @@ class config(metaclass=Singleton):
             raise invalidConfiguration
 
     def get_jdbc_table_definition(
-        self, source_schema: str, source_table: str, printInfo: bool = True
+        self, source_schema: str, source_table: str, print_info: bool = True
     ) -> None:
         logging.debug("Executing common_config.get_jdbc_table_definition()")
-        if printInfo == True:
+        if print_info == True:
             logging.info("Reading SQL table definitions from source database")
         self.source_schema = source_schema
         self.source_table = source_table
@@ -1681,18 +1681,18 @@ class config(metaclass=Singleton):
 
     def connect_to_jdbc(
         self,
-        allJarFiles: bool = False,
-        exitIfFailure: bool = True,
+        all_jar_files: bool = False,
+        exit_if_failure: bool = True,
         logger: str = "",
-        printError: bool = True,
+        print_error: bool = True,
     ) -> bool:
         log = logging.getLogger(logger)
 
         if self.db_mongodb == True:
             # This is a MongoDB connection. Lets rediret to connectToMongo instead
-            return self.connect_to_mongo(exit_if_failure=exitIfFailure, logger=logger)
+            return self.connect_to_mongo(exit_if_failure=exit_if_failure, logger=logger)
 
-        if allJarFiles == True:
+        if all_jar_files == True:
             query = "select classpath from jdbc_connections_drivers"
             log.debug("Executing the following SQL: %s", query)
             self.mysql_cursor.execute(
@@ -1731,23 +1731,23 @@ class config(metaclass=Singleton):
                 )
                 self.JDBCCursor = self.jdbc_conn.cursor()
             except TypeError as exception:
-                if printError == True:
+                if print_error == True:
                     log.error(
                         "Connection to database over JDBC failed with the following error:"
                     )
                     log.error(str(exception))
-                if exitIfFailure == True:
+                if exit_if_failure == True:
                     self.remove_temporary_files()
                     sys.exit(1)
                 else:
                     return False
             except Exception as exception:
-                if printError == True:
+                if print_error == True:
                     log.error(
                         "Connection to database over JDBC failed with the following error:"
                     )
                     log.error(exception.message())
-                if exitIfFailure == True:
+                if exit_if_failure == True:
                     self.remove_temporary_files()
                     sys.exit(1)
                 else:
@@ -1999,7 +1999,7 @@ class config(metaclass=Singleton):
         return result_df
 
     def get_jdbc_table_row_count(
-        self, source_schema: str, source_table: str, whereStatement: str | None = None
+        self, source_schema: str, source_table: str, where_statement: str | None = None
     ) -> int:
         logging.debug("Executing common_config.get_jdbc_table_row_count()")
 
@@ -2049,8 +2049,8 @@ class config(metaclass=Singleton):
         if self.db_sqlanywhere == True:
             query = "select count(1) from %s.%s" % (source_schema, source_table)
 
-        if whereStatement != None and whereStatement != "":
-            query = query + " where " + whereStatement
+        if where_statement != None and where_statement != "":
+            query = query + " where " + where_statement
 
         logging.debug("SQL Statement executed: %s", query)
         self.JDBCCursor.execute(query)
@@ -2107,21 +2107,21 @@ class config(metaclass=Singleton):
     def log_hive_column_add(
         self,
         column: str,
-        columnType: str | None = None,
+        column_type: str | None = None,
         description: str | None = None,
-        hiveDB: str | None = None,
-        hiveTable: str | None = None,
+        hive_db: str | None = None,
+        hive_table: str | None = None,
     ) -> None:
         if description == None:
             description = "Column '%s' added to table with type '%s'" % (
                 column,
-                columnType,
+                column_type,
             )
 
-        if hiveDB == None:
-            hiveDB = self.Hive_DB
-        if hiveTable == None:
-            hiveTable = self.Hive_Table
+        if hive_db == None:
+            hive_db = self.Hive_DB
+        if hive_table == None:
+            hive_table = self.Hive_Table
 
         query = "insert into table_change_history "
         query += "( hive_db, hive_table, column_name, eventtime, event, value, description ) "
@@ -2132,11 +2132,11 @@ class config(metaclass=Singleton):
         self.mysql_cursor.execute(
             query,
             (
-                hiveDB,
-                hiveTable,
+                hive_db,
+                hive_table,
                 column,
                 datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f"),
-                columnType,
+                column_type,
                 description,
             ),
         )
@@ -2145,27 +2145,27 @@ class config(metaclass=Singleton):
     def log_hive_column_type_change(
         self,
         column: str,
-        columnType: str,
-        previous_columnType: str | None = None,
+        column_type: str,
+        previous_column_type: str | None = None,
         description: str | None = None,
-        hiveDB: str | None = None,
-        hiveTable: str | None = None,
+        hive_db: str | None = None,
+        hive_table: str | None = None,
     ) -> None:
 
         if description == None:
-            if previous_columnType == None:
-                description = "Column '%s' type changed to %s" % (column, columnType)
+            if previous_column_type == None:
+                description = "Column '%s' type changed to %s" % (column, column_type)
             else:
                 description = "Column '%s' type changed from %s to %s" % (
                     column,
-                    previous_columnType,
-                    columnType,
+                    previous_column_type,
+                    column_type,
                 )
 
-        if hiveDB == None:
-            hiveDB = self.Hive_DB
-        if hiveTable == None:
-            hiveTable = self.Hive_Table
+        if hive_db == None:
+            hive_db = self.Hive_DB
+        if hive_table == None:
+            hive_table = self.Hive_Table
 
         query = "insert into table_change_history "
         query += "( hive_db, hive_table, column_name, eventtime, event, previous_value, value, description ) "
@@ -2176,12 +2176,12 @@ class config(metaclass=Singleton):
         self.mysql_cursor.execute(
             query,
             (
-                hiveDB,
-                hiveTable,
+                hive_db,
+                hive_table,
                 column,
                 datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f"),
-                previous_columnType,
-                columnType,
+                previous_column_type,
+                column_type,
                 description,
             ),
         )
@@ -2189,23 +2189,23 @@ class config(metaclass=Singleton):
 
     def log_hive_column_rename(
         self,
-        columnName: str,
-        previous_columnName: str,
+        column_name: str,
+        previous_column_name: str,
         description: str | None = None,
-        hiveDB: str | None = None,
-        hiveTable: str | None = None,
+        hive_db: str | None = None,
+        hive_table: str | None = None,
     ) -> None:
 
         if description == None:
             description = "Column '%s' renamed to %s" % (
-                previous_columnName,
-                columnName,
+                previous_column_name,
+                column_name,
             )
 
-        if hiveDB == None:
-            hiveDB = self.Hive_DB
-        if hiveTable == None:
-            hiveTable = self.Hive_Table
+        if hive_db == None:
+            hive_db = self.Hive_DB
+        if hive_table == None:
+            hive_table = self.Hive_Table
 
         query = "insert into table_change_history "
         query += "( hive_db, hive_table, column_name, eventtime, event, previous_value, value, description ) "
@@ -2216,12 +2216,12 @@ class config(metaclass=Singleton):
         self.mysql_cursor.execute(
             query,
             (
-                hiveDB,
-                hiveTable,
-                columnName,
+                hive_db,
+                hive_table,
+                column_name,
                 datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f"),
-                previous_columnName,
-                columnName,
+                previous_column_name,
+                column_name,
                 description,
             ),
         )
@@ -2640,17 +2640,17 @@ class config(metaclass=Singleton):
         return result_df
 
     def get_jdbc_tables_and_views(
-        self, schemaFilter: str | None = None, tableFilter: str | None = None
+        self, schema_filter: str | None = None, table_filter: str | None = None
     ) -> pd.DataFrame:
         logging.debug("Executing common_config.get_jdbc_tables_and_views()")
         self.connect_to_jdbc()
 
         result_df = self.sourceSchema.get_jdbc_tables_and_views(
-            JDBCCursor=self.JDBCCursor,
-            serverType=self.jdbc_servertype,
+            jdbc_cursor=self.JDBCCursor,
+            server_type=self.jdbc_servertype,
             database=self.jdbc_database,
-            schemaFilter=schemaFilter,
-            tableFilter=tableFilter,
+            schema_filter=schema_filter,
+            table_filter=table_filter,
         )
 
         logging.debug("Executing common_config.get_jdbc_tables_and_views() - Finished")

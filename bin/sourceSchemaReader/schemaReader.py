@@ -2224,141 +2224,146 @@ class source:
         return result_df
 
     def get_jdbc_tables_and_views(
-        self, JDBCCursor, serverType, database=None, schemaFilter=None, tableFilter=None
+        self,
+        jdbc_cursor,
+        server_type,
+        database=None,
+        schema_filter=None,
+        table_filter=None,
     ):
         logging.debug("Executing schemaReader.get_jdbc_tables_and_views()")
 
-        if schemaFilter != None:
-            schemaFilter = schemaFilter.replace("*", "%")
+        if schema_filter != None:
+            schema_filter = schema_filter.replace("*", "%")
 
-        if tableFilter != None:
-            tableFilter = tableFilter.replace("*", "%")
+        if table_filter != None:
+            table_filter = table_filter.replace("*", "%")
 
-        if serverType == constant.MSSQL:
+        if server_type == constant.MSSQL:
             query = "select TABLE_SCHEMA, TABLE_NAME from INFORMATION_SCHEMA.TABLES "
-            if schemaFilter != None:
-                query += "where TABLE_SCHEMA like '%s' " % (schemaFilter)
-            if tableFilter != None:
-                if schemaFilter != None:
-                    query += "and TABLE_NAME like '%s' " % (tableFilter)
+            if schema_filter != None:
+                query += "where TABLE_SCHEMA like '%s' " % (schema_filter)
+            if table_filter != None:
+                if schema_filter != None:
+                    query += "and TABLE_NAME like '%s' " % (table_filter)
                 else:
-                    query += "where TABLE_NAME like '%s' " % (tableFilter)
+                    query += "where TABLE_NAME like '%s' " % (table_filter)
             query += "order by TABLE_SCHEMA, TABLE_NAME"
 
-        if serverType == constant.ORACLE:
+        if server_type == constant.ORACLE:
             query = "select OWNER, TABLE_NAME as NAME from all_tables "
-            if schemaFilter != None:
-                query += "where OWNER like '%s' " % (schemaFilter)
-            if tableFilter != None:
-                if schemaFilter != None:
-                    query += "and TABLE_NAME like '%s' " % (tableFilter)
+            if schema_filter != None:
+                query += "where OWNER like '%s' " % (schema_filter)
+            if table_filter != None:
+                if schema_filter != None:
+                    query += "and TABLE_NAME like '%s' " % (table_filter)
                 else:
-                    query += "where TABLE_NAME like '%s' " % (tableFilter)
+                    query += "where TABLE_NAME like '%s' " % (table_filter)
 
             query += "union all "
             query += "select OWNER, VIEW_NAME as NAME from all_views "
-            if schemaFilter != None:
-                query += "where OWNER like '%s' " % (schemaFilter)
-            if tableFilter != None:
-                if schemaFilter != None:
-                    query += "and VIEW_NAME like '%s' " % (tableFilter)
+            if schema_filter != None:
+                query += "where OWNER like '%s' " % (schema_filter)
+            if table_filter != None:
+                if schema_filter != None:
+                    query += "and VIEW_NAME like '%s' " % (table_filter)
                 else:
-                    query += "where VIEW_NAME like '%s' " % (tableFilter)
+                    query += "where VIEW_NAME like '%s' " % (table_filter)
             query += "order by OWNER, NAME "
 
-        if serverType == constant.MYSQL:
+        if server_type == constant.MYSQL:
             # 			query = "select '-', table_name from INFORMATION_SCHEMA.tables where table_schema = '%s' "%(self.jdbc_database)
             query = (
                 "select '-', table_name from INFORMATION_SCHEMA.tables where table_schema = '%s' "
                 % (database)
             )
-            if tableFilter != None:
-                query += "and table_name like '%s' " % (tableFilter)
+            if table_filter != None:
+                query += "and table_name like '%s' " % (table_filter)
             query += "order by table_name"
 
-        if serverType == constant.POSTGRESQL:
+        if server_type == constant.POSTGRESQL:
             query = "select TABLE_SCHEMA, TABLE_NAME from INFORMATION_SCHEMA.TABLES "
-            if schemaFilter != None:
-                query += "where TABLE_SCHEMA like '%s' " % (schemaFilter)
-            if tableFilter != None:
-                if schemaFilter != None:
-                    query += "and TABLE_NAME like '%s' " % (tableFilter)
+            if schema_filter != None:
+                query += "where TABLE_SCHEMA like '%s' " % (schema_filter)
+            if table_filter != None:
+                if schema_filter != None:
+                    query += "and TABLE_NAME like '%s' " % (table_filter)
                 else:
-                    query += "where TABLE_NAME like '%s' " % (tableFilter)
+                    query += "where TABLE_NAME like '%s' " % (table_filter)
             query += "order by TABLE_SCHEMA, TABLE_NAME"
 
-        if serverType == constant.PROGRESS:
+        if server_type == constant.PROGRESS:
             query = 'select "_Owner", "_File-Name" from PUB."_File" '
-            if schemaFilter != None:
-                query += "WHERE \"_Owner\" LIKE '%s' " % (schemaFilter)
-            if tableFilter != None:
-                if schemaFilter != None:
-                    query += "AND \"_File-Name\" LIKE '%s' " % (tableFilter)
+            if schema_filter != None:
+                query += "WHERE \"_Owner\" LIKE '%s' " % (schema_filter)
+            if table_filter != None:
+                if schema_filter != None:
+                    query += "AND \"_File-Name\" LIKE '%s' " % (table_filter)
                 else:
-                    query += "WHERE \"_File-Name\" LIKE '%s' " % (tableFilter)
+                    query += "WHERE \"_File-Name\" LIKE '%s' " % (table_filter)
             query += 'ORDER BY "_Owner", "_File-Name"'
 
-        if serverType == constant.DB2_UDB:
+        if server_type == constant.DB2_UDB:
             query = "SELECT CREATOR, NAME FROM SYSIBM.SYSTABLES "
-            if schemaFilter != None:
-                query += "WHERE CREATOR LIKE '%s' " % (schemaFilter)
-            if tableFilter != None:
-                if schemaFilter != None:
-                    query += "AND NAME LIKE '%s' " % (tableFilter)
+            if schema_filter != None:
+                query += "WHERE CREATOR LIKE '%s' " % (schema_filter)
+            if table_filter != None:
+                if schema_filter != None:
+                    query += "AND NAME LIKE '%s' " % (table_filter)
                 else:
-                    query += "WHERE NAME LIKE '%s' " % (tableFilter)
+                    query += "WHERE NAME LIKE '%s' " % (table_filter)
             query += "ORDER BY CREATOR, NAME"
 
-        if serverType == constant.DB2_AS400:
+        if server_type == constant.DB2_AS400:
             query = "SELECT TABLE_SCHEM, TABLE_NAME FROM SYSIBM.SQLTABLES "
-            if schemaFilter != None:
-                query += "WHERE TABLE_SCHEM LIKE '%s' " % (schemaFilter)
-            if tableFilter != None:
-                if schemaFilter != None:
-                    query += "AND TABLE_NAME LIKE '%s' " % (tableFilter)
+            if schema_filter != None:
+                query += "WHERE TABLE_SCHEM LIKE '%s' " % (schema_filter)
+            if table_filter != None:
+                if schema_filter != None:
+                    query += "AND TABLE_NAME LIKE '%s' " % (table_filter)
                 else:
-                    query += "WHERE TABLE_NAME LIKE '%s' " % (tableFilter)
+                    query += "WHERE TABLE_NAME LIKE '%s' " % (table_filter)
             query += "ORDER BY TABLE_SCHEM, TABLE_NAME"
 
-        if serverType == constant.SNOWFLAKE:
+        if server_type == constant.SNOWFLAKE:
             query = "select TABLE_SCHEMA, TABLE_NAME from INFORMATION_SCHEMA.TABLES "
-            if schemaFilter != None:
-                query += "where TABLE_SCHEMA like '%s' " % (schemaFilter)
-            if tableFilter != None:
-                if schemaFilter != None:
-                    query += "and TABLE_NAME like '%s' " % (tableFilter)
+            if schema_filter != None:
+                query += "where TABLE_SCHEMA like '%s' " % (schema_filter)
+            if table_filter != None:
+                if schema_filter != None:
+                    query += "and TABLE_NAME like '%s' " % (table_filter)
                 else:
-                    query += "where TABLE_NAME like '%s' " % (tableFilter)
+                    query += "where TABLE_NAME like '%s' " % (table_filter)
             query += "order by TABLE_SCHEMA, TABLE_NAME"
 
-        if serverType == constant.INFORMIX:
+        if server_type == constant.INFORMIX:
             query = "select owner, tabname from informix.systables "
-            if schemaFilter != None:
-                query += "where owner like '%s' " % (schemaFilter)
-            if tableFilter != None:
-                if schemaFilter != None:
-                    query += "and tabname like '%s' " % (tableFilter)
+            if schema_filter != None:
+                query += "where owner like '%s' " % (schema_filter)
+            if table_filter != None:
+                if schema_filter != None:
+                    query += "and tabname like '%s' " % (table_filter)
                 else:
-                    query += "where tabname like '%s' " % (tableFilter)
+                    query += "where tabname like '%s' " % (table_filter)
             query += "order by owner, tabname"
 
-        if serverType == constant.SQLANYWHERE:
+        if server_type == constant.SQLANYWHERE:
             query = "select u.user_name, t.table_name from sys.systab t "
             query += "left join sys.sysdbspace db "
             query += "   on t.dbspace_id = db.dbspace_id "
             query += "left join sys.sysuser u "
             query += "   on t.creator = u.user_id "
             query += "where db.dbspace_name != 'temporary' "
-            if schemaFilter != None:
-                query += "   and u.user_name like '%s' " % (schemaFilter)
-            if tableFilter != None:
-                query += "   and t.table_name like '%s' " % (tableFilter)
+            if schema_filter != None:
+                query += "   and u.user_name like '%s' " % (schema_filter)
+            if table_filter != None:
+                query += "   and t.table_name like '%s' " % (table_filter)
             query += "order by t.table_name"
 
         logging.debug("SQL Statement executed: %s", query)
-        JDBCCursor.execute(query)
+        jdbc_cursor.execute(query)
 
-        result_df = pd.DataFrame(JDBCCursor.fetchall())
+        result_df = pd.DataFrame(jdbc_cursor.fetchall())
         if len(result_df) > 0:
             result_df.columns = ["schema", "table"]
         else:

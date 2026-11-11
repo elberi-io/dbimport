@@ -38,14 +38,14 @@ from Server import atlasDiscovery
 
 class distCP(threading.Thread):
     def __init__(
-        self, name, distCPreqQueue, distCPresQueue, threadStopEvent, loggerName
+        self, name, dist_cp_req_queue, dist_cp_res_queue, thread_stop_event, logger_name
     ):
         threading.Thread.__init__(self)
         self.name = name
-        self.dist_cp_req_queue = distCPreqQueue
-        self.dist_cp_res_queue = distCPresQueue
-        self.thread_stop_event = threadStopEvent
-        self.logger_name = loggerName
+        self.dist_cp_req_queue = dist_cp_req_queue
+        self.dist_cp_res_queue = dist_cp_res_queue
+        self.thread_stop_event = thread_stop_event
+        self.logger_name = logger_name
 
     def run(self):
         log = logging.getLogger(self.logger_name)
@@ -226,10 +226,10 @@ class serverDaemon(run.RunDaemon):
 
             thread = distCP(
                 name=str(thread_id),
-                distCPreqQueue=self.dist_cp_req_queue,
-                distCPresQueue=self.dist_cp_res_queue,
-                threadStopEvent=self.thread_stop_event,
-                loggerName=dist_cp_log_name,
+                dist_cp_req_queue=self.dist_cp_req_queue,
+                dist_cp_res_queue=self.dist_cp_res_queue,
+                thread_stop_event=self.thread_stop_event,
+                logger_name=dist_cp_log_name,
             )
             thread.daemon = True
             thread.start()

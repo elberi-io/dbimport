@@ -47,8 +47,8 @@ from sourceSchemaReader import schemaReader
 
 
 class atlasOperation:
-    def __init__(self, loggerName=None):
-        self.logger_name = loggerName
+    def __init__(self, logger_name=None):
+        self.logger_name = logger_name
         self.debugLogLevel = False
         log = logging.getLogger(self.logger_name)
         log.debug("Executing atlas_operations.__init__()")

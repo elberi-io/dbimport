@@ -38,11 +38,11 @@ from DBImportConfig import common_config
 
 
 class operation(metaclass=Singleton):
-    def __init__(self, Hive_DB=None, Hive_Table=None):
+    def __init__(self, hive_db=None, hive_table=None):
         logging.debug("Executing common_operation.__init__()")
 
-        self.Hive_DB = Hive_DB
-        self.Hive_Table = Hive_Table
+        self.Hive_DB = hive_db
+        self.Hive_Table = hive_table
         self.hive_conn = None
         self.hive_cursor = None
         self.sparkCatalogName = None
@@ -109,10 +109,10 @@ class operation(metaclass=Singleton):
             "Reconnecting to Hive Metastore should not be needed anymore. Code is not really doing anything"
         )
 
-    def set_hive_table(self, Hive_DB, Hive_Table):
+    def set_hive_table(self, hive_db, hive_table):
         """Sets the parameters to work against a new Hive database and table"""
-        self.Hive_DB = Hive_DB.lower()
-        self.Hive_Table = Hive_Table.lower()
+        self.Hive_DB = hive_db.lower()
+        self.Hive_Table = hive_table.lower()
 
     def set_table_and_column_names(
         self,
@@ -181,94 +181,100 @@ class operation(metaclass=Singleton):
 
         logging.debug("Executing common_operation.check_hive_meta_store() - Finished")
 
-    def check_db(self, hiveDB):
-        result = self.metastore.check_db(hiveDB)
+    def check_db(self, hive_db):
+        result = self.metastore.check_db(hive_db)
         return result
 
-    def check_table(self, hiveDB, hiveTable):
-        result = self.metastore.check_table(hiveDB=hiveDB, hiveTable=hiveTable)
+    def check_table(self, hive_db, hive_table):
+        result = self.metastore.check_table(hive_db=hive_db, hive_table=hive_table)
         return result
 
-    def get_table_location(self, hiveDB, hiveTable):
-        result = self.metastore.get_table_location(hiveDB=hiveDB, hiveTable=hiveTable)
+    def get_table_location(self, hive_db, hive_table):
+        result = self.metastore.get_table_location(
+            hive_db=hive_db, hive_table=hive_table
+        )
         return result
 
-    def is_table_external_orc_format(self, hiveDB, hiveTable):
+    def is_table_external_orc_format(self, hive_db, hive_table):
         result = self.metastore.is_table_external_orc_format(
-            hiveDB=hiveDB, hiveTable=hiveTable
+            hive_db=hive_db, hive_table=hive_table
         )
         return result
 
-    def is_table_external_parquet_format(self, hiveDB, hiveTable):
+    def is_table_external_parquet_format(self, hive_db, hive_table):
         result = self.metastore.is_table_external_parquet_format(
-            hiveDB=hiveDB, hiveTable=hiveTable
+            hive_db=hive_db, hive_table=hive_table
         )
         return result
 
-    def is_table_external_iceberg_format(self, hiveDB, hiveTable):
+    def is_table_external_iceberg_format(self, hive_db, hive_table):
         result = self.metastore.is_table_external_iceberg_format(
-            hiveDB=hiveDB, hiveTable=hiveTable
+            hive_db=hive_db, hive_table=hive_table
         )
         return result
 
-    def is_table_external(self, hiveDB, hiveTable):
-        result = self.metastore.is_table_external(hiveDB=hiveDB, hiveTable=hiveTable)
+    def is_table_external(self, hive_db, hive_table):
+        result = self.metastore.is_table_external(
+            hive_db=hive_db, hive_table=hive_table
+        )
         return result
 
-    def is_table_transactional(self, hiveDB, hiveTable):
+    def is_table_transactional(self, hive_db, hive_table):
         result = self.metastore.is_table_transactional(
-            hiveDB=hiveDB, hiveTable=hiveTable
+            hive_db=hive_db, hive_table=hive_table
         )
         return result
 
-    def is_table_view(self, hiveDB, hiveTable):
-        result = self.metastore.is_table_view(hiveDB=hiveDB, hiveTable=hiveTable)
+    def is_table_view(self, hive_db, hive_table):
+        result = self.metastore.is_table_view(hive_db=hive_db, hive_table=hive_table)
         return result
 
-    def get_pk(self, hiveDB, hiveTable, quotedColumns=False):
+    def get_pk(self, hive_db, hive_table, quoted_columns=False):
         result = self.metastore.get_pk(
-            hiveDB=hiveDB, hiveTable=hiveTable, quotedColumns=quotedColumns
+            hive_db=hive_db, hive_table=hive_table, quoted_columns=quoted_columns
         )
         return result
 
-    def get_pk_name(self, hiveDB, hiveTable):
-        result = self.metastore.get_pk_name(hiveDB=hiveDB, hiveTable=hiveTable)
+    def get_pk_name(self, hive_db, hive_table):
+        result = self.metastore.get_pk_name(hive_db=hive_db, hive_table=hive_table)
         return result
 
-    def get_fks(self, hiveDB, hiveTable):
-        result = self.metastore.get_fks(hiveDB=hiveDB, hiveTable=hiveTable)
+    def get_fks(self, hive_db, hive_table):
+        result = self.metastore.get_fks(hive_db=hive_db, hive_table=hive_table)
         return result
 
-    def remove_locks_by_force(self, hiveDB, hiveTable):
+    def remove_locks_by_force(self, hive_db, hive_table):
         result = self.metastore.remove_locks_by_force(
-            hiveDB=hiveDB, hiveTable=hiveTable
+            hive_db=hive_db, hive_table=hive_table
         )
         return result
 
-    def get_tables(self, dbFilter=None, tableFilter=None):
-        result = self.metastore.get_tables(dbFilter=dbFilter, tableFilter=tableFilter)
+    def get_tables(self, db_filter=None, table_filter=None):
+        result = self.metastore.get_tables(
+            db_filter=db_filter, table_filter=table_filter
+        )
         return result
 
     def get_columns(
         self,
-        hiveDB,
-        hiveTable,
-        includeType=False,
-        includeComment=False,
-        includeIdx=False,
-        forceColumnUppercase=False,
-        excludeDataLakeColumns=False,
+        hive_db,
+        hive_table,
+        include_type=False,
+        include_comment=False,
+        include_idx=False,
+        force_column_uppercase=False,
+        exclude_data_lake_columns=False,
     ):
         result = self.metastore.get_columns(
-            hiveDB=hiveDB,
-            hiveTable=hiveTable,
-            includeType=includeType,
-            includeComment=includeComment,
-            includeIdx=includeIdx,
-            forceColumnUppercase=forceColumnUppercase,
+            hive_db=hive_db,
+            hive_table=hive_table,
+            include_type=include_type,
+            include_comment=include_comment,
+            include_idx=include_idx,
+            force_column_uppercase=force_column_uppercase,
         )
 
-        if excludeDataLakeColumns == True:
+        if exclude_data_lake_columns == True:
             result = result[
                 ~result["name"].isin(
                     [
@@ -299,7 +305,7 @@ class operation(metaclass=Singleton):
 
         logging.debug("Executing common_operations.disconnect_from_hive() - Finished")
 
-    def connect_to_hive(self, forceSkipTest=False, quiet=False):
+    def connect_to_hive(self, force_skip_test=False, quiet=False):
         logging.debug("Executing common_operations.connect_to_hive()")
 
         # Make sure we only connect if we havent done so before. Reason is that this function can be called from many different places
@@ -378,7 +384,7 @@ class operation(metaclass=Singleton):
                     key="hive_validate_before_execution"
                 )
                 == True
-                and forceSkipTest == False
+                and force_skip_test == False
             ):
                 self.test_hive_query_execution()
 
@@ -603,7 +609,7 @@ class operation(metaclass=Singleton):
 
         # Connect to Hive to get a working server in the list of Hive servers
         # This sets the self.hive_hostname and self.hive_port so that beeline can connect to a working Hive server
-        self.connect_to_hive(forceSkipTest=True, quiet=True)
+        self.connect_to_hive(force_skip_test=True, quiet=True)
         self.disconnect_from_hive()
 
         if self.hive_use_ssl == False:
@@ -660,20 +666,20 @@ class operation(metaclass=Singleton):
 
         logging.debug("Executing common_operations.execute_beeline_script() - Finished")
 
-    def get_hive_table_row_count(self, hiveDB, hiveTable, whereStatement=None):
+    def get_hive_table_row_count(self, hive_db, hive_table, where_statement=None):
         logging.debug("Executing common_operations.get_hive_table_row_count()")
-        logging.info("Reading the number of rows from %s.%s", hiveDB, hiveTable)
+        logging.info("Reading the number of rows from %s.%s", hive_db, hive_table)
         row_count = 0
 
-        query = "select count(1) as rowcount from `%s`.`%s` " % (hiveDB, hiveTable)
-        if whereStatement != None:
-            query += "where " + whereStatement
+        query = "select count(1) as rowcount from `%s`.`%s` " % (hive_db, hive_table)
+        if where_statement != None:
+            query += "where " + where_statement
         else:
             query += "limit 1"
 
         result_df = self.execute_hive_query(query)
         row_count = int(result_df["rowcount"].iloc[0])
-        logging.debug("Rowcount from %s.%s: %s", hiveDB, hiveTable, row_count)
+        logging.debug("Rowcount from %s.%s: %s", hive_db, hive_table, row_count)
 
         logging.debug(
             "Executing common_operations.get_hive_table_row_count() - Finished"
@@ -684,7 +690,7 @@ class operation(metaclass=Singleton):
         logging.debug("Executing common_operations.drop_hive_table()")
         logging.info("Dropping table %s.%s", hive_db, hive_table)
 
-        self.connect_to_hive(forceSkipTest=True, quiet=True)
+        self.connect_to_hive(force_skip_test=True, quiet=True)
         self.execute_hive_query(
             "drop table if exists `%s`.`%s`" % (hive_db, hive_table)
         )
@@ -709,7 +715,7 @@ class operation(metaclass=Singleton):
             "Executing common_operations.update_hive_table_statistics() - Finished"
         )
 
-    def run_hive_major_compaction(self, hiveDB, hiveTable):
+    def run_hive_major_compaction(self, hive_db, hive_table):
         """Force a major compaction on a Hive table"""
         logging.debug("Executing common_operations.run_hive_major_compaction()")
 
@@ -720,7 +726,7 @@ class operation(metaclass=Singleton):
             logging.info("Running a Major compaction on Hive table")
             try:
                 self.execute_hive_query(
-                    "alter table `%s`.`%s` compact 'major' " % (hiveDB, hiveTable)
+                    "alter table `%s`.`%s` compact 'major' " % (hive_db, hive_table)
                 )
             except:
                 logging.error(
@@ -734,7 +740,11 @@ class operation(metaclass=Singleton):
         )
 
     def convert_hive_table_to_acid(
-        self, hiveDB, hiveTable, createDeleteColumn=False, createMergeColumns=False
+        self,
+        hive_db,
+        hive_table,
+        create_delete_column=False,
+        create_merge_columns=False,
     ):
         """Checks if a table is ACID or not, and it it isn't, it converts the table to an ACID table"""
         # TODO(#229): HDP3 shouldnt run this
@@ -742,19 +752,22 @@ class operation(metaclass=Singleton):
         logging.info("Converting table to an ACID & Transactional enabled table")
 
         buckets = 1
-        hive_table_bucketed = "%s_hive_bucketed" % (hiveTable)
+        hive_table_bucketed = "%s_hive_bucketed" % (hive_table)
         logging.info("The new table will use %s buckets", buckets)
 
-        if self.check_table(hiveDB=hiveDB, hiveTable=hive_table_bucketed) == True:
+        if self.check_table(hive_db=hive_db, hive_table=hive_table_bucketed) == True:
             logging.warning(
                 "Temporary table used during conversion to ACID already exists. We will drop this table and recreate it again"
             )
             self.execute_hive_query(
-                "drop table `%s`.`%s` " % (hiveDB, hive_table_bucketed)
+                "drop table `%s`.`%s` " % (hive_db, hive_table_bucketed)
             )
 
         column_df = self.get_columns(
-            hiveDB=hiveDB, hiveTable=hiveTable, includeType=True, includeComment=True
+            hive_db=hive_db,
+            hive_table=hive_table,
+            include_type=True,
+            include_comment=True,
         )
         hive_columns_create = []
         hive_columns_insert = []
@@ -762,7 +775,9 @@ class operation(metaclass=Singleton):
         hive_columns_insert_adding = []
         datalake_import_exists = False
 
-        pk_columns = self.get_pk(hiveDB=hiveDB, hiveTable=hiveTable, quotedColumns=True)
+        pk_columns = self.get_pk(
+            hive_db=hive_db, hive_table=hive_table, quoted_columns=True
+        )
         if pk_columns == None or pk_columns == "":
             logging.error(
                 "There are no PrimaryKey defined on the table. Please create one first before converting to ACID (PK is needed for bucket columns)"
@@ -778,7 +793,7 @@ class operation(metaclass=Singleton):
             # if columnName in ["datalake_import"] and createMergeColumns == True:
             if (
                 column_name in [self.Hive_ColumnName_Import]
-                and createMergeColumns == True
+                and create_merge_columns == True
             ):
                 datalake_import_exists = True
                 continue
@@ -791,7 +806,7 @@ class operation(metaclass=Singleton):
                 hive_columns_create.append("%s %s" % (column_name, column_type))
             hive_columns_insert.append(column_name)
 
-        if createMergeColumns == True:
+        if create_merge_columns == True:
             # hiveColumnsCreateAdding.append("datalake_iud char(1) COMMENT \"Last operation of this record was I=Insert, U=Update or D=Delete\"")
             # hiveColumnsCreateAdding.append("datalake_insert timestamp COMMENT \"Timestamp for insert in Datalake\"")
             # hiveColumnsCreateAdding.append("datalake_update timestamp COMMENT \"Timestamp for last update in Datalake\"")
@@ -814,7 +829,7 @@ class operation(metaclass=Singleton):
             hive_columns_insert_adding.append(self.Hive_ColumnName_Insert)
             hive_columns_insert_adding.append(self.Hive_ColumnName_Update)
 
-            if createDeleteColumn == True:
+            if create_delete_column == True:
                 # hiveColumnsCreateAdding.append("datalake_delete timestamp COMMENT \"Timestamp for soft delete in Datalake\"")
                 # hiveColumnsInsertAdding.append("datalake_delete")
                 hive_columns_create_adding.append(
@@ -824,9 +839,9 @@ class operation(metaclass=Singleton):
                 hive_columns_insert_adding.append(self.Hive_ColumnName_Delete)
 
         # Create the Bucketed table
-        query = "create table `%s`.`%s` " % (hiveDB, hive_table_bucketed)
+        query = "create table `%s`.`%s` " % (hive_db, hive_table_bucketed)
         query += "( %s" % (", ".join(hive_columns_create))
-        if createMergeColumns == True:
+        if create_merge_columns == True:
             query += ", %s" % (", ".join(hive_columns_create_adding))
         query += (
             ") clustered by (%s) into %s buckets stored as orc tblproperties ('orc.compress'='ZLIB', 'transactional'='true')"
@@ -835,14 +850,14 @@ class operation(metaclass=Singleton):
         self.execute_hive_query(query)
 
         # Insert data into the Bucketed table
-        query = "insert into `%s`.`%s` " % (hiveDB, hive_table_bucketed)
+        query = "insert into `%s`.`%s` " % (hive_db, hive_table_bucketed)
         query += "( %s" % (", ".join(hive_columns_insert))
-        if createMergeColumns == True:
+        if create_merge_columns == True:
             query += ", %s" % (", ".join(hive_columns_insert_adding))
         query += ") "
         query += "select "
         query += "%s" % (", ".join(hive_columns_insert))
-        if createMergeColumns == True:
+        if create_merge_columns == True:
             if datalake_import_exists == True:
                 # query += ", 'I', datalake_import, datalake_import"
                 query += ", 'I', %s, %s" % (
@@ -852,21 +867,21 @@ class operation(metaclass=Singleton):
             else:
                 query += ', \'I\', timestamp("1900-01-01 00:00:00.000"), timestamp("1900-01-01 00:00:00.000")'
 
-            if createDeleteColumn == True:
+            if create_delete_column == True:
                 query += ", NULL"
-        query += " from `%s`.`%s` " % (hiveDB, hiveTable)
+        query += " from `%s`.`%s` " % (hive_db, hive_table)
         self.execute_hive_query(query)
 
         # Drop Target table
-        query = "drop table `%s`.`%s` " % (hiveDB, hiveTable)
+        query = "drop table `%s`.`%s` " % (hive_db, hive_table)
         self.execute_hive_query(query)
 
         # Rename bucketed table to Target table
         query = "alter table `%s`.`%s` rename to `%s`.`%s`" % (
-            hiveDB,
+            hive_db,
             hive_table_bucketed,
-            hiveDB,
-            hiveTable,
+            hive_db,
+            hive_table,
         )
         self.execute_hive_query(query)
 
@@ -889,16 +904,16 @@ class operation(metaclass=Singleton):
         logging.debug("Executing common_operations.get_hive_column_name_diff()")
 
         source_columns = self.get_columns(
-            hiveDB=source_db,
-            hiveTable=source_table,
-            includeType=False,
-            includeComment=False,
+            hive_db=source_db,
+            hive_table=source_table,
+            include_type=False,
+            include_comment=False,
         )
         target_columns = self.get_columns(
-            hiveDB=target_db,
-            hiveTable=target_table,
-            includeType=False,
-            includeComment=False,
+            hive_db=target_db,
+            hive_table=target_table,
+            include_type=False,
+            include_comment=False,
         )
 
         if source_is_import_table == True:

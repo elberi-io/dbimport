@@ -54,27 +54,27 @@ class glueCatalog(metaclass=Singleton):
 
         logging.debug("Executing glueCatalog.__init__() - Finished")
 
-    def check_db(self, hiveDB):
+    def check_db(self, hive_db):
         logging.debug("Executing glueCatalog.check_db()")
 
         try:
-            response = self.glue_client.get_database(Name=hiveDB)
+            response = self.glue_client.get_database(Name=hive_db)
         # 			print(response)
         except botocore.exceptions.ClientError as error:
             logging.error(error)
             raise databaseNotFound(
-                "Can't find database '%s' in Glue Catalog" % (hiveDB)
+                "Can't find database '%s' in Glue Catalog" % (hive_db)
             )
             # raise catalogError("Can't find database '%s' in Glue Catalog"%(hiveDB))
 
         logging.debug("Executing glueCatalog.check_db() - Finished")
 
-    def check_table(self, hiveDB, hiveTable):
+    def check_table(self, hive_db, hive_table):
         logging.debug("Executing glueCatalog.check_table()")
 
         result = False
         try:
-            response = self.glue_client.get_table(DatabaseName=hiveDB, Name=hiveTable)
+            response = self.glue_client.get_table(DatabaseName=hive_db, Name=hive_table)
             # 			print(response)
             result = True
         except botocore.exceptions.ClientError as error:
@@ -84,11 +84,11 @@ class glueCatalog(metaclass=Singleton):
         logging.debug("Executing glueCatalog.check_table() - Finished")
         return result
 
-    def get_table_location(self, hiveDB, hiveTable):
+    def get_table_location(self, hive_db, hive_table):
         logging.debug("Executing glueCatalog.get_table_location()")
 
         try:
-            response = self.glue_client.get_table(DatabaseName=hiveDB, Name=hiveTable)
+            response = self.glue_client.get_table(DatabaseName=hive_db, Name=hive_table)
             location = response["Table"]["StorageDescriptor"]["Location"]
         # 			print(location)
         except botocore.exceptions.ClientError as error:
@@ -98,14 +98,14 @@ class glueCatalog(metaclass=Singleton):
         logging.debug("Executing glueCatalog.get_table_location() - Finished")
         return location
 
-    def is_table_external_orc_format(self, hiveDB, hiveTable):
+    def is_table_external_orc_format(self, hive_db, hive_table):
         logging.debug("Executing glueCatalog.is_table_external_orc_format()")
         logging.warning(
             "glueCatalog.is_table_external_orc_format() is undeveloped. Please contact developer if this is needed"
         )
         logging.debug("Executing glueCatalog.is_table_external_orc_format() - Finished")
 
-    def is_table_external_parquet_format(self, hiveDB, hiveTable):
+    def is_table_external_parquet_format(self, hive_db, hive_table):
         logging.debug("Executing glueCatalog.is_table_external_parquet_format()")
         logging.warning(
             "glueCatalog.is_table_external_parquet_format() is undeveloped. Please contact developer if this is needed"
@@ -114,12 +114,12 @@ class glueCatalog(metaclass=Singleton):
             "Executing glueCatalog.is_table_external_parquet_format() - Finished"
         )
 
-    def is_table_external_iceberg_format(self, hiveDB, hiveTable):
+    def is_table_external_iceberg_format(self, hive_db, hive_table):
         logging.debug("Executing glueCatalog.is_table_external_iceberg_format()")
 
         return_value = False
         try:
-            response = self.glue_client.get_table(DatabaseName=hiveDB, Name=hiveTable)
+            response = self.glue_client.get_table(DatabaseName=hive_db, Name=hive_table)
             table_type = response["Table"]["TableType"]
             parameter_table_type = response["Table"]["Parameters"]["table_type"]
 
@@ -139,12 +139,12 @@ class glueCatalog(metaclass=Singleton):
         )
         return return_value
 
-    def is_table_external(self, hiveDB, hiveTable):
+    def is_table_external(self, hive_db, hive_table):
         logging.debug("Executing glueCatalog.is_table_external()")
 
         return_value = False
         try:
-            response = self.glue_client.get_table(DatabaseName=hiveDB, Name=hiveTable)
+            response = self.glue_client.get_table(DatabaseName=hive_db, Name=hive_table)
             table_type = response["Table"]["TableType"]
 
             if table_type == "EXTERNAL_TABLE":
@@ -161,7 +161,7 @@ class glueCatalog(metaclass=Singleton):
         logging.debug("Executing glueCatalog.is_table_external() - Finished")
         return return_value
 
-    def get_pk(self, hiveDB, hiveTable, quotedColumns=False):
+    def get_pk(self, hive_db, hive_table, quoted_columns=False):
         """Reads the PK from the Hive Metadatabase and return a comma separated string with the information"""
         logging.debug("Executing glueCatalog.get_pk()")
 
@@ -208,7 +208,7 @@ class glueCatalog(metaclass=Singleton):
         logging.debug("Executing glueCatalog.get_pk() - Finished")
         return result
 
-    def get_pk_name(self, hiveDB, hiveTable):
+    def get_pk_name(self, hive_db, hive_table):
         """Returns the name of the Primary Key that exists on the table. Returns None if it doesnt exist"""
         logging.debug("Executing glueCatalog.get_pk_name()")
 
@@ -244,7 +244,7 @@ class glueCatalog(metaclass=Singleton):
         # 		return row[0]
         return None
 
-    def get_fks(self, hiveDB, hiveTable):
+    def get_fks(self, hive_db, hive_table):
         """Reads the ForeignKeys from the Hive Metastore tables and return the result in a Pandas DF"""
         logging.debug("Executing glueCatalog.get_fks()")
 
@@ -310,7 +310,7 @@ class glueCatalog(metaclass=Singleton):
             ]
         )
 
-    def remove_locks_by_force(self, hiveDB, hiveTable):
+    def remove_locks_by_force(self, hive_db, hive_table):
         """Removes the locks on the Hive table from the Hive Metadatabase"""
         logging.debug("Executing glueCatalog.remove_locks_by_force()")
         # This is not needed with Glue Catalog, but code must be here anyway
@@ -318,13 +318,13 @@ class glueCatalog(metaclass=Singleton):
 
     def get_columns(
         self,
-        hiveDB,
-        hiveTable,
-        includeType=False,
-        includeComment=False,
-        includeIdx=False,
-        forceColumnUppercase=False,
-        excludeDataLakeColumns=False,
+        hive_db,
+        hive_table,
+        include_type=False,
+        include_comment=False,
+        include_idx=False,
+        force_column_uppercase=False,
+        exclude_data_lake_columns=False,
     ):
         """Returns a pandas DataFrame with all columns in the specified table"""
         logging.debug("Executing glueCatalog.get_columns()")
@@ -338,7 +338,7 @@ class glueCatalog(metaclass=Singleton):
         # 		print(excludeDataLakeColumns)
 
         try:
-            response = self.glue_client.get_table(DatabaseName=hiveDB, Name=hiveTable)
+            response = self.glue_client.get_table(DatabaseName=hive_db, Name=hive_table)
             columns = response["Table"]["StorageDescriptor"]["Columns"]
             # 			print(columns)
 
@@ -376,17 +376,17 @@ class glueCatalog(metaclass=Singleton):
             logging.error(error)
             raise catalogError("Error when checking table type in Glue Catalog")
 
-        if includeType == False:
+        if include_type == False:
             result_df.drop("type", axis=1, inplace=True)
         #
-        if includeComment == False:
+        if include_comment == False:
             result_df.drop("comment", axis=1, inplace=True)
         #
         # 		This is needed for exports
         # 		if includeIdx == False:
         # 			result_df.drop('idx', axis=1, inplace=True)
         #
-        if forceColumnUppercase == True:
+        if force_column_uppercase == True:
             result_df["name"] = result_df["name"].str.upper()
         #
         # 		if excludeDataLakeColumns == True:
@@ -400,13 +400,13 @@ class glueCatalog(metaclass=Singleton):
         return result_df
 
     #
-    def is_table_transactional(self, hiveDB, hiveTable):
+    def is_table_transactional(self, hive_db, hive_table):
         logging.debug("Executing glueCatalog.is_table_transactional()")
         # Always True for Glue Catalog
         logging.debug("Executing glueCatalog.is_table_transactional() - Finished")
         return True
 
-    def is_table_view(self, hiveDB, hiveTable):
+    def is_table_view(self, hive_db, hive_table):
         logging.debug("Executing glueCatalog.is_table_view()")
 
         raise undevelopedFeature(
@@ -417,7 +417,7 @@ class glueCatalog(metaclass=Singleton):
         logging.debug("Executing glueCatalog.is_table_view() - Finished")
         return return_value
 
-    def get_tables(self, dbFilter=None, tableFilter=None):
+    def get_tables(self, db_filter=None, table_filter=None):
         """Return all tables from specific Hive DB"""
         logging.debug("Executing glueCatalog.get_tables()")
 

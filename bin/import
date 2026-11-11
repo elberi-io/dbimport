@@ -1084,10 +1084,10 @@ def main(argv):
 
             if run_only_function == None or run_only_function == "createImportTable":
                 if import_operation.run_stage(3050) == True:
-                    import_operation.connect_to_hive(forceSkipTest=skip_hive_test)
+                    import_operation.connect_to_hive(force_skip_test=skip_hive_test)
 
                 if import_operation.run_stage(3051) == True:
-                    import_operation.connect_to_hive(forceSkipTest=skip_hive_test)
+                    import_operation.connect_to_hive(force_skip_test=skip_hive_test)
                     import_operation.create_external_import_table()
                     import_operation.update_external_import_table()
 
@@ -1096,7 +1096,7 @@ def main(argv):
                 or run_only_function == "getImportTableRowCount"
             ):
                 if import_operation.run_stage(3052) == True:
-                    import_operation.connect_to_hive(forceSkipTest=skip_hive_test)
+                    import_operation.connect_to_hive(force_skip_test=skip_hive_test)
                     import_operation.get_import_table_validation_data()
 
                 if import_operation.run_stage(3053) == True:
@@ -1104,12 +1104,12 @@ def main(argv):
 
             if run_only_function == None or run_only_function == "removeHiveLocks":
                 if import_operation.run_stage(3054) == True:
-                    import_operation.connect_to_hive(forceSkipTest=skip_hive_test)
+                    import_operation.connect_to_hive(force_skip_test=skip_hive_test)
                     import_operation.remove_hive_locks()
 
             if run_only_function == None or run_only_function == "createTargetTable":
                 if import_operation.run_stage(3055) == True:
-                    import_operation.connect_to_hive(forceSkipTest=skip_hive_test)
+                    import_operation.connect_to_hive(force_skip_test=skip_hive_test)
                     if drop_target_table == True:
                         import_operation.dropTargetTable()
                     import_operation.create_target_table()
@@ -1120,7 +1120,7 @@ def main(argv):
 
             if run_only_function == None or run_only_function == "truncateTargetTable":
                 if import_operation.run_stage(3056) == True:
-                    import_operation.connect_to_hive(forceSkipTest=skip_hive_test)
+                    import_operation.connect_to_hive(force_skip_test=skip_hive_test)
                     import_operation.truncateTargetTable()
 
             if (
@@ -1128,11 +1128,11 @@ def main(argv):
                 or run_only_function == "loadDataFromImportTable"
             ):
                 if import_operation.run_stage(3057) == True:
-                    import_operation.connect_to_hive(forceSkipTest=skip_hive_test)
+                    import_operation.connect_to_hive(force_skip_test=skip_hive_test)
                     import_operation.load_data_from_import_to_target_table()
 
                 if import_operation.run_stage(3058) == True:
-                    import_operation.connect_to_hive(forceSkipTest=skip_hive_test)
+                    import_operation.connect_to_hive(force_skip_test=skip_hive_test)
                     import_operation.update_statistics_on_target_table()
                     import_operation.purge_iceberg_versions_on_target_table()
 
@@ -1142,7 +1142,7 @@ def main(argv):
             ):
                 if import_operation.import_config.validate_import == True:
                     if import_operation.run_stage(3059) == True:
-                        import_operation.connect_to_hive(forceSkipTest=skip_hive_test)
+                        import_operation.connect_to_hive(force_skip_test=skip_hive_test)
                         import_operation.get_target_table_validation_data()
 
                     if import_operation.run_stage(3060) == True:
@@ -1212,10 +1212,10 @@ def main(argv):
 
             if run_only_function == None or run_only_function == "createImportTable":
                 if import_operation.run_stage(3100) == True:
-                    import_operation.connect_to_hive(forceSkipTest=skip_hive_test)
+                    import_operation.connect_to_hive(force_skip_test=skip_hive_test)
 
                 if import_operation.run_stage(3101) == True:
-                    import_operation.connect_to_hive(forceSkipTest=skip_hive_test)
+                    import_operation.connect_to_hive(force_skip_test=skip_hive_test)
                     import_operation.create_external_import_table()
                     import_operation.update_external_import_table()
 
@@ -1225,7 +1225,7 @@ def main(argv):
             ):
                 if import_operation.import_config.validate_import == True:
                     if import_operation.run_stage(3102) == True:
-                        import_operation.connect_to_hive(forceSkipTest=skip_hive_test)
+                        import_operation.connect_to_hive(force_skip_test=skip_hive_test)
                         import_operation.get_import_table_validation_data()
 
                     if import_operation.run_stage(3103) == True:
@@ -1233,12 +1233,12 @@ def main(argv):
 
             if run_only_function == None or run_only_function == "removeHiveLocks":
                 if import_operation.run_stage(3104) == True:
-                    import_operation.connect_to_hive(forceSkipTest=skip_hive_test)
+                    import_operation.connect_to_hive(force_skip_test=skip_hive_test)
                     import_operation.remove_hive_locks()
 
             if run_only_function == None or run_only_function == "createTargetTable":
                 if import_operation.run_stage(3105) == True:
-                    import_operation.connect_to_hive(forceSkipTest=skip_hive_test)
+                    import_operation.connect_to_hive(force_skip_test=skip_hive_test)
                     if drop_target_table == True:
                         import_operation.dropTargetTable()
                     import_operation.create_target_table()
@@ -1252,11 +1252,11 @@ def main(argv):
                 or run_only_function == "loadDataFromImportTable"
             ):
                 if import_operation.run_stage(3106) == True:
-                    import_operation.connect_to_hive(forceSkipTest=skip_hive_test)
+                    import_operation.connect_to_hive(force_skip_test=skip_hive_test)
                     import_operation.load_data_from_import_to_target_table()
 
                 if import_operation.run_stage(3107) == True:
-                    import_operation.connect_to_hive(forceSkipTest=skip_hive_test)
+                    import_operation.connect_to_hive(force_skip_test=skip_hive_test)
                     import_operation.update_statistics_on_target_table()
                     import_operation.purge_iceberg_versions_on_target_table()
 
@@ -1266,7 +1266,7 @@ def main(argv):
             ):
                 if import_operation.import_config.validate_import == True:
                     if import_operation.run_stage(3108) == True:
-                        import_operation.connect_to_hive(forceSkipTest=skip_hive_test)
+                        import_operation.connect_to_hive(force_skip_test=skip_hive_test)
                         import_operation.get_target_table_validation_data()
 
                     if import_operation.run_stage(3109) == True:
@@ -1347,10 +1347,10 @@ def main(argv):
             if run_only_function == None or run_only_function == "createImportTable":
                 # 			if (runOnlyFunction == None or runOnlyFunction == "createImportTable") and import_operation.import_config.etlEngine == constant.ETL_ENGINE_HIVE:
                 if import_operation.run_stage(3150) == True:
-                    import_operation.connect_to_hive(forceSkipTest=skip_hive_test)
+                    import_operation.connect_to_hive(force_skip_test=skip_hive_test)
 
                 if import_operation.run_stage(3151) == True:
-                    import_operation.connect_to_hive(forceSkipTest=skip_hive_test)
+                    import_operation.connect_to_hive(force_skip_test=skip_hive_test)
                     import_operation.create_external_import_table()
                     import_operation.update_external_import_table()
 
@@ -1361,7 +1361,7 @@ def main(argv):
                 # 			if (runOnlyFunction == None or runOnlyFunction == "getImportTableRowCount") and import_operation.import_config.etlEngine == constant.ETL_ENGINE_HIVE:
                 if import_operation.import_config.validate_import == True:
                     if import_operation.run_stage(3152) == True:
-                        import_operation.connect_to_hive(forceSkipTest=skip_hive_test)
+                        import_operation.connect_to_hive(force_skip_test=skip_hive_test)
                         import_operation.get_import_table_validation_data()
 
                     if import_operation.run_stage(3153) == True:
@@ -1370,12 +1370,12 @@ def main(argv):
             if run_only_function == None or run_only_function == "removeHiveLocks":
                 # 			if (runOnlyFunction == None or runOnlyFunction == "removeHiveLocks") and import_operation.import_config.etlEngine == constant.ETL_ENGINE_HIVE:
                 if import_operation.run_stage(3154) == True:
-                    import_operation.connect_to_hive(forceSkipTest=skip_hive_test)
+                    import_operation.connect_to_hive(force_skip_test=skip_hive_test)
                     import_operation.remove_hive_locks()
 
             if run_only_function == None or run_only_function == "createTargetTable":
                 if import_operation.run_stage(3155) == True:
-                    import_operation.connect_to_hive(forceSkipTest=skip_hive_test)
+                    import_operation.connect_to_hive(force_skip_test=skip_hive_test)
                     if drop_target_table == True:
                         import_operation.dropTargetTable()
                     import_operation.create_target_table()
@@ -1389,11 +1389,11 @@ def main(argv):
                 or run_only_function == "loadDataFromImportTable"
             ):
                 if import_operation.run_stage(3156) == True:
-                    import_operation.connect_to_hive(forceSkipTest=skip_hive_test)
+                    import_operation.connect_to_hive(force_skip_test=skip_hive_test)
                     import_operation.load_data_from_import_to_target_table()
 
                 if import_operation.run_stage(3157) == True:
-                    import_operation.connect_to_hive(forceSkipTest=skip_hive_test)
+                    import_operation.connect_to_hive(force_skip_test=skip_hive_test)
                     import_operation.update_statistics_on_target_table()
                     import_operation.purge_iceberg_versions_on_target_table()
 
@@ -1403,9 +1403,9 @@ def main(argv):
             ):
                 if import_operation.import_config.validate_import == True:
                     if import_operation.run_stage(3158) == True:
-                        import_operation.connect_to_hive(forceSkipTest=skip_hive_test)
+                        import_operation.connect_to_hive(force_skip_test=skip_hive_test)
                         import_operation.get_target_table_validation_data(
-                            incrementalMax=incremental_max
+                            incremental_max=incremental_max
                         )
 
                     if import_operation.run_stage(3159) == True:
@@ -1480,10 +1480,10 @@ def main(argv):
             if run_only_function == None or run_only_function == "createImportTable":
                 # if (runOnlyFunction == None or runOnlyFunction == "createImportTable") and import_operation.import_config.etlEngine == constant.ETL_ENGINE_HIVE:
                 if import_operation.run_stage(3200) == True:
-                    import_operation.connect_to_hive(forceSkipTest=skip_hive_test)
+                    import_operation.connect_to_hive(force_skip_test=skip_hive_test)
 
                 if import_operation.run_stage(3201) == True:
-                    import_operation.connect_to_hive(forceSkipTest=skip_hive_test)
+                    import_operation.connect_to_hive(force_skip_test=skip_hive_test)
                     import_operation.create_external_import_table()
                     import_operation.update_external_import_table()
                     import_operation.create_external_import_view()
@@ -1496,7 +1496,7 @@ def main(argv):
                 # if (runOnlyFunction == None or runOnlyFunction == "getImportTableRowCount") and import_operation.import_config.etlEngine == constant.ETL_ENGINE_HIVE:
                 if import_operation.import_config.validate_import == True:
                     if import_operation.run_stage(3202) == True:
-                        import_operation.connect_to_hive(forceSkipTest=skip_hive_test)
+                        import_operation.connect_to_hive(force_skip_test=skip_hive_test)
                         import_operation.get_import_table_validation_data()
 
                     if import_operation.run_stage(3203) == True:
@@ -1505,12 +1505,12 @@ def main(argv):
             if run_only_function == None or run_only_function == "removeHiveLocks":
                 # if (runOnlyFunction == None or runOnlyFunction == "removeHiveLocks") and import_operation.import_config.etlEngine == constant.ETL_ENGINE_HIVE:
                 if import_operation.run_stage(3204) == True:
-                    import_operation.connect_to_hive(forceSkipTest=skip_hive_test)
+                    import_operation.connect_to_hive(force_skip_test=skip_hive_test)
                     import_operation.remove_hive_locks()
 
             if run_only_function == None or run_only_function == "createTargetTable":
                 if import_operation.run_stage(3205) == True:
-                    import_operation.connect_to_hive(forceSkipTest=skip_hive_test)
+                    import_operation.connect_to_hive(force_skip_test=skip_hive_test)
                     if drop_target_table == True:
                         import_operation.dropTargetTable()
                     import_operation.create_target_table()
@@ -1522,20 +1522,20 @@ def main(argv):
 
             if run_only_function == None or run_only_function == "createHistoryTable":
                 if import_operation.run_stage(3206) == True:
-                    import_operation.connect_to_hive(forceSkipTest=skip_hive_test)
+                    import_operation.connect_to_hive(force_skip_test=skip_hive_test)
                     import_operation.create_history_table()
                     import_operation.update_history_table()
                     import_operation.add_hive_dbimport_columns_to_history_table()
 
             if run_only_function == None or run_only_function == "createDeleteTable":
                 if import_operation.run_stage(3207) == True:
-                    import_operation.connect_to_hive(forceSkipTest=skip_hive_test)
+                    import_operation.connect_to_hive(force_skip_test=skip_hive_test)
                     import_operation.create_delete_table()
                     import_operation.update_delete_table()
 
             if run_only_function == None or run_only_function == "mergeTable":
                 if import_operation.run_stage(3208) == True:
-                    import_operation.connect_to_hive(forceSkipTest=skip_hive_test)
+                    import_operation.connect_to_hive(force_skip_test=skip_hive_test)
                     import_table_or_view = (
                         import_operation.import_config.Hive_Import_Table
                     )
@@ -1567,7 +1567,7 @@ def main(argv):
                     )
 
                 if import_operation.run_stage(3209) == True:
-                    import_operation.connect_to_hive(forceSkipTest=skip_hive_test)
+                    import_operation.connect_to_hive(force_skip_test=skip_hive_test)
                     import_operation.update_statistics_on_target_table()
                     import_operation.purge_iceberg_versions_on_target_table()
 
@@ -1577,7 +1577,7 @@ def main(argv):
             ):
                 if import_operation.import_config.validate_import == True:
                     if import_operation.run_stage(3210) == True:
-                        import_operation.connect_to_hive(forceSkipTest=skip_hive_test)
+                        import_operation.connect_to_hive(force_skip_test=skip_hive_test)
                         import_operation.get_target_table_validation_data()
 
                     if import_operation.run_stage(3211) == True:
@@ -1586,7 +1586,7 @@ def main(argv):
 
             if run_only_function == None or run_only_function == "compaction":
                 if import_operation.run_stage(3212) == True:
-                    import_operation.connect_to_hive(forceSkipTest=skip_hive_test)
+                    import_operation.connect_to_hive(force_skip_test=skip_hive_test)
                     import_operation.run_hive_compaction()
             # 					import_operation.run_hive_major_compaction()
 
@@ -1651,10 +1651,10 @@ def main(argv):
 
             if run_only_function == None or run_only_function == "createImportTable":
                 if import_operation.run_stage(3250) == True:
-                    import_operation.connect_to_hive(forceSkipTest=skip_hive_test)
+                    import_operation.connect_to_hive(force_skip_test=skip_hive_test)
 
                 if import_operation.run_stage(3251) == True:
-                    import_operation.connect_to_hive(forceSkipTest=skip_hive_test)
+                    import_operation.connect_to_hive(force_skip_test=skip_hive_test)
                     import_operation.create_external_import_table()
                     import_operation.update_external_import_table()
                     import_operation.create_external_import_view()
@@ -1666,7 +1666,7 @@ def main(argv):
             ):
                 if import_operation.import_config.validate_import == True:
                     if import_operation.run_stage(3252) == True:
-                        import_operation.connect_to_hive(forceSkipTest=skip_hive_test)
+                        import_operation.connect_to_hive(force_skip_test=skip_hive_test)
                         import_operation.get_import_table_validation_data()
 
                     if import_operation.run_stage(3253) == True:
@@ -1674,12 +1674,12 @@ def main(argv):
 
             if run_only_function == None or run_only_function == "removeHiveLocks":
                 if import_operation.run_stage(3254) == True:
-                    import_operation.connect_to_hive(forceSkipTest=skip_hive_test)
+                    import_operation.connect_to_hive(force_skip_test=skip_hive_test)
                     import_operation.remove_hive_locks()
 
             if run_only_function == None or run_only_function == "createTargetTable":
                 if import_operation.run_stage(3255) == True:
-                    import_operation.connect_to_hive(forceSkipTest=skip_hive_test)
+                    import_operation.connect_to_hive(force_skip_test=skip_hive_test)
                     if drop_target_table == True:
                         import_operation.dropTargetTable()
                     import_operation.create_target_table()
@@ -1691,13 +1691,13 @@ def main(argv):
 
             if run_only_function == None or run_only_function == "createDeleteTable":
                 if import_operation.run_stage(3256) == True:
-                    import_operation.connect_to_hive(forceSkipTest=skip_hive_test)
+                    import_operation.connect_to_hive(force_skip_test=skip_hive_test)
                     import_operation.create_delete_table()
                     import_operation.update_delete_table()
 
             if run_only_function == None or run_only_function == "mergeTable":
                 if import_operation.run_stage(3257) == True:
-                    import_operation.connect_to_hive(forceSkipTest=skip_hive_test)
+                    import_operation.connect_to_hive(force_skip_test=skip_hive_test)
                     import_table_or_view = (
                         import_operation.import_config.Hive_Import_Table
                     )
@@ -1727,7 +1727,7 @@ def main(argv):
                     )
 
                 if import_operation.run_stage(3258) == True:
-                    import_operation.connect_to_hive(forceSkipTest=skip_hive_test)
+                    import_operation.connect_to_hive(force_skip_test=skip_hive_test)
                     import_operation.update_statistics_on_target_table()
                     import_operation.purge_iceberg_versions_on_target_table()
 
@@ -1737,7 +1737,7 @@ def main(argv):
             ):
                 if import_operation.import_config.validate_import == True:
                     if import_operation.run_stage(3259) == True:
-                        import_operation.connect_to_hive(forceSkipTest=skip_hive_test)
+                        import_operation.connect_to_hive(force_skip_test=skip_hive_test)
                         import_operation.get_target_table_validation_data()
 
                     if import_operation.run_stage(3260) == True:
@@ -1746,7 +1746,7 @@ def main(argv):
 
             if run_only_function == None or run_only_function == "compaction":
                 if import_operation.run_stage(3261) == True:
-                    import_operation.connect_to_hive(forceSkipTest=skip_hive_test)
+                    import_operation.connect_to_hive(force_skip_test=skip_hive_test)
                     import_operation.run_hive_compaction()
             # 					import_operation.run_hive_major_compaction()
 
@@ -1827,10 +1827,10 @@ def main(argv):
 
             if run_only_function == None or run_only_function == "createImportTable":
                 if import_operation.run_stage(3300) == True:
-                    import_operation.connect_to_hive(forceSkipTest=skip_hive_test)
+                    import_operation.connect_to_hive(force_skip_test=skip_hive_test)
 
                 if import_operation.run_stage(3301) == True:
-                    import_operation.connect_to_hive(forceSkipTest=skip_hive_test)
+                    import_operation.connect_to_hive(force_skip_test=skip_hive_test)
                     import_operation.create_external_import_table()
                     import_operation.update_external_import_table()
                     import_operation.create_external_import_view()
@@ -1842,7 +1842,7 @@ def main(argv):
             ):
                 if import_operation.import_config.validate_import == True:
                     if import_operation.run_stage(3302) == True:
-                        import_operation.connect_to_hive(forceSkipTest=skip_hive_test)
+                        import_operation.connect_to_hive(force_skip_test=skip_hive_test)
                         import_operation.get_import_table_validation_data()
 
                     if import_operation.run_stage(3303) == True:
@@ -1850,12 +1850,12 @@ def main(argv):
 
             if run_only_function == None or run_only_function == "removeHiveLocks":
                 if import_operation.run_stage(3304) == True:
-                    import_operation.connect_to_hive(forceSkipTest=skip_hive_test)
+                    import_operation.connect_to_hive(force_skip_test=skip_hive_test)
                     import_operation.remove_hive_locks()
 
             if run_only_function == None or run_only_function == "createTargetTable":
                 if import_operation.run_stage(3305) == True:
-                    import_operation.connect_to_hive(forceSkipTest=skip_hive_test)
+                    import_operation.connect_to_hive(force_skip_test=skip_hive_test)
                     if drop_target_table == True:
                         import_operation.dropTargetTable()
                     import_operation.create_target_table()
@@ -1867,7 +1867,7 @@ def main(argv):
 
             if run_only_function == None or run_only_function == "mergeTable":
                 if import_operation.run_stage(3306) == True:
-                    import_operation.connect_to_hive(forceSkipTest=skip_hive_test)
+                    import_operation.connect_to_hive(force_skip_test=skip_hive_test)
                     import_table_or_view = (
                         import_operation.import_config.Hive_Import_Table
                     )
@@ -1895,7 +1895,7 @@ def main(argv):
                     )
 
                 if import_operation.run_stage(3307) == True:
-                    import_operation.connect_to_hive(forceSkipTest=skip_hive_test)
+                    import_operation.connect_to_hive(force_skip_test=skip_hive_test)
                     import_operation.update_statistics_on_target_table()
                     import_operation.purge_iceberg_versions_on_target_table()
 
@@ -1905,9 +1905,9 @@ def main(argv):
             ):
                 if import_operation.import_config.validate_import == True:
                     if import_operation.run_stage(3308) == True:
-                        import_operation.connect_to_hive(forceSkipTest=skip_hive_test)
+                        import_operation.connect_to_hive(force_skip_test=skip_hive_test)
                         import_operation.get_target_table_validation_data(
-                            incrementalMax=incremental_max
+                            incremental_max=incremental_max
                         )
 
                     if import_operation.run_stage(3309) == True:
@@ -1920,7 +1920,7 @@ def main(argv):
 
             if run_only_function == None or run_only_function == "compaction":
                 if import_operation.run_stage(3311) == True:
-                    import_operation.connect_to_hive(forceSkipTest=skip_hive_test)
+                    import_operation.connect_to_hive(force_skip_test=skip_hive_test)
                     import_operation.run_hive_compaction()
             # 					import_operation.run_hive_major_compaction()
 
@@ -1997,10 +1997,10 @@ def main(argv):
 
             if run_only_function == None or run_only_function == "createImportTable":
                 if import_operation.run_stage(3350) == True:
-                    import_operation.connect_to_hive(forceSkipTest=skip_hive_test)
+                    import_operation.connect_to_hive(force_skip_test=skip_hive_test)
 
                 if import_operation.run_stage(3351) == True:
-                    import_operation.connect_to_hive(forceSkipTest=skip_hive_test)
+                    import_operation.connect_to_hive(force_skip_test=skip_hive_test)
                     import_operation.create_external_import_table()
                     import_operation.update_external_import_table()
                     import_operation.create_external_import_view()
@@ -2012,7 +2012,7 @@ def main(argv):
             ):
                 if import_operation.import_config.validate_import == True:
                     if import_operation.run_stage(3352) == True:
-                        import_operation.connect_to_hive(forceSkipTest=skip_hive_test)
+                        import_operation.connect_to_hive(force_skip_test=skip_hive_test)
                         import_operation.get_import_table_validation_data()
 
                     if import_operation.run_stage(3353) == True:
@@ -2020,12 +2020,12 @@ def main(argv):
 
             if run_only_function == None or run_only_function == "removeHiveLocks":
                 if import_operation.run_stage(3354) == True:
-                    import_operation.connect_to_hive(forceSkipTest=skip_hive_test)
+                    import_operation.connect_to_hive(force_skip_test=skip_hive_test)
                     import_operation.remove_hive_locks()
 
             if run_only_function == None or run_only_function == "createTargetTable":
                 if import_operation.run_stage(3355) == True:
-                    import_operation.connect_to_hive(forceSkipTest=skip_hive_test)
+                    import_operation.connect_to_hive(force_skip_test=skip_hive_test)
                     if drop_target_table == True:
                         import_operation.dropTargetTable()
                     import_operation.create_target_table()
@@ -2037,14 +2037,14 @@ def main(argv):
 
             if run_only_function == None or run_only_function == "createHistoryTable":
                 if import_operation.run_stage(3356) == True:
-                    import_operation.connect_to_hive(forceSkipTest=skip_hive_test)
+                    import_operation.connect_to_hive(force_skip_test=skip_hive_test)
                     import_operation.create_history_table()
                     import_operation.update_history_table()
                     import_operation.add_hive_dbimport_columns_to_history_table()
 
             if run_only_function == None or run_only_function == "mergeTable":
                 if import_operation.run_stage(3357) == True:
-                    import_operation.connect_to_hive(forceSkipTest=skip_hive_test)
+                    import_operation.connect_to_hive(force_skip_test=skip_hive_test)
                     import_table_or_view = (
                         import_operation.import_config.Hive_Import_Table
                     )
@@ -2074,7 +2074,7 @@ def main(argv):
                     )
 
                 if import_operation.run_stage(3358) == True:
-                    import_operation.connect_to_hive(forceSkipTest=skip_hive_test)
+                    import_operation.connect_to_hive(force_skip_test=skip_hive_test)
                     import_operation.update_statistics_on_target_table()
                     import_operation.purge_iceberg_versions_on_target_table()
 
@@ -2084,9 +2084,9 @@ def main(argv):
             ):
                 if import_operation.import_config.validate_import == True:
                     if import_operation.run_stage(3359) == True:
-                        import_operation.connect_to_hive(forceSkipTest=skip_hive_test)
+                        import_operation.connect_to_hive(force_skip_test=skip_hive_test)
                         import_operation.get_target_table_validation_data(
-                            incrementalMax=incremental_max
+                            incremental_max=incremental_max
                         )
 
                     if import_operation.run_stage(3360) == True:
@@ -2099,7 +2099,7 @@ def main(argv):
 
             if run_only_function == None or run_only_function == "compaction":
                 if import_operation.run_stage(3362) == True:
-                    import_operation.connect_to_hive(forceSkipTest=skip_hive_test)
+                    import_operation.connect_to_hive(force_skip_test=skip_hive_test)
                     import_operation.run_hive_compaction()
             # 					import_operation.run_hive_major_compaction()
 
@@ -2176,10 +2176,10 @@ def main(argv):
 
             if run_only_function == None or run_only_function == "createImportTable":
                 if import_operation.run_stage(3400) == True:
-                    import_operation.connect_to_hive(forceSkipTest=skip_hive_test)
+                    import_operation.connect_to_hive(force_skip_test=skip_hive_test)
 
                 if import_operation.run_stage(3401) == True:
-                    import_operation.connect_to_hive(forceSkipTest=skip_hive_test)
+                    import_operation.connect_to_hive(force_skip_test=skip_hive_test)
                     import_operation.create_external_import_table()
                     import_operation.update_external_import_table()
                     import_operation.create_external_import_view()
@@ -2191,7 +2191,7 @@ def main(argv):
             ):
                 if import_operation.import_config.validate_import == True:
                     if import_operation.run_stage(3402) == True:
-                        import_operation.connect_to_hive(forceSkipTest=skip_hive_test)
+                        import_operation.connect_to_hive(force_skip_test=skip_hive_test)
                         import_operation.get_import_table_validation_data()
 
                     if import_operation.run_stage(3403) == True:
@@ -2200,12 +2200,12 @@ def main(argv):
 
             if run_only_function == None or run_only_function == "removeHiveLocks":
                 if import_operation.run_stage(3404) == True:
-                    import_operation.connect_to_hive(forceSkipTest=skip_hive_test)
+                    import_operation.connect_to_hive(force_skip_test=skip_hive_test)
                     import_operation.remove_hive_locks()
 
             if run_only_function == None or run_only_function == "createTargetTable":
                 if import_operation.run_stage(3405) == True:
-                    import_operation.connect_to_hive(forceSkipTest=skip_hive_test)
+                    import_operation.connect_to_hive(force_skip_test=skip_hive_test)
                     if drop_target_table == True:
                         import_operation.dropTargetTable()
                     import_operation.create_target_table()
@@ -2217,7 +2217,7 @@ def main(argv):
 
             if run_only_function == None or run_only_function == "mergeTable":
                 if import_operation.run_stage(3406) == True:
-                    import_operation.connect_to_hive(forceSkipTest=skip_hive_test)
+                    import_operation.connect_to_hive(force_skip_test=skip_hive_test)
 
                     if (
                         import_operation.import_config.is_external_view_required()
@@ -2256,7 +2256,7 @@ def main(argv):
                     )
 
                 if import_operation.run_stage(3407) == True:
-                    import_operation.connect_to_hive(forceSkipTest=skip_hive_test)
+                    import_operation.connect_to_hive(force_skip_test=skip_hive_test)
                     import_operation.update_statistics_on_target_table()
                     import_operation.purge_iceberg_versions_on_target_table()
 
@@ -2266,7 +2266,7 @@ def main(argv):
             ):
                 if import_operation.import_config.validate_import == True:
                     if import_operation.run_stage(3408) == True:
-                        import_operation.connect_to_hive(forceSkipTest=skip_hive_test)
+                        import_operation.connect_to_hive(force_skip_test=skip_hive_test)
                         import_operation.get_target_table_validation_data()
 
                     if import_operation.run_stage(3409) == True:
@@ -2279,7 +2279,7 @@ def main(argv):
 
             if run_only_function == None or run_only_function == "compaction":
                 if import_operation.run_stage(3411) == True:
-                    import_operation.connect_to_hive(forceSkipTest=skip_hive_test)
+                    import_operation.connect_to_hive(force_skip_test=skip_hive_test)
                     import_operation.run_hive_compaction()
             # 					import_operation.run_hive_major_compaction()
 
@@ -2347,10 +2347,10 @@ def main(argv):
 
             if run_only_function == None or run_only_function == "createImportTable":
                 if import_operation.run_stage(3450) == True:
-                    import_operation.connect_to_hive(forceSkipTest=skip_hive_test)
+                    import_operation.connect_to_hive(force_skip_test=skip_hive_test)
 
                 if import_operation.run_stage(3451) == True:
-                    import_operation.connect_to_hive(forceSkipTest=skip_hive_test)
+                    import_operation.connect_to_hive(force_skip_test=skip_hive_test)
                     import_operation.create_external_import_table()
                     import_operation.update_external_import_table()
 
@@ -2360,7 +2360,7 @@ def main(argv):
             ):
                 if import_operation.import_config.validate_import == True:
                     if import_operation.run_stage(3452) == True:
-                        import_operation.connect_to_hive(forceSkipTest=skip_hive_test)
+                        import_operation.connect_to_hive(force_skip_test=skip_hive_test)
                         import_operation.get_import_table_validation_data()
 
                     if import_operation.run_stage(3453) == True:
@@ -2429,10 +2429,10 @@ def main(argv):
 
             if run_only_function == None or run_only_function == "createImportTable":
                 if import_operation.run_stage(3500) == True:
-                    import_operation.connect_to_hive(forceSkipTest=skip_hive_test)
+                    import_operation.connect_to_hive(force_skip_test=skip_hive_test)
 
                 if import_operation.run_stage(3501) == True:
-                    import_operation.connect_to_hive(forceSkipTest=skip_hive_test)
+                    import_operation.connect_to_hive(force_skip_test=skip_hive_test)
                     import_operation.create_external_import_table()
                     import_operation.update_external_import_table()
 
@@ -2442,7 +2442,7 @@ def main(argv):
             ):
                 if import_operation.import_config.validate_import == True:
                     if import_operation.run_stage(3502) == True:
-                        import_operation.connect_to_hive(forceSkipTest=skip_hive_test)
+                        import_operation.connect_to_hive(force_skip_test=skip_hive_test)
                         import_operation.get_import_table_validation_data()
 
                     if import_operation.run_stage(3503) == True:
@@ -2450,12 +2450,12 @@ def main(argv):
 
             if run_only_function == None or run_only_function == "removeHiveLocks":
                 if import_operation.run_stage(3504) == True:
-                    import_operation.connect_to_hive(forceSkipTest=skip_hive_test)
+                    import_operation.connect_to_hive(force_skip_test=skip_hive_test)
                     import_operation.remove_hive_locks()
 
             if run_only_function == None or run_only_function == "createTargetTable":
                 if import_operation.run_stage(3505) == True:
-                    import_operation.connect_to_hive(forceSkipTest=skip_hive_test)
+                    import_operation.connect_to_hive(force_skip_test=skip_hive_test)
                     if drop_target_table == True:
                         import_operation.dropTargetTable()
                     import_operation.create_target_table()
@@ -2466,7 +2466,7 @@ def main(argv):
 
             if run_only_function == None or run_only_function == "truncateTargetTable":
                 if import_operation.run_stage(3506) == True:
-                    import_operation.connect_to_hive(forceSkipTest=skip_hive_test)
+                    import_operation.connect_to_hive(force_skip_test=skip_hive_test)
                     import_operation.truncateTargetTable()
 
             if (
@@ -2474,11 +2474,11 @@ def main(argv):
                 or run_only_function == "loadDataFromImportTable"
             ):
                 if import_operation.run_stage(3507) == True:
-                    import_operation.connect_to_hive(forceSkipTest=skip_hive_test)
+                    import_operation.connect_to_hive(force_skip_test=skip_hive_test)
                     import_operation.load_data_from_import_to_target_table()
 
                 if import_operation.run_stage(3508) == True:
-                    import_operation.connect_to_hive(forceSkipTest=skip_hive_test)
+                    import_operation.connect_to_hive(force_skip_test=skip_hive_test)
                     import_operation.update_statistics_on_target_table()
                     import_operation.purge_iceberg_versions_on_target_table()
 
@@ -2488,7 +2488,7 @@ def main(argv):
             ):
                 if import_operation.import_config.validate_import == True:
                     if import_operation.run_stage(3509) == True:
-                        import_operation.connect_to_hive(forceSkipTest=skip_hive_test)
+                        import_operation.connect_to_hive(force_skip_test=skip_hive_test)
                         import_operation.get_target_table_validation_data()
 
                     if import_operation.run_stage(3510) == True:
@@ -2568,10 +2568,10 @@ def main(argv):
 
             if run_only_function == None or run_only_function == "createImportTable":
                 if import_operation.run_stage(3550) == True:
-                    import_operation.connect_to_hive(forceSkipTest=skip_hive_test)
+                    import_operation.connect_to_hive(force_skip_test=skip_hive_test)
 
                 if import_operation.run_stage(3551) == True:
-                    import_operation.connect_to_hive(forceSkipTest=skip_hive_test)
+                    import_operation.connect_to_hive(force_skip_test=skip_hive_test)
                     import_operation.create_external_import_table()
                     import_operation.update_external_import_table()
                     import_operation.create_external_import_view()
@@ -2583,7 +2583,7 @@ def main(argv):
             ):
                 if import_operation.import_config.validate_import == True:
                     if import_operation.run_stage(3552) == True:
-                        import_operation.connect_to_hive(forceSkipTest=skip_hive_test)
+                        import_operation.connect_to_hive(force_skip_test=skip_hive_test)
                         import_operation.get_import_table_validation_data()
 
                     if import_operation.run_stage(3553) == True:
@@ -2591,12 +2591,12 @@ def main(argv):
 
             if run_only_function == None or run_only_function == "removeHiveLocks":
                 if import_operation.run_stage(3554) == True:
-                    import_operation.connect_to_hive(forceSkipTest=skip_hive_test)
+                    import_operation.connect_to_hive(force_skip_test=skip_hive_test)
                     import_operation.remove_hive_locks()
 
             if run_only_function == None or run_only_function == "createTargetTable":
                 if import_operation.run_stage(3555) == True:
-                    import_operation.connect_to_hive(forceSkipTest=skip_hive_test)
+                    import_operation.connect_to_hive(force_skip_test=skip_hive_test)
                     if drop_target_table == True:
                         import_operation.dropTargetTable()
                     import_operation.create_target_table()
@@ -2608,14 +2608,14 @@ def main(argv):
 
             if run_only_function == None or run_only_function == "createHistoryTable":
                 if import_operation.run_stage(3556) == True:
-                    import_operation.connect_to_hive(forceSkipTest=skip_hive_test)
+                    import_operation.connect_to_hive(force_skip_test=skip_hive_test)
                     import_operation.create_history_table()
                     import_operation.update_history_table()
                     import_operation.add_hive_dbimport_columns_to_history_table()
 
             if run_only_function == None or run_only_function == "mergeTable":
                 if import_operation.run_stage(3557) == True:
-                    import_operation.connect_to_hive(forceSkipTest=skip_hive_test)
+                    import_operation.connect_to_hive(force_skip_test=skip_hive_test)
 
                     if (
                         import_operation.import_config.is_external_view_required()
@@ -2662,7 +2662,7 @@ def main(argv):
             ):
                 if import_operation.import_config.validate_import == True:
                     if import_operation.run_stage(3559) == True:
-                        import_operation.connect_to_hive(forceSkipTest=skip_hive_test)
+                        import_operation.connect_to_hive(force_skip_test=skip_hive_test)
                         import_operation.get_import_view_row_count_as_source(incr=True)
                         import_operation.get_target_table_validation_data()
 
@@ -2676,7 +2676,7 @@ def main(argv):
 
             if run_only_function == None or run_only_function == "compaction":
                 if import_operation.run_stage(3562) == True:
-                    import_operation.connect_to_hive(forceSkipTest=skip_hive_test)
+                    import_operation.connect_to_hive(force_skip_test=skip_hive_test)
                     import_operation.run_hive_compaction()
             # 					import_operation.run_hive_major_compaction()
 
@@ -2755,10 +2755,10 @@ def main(argv):
 
             if run_only_function == None or run_only_function == "createImportTable":
                 if import_operation.run_stage(3600) == True:
-                    import_operation.connect_to_hive(forceSkipTest=skip_hive_test)
+                    import_operation.connect_to_hive(force_skip_test=skip_hive_test)
 
                 if import_operation.run_stage(3601) == True:
-                    import_operation.connect_to_hive(forceSkipTest=skip_hive_test)
+                    import_operation.connect_to_hive(force_skip_test=skip_hive_test)
                     import_operation.create_external_import_table()
                     import_operation.update_external_import_table()
 
@@ -2768,7 +2768,7 @@ def main(argv):
             ):
                 if import_operation.import_config.validate_import == True:
                     if import_operation.run_stage(3602) == True:
-                        import_operation.connect_to_hive(forceSkipTest=skip_hive_test)
+                        import_operation.connect_to_hive(force_skip_test=skip_hive_test)
                         import_operation.get_import_table_validation_data()
 
                     if import_operation.run_stage(3603) == True:
@@ -2776,12 +2776,12 @@ def main(argv):
 
             if run_only_function == None or run_only_function == "removeHiveLocks":
                 if import_operation.run_stage(3604) == True:
-                    import_operation.connect_to_hive(forceSkipTest=skip_hive_test)
+                    import_operation.connect_to_hive(force_skip_test=skip_hive_test)
                     import_operation.remove_hive_locks()
 
             if run_only_function == None or run_only_function == "createTargetTable":
                 if import_operation.run_stage(3605) == True:
-                    import_operation.connect_to_hive(forceSkipTest=skip_hive_test)
+                    import_operation.connect_to_hive(force_skip_test=skip_hive_test)
                     if drop_target_table == True:
                         import_operation.dropTargetTable()
                     import_operation.create_target_table()
@@ -2793,7 +2793,7 @@ def main(argv):
 
             if run_only_function == None or run_only_function == "mergeTable":
                 if import_operation.run_stage(3607) == True:
-                    import_operation.connect_to_hive(forceSkipTest=skip_hive_test)
+                    import_operation.connect_to_hive(force_skip_test=skip_hive_test)
 
                     if (
                         import_operation.import_config.is_external_view_required()
@@ -2834,7 +2834,7 @@ def main(argv):
                     )
 
                 if import_operation.run_stage(3608) == True:
-                    import_operation.connect_to_hive(forceSkipTest=skip_hive_test)
+                    import_operation.connect_to_hive(force_skip_test=skip_hive_test)
                     import_operation.update_statistics_on_target_table()
                     import_operation.purge_iceberg_versions_on_target_table()
 
@@ -2844,7 +2844,7 @@ def main(argv):
             ):
                 if import_operation.import_config.validate_import == True:
                     if import_operation.run_stage(3609) == True:
-                        import_operation.connect_to_hive(forceSkipTest=skip_hive_test)
+                        import_operation.connect_to_hive(force_skip_test=skip_hive_test)
                         import_operation.get_target_table_validation_data()
 
                     if import_operation.run_stage(3610) == True:
@@ -2857,7 +2857,7 @@ def main(argv):
 
             if run_only_function == None or run_only_function == "compaction":
                 if import_operation.run_stage(3612) == True:
-                    import_operation.connect_to_hive(forceSkipTest=skip_hive_test)
+                    import_operation.connect_to_hive(force_skip_test=skip_hive_test)
                     import_operation.run_hive_compaction()
 
             if run_only_function == None or run_only_function == "invalidateImpala":
@@ -2935,10 +2935,10 @@ def main(argv):
 
             if run_only_function == None or run_only_function == "createImportTable":
                 if import_operation.run_stage(3650) == True:
-                    import_operation.connect_to_hive(forceSkipTest=skip_hive_test)
+                    import_operation.connect_to_hive(force_skip_test=skip_hive_test)
 
                 if import_operation.run_stage(3651) == True:
-                    import_operation.connect_to_hive(forceSkipTest=skip_hive_test)
+                    import_operation.connect_to_hive(force_skip_test=skip_hive_test)
                     import_operation.create_external_import_table()
                     import_operation.update_external_import_table()
 
@@ -2948,7 +2948,7 @@ def main(argv):
             ):
                 if import_operation.import_config.validate_import == True:
                     if import_operation.run_stage(3652) == True:
-                        import_operation.connect_to_hive(forceSkipTest=skip_hive_test)
+                        import_operation.connect_to_hive(force_skip_test=skip_hive_test)
                         import_operation.get_import_table_validation_data()
 
                     if import_operation.run_stage(3653) == True:
@@ -2956,12 +2956,12 @@ def main(argv):
 
             if run_only_function == None or run_only_function == "removeHiveLocks":
                 if import_operation.run_stage(3654) == True:
-                    import_operation.connect_to_hive(forceSkipTest=skip_hive_test)
+                    import_operation.connect_to_hive(force_skip_test=skip_hive_test)
                     import_operation.remove_hive_locks()
 
             if run_only_function == None or run_only_function == "createTargetTable":
                 if import_operation.run_stage(3655) == True:
-                    import_operation.connect_to_hive(forceSkipTest=skip_hive_test)
+                    import_operation.connect_to_hive(force_skip_test=skip_hive_test)
                     if drop_target_table == True:
                         import_operation.dropTargetTable()
                     import_operation.create_target_table()
@@ -2973,20 +2973,20 @@ def main(argv):
 
             if run_only_function == None or run_only_function == "createHistoryTable":
                 if import_operation.run_stage(3656) == True:
-                    import_operation.connect_to_hive(forceSkipTest=skip_hive_test)
+                    import_operation.connect_to_hive(force_skip_test=skip_hive_test)
                     import_operation.create_history_table()
                     import_operation.update_history_table()
                     import_operation.add_hive_dbimport_columns_to_history_table()
 
             if run_only_function == None or run_only_function == "createDeleteTable":
                 if import_operation.run_stage(3657) == True:
-                    import_operation.connect_to_hive(forceSkipTest=skip_hive_test)
+                    import_operation.connect_to_hive(force_skip_test=skip_hive_test)
                     import_operation.create_delete_table()
                     import_operation.update_delete_table()
 
             if run_only_function == None or run_only_function == "mergeTable":
                 if import_operation.run_stage(3658) == True:
-                    import_operation.connect_to_hive(forceSkipTest=skip_hive_test)
+                    import_operation.connect_to_hive(force_skip_test=skip_hive_test)
 
                     if (
                         import_operation.import_config.is_external_view_required()
@@ -3032,7 +3032,7 @@ def main(argv):
                     )
 
                 if import_operation.run_stage(3659) == True:
-                    import_operation.connect_to_hive(forceSkipTest=skip_hive_test)
+                    import_operation.connect_to_hive(force_skip_test=skip_hive_test)
                     import_operation.update_statistics_on_target_table()
                     import_operation.purge_iceberg_versions_on_target_table()
 
@@ -3042,7 +3042,7 @@ def main(argv):
             ):
                 if import_operation.import_config.validate_import == True:
                     if import_operation.run_stage(3660) == True:
-                        import_operation.connect_to_hive(forceSkipTest=skip_hive_test)
+                        import_operation.connect_to_hive(force_skip_test=skip_hive_test)
                         import_operation.get_target_table_validation_data()
 
                     if import_operation.run_stage(3661) == True:
@@ -3055,7 +3055,7 @@ def main(argv):
 
             if run_only_function == None or run_only_function == "compaction":
                 if import_operation.run_stage(3663) == True:
-                    import_operation.connect_to_hive(forceSkipTest=skip_hive_test)
+                    import_operation.connect_to_hive(force_skip_test=skip_hive_test)
                     import_operation.run_hive_compaction()
 
             if run_only_function == None or run_only_function == "invalidateImpala":

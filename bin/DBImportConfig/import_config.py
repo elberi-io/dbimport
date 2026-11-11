@@ -35,11 +35,11 @@ from DBImportConfig import import_stage as stage
 
 class config(metaclass=Singleton):
     def __init__(
-        self, Hive_DB: str | None = None, Hive_Table: str | None = None
+        self, hive_db: str | None = None, hive_table: str | None = None
     ) -> None:
         logging.debug("Executing import_config.__init__()")
-        self.Hive_DB = Hive_DB
-        self.Hive_Table = Hive_Table
+        self.Hive_DB = hive_db
+        self.Hive_Table = hive_table
         self.mysql_conn: Any = None
         self.mysql_cursor01: Any = None
         self.startDate: str | None = None
@@ -145,7 +145,7 @@ class config(metaclass=Singleton):
         self.fullExecutedCommand: str | None = None
         self.mongoImport: bool | None = None
 
-        self.common_config = common_config.config(Hive_DB, Hive_Table)
+        self.common_config = common_config.config(hive_db, hive_table)
         self.common_config.operationType = "import"
         self.sendStatistics = sendStatistics.sendStatistics()
 
@@ -174,62 +174,62 @@ class config(metaclass=Singleton):
 
             self.stage.set_mysql_connection(self.mysql_conn)
 
-    def set_hive_table(self, Hive_DB: str, Hive_Table: str) -> None:
+    def set_hive_table(self, hive_db: str, hive_table: str) -> None:
         """Sets the parameters to work against a new Hive database and table"""
-        self.Hive_DB = Hive_DB.lower()
-        self.Hive_Table = Hive_Table.lower()
+        self.Hive_DB = hive_db.lower()
+        self.Hive_Table = hive_table.lower()
 
-        self.common_config.set_hive_table(Hive_DB, Hive_Table)
-        self.stage.set_hive_table(Hive_DB, Hive_Table)
+        self.common_config.set_hive_table(hive_db, hive_table)
+        self.stage.set_hive_table(hive_db, hive_table)
 
     def log_hive_column_add(
         self,
         column: str,
-        columnType: str | None,
+        column_type: str | None,
         description: str | None = None,
-        hiveDB: str | None = None,
-        hiveTable: str | None = None,
+        hive_db: str | None = None,
+        hive_table: str | None = None,
     ) -> None:
         self.common_config.log_hive_column_add(
             column=column,
-            columnType=columnType,
+            column_type=column_type,
             description=description,
-            hiveDB=hiveDB,
-            hiveTable=hiveTable,
+            hive_db=hive_db,
+            hive_table=hive_table,
         )
 
     def log_hive_column_type_change(
         self,
         column: str,
-        columnType: str,
-        previous_columnType: str | None = None,
+        column_type: str,
+        previous_column_type: str | None = None,
         description: str | None = None,
-        hiveDB: str | None = None,
-        hiveTable: str | None = None,
+        hive_db: str | None = None,
+        hive_table: str | None = None,
     ) -> None:
         self.common_config.log_hive_column_type_change(
             column,
-            columnType,
-            previous_columnType=previous_columnType,
+            column_type,
+            previous_column_type=previous_column_type,
             description=description,
-            hiveDB=hiveDB,
-            hiveTable=hiveTable,
+            hive_db=hive_db,
+            hive_table=hive_table,
         )
 
     def log_hive_column_rename(
         self,
-        columnName: str,
-        previous_columnName: str,
+        column_name: str,
+        previous_column_name: str,
         description: str | None = None,
-        hiveDB: str | None = None,
-        hiveTable: str | None = None,
+        hive_db: str | None = None,
+        hive_table: str | None = None,
     ) -> None:
         self.common_config.log_hive_column_rename(
-            columnName,
-            previous_columnName,
+            column_name,
+            previous_column_name,
             description=description,
-            hiveDB=hiveDB,
-            hiveTable=hiveTable,
+            hive_db=hive_db,
+            hive_table=hive_table,
         )
 
     def remove_temporary_files(self) -> None:
@@ -371,7 +371,7 @@ class config(metaclass=Singleton):
             self.copy_slave = False
 
         self.common_config.lookup_connection_alias(
-            connection_alias, copySlave=self.copy_slave
+            connection_alias, copy_slave=self.copy_slave
         )
 
         # Save if the source is a MongoDB database to a local parameter
@@ -2710,19 +2710,19 @@ class config(metaclass=Singleton):
 
     def get_incr_where_statement(
         self,
-        forceIncr: bool = False,
-        ignoreIfOnlyIncrMax: bool = False,
-        whereForSourceTable: bool = False,
-        whereForSqoop: bool = False,
-        ignoreSQLwhereAddition: bool = False,
-        incrementalMax: Any = None,
+        force_incr: bool = False,
+        ignore_if_only_incr_max: bool = False,
+        where_for_source_table: bool = False,
+        where_for_sqoop: bool = False,
+        ignore_sql_where_addition: bool = False,
+        incremental_max: Any = None,
     ) -> str | None:
         """Returns the where statement that is needed to only work on the rows that was loaded incr"""
         logging.debug("Executing import_config.get_incr_where_statement()")
-        logging.debug("forceIncr = %s", forceIncr)
-        logging.debug("ignoreIfOnlyIncrMax = %s", ignoreIfOnlyIncrMax)
-        logging.debug("whereForSourceTable = %s", whereForSourceTable)
-        logging.debug("whereForSqoop = %s", whereForSqoop)
+        logging.debug("forceIncr = %s", force_incr)
+        logging.debug("ignoreIfOnlyIncrMax = %s", ignore_if_only_incr_max)
+        logging.debug("whereForSourceTable = %s", where_for_source_table)
+        logging.debug("whereForSqoop = %s", where_for_sqoop)
         logging.debug("sqoopIncrMaxvaluePending = %s" % (self.sqoopIncrMaxvaluePending))
         logging.debug("sqoop_incr_mode = %s", self.sqoop_incr_mode)
         logging.debug(
@@ -2740,7 +2740,7 @@ class config(metaclass=Singleton):
 
         if self.importPhase == constant.IMPORT_PHASE_ORACLE_FLASHBACK:
             # This is where we handle the specific where statement for Oracle FlashBack Imports
-            if whereForSqoop == True:
+            if where_for_sqoop == True:
                 max_scn = int(
                     self.common_config.execute_jdbc_query(
                         "SELECT CURRENT_SCN FROM V$DATABASE"
@@ -2777,7 +2777,7 @@ class config(metaclass=Singleton):
             if self.incr_maxvalue == None:
                 # There is no MaxValue stored form previous imports. That means we need to do a full import up to SCN number
                 # It also means that this will only be executed by sqoop, as after sqoop there will be a maxvalue present
-                if whereForSourceTable == True or whereForSqoop == True:
+                if where_for_source_table == True or where_for_sqoop == True:
                     try:
                         self.sqoopIncrMinvaluePending = int(
                             self.common_config.execute_jdbc_query(
@@ -2801,12 +2801,12 @@ class config(metaclass=Singleton):
                     where_statement += "WHERE VERSIONS_ENDTIME IS NULL AND (VERSIONS_OPERATION != 'D' OR VERSIONS_OPERATION IS NULL)"
 
             else:
-                if whereForSourceTable == True or whereForSqoop == True:
+                if where_for_source_table == True or where_for_sqoop == True:
                     where_statement = "VERSIONS BETWEEN SCN %s AND %s " % (
                         self.sqoopIncrMinvaluePending,
                         self.sqoopIncrMaxvaluePending,
                     )
-                    if forceIncr == True or whereForSqoop == True:
+                    if force_incr == True or where_for_sqoop == True:
                         where_statement += (
                             "WHERE VERSIONS_STARTSCN > %s AND VERSIONS_STARTSCN  <= %s AND VERSIONS_OPERATION IS NOT NULL AND VERSIONS_ENDTIME IS NULL "
                             % (
@@ -2825,7 +2825,7 @@ class config(metaclass=Singleton):
 
             if (
                 self.get_sql_where_addition() != None
-                and ignoreSQLwhereAddition == False
+                and ignore_sql_where_addition == False
             ):
                 if where_statement != None:
                     where_statement += "AND %s " % (self.get_sql_where_addition())
@@ -2833,12 +2833,12 @@ class config(metaclass=Singleton):
                     where_statement = "%s " % (self.get_sql_where_addition())
 
         else:
-            if whereForSqoop == True:
+            if where_for_sqoop == True:
                 # If it is the where for sqoop, we need to get the max value for the configured column and save that into the config database
 
-                if incrementalMax != None:
+                if incremental_max != None:
                     # This way, we can forcefully override the max value in an incremental import
-                    max_value = incrementalMax
+                    max_value = incremental_max
                 else:
                     max_value = self.common_config.get_jdbc_column_max_value(
                         self.source_schema, self.source_table, self.sqoop_incr_column
@@ -2905,14 +2905,14 @@ class config(metaclass=Singleton):
 
             if self.sqoop_incr_mode == "lastmodified":
                 if self.common_config.jdbc_servertype == constant.MSSQL and (
-                    whereForSourceTable == True or whereForSqoop == True
+                    where_for_source_table == True or where_for_sqoop == True
                 ):
                     where_statement = "%s <= CONVERT(datetime, '%s', 121) " % (
                         self.sqoop_incr_column,
                         self.sqoopIncrMaxvaluePending,
                     )
                 elif self.common_config.jdbc_servertype == constant.MYSQL and (
-                    whereForSourceTable == True or whereForSqoop == True
+                    where_for_source_table == True or where_for_sqoop == True
                 ):
                     where_statement = (
                         "%s <= STR_TO_DATE('%s', "
@@ -2920,13 +2920,13 @@ class config(metaclass=Singleton):
                         + "'%Y-%m-%d %H:%i:%s') "
                     )
                 elif self.common_config.jdbc_servertype == constant.SNOWFLAKE and (
-                    whereForSourceTable == True or whereForSqoop == True
+                    where_for_source_table == True or where_for_sqoop == True
                 ):
                     where_statement = (
                         "\"%s\" <= TO_TIMESTAMP('%s', 'yyyy-mm-dd hh24:mi:ss.ff6') "
                         % (self.sqoop_incr_column, self.sqoopIncrMaxvaluePending)
                     )
-                elif whereForSourceTable == True or whereForSqoop == True:
+                elif where_for_source_table == True or where_for_sqoop == True:
                     if self.sqoopIncrMaxvaluePending != None:
                         where_statement = (
                             "%s <= TO_TIMESTAMP('%s', 'YYYY-MM-DD HH24:MI:SS.FF') "
@@ -2938,7 +2938,7 @@ class config(metaclass=Singleton):
                         self.sqoopIncrMaxvaluePending,
                     )
             else:
-                if whereForSourceTable == True or whereForSqoop == True:
+                if where_for_source_table == True or where_for_sqoop == True:
                     where_statement = "%s <= %s " % (
                         self.sqoop_incr_column,
                         self.sqoopIncrMaxvaluePending,
@@ -2953,25 +2953,25 @@ class config(metaclass=Singleton):
 
             if (
                 self.get_sql_where_addition() != None
-                and ignoreSQLwhereAddition == False
+                and ignore_sql_where_addition == False
             ):
                 where_statement += "and %s " % (self.get_sql_where_addition())
 
             if (
                 self.sqoop_incr_validation_method == "incr"
-                or forceIncr == True
-                or whereForSqoop == True
+                or force_incr == True
+                or where_for_sqoop == True
             ) and self.sqoop_incr_lastvalue != None:
                 if self.sqoop_incr_mode == "lastmodified":
                     if self.common_config.jdbc_servertype == constant.MSSQL and (
-                        whereForSourceTable == True or whereForSqoop == True
+                        where_for_source_table == True or where_for_sqoop == True
                     ):
                         where_statement += "and %s > CONVERT(datetime, '%s', 121) " % (
                             self.sqoop_incr_column,
                             self.sqoop_incr_lastvalue,
                         )
                     elif self.common_config.jdbc_servertype == constant.MYSQL and (
-                        whereForSourceTable == True or whereForSqoop == True
+                        where_for_source_table == True or where_for_sqoop == True
                     ):
                         where_statement += (
                             "and %s > STR_TO_DATE('%s', "
@@ -2979,13 +2979,13 @@ class config(metaclass=Singleton):
                             + "'%Y-%m-%d %H:%i:%s') "
                         )
                     elif self.common_config.jdbc_servertype == constant.SNOWFLAKE and (
-                        whereForSourceTable == True or whereForSqoop == True
+                        where_for_source_table == True or where_for_sqoop == True
                     ):
                         where_statement += (
                             "and \"%s\" > TO_TIMESTAMP('%s', 'yyyy-mm-dd hh24:mi:ss.ff6') "
                             % (self.sqoop_incr_column, self.sqoop_incr_lastvalue)
                         )
-                    elif whereForSourceTable == True or whereForSqoop == True:
+                    elif where_for_source_table == True or where_for_sqoop == True:
                         where_statement += (
                             "and %s > TO_TIMESTAMP('%s', 'YYYY-MM-DD HH24:MI:SS.FF') "
                             % (self.sqoop_incr_column, self.sqoop_incr_lastvalue)
@@ -2996,7 +2996,7 @@ class config(metaclass=Singleton):
                             self.sqoop_incr_lastvalue,
                         )
                 else:
-                    if whereForSourceTable == True or whereForSqoop == True:
+                    if where_for_source_table == True or where_for_sqoop == True:
                         where_statement += "and %s > %s " % (
                             self.sqoop_incr_column,
                             self.sqoop_incr_lastvalue,
@@ -3008,7 +3008,10 @@ class config(metaclass=Singleton):
                         )
 
             logging.debug("whereStatement = %s", where_statement)
-            if where_statement_saved == where_statement and ignoreIfOnlyIncrMax == True:
+            if (
+                where_statement_saved == where_statement
+                and ignore_if_only_incr_max == True
+            ):
                 # We have only added the MAX value to there WHERE statement and have a setting to ignore it if that is the only value
                 where_statement = None
 
@@ -3074,7 +3077,7 @@ class config(metaclass=Singleton):
             if self.importPhase == constant.IMPORT_PHASE_ORACLE_FLASHBACK:
                 if self.sqoop_incr_validation_method == "full":
                     where_statement = self.get_incr_where_statement(
-                        forceIncr=False, whereForSourceTable=True
+                        force_incr=False, where_for_source_table=True
                     )
                     query = 'SELECT COUNT(1) FROM "%s"."%s" ' % (
                         self.source_schema.upper(),
@@ -3086,7 +3089,7 @@ class config(metaclass=Singleton):
                     )
 
                 where_statement = self.get_incr_where_statement(
-                    forceIncr=True, whereForSourceTable=True
+                    force_incr=True, where_for_source_table=True
                 )
                 query = 'SELECT COUNT(1) FROM "%s"."%s" ' % (
                     self.source_schema.upper(),
@@ -3098,7 +3101,7 @@ class config(metaclass=Singleton):
                 )
             else:
                 where_statement = self.get_incr_where_statement(
-                    forceIncr=False, whereForSourceTable=True
+                    force_incr=False, where_for_source_table=True
                 )
                 logging.debug(
                     "Where statement for forceIncr = False: %s", where_statement
@@ -3111,7 +3114,7 @@ class config(metaclass=Singleton):
                 )
 
                 where_statement = self.get_incr_where_statement(
-                    forceIncr=True, whereForSourceTable=True
+                    force_incr=True, where_for_source_table=True
                 )
                 logging.debug(
                     "Where statement for forceIncr = True: %s", where_statement
@@ -3193,17 +3196,17 @@ class config(metaclass=Singleton):
         )
 
     def save_custom_sql_validation_hive_value(
-        self, jsonValue: str, printInfo: bool = True
+        self, json_value: str, print_info: bool = True
     ) -> None:
         logging.debug("Executing import_config.save_custom_sql_validation_hive_value()")
-        if printInfo == True:
+        if print_info == True:
             logging.info(
                 "Saving the custom SQL validation data from Hive Table to the configuration database"
             )
 
         query = "update import_tables set validationCustomQueryHiveValue = %s where table_id = %s"
 
-        self.mysql_cursor01.execute(query, (jsonValue, self.table_id))
+        self.mysql_cursor01.execute(query, (json_value, self.table_id))
         self.mysql_conn.commit()
         logging.debug("SQL Statement executed: %s" % (self.mysql_cursor01.statement))
 
@@ -3243,7 +3246,7 @@ class config(metaclass=Singleton):
             "Executing import_config.save_source_table_row_count() - Finished"
         )
 
-    def save_hive_table_row_count(self, rowCount: int) -> None:
+    def save_hive_table_row_count(self, row_count: int) -> None:
         logging.debug("Executing import_config.save_hive_table_row_count()")
         logging.info(
             "Saving the number of rows in the Hive Table to the configuration database"
@@ -3251,7 +3254,7 @@ class config(metaclass=Singleton):
 
         # Save the value to the database
         query = "update import_tables set hive_rowcount = %s where table_id = %s"
-        self.mysql_cursor01.execute(query, (rowCount, self.table_id))
+        self.mysql_cursor01.execute(query, (row_count, self.table_id))
         self.mysql_conn.commit()
         logging.debug("SQL Statement executed: %s" % (self.mysql_cursor01.statement))
 
@@ -3540,17 +3543,17 @@ class config(metaclass=Singleton):
 
     def get_columns_from_config_database(
         self,
-        restrictColumns: str | None = None,
-        sourceIsParquetFile: bool = False,
-        includeAllColumns: bool = True,
+        restrict_columns: str | None = None,
+        source_is_parquet_file: bool = False,
+        include_all_columns: bool = True,
     ) -> pd.DataFrame:
         """Reads the columns from the configuration database and returns the information in a Pandas DF with the columns name, type and comment"""
         logging.debug("Executing import_config.get_columns_from_config_database()")
         hive_column_definition = ""
 
         restrict_columns_list = []
-        if restrictColumns != None:
-            restrict_columns_list = restrictColumns.split(",")
+        if restrict_columns != None:
+            restrict_columns_list = restrict_columns.split(",")
 
         query = "select "
         query += "   COALESCE(c.column_name_override, c.column_name) as name, "
@@ -3560,7 +3563,7 @@ class config(metaclass=Singleton):
         query += "join import_columns c on t.table_id = c.table_id "
         query += "where t.table_id = %s and t.last_update_from_source = c.last_update_from_source "
 
-        if includeAllColumns == False:
+        if include_all_columns == False:
             query += " and c.include_in_import = 1 "
 
         if restrict_columns_list != []:
@@ -3590,7 +3593,7 @@ class config(metaclass=Singleton):
             )  # Name of the column is in the first position
         result_df.columns = result_df_columns
 
-        if sourceIsParquetFile == True:
+        if source_is_parquet_file == True:
             result_df["name"] = result_df["name"].apply(
                 lambda x: self.get_parquet_column_name(x)
             )
@@ -3695,20 +3698,20 @@ class config(metaclass=Singleton):
         return True
 
     def validate_row_count(
-        self, validateSqoop: bool = False, incremental: bool = False
+        self, validate_sqoop: bool = False, incremental: bool = False
     ) -> bool:
         """Validates the rows based on values stored in import_tables -> source_columns and target_columns. Returns True or False"""
         # incremental=True is used for normal validations but on ly on incremented rows, regardless if we are going to validate full or incr.
         # This is used to validate the Import table if the validation method is full for incremental import
 
         logging.debug("Executing import_config.validate_row_count()")
-        logging.debug("validateSqoop = %s", validateSqoop)
+        logging.debug("validateSqoop = %s", validate_sqoop)
         logging.debug("incremental = %s", incremental)
         return_value = None
 
         if self.validate_import == True:
             # Reading the saved number from the configurationdatabase
-            if validateSqoop == False:
+            if validate_sqoop == False:
                 if self.import_is_incremental == False:
                     logging.debug(
                         "validateSqoop == False & self.import_is_incremental == False"
@@ -3769,7 +3772,7 @@ class config(metaclass=Singleton):
 
             row = self.mysql_cursor01.fetchone()
             source_rowcount = row[0]
-            if validateSqoop == False:
+            if validate_sqoop == False:
                 target_rowcount = row[1]
             else:
                 target_rowcount = self.sqoop_last_rows
@@ -4413,12 +4416,12 @@ class config(metaclass=Singleton):
         logging.debug("Executing import_config.get_select_for_import_view() - Finished")
         return select_query
 
-    def reset_incr_min_max_values(self, maxValue: Any) -> None:
+    def reset_incr_min_max_values(self, max_value: Any) -> None:
         logging.debug("Executing import_config.reset_incr_min_max_values()")
-        if maxValue != None:
+        if max_value != None:
             logging.info(
                 "Reseting incremental values for import. New max value is: %s"
-                % (maxValue)
+                % (max_value)
             )
         else:
             logging.info("Reseting incremental values for import.")
@@ -4430,7 +4433,7 @@ class config(metaclass=Singleton):
         query += "  incr_maxvalue_pending = NULL "
         query += "where table_id = %s "
 
-        self.mysql_cursor01.execute(query, (maxValue, self.table_id))
+        self.mysql_cursor01.execute(query, (max_value, self.table_id))
         logging.debug("SQL Statement executed: %s" % (self.mysql_cursor01.statement))
         self.mysql_conn.commit()
 

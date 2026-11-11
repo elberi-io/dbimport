@@ -26,7 +26,7 @@ from DBImportOperation import common_operations, import_operations
 
 
 class operation(metaclass=Singleton):
-    def __init__(self, Hive_DB=None, Hive_Table=None):
+    def __init__(self, hive_db=None, hive_table=None):
         logging.debug("Executing etl_operations.__init__()")
         self.Hive_DB = None
         self.Hive_Table = None
@@ -34,12 +34,12 @@ class operation(metaclass=Singleton):
         self.mysql_cursor = None
         self.startDate = None
 
-        self.common_operations = common_operations.operation(Hive_DB, Hive_Table)
-        self.import_operations = import_operations.operation(Hive_DB, Hive_Table)
-        self.import_config = import_config.config(Hive_DB, Hive_Table)
+        self.common_operations = common_operations.operation(hive_db, hive_table)
+        self.import_operations = import_operations.operation(hive_db, hive_table)
+        self.import_config = import_config.config(hive_db, hive_table)
 
-        if Hive_DB != None and Hive_Table != None:
-            self.set_hive_table(Hive_DB, Hive_Table)
+        if hive_db != None and hive_table != None:
+            self.set_hive_table(hive_db, hive_table)
         else:
             # If the class already is initialized, we just pull the parameters and set them here
             self.Hive_DB = self.common_operations.Hive_DB
@@ -48,10 +48,10 @@ class operation(metaclass=Singleton):
 
         logging.debug("Executing etl_operations.__init__() - Finished")
 
-    def set_hive_table(self, Hive_DB, Hive_Table):
+    def set_hive_table(self, hive_db, hive_table):
         """Sets the parameters to work against a new Hive database and table"""
-        self.Hive_DB = Hive_DB.lower()
-        self.Hive_Table = Hive_Table.lower()
+        self.Hive_DB = hive_db.lower()
+        self.Hive_Table = hive_table.lower()
 
         self.common_operations.set_hive_table(self.Hive_DB, self.Hive_Table)
         self.import_config.set_hive_table(self.Hive_DB, self.Hive_Table)
@@ -117,10 +117,10 @@ class operation(metaclass=Singleton):
         logging.debug("Executing etl_operations.merge_hive_tables()")
 
         target_columns = self.common_operations.get_columns(
-            hiveDB=target_db,
-            hiveTable=target_table,
-            includeType=False,
-            includeComment=False,
+            hive_db=target_db,
+            hive_table=target_table,
+            include_type=False,
+            include_comment=False,
         )
         column_merge = self.common_operations.get_hive_column_name_diff(
             source_db=source_db,
@@ -132,7 +132,7 @@ class operation(metaclass=Singleton):
         )
         if pk_columns == None:
             pk_columns = self.common_operations.get_pk(
-                hiveDB=target_db, hiveTable=target_table, quotedColumns=False
+                hive_db=target_db, hive_table=target_table, quoted_columns=False
             )
 
         source_db_and_table = "`%s`.`%s`" % (source_db, source_table)

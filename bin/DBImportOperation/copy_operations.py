@@ -1995,7 +1995,7 @@ class operation(metaclass=Singleton):
         """Import a table from the specified directory"""
         logging.debug("Executing copy_operations.import_copied_table()")
 
-        self.common_operations.connect_to_hive(forceSkipTest=True)
+        self.common_operations.connect_to_hive(force_skip_test=True)
         local_hdfs_path = (
             (local_hdfs_path + "/" + hive_db + "/" + hive_table)
             .replace("$", "")
@@ -2070,7 +2070,7 @@ class operation(metaclass=Singleton):
                 hdfs_deleteoutput += row + "\n"
                 sys.stdout.flush()
 
-        self.common_operations.connect_to_hive(forceSkipTest=True)
+        self.common_operations.connect_to_hive(force_skip_test=True)
 
         logging.info("Exporting table")
         # 		query = "export table `%s`.`%s` to '%s'"%(hiveDB, hiveTable, localHDFSpath)

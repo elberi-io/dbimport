@@ -44,7 +44,7 @@ from DBImportOperation import atlas_operations, common_operations
 
 
 class operation(metaclass=Singleton):
-    def __init__(self, Hive_DB=None, Hive_Table=None):
+    def __init__(self, hive_db=None, hive_table=None):
         logging.debug("Executing import_operations.__init__()")
         self.Hive_DB = None
         self.Hive_Table = None
@@ -76,21 +76,21 @@ class operation(metaclass=Singleton):
 
         self.global_hive_configuration_set = False
 
-        self.import_config = import_config.config(Hive_DB, Hive_Table)
-        self.common_operations = common_operations.operation(Hive_DB, Hive_Table)
+        self.import_config = import_config.config(hive_db, hive_table)
+        self.common_operations = common_operations.operation(hive_db, hive_table)
         self.atlasOperation = atlas_operations.atlasOperation()
 
         # self.import_config.sparkCatalogName = self.common_operations.sparkCatalogName
 
-        if Hive_DB != None and Hive_Table != None:
-            self.set_hive_table(Hive_DB, Hive_Table)
+        if hive_db != None and hive_table != None:
+            self.set_hive_table(hive_db, hive_table)
 
         logging.debug("Executing import_operations.__init__() - Finished")
 
-    def set_hive_table(self, Hive_DB, Hive_Table):
+    def set_hive_table(self, hive_db, hive_table):
         """Sets the parameters to work against a new Hive database and table"""
-        self.Hive_DB = Hive_DB.lower()
-        self.Hive_Table = Hive_Table.lower()
+        self.Hive_DB = hive_db.lower()
+        self.Hive_Table = hive_table.lower()
 
         self.common_operations.set_hive_table(self.Hive_DB, self.Hive_Table)
         self.import_config.set_hive_table(self.Hive_DB, self.Hive_Table)
@@ -148,7 +148,7 @@ class operation(metaclass=Singleton):
     def check_time_window(self):
         self.import_config.check_time_window()
 
-    def run_stage(self, stage, stageMax=None):
+    def run_stage(self, stage, stage_max=None):
         self.import_config.set_stage(stage)
 
         if (
@@ -162,13 +162,13 @@ class operation(metaclass=Singleton):
             sys.exit(1)
 
         temp_stage = self.import_config.get_stage()
-        if stageMax == None:
+        if stage_max == None:
             if temp_stage == stage:
                 return True
             else:
                 return False
         else:
-            if temp_stage >= stage and temp_stage <= stageMax:
+            if temp_stage >= stage and temp_stage <= stage_max:
                 return True
             else:
                 return False
@@ -248,9 +248,9 @@ class operation(metaclass=Singleton):
 
             logging.info("")  # Just to get a blank row before connecting to Hive
 
-    def check_db(self, hiveDB):
+    def check_db(self, hive_db):
         try:
-            self.common_operations.check_db(hiveDB)
+            self.common_operations.check_db(hive_db)
         except databaseNotFound as errMsg:
             logging.error(errMsg)
             self.import_config.remove_temporary_files()
@@ -287,7 +287,7 @@ class operation(metaclass=Singleton):
             else:
                 self.get_import_table_row_count()
 
-    def get_target_table_validation_data(self, incrementalMax=None):
+    def get_target_table_validation_data(self, incremental_max=None):
         if self.import_config.validationMethod == "customQuery":
             if self.import_config.etlEngine == constant.ETL_ENGINE_SPARK:
                 raise invalidConfiguration(
@@ -296,7 +296,7 @@ class operation(metaclass=Singleton):
             else:
                 self.run_custom_validation_query_on_target_table()
         else:
-            self.get_target_table_row_count(incrementalMax=incrementalMax)
+            self.get_target_table_row_count(incremental_max=incremental_max)
 
     def run_custom_validation_query_on_import_table(self):
         logging.debug(
@@ -323,7 +323,7 @@ class operation(metaclass=Singleton):
                 "The size of the json document on the custom query exceeds 1024 bytes. Change the query to create a result with less than 512 bytes"
             )
 
-        self.import_config.save_custom_sql_validation_hive_value(jsonValue=result_json)
+        self.import_config.save_custom_sql_validation_hive_value(json_value=result_json)
 
         logging.debug("resultDF:")
         logging.debug(result_df)
@@ -358,7 +358,7 @@ class operation(metaclass=Singleton):
                 "The size of the json document on the custom query exceeds 1024 bytes. Change the query to create a result with less than 512 bytes"
             )
 
-        self.import_config.save_custom_sql_validation_hive_value(jsonValue=result_json)
+        self.import_config.save_custom_sql_validation_hive_value(json_value=result_json)
 
         logging.debug("resultDF:")
         logging.debug(result_df)
@@ -394,7 +394,7 @@ class operation(metaclass=Singleton):
             import_view_row_count = self.common_operations.get_hive_table_row_count(
                 self.import_config.Hive_Import_DB,
                 self.import_config.Hive_Import_Table,
-                whereStatement=where_statement,
+                where_statement=where_statement,
             )
             self.import_config.save_source_table_row_count(
                 import_view_row_count, incr=incr
@@ -416,7 +416,7 @@ class operation(metaclass=Singleton):
             import_table_row_count = self.common_operations.get_hive_table_row_count(
                 self.import_config.Hive_Import_DB,
                 self.import_config.Hive_Import_Table,
-                whereStatement=where_statement,
+                where_statement=where_statement,
             )
             self.import_config.save_hive_table_row_count(import_table_row_count)
         except:
@@ -450,12 +450,12 @@ class operation(metaclass=Singleton):
         )
         return row_count
 
-    def get_target_table_row_count(self, incrementalMax=None):
+    def get_target_table_row_count(self, incremental_max=None):
         try:
             where_statement = self.import_config.get_incr_where_statement(
-                ignoreIfOnlyIncrMax=True,
-                ignoreSQLwhereAddition=True,
-                incrementalMax=incrementalMax,
+                ignore_if_only_incr_max=True,
+                ignore_sql_where_addition=True,
+                incremental_max=incremental_max,
             )
 
             if (
@@ -487,7 +487,7 @@ class operation(metaclass=Singleton):
                     self.common_operations.get_hive_table_row_count(
                         self.import_config.Hive_DB,
                         self.import_config.Hive_Table,
-                        whereStatement=where_statement,
+                        where_statement=where_statement,
                     )
                 )
 
@@ -544,7 +544,7 @@ class operation(metaclass=Singleton):
         logging.debug("Executing import_operations.validate_row_count()")
         try:
             validate_result = self.import_config.validate_row_count(
-                validateSqoop=False, incremental=False
+                validate_sqoop=False, incremental=False
             )
         except:
             logging.exception("Fatal error when validating imported rows")
@@ -559,7 +559,7 @@ class operation(metaclass=Singleton):
         logging.debug("Executing import_operations.validate_import_row_count()")
         try:
             validate_result = self.import_config.validate_row_count(
-                validateSqoop=True, incremental=False
+                validate_sqoop=True, incremental=False
             )
         except:
             logging.exception("Fatal error when validating imported rows by sqoop")
@@ -574,7 +574,7 @@ class operation(metaclass=Singleton):
         logging.debug("Executing import_operations.validate_incr_row_count()")
         try:
             validate_result = self.import_config.validate_row_count(
-                validateSqoop=False, incremental=True
+                validate_sqoop=False, incremental=True
             )
         except:
             logging.exception("Fatal error when validating imported incremental rows")
@@ -633,7 +633,7 @@ class operation(metaclass=Singleton):
 
         if self.import_config.mongoImport == False:
             source_df = self.import_config.common_config.get_jdbc_tables_and_views(
-                schemaFilter=schema_filter, tableFilter=table_filter
+                schema_filter=schema_filter, table_filter=table_filter
             )
         else:
             source_df = self.import_config.common_config.get_mongo_collections(
@@ -805,7 +805,7 @@ class operation(metaclass=Singleton):
         """Checks if the Oracle Flashback SCN number used in the previous import is valid. If not, we force a full import"""
 
         incr_where_statement = self.import_config.get_incr_where_statement(
-            whereForSqoop=True
+            where_for_sqoop=True
         ).replace('"', "'")
         query = "%s %s AND 1 = 0" % (
             self.import_config.sqlGeneratedSqoopQuery,
@@ -825,7 +825,7 @@ class operation(metaclass=Singleton):
                 )
                 logging.warning("Reseting Oracle Flashback versions")
 
-                self.reset_incr_min_max_values(maxValue=None)
+                self.reset_incr_min_max_values(max_value=None)
                 self.truncateTargetTable()
                 self.import_config.sqoopIncrMinvaluePending = None
                 self.import_config.sqoopIncrMaxvaluePending = None
@@ -837,7 +837,7 @@ class operation(metaclass=Singleton):
                 )
                 logging.warning("Reseting Oracle Flashback versions")
 
-                self.reset_incr_min_max_values(maxValue=None)
+                self.reset_incr_min_max_values(max_value=None)
                 self.truncateTargetTable()
                 self.import_config.sqoopIncrMinvaluePending = None
                 self.import_config.sqoopIncrMaxvaluePending = None
@@ -1675,11 +1675,11 @@ class operation(metaclass=Singleton):
         ):
             if self.import_config.common_config.jdbc_servertype == constant.SNOWFLAKE:
                 incr_where_statement = self.import_config.get_incr_where_statement(
-                    whereForSqoop=True, incrementalMax=incremental_max
+                    where_for_sqoop=True, incremental_max=incremental_max
                 )
             else:
                 incr_where_statement = self.import_config.get_incr_where_statement(
-                    whereForSqoop=True, incrementalMax=incremental_max
+                    where_for_sqoop=True, incremental_max=incremental_max
                 ).replace('"', "'")
 
             if incr_where_statement == "":
@@ -1919,7 +1919,7 @@ class operation(metaclass=Singleton):
                         logging.warning(
                             "Staging table exists and is not an Iceberg table. Dropping the staging table"
                         )
-                        self.common_operations.connect_to_hive(forceSkipTest=True)
+                        self.common_operations.connect_to_hive(force_skip_test=True)
                         self.common_operations.drop_hive_table(
                             self.import_config.Hive_Import_DB,
                             self.import_config.Hive_Import_Table,
@@ -2341,7 +2341,7 @@ class operation(metaclass=Singleton):
 
         if self.import_config.import_is_incremental == True and pk_only_import == False:
             incr_where_statement = self.import_config.get_incr_where_statement(
-                whereForSqoop=True, incrementalMax=incremental_max
+                where_for_sqoop=True, incremental_max=incremental_max
             ).replace('"', "'")
             if incr_where_statement == "":
                 # DBImport is unable to find the max value for the configured incremental column. Is the table empty?
@@ -2631,7 +2631,7 @@ class operation(metaclass=Singleton):
         if "Killed reduce tasks=" in row:
             self.sqoop_killed_reduce_tasks = int(row.split("=")[1].strip())
 
-    def connect_to_hive(self, forceSkipTest=False):
+    def connect_to_hive(self, force_skip_test=False):
         logging.debug("Executing import_operations.connect_to_hive()")
 
         if self.import_config.etlEngine == constant.ETL_ENGINE_SPARK:
@@ -2639,7 +2639,7 @@ class operation(metaclass=Singleton):
             return
 
         try:
-            self.common_operations.connect_to_hive(forceSkipTest=forceSkipTest)
+            self.common_operations.connect_to_hive(force_skip_test=force_skip_test)
         except Exception as ex:
             logging.error(ex)
             self.import_config.remove_temporary_files()
@@ -2698,13 +2698,13 @@ class operation(metaclass=Singleton):
 
         if self.import_config.is_external_view_required() == True:
             columns_config = self.import_config.get_columns_from_config_database(
-                sourceIsParquetFile=True, includeAllColumns=False
+                source_is_parquet_file=True, include_all_columns=False
             )
 
             hive_db = self.import_config.Hive_Import_DB
             hive_view = self.import_config.Hive_Import_View
             columns_hive = self.common_operations.get_columns(
-                hive_db, hive_view, includeType=True, excludeDataLakeColumns=True
+                hive_db, hive_view, include_type=True, exclude_data_lake_columns=True
             )
             columns_merge = pd.merge(
                 columns_config, columns_hive, on=None, how="outer", indicator="Exist"
@@ -2784,7 +2784,7 @@ class operation(metaclass=Singleton):
 
             query = "create external table `%s`.`%s` (" % (hive_db, hive_table)
             columns_df = self.import_config.get_columns_from_config_database(
-                includeAllColumns=False
+                include_all_columns=False
             )
 
             if self.import_config.importTool == "sqoop":
@@ -2856,8 +2856,8 @@ class operation(metaclass=Singleton):
                 self.common_operations.convert_hive_table_to_acid(
                     self.Hive_DB,
                     self.Hive_Table,
-                    createDeleteColumn=self.import_config.soft_delete_during_merge,
-                    createMergeColumns=True,
+                    create_delete_column=self.import_config.soft_delete_during_merge,
+                    create_merge_columns=True,
                 )
 
     def add_hive_dbimport_columns_to_history_table(self):
@@ -2874,10 +2874,10 @@ class operation(metaclass=Singleton):
         hive_history_table = self.import_config.Hive_History_Table
 
         columns = self.common_operations.get_columns(
-            hiveDB=hive_history_db,
-            hiveTable=hive_history_table,
-            includeType=False,
-            includeComment=False,
+            hive_db=hive_history_db,
+            hive_table=hive_history_table,
+            include_type=False,
+            include_comment=False,
         )
 
         if (
@@ -2968,10 +2968,10 @@ class operation(metaclass=Singleton):
             self.start_spark()
 
         columns = self.common_operations.get_columns(
-            hiveDB=self.Hive_DB,
-            hiveTable=self.Hive_Table,
-            includeType=False,
-            includeComment=False,
+            hive_db=self.Hive_DB,
+            hive_table=self.Hive_Table,
+            include_type=False,
+            include_comment=False,
         )
 
         if (
@@ -3262,7 +3262,7 @@ class operation(metaclass=Singleton):
         else:
             query = "create table `%s`.`%s` (" % (hive_db, hive_table)
         columns_df = self.import_config.get_columns_from_config_database(
-            includeAllColumns=False
+            include_all_columns=False
         )
 
         restrict_columns_list = []
@@ -3863,12 +3863,12 @@ class operation(metaclass=Singleton):
         """Update the target table based on the column information in the configuration database"""
         logging.debug("Executing import_operations.update_hive_table()")
         columns_config = self.import_config.get_columns_from_config_database(
-            restrictColumns=restrict_columns,
-            sourceIsParquetFile=source_is_parquet_file,
-            includeAllColumns=False,
+            restrict_columns=restrict_columns,
+            source_is_parquet_file=source_is_parquet_file,
+            include_all_columns=False,
         )
         columns_hive = self.common_operations.get_columns(
-            hive_db, hive_table, includeType=True, excludeDataLakeColumns=True
+            hive_db, hive_table, include_type=True, exclude_data_lake_columns=True
         )
 
         if self.import_config.etlEngine == constant.ETL_ENGINE_SPARK:
@@ -4042,16 +4042,16 @@ class operation(metaclass=Singleton):
                     self.import_config.log_hive_column_rename(
                         row_in_config["name"],
                         row_in_hive["name"],
-                        hiveDB=hive_db,
-                        hiveTable=hive_table,
+                        hive_db=hive_db,
+                        hive_table=hive_table,
                     )
                     if row_in_config["type"] != row_in_hive["type"]:
                         self.import_config.log_hive_column_type_change(
                             row_in_config["name"],
                             row_in_config["type"],
-                            previous_columnType=row_in_hive["type"],
-                            hiveDB=hive_db,
-                            hiveTable=hive_table,
+                            previous_column_type=row_in_hive["type"],
+                            hive_db=hive_db,
+                            hive_table=hive_table,
                         )
                 else:
                     if (
@@ -4107,16 +4107,16 @@ class operation(metaclass=Singleton):
                         self.import_config.log_hive_column_rename(
                             row_in_config["name"],
                             row_in_hive["name"],
-                            hiveDB=hive_db,
-                            hiveTable=hive_table,
+                            hive_db=hive_db,
+                            hive_table=hive_table,
                         )
                         if row_in_config["type"] != row_in_hive["type"]:
                             self.import_config.log_hive_column_type_change(
                                 row_in_config["name"],
                                 row_in_config["type"],
-                                previous_columnType=row_in_hive["type"],
-                                hiveDB=hive_db,
-                                hiveTable=hive_table,
+                                previous_column_type=row_in_hive["type"],
+                                hive_db=hive_db,
+                                hive_table=hive_table,
                             )
 
             if self.common_operations.metastore_type == constant.CATALOG_HIVE_DIRECT:
@@ -4125,9 +4125,9 @@ class operation(metaclass=Singleton):
             columns_hive = self.common_operations.get_columns(
                 hive_db,
                 hive_table,
-                includeType=True,
-                includeComment=True,
-                excludeDataLakeColumns=True,
+                include_type=True,
+                include_comment=True,
+                exclude_data_lake_columns=True,
             )
             columns_hive_only_name = columns_hive.filter(["name"])
             columns_merge_only_name = pd.merge(
@@ -4174,9 +4174,9 @@ class operation(metaclass=Singleton):
 
             self.import_config.log_hive_column_add(
                 full_row["name"],
-                columnType=full_row["type"],
-                hiveDB=hive_db,
-                hiveTable=hive_table,
+                column_type=full_row["type"],
+                hive_db=hive_db,
+                hive_table=hive_table,
             )
 
         # Check for changed column types
@@ -4184,7 +4184,7 @@ class operation(metaclass=Singleton):
             self.common_operations.reconnect_hive_meta_store()
 
         columns_hive = self.common_operations.get_columns(
-            hive_db, hive_table, includeType=True, excludeDataLakeColumns=True
+            hive_db, hive_table, include_type=True, exclude_data_lake_columns=True
         )
 
         columns_config_only_name_type = columns_config.filter(
@@ -4334,10 +4334,10 @@ class operation(metaclass=Singleton):
 
             self.import_config.log_hive_column_type_change(
                 row["name"],
-                columnType=row["type"],
-                previous_columnType=previous_column_type,
-                hiveDB=hive_db,
-                hiveTable=hive_table,
+                column_type=row["type"],
+                previous_column_type=previous_column_type,
+                hive_db=hive_db,
+                hive_table=hive_table,
             )
 
         # Check for change column comments
@@ -4347,9 +4347,9 @@ class operation(metaclass=Singleton):
         columns_hive = self.common_operations.get_columns(
             hive_db,
             hive_table,
-            includeType=True,
-            includeComment=True,
-            excludeDataLakeColumns=True,
+            include_type=True,
+            include_comment=True,
+            exclude_data_lake_columns=True,
         )
 
         try:
@@ -4645,7 +4645,7 @@ class operation(metaclass=Singleton):
     def run_hive_major_compaction(
         self,
     ):
-        self.common_operations.connect_to_hive(forceSkipTest=True)
+        self.common_operations.connect_to_hive(force_skip_test=True)
         self.common_operations.run_hive_major_compaction(self.Hive_DB, self.Hive_Table)
 
     def run_hive_compaction(
@@ -4715,7 +4715,7 @@ class operation(metaclass=Singleton):
     ):
         if self.import_config.etlEngine == constant.ETL_ENGINE_HIVE:
             logging.info("Truncating Target table in Hive")
-            self.common_operations.connect_to_hive(forceSkipTest=True)
+            self.common_operations.connect_to_hive(force_skip_test=True)
             self.common_operations.truncateHiveTable(self.Hive_DB, self.Hive_Table)
 
         if self.import_config.etlEngine == constant.ETL_ENGINE_SPARK:
@@ -4878,8 +4878,8 @@ class operation(metaclass=Singleton):
 
         logging.debug("Executing import_operations.copy_hive_table() - Finished")
 
-    def reset_incr_min_max_values(self, maxValue):
-        self.import_config.reset_incr_min_max_values(maxValue=maxValue)
+    def reset_incr_min_max_values(self, max_value):
+        self.import_config.reset_incr_min_max_values(max_value=max_value)
 
     def reset_incr_max_value(self, hive_db=None, hive_table=None):
         """Will read the Max value from the Hive table and save that into the incr_maxvalue column"""
@@ -4905,7 +4905,7 @@ class operation(metaclass=Singleton):
                 hive_table,
             )
 
-            self.common_operations.connect_to_hive(forceSkipTest=True)
+            self.common_operations.connect_to_hive(force_skip_test=True)
             result_df = self.common_operations.execute_hive_query(query)
             max_value = result_df.loc[0][0]
 
@@ -4955,7 +4955,7 @@ class operation(metaclass=Singleton):
         """Execute a concatenate table on the specified table, or what is already set in the class"""
         logging.debug("Executing import_operations.concatenateTable()")
 
-        self.connect_to_hive(forceSkipTest=True)
+        self.connect_to_hive(force_skip_test=True)
 
         if hive_db == None:
             hive_db = self.Hive_DB

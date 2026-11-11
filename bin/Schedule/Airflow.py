@@ -577,7 +577,7 @@ class initialize:
                 # We save the previousConnectionAlias just to avoid making lookups for every dbalias even if they are all the same
                 try:
                     self.common_config.lookup_connection_alias(
-                        connection_alias=row["dbalias"], decryptCredentials=False
+                        connection_alias=row["dbalias"], decrypt_credentials=False
                     )
                     previous_connection_alias = row["dbalias"]
 
@@ -795,7 +795,7 @@ class initialize:
                 if row["dbalias"] != previous_connection_alias:
                     # We save the previousConnectionAlias just to avoid making lookups for every dbalias even if they are all the same
                     self.common_config.lookup_connection_alias(
-                        connection_alias=row["dbalias"], decryptCredentials=False
+                        connection_alias=row["dbalias"], decrypt_credentials=False
                     )
                     previous_connection_alias = row["dbalias"]
             except:

@@ -74,7 +74,7 @@ def test_incr_where_for_target_timestamp_column_converts_values(
     config.get_export_config()
     config.lookup_connection_alias()
 
-    where = config.get_incr_where_statement(whereForTarget=True)
+    where = config.get_incr_where_statement(where_for_target=True)
 
     assert " ".join(where.split()) == (
         f"updated > {convert.format(MIN_VALUE)} "

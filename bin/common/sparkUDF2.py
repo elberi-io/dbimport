@@ -62,20 +62,20 @@ class sparkUDFClass:
 
         return s
 
-    def parse_struct_date(self, timestampString: object) -> str:
-        timestampString = str(timestampString)
-        m = re.match(r'\{ *"\$date" *: *(-?\d+)\ *}', timestampString)
+    def parse_struct_date(self, timestamp_string: object) -> str:
+        timestamp_string = str(timestamp_string)
+        m = re.match(r'\{ *"\$date" *: *(-?\d+)\ *}', timestamp_string)
         if m:
             num = m.group(1)
             timestamp = datetime.utcfromtimestamp(int(num) / 1000)
             return timestamp.strftime("%Y-%m-%d %H:%M:%S.%f")
-        return timestampString
+        return timestamp_string
 
-    def set_seed_string(self, setValue: str) -> None:
-        self.seed_string_encoded = setValue.encode()
+    def set_seed_string(self, set_value: str) -> None:
+        self.seed_string_encoded = set_value.encode()
 
-    def hash_column(self, columnValue: object) -> str | None:
-        if columnValue == None:
+    def hash_column(self, column_value: object) -> str | None:
+        if column_value == None:
             return None
 
         # 		sha_value = hashlib.sha3_512(str(columnValue).encode()).hexdigest()
@@ -84,7 +84,7 @@ class sparkUDFClass:
             # None only before set_seed_string(), which the import calls first.
             person=self.seed_string_encoded,  # type: ignore[arg-type]
         )
-        h.update(str(columnValue).encode())
+        h.update(str(column_value).encode())
         hashed_column_content = h.hexdigest()
         return hashed_column_content
 

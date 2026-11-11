@@ -36,12 +36,12 @@ from DBImportOperation import atlas_operations, common_operations
 
 
 class operation(metaclass=Singleton):
-    def __init__(self, connectionAlias=None, targetSchema=None, targetTable=None):
+    def __init__(self, connection_alias=None, target_schema=None, target_table=None):
         logging.debug("Executing export_operations.__init__()")
 
-        self.connectionAlias = connectionAlias
-        self.targetSchema = targetSchema
-        self.targetTable = targetTable
+        self.connectionAlias = connection_alias
+        self.targetSchema = target_schema
+        self.targetTable = target_table
         self.hiveDB = None
         self.hiveTable = None
         self.hiveExportTempDB = None
@@ -56,15 +56,15 @@ class operation(metaclass=Singleton):
 
         self.atlasOperation = atlas_operations.atlasOperation()
 
-        if connectionAlias == None and targetSchema == None and targetTable == None:
+        if connection_alias == None and target_schema == None and target_table == None:
             self.export_config = export_config.config()
             self.common_operations = common_operations.operation()
         else:
             try:
                 self.export_config = export_config.config(
-                    connectionAlias=connectionAlias,
-                    targetSchema=targetSchema,
-                    targetTable=targetTable,
+                    connection_alias=connection_alias,
+                    target_schema=target_schema,
+                    target_table=target_table,
                 )
                 self.common_operations = common_operations.operation()
 
@@ -79,15 +79,15 @@ class operation(metaclass=Singleton):
                 self.check_table(self.hiveDB, self.hiveTable)
 
                 self.common_operations.set_hive_table(
-                    Hive_DB=self.hiveDB, Hive_Table=self.hiveTable
+                    hive_db=self.hiveDB, hive_table=self.hiveTable
                 )
                 self.hive_table_is_transactional = (
                     self.common_operations.is_table_transactional(
-                        hiveDB=self.hiveDB, hiveTable=self.hiveTable
+                        hive_db=self.hiveDB, hive_table=self.hiveTable
                     )
                 )
                 self.hive_table_is_view = self.common_operations.is_table_view(
-                    hiveDB=self.hiveDB, hiveTable=self.hiveTable
+                    hive_db=self.hiveDB, hive_table=self.hiveTable
                 )
 
             except invalidConfiguration as errMsg:
@@ -150,8 +150,8 @@ class operation(metaclass=Singleton):
     def save_incr_pending_values(self):
         self.export_config.save_incr_pending_values()
 
-    def reset_incr_min_max_values(self, maxValue):
-        self.export_config.reset_incr_min_max_values(maxValue=maxValue)
+    def reset_incr_min_max_values(self, max_value):
+        self.export_config.reset_incr_min_max_values(max_value=max_value)
 
     def reset_max_value_from_target(self):
         self.export_config.reset_max_value_from_target()
@@ -167,10 +167,10 @@ class operation(metaclass=Singleton):
                 self.hiveExportTempDB, self.hiveExportTempTable
             )
 
-    def check_table(self, hiveDB, hiveTable):
-        if self.common_operations.check_table(hiveDB, hiveTable) == False:
+    def check_table(self, hive_db, hive_table):
+        if self.common_operations.check_table(hive_db, hive_table) == False:
             logging.error(
-                "Hive table '%s' cant be found in '%s' database", hiveTable, hiveDB
+                "Hive table '%s' cant be found in '%s' database", hive_table, hive_db
             )
             self.export_config.remove_temporary_files()
             sys.exit(1)
@@ -204,7 +204,7 @@ class operation(metaclass=Singleton):
 
             # Fetch the remote system schema again as it might have been updated in the export
             self.export_config.common_config.get_jdbc_table_definition(
-                source_schema=target_schema, source_table=target_table, printInfo=False
+                source_schema=target_schema, source_table=target_table, print_info=False
             )
             self.atlasOperation.source_columns_df = (
                 self.export_config.common_config.source_columns_df
@@ -233,9 +233,9 @@ class operation(metaclass=Singleton):
             except:
                 pass
 
-    def check_db(self, hiveDB):
+    def check_db(self, hive_db):
         try:
-            self.common_operations.check_db(hiveDB)
+            self.common_operations.check_db(hive_db)
         except databaseNotFound as errMsg:
             logging.error(errMsg)
             self.export_config.remove_temporary_files()
@@ -248,12 +248,12 @@ class operation(metaclass=Singleton):
         try:
             self.export_config.update_last_update_from_hive()
             self.export_config.save_column_data(
-                columnsDF=self.common_operations.get_columns(
+                columns_df=self.common_operations.get_columns(
                     self.hiveDB,
                     self.hiveTable,
-                    includeType=True,
-                    includeComment=True,
-                    includeIdx=True,
+                    include_type=True,
+                    include_comment=True,
+                    include_idx=True,
                 )
             )
         except invalidConfiguration as errMsg:
@@ -376,7 +376,7 @@ class operation(metaclass=Singleton):
         error_during_add = False
 
         source_df = self.common_operations.get_tables(
-            dbFilter=db_filter, tableFilter=table_filter
+            db_filter=db_filter, table_filter=table_filter
         )
 
         if len(source_df) == 0:
@@ -516,8 +516,8 @@ class operation(metaclass=Singleton):
     def is_export_temp_table_needed(self):
         try:
             self.tempTableNeeded = self.export_config.is_export_temp_table_needed(
-                hiveTableIsTransactional=self.hive_table_is_transactional,
-                hiveTableIsView=self.hive_table_is_view,
+                hive_table_is_transactional=self.hive_table_is_transactional,
+                hive_table_is_view=self.hive_table_is_view,
             )
         except invalidConfiguration as errMsg:
             logging.error(errMsg)
@@ -557,7 +557,7 @@ class operation(metaclass=Singleton):
     ):
         if (
             self.common_operations.is_table_view(
-                hiveDB=self.hiveDB, hiveTable=self.hiveTable
+                hive_db=self.hiveDB, hive_table=self.hiveTable
             )
             == False
         ):
@@ -584,11 +584,11 @@ class operation(metaclass=Singleton):
 
             if self.export_config.exportTool == "sqoop":
                 columns_df = self.export_config.get_columns_from_config_database(
-                    excludeColumns=True, getReplacedColumnTypes=True
+                    exclude_columns=True, get_replaced_column_types=True
                 )
             else:
                 columns_df = self.export_config.get_columns_from_config_database(
-                    excludeColumns=True, getReplacedColumnTypes=False
+                    exclude_columns=True, get_replaced_column_types=False
                 )
 
             query = "create table `%s`.`%s` (" % (
@@ -655,16 +655,16 @@ class operation(metaclass=Singleton):
         hive_table = self.hiveExportTempTable
 
         columns_hive = self.common_operations.get_columns(
-            hive_db, hive_table, includeType=True, includeIdx=False
+            hive_db, hive_table, include_type=True, include_idx=False
         )
 
         if self.export_config.exportTool == "sqoop":
             columns_config = self.export_config.get_columns_from_config_database(
-                excludeColumns=True, getReplacedColumnTypes=True
+                exclude_columns=True, get_replaced_column_types=True
             )
         else:
             columns_config = self.export_config.get_columns_from_config_database(
-                excludeColumns=True, getReplacedColumnTypes=False
+                exclude_columns=True, get_replaced_column_types=False
             )
 
         columns_config.rename(
@@ -767,17 +767,17 @@ class operation(metaclass=Singleton):
                     self.export_config.log_hive_column_rename(
                         row_in_config["name"],
                         row_in_hive["name"],
-                        hiveDB=hive_db,
-                        hiveTable=hive_table,
+                        hive_db=hive_db,
+                        hive_table=hive_table,
                     )
 
                     if row_in_config["type"] != row_in_hive["type"]:
                         self.export_config.log_hive_column_type_change(
                             row_in_config["name"],
                             row_in_config["type"],
-                            previous_columnType=row_in_hive["type"],
-                            hiveDB=hive_db,
-                            hiveTable=hive_table,
+                            previous_column_type=row_in_hive["type"],
+                            hive_db=hive_db,
+                            hive_table=hive_table,
                         )
                 else:
                     if (
@@ -815,13 +815,13 @@ class operation(metaclass=Singleton):
                         self.export_config.log_hive_column_rename(
                             row_in_config["name"],
                             row_in_hive["name"],
-                            hiveDB=hive_db,
-                            hiveTable=hive_table,
+                            hive_db=hive_db,
+                            hive_table=hive_table,
                         )
 
             self.common_operations.reconnect_hive_meta_store()
             columns_hive = self.common_operations.get_columns(
-                hive_db, hive_table, includeType=True, includeIdx=False
+                hive_db, hive_table, include_type=True, include_idx=False
             )
             columns_hive_only_name = columns_hive.filter(["name"])
             columns_merge_only_name = pd.merge(
@@ -849,15 +849,19 @@ class operation(metaclass=Singleton):
 
             self.export_config.log_hive_column_add(
                 full_row["name"],
-                columnType=full_row["type"],
-                hiveDB=hive_db,
-                hiveTable=hive_table,
+                column_type=full_row["type"],
+                hive_db=hive_db,
+                hive_table=hive_table,
             )
 
         # Check for changed column types
         self.common_operations.reconnect_hive_meta_store()
         columns_hive = self.common_operations.get_columns(
-            hive_db, hive_table, includeType=True, includeIdx=False, includeComment=True
+            hive_db,
+            hive_table,
+            include_type=True,
+            include_idx=False,
+            include_comment=True,
         )
 
         columns_config_only_name_type = columns_config.filter(
@@ -915,16 +919,20 @@ class operation(metaclass=Singleton):
 
             self.export_config.log_hive_column_type_change(
                 row["name"],
-                columnType=row["type"],
-                previous_columnType=previous_column_type,
-                hiveDB=hive_db,
-                hiveTable=hive_table,
+                column_type=row["type"],
+                previous_column_type=previous_column_type,
+                hive_db=hive_db,
+                hive_table=hive_table,
             )
 
         # Check for change column comments
         self.common_operations.reconnect_hive_meta_store()
         columns_hive = self.common_operations.get_columns(
-            hive_db, hive_table, includeType=True, includeIdx=False, includeComment=True
+            hive_db,
+            hive_table,
+            include_type=True,
+            include_idx=False,
+            include_comment=True,
         )
         columns_hive["comment"].replace(
             "", None, inplace=True
@@ -975,7 +983,7 @@ class operation(metaclass=Singleton):
         logging.info("Inserting data into the the Export Temp table")
 
         columns_config = self.export_config.get_columns_from_config_database(
-            excludeColumns=True
+            exclude_columns=True
         )
 
         query = "insert into `%s`.`%s` (" % (
@@ -1055,7 +1063,7 @@ class operation(metaclass=Singleton):
             # As we cant verify schema on S3 files, we are just going to read what we have in Hive and export all columns
 
             columns_config = self.export_config.get_columns_from_config_database(
-                excludeColumns=True, forceColumnUppercase=force_column_uppercase
+                exclude_columns=True, force_column_uppercase=force_column_uppercase
             )
 
             # Generate the SQL used to query Hive
@@ -1114,7 +1122,7 @@ class operation(metaclass=Singleton):
             columns_target.drop("DEFAULT_VALUE", axis=1, inplace=True)
 
             columns_config = self.export_config.get_columns_from_config_database(
-                excludeColumns=True, forceColumnUppercase=force_column_uppercase
+                exclude_columns=True, force_column_uppercase=force_column_uppercase
             )
 
             logging.debug(
@@ -1619,7 +1627,7 @@ class operation(metaclass=Singleton):
         logging.debug("forceColumnUppercase: %s", force_column_uppercase)
 
         columns_config = self.export_config.get_columns_from_config_database(
-            excludeColumns=True, forceColumnUppercase=force_column_uppercase
+            exclude_columns=True, force_column_uppercase=force_column_uppercase
         )
         columns_config.rename(columns={"hiveColumnName": "name"}, inplace=True)
         for index, row in columns_config.iterrows():
@@ -1849,13 +1857,13 @@ class operation(metaclass=Singleton):
 
             if self.export_config.incr_validation_method == "incr":
                 where_statement = self.export_config.get_incr_where_statement(
-                    excludeMinValue=False
+                    exclude_min_value=False
                 )
             else:
                 # Needed to make sure that we are not validating against new rows that might have been saved in Hive
                 if self.export_config.exportIsIncremental == True:
                     where_statement = self.export_config.get_incr_where_statement(
-                        excludeMinValue=True
+                        exclude_min_value=True
                     )
 
             if self.export_config.sqlWhereAddition != None:
@@ -1867,7 +1875,7 @@ class operation(metaclass=Singleton):
                     )
 
             hive_table_row_count = self.common_operations.get_hive_table_row_count(
-                hive_db, hive_table, whereStatement=where_statement
+                hive_db, hive_table, where_statement=where_statement
             )
             self.export_config.save_hive_table_row_count(hive_table_row_count)
         except:
@@ -1907,7 +1915,7 @@ class operation(metaclass=Singleton):
             )
 
         self.export_config.save_custom_sql_validation_hive_value(
-            jsonValue=result_json, printInfo=False
+            json_value=result_json, print_info=False
         )
 
         logging.debug("resultDF:")
@@ -1931,9 +1939,9 @@ class operation(metaclass=Singleton):
             where_statement = None
             if self.export_config.incr_validation_method == "incr":
                 where_statement = self.export_config.get_incr_where_statement(
-                    whereForTarget=True, excludeMinValue=False
+                    where_for_target=True, exclude_min_value=False
                 )
-            self.export_config.get_jdbc_table_row_count(whereStatement=where_statement)
+            self.export_config.get_jdbc_table_row_count(where_statement=where_statement)
         except:
             logging.exception("Fatal error when reading Target table row count")
             self.export_config.remove_temporary_files()

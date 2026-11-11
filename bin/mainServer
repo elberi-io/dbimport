@@ -43,12 +43,12 @@ def print_help():
     sys.exit(1)
 
 
-def setup_logger(name, logfile, logFormat, loggingLevel, logPropagate=True):
+def setup_logger(name, logfile, log_format, logging_level, log_propagate=True):
     new_logger = logging.getLogger(name)
-    new_logger.propagate = logPropagate
+    new_logger.propagate = log_propagate
     log_handler = logging.FileHandler(logfile)
-    log_handler.setFormatter(logging.Formatter(logFormat))
-    log_handler.setLevel(loggingLevel)
+    log_handler.setFormatter(logging.Formatter(log_format))
+    log_handler.setLevel(logging_level)
     new_logger.addHandler(log_handler)
 
 
@@ -109,37 +109,37 @@ def main(argv):
     setup_logger(
         name="server",
         logfile=f"{logdir}/dbimport_server.log",
-        logFormat=log_format,
-        loggingLevel=logging_level,
-        logPropagate=log_propagate,
+        log_format=log_format,
+        logging_level=logging_level,
+        log_propagate=log_propagate,
     )
     setup_logger(
         name="atlasDiscovery",
         logfile=f"{logdir}/atlasDiscovery.log",
-        logFormat=log_format,
-        loggingLevel=logging_level,
-        logPropagate=log_propagate,
+        log_format=log_format,
+        logging_level=logging_level,
+        log_propagate=log_propagate,
     )
     setup_logger(
         name="restServer",
         logfile=f"{logdir}/restServer.log",
-        logFormat=log_format,
-        loggingLevel=logging_level,
-        logPropagate=log_propagate,
+        log_format=log_format,
+        logging_level=logging_level,
+        log_propagate=log_propagate,
     )
     setup_logger(
         name="werkzeug",
         logfile=f"{logdir}/restServer.log",
-        logFormat=log_format,
-        loggingLevel=logging_level,
-        logPropagate=log_propagate,
+        log_format=log_format,
+        logging_level=logging_level,
+        log_propagate=log_propagate,
     )
     setup_logger(
         name="waitress",
         logfile=f"{logdir}/restServer.log",
-        logFormat=log_format,
-        loggingLevel=logging_level,
-        logPropagate=log_propagate,
+        log_format=log_format,
+        logging_level=logging_level,
+        log_propagate=log_propagate,
     )
 
     if dist_cp_separate_logs == False:
@@ -147,8 +147,8 @@ def main(argv):
         setup_logger(
             name="distCP",
             logfile=dist_cp_logfile,
-            logFormat=log_format,
-            loggingLevel=logging_level,
+            log_format=log_format,
+            logging_level=logging_level,
         )
     else:
         dist_cp_threads = int(configuration.get("Server", "distCP_threads"))
@@ -159,8 +159,8 @@ def main(argv):
             setup_logger(
                 name=dist_cp_log_name,
                 logfile=dist_cp_logfile,
-                logFormat=log_format,
-                loggingLevel=logging_level,
+                log_format=log_format,
+                logging_level=logging_level,
             )
 
     d = daemon.serverDaemon(pidfile=pidfile)
