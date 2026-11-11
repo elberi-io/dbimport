@@ -784,7 +784,7 @@ def main(argv):
         if operation == "runHiveQuery":
             common_operation = common_operations.operation()
             common_operation.common_config.check_kerberos_ticket()
-            common_operation.connect_to_hive(forceSkipTest=True, quiet=quiet_mode)
+            common_operation.connect_to_hive(force_skip_test=True, quiet=quiet_mode)
             result = common_operation.execute_hive_query(
                 query=jdbc_query, quiet=quiet_mode
             )
@@ -1098,7 +1098,7 @@ def main(argv):
                 answer = "y"
 
             if answer.lower() == "y":
-                import_operation.reset_incr_min_max_values(maxValue=None)
+                import_operation.reset_incr_min_max_values(max_value=None)
                 import_operation.truncateTargetTable()
                 import_operation.clear_stage()
                 import_operation.remove_temporary_files()
@@ -1134,7 +1134,7 @@ def main(argv):
                 answer = "y"
 
             if answer.lower() == "y":
-                import_operation.reset_incr_min_max_values(maxValue=None)
+                import_operation.reset_incr_min_max_values(max_value=None)
                 import_operation.truncateTargetTable()
                 import_operation.clear_stage()
                 import_operation.remove_temporary_files()
@@ -1160,12 +1160,12 @@ def main(argv):
 
             if answer.lower() == "y":
                 export_operation = export_operations.operation(
-                    connectionAlias=connection_alias,
-                    targetSchema=jdbc_schema,
-                    targetTable=jdbc_table,
+                    connection_alias=connection_alias,
+                    target_schema=jdbc_schema,
+                    target_table=jdbc_table,
                 )
                 export_operation.truncate_jdbc_table(force=True)
-                export_operation.reset_incr_min_max_values(maxValue=None)
+                export_operation.reset_incr_min_max_values(max_value=None)
                 export_operation.clear_stage()
                 export_operation.remove_temporary_files()
             else:
@@ -1191,9 +1191,9 @@ def main(argv):
 
             if answer.lower() == "y":
                 export_operation = export_operations.operation(
-                    connectionAlias=connection_alias,
-                    targetSchema=jdbc_schema,
-                    targetTable=jdbc_table,
+                    connection_alias=connection_alias,
+                    target_schema=jdbc_schema,
+                    target_table=jdbc_table,
                 )
                 export_operation.reset_max_value_from_target()
                 export_operation.remove_temporary_files()
@@ -1218,12 +1218,12 @@ def main(argv):
 
             if answer.lower() == "y":
                 export_operation = export_operations.operation(
-                    connectionAlias=connection_alias,
-                    targetSchema=jdbc_schema,
-                    targetTable=jdbc_table,
+                    connection_alias=connection_alias,
+                    target_schema=jdbc_schema,
+                    target_table=jdbc_table,
                 )
                 export_operation.drop_jdbc_table()
-                export_operation.reset_incr_min_max_values(maxValue=None)
+                export_operation.reset_incr_min_max_values(max_value=None)
                 export_operation.clear_stage()
                 export_operation.remove_temporary_files()
             else:
@@ -1231,9 +1231,9 @@ def main(argv):
 
         if operation == "clearExportStage":
             export_operation = export_operations.operation(
-                connectionAlias=connection_alias,
-                targetSchema=jdbc_schema,
-                targetTable=jdbc_table,
+                connection_alias=connection_alias,
+                target_schema=jdbc_schema,
+                target_table=jdbc_table,
             )
             export_operation.clear_stage()
             logging.info("Stage information cleared")

@@ -59,7 +59,6 @@
     "E722": 4,
     "F841": 23,
     "G002": 41,
-    "N803": 1,
     "UP031": 87
   },
   "bin/DBImportOperation/common_operations.py": {
@@ -69,7 +68,6 @@
     "E722": 4,
     "G002": 4,
     "N802": 1,
-    "N803": 49,
     "UP031": 32
   },
   "bin/DBImportOperation/copy_operations.py": {
@@ -87,7 +85,6 @@
     "E722": 1,
     "F841": 2,
     "G002": 1,
-    "N803": 4,
     "UP031": 120
   },
   "bin/DBImportOperation/export_operations.py": {
@@ -97,7 +94,6 @@
     "F841": 2,
     "G002": 8,
     "N802": 1,
-    "N803": 7,
     "UP031": 49
   },
   "bin/DBImportOperation/import_operations.py": {
@@ -109,7 +105,6 @@
     "F841": 6,
     "G002": 20,
     "N802": 4,
-    "N803": 10,
     "UP031": 167
   },
   "bin/Schedule/Airflow.py": {
