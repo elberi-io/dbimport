@@ -10,8 +10,6 @@
     "E722": 39,
     "F841": 2,
     "G002": 2,
-    "N803": 28,
-    "N806": 6,
     "UP031": 54
   },
   "bin/DBImportConfig/decryption.py": {
@@ -24,8 +22,6 @@
     "E712": 54,
     "F841": 7,
     "G002": 41,
-    "N803": 29,
-    "N806": 2,
     "UP031": 102
   },
   "bin/DBImportConfig/export_stage.py": {
@@ -33,7 +29,6 @@
     "E712": 21,
     "F841": 1,
     "G002": 15,
-    "N803": 4,
     "UP031": 41
   },
   "bin/DBImportConfig/import_config.py": {
@@ -43,7 +38,6 @@
     "F841": 4,
     "G002": 89,
     "N802": 1,
-    "N803": 29,
     "UP031": 144
   },
   "bin/DBImportConfig/import_stage.py": {
@@ -51,7 +45,6 @@
     "E712": 23,
     "F841": 1,
     "G002": 15,
-    "N803": 5,
     "UP031": 37
   },
   "bin/DBImportConfig/sendStatistics.py": {

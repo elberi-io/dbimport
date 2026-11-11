@@ -28,15 +28,15 @@ class stage:
     def __init__(
         self,
         mysql_conn: Any,
-        connectionAlias: str | None = None,
-        targetSchema: str | None = None,
-        targetTable: str | None = None,
+        connection_alias: str | None = None,
+        target_schema: str | None = None,
+        target_table: str | None = None,
     ) -> None:
         logging.debug("Executing stage.__init__()")
 
-        self.connectionAlias = connectionAlias
-        self.targetSchema = targetSchema
-        self.targetTable = targetTable
+        self.connectionAlias = connection_alias
+        self.targetSchema = target_schema
+        self.targetTable = target_table
 
         self.mysql_conn = mysql_conn
         self.mysql_cursor = self.mysql_conn.cursor(buffered=False)
@@ -564,19 +564,19 @@ class stage:
         logging.debug("Executing stage.get_stage() - Finished")
         return self.current_stage
 
-    def set_stage(self, newStage: int, force: bool = False) -> None:
+    def set_stage(self, new_stage: int, force: bool = False) -> None:
         """Saves the stage information that is used for finding the correct step in the retries operations"""
         logging.debug("Executing stage.set_stage()")
 
         if force == True:
             self.current_stage = 0
 
-        if self.current_stage != None and self.current_stage > newStage:
+        if self.current_stage != None and self.current_stage > new_stage:
             logging.debug("Executing stage.set_stage() - Finished (no stage set)")
             return
 
         if self.memory_stage == True:
-            self.current_stage = newStage
+            self.current_stage = new_stage
             logging.debug(
                 "Executing stage.set_stage() - Finished (stage only in memory)"
             )
@@ -638,7 +638,7 @@ class stage:
         self.mysql_conn.commit()
         logging.debug("SQL Statement executed: %s" % (self.mysql_cursor.statement))
 
-        stage_description = self.get_stage_description(newStage)
+        stage_description = self.get_stage_description(new_stage)
 
         # Save stage information in export_stage
         query = "select count(stage) from export_stage where dbalias = %s and target_schema = %s and target_table = %s"
@@ -665,14 +665,14 @@ class stage:
             query += "	'%s', " % (self.connectionAlias)
             query += "	'%s', " % (self.targetSchema)
             query += "	'%s', " % (self.targetTable)
-            query += "	%s, " % (newStage)
+            query += "	%s, " % (new_stage)
             query += "	'%s', " % (stage_description)
             query += "	'%s' " % (datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f"))
             # 			query += "	0 "
             query += ") "
         else:
             query = "update export_stage set"
-            query += "	stage = %s, " % (newStage)
+            query += "	stage = %s, " % (new_stage)
             query += "	stage_description = '%s', " % (stage_description)
             query += "	stage_time = '%s' " % (
                 datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
@@ -686,7 +686,7 @@ class stage:
         self.mysql_conn.commit()
         logging.debug("SQL Statement executed: %s" % (self.mysql_cursor.statement))
 
-        self.current_stage = newStage
+        self.current_stage = new_stage
         self.stageTimeStart = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
         self.stageTimeStop = None
         self.stageDurationStart = time.monotonic()

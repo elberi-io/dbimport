@@ -858,7 +858,7 @@ class dbCalls:
         """Return the server type based on the connection string"""
         try:
             self.common_config.lookup_connection_alias(
-                name, decryptCredentials=False, jdbcURL=connection_string, quiet=True
+                name, decrypt_credentials=False, jdbc_url=connection_string, quiet=True
             )
         except invalidConfiguration:
             pass

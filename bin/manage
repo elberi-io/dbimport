@@ -936,7 +936,7 @@ def main(argv):
                     sys.exit(1)
 
                 commonConfig.lookup_connection_alias(
-                    connection_alias=connection_alias, decryptCredentials=False
+                    connection_alias=connection_alias, decrypt_credentials=False
                 )
 
                 try:
@@ -980,7 +980,7 @@ def main(argv):
                     sys.exit(1)
 
                 commonConfig.lookup_connection_alias(
-                    connection_alias=connection_alias, decryptCredentials=False
+                    connection_alias=connection_alias, decrypt_credentials=False
                 )
 
             commonConfig.encrypt_user_password(connection_alias, username, password)

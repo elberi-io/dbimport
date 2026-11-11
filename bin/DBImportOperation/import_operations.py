@@ -323,7 +323,7 @@ class operation(metaclass=Singleton):
                 "The size of the json document on the custom query exceeds 1024 bytes. Change the query to create a result with less than 512 bytes"
             )
 
-        self.import_config.save_custom_sql_validation_hive_value(jsonValue=result_json)
+        self.import_config.save_custom_sql_validation_hive_value(json_value=result_json)
 
         logging.debug("resultDF:")
         logging.debug(result_df)
@@ -358,7 +358,7 @@ class operation(metaclass=Singleton):
                 "The size of the json document on the custom query exceeds 1024 bytes. Change the query to create a result with less than 512 bytes"
             )
 
-        self.import_config.save_custom_sql_validation_hive_value(jsonValue=result_json)
+        self.import_config.save_custom_sql_validation_hive_value(json_value=result_json)
 
         logging.debug("resultDF:")
         logging.debug(result_df)
@@ -453,9 +453,9 @@ class operation(metaclass=Singleton):
     def get_target_table_row_count(self, incrementalMax=None):
         try:
             where_statement = self.import_config.get_incr_where_statement(
-                ignoreIfOnlyIncrMax=True,
-                ignoreSQLwhereAddition=True,
-                incrementalMax=incrementalMax,
+                ignore_if_only_incr_max=True,
+                ignore_sql_where_addition=True,
+                incremental_max=incrementalMax,
             )
 
             if (
@@ -544,7 +544,7 @@ class operation(metaclass=Singleton):
         logging.debug("Executing import_operations.validate_row_count()")
         try:
             validate_result = self.import_config.validate_row_count(
-                validateSqoop=False, incremental=False
+                validate_sqoop=False, incremental=False
             )
         except:
             logging.exception("Fatal error when validating imported rows")
@@ -559,7 +559,7 @@ class operation(metaclass=Singleton):
         logging.debug("Executing import_operations.validate_import_row_count()")
         try:
             validate_result = self.import_config.validate_row_count(
-                validateSqoop=True, incremental=False
+                validate_sqoop=True, incremental=False
             )
         except:
             logging.exception("Fatal error when validating imported rows by sqoop")
@@ -574,7 +574,7 @@ class operation(metaclass=Singleton):
         logging.debug("Executing import_operations.validate_incr_row_count()")
         try:
             validate_result = self.import_config.validate_row_count(
-                validateSqoop=False, incremental=True
+                validate_sqoop=False, incremental=True
             )
         except:
             logging.exception("Fatal error when validating imported incremental rows")
@@ -633,7 +633,7 @@ class operation(metaclass=Singleton):
 
         if self.import_config.mongoImport == False:
             source_df = self.import_config.common_config.get_jdbc_tables_and_views(
-                schemaFilter=schema_filter, tableFilter=table_filter
+                schema_filter=schema_filter, table_filter=table_filter
             )
         else:
             source_df = self.import_config.common_config.get_mongo_collections(
@@ -805,7 +805,7 @@ class operation(metaclass=Singleton):
         """Checks if the Oracle Flashback SCN number used in the previous import is valid. If not, we force a full import"""
 
         incr_where_statement = self.import_config.get_incr_where_statement(
-            whereForSqoop=True
+            where_for_sqoop=True
         ).replace('"', "'")
         query = "%s %s AND 1 = 0" % (
             self.import_config.sqlGeneratedSqoopQuery,
@@ -1675,11 +1675,11 @@ class operation(metaclass=Singleton):
         ):
             if self.import_config.common_config.jdbc_servertype == constant.SNOWFLAKE:
                 incr_where_statement = self.import_config.get_incr_where_statement(
-                    whereForSqoop=True, incrementalMax=incremental_max
+                    where_for_sqoop=True, incremental_max=incremental_max
                 )
             else:
                 incr_where_statement = self.import_config.get_incr_where_statement(
-                    whereForSqoop=True, incrementalMax=incremental_max
+                    where_for_sqoop=True, incremental_max=incremental_max
                 ).replace('"', "'")
 
             if incr_where_statement == "":
@@ -2341,7 +2341,7 @@ class operation(metaclass=Singleton):
 
         if self.import_config.import_is_incremental == True and pk_only_import == False:
             incr_where_statement = self.import_config.get_incr_where_statement(
-                whereForSqoop=True, incrementalMax=incremental_max
+                where_for_sqoop=True, incremental_max=incremental_max
             ).replace('"', "'")
             if incr_where_statement == "":
                 # DBImport is unable to find the max value for the configured incremental column. Is the table empty?
@@ -2698,7 +2698,7 @@ class operation(metaclass=Singleton):
 
         if self.import_config.is_external_view_required() == True:
             columns_config = self.import_config.get_columns_from_config_database(
-                sourceIsParquetFile=True, includeAllColumns=False
+                source_is_parquet_file=True, include_all_columns=False
             )
 
             hive_db = self.import_config.Hive_Import_DB
@@ -2784,7 +2784,7 @@ class operation(metaclass=Singleton):
 
             query = "create external table `%s`.`%s` (" % (hive_db, hive_table)
             columns_df = self.import_config.get_columns_from_config_database(
-                includeAllColumns=False
+                include_all_columns=False
             )
 
             if self.import_config.importTool == "sqoop":
@@ -3262,7 +3262,7 @@ class operation(metaclass=Singleton):
         else:
             query = "create table `%s`.`%s` (" % (hive_db, hive_table)
         columns_df = self.import_config.get_columns_from_config_database(
-            includeAllColumns=False
+            include_all_columns=False
         )
 
         restrict_columns_list = []
@@ -3863,9 +3863,9 @@ class operation(metaclass=Singleton):
         """Update the target table based on the column information in the configuration database"""
         logging.debug("Executing import_operations.update_hive_table()")
         columns_config = self.import_config.get_columns_from_config_database(
-            restrictColumns=restrict_columns,
-            sourceIsParquetFile=source_is_parquet_file,
-            includeAllColumns=False,
+            restrict_columns=restrict_columns,
+            source_is_parquet_file=source_is_parquet_file,
+            include_all_columns=False,
         )
         columns_hive = self.common_operations.get_columns(
             hive_db, hive_table, includeType=True, excludeDataLakeColumns=True
@@ -4042,16 +4042,16 @@ class operation(metaclass=Singleton):
                     self.import_config.log_hive_column_rename(
                         row_in_config["name"],
                         row_in_hive["name"],
-                        hiveDB=hive_db,
-                        hiveTable=hive_table,
+                        hive_db=hive_db,
+                        hive_table=hive_table,
                     )
                     if row_in_config["type"] != row_in_hive["type"]:
                         self.import_config.log_hive_column_type_change(
                             row_in_config["name"],
                             row_in_config["type"],
-                            previous_columnType=row_in_hive["type"],
-                            hiveDB=hive_db,
-                            hiveTable=hive_table,
+                            previous_column_type=row_in_hive["type"],
+                            hive_db=hive_db,
+                            hive_table=hive_table,
                         )
                 else:
                     if (
@@ -4107,16 +4107,16 @@ class operation(metaclass=Singleton):
                         self.import_config.log_hive_column_rename(
                             row_in_config["name"],
                             row_in_hive["name"],
-                            hiveDB=hive_db,
-                            hiveTable=hive_table,
+                            hive_db=hive_db,
+                            hive_table=hive_table,
                         )
                         if row_in_config["type"] != row_in_hive["type"]:
                             self.import_config.log_hive_column_type_change(
                                 row_in_config["name"],
                                 row_in_config["type"],
-                                previous_columnType=row_in_hive["type"],
-                                hiveDB=hive_db,
-                                hiveTable=hive_table,
+                                previous_column_type=row_in_hive["type"],
+                                hive_db=hive_db,
+                                hive_table=hive_table,
                             )
 
             if self.common_operations.metastore_type == constant.CATALOG_HIVE_DIRECT:
@@ -4174,9 +4174,9 @@ class operation(metaclass=Singleton):
 
             self.import_config.log_hive_column_add(
                 full_row["name"],
-                columnType=full_row["type"],
-                hiveDB=hive_db,
-                hiveTable=hive_table,
+                column_type=full_row["type"],
+                hive_db=hive_db,
+                hive_table=hive_table,
             )
 
         # Check for changed column types
@@ -4334,10 +4334,10 @@ class operation(metaclass=Singleton):
 
             self.import_config.log_hive_column_type_change(
                 row["name"],
-                columnType=row["type"],
-                previous_columnType=previous_column_type,
-                hiveDB=hive_db,
-                hiveTable=hive_table,
+                column_type=row["type"],
+                previous_column_type=previous_column_type,
+                hive_db=hive_db,
+                hive_table=hive_table,
             )
 
         # Check for change column comments
@@ -4879,7 +4879,7 @@ class operation(metaclass=Singleton):
         logging.debug("Executing import_operations.copy_hive_table() - Finished")
 
     def reset_incr_min_max_values(self, maxValue):
-        self.import_config.reset_incr_min_max_values(maxValue=maxValue)
+        self.import_config.reset_incr_min_max_values(max_value=maxValue)
 
     def reset_incr_max_value(self, hive_db=None, hive_table=None):
         """Will read the Max value from the Hive table and save that into the incr_maxvalue column"""

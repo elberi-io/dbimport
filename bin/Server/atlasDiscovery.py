@@ -239,7 +239,7 @@ class atlasDiscovery(threading.Thread):
                         # TODO(#229): Move this into the thread
                         if (
                             self.common_config.check_time_window(
-                                db_alias, atlasDiscoveryMode=True
+                                db_alias, atlas_discovery_mode=True
                             )
                             == False
                         ):
@@ -281,10 +281,10 @@ class atlasDiscovery(threading.Thread):
                         if jpype.isJVMStarted() == False:
                             log.debug("Starting jpype JVM")
                             self.common_config.connect_to_jdbc(
-                                allJarFiles=True,
-                                exitIfFailure=False,
+                                all_jar_files=True,
+                                exit_if_failure=False,
                                 logger=logger,
-                                printError=False,
+                                print_error=False,
                             )
                             self.common_config.disconnect_from_jdbc()
 
