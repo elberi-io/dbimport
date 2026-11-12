@@ -143,7 +143,7 @@ def _undefined_task_references(dag_source: str) -> set[str]:
 
 
 def _generate(tmp_path: Path) -> str:
-    Airflow.initialize().generate_dag(name=DAG_NAME, dag_folder=str(tmp_path))
+    Airflow.Initialize().generate_dag(name=DAG_NAME, dag_folder=str(tmp_path))
     return (tmp_path / f"{DAG_NAME}.py").read_text()
 
 

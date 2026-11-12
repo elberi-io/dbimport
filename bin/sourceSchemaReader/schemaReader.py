@@ -25,9 +25,9 @@ import pandas as pd
 from common import constants as constant
 
 
-class source:
+class Source:
     def __init__(self):
-        logging.debug("Initiating schemaReader.source()")
+        logging.debug("Initiating schemaReader.Source()")
 
     def remove_new_line(self, _data):
         if _data == None:

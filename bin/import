@@ -320,9 +320,9 @@ def main(argv):
     import_operation = None
     try:
         # Initiate the master class for all import operations
-        import_operation = import_operations.operation(hive_db, hive_table)
-        copy_operation = copy_operations.operation()
-        etl_operation = etl_operations.operation()
+        import_operation = import_operations.Operation(hive_db, hive_table)
+        copy_operation = copy_operations.Operation()
+        etl_operation = etl_operations.Operation()
     except KeyboardInterrupt:
         logging.error("Program exit because requested by user.")
         if import_operation is not None:

@@ -449,8 +449,8 @@ def main(argv):
         )
 
     if operation == "exportTable":
-        copy_operation = copy_operations.operation()
-        import_operation = import_operations.operation()
+        copy_operation = copy_operations.Operation()
+        import_operation = import_operations.Operation()
         if concatenate_table:
             import_operation.concatenate_table(hive_db=hive_db, hive_table=hive_table)
 
@@ -460,7 +460,7 @@ def main(argv):
         import_operation.remove_temporary_files()
 
     if operation == "copyTableFromCluster":
-        copy_operation = copy_operations.operation()
+        copy_operation = copy_operations.Operation()
         copy_operation.copy_table_to_from_cluster(
             hive_db=hive_db,
             hive_table=hive_table,
@@ -472,7 +472,7 @@ def main(argv):
         copy_operation.remove_temporary_files()
 
     if operation == "copyTableToCluster":
-        copy_operation = copy_operations.operation()
+        copy_operation = copy_operations.Operation()
         copy_operation.copy_table_to_from_cluster(
             hive_db=hive_db,
             hive_table=hive_table,
@@ -484,14 +484,14 @@ def main(argv):
         copy_operation.remove_temporary_files()
 
     if operation == "importTable":
-        copy_operation = copy_operations.operation()
+        copy_operation = copy_operations.Operation()
         copy_operation.import_copied_table(
             hive_db=hive_db, hive_table=hive_table, local_hdfs_path=local_hdfs_path
         )
         copy_operation.remove_temporary_files()
 
     if operation == "scheduleTableAsyncCopy":
-        copy_operation = copy_operations.operation()
+        copy_operation = copy_operations.Operation()
         copy_operation.schedule_table_async_copy(
             hive_filter_db=hive_db,
             hive_filter_table=hive_table,
@@ -500,7 +500,7 @@ def main(argv):
         copy_operation.remove_temporary_files()
 
     if operation == "scheduleDAGasyncCopy":
-        copy_operation = copy_operations.operation()
+        copy_operation = copy_operations.Operation()
         copy_operation.schedule_dag_async_copy(
             airflow_dag_name=airflow_dag,
             copy_destination=copy_destination,
@@ -509,7 +509,7 @@ def main(argv):
         copy_operation.remove_temporary_files()
 
     if operation == "copyAirflowImportDAG":
-        copy_operation = copy_operations.operation()
+        copy_operation = copy_operations.Operation()
         copy_operation.copy_airflow_import_dag(
             airflow_dag_name=airflow_dag,
             copy_destination=copy_destination,
@@ -519,7 +519,7 @@ def main(argv):
         copy_operation.remove_temporary_files()
 
     if operation == "copyAirflowExportDAG":
-        copy_operation = copy_operations.operation()
+        copy_operation = copy_operations.Operation()
         copy_operation.copy_airflow_export_dag(
             airflow_dag_name=airflow_dag,
             copy_destination=copy_destination,

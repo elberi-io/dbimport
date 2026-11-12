@@ -41,7 +41,7 @@ from DBImportConfig import common_config, configSchema
 from Server import dataModels
 
 
-class dbCalls:
+class DBCalls:
     def __init__(self):
 
         # 		logFormat = '%(asctime)s %(levelname)s - %(message)s'
@@ -60,7 +60,7 @@ class dbCalls:
         if logging.root.level == 10:  # DEBUG
             self.debug_log_level = True
 
-        self.common_config = common_config.config()
+        self.common_config = common_config.Config()
         # self.common_config.disconnect_config_database() # This is needed as we must connect with buffered=False and that is only available during reconnect
         # self.common_config.reconnect_config_database(printReconnectMessage=True, buffered=False)
 

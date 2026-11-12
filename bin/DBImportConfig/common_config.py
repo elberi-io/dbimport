@@ -47,7 +47,7 @@ from DBImportConfig import decryption as decryption
 from sourceSchemaReader import schemaReader
 
 
-class config(metaclass=Singleton):
+class Config(metaclass=Singleton):
     def __init__(
         self, hive_db: str | None = None, hive_table: str | None = None
     ) -> None:
@@ -154,7 +154,7 @@ class config(metaclass=Singleton):
         self.jdbc_conn: Any = None
         self.jdbc_cursor: Any = None
 
-        self.schema_reader = schemaReader.source()
+        self.schema_reader = schemaReader.Source()
 
         # SQLAlchemy connection variables
         self.config_db: Any = None
@@ -243,7 +243,7 @@ class config(metaclass=Singleton):
         else:
             self.spark_dynamic_allocation = False
 
-        self.crypto = decryption.crypto()
+        self.crypto = decryption.Crypto()
 
         # Sets and create a temporary directory
         self.tempdir = "/tmp/dbimport." + str(os.getpid()) + ".tmp"

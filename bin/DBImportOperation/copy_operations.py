@@ -34,7 +34,7 @@ from DBImportConfig import configSchema, import_config
 from DBImportOperation import common_operations
 
 
-class operation(metaclass=Singleton):
+class Operation(metaclass=Singleton):
     def __init__(self):
         logging.debug("Executing copy_operations.__init__()")
         self.hive_db = None
@@ -45,8 +45,8 @@ class operation(metaclass=Singleton):
         self.remote_instance_config_db_session = None
         self.copy_destinations = None
 
-        self.common_operations = common_operations.operation()
-        self.import_config = import_config.config()
+        self.common_operations = common_operations.Operation()
+        self.import_config = import_config.Config()
 
         self.hive_db = self.common_operations.hive_db
         self.hive_table = self.common_operations.hive_table

@@ -185,7 +185,7 @@ def main(argv):
         print_help()
 
     # Initiate the master class for all export operations
-    export_operation = export_operations.operation(
+    export_operation = export_operations.Operation(
         connection_alias=connection_alias,
         target_schema=target_schema,
         target_table=target_table,

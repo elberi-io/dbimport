@@ -46,7 +46,7 @@ from DBImportConfig import configSchema
 from sourceSchemaReader import schemaReader
 
 
-class atlasOperation:
+class AtlasOperation:
     def __init__(self, logger_name=None):
         self.logger_name = logger_name
         self.debug_log_level = False
@@ -62,7 +62,7 @@ class atlasOperation:
         self.jdbc_cursor = None
         self.jdbc_conn = None
 
-        self.schema_reader = schemaReader.source()
+        self.schema_reader = schemaReader.Source()
 
         # Fetch configuration about MySQL database and how to connect to it
         self.config_hostname = configuration.get("Database", "mysql_hostname")

@@ -5,9 +5,9 @@ from DBImportConfig import decryption
 
 
 @pytest.fixture
-def crypto() -> decryption.crypto:
+def crypto() -> decryption.Crypto:
     """crypto object with the key pair from the test configuration."""
-    obj = decryption.crypto()
+    obj = decryption.Crypto()
     obj.set_private_key_file(configuration.get("Credentials", "private_key"))
     obj.set_public_key_file(configuration.get("Credentials", "public_key"))
     return obj
@@ -15,15 +15,15 @@ def crypto() -> decryption.crypto:
 
 @pytest.mark.parametrize("plaintext", ["user secret", "user pass word", "a"])
 def test_decrypt_of_encrypted_text_returns_original(
-    crypto: decryption.crypto, plaintext: str
+    crypto: decryption.Crypto, plaintext: str
 ) -> None:
     assert crypto.decrypt(crypto.encrypt(plaintext)) == plaintext
 
 
-def test_decrypt_strips_surrounding_whitespace(crypto: decryption.crypto) -> None:
+def test_decrypt_strips_surrounding_whitespace(crypto: decryption.Crypto) -> None:
     # Credentials are stored as "<user> <password>\n".
     assert crypto.decrypt(crypto.encrypt("user secret\n")) == "user secret"
 
 
-def test_decrypt_none_returns_none(crypto: decryption.crypto) -> None:
+def test_decrypt_none_returns_none(crypto: decryption.Crypto) -> None:
     assert crypto.decrypt(None) is None

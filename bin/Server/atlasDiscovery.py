@@ -39,7 +39,7 @@ from DBImportConfig import common_config, configSchema
 from DBImportOperation import atlas_operations
 
 
-class atlasCrawler(threading.Thread):
+class AtlasCrawler(threading.Thread):
     def __init__(
         self,
         name,
@@ -56,9 +56,9 @@ class atlasCrawler(threading.Thread):
         self.atlas_crawler_result_queue = atlas_crawler_result_queue
         self.thread_stop_event = thread_stop_event
         self.logger_name = logger_name
-        self.atlas_operation = atlas_operations.atlasOperation(logger_name)
+        self.atlas_operation = atlas_operations.AtlasOperation(logger_name)
 
-    # 		self.schema_reader = schemaReader.source()
+    # 		self.schema_reader = schemaReader.Source()
     # 		self.jdbc_conn = None
     # 		self.jdbc_cursor = None
 
@@ -115,7 +115,7 @@ class atlasCrawler(threading.Thread):
         log.info("Atlas crawler thread %s stopped", self.name)
 
 
-class atlasDiscovery(threading.Thread):
+class AtlasDiscovery(threading.Thread):
     def __init__(self, thread_stop_event):
         threading.Thread.__init__(self)
         self.thread_stop_event = thread_stop_event
@@ -129,7 +129,7 @@ class atlasDiscovery(threading.Thread):
         self.config_db_engine = None
         self.debug_log_level = False
         atlas_enabled = True
-        # 		self.atlas_operation = atlas_operations.atlasOperation(logger)
+        # 		self.atlas_operation = atlas_operations.AtlasOperation(logger)
 
         if logging.root.level == 10:  # DEBUG
             self.debug_log_level = True
@@ -159,7 +159,7 @@ class atlasDiscovery(threading.Thread):
             # 			else:
             # 				distCPlogName = "distCP-thread%s"%(str(threadID))
 
-            thread = atlasCrawler(
+            thread = AtlasCrawler(
                 name=str(thread_id),
                 atlas_crawler_process_queue=self.atlas_crawler_process_queue,
                 atlas_crawler_result_queue=self.atlas_crawler_result_queue,
@@ -171,7 +171,7 @@ class atlasDiscovery(threading.Thread):
             thread.start()
             atlas_crawler_objects.append(thread)
 
-        self.common_config = common_config.config()
+        self.common_config = common_config.Config()
         jdbc_connections = aliased(configSchema.JDBCConnections)
         self.failure_log = {}
         self.connections_sent_to_crawlers = []
@@ -351,7 +351,7 @@ class atlasDiscovery(threading.Thread):
                             )
 
             # ********************************
-            # Read response from atlasCrawler
+            # Read response from AtlasCrawler
             # ********************************
 
             try:

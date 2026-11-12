@@ -17,7 +17,7 @@ from DBImportConfig import common_config
 from Schedule import Airflow
 from Server import dataModels, restServerCalls
 
-common_config = common_config.config()
+common_config = common_config.Config()
 
 ADMIN_USER = common_config.get_config_value("restserver_admin_user")
 AUTHENTICATION_METHOD = common_config.get_config_value(
@@ -93,8 +93,8 @@ tags_metadata = [
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/oauth2/access_token")
 app = FastAPI(openapi_tags=tags_metadata)
-db_calls = restServerCalls.dbCalls()
-airflow = Airflow.initialize()
+db_calls = restServerCalls.DBCalls()
+airflow = Airflow.Initialize()
 airflow.logger = logger
 
 

@@ -25,7 +25,7 @@ from DBImportConfig import import_config
 from DBImportOperation import common_operations, import_operations
 
 
-class operation(metaclass=Singleton):
+class Operation(metaclass=Singleton):
     def __init__(self, hive_db=None, hive_table=None):
         logging.debug("Executing etl_operations.__init__()")
         self.hive_db = None
@@ -34,9 +34,9 @@ class operation(metaclass=Singleton):
         self.mysql_cursor = None
         self.start_date = None
 
-        self.common_operations = common_operations.operation(hive_db, hive_table)
-        self.import_operations = import_operations.operation(hive_db, hive_table)
-        self.import_config = import_config.config(hive_db, hive_table)
+        self.common_operations = common_operations.Operation(hive_db, hive_table)
+        self.import_operations = import_operations.Operation(hive_db, hive_table)
+        self.import_config = import_config.Config(hive_db, hive_table)
 
         if hive_db != None and hive_table != None:
             self.set_hive_table(hive_db, hive_table)

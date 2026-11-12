@@ -33,7 +33,7 @@ from DBImportConfig import common_config, sendStatistics
 from DBImportConfig import import_stage as stage
 
 
-class config(metaclass=Singleton):
+class Config(metaclass=Singleton):
     def __init__(
         self, hive_db: str | None = None, hive_table: str | None = None
     ) -> None:
@@ -145,9 +145,9 @@ class config(metaclass=Singleton):
         self.full_executed_command: str | None = None
         self.mongo_import: bool | None = None
 
-        self.common_config = common_config.config(hive_db, hive_table)
+        self.common_config = common_config.Config(hive_db, hive_table)
         self.common_config.operation_type = "import"
-        self.send_statistics = sendStatistics.sendStatistics()
+        self.send_statistics = sendStatistics.SendStatistics()
 
         self.start_date = self.common_config.start_date
         self.mysql_conn = self.common_config.mysql_conn
@@ -155,7 +155,7 @@ class config(metaclass=Singleton):
         self.mysql_cursor02 = self.mysql_conn.cursor(buffered=True)
 
         # Initialize the stage class that will handle all stage operations for us
-        self.stage = stage.stage(self.mysql_conn, self.hive_db, self.hive_table)
+        self.stage = stage.Stage(self.mysql_conn, self.hive_db, self.hive_table)
 
         logging.debug("Executing import_config.__init__() - Finished")
 

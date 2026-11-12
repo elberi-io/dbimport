@@ -35,7 +35,7 @@ from common.Singleton import Singleton
 from DBImportConfig import common_config, export_stage, sendStatistics
 
 
-class config(metaclass=Singleton):
+class Config(metaclass=Singleton):
     def __init__(
         self,
         connection_alias: str | None = None,
@@ -52,12 +52,12 @@ class config(metaclass=Singleton):
         self.target_schema = target_schema
         self.target_table = target_table
 
-        self.common_config = common_config.config()
+        self.common_config = common_config.Config()
         self.common_config.operation_type = "export"
         self.common_config.target_schema = target_schema
         self.common_config.target_table = target_table
 
-        self.send_statistics = sendStatistics.sendStatistics()
+        self.send_statistics = sendStatistics.SendStatistics()
 
         self.start_date = self.common_config.start_date
         self.mysql_conn = self.common_config.mysql_conn
@@ -104,7 +104,7 @@ class config(metaclass=Singleton):
         self.validation_custom_query_target_value: str | None = None
 
         # Initialize the stage class that will handle all stage operations for us
-        self.stage = export_stage.stage(
+        self.stage = export_stage.Stage(
             self.mysql_conn,
             connection_alias=connection_alias,
             target_schema=target_schema,

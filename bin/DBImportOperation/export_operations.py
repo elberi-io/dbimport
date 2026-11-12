@@ -35,7 +35,7 @@ from DBImportConfig import export_config
 from DBImportOperation import atlas_operations, common_operations
 
 
-class operation(metaclass=Singleton):
+class Operation(metaclass=Singleton):
     def __init__(self, connection_alias=None, target_schema=None, target_table=None):
         logging.debug("Executing export_operations.__init__()")
 
@@ -54,19 +54,19 @@ class operation(metaclass=Singleton):
 
         self.global_hive_configuration_set = False
 
-        self.atlas_operation = atlas_operations.atlasOperation()
+        self.atlas_operation = atlas_operations.AtlasOperation()
 
         if connection_alias == None and target_schema == None and target_table == None:
-            self.export_config = export_config.config()
-            self.common_operations = common_operations.operation()
+            self.export_config = export_config.Config()
+            self.common_operations = common_operations.Operation()
         else:
             try:
-                self.export_config = export_config.config(
+                self.export_config = export_config.Config(
                     connection_alias=connection_alias,
                     target_schema=target_schema,
                     target_table=target_table,
                 )
-                self.common_operations = common_operations.operation()
+                self.common_operations = common_operations.Operation()
 
                 self.export_config.get_export_config()
 

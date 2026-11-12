@@ -27,9 +27,9 @@ from Crypto.Random import get_random_bytes
 from common.Exceptions import InvalidConfigurationError
 
 
-class crypto:
+class Crypto:
     def __init__(self) -> None:
-        logging.debug("Executing crypto.__init__()")
+        logging.debug("Executing Crypto.__init__()")
         self.private_key_file: str | None = None
         self.public_key_file: str | None = None
         self.private_key_string: str | None = None

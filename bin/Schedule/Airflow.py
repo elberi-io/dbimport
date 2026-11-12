@@ -38,7 +38,7 @@ from DBImportConfig import common_config, configSchema, sendStatistics
 from Schedule import airflowSchema
 
 
-class initialize:
+class Initialize:
     def __init__(self):
         logging.debug("Executing Airflow.__init__()")
 
@@ -55,8 +55,8 @@ class initialize:
         if logging.root.level == 10:  # DEBUG
             self.debug_log_level = True
 
-        self.common_config = common_config.config()
-        self.send_statistics = sendStatistics.sendStatistics()
+        self.common_config = common_config.Config()
+        self.send_statistics = sendStatistics.SendStatistics()
 
         self.dbimport_command_path = self.get_config_value(
             "airflow_dbimport_commandpath"

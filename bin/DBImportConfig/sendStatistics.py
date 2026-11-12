@@ -26,11 +26,11 @@ import requests
 from DBImportConfig import common_config
 
 
-class sendStatistics:
+class SendStatistics:
     def __init__(self) -> None:
         logging.debug("Executing rest.__init__()")
 
-        self.common_config = common_config.config()
+        self.common_config = common_config.Config()
         self.rest_headers = {"Content-type": "application/json"}
 
         self.rest_endpoint = self.common_config.get_config_value(key="rest_url")

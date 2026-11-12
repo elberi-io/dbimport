@@ -33,7 +33,7 @@ from sqlalchemy.orm import sessionmaker
 from DBImportConfig import common_config, configSchema
 
 
-class initialize:
+class Initialize:
     def __init__(self):
         logging.debug("Executing database.__init__()")
 
@@ -51,7 +51,7 @@ class initialize:
             # 			self.remove_temporary_files()
             sys.exit(1)
 
-        self.common_config = common_config.config()
+        self.common_config = common_config.Config()
 
         # Fetch configuration about MySQL database and how to connect to it
         self.database_credentials = self.common_config.get_mysql_credentials()

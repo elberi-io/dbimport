@@ -37,7 +37,7 @@ from ConfigReader import configuration
 from DBImportConfig import common_config
 
 
-class operation(metaclass=Singleton):
+class Operation(metaclass=Singleton):
     def __init__(self, hive_db=None, hive_table=None):
         logging.debug("Executing common_operation.__init__()")
 
@@ -57,7 +57,7 @@ class operation(metaclass=Singleton):
             force_preemptive=True, principal=self.kerberos_principal
         )
 
-        self.common_config = common_config.config()
+        self.common_config = common_config.Config()
 
         # Fetch configuration details about Hive
         self.hive_servers = configuration.get("Hive", "servers")
@@ -81,10 +81,10 @@ class operation(metaclass=Singleton):
         # Metastore connections
         self.metastore_type = configuration.get("Metastore", "metastore_type")
         if self.metastore_type == constant.CATALOG_HIVE_DIRECT:
-            self.metastore = hiveDirect.hiveMetastoreDirect()
+            self.metastore = hiveDirect.HiveMetastoreDirect()
             self.spark_catalog_name = "hive"
         elif self.metastore_type == constant.CATALOG_GLUE:
-            self.metastore = glue.glueCatalog()
+            self.metastore = glue.GlueCatalog()
             self.spark_catalog_name = "glue"
         else:
             raise InvalidConfigurationError(

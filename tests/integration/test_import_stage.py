@@ -8,10 +8,10 @@ HIVE_TABLE = "testtable"
 
 
 @pytest.fixture
-def stage(clean_config_db: None) -> import_stage.stage:
+def stage(clean_config_db: None) -> import_stage.Stage:
     """Stage handler for HIVE_DB.HIVE_TABLE, as import_config creates it."""
-    conn = common_config.config(HIVE_DB, HIVE_TABLE).mysql_conn
-    return import_stage.stage(conn, HIVE_DB, HIVE_TABLE)
+    conn = common_config.Config(HIVE_DB, HIVE_TABLE).mysql_conn
+    return import_stage.Stage(conn, HIVE_DB, HIVE_TABLE)
 
 
 def _persisted_stage(conn: sa.Connection) -> int | None:
@@ -37,13 +37,13 @@ def _rows(conn: sa.Connection, table: str) -> list[int]:
 
 
 def test_get_stage_without_stored_stage_returns_zero(
-    stage: import_stage.stage,
+    stage: import_stage.Stage,
 ) -> None:
     assert stage.get_stage() == 0
 
 
 def test_set_stage_persists_stage(
-    stage: import_stage.stage, db_connection: sa.Connection
+    stage: import_stage.Stage, db_connection: sa.Connection
 ) -> None:
     stage.get_stage()
 
@@ -53,7 +53,7 @@ def test_set_stage_persists_stage(
 
 
 def test_set_stage_lower_than_current_stage_is_ignored(
-    stage: import_stage.stage, db_connection: sa.Connection
+    stage: import_stage.Stage, db_connection: sa.Connection
 ) -> None:
     stage.get_stage()
     stage.set_stage(1020)
@@ -64,7 +64,7 @@ def test_set_stage_lower_than_current_stage_is_ignored(
 
 
 def test_set_stage_with_force_allows_lower_stage(
-    stage: import_stage.stage, db_connection: sa.Connection
+    stage: import_stage.Stage, db_connection: sa.Connection
 ) -> None:
     stage.get_stage()
     stage.set_stage(1020)
@@ -75,7 +75,7 @@ def test_set_stage_with_force_allows_lower_stage(
 
 
 def test_set_stage_records_statistics_for_the_stage_it_leaves(
-    stage: import_stage.stage, db_connection: sa.Connection
+    stage: import_stage.Stage, db_connection: sa.Connection
 ) -> None:
     stage.get_stage()
 
@@ -86,7 +86,7 @@ def test_set_stage_records_statistics_for_the_stage_it_leaves(
 
 
 def test_set_stage_in_memory_mode_writes_nothing(
-    stage: import_stage.stage, db_connection: sa.Connection
+    stage: import_stage.Stage, db_connection: sa.Connection
 ) -> None:
     stage.set_stage_only_in_memory()
     stage.get_stage()
@@ -99,7 +99,7 @@ def test_set_stage_in_memory_mode_writes_nothing(
 
 
 def test_save_retry_attempt_logs_the_stage(
-    stage: import_stage.stage, db_connection: sa.Connection
+    stage: import_stage.Stage, db_connection: sa.Connection
 ) -> None:
     stage.save_retry_attempt(1013)
 
@@ -107,7 +107,7 @@ def test_save_retry_attempt_logs_the_stage(
 
 
 def test_clear_stage_removes_stage_and_statistics(
-    stage: import_stage.stage, db_connection: sa.Connection
+    stage: import_stage.Stage, db_connection: sa.Connection
 ) -> None:
     stage.get_stage()
     stage.set_stage(1010)

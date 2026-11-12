@@ -36,7 +36,7 @@ from DBImportConfig import common_config, configSchema
 from Server import atlasDiscovery
 
 
-class distCP(threading.Thread):
+class DistCP(threading.Thread):
     def __init__(
         self, name, dist_cp_req_queue, dist_cp_res_queue, thread_stop_event, logger_name
     ):
@@ -160,7 +160,7 @@ class distCP(threading.Thread):
         log.info("distCP %s stopped", self.name)
 
 
-class serverDaemon(run.RunDaemon):
+class ServerDaemon(run.RunDaemon):
     def set_config(self, action, log_format):
         self.action = action
         self.log_format = log_format
@@ -168,7 +168,7 @@ class serverDaemon(run.RunDaemon):
     def run(self):
         # This is the main event loop where the 'real' daemonwork happens
         log = logging.getLogger("server")
-        log.debug("Executing daemon.serverDaemon.run()")
+        log.debug("Executing daemon.ServerDaemon.run()")
         log.info("Server initializing")
         self.mysql_conn = None
         self.mysql_cursor = None
@@ -177,7 +177,7 @@ class serverDaemon(run.RunDaemon):
         if logging.root.level == 10:  # DEBUG
             self.debug_log_level = True
 
-        self.common_config = common_config.config()
+        self.common_config = common_config.Config()
 
         self.logdir = configuration.get("Server", "logdir")
 
@@ -199,13 +199,13 @@ class serverDaemon(run.RunDaemon):
         self.thread_stop_event = threading.Event()
 
         # Start the Atlas Discovery Thread
-        self.atlas_discovery_thread = atlasDiscovery.atlasDiscovery(
+        self.atlas_discovery_thread = atlasDiscovery.AtlasDiscovery(
             self.thread_stop_event
         )
         self.atlas_discovery_thread.daemon = True
         self.atlas_discovery_thread.start()
 
-        # Start the distCP threads
+        # Start the DistCP threads
         if configuration.get("Server", "distCP_separate_logs").lower() == "true":
             dist_cp_separate_logs = True
         else:
@@ -224,7 +224,7 @@ class serverDaemon(run.RunDaemon):
             else:
                 dist_cp_log_name = f"distCP-thread{thread_id}"
 
-            thread = distCP(
+            thread = DistCP(
                 name=str(thread_id),
                 dist_cp_req_queue=self.dist_cp_req_queue,
                 dist_cp_res_queue=self.dist_cp_res_queue,
@@ -262,7 +262,7 @@ class serverDaemon(run.RunDaemon):
                 session.commit()
                 session.close()
 
-                log.debug("Init part of daemon.serverDaemon.run() completed")
+                log.debug("Init part of daemon.ServerDaemon.run() completed")
 
                 log.info("Server startup completed")
 
@@ -295,12 +295,12 @@ class serverDaemon(run.RunDaemon):
                     session = self.get_dbimport_session()
 
                     # status 0 = New data from import
-                    # status 1 = Data sent to distCP thread
-                    # status 2 = Data returned from distCP and was a failure
-                    # status 3 = Data returned from distCP and was a success
+                    # status 1 = Data sent to DistCP thread
+                    # status 2 = Data returned from DistCP and was a failure
+                    # status 3 = Data returned from DistCP and was a success
 
                     # ------------------------------------------
-                    # Fetch all rows from CopyAsyncStatus that contains the status 0 and send them to distCP threads
+                    # Fetch all rows from CopyAsyncStatus that contains the status 0 and send them to DistCP threads
                     # ------------------------------------------
 
                     # TODO(#229): make the 1 min interval a configured param
@@ -388,7 +388,7 @@ class serverDaemon(run.RunDaemon):
                     self.disconnect_dbimport_db()
 
                 # ------------------------------------------
-                # Read the response from the distCP threads
+                # Read the response from the DistCP threads
                 # ------------------------------------------
                 try:
                     dist_cp_response = self.dist_cp_res_queue.get(block=False)
@@ -560,7 +560,7 @@ class serverDaemon(run.RunDaemon):
             time.sleep(1)
 
         log.info("Server stopped")
-        log.debug("Executing daemon.serverDaemon.run() - Finished")
+        log.debug("Executing daemon.ServerDaemon.run() - Finished")
 
     def disconnect_dbimport_db(self):
         """Disconnects from the database and removes all sessions and engine"""

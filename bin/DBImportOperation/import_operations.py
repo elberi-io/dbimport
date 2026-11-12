@@ -43,7 +43,7 @@ from DBImportConfig import import_config
 from DBImportOperation import atlas_operations, common_operations
 
 
-class operation(metaclass=Singleton):
+class Operation(metaclass=Singleton):
     def __init__(self, hive_db=None, hive_table=None):
         logging.debug("Executing import_operations.__init__()")
         self.hive_db = None
@@ -76,9 +76,9 @@ class operation(metaclass=Singleton):
 
         self.global_hive_configuration_set = False
 
-        self.import_config = import_config.config(hive_db, hive_table)
-        self.common_operations = common_operations.operation(hive_db, hive_table)
-        self.atlas_operation = atlas_operations.atlasOperation()
+        self.import_config = import_config.Config(hive_db, hive_table)
+        self.common_operations = common_operations.Operation(hive_db, hive_table)
+        self.atlas_operation = atlas_operations.AtlasOperation()
 
         # self.import_config.spark_catalog_name = self.common_operations.spark_catalog_name
 
@@ -1591,7 +1591,7 @@ class operation(metaclass=Singleton):
         )
         import sparkUDF2
 
-        spark_udf = sparkUDF2.sparkUDFClass()
+        spark_udf = sparkUDF2.SparkUDFClass()
 
         # Anonymization of data in columns
         spark_udf.set_seed_string(
