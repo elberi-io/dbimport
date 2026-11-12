@@ -1,6 +1,7 @@
 # Commits that only reformatted code (ruff format, #159), only renamed
-# identifiers to snake_case (#202) or only changed how strings are
-# formatted (#202).
+# identifiers to snake_case (#202), only changed how strings are
+# formatted (#202) or only changed how comparisons with None, True and
+# False are written (#202).
 # GitHub skips them in the blame view. Locally, run once:
 #   git config blame.ignoreRevsFile .git-blame-ignore-revs
 # Keep the hashes valid: merge with a merge commit, do not rebase or squash.
@@ -112,3 +113,9 @@ e0e64b833033d292885a72876503b03c8bb6e3fe
 
 # refactor: rename the DBImport_Home globals to dbimport_home
 70c6438cb7b5b51ac686993c5072f2c7f1642647
+
+# refactor: compare with None by identity where the operand is plain
+88594c306328b03b6051a9ff8774dfbbf5602ca1
+
+# refactor: test proven booleans by truth value instead of == True
+31c6f318f26c338aebb59f74059f4ee6e990b093
