@@ -1,7 +1,7 @@
 # Commits that only reformatted code (ruff format, #159), only renamed
-# identifiers to snake_case (#202), only changed how strings are
-# formatted (#202) or only changed how comparisons with None, True and
-# False are written (#202).
+# identifiers to snake_case or classes to CapWords (#202), only changed
+# how strings are formatted (#202) or only changed how comparisons with
+# None, True and False are written (#202).
 # GitHub skips them in the blame view. Locally, run once:
 #   git config blame.ignoreRevsFile .git-blame-ignore-revs
 # Keep the hashes valid: merge with a merge commit, do not rebase or squash.
@@ -119,3 +119,15 @@ e0e64b833033d292885a72876503b03c8bb6e3fe
 
 # refactor: test proven booleans by truth value instead of == True
 31c6f318f26c338aebb59f74059f4ee6e990b093
+
+# refactor: rename the ORM classes to CapWords
+4e10232cebb3bd1662db65aa2de266030f332c61
+
+# refactor: rename the REST payload classes to CapWords
+ebef1789e23cca73f8e53b90220723058bef19ef
+
+# refactor: rename the DBImport exceptions to CapWords with an Error suffix
+efa4947f57452c84afb788a77541cd4f282307a9
+
+# refactor: rename the remaining classes to CapWords
+f4229a106771a1e25521ecdadc7cd54be23f60c1
