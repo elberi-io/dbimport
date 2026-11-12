@@ -49,21 +49,21 @@ class config(metaclass=Singleton):
     ) -> None:
         logging.debug("Executing common_config.__init__()")
 
-        self.Hive_DB = None
-        self.Hive_Table = None
-        if hive_db != None and self.Hive_DB == None:
-            self.Hive_DB = hive_db
-        if hive_table != None and self.Hive_Table == None:
-            self.Hive_Table = hive_table
+        self.hive_db = None
+        self.hive_table = None
+        if hive_db != None and self.hive_db == None:
+            self.hive_db = hive_db
+        if hive_table != None and self.hive_table == None:
+            self.hive_table = hive_table
 
         self.mysql_conn: Any = None
         self.mysql_cursor: Any = None
         self.tempdir = None
-        self.startDate = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
-        self.operationType: str | None = None
-        self.dbAlias: str | None = None
-        self.targetSchema: str | None = None
-        self.targetTable: str | None = None
+        self.start_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
+        self.operation_type: str | None = None
+        self.db_alias: str | None = None
+        self.target_schema: str | None = None
+        self.target_table: str | None = None
 
         # Variables used in lookupConnectionAlias
         self.db_mssql = False
@@ -101,46 +101,46 @@ class config(metaclass=Singleton):
         self.jdbc_oracle_servicename: str | None = None
         self.jdbc_force_column_lowercase: bool | None = None
         self.jdbc_environment: str | None = None
-        self.seedFile = None
+        self.seed_file = None
         self.mongo_client: Any = None
-        self.mongoDB: Any = None
-        self.mongoAuthSource: str | None = None
-        self.awsS3assumeRole: str | None = None
-        self.awsS3assumeRoleDuration: int | None = None
-        self.awsS3proxyServer: str | None = None
-        self.awsS3bucket: str | None = None
-        self.awsS3region: str | None = None
-        self.awsS3externalId: str | None = None
-        self.awsS3fileFormat: str | None = None
+        self.mongo_db: Any = None
+        self.mongo_auth_source: str | None = None
+        self.aws_s3_assume_role: str | None = None
+        self.aws_s3_assume_role_duration: int | None = None
+        self.aws_s3_proxy_server: str | None = None
+        self.aws_s3_bucket: str | None = None
+        self.aws_s3_region: str | None = None
+        self.aws_s3_external_id: str | None = None
+        self.aws_s3_file_format: str | None = None
         self.kerberos_initiated = False
 
-        self.impalaDriver: str | None = None
-        self.impalaClasspath: str | None = None
-        self.impalaAddress: str | None = None
+        self.impala_driver: str | None = None
+        self.impala_classpath: str | None = None
+        self.impala_address: str | None = None
         self.impala_jdbc_conn: Any = None
-        self.impalaJDBCCursor: Any = None
+        self.impala_jdbc_cursor: Any = None
 
-        self.sparkPathAppend = None
-        self.sparkPysparkSubmitArgs = None
-        self.sparkJarFiles = None
-        self.sparkPackages = None
-        self.sparkMajorVersion = None
-        self.sparkPyFiles = None
-        self.sparkMaster = None
-        self.sparkDeployMode = None
-        self.sparkYarnQueue = None
-        self.sparkDynamicAllocation = None
+        self.spark_path_append = None
+        self.spark_pyspark_submit_args = None
+        self.spark_jar_files = None
+        self.spark_packages = None
+        self.spark_major_version = None
+        self.spark_py_files = None
+        self.spark_master = None
+        self.spark_deploy_mode = None
+        self.spark_yarn_queue = None
+        self.spark_dynamic_allocation = None
         self.spark_min_executors = None
-        self.sparkMaxExecutors = None
-        self.sparkExecutorMemory = None
-        self.sparkHiveLibrary = None
-        self.sparkLogLevel = None
+        self.spark_max_executors = None
+        self.spark_executor_memory = None
+        self.spark_hive_library = None
+        self.spark_log_level = None
 
-        self.operationTimestamp: datetime | None = None
+        self.operation_timestamp: datetime | None = None
         self.yarn_application_start: str | None = None
 
-        self.sourceSchema = None
-        self.tableType: str | None = None
+        self.schema_reader = None
+        self.table_type: str | None = None
 
         self.custom_max_query: str | None = None
 
@@ -148,50 +148,50 @@ class config(metaclass=Singleton):
         self.source_keys_df = pd.DataFrame()
 
         self.jdbc_conn: Any = None
-        self.JDBCCursor: Any = None
+        self.jdbc_cursor: Any = None
 
-        self.sourceSchema = schemaReader.source()
+        self.schema_reader = schemaReader.source()
 
         # SQLAlchemy connection variables
-        self.configDB: Any = None
-        self.configDBSession: Any = None
+        self.config_db: Any = None
+        self.config_db_session: Any = None
         self.mysql_connection_details: dict[str, str] | None = None
 
-        self.debugLogLevel = False
+        self.debug_log_level = False
         if logging.root.level == 10:  # DEBUG
-            self.debugLogLevel = True
+            self.debug_log_level = True
 
-        self.kerberosPrincipal = configuration.get("Kerberos", "principal")
-        self.kerberosKeytab = configuration.get("Kerberos", "keytab")
+        self.kerberos_principal = configuration.get("Kerberos", "principal")
+        self.kerberos_keytab = configuration.get("Kerberos", "keytab")
 
         try:
-            self.sparkMajorVersion = int(
+            self.spark_major_version = int(
                 configuration.get("Spark", "spark_major_version", exit_on_error=False)
             )
         except invalidConfiguration:
             logging.warning(
                 "Configuration option 'spark_major_version' under [Spark] in the configuration file is missing. Please update your config file"
             )
-            self.sparkMajorVersion = 3
+            self.spark_major_version = 3
         except ValueError:
             logging.warning(
                 "Configuration option 'spark_major_version' under [Spark] in the configuration file must be an integer. Please update your config file"
             )
-            self.sparkMajorVersion = 3
+            self.spark_major_version = 3
 
-        if self.sparkMajorVersion < 2 or self.sparkMajorVersion > 4:
+        if self.spark_major_version < 2 or self.spark_major_version > 4:
             logging.error("Only Spark version 2, 3 and 4 is supported.")
             sys.exit(1)
 
         try:
-            self.sparkLogLevel = configuration.get(
+            self.spark_log_level = configuration.get(
                 "Spark", "spark_log_level", exit_on_error=False
             )
         except invalidConfiguration:
             pass
 
         try:
-            self.sparkPackages = configuration.get(
+            self.spark_packages = configuration.get(
                 "Spark", "packages", exit_on_error=False
             )
         except invalidConfiguration:
@@ -199,14 +199,14 @@ class config(metaclass=Singleton):
                 "Configuration option 'packages' under [Spark] in the configuration file is missing. Please update your config file"
             )
 
-        self.sparkPathAppend = configuration.get("Spark", "path_append")
-        self.sparkJarFiles = configuration.get("Spark", "jar_files")
-        self.sparkPyFiles = configuration.get("Spark", "py_files")
-        self.sparkMaster = configuration.get("Spark", "master")
-        self.sparkDeployMode = configuration.get("Spark", "deployMode")
-        self.sparkYarnQueue = configuration.get("Spark", "yarnqueue")
-        self.sparkExecutorMemory = configuration.get("Spark", "executor_memory")
-        self.sparkHiveLibrary = configuration.get("Spark", "hive_library")
+        self.spark_path_append = configuration.get("Spark", "path_append")
+        self.spark_jar_files = configuration.get("Spark", "jar_files")
+        self.spark_py_files = configuration.get("Spark", "py_files")
+        self.spark_master = configuration.get("Spark", "master")
+        self.spark_deploy_mode = configuration.get("Spark", "deployMode")
+        self.spark_yarn_queue = configuration.get("Spark", "yarnqueue")
+        self.spark_executor_memory = configuration.get("Spark", "executor_memory")
+        self.spark_hive_library = configuration.get("Spark", "hive_library")
 
         try:
             if (
@@ -215,29 +215,29 @@ class config(metaclass=Singleton):
                 ).lower()
                 == "true"
             ):
-                self.sparkS3AccessToOzone = True
+                self.spark_s3_access_to_ozone = True
             else:
-                self.sparkS3AccessToOzone = False
-            self.sparkS3AccessKeyID = configuration.get("Spark", "s3_access_key_id")
-            self.sparkS3SecretAccessKey = configuration.get(
+                self.spark_s3_access_to_ozone = False
+            self.spark_s3_access_key_id = configuration.get("Spark", "s3_access_key_id")
+            self.spark_s3_secret_access_key = configuration.get(
                 "Spark", "s3_secret_access_key"
             )
 
         except invalidConfiguration:
-            self.sparkS3AccessToOzone = False
-            self.sparkS3AccessKeyID = ""
-            self.sparkS3SecretAccessKey = ""
+            self.spark_s3_access_to_ozone = False
+            self.spark_s3_access_key_id = ""
+            self.spark_s3_secret_access_key = ""
 
-        self.awsRegion = None
+        self.aws_region = None
         try:
-            self.awsRegion = configuration.get("AWS", "region", exit_on_error=False)
+            self.aws_region = configuration.get("AWS", "region", exit_on_error=False)
         except invalidConfiguration:
             pass
 
         if configuration.get("Spark", "dynamic_allocation").lower() == "true":
-            self.sparkDynamicAllocation = True
+            self.spark_dynamic_allocation = True
         else:
-            self.sparkDynamicAllocation = False
+            self.spark_dynamic_allocation = False
 
         self.crypto = decryption.crypto()
 
@@ -292,7 +292,7 @@ class config(metaclass=Singleton):
         mysql_username = configuration.get("Database", "mysql_username")
         mysql_password = configuration.get("Database", "mysql_password")
 
-        if mysql_password == "" and mysql_username == "" and self.awsRegion != None:
+        if mysql_password == "" and mysql_username == "" and self.aws_region != None:
             # No password is configured. Lets try the AWS get_secret function if configured
             aws_secret_name = None
 
@@ -312,7 +312,7 @@ class config(metaclass=Singleton):
             # Create a Secrets Manager client
             session = boto3.session.Session()
             client = session.client(
-                service_name="secretsmanager", region_name=self.awsRegion
+                service_name="secretsmanager", region_name=self.aws_region
             )
 
             try:
@@ -383,7 +383,7 @@ class config(metaclass=Singleton):
         logging.debug("Executing common_config.get_atlas_jdbc_connection_data()")
 
         if db_alias == None:
-            db_alias = self.dbAlias
+            db_alias = self.db_alias
 
         # Fetch data from jdbc_connection table
         query = "select contact_info, description, owner, atlas_discovery, atlas_include_filter, atlas_exclude_filter, atlas_last_discovery from jdbc_connections where dbalias = %s "
@@ -421,12 +421,12 @@ class config(metaclass=Singleton):
         """Disconnects from the database and removes all sessions and engine"""
         log = logging.getLogger(logger)
 
-        if self.configDB != None:
+        if self.config_db != None:
             log.info("Disconnecting from DBImport database")
-            self.configDB.dispose()
-            self.configDB = None
+            self.config_db.dispose()
+            self.config_db = None
 
-        self.configDBSession = None
+        self.config_db_session = None
 
     def connect_sqlalchemy(
         self, exit_if_failure: bool = True, logger: str = ""
@@ -434,7 +434,7 @@ class config(metaclass=Singleton):
         log = logging.getLogger(logger)
         """ Connects to the configuration database with SQLAlchemy """
 
-        if self.configDBSession != None:
+        if self.config_db_session != None:
             # If we already have a connection, we just say that it's ok....
             return True
 
@@ -443,11 +443,11 @@ class config(metaclass=Singleton):
         self.connect_str = f"mysql+pymysql://{mysql_credentials['mysql_username']}:{quote(mysql_credentials['mysql_password'], safe=' +')}@{mysql_credentials['mysql_hostname']}:{mysql_credentials['mysql_port']}/{mysql_credentials['mysql_database']}"
 
         try:
-            self.configDB = sa.create_engine(
-                self.connect_str, echo=self.debugLogLevel, pool_pre_ping=True
+            self.config_db = sa.create_engine(
+                self.connect_str, echo=self.debug_log_level, pool_pre_ping=True
             )
-            self.configDB.connect()
-            self.configDBSession = sessionmaker(bind=self.configDB)
+            self.config_db.connect()
+            self.config_db_session = sessionmaker(bind=self.config_db)
 
         except sa.exc.OperationalError as err:
             logging.error("%s", err)
@@ -455,8 +455,8 @@ class config(metaclass=Singleton):
                 self.remove_temporary_files()
                 sys.exit(1)
             else:
-                self.configDBSession = None
-                self.configDB = None
+                self.config_db_session = None
+                self.config_db = None
                 return False
         except:
             print("Unexpected error: ")
@@ -465,8 +465,8 @@ class config(metaclass=Singleton):
                 self.remove_temporary_files()
                 sys.exit(1)
             else:
-                self.configDBSession = None
-                self.configDB = None
+                self.config_db_session = None
+                self.config_db = None
                 return False
 
         else:
@@ -474,8 +474,8 @@ class config(metaclass=Singleton):
 
     def set_hive_table(self, hive_db: str, hive_table: str) -> None:
         """Sets the parameters to work against a new Hive database and table"""
-        self.Hive_DB = hive_db.lower()
-        self.Hive_Table = hive_table.lower()
+        self.hive_db = hive_db.lower()
+        self.hive_table = hive_table.lower()
 
     def get_mysql_cursor(self) -> Any:
         return self.mysql_cursor
@@ -516,7 +516,7 @@ class config(metaclass=Singleton):
                 "Checking if we are allowed to use this jdbc connection at this time"
             )
 
-        self.timeZone = self.get_config_value("timezone")
+        self.time_zone = self.get_config_value("timezone")
 
         query = "select timewindow_start, timewindow_stop, timewindow_timezone from jdbc_connections where dbalias = %s"
         self.mysql_cursor.execute(query, (connection_alias,))
@@ -528,9 +528,9 @@ class config(metaclass=Singleton):
 
         # If there is a local timezone set on the JDBC connection, we use that instead of the configured default timezone
         if row[2] is not None and row[2].strip() != "":
-            self.timeZone = row[2]
+            self.time_zone = row[2]
 
-        current_time = pendulum.now(self.timeZone)  # Get time in configured timeZone
+        current_time = pendulum.now(self.time_zone)  # Get time in configured timeZone
         time_window_start = None
         time_window_stop = None
 
@@ -619,7 +619,7 @@ class config(metaclass=Singleton):
                     logging.info(
                         "    Current time:     %s (%s)",
                         current_time.to_time_string(),
-                        self.timeZone,
+                        self.time_zone,
                     )
                     logging.info(
                         "    TimeWindow Start: %s", time_window_start.to_time_string()
@@ -666,9 +666,9 @@ class config(metaclass=Singleton):
 
         os.environ["KRB5CCNAME"] = f"FILE:/tmp/krb5cc_{os.getuid()}_{os.getpid()}"
 
-        if self.kerberosPrincipal == "" and self.kerberosKeytab != "":
+        if self.kerberos_principal == "" and self.kerberos_keytab != "":
             # There is information about a keytab, but not the principal. So lets grab the first from the file
-            kinit_command_list = ["klist", "-k", self.kerberosKeytab]
+            kinit_command_list = ["klist", "-k", self.kerberos_keytab]
             try:
                 kinit_proc = subprocess.Popen(
                     kinit_command_list, stdout=subprocess.PIPE, stderr=subprocess.PIPE
@@ -687,17 +687,17 @@ class config(metaclass=Singleton):
                 try:
                     if "@" in line.strip().split(" ")[1]:
                         # Get the first line with a @ in it. That should be the first principal in the keytab file
-                        self.kerberosPrincipal = line.strip().split(" ")[1]
+                        self.kerberos_principal = line.strip().split(" ")[1]
                         break
                 except IndexError:
                     pass
 
-            if self.kerberosPrincipal == "":
+            if self.kerberos_principal == "":
                 logging.error("No kerberos principal can be found in the keytab file.")
                 self.remove_temporary_files()
                 sys.exit(1)
 
-        elif self.kerberosPrincipal == "" or self.kerberosKeytab == "":
+        elif self.kerberos_principal == "" or self.kerberos_keytab == "":
             logging.error(
                 "The kerberos information is not correct in configuration file."
             )
@@ -710,8 +710,8 @@ class config(metaclass=Singleton):
         kinit_command_list = [
             "kinit",
             "-kt",
-            self.kerberosKeytab,
-            self.kerberosPrincipal,
+            self.kerberos_keytab,
+            self.kerberos_principal,
         ]
         kinit_proc = subprocess.Popen(
             kinit_command_list, stdout=subprocess.PIPE, stderr=subprocess.PIPE
@@ -824,8 +824,8 @@ class config(metaclass=Singleton):
         logging.debug("Executing common_config.lookup_connection_alias()")
 
         exit_after_function = False
-        self.dbAlias = connection_alias
-        self.atlasJdbcSourceSupport = False
+        self.db_alias = connection_alias
+        self.atlas_jdbc_source_support = False
 
         self.db_mssql = False
         self.db_oracle = False
@@ -873,7 +873,7 @@ class config(metaclass=Singleton):
                 # Create a Secrets Manager client
                 session = boto3.session.Session()
                 client = session.client(
-                    service_name="secretsmanager", region_name=self.awsRegion
+                    service_name="secretsmanager", region_name=self.aws_region
                 )
 
                 try:
@@ -946,7 +946,7 @@ class config(metaclass=Singleton):
 
         # Lookup Connection details based on JDBC STRING for all different types we support
         if self.jdbc_url.startswith("jdbc:sqlserver:"):
-            self.atlasJdbcSourceSupport = True
+            self.atlas_jdbc_source_support = True
             self.db_mssql = True
             self.jdbc_servertype = constant.MSSQL
             if jdbc_url == None:
@@ -1018,7 +1018,7 @@ class config(metaclass=Singleton):
                 )
 
         if self.jdbc_url.startswith("jdbc:jtds:sqlserver:"):
-            self.atlasJdbcSourceSupport = True
+            self.atlas_jdbc_source_support = True
             self.db_mssql = True
             self.jdbc_servertype = constant.MSSQL
             self.jdbc_force_column_lowercase = True
@@ -1046,7 +1046,7 @@ class config(metaclass=Singleton):
                 exit_after_function = True
 
         if self.jdbc_url.startswith("jdbc:oracle:"):
-            self.atlasJdbcSourceSupport = True
+            self.atlas_jdbc_source_support = True
             self.db_oracle = True
             self.jdbc_servertype = constant.ORACLE
             self.jdbc_force_column_lowercase = False
@@ -1105,7 +1105,7 @@ class config(metaclass=Singleton):
                     exit_after_function = True
 
         if self.jdbc_url.startswith("jdbc:mysql:"):
-            self.atlasJdbcSourceSupport = True
+            self.atlas_jdbc_source_support = True
             self.db_mysql = True
             self.jdbc_servertype = constant.MYSQL
             self.jdbc_force_column_lowercase = True
@@ -1136,7 +1136,7 @@ class config(metaclass=Singleton):
                 exit_after_function = True
 
         if self.jdbc_url.startswith("jdbc:postgresql:"):
-            self.atlasJdbcSourceSupport = True
+            self.atlas_jdbc_source_support = True
             self.db_postgresql = True
             self.jdbc_servertype = constant.POSTGRESQL
             self.jdbc_force_column_lowercase = True
@@ -1165,7 +1165,7 @@ class config(metaclass=Singleton):
                 exit_after_function = True
 
         if self.jdbc_url.startswith("jdbc:datadirect:openedge:"):
-            self.atlasJdbcSourceSupport = True
+            self.atlas_jdbc_source_support = True
             self.db_progress = True
             self.jdbc_servertype = constant.PROGRESS
             self.jdbc_force_column_lowercase = True
@@ -1194,7 +1194,7 @@ class config(metaclass=Singleton):
                 exit_after_function = True
 
         if self.jdbc_url.startswith("jdbc:db2://"):
-            self.atlasJdbcSourceSupport = True
+            self.atlas_jdbc_source_support = True
             self.db_db2udb = True
             self.jdbc_servertype = constant.DB2_UDB
             self.jdbc_force_column_lowercase = False
@@ -1248,7 +1248,7 @@ class config(metaclass=Singleton):
                 self.jdbc_trustedservercert_password = False
 
         if self.jdbc_url.startswith("jdbc:as400://"):
-            self.atlasJdbcSourceSupport = True
+            self.atlas_jdbc_source_support = True
             self.db_db2as400 = True
             self.jdbc_servertype = constant.DB2_AS400
             self.jdbc_force_column_lowercase = False
@@ -1279,7 +1279,7 @@ class config(metaclass=Singleton):
                 exit_after_function = True
 
         if self.jdbc_url.startswith("mongo://"):
-            self.atlasJdbcSourceSupport = False
+            self.atlas_jdbc_source_support = False
             self.db_mongodb = True
             self.jdbc_servertype = constant.MONGO
             if jdbc_url == None:
@@ -1300,12 +1300,12 @@ class config(metaclass=Singleton):
                 )
                 for k, v in mongo_options.items():
                     if k.lower() == "authsource":
-                        self.mongoAuthSource = v
+                        self.mongo_auth_source = v
             except IndexError:
                 pass
 
         if self.jdbc_url.startswith("jdbc:Cache://"):
-            self.atlasJdbcSourceSupport = True
+            self.atlas_jdbc_source_support = True
             self.db_cachedb = True
             self.jdbc_servertype = constant.CACHEDB
             self.jdbc_force_column_lowercase = False
@@ -1336,7 +1336,7 @@ class config(metaclass=Singleton):
                 exit_after_function = True
 
         if self.jdbc_url.startswith("jdbc:snowflake://"):
-            self.atlasJdbcSourceSupport = False
+            self.atlas_jdbc_source_support = False
             self.db_snowflake = True
             self.jdbc_servertype = constant.SNOWFLAKE
             self.jdbc_force_column_lowercase = False
@@ -1368,7 +1368,7 @@ class config(metaclass=Singleton):
                     exit_after_function = True
 
         if self.jdbc_url.startswith("s3a://"):
-            self.atlasJdbcSourceSupport = False
+            self.atlas_jdbc_source_support = False
             self.db_awss3 = True
             self.jdbc_servertype = constant.AWS_S3
             self.jdbc_force_column_lowercase = False
@@ -1376,30 +1376,34 @@ class config(metaclass=Singleton):
             self.jdbc_classpath = ""
             self.jdbc_database = "-"
 
-            self.awsS3bucket = self.jdbc_url.split(";")[0]
+            self.aws_s3_bucket = self.jdbc_url.split(";")[0]
 
             try:
-                self.awsS3assumeRole = self.jdbc_url.split(";assumeRole=")[1].split(
+                self.aws_s3_assume_role = self.jdbc_url.split(";assumeRole=")[1].split(
                     ";"
                 )[0]
             except:
-                self.awsS3assumeRole = None
+                self.aws_s3_assume_role = None
 
             try:
-                self.awsS3assumeRoleDuration = int(
+                self.aws_s3_assume_role_duration = int(
                     self.jdbc_url.split(";assumeRoleDuration=")[1].split(";")[0]
                 )
             except:
-                self.awsS3assumeRoleDuration = None
+                self.aws_s3_assume_role_duration = None
 
             try:
-                self.awsS3proxyServer = self.jdbc_url.split(";proxy=")[1].split(";")[0]
+                self.aws_s3_proxy_server = self.jdbc_url.split(";proxy=")[1].split(";")[
+                    0
+                ]
             except:
-                self.awsS3proxyServer = None
+                self.aws_s3_proxy_server = None
 
             try:
-                self.awsS3fileFormat = self.jdbc_url.split(";format=")[1].split(";")[0]
-                if self.awsS3fileFormat != "parquet":
+                self.aws_s3_file_format = self.jdbc_url.split(";format=")[1].split(";")[
+                    0
+                ]
+                if self.aws_s3_file_format != "parquet":
                     if quiet == False:
                         logging.error("Only parquet files are supported for AWS S3")
                     exit_after_function = True
@@ -1411,7 +1415,7 @@ class config(metaclass=Singleton):
                 exit_after_function = True
 
             try:
-                self.awsS3region = self.jdbc_url.split(";region=")[1].split(";")[0]
+                self.aws_s3_region = self.jdbc_url.split(";region=")[1].split(";")[0]
             except:
                 if quiet == False:
                     logging.error(
@@ -1420,14 +1424,14 @@ class config(metaclass=Singleton):
                 exit_after_function = True
 
             try:
-                self.awsS3externalId = self.jdbc_url.split(";externalId=")[1].split(
+                self.aws_s3_external_id = self.jdbc_url.split(";externalId=")[1].split(
                     ";"
                 )[0]
             except:
-                self.awsS3externalId = None
+                self.aws_s3_external_id = None
 
         if self.jdbc_url.startswith("jdbc:informix-sqli://"):
-            self.atlasJdbcSourceSupport = True
+            self.atlas_jdbc_source_support = True
             self.db_informix = True
             self.jdbc_servertype = constant.INFORMIX
             self.jdbc_force_column_lowercase = False
@@ -1465,7 +1469,7 @@ class config(metaclass=Singleton):
                 exit_after_function = True
 
         if self.jdbc_url.startswith("jdbc:sybase:Tds:"):
-            self.atlasJdbcSourceSupport = True
+            self.atlas_jdbc_source_support = True
             self.db_sqlanywhere = True
             self.jdbc_servertype = constant.SQLANYWHERE
             self.jdbc_force_column_lowercase = False
@@ -1488,20 +1492,20 @@ class config(metaclass=Singleton):
 
         # Add Impala drivers to CP if configured in config file
         try:
-            self.impalaDriver = configuration.get(
+            self.impala_driver = configuration.get(
                 "Impala", "driver", exit_on_error=False
             )
-            self.impalaClasspath = configuration.get(
+            self.impala_classpath = configuration.get(
                 "Impala", "class", exit_on_error=False
             )
-            self.impalaAddress = configuration.get(
+            self.impala_address = configuration.get(
                 "Impala", "address", exit_on_error=False
             )
             if (
-                self.impalaDriver != None
-                and self.impalaDriver.startswith("/path/to/") == False
+                self.impala_driver != None
+                and self.impala_driver.startswith("/path/to/") == False
             ):
-                self.jdbc_classpath += f":{self.impalaDriver}"
+                self.jdbc_classpath += f":{self.impala_driver}"
                 self.jdbc_classpath_for_python = self.jdbc_classpath
         except:
             pass
@@ -1553,13 +1557,14 @@ class config(metaclass=Singleton):
         logging.debug("    jdbc_logintimeout = %s", self.jdbc_logintimeout)
         logging.debug("    jdbc_oracle_sid = %s", self.jdbc_oracle_sid)
         logging.debug("    jdbc_oracle_servicename = %s", self.jdbc_oracle_servicename)
-        logging.debug("    self.awsS3assumeRole = %s", self.awsS3assumeRole)
+        logging.debug("    self.aws_s3_assume_role = %s", self.aws_s3_assume_role)
         logging.debug(
-            "    self.awsS3assumeRoleDuration = %s", self.awsS3assumeRoleDuration
+            "    self.aws_s3_assume_role_duration = %s",
+            self.aws_s3_assume_role_duration,
         )
-        logging.debug("    self.awsS3proxyServer = %s", self.awsS3proxyServer)
-        logging.debug("    self.awsS3externalId = %s", self.awsS3externalId)
-        logging.debug("    self.awsS3region = %s", self.awsS3region)
+        logging.debug("    self.aws_s3_proxy_server = %s", self.aws_s3_proxy_server)
+        logging.debug("    self.aws_s3_external_id = %s", self.aws_s3_external_id)
+        logging.debug("    self.aws_s3_region = %s", self.aws_s3_region)
         logging.debug("Executing common_config.lookup_connection_alias() - Finished")
 
         if exit_after_function == True:
@@ -1577,24 +1582,24 @@ class config(metaclass=Singleton):
         # Connect to the source database
         self.connect_to_jdbc()
 
-        self.source_columns_df = self.sourceSchema.read_table_columns(
-            self.JDBCCursor,
+        self.source_columns_df = self.schema_reader.read_table_columns(
+            self.jdbc_cursor,
             server_type=self.jdbc_servertype,
             database=self.jdbc_database,
             schema=self.source_schema,
             table=self.source_table,
         )
 
-        self.source_keys_df = self.sourceSchema.read_table_keys(
-            self.JDBCCursor,
+        self.source_keys_df = self.schema_reader.read_table_keys(
+            self.jdbc_cursor,
             server_type=self.jdbc_servertype,
             database=self.jdbc_database,
             schema=self.source_schema,
             table=self.source_table,
         )
 
-        self.source_index_df = self.sourceSchema.read_table_index(
-            self.JDBCCursor,
+        self.source_index_df = self.schema_reader.read_table_index(
+            self.jdbc_cursor,
             server_type=self.jdbc_servertype,
             database=self.jdbc_database,
             schema=self.source_schema,
@@ -1602,11 +1607,11 @@ class config(metaclass=Singleton):
         )
 
         try:
-            self.tableType = self.sourceSchema.get_jdbc_table_type(
+            self.table_type = self.schema_reader.get_jdbc_table_type(
                 self.jdbc_servertype, self.source_columns_df.iloc[0]["TABLE_TYPE"]
             )
         except IndexError:
-            self.tableType = "unknown"
+            self.table_type = "unknown"
 
         logging.debug("Executing common_config.getSourceTableDefinition() - Finished")
 
@@ -1623,7 +1628,7 @@ class config(metaclass=Singleton):
             return self.disconnect_from_mongo()
 
         try:
-            self.JDBCCursor.close()
+            self.jdbc_cursor.close()
             self.jdbc_conn.close()
 
         except AttributeError:
@@ -1634,28 +1639,28 @@ class config(metaclass=Singleton):
             log.debug(exception.message())
             pass
 
-        self.JDBCCursor = None
+        self.jdbc_cursor = None
 
     def connect_to_impala(self, logger: str = "") -> None:
         log = logging.getLogger(logger)
-        if self.impalaDriver == None:
+        if self.impala_driver == None:
             log.info("Impala is not configured")
             return
 
-        if self.impalaJDBCCursor == None:
+        if self.impala_jdbc_cursor == None:
             log.info("Connecting to Impala")
             log.debug("Connecting to Impala over JDBC")
-            log.debug("   impalaDriver = %s", self.impalaDriver)
-            log.debug("   impalaClasspath = %s", self.impalaClasspath)
-            log.debug("   impalaAddress = %s", self.impalaAddress)
+            log.debug("   impalaDriver = %s", self.impala_driver)
+            log.debug("   impalaClasspath = %s", self.impala_classpath)
+            log.debug("   impalaAddress = %s", self.impala_address)
 
             try:
                 jdbc_credentials = [self.jdbc_username, self.jdbc_password]
 
                 self.impala_jdbc_conn = jaydebeapi.connect(
-                    self.impalaClasspath, self.impalaAddress, [], self.impalaDriver
+                    self.impala_classpath, self.impala_address, [], self.impala_driver
                 )
-                self.impalaJDBCCursor = self.impala_jdbc_conn.cursor()
+                self.impala_jdbc_cursor = self.impala_jdbc_conn.cursor()
                 log.info("Connected to Impala")
             except Exception as exception:
                 log.error("Connection to Impala failed with the following error:")
@@ -1666,7 +1671,7 @@ class config(metaclass=Singleton):
         log.info("Disconnecting from Impala")
 
         try:
-            self.impalaJDBCCursor.close()
+            self.impala_jdbc_cursor.close()
             self.impala_jdbc_conn.close()
 
         except AttributeError:
@@ -1677,7 +1682,7 @@ class config(metaclass=Singleton):
             log.info(exception.message())
             pass
 
-        self.impalaJDBCCursor = None
+        self.impala_jdbc_cursor = None
 
     def connect_to_jdbc(
         self,
@@ -1711,7 +1716,7 @@ class config(metaclass=Singleton):
             self.remove_temporary_files()
             sys.exit(1)
 
-        if self.JDBCCursor == None:
+        if self.jdbc_cursor == None:
             log.debug("Connecting to database over JDBC")
             log.debug("   jdbc_username = %s", self.jdbc_username)
             log.debug("   jdbc_password = <ENCRYPTED>")
@@ -1729,7 +1734,7 @@ class config(metaclass=Singleton):
                     jdbc_credentials,
                     self.jdbc_classpath_for_python,
                 )
-                self.JDBCCursor = self.jdbc_conn.cursor()
+                self.jdbc_cursor = self.jdbc_conn.cursor()
             except TypeError as exception:
                 if print_error == True:
                     log.error(
@@ -1830,9 +1835,9 @@ class config(metaclass=Singleton):
                 "Using a custom query to get Max value from source table (%s)", query
             )
 
-        self.JDBCCursor.execute(query)
+        self.jdbc_cursor.execute(query)
         logging.debug("SQL Statement executed: %s", query)
-        row = self.JDBCCursor.fetchone()
+        row = self.jdbc_cursor.fetchone()
 
         logging.info(
             "Max value that will be used in the incremental import is '%s'" % (row[0])
@@ -1873,7 +1878,7 @@ class config(metaclass=Singleton):
             )
 
         logging.debug("SQL Statement executed: %s", query)
-        self.JDBCCursor.execute(query)
+        self.jdbc_cursor.execute(query)
 
         logging.debug("Executing common_config.truncate_jdbc_table() - Finished")
 
@@ -1925,8 +1930,8 @@ class config(metaclass=Singleton):
             )
 
         logging.debug("SQL Statement executed: %s", query)
-        self.JDBCCursor.execute(query)
-        row = self.JDBCCursor.fetchone()
+        self.jdbc_cursor.execute(query)
+        row = self.jdbc_cursor.fetchone()
 
         table_exists = False
 
@@ -1943,16 +1948,16 @@ class config(metaclass=Singleton):
         logging.debug("Query to execute: %s", query)
         try:
             self.connect_to_jdbc()
-            self.JDBCCursor.execute(query)
+            self.jdbc_cursor.execute(query)
         except jaydebeapi.DatabaseError as errMsg:
             raise SQLerror(errMsg)
 
         result_df = pd.DataFrame()
         try:
-            result_df = pd.DataFrame(self.JDBCCursor.fetchall())
+            result_df = pd.DataFrame(self.jdbc_cursor.fetchall())
             if result_df.empty == False:
                 result_df_columns = []
-                for columns in self.JDBCCursor.description:
+                for columns in self.jdbc_cursor.description:
                     result_df_columns.append(
                         columns[0]
                     )  # Name of the column is in the first position
@@ -1974,16 +1979,16 @@ class config(metaclass=Singleton):
         logging.debug("Query to execute: %s", query)
         try:
             self.connect_to_impala()
-            self.impalaJDBCCursor.execute(query)
+            self.impala_jdbc_cursor.execute(query)
         except jaydebeapi.DatabaseError as errMsg:
             raise SQLerror(errMsg)
 
         result_df = pd.DataFrame()
         try:
-            result_df = pd.DataFrame(self.impalaJDBCCursor.fetchall())
+            result_df = pd.DataFrame(self.impala_jdbc_cursor.fetchall())
             if result_df.empty == False:
                 result_df_columns = []
-                for columns in self.impalaJDBCCursor.description:
+                for columns in self.impala_jdbc_cursor.description:
                     result_df_columns.append(
                         columns[0]
                     )  # Name of the column is in the first position
@@ -2053,8 +2058,8 @@ class config(metaclass=Singleton):
             query = query + " where " + where_statement
 
         logging.debug("SQL Statement executed: %s", query)
-        self.JDBCCursor.execute(query)
-        row = self.JDBCCursor.fetchone()
+        self.jdbc_cursor.execute(query)
+        row = self.jdbc_cursor.fetchone()
 
         return int(row[0])
 
@@ -2065,7 +2070,7 @@ class config(metaclass=Singleton):
         query = "drop table %s" % (
             self.get_jdbc_sql_from_table(schema=schema, table=table)
         )
-        self.JDBCCursor.execute(query)
+        self.jdbc_cursor.execute(query)
 
         logging.debug("Executing common_config.drop_jdbc_table() - Finished")
 
@@ -2079,9 +2084,9 @@ class config(metaclass=Singleton):
     ) -> None:
 
         if hive_db == None:
-            hive_db = self.Hive_DB
+            hive_db = self.hive_db
         if hive_table == None:
-            hive_table = self.Hive_Table
+            hive_table = self.hive_table
 
         query = "insert into import_failure_log "
         query += (
@@ -2119,9 +2124,9 @@ class config(metaclass=Singleton):
             )
 
         if hive_db == None:
-            hive_db = self.Hive_DB
+            hive_db = self.hive_db
         if hive_table == None:
-            hive_table = self.Hive_Table
+            hive_table = self.hive_table
 
         query = "insert into table_change_history "
         query += "( hive_db, hive_table, column_name, eventtime, event, value, description ) "
@@ -2163,9 +2168,9 @@ class config(metaclass=Singleton):
                 )
 
         if hive_db == None:
-            hive_db = self.Hive_DB
+            hive_db = self.hive_db
         if hive_table == None:
-            hive_table = self.Hive_Table
+            hive_table = self.hive_table
 
         query = "insert into table_change_history "
         query += "( hive_db, hive_table, column_name, eventtime, event, previous_value, value, description ) "
@@ -2203,9 +2208,9 @@ class config(metaclass=Singleton):
             )
 
         if hive_db == None:
-            hive_db = self.Hive_DB
+            hive_db = self.hive_db
         if hive_table == None:
-            hive_table = self.Hive_Table
+            hive_table = self.hive_table
 
         query = "insert into table_change_history "
         query += "( hive_db, hive_table, column_name, eventtime, event, previous_value, value, description ) "
@@ -2582,12 +2587,14 @@ class config(metaclass=Singleton):
             self.mongo_client = pymongo.MongoClient(
                 f"mongodb://{self.jdbc_hostname}:{self.jdbc_port}/"
             )
-            self.mongoDB = self.mongo_client[self.jdbc_database.strip()]
-            if self.mongoAuthSource == None:
-                self.mongoDB.authenticate(self.jdbc_username, self.jdbc_password)
+            self.mongo_db = self.mongo_client[self.jdbc_database.strip()]
+            if self.mongo_auth_source == None:
+                self.mongo_db.authenticate(self.jdbc_username, self.jdbc_password)
             else:
-                self.mongoDB.authenticate(
-                    self.jdbc_username, self.jdbc_password, source=self.mongoAuthSource
+                self.mongo_db.authenticate(
+                    self.jdbc_username,
+                    self.jdbc_password,
+                    source=self.mongo_auth_source,
                 )
 
         except pymongo.errors.ServerSelectionTimeoutError:
@@ -2609,7 +2616,7 @@ class config(metaclass=Singleton):
 
         self.mongo_client.close()
         self.mongo_client = None
-        self.mongoDB = None
+        self.mongo_db = None
 
         logging.debug("Executing common_config.disconnect_from_mongo() - Finished")
 
@@ -2620,7 +2627,7 @@ class config(metaclass=Singleton):
 
         # Connect to MongoDB and get a list of all collections
         self.connect_to_mongo()
-        mongo_collections = self.mongoDB.list_collection_names()
+        mongo_collections = self.mongo_db.list_collection_names()
         self.disconnect_from_mongo()
 
         if collection_filter == None:
@@ -2645,8 +2652,8 @@ class config(metaclass=Singleton):
         logging.debug("Executing common_config.get_jdbc_tables_and_views()")
         self.connect_to_jdbc()
 
-        result_df = self.sourceSchema.get_jdbc_tables_and_views(
-            jdbc_cursor=self.JDBCCursor,
+        result_df = self.schema_reader.get_jdbc_tables_and_views(
+            jdbc_cursor=self.jdbc_cursor,
             server_type=self.jdbc_servertype,
             database=self.jdbc_database,
             schema_filter=schema_filter,
@@ -2664,7 +2671,7 @@ class config(metaclass=Singleton):
         log.debug("Executing common_config.get_atlas_discover_config_object()")
 
         if db_alias == None:
-            db_alias = self.dbAlias
+            db_alias = self.db_alias
 
         self.lookup_connection_alias(db_alias)
         jdbc_connection_data = self.get_atlas_jdbc_connection_data(db_alias)
@@ -2708,7 +2715,7 @@ class config(metaclass=Singleton):
 
         query = "select seed_file from jdbc_connections where dbalias = %s "
         logging.debug("Executing the following SQL: %s", query)
-        self.mysql_cursor.execute(query, (self.dbAlias,))
+        self.mysql_cursor.execute(query, (self.db_alias,))
 
         row = self.mysql_cursor.fetchone()
         seed_file = row[0]
@@ -2790,7 +2797,7 @@ class config(metaclass=Singleton):
         if yarn_containers_total == None:
             # If it's None, it means that it was called when query was started. At this stage, we need to insert the data
 
-            if self.operationType == "import":
+            if self.operation_type == "import":
                 self.yarn_application_start = start_stop_date
 
                 query = "insert into yarn_statistics "
@@ -2803,16 +2810,16 @@ class config(metaclass=Singleton):
                     query,
                     (
                         yarn_application_id,
-                        self.operationTimestamp,
+                        self.operation_timestamp,
                         operation_tool,
-                        self.Hive_DB,
-                        self.Hive_Table,
+                        self.hive_db,
+                        self.hive_table,
                         start_stop_date,
                     ),
                 )
                 self.mysql_conn.commit()
 
-            if self.operationType == "export":
+            if self.operation_type == "export":
                 self.yarn_application_start = start_stop_date
 
                 query = "insert into yarn_statistics "
@@ -2825,11 +2832,11 @@ class config(metaclass=Singleton):
                     query,
                     (
                         yarn_application_id,
-                        self.operationTimestamp,
+                        self.operation_timestamp,
                         operation_tool,
-                        self.dbAlias,
-                        self.targetSchema,
-                        self.targetTable,
+                        self.db_alias,
+                        self.target_schema,
+                        self.target_table,
                         start_stop_date,
                     ),
                 )

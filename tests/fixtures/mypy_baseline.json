@@ -107,7 +107,6 @@
     "name-defined": 1
   },
   "bin/Server/atlasDiscovery.py": {
-    "attr-defined": 1,
     "misc": 1,
     "var-annotated": 3
   },

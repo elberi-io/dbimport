@@ -364,13 +364,13 @@ def main(argv):
     )
 
     # Save data down to import_operation
-    import_operation.import_config.fullExecutedCommand = full_executed_command
+    import_operation.import_config.full_executed_command = full_executed_command
 
     # Get the name of the different phases we are going to execute
-    import_phase = import_operation.import_config.importPhase
-    etl_phase = import_operation.import_config.etlPhase
-    import_phase_description = import_operation.import_config.importPhaseDescription
-    etl_phase_description = import_operation.import_config.etlPhaseDescription
+    import_phase = import_operation.import_config.import_phase
+    etl_phase = import_operation.import_config.etl_phase
+    import_phase_description = import_operation.import_config.import_phase_description
+    etl_phase_description = import_operation.import_config.etl_phase_description
 
     slave_table = import_operation.import_config.copy_slave
 
@@ -405,11 +405,11 @@ def main(argv):
                 print("                          %s" % (dest.replace(";", " - ")))
 
     print("ETL Phase:                %s" % (etl_phase_description))
-    print("Import Tool:              %s" % (import_operation.import_config.importTool))
-    print("ETL Engine:               %s" % (import_operation.import_config.etlEngine))
+    print("Import Tool:              %s" % (import_operation.import_config.import_tool))
+    print("ETL Engine:               %s" % (import_operation.import_config.etl_engine))
     print(
         "JDBC Connection name:     %s"
-        % (import_operation.import_config.common_config.dbAlias)
+        % (import_operation.import_config.common_config.db_alias)
     )
     print(
         "Source hostname:          %s"
@@ -431,8 +431,8 @@ def main(argv):
     print(
         "Source table:             %s" % (import_operation.import_config.source_table)
     )
-    print("Hive database:            %s" % (import_operation.import_config.Hive_DB))
-    print("Hive table:               %s" % (import_operation.import_config.Hive_Table))
+    print("Hive database:            %s" % (import_operation.import_config.hive_db))
+    print("Hive table:               %s" % (import_operation.import_config.hive_table))
     print(
         "______________________________________________________________________________"
     )
@@ -642,11 +642,11 @@ def main(argv):
             if (
                 run_only_function == None or run_only_function == "importData"
             ) and skip_import_data == False:
-                if import_operation.import_config.importTool == "sqoop":
+                if import_operation.import_config.import_tool == "sqoop":
                     if import_operation.run_stage(1013) == True:
                         import_operation.run_sqoop_import(pk_only_import=False)
                         import_operation.import_config.common_config.reconnect_jdbc()
-                if import_operation.import_config.importTool == "spark":
+                if import_operation.import_config.import_tool == "spark":
                     # 					if import_operation.run_stage(1014, 1017) == True:
                     if import_operation.run_stage(1014) == True:
                         import_operation.run_spark_import(pk_only_import=False)
@@ -711,23 +711,23 @@ def main(argv):
             if (
                 run_only_function == None or run_only_function == "importData"
             ) and skip_import_data == False:
-                if import_operation.import_config.importTool == "sqoop":
+                if import_operation.import_config.import_tool == "sqoop":
                     if import_operation.run_stage(1112) == True:
                         import_operation.save_incr_min_value()
                         import_operation.run_sqoop_import(
                             pk_only_import=False, incremental_max=incremental_max
                         )
                         import_operation.import_config.common_config.reconnect_jdbc()
-                        if import_operation.sqoopIncrNoNewRows == True:
+                        if import_operation.sqoop_incr_no_new_rows == True:
                             import_operation.set_stage(1149)
-                if import_operation.import_config.importTool == "spark":
+                if import_operation.import_config.import_tool == "spark":
                     if import_operation.run_stage(1113) == True:
                         import_operation.save_incr_min_value()
                         import_operation.run_spark_import(
                             pk_only_import=False, incremental_max=incremental_max
                         )
                         import_operation.import_config.common_config.reconnect_jdbc()
-                        if import_operation.sqoopIncrNoNewRows == True:
+                        if import_operation.sqoop_incr_no_new_rows == True:
                             import_operation.set_stage(1149)
 
             if run_only_function == None or run_only_function in (
@@ -810,11 +810,11 @@ def main(argv):
             if (
                 run_only_function == None or run_only_function == "importData"
             ) and skip_import_data == False:
-                if import_operation.import_config.importTool == "sqoop":
+                if import_operation.import_config.import_tool == "sqoop":
                     if import_operation.run_stage(1215) == True:
                         import_operation.run_sqoop_import(pk_only_import=False)
                         import_operation.import_config.common_config.reconnect_jdbc()
-                if import_operation.import_config.importTool == "spark":
+                if import_operation.import_config.import_tool == "spark":
                     if import_operation.run_stage(1216) == True:
                         import_operation.run_spark_import(pk_only_import=False)
                         import_operation.import_config.common_config.reconnect_jdbc()
@@ -898,10 +898,10 @@ def main(argv):
             if (
                 run_only_function == None or run_only_function == "importData"
             ) and skip_import_data == False:
-                # 				if import_operation.import_config.importTool == "sqoop":
+                # 				if import_operation.import_config.import_tool == "sqoop":
                 # 					if import_operation.run_stage(1264) == True:
                 # 						import_operation.run_sqoop_import(PKOnlyImport = False)
-                if import_operation.import_config.importTool == "spark":
+                if import_operation.import_config.import_tool == "spark":
                     if import_operation.run_stage(1265) == True:
                         import_operation.run_spark_import(pk_only_import=False)
                         import_operation.import_config.common_config.reconnect_jdbc()
@@ -1111,7 +1111,7 @@ def main(argv):
                 if import_operation.run_stage(3055) == True:
                     import_operation.connect_to_hive(force_skip_test=skip_hive_test)
                     if drop_target_table == True:
-                        import_operation.dropTargetTable()
+                        import_operation.drop_target_table()
                     import_operation.create_target_table()
                     import_operation.update_target_table()
                     import_operation.add_hive_dbimport_columns(merge_operation=False)
@@ -1121,7 +1121,7 @@ def main(argv):
             if run_only_function == None or run_only_function == "truncateTargetTable":
                 if import_operation.run_stage(3056) == True:
                     import_operation.connect_to_hive(force_skip_test=skip_hive_test)
-                    import_operation.truncateTargetTable()
+                    import_operation.truncate_target_table()
 
             if (
                 run_only_function == None
@@ -1151,7 +1151,7 @@ def main(argv):
 
             if run_only_function == None or run_only_function == "invalidateImpala":
                 if import_operation.run_stage(3095) == True:
-                    import_operation.invalidateImpala()
+                    import_operation.invalidate_impala()
 
             if run_only_function == None:
                 import_operation.set_stage(9999)
@@ -1240,7 +1240,7 @@ def main(argv):
                 if import_operation.run_stage(3105) == True:
                     import_operation.connect_to_hive(force_skip_test=skip_hive_test)
                     if drop_target_table == True:
-                        import_operation.dropTargetTable()
+                        import_operation.drop_target_table()
                     import_operation.create_target_table()
                     import_operation.update_target_table()
                     import_operation.add_hive_dbimport_columns(merge_operation=False)
@@ -1275,7 +1275,7 @@ def main(argv):
 
             if run_only_function == None or run_only_function == "invalidateImpala":
                 if import_operation.run_stage(3145) == True:
-                    import_operation.invalidateImpala()
+                    import_operation.invalidate_impala()
 
             if run_only_function == None:
                 import_operation.set_stage(9999)
@@ -1345,7 +1345,7 @@ def main(argv):
                     import_operation.set_stage(3160)
 
             if run_only_function == None or run_only_function == "createImportTable":
-                # 			if (runOnlyFunction == None or runOnlyFunction == "createImportTable") and import_operation.import_config.etlEngine == constant.ETL_ENGINE_HIVE:
+                # 			if (runOnlyFunction == None or runOnlyFunction == "createImportTable") and import_operation.import_config.etl_engine == constant.ETL_ENGINE_HIVE:
                 if import_operation.run_stage(3150) == True:
                     import_operation.connect_to_hive(force_skip_test=skip_hive_test)
 
@@ -1358,7 +1358,7 @@ def main(argv):
                 run_only_function == None
                 or run_only_function == "getImportTableRowCount"
             ):
-                # 			if (runOnlyFunction == None or runOnlyFunction == "getImportTableRowCount") and import_operation.import_config.etlEngine == constant.ETL_ENGINE_HIVE:
+                # 			if (runOnlyFunction == None or runOnlyFunction == "getImportTableRowCount") and import_operation.import_config.etl_engine == constant.ETL_ENGINE_HIVE:
                 if import_operation.import_config.validate_import == True:
                     if import_operation.run_stage(3152) == True:
                         import_operation.connect_to_hive(force_skip_test=skip_hive_test)
@@ -1368,7 +1368,7 @@ def main(argv):
                         import_operation.validate_import_table()
 
             if run_only_function == None or run_only_function == "removeHiveLocks":
-                # 			if (runOnlyFunction == None or runOnlyFunction == "removeHiveLocks") and import_operation.import_config.etlEngine == constant.ETL_ENGINE_HIVE:
+                # 			if (runOnlyFunction == None or runOnlyFunction == "removeHiveLocks") and import_operation.import_config.etl_engine == constant.ETL_ENGINE_HIVE:
                 if import_operation.run_stage(3154) == True:
                     import_operation.connect_to_hive(force_skip_test=skip_hive_test)
                     import_operation.remove_hive_locks()
@@ -1377,7 +1377,7 @@ def main(argv):
                 if import_operation.run_stage(3155) == True:
                     import_operation.connect_to_hive(force_skip_test=skip_hive_test)
                     if drop_target_table == True:
-                        import_operation.dropTargetTable()
+                        import_operation.drop_target_table()
                     import_operation.create_target_table()
                     import_operation.update_target_table()
                     import_operation.add_hive_dbimport_columns(merge_operation=False)
@@ -1418,7 +1418,7 @@ def main(argv):
 
             if run_only_function == None or run_only_function == "invalidateImpala":
                 if import_operation.run_stage(3195) == True:
-                    import_operation.invalidateImpala()
+                    import_operation.invalidate_impala()
 
             if run_only_function == None:
                 import_operation.set_stage(9999)
@@ -1478,7 +1478,7 @@ def main(argv):
                 sys.exit(0)
 
             if run_only_function == None or run_only_function == "createImportTable":
-                # if (runOnlyFunction == None or runOnlyFunction == "createImportTable") and import_operation.import_config.etlEngine == constant.ETL_ENGINE_HIVE:
+                # if (runOnlyFunction == None or runOnlyFunction == "createImportTable") and import_operation.import_config.etl_engine == constant.ETL_ENGINE_HIVE:
                 if import_operation.run_stage(3200) == True:
                     import_operation.connect_to_hive(force_skip_test=skip_hive_test)
 
@@ -1493,7 +1493,7 @@ def main(argv):
                 run_only_function == None
                 or run_only_function == "getImportTableRowCount"
             ):
-                # if (runOnlyFunction == None or runOnlyFunction == "getImportTableRowCount") and import_operation.import_config.etlEngine == constant.ETL_ENGINE_HIVE:
+                # if (runOnlyFunction == None or runOnlyFunction == "getImportTableRowCount") and import_operation.import_config.etl_engine == constant.ETL_ENGINE_HIVE:
                 if import_operation.import_config.validate_import == True:
                     if import_operation.run_stage(3202) == True:
                         import_operation.connect_to_hive(force_skip_test=skip_hive_test)
@@ -1503,7 +1503,7 @@ def main(argv):
                         import_operation.validate_import_table()
 
             if run_only_function == None or run_only_function == "removeHiveLocks":
-                # if (runOnlyFunction == None or runOnlyFunction == "removeHiveLocks") and import_operation.import_config.etlEngine == constant.ETL_ENGINE_HIVE:
+                # if (runOnlyFunction == None or runOnlyFunction == "removeHiveLocks") and import_operation.import_config.etl_engine == constant.ETL_ENGINE_HIVE:
                 if import_operation.run_stage(3204) == True:
                     import_operation.connect_to_hive(force_skip_test=skip_hive_test)
                     import_operation.remove_hive_locks()
@@ -1512,7 +1512,7 @@ def main(argv):
                 if import_operation.run_stage(3205) == True:
                     import_operation.connect_to_hive(force_skip_test=skip_hive_test)
                     if drop_target_table == True:
-                        import_operation.dropTargetTable()
+                        import_operation.drop_target_table()
                     import_operation.create_target_table()
                     import_operation.convert_hive_table_to_acid()
                     import_operation.update_target_table()
@@ -1537,24 +1537,24 @@ def main(argv):
                 if import_operation.run_stage(3208) == True:
                     import_operation.connect_to_hive(force_skip_test=skip_hive_test)
                     import_table_or_view = (
-                        import_operation.import_config.Hive_Import_Table
+                        import_operation.import_config.hive_import_table
                     )
                     if (
                         import_operation.import_config.is_external_view_required()
                         == True
                     ):
                         import_table_or_view = (
-                            import_operation.import_config.Hive_Import_View
+                            import_operation.import_config.hive_import_view
                         )
                     etl_operation.merge_hive_tables(
-                        source_db=import_operation.import_config.Hive_Import_DB,
+                        source_db=import_operation.import_config.hive_import_db,
                         source_table=import_table_or_view,
-                        target_db=import_operation.import_config.Hive_DB,
-                        target_table=import_operation.import_config.Hive_Table,
-                        history_db=import_operation.import_config.Hive_History_DB,
-                        history_table=import_operation.import_config.Hive_History_Table,
-                        target_delete_db=import_operation.import_config.Hive_Delete_DB,
-                        target_delete_table=import_operation.import_config.Hive_Delete_Table,
+                        target_db=import_operation.import_config.hive_db,
+                        target_table=import_operation.import_config.hive_table,
+                        history_db=import_operation.import_config.hive_history_db,
+                        history_table=import_operation.import_config.hive_history_table,
+                        target_delete_db=import_operation.import_config.hive_delete_db,
+                        target_delete_table=import_operation.import_config.hive_delete_table,
                         create_history_audit=True,
                         source_is_incremental=False,
                         source_is_import_table=True,
@@ -1592,7 +1592,7 @@ def main(argv):
 
             if run_only_function == None or run_only_function == "invalidateImpala":
                 if import_operation.run_stage(3245) == True:
-                    import_operation.invalidateImpala()
+                    import_operation.invalidate_impala()
 
             if run_only_function == None:
                 import_operation.set_stage(9999)
@@ -1681,7 +1681,7 @@ def main(argv):
                 if import_operation.run_stage(3255) == True:
                     import_operation.connect_to_hive(force_skip_test=skip_hive_test)
                     if drop_target_table == True:
-                        import_operation.dropTargetTable()
+                        import_operation.drop_target_table()
                     import_operation.create_target_table()
                     import_operation.convert_hive_table_to_acid()
                     import_operation.update_target_table()
@@ -1699,22 +1699,22 @@ def main(argv):
                 if import_operation.run_stage(3257) == True:
                     import_operation.connect_to_hive(force_skip_test=skip_hive_test)
                     import_table_or_view = (
-                        import_operation.import_config.Hive_Import_Table
+                        import_operation.import_config.hive_import_table
                     )
                     if (
                         import_operation.import_config.is_external_view_required()
                         == True
                     ):
                         import_table_or_view = (
-                            import_operation.import_config.Hive_Import_View
+                            import_operation.import_config.hive_import_view
                         )
                     etl_operation.merge_hive_tables(
-                        source_db=import_operation.import_config.Hive_Import_DB,
+                        source_db=import_operation.import_config.hive_import_db,
                         source_table=import_table_or_view,
-                        target_db=import_operation.import_config.Hive_DB,
-                        target_table=import_operation.import_config.Hive_Table,
-                        target_delete_db=import_operation.import_config.Hive_Delete_DB,
-                        target_delete_table=import_operation.import_config.Hive_Delete_Table,
+                        target_db=import_operation.import_config.hive_db,
+                        target_table=import_operation.import_config.hive_table,
+                        target_delete_db=import_operation.import_config.hive_delete_db,
+                        target_delete_table=import_operation.import_config.hive_delete_table,
                         create_history_audit=False,
                         source_is_incremental=False,
                         source_is_import_table=True,
@@ -1752,7 +1752,7 @@ def main(argv):
 
             if run_only_function == None or run_only_function == "invalidateImpala":
                 if import_operation.run_stage(3295) == True:
-                    import_operation.invalidateImpala()
+                    import_operation.invalidate_impala()
 
             if run_only_function == None:
                 import_operation.set_stage(9999)
@@ -1857,7 +1857,7 @@ def main(argv):
                 if import_operation.run_stage(3305) == True:
                     import_operation.connect_to_hive(force_skip_test=skip_hive_test)
                     if drop_target_table == True:
-                        import_operation.dropTargetTable()
+                        import_operation.drop_target_table()
                     import_operation.create_target_table()
                     import_operation.convert_hive_table_to_acid()
                     import_operation.add_hive_dbimport_columns(merge_operation=True)
@@ -1869,20 +1869,20 @@ def main(argv):
                 if import_operation.run_stage(3306) == True:
                     import_operation.connect_to_hive(force_skip_test=skip_hive_test)
                     import_table_or_view = (
-                        import_operation.import_config.Hive_Import_Table
+                        import_operation.import_config.hive_import_table
                     )
                     if (
                         import_operation.import_config.is_external_view_required()
                         == True
                     ):
                         import_table_or_view = (
-                            import_operation.import_config.Hive_Import_View
+                            import_operation.import_config.hive_import_view
                         )
                     etl_operation.merge_hive_tables(
-                        source_db=import_operation.import_config.Hive_Import_DB,
+                        source_db=import_operation.import_config.hive_import_db,
                         source_table=import_table_or_view,
-                        target_db=import_operation.import_config.Hive_DB,
-                        target_table=import_operation.import_config.Hive_Table,
+                        target_db=import_operation.import_config.hive_db,
+                        target_table=import_operation.import_config.hive_table,
                         create_history_audit=False,
                         source_is_incremental=True,
                         source_is_import_table=True,
@@ -1926,7 +1926,7 @@ def main(argv):
 
             if run_only_function == None or run_only_function == "invalidateImpala":
                 if import_operation.run_stage(3345) == True:
-                    import_operation.invalidateImpala()
+                    import_operation.invalidate_impala()
 
             if run_only_function == None:
                 import_operation.set_stage(9999)
@@ -2027,7 +2027,7 @@ def main(argv):
                 if import_operation.run_stage(3355) == True:
                     import_operation.connect_to_hive(force_skip_test=skip_hive_test)
                     if drop_target_table == True:
-                        import_operation.dropTargetTable()
+                        import_operation.drop_target_table()
                     import_operation.create_target_table()
                     import_operation.convert_hive_table_to_acid()
                     import_operation.update_target_table()
@@ -2046,22 +2046,22 @@ def main(argv):
                 if import_operation.run_stage(3357) == True:
                     import_operation.connect_to_hive(force_skip_test=skip_hive_test)
                     import_table_or_view = (
-                        import_operation.import_config.Hive_Import_Table
+                        import_operation.import_config.hive_import_table
                     )
                     if (
                         import_operation.import_config.is_external_view_required()
                         == True
                     ):
                         import_table_or_view = (
-                            import_operation.import_config.Hive_Import_View
+                            import_operation.import_config.hive_import_view
                         )
                     etl_operation.merge_hive_tables(
-                        source_db=import_operation.import_config.Hive_Import_DB,
+                        source_db=import_operation.import_config.hive_import_db,
                         source_table=import_table_or_view,
-                        target_db=import_operation.import_config.Hive_DB,
-                        target_table=import_operation.import_config.Hive_Table,
-                        history_db=import_operation.import_config.Hive_History_DB,
-                        history_table=import_operation.import_config.Hive_History_Table,
+                        target_db=import_operation.import_config.hive_db,
+                        target_table=import_operation.import_config.hive_table,
+                        history_db=import_operation.import_config.hive_history_db,
+                        history_table=import_operation.import_config.hive_history_table,
                         create_history_audit=True,
                         source_is_incremental=True,
                         source_is_import_table=True,
@@ -2105,7 +2105,7 @@ def main(argv):
 
             if run_only_function == None or run_only_function == "invalidateImpala":
                 if import_operation.run_stage(3395) == True:
-                    import_operation.invalidateImpala()
+                    import_operation.invalidate_impala()
 
             if run_only_function == None:
                 import_operation.set_stage(9999)
@@ -2207,7 +2207,7 @@ def main(argv):
                 if import_operation.run_stage(3405) == True:
                     import_operation.connect_to_hive(force_skip_test=skip_hive_test)
                     if drop_target_table == True:
-                        import_operation.dropTargetTable()
+                        import_operation.drop_target_table()
                     import_operation.create_target_table()
                     import_operation.convert_hive_table_to_acid()
                     import_operation.update_target_table()
@@ -2224,11 +2224,11 @@ def main(argv):
                         == True
                     ):
                         import_table_or_view = (
-                            import_operation.import_config.Hive_Import_View
+                            import_operation.import_config.hive_import_view
                         )
                     else:
                         import_table_or_view = (
-                            import_operation.import_config.Hive_Import_Table
+                            import_operation.import_config.hive_import_table
                         )
 
                     if import_operation.import_config.incr_maxvalue == None:
@@ -2238,10 +2238,10 @@ def main(argv):
                         change_data_tracking_initial_load = False
 
                     etl_operation.merge_hive_tables(
-                        source_db=import_operation.import_config.Hive_Import_DB,
+                        source_db=import_operation.import_config.hive_import_db,
                         source_table=import_table_or_view,
-                        target_db=import_operation.import_config.Hive_DB,
-                        target_table=import_operation.import_config.Hive_Table,
+                        target_db=import_operation.import_config.hive_db,
+                        target_table=import_operation.import_config.hive_table,
                         create_history_audit=False,
                         source_is_incremental=True,
                         source_is_import_table=True,
@@ -2285,7 +2285,7 @@ def main(argv):
 
             if run_only_function == None or run_only_function == "invalidateImpala":
                 if import_operation.run_stage(3445) == True:
-                    import_operation.invalidateImpala()
+                    import_operation.invalidate_impala()
 
             if run_only_function == None:
                 import_operation.set_stage(9999)
@@ -2368,7 +2368,7 @@ def main(argv):
 
             if run_only_function == None or run_only_function == "invalidateImpala":
                 if import_operation.run_stage(3495) == True:
-                    import_operation.invalidateImpala()
+                    import_operation.invalidate_impala()
 
             if run_only_function == None:
                 import_operation.set_stage(9999)
@@ -2457,7 +2457,7 @@ def main(argv):
                 if import_operation.run_stage(3505) == True:
                     import_operation.connect_to_hive(force_skip_test=skip_hive_test)
                     if drop_target_table == True:
-                        import_operation.dropTargetTable()
+                        import_operation.drop_target_table()
                     import_operation.create_target_table()
                     import_operation.update_target_table()
                     import_operation.add_hive_dbimport_columns(merge_operation=False)
@@ -2467,7 +2467,7 @@ def main(argv):
             if run_only_function == None or run_only_function == "truncateTargetTable":
                 if import_operation.run_stage(3506) == True:
                     import_operation.connect_to_hive(force_skip_test=skip_hive_test)
-                    import_operation.truncateTargetTable()
+                    import_operation.truncate_target_table()
 
             if (
                 run_only_function == None
@@ -2497,7 +2497,7 @@ def main(argv):
 
             if run_only_function == None or run_only_function == "invalidateImpala":
                 if import_operation.run_stage(3545) == True:
-                    import_operation.invalidateImpala()
+                    import_operation.invalidate_impala()
 
             if run_only_function == None:
                 import_operation.set_stage(9999)
@@ -2598,7 +2598,7 @@ def main(argv):
                 if import_operation.run_stage(3555) == True:
                     import_operation.connect_to_hive(force_skip_test=skip_hive_test)
                     if drop_target_table == True:
-                        import_operation.dropTargetTable()
+                        import_operation.drop_target_table()
                     import_operation.create_target_table()
                     import_operation.convert_hive_table_to_acid()
                     import_operation.update_target_table()
@@ -2622,11 +2622,11 @@ def main(argv):
                         == True
                     ):
                         import_table_or_view = (
-                            import_operation.import_config.Hive_Import_View
+                            import_operation.import_config.hive_import_view
                         )
                     else:
                         import_table_or_view = (
-                            import_operation.import_config.Hive_Import_Table
+                            import_operation.import_config.hive_import_table
                         )
 
                     if import_operation.import_config.incr_maxvalue == None:
@@ -2636,12 +2636,12 @@ def main(argv):
                         change_data_tracking_initial_load = False
 
                     etl_operation.merge_hive_tables(
-                        source_db=import_operation.import_config.Hive_Import_DB,
+                        source_db=import_operation.import_config.hive_import_db,
                         source_table=import_table_or_view,
-                        target_db=import_operation.import_config.Hive_DB,
-                        target_table=import_operation.import_config.Hive_Table,
-                        history_db=import_operation.import_config.Hive_History_DB,
-                        history_table=import_operation.import_config.Hive_History_Table,
+                        target_db=import_operation.import_config.hive_db,
+                        target_table=import_operation.import_config.hive_table,
+                        history_db=import_operation.import_config.hive_history_db,
+                        history_table=import_operation.import_config.hive_history_table,
                         create_history_audit=True,
                         source_is_incremental=True,
                         source_is_import_table=True,
@@ -2653,7 +2653,7 @@ def main(argv):
                             pk_for_merge=True
                         ),
                         change_data_tracking_initial_load=change_data_tracking_initial_load,
-                        oracle_flashback_import_table=import_operation.import_config.Hive_Import_Table,
+                        oracle_flashback_import_table=import_operation.import_config.hive_import_table,
                     )
 
             if (
@@ -2682,7 +2682,7 @@ def main(argv):
 
             if run_only_function == None or run_only_function == "invalidateImpala":
                 if import_operation.run_stage(3595) == True:
-                    import_operation.invalidateImpala()
+                    import_operation.invalidate_impala()
 
             if run_only_function == None:
                 import_operation.set_stage(9999)
@@ -2783,7 +2783,7 @@ def main(argv):
                 if import_operation.run_stage(3605) == True:
                     import_operation.connect_to_hive(force_skip_test=skip_hive_test)
                     if drop_target_table == True:
-                        import_operation.dropTargetTable()
+                        import_operation.drop_target_table()
                     import_operation.create_target_table()
                     import_operation.convert_hive_table_to_acid()
                     import_operation.update_target_table()
@@ -2800,11 +2800,11 @@ def main(argv):
                         == True
                     ):
                         import_table_or_view = (
-                            import_operation.import_config.Hive_Import_View
+                            import_operation.import_config.hive_import_view
                         )
                     else:
                         import_table_or_view = (
-                            import_operation.import_config.Hive_Import_Table
+                            import_operation.import_config.hive_import_table
                         )
 
                     if import_operation.import_config.incr_maxvalue == None:
@@ -2816,10 +2816,10 @@ def main(argv):
                         source_is_incremental = True
 
                     etl_operation.merge_hive_tables(
-                        source_db=import_operation.import_config.Hive_Import_DB,
+                        source_db=import_operation.import_config.hive_import_db,
                         source_table=import_table_or_view,
-                        target_db=import_operation.import_config.Hive_DB,
-                        target_table=import_operation.import_config.Hive_Table,
+                        target_db=import_operation.import_config.hive_db,
+                        target_table=import_operation.import_config.hive_table,
                         create_history_audit=False,
                         source_is_incremental=source_is_incremental,
                         source_is_import_table=True,
@@ -2862,7 +2862,7 @@ def main(argv):
 
             if run_only_function == None or run_only_function == "invalidateImpala":
                 if import_operation.run_stage(3645) == True:
-                    import_operation.invalidateImpala()
+                    import_operation.invalidate_impala()
 
             if run_only_function == None:
                 import_operation.set_stage(9999)
@@ -2963,7 +2963,7 @@ def main(argv):
                 if import_operation.run_stage(3655) == True:
                     import_operation.connect_to_hive(force_skip_test=skip_hive_test)
                     if drop_target_table == True:
-                        import_operation.dropTargetTable()
+                        import_operation.drop_target_table()
                     import_operation.create_target_table()
                     import_operation.convert_hive_table_to_acid()
                     import_operation.update_target_table()
@@ -2993,11 +2993,11 @@ def main(argv):
                         == True
                     ):
                         import_table_or_view = (
-                            import_operation.import_config.Hive_Import_View
+                            import_operation.import_config.hive_import_view
                         )
                     else:
                         import_table_or_view = (
-                            import_operation.import_config.Hive_Import_Table
+                            import_operation.import_config.hive_import_table
                         )
 
                     if import_operation.import_config.incr_maxvalue == None:
@@ -3009,14 +3009,14 @@ def main(argv):
                         source_is_incremental = True
 
                     etl_operation.merge_hive_tables(
-                        source_db=import_operation.import_config.Hive_Import_DB,
+                        source_db=import_operation.import_config.hive_import_db,
                         source_table=import_table_or_view,
-                        target_db=import_operation.import_config.Hive_DB,
-                        target_table=import_operation.import_config.Hive_Table,
-                        history_db=import_operation.import_config.Hive_History_DB,
-                        history_table=import_operation.import_config.Hive_History_Table,
-                        target_delete_db=import_operation.import_config.Hive_Delete_DB,
-                        target_delete_table=import_operation.import_config.Hive_Delete_Table,
+                        target_db=import_operation.import_config.hive_db,
+                        target_table=import_operation.import_config.hive_table,
+                        history_db=import_operation.import_config.hive_history_db,
+                        history_table=import_operation.import_config.hive_history_table,
+                        target_delete_db=import_operation.import_config.hive_delete_db,
+                        target_delete_table=import_operation.import_config.hive_delete_table,
                         create_history_audit=True,
                         source_is_incremental=source_is_incremental,
                         source_is_import_table=True,
@@ -3028,7 +3028,7 @@ def main(argv):
                             pk_for_merge=True
                         ),
                         change_data_tracking_initial_load=change_data_tracking_initial_load,
-                        mssql_change_tracking_import_table=import_operation.import_config.Hive_Import_Table,
+                        mssql_change_tracking_import_table=import_operation.import_config.hive_import_table,
                     )
 
                 if import_operation.run_stage(3659) == True:
@@ -3060,7 +3060,7 @@ def main(argv):
 
             if run_only_function == None or run_only_function == "invalidateImpala":
                 if import_operation.run_stage(3695) == True:
-                    import_operation.invalidateImpala()
+                    import_operation.invalidate_impala()
 
             if run_only_function == None:
                 import_operation.set_stage(9999)

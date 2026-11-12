@@ -18,7 +18,7 @@ def close_dbimport_connections(obj: object) -> None:
     conn = getattr(obj, "mysql_conn", None)
     if conn is not None:
         conn.close()
-    engine = getattr(obj, "configDB", None)
+    engine = getattr(obj, "config_db", None)
     if engine is not None:
         engine.dispose()
 

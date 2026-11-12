@@ -163,7 +163,7 @@ class distCP(threading.Thread):
 class serverDaemon(run.RunDaemon):
     def set_config(self, action, log_format):
         self.action = action
-        self.logFormat = log_format
+        self.log_format = log_format
 
     def run(self):
         # This is the main event loop where the 'real' daemonwork happens
@@ -172,10 +172,10 @@ class serverDaemon(run.RunDaemon):
         log.info("Server initializing")
         self.mysql_conn = None
         self.mysql_cursor = None
-        self.debugLogLevel = False
+        self.debug_log_level = False
 
         if logging.root.level == 10:  # DEBUG
-            self.debugLogLevel = True
+            self.debug_log_level = True
 
         self.common_config = common_config.config()
 
@@ -191,7 +191,7 @@ class serverDaemon(run.RunDaemon):
         self.remote_dbimport_sessions = {}
         self.remote_instance_config_db = None
 
-        self.configDBSession = None
+        self.config_db_session = None
         self.config_db_engine = None
 
         self.dist_cp_req_queue = Queue()
@@ -571,15 +571,15 @@ class serverDaemon(run.RunDaemon):
             self.config_db_engine.dispose()
             self.config_db_engine = None
 
-        self.configDBSession = None
+        self.config_db_session = None
 
     def get_dbimport_session(self):
         log = logging.getLogger("server")
-        if self.configDBSession == None:
+        if self.config_db_session == None:
             if self.connect_dbimport_db() == False:
                 raise SQLerror("Can't connect to DBImport database")
 
-        return self.configDBSession()
+        return self.config_db_session()
 
     def connect_dbimport_db(self):
         # Esablish a SQLAlchemy connection to the DBImport database
@@ -588,14 +588,14 @@ class serverDaemon(run.RunDaemon):
 
         try:
             self.config_db_engine = sa.create_engine(
-                self.connect_str, echo=self.debugLogLevel
+                self.connect_str, echo=self.debug_log_level
             )
             self.config_db_engine.connect()
-            self.configDBSession = sessionmaker(bind=self.config_db_engine)
+            self.config_db_session = sessionmaker(bind=self.config_db_engine)
 
         except sa.exc.OperationalError as err:
             log.error("%s", err)
-            self.configDBSession = None
+            self.config_db_session = None
             self.config_db_engine = None
             return False
         # 			self.common_config.remove_temporary_files()
@@ -604,7 +604,7 @@ class serverDaemon(run.RunDaemon):
         except:
             print("Unexpected error: ")
             print(sys.exc_info())
-            self.configDBSession = None
+            self.config_db_session = None
             self.config_db_engine = None
             return False
         # 			self.common_config.remove_temporary_files()
@@ -701,7 +701,7 @@ class serverDaemon(run.RunDaemon):
 
         try:
             remote_instance_config_db_engine = sa.create_engine(
-                instance_connect_str, echo=self.debugLogLevel
+                instance_connect_str, echo=self.debug_log_level
             )
             remote_instance_config_db_engine.connect()
             remote_instance_config_db_session = sessionmaker(

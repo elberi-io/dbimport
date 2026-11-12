@@ -100,3 +100,15 @@ f0790f1b1e63f3c8bb9b220dc1169f7bd454b4e8
 
 # refactor: rename the remaining arguments in the launchers
 8ebde5e0bc157f74acd639edb48c88784547d1fc
+
+# refactor: rename the remaining methods and functions to snake_case
+68ffb686fa4326bac0995f4d259f961dcc2f516e
+
+# refactor: rename the remaining mixedCase attributes to snake_case
+f84b1bcffe116ad8034f7b851fa8d000d828ff04
+
+# refactor: rename the last mixedCase locals in bin/manage
+e0e64b833033d292885a72876503b03c8bb6e3fe
+
+# refactor: rename the DBImport_Home globals to dbimport_home
+70c6438cb7b5b51ac686993c5072f2c7f1642647

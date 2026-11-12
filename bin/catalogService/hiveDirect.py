@@ -33,11 +33,11 @@ class hiveMetastoreDirect(metaclass=Singleton):
     def __init__(self):
         logging.debug("Executing hiveMetastoreDirect.__init__()")
 
-        self.debugLogLevel = False
-        # self.debugLogLevel = True
+        self.debug_log_level = False
+        # self.debug_log_level = True
 
         if logging.root.level == 10:  # DEBUG
-            self.debugLogLevel = True
+            self.debug_log_level = True
 
         self.common_config = common_config.config()
 
@@ -53,7 +53,7 @@ class hiveMetastoreDirect(metaclass=Singleton):
 
         try:
             self.hive_meta_db = sa.create_engine(
-                self.hive_connect_str, echo=self.debugLogLevel, pool_pre_ping=True
+                self.hive_connect_str, echo=self.debug_log_level, pool_pre_ping=True
             )
             self.hive_meta_db.connect()
             self.hive_meta_session = sessionmaker(bind=self.hive_meta_db)

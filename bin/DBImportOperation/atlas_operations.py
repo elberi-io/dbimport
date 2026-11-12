@@ -49,20 +49,20 @@ from sourceSchemaReader import schemaReader
 class atlasOperation:
     def __init__(self, logger_name=None):
         self.logger_name = logger_name
-        self.debugLogLevel = False
+        self.debug_log_level = False
         log = logging.getLogger(self.logger_name)
         log.debug("Executing atlas_operations.__init__()")
 
         if logging.root.level == 10:  # DEBUG
-            self.debugLogLevel = True
+            self.debug_log_level = True
 
         self.jdbc_connection_mutex = None
-        self.configDBSession = None
+        self.config_db_session = None
         self.config_db_engine = None
-        self.JDBCCursor = None
+        self.jdbc_cursor = None
         self.jdbc_conn = None
 
-        self.sourceSchema = schemaReader.source()
+        self.schema_reader = schemaReader.source()
 
         # Fetch configuration about MySQL database and how to connect to it
         self.config_hostname = configuration.get("Database", "mysql_hostname")
@@ -72,7 +72,7 @@ class atlasOperation:
         self.config_password = configuration.get("Database", "mysql_password")
 
         # Atlas variables
-        self.atlasEnabled = False
+        self.atlas_enabled = False
         self.atlas_schema_checked = False
         self.atlas_address = None
         self.atlas_headers = None
@@ -81,7 +81,7 @@ class atlasOperation:
         self.atlas_rest_type_def_dbimport_process = None
         self.atlas_rest_entities = None
         self.atlas_rest_unique_attribute_type = None
-        self.atlasJdbcSourceSupport = None
+        self.atlas_jdbc_source_support = None
         self.atlas_authentication = None
         self.atlas_username = None
         self.atlas_password = None
@@ -99,7 +99,7 @@ class atlasOperation:
             self.atlas_rest_unique_attribute_type = (
                 f"{self.atlas_address}/api/atlas/v2/entity/uniqueAttribute/type"
             )
-            self.atlasEnabled = True
+            self.atlas_enabled = True
             self.atlas_headers = {
                 "Content-type": "application/json",
                 "Accept": "application/json",
@@ -139,7 +139,7 @@ class atlasOperation:
                 logging.error(
                     "Atlas authentication is not configured correctly. Valid options are 'username' or 'kerberos'"
                 )
-                self.atlasEnabled = False
+                self.atlas_enabled = False
 
     # 				sys.exit(1)
 
@@ -154,7 +154,7 @@ class atlasOperation:
         """Returns a dict that contains the referredEntities part for the RDBMS update rest call"""
         logging.debug("Executing atlas_operations.getAtlasReferredEntities()")
 
-        if self.atlasEnabled == False:
+        if self.atlas_enabled == False:
             return None
 
         return_dict = self.get_atlas_rdbms_names(
@@ -203,13 +203,15 @@ class atlasOperation:
                     schema_name
                 )
             json_data["referredEntities"]["-100"]["attributes"]["contact_info"] = (
-                self.contactInfo
+                self.contact_info
             )
             json_data["referredEntities"]["-100"]["attributes"]["owner"] = self.owner
             json_data["referredEntities"]["-100"]["attributes"]["comment"] = (
                 table_comment
             )
-            json_data["referredEntities"]["-100"]["attributes"]["type"] = self.tableType
+            json_data["referredEntities"]["-100"]["attributes"]["type"] = (
+                self.table_type
+            )
             if table_create_time != None:
                 # Atlas only support fractions of a second with 3 digits. So we remove the last 3 as python %f gives 6 digits
                 # This datetime object from the source database needs to be in UTC. We might have to convert it
@@ -240,8 +242,8 @@ class atlasOperation:
             if hdfs_path != "":
                 # 				hdfsAddress = self.get_config_value(key = "hdfs_address")
                 # 				clusterName = self.get_config_value(key = "cluster_name")
-                hdfs_uri = "%s%s@%s" % (self.hdfsAddress, hdfs_path, self.clusterName)
-                hdfs_full_path = "%s%s" % (self.hdfsAddress, hdfs_path)
+                hdfs_uri = "%s%s@%s" % (self.hdfs_address, hdfs_path, self.cluster_name)
+                hdfs_full_path = "%s%s" % (self.hdfs_address, hdfs_path)
 
                 json_data["referredEntities"]["-200"] = {}
                 json_data["referredEntities"]["-200"]["guid"] = "-200"
@@ -255,10 +257,10 @@ class atlasOperation:
                     hdfs_full_path
                 )
                 json_data["referredEntities"]["-200"]["attributes"]["clusterName"] = (
-                    self.clusterName
+                    self.cluster_name
                 )
                 json_data["referredEntities"]["-200"]["attributes"]["nameServiceId"] = (
-                    self.clusterName
+                    self.cluster_name
                 )
 
             json_data["referredEntities"]["-300"] = {}
@@ -270,7 +272,7 @@ class atlasOperation:
             )
             json_data["referredEntities"]["-300"]["attributes"]["name"] = db_name
             json_data["referredEntities"]["-300"]["attributes"]["contact_info"] = (
-                self.contactInfo
+                self.contact_info
             )
             json_data["referredEntities"]["-300"]["attributes"]["owner"] = self.owner
             json_data["referredEntities"]["-300"]["attributes"]["description"] = (
@@ -315,9 +317,9 @@ class atlasOperation:
 
         # We only check the Atlas schema ones per execution. This will otherwise add more requests to Atlas for the same data
         if self.atlas_schema_checked == True:
-            return self.atlasEnabled
+            return self.atlas_enabled
 
-        if self.atlasEnabled == True:
+        if self.atlas_enabled == True:
             log.info("Checking Atlas connection")
             response = self.atlas_get_data(
                 url=self.atlas_rest_type_def_dbimport_process, logger=logger
@@ -336,21 +338,21 @@ class atlasOperation:
                     )
                     log.error(errMsg)
                     log.warning("Disable Atlas integration")
-                    self.atlasEnabled = False
+                    self.atlas_enabled = False
 
-        if self.atlasEnabled == True and status_code == 404:
+        if self.atlas_enabled == True and status_code == 404:
             # The TypeDef was not found
             log.warning(
                 "The Atlas typeDef 'DBImport_Process' was not found. Did you run the Atlas setup for DBImport?"
             )
-            self.atlasEnabled = False
+            self.atlas_enabled = False
 
-        elif self.atlasEnabled == True and status_code != 200:
+        elif self.atlas_enabled == True and status_code != 200:
             log.warning("Atlas communication failed with response %s", status_code)
-            self.atlasEnabled = False
+            self.atlas_enabled = False
 
-        if self.atlasEnabled == True:
-            # if self.atlasEnabled = True at this stage, it means that we have a valid json response in DBImportProcessJSON
+        if self.atlas_enabled == True:
+            # if self.atlas_enabled = True at this stage, it means that we have a valid json response in DBImportProcessJSON
             type_def_version = response_data["typeVersion"]
             if type_def_version != "1.2":
                 log.warning(
@@ -358,11 +360,11 @@ class atlasOperation:
                     % (type_def_version)
                 )
                 log.warning("Atlas integration is Disabled")
-                self.atlasEnabled = False
+                self.atlas_enabled = False
             else:
                 self.atlas_schema_checked = True
 
-        return self.atlasEnabled
+        return self.atlas_enabled
 
         logging.debug("Executing atlas_operations.check_atlas_schema() - Finished")
 
@@ -388,7 +390,7 @@ class atlasOperation:
         log.debug("Executing atlas_operations.atlas_communicate()")
 
         return_value = None
-        if self.atlasEnabled == True:
+        if self.atlas_enabled == True:
             try:
                 if request_type == "POST":
                     response = requests.post(
@@ -436,13 +438,13 @@ class atlasOperation:
                 log.warning("Atlas integration is Disabled")
                 log.debug("Atlas data: %s" % (data))
                 log.debug("Atlas requestType: %s" % (request_type))
-                self.atlasEnabled = False
+                self.atlas_enabled = False
             except requests.exceptions.HTTPError:
                 log.error("HTTP error when communicating with Atlas on %s" % (url))
                 log.warning("Atlas integration is Disabled")
                 log.debug("Atlas data: %s" % (data))
                 log.debug("Atlas requestType: %s" % (request_type))
-                self.atlasEnabled = False
+                self.atlas_enabled = False
             except requests.exceptions.RequestException:
                 log.error(
                     "RequestException error when communicating with Atlas on %s" % (url)
@@ -450,7 +452,7 @@ class atlasOperation:
                 log.warning("Atlas integration is Disabled")
                 log.debug("Atlas data: %s" % (data))
                 log.debug("Atlas requestType: %s" % (request_type))
-                self.atlasEnabled = False
+                self.atlas_enabled = False
             except requests.exceptions.ConnectionError:
                 log.error(
                     "Connection error when communicating with Atlas on %s" % (url)
@@ -458,7 +460,7 @@ class atlasOperation:
                 log.warning("Atlas integration is Disabled")
                 log.debug("Atlas data: %s" % (data))
                 log.debug("Atlas requestType: %s" % (request_type))
-                self.atlasEnabled = False
+                self.atlas_enabled = False
             except ValueError:
                 log.error(
                     "The used requstType (%s) for atlas_communicate() is not supported"
@@ -467,7 +469,7 @@ class atlasOperation:
                 log.warning("Atlas integration is Disabled")
                 log.debug("Atlas data: %s" % (data))
                 log.debug("Atlas requestType: %s" % (request_type))
-                self.atlasEnabled = False
+                self.atlas_enabled = False
 
         log.debug("Executing atlas_operations.atlas_communicate() - Finished")
         return return_value
@@ -497,12 +499,12 @@ class atlasOperation:
         log = logging.getLogger(self.logger_name)
         log.debug("Executing atlas_operations.set_configuration()")
 
-        self.dbAlias = config_dict.get("dbAlias")
-        self.contactInfo = config_dict.get("contactInfo")
+        self.db_alias = config_dict.get("dbAlias")
+        self.contact_info = config_dict.get("contactInfo")
         self.description = config_dict.get("description")
         self.owner = config_dict.get("owner")
-        self.atlasIncludeFilter = config_dict.get("atlasIncludeFilter")
-        self.atlasExcludeFilter = config_dict.get("atlasExcludeFilter")
+        self.atlas_include_filter = config_dict.get("atlasIncludeFilter")
+        self.atlas_exclude_filter = config_dict.get("atlasExcludeFilter")
         self.jdbc_hostname = config_dict.get("jdbc_hostname")
         self.jdbc_port = config_dict.get("jdbc_port")
         self.jdbc_servertype = config_dict.get("jdbc_servertype")
@@ -515,8 +517,8 @@ class atlasOperation:
         self.jdbc_url = config_dict.get("jdbc_url")
         self.jdbc_classpath_for_python = config_dict.get("jdbc_classpath_for_python")
         self.jdbc_environment = config_dict.get("jdbc_environment")
-        self.hdfsAddress = config_dict.get("hdfs_address")
-        self.clusterName = config_dict.get("cluster_name")
+        self.hdfs_address = config_dict.get("hdfs_address")
+        self.cluster_name = config_dict.get("cluster_name")
 
         self.jdbc_connection_mutex = mutex
 
@@ -527,13 +529,13 @@ class atlasOperation:
 
         log = logging.getLogger(self.logger_name)
         log.debug("Executing atlas_operations.discover_atlas_rdbms()")
-        log.info("Starting a Atlas discovery on connection '%s'" % (self.dbAlias))
+        log.info("Starting a Atlas discovery on connection '%s'" % (self.db_alias))
 
-        if self.atlasIncludeFilter == None or self.atlasIncludeFilter == "":
-            self.atlasIncludeFilter = "*.*"
+        if self.atlas_include_filter == None or self.atlas_include_filter == "":
+            self.atlas_include_filter = "*.*"
 
-        if self.atlasExcludeFilter == None:
-            self.atlasExcludeFilter = ""
+        if self.atlas_exclude_filter == None:
+            self.atlas_exclude_filter = ""
 
         self.jdbc_hostname = re.sub("\\r", "", self.jdbc_hostname)
         self.jdbc_hostname = re.sub("\\n", "", self.jdbc_hostname)
@@ -544,7 +546,7 @@ class atlasOperation:
             self.jdbc_connection_mutex.acquire()
             log.debug(
                 "JDBC connection Mutex acquired for reading all tables and views on '%s'"
-                % (self.dbAlias)
+                % (self.db_alias)
             )
 
         try:
@@ -558,15 +560,15 @@ class atlasOperation:
 
         try:
             # Get a list of all schemas and tables that can be found on the database connection
-            tables_and_views_df = self.sourceSchema.get_jdbc_tables_and_views(
-                self.JDBCCursor, self.jdbc_servertype, database=self.jdbc_database
+            tables_and_views_df = self.schema_reader.get_jdbc_tables_and_views(
+                self.jdbc_cursor, self.jdbc_servertype, database=self.jdbc_database
             )
 
             self.disconnect_from_jdbc()
         except:
             log.error(
                 "Unknown error during reading of tables and views from '%s'"
-                % (self.dbAlias)
+                % (self.db_alias)
             )
             if self.jdbc_connection_mutex != None:
                 self.jdbc_connection_mutex.release()
@@ -582,7 +584,7 @@ class atlasOperation:
         else:
             create_empty_database_in_atlas = False
 
-        if self.atlasIncludeFilter == None or self.atlasIncludeFilter == "":
+        if self.atlas_include_filter == None or self.atlas_include_filter == "":
             # Set default to include the table to True if there is no include filter
             tables_and_views_df.insert(2, "include", True)
         else:
@@ -598,7 +600,7 @@ class atlasOperation:
             table = row["table"].lower()
 
             # Filter the schema.table so that only the included tables gets processed
-            for include in self.atlasIncludeFilter.split(";"):
+            for include in self.atlas_include_filter.split(";"):
                 try:
                     include_schema = include.split(".")[0].replace("*", ".*").lower()
                     include_table = include.split(".")[1].replace("*", ".*").lower()
@@ -611,7 +613,7 @@ class atlasOperation:
                     pass
 
             # Filter the schema.table so we remove the excluded items
-            for exclude in self.atlasExcludeFilter.split(";"):
+            for exclude in self.atlas_exclude_filter.split(";"):
                 try:
                     exclude_schema = exclude.split(".")[0].replace("*", ".*").lower()
                     exclude_table = exclude.split(".")[1].replace("*", ".*").lower()
@@ -646,13 +648,13 @@ class atlasOperation:
                 log.info(
                     "Starting discovery of database '%s' on connection '%s'",
                     self.jdbc_database,
-                    self.dbAlias,
+                    self.db_alias,
                 )
             else:
                 log.info(
                     "Starting discovery of schema '%s' on connection '%s'",
                     schema.strip(),
-                    self.dbAlias,
+                    self.db_alias,
                 )
 
             # TODO(#229): Must check if the connection is still valid. Very large databases with many table will cause the connection to die
@@ -662,7 +664,7 @@ class atlasOperation:
                 log.debug(
                     "JDBC connection Mutex acquired for reading columns and keys in schema '%s' on '%s'",
                     schema,
-                    self.dbAlias,
+                    self.db_alias,
                 )
 
             try:
@@ -670,15 +672,15 @@ class atlasOperation:
                 self.connect_to_jdbc()
                 # TODO(#229): Handle failures of the connection
 
-                full_schema_column_df = self.sourceSchema.read_table_columns(
-                    self.JDBCCursor,
+                full_schema_column_df = self.schema_reader.read_table_columns(
+                    self.jdbc_cursor,
                     server_type=self.jdbc_servertype,
                     database=self.jdbc_database,
                     schema=schema,
                 )
 
-                full_schema_key_df = self.sourceSchema.read_table_keys(
-                    self.JDBCCursor,
+                full_schema_key_df = self.schema_reader.read_table_keys(
+                    self.jdbc_cursor,
                     server_type=self.jdbc_servertype,
                     database=self.jdbc_database,
                     schema=schema,
@@ -694,7 +696,7 @@ class atlasOperation:
                 log.error(
                     "Unknown error during reading of columns and keys for schema '%s' on '%s'",
                     schema,
-                    self.dbAlias,
+                    self.db_alias,
                 )
                 if self.jdbc_connection_mutex != None:
                     self.jdbc_connection_mutex.release()
@@ -825,7 +827,7 @@ class atlasOperation:
                 self.source_columns_df.replace({pd.NaT: None}, inplace=True)
 
                 if len(self.source_columns_df) > 0:
-                    self.tableType = self.sourceSchema.get_jdbc_table_type(
+                    self.table_type = self.schema_reader.get_jdbc_table_type(
                         self.jdbc_servertype,
                         self.source_columns_df.iloc[0]["TABLE_TYPE"],
                     )
@@ -973,30 +975,30 @@ class atlasOperation:
                                     "Atlas table schema for %s.%s on dbalias %s match cached values. No update required",
                                     schema,
                                     table,
-                                    self.dbAlias,
+                                    self.db_alias,
                                 )
                             else:
                                 log.debug(
                                     "Atlas table schema for %s on dbalias %s match cached values. No update required",
                                     table,
-                                    self.dbAlias,
+                                    self.db_alias,
                                 )
                             continue
 
-                self.atlasEnabled = True  # This can be set to False in self.update_atlas_with_rdbms_data depending on what it finds
+                self.atlas_enabled = True  # This can be set to False in self.update_atlas_with_rdbms_data depending on what it finds
 
                 if row["schema"] != "-":
                     log.info(
                         "Creating/updating Atlas information for table '%s.%s' on connection '%s'",
                         schema,
                         table,
-                        self.dbAlias,
+                        self.db_alias,
                     )
                 else:
                     log.info(
                         "Creating/updating Atlas information for table '%s' on connection '%s'",
                         table,
-                        self.dbAlias,
+                        self.db_alias,
                     )
 
                 # We need to save if there is an error and raise them after all tables are processed. If not, tables with foreign keys that dont have
@@ -1135,7 +1137,7 @@ class atlasOperation:
             db_data["attributes"] = {}
             db_data["attributes"]["qualifiedName"] = db_uri
             db_data["attributes"]["name"] = db_name
-            db_data["attributes"]["contact_info"] = self.contactInfo
+            db_data["attributes"]["contact_info"] = self.contact_info
             db_data["attributes"]["owner"] = self.owner
             db_data["attributes"]["description"] = self.description
             db_data["attributes"]["prodOrOther"] = environment_type
@@ -1167,7 +1169,7 @@ class atlasOperation:
                     % (status_code)
                 )
                 log.warning("%s" % (response["data"]))
-                self.atlasEnabled == False  # noqa: B015  # TODO(#182): = was meant
+                self.atlas_enabled == False  # noqa: B015  # TODO(#182): = was meant
                 raise atlasError
 
         # query the rdbms_db object in Atlas
@@ -1191,7 +1193,7 @@ class atlasOperation:
                 "Request from Atlas when updating source schema was %s." % (status_code)
             )
             log.warning("%s" % (response["data"]))
-            self.atlasEnabled == False  # noqa: B015  # TODO(#182): = was meant
+            self.atlas_enabled == False  # noqa: B015  # TODO(#182): = was meant
             raise atlasError
 
         # Fetch all tables defined on the rdbms_db object
@@ -1212,13 +1214,13 @@ class atlasOperation:
                 table = qualified_name.split("@")[0].split(".")[-1]
                 schema = qualified_name.split("@")[0].split(".")[-2]
 
-            if self.atlasIncludeFilter == None or self.atlasIncludeFilter == "":
+            if self.atlas_include_filter == None or self.atlas_include_filter == "":
                 process_table_for_delete = True
             else:
                 process_table_for_delete = False
 
             # Filter the schema.table so that only the included tables gets processed
-            for include in self.atlasIncludeFilter.split(";"):
+            for include in self.atlas_include_filter.split(";"):
                 try:
                     include_schema = include.split(".")[0].replace("*", ".*").lower()
                     include_table = include.split(".")[1].replace("*", ".*").lower()
@@ -1231,7 +1233,7 @@ class atlasOperation:
                     pass
 
             # Filter the schema.table so we remove the excluded items
-            for exclude in self.atlasExcludeFilter.split(";"):
+            for exclude in self.atlas_exclude_filter.split(";"):
                 try:
                     exclude_schema = exclude.split(".")[0].replace("*", ".*").lower()
                     exclude_table = exclude.split(".")[1].replace("*", ".*").lower()
@@ -1273,13 +1275,13 @@ class atlasOperation:
                     "Deleting Atlas table for %s.%s on dbalias %s",
                     row["schema"],
                     row["table"],
-                    self.dbAlias,
+                    self.db_alias,
                 )
             else:
                 log.info(
                     "Deleting Atlas table for %s on dbalias %s",
                     row["table"],
-                    self.dbAlias,
+                    self.db_alias,
                 )
 
             atlas_rest_url = "%s/rdbms_table?attr:qualifiedName=%s" % (
@@ -1306,7 +1308,7 @@ class atlasOperation:
         if atlas_foreign_key_error_detected == True:
             raise foreignKeyError
 
-        log.info("Finished Atlas discovery on connection '%s'" % (self.dbAlias))
+        log.info("Finished Atlas discovery on connection '%s'" % (self.db_alias))
         log.debug("Executing atlas_operations.discover_atlas_rdbms() - Finished")
 
     def disconnect_from_jdbc(self):
@@ -1314,7 +1316,7 @@ class atlasOperation:
         log.debug("Disconnect from JDBC database")
 
         try:
-            self.JDBCCursor.close()
+            self.jdbc_cursor.close()
             self.jdbc_conn.close()
 
         except AttributeError:
@@ -1332,12 +1334,12 @@ class atlasOperation:
             log.info(exception.message())
             pass
 
-        self.JDBCCursor = None
+        self.jdbc_cursor = None
 
     def connect_to_jdbc(self, force=False):
         log = logging.getLogger(self.logger_name)
 
-        if self.JDBCCursor == None or force == True:
+        if self.jdbc_cursor == None or force == True:
             log.debug("Connecting to database over JDBC")
             log.debug("	self.jdbc_username = %s" % (self.jdbc_username))
             log.debug("	self.jdbc_password = %s" % (self.jdbc_password))
@@ -1356,7 +1358,7 @@ class atlasOperation:
                     jdbc_credentials,
                     self.jdbc_classpath_for_python,
                 )
-                self.JDBCCursor = self.jdbc_conn.cursor()
+                self.jdbc_cursor = self.jdbc_conn.cursor()
             except jpype.JavaException as exception:
                 # 				log.error("Connection to database over JDBC failed with the following error:")
                 log.error(exception.message())
@@ -1364,10 +1366,10 @@ class atlasOperation:
 
     def get_dbimport_session(self):
         log = logging.getLogger(self.logger_name)
-        if self.configDBSession == None:
+        if self.config_db_session == None:
             self.connect_dbimport_db()
 
-        return self.configDBSession()
+        return self.config_db_session()
 
     def connect_dbimport_db(self):
         # Esablish a SQLAlchemy connection to the DBImport database
@@ -1376,10 +1378,10 @@ class atlasOperation:
 
         try:
             self.config_db_engine = sa.create_engine(
-                self.connect_str, echo=self.debugLogLevel
+                self.connect_str, echo=self.debug_log_level
             )
             self.config_db_engine.connect()
-            self.configDBSession = sessionmaker(bind=self.config_db_engine)
+            self.config_db_session = sessionmaker(bind=self.config_db_engine)
 
         except sa.exc.OperationalError as err:
             raise SQLerror(err)
@@ -1397,7 +1399,7 @@ class atlasOperation:
             self.config_db_engine.dispose()
             self.config_db_engine = None
 
-        self.configDBSession = None
+        self.config_db_session = None
 
     def update_atlas_with_rdbms_data(
         self, schema_name, table_name, print_info=True, error_on_warning=False
@@ -1406,14 +1408,14 @@ class atlasOperation:
         log = logging.getLogger(self.logger_name)
         log.debug("Executing atlas_operations.updateAtlasWithSourceSchema()")
 
-        if self.atlasEnabled == False:
+        if self.atlas_enabled == False:
             return False
 
         delete_column_error_found = False
         foreign_key_error_found = False
 
         if self.source_columns_df.empty == True:
-            self.atlasEnabled = False
+            self.atlas_enabled = False
             log.warning(
                 "Atlas opertions class was not initialized correctly. source_columns_df is empty. Atlas integrations disabled"
             )
@@ -1423,7 +1425,7 @@ class atlasOperation:
         if print_info == True:
             log.info("Updating Atlas with remote database schema")
 
-        self.tableType = self.sourceSchema.get_jdbc_table_type(
+        self.table_type = self.schema_reader.get_jdbc_table_type(
             self.jdbc_servertype, self.source_columns_df.iloc[0]["TABLE_TYPE"]
         )
 
@@ -1525,7 +1527,7 @@ class atlasOperation:
                 "Request from Atlas when updating source schema was %s." % (status_code)
             )
             log.warning("%s" % (response["data"]))
-            self.atlasEnabled == False  # noqa: B015  # TODO(#182): = was meant
+            self.atlas_enabled == False  # noqa: B015  # TODO(#182): = was meant
             raise atlasError
 
         # We now have to find columns that exists in DBImport but not in the source anymore.
@@ -1551,7 +1553,7 @@ class atlasOperation:
                 "Request from Atlas when updating source schema was %s." % (status_code)
             )
             log.warning("%s" % (response["data"]))
-            self.atlasEnabled == False  # noqa: B015  # TODO(#182): = was meant
+            self.atlas_enabled == False  # noqa: B015  # TODO(#182): = was meant
             raise atlasError
 
         for json_ref_entities in response_data["referredEntities"]:
@@ -1604,7 +1606,7 @@ class atlasOperation:
                             % (status_code)
                         )
                         log.warning("%s" % (response["data"]))
-                        self.atlasEnabled == False  # noqa: B015  # TODO(#182): = was meant
+                        self.atlas_enabled == False  # noqa: B015  # TODO(#182): = was meant
                         delete_column_error_found = True
 
         # Code to add Foreign Keys to table. This is done in a new JSON as we reference the table we just created. One JSON per FK
@@ -1773,7 +1775,7 @@ class atlasOperation:
                             % (status_code)
                         )
                         log.warning("%s" % (response["data"]))
-                        self.atlasEnabled == False  # noqa: B015  # TODO(#182): = was meant
+                        self.atlas_enabled == False  # noqa: B015  # TODO(#182): = was meant
                         foreign_key_error_found = True
                     else:
                         log.debug(
@@ -1802,7 +1804,7 @@ class atlasOperation:
         log = logging.getLogger(self.logger_name)
         log.debug("Executing atlas_operations.get_atlas_rdbms_column_uri()")
 
-        if self.atlasEnabled == False:
+        if self.atlas_enabled == False:
             return None
 
         if self.jdbc_servertype == constant.ORACLE:
@@ -1895,7 +1897,7 @@ class atlasOperation:
             logging.warning(
                 "The Atlas integrations does not support this database type. Atlas integration disabled"
             )
-            self.atlasEnabled = False
+            self.atlas_enabled = False
             return None
 
         log.debug("Executing atlas_operations.get_atlas_rdbms_column_uri() - Finished")
@@ -1913,7 +1915,7 @@ class atlasOperation:
         instance_type = None
         environment_type = None
 
-        if self.atlasEnabled == False:
+        if self.atlas_enabled == False:
             return None
 
         if self.jdbc_environment == None:
@@ -2072,7 +2074,7 @@ class atlasOperation:
             logging.warning(
                 "The Atlas integrations does not support this database type. Atlas integration disabled"
             )
-            self.atlasEnabled = False
+            self.atlas_enabled = False
             return None
 
         return_dict = {}
@@ -2102,7 +2104,7 @@ class atlasOperation:
         log = logging.getLogger(self.logger_name)
         log.debug("Executing atlas_operations.update_atlas_with_import_lineage()")
 
-        if self.atlasEnabled == False:
+        if self.atlas_enabled == False:
             return
 
         log.info("Updating Atlas with import lineage")
@@ -2168,7 +2170,7 @@ class atlasOperation:
                 "Request from Atlas when updating import lineage was %s."
                 % (status_code)
             )
-            self.atlasEnabled == False  # noqa: B015  # TODO(#182): = was meant
+            self.atlas_enabled == False  # noqa: B015  # TODO(#182): = was meant
 
         log.debug(
             "Executing atlas_operations.update_atlas_with_import_lineage() - Finished"
@@ -2191,7 +2193,7 @@ class atlasOperation:
         log = logging.getLogger(self.logger_name)
         log.debug("Executing atlas_operations.update_atlas_with_export_lineage()")
 
-        if self.atlasEnabled == False:
+        if self.atlas_enabled == False:
             return
 
         log.info("Updating Atlas with export lineage")
@@ -2216,16 +2218,20 @@ class atlasOperation:
         instance_name = return_dict["instanceName"]
         instance_type = return_dict["instanceType"]
 
-        process_name = "%s.%s.%s@DBimport" % (self.dbAlias, target_schema, target_table)
+        process_name = "%s.%s.%s@DBimport" % (
+            self.db_alias,
+            target_schema,
+            target_table,
+        )
 
         if temp_table_needed == True:
             hive_qualified_name = "%s.%s@%s" % (
                 hive_export_temp_db,
                 hive_export_temp_table,
-                self.clusterName,
+                self.cluster_name,
             )
         else:
-            hive_qualified_name = "%s.%s@%s" % (hive_db, hive_table, self.clusterName)
+            hive_qualified_name = "%s.%s@%s" % (hive_db, hive_table, self.cluster_name)
 
         json_data["referredEntities"]["-500"] = {}
         json_data["referredEntities"]["-500"]["guid"] = "-500"
@@ -2274,7 +2280,7 @@ class atlasOperation:
                 "Request from Atlas when updating import lineage was %s."
                 % (status_code)
             )
-            self.atlasEnabled == False  # noqa: B015  # TODO(#182): = was meant
+            self.atlas_enabled == False  # noqa: B015  # TODO(#182): = was meant
 
         log.debug(
             "Executing atlas_operations.update_atlas_with_export_lineage() - Finished"

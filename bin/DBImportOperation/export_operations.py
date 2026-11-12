@@ -39,22 +39,22 @@ class operation(metaclass=Singleton):
     def __init__(self, connection_alias=None, target_schema=None, target_table=None):
         logging.debug("Executing export_operations.__init__()")
 
-        self.connectionAlias = connection_alias
-        self.targetSchema = target_schema
-        self.targetTable = target_table
-        self.hiveDB = None
-        self.hiveTable = None
-        self.hiveExportTempDB = None
-        self.hiveExportTempTable = None
-        self.tempTableNeeded = None
+        self.connection_alias = connection_alias
+        self.target_schema = target_schema
+        self.target_table = target_table
+        self.hive_db = None
+        self.hive_table = None
+        self.hive_export_temp_db = None
+        self.hive_export_temp_table = None
+        self.temp_table_needed = None
 
-        self.sqoopSize = None
-        self.sqoopRows = None
-        self.sqoopMappers = None
+        self.sqoop_size = None
+        self.sqoop_rows = None
+        self.sqoop_mappers = None
 
         self.global_hive_configuration_set = False
 
-        self.atlasOperation = atlas_operations.atlasOperation()
+        self.atlas_operation = atlas_operations.atlasOperation()
 
         if connection_alias == None and target_schema == None and target_table == None:
             self.export_config = export_config.config()
@@ -70,24 +70,24 @@ class operation(metaclass=Singleton):
 
                 self.export_config.get_export_config()
 
-                self.hiveDB = self.export_config.hiveDB
-                self.hiveTable = self.export_config.hiveTable
-                self.hiveExportTempDB = self.export_config.hiveExportTempDB
-                self.hiveExportTempTable = self.export_config.hiveExportTempTable
+                self.hive_db = self.export_config.hive_db
+                self.hive_table = self.export_config.hive_table
+                self.hive_export_temp_db = self.export_config.hive_export_temp_db
+                self.hive_export_temp_table = self.export_config.hive_export_temp_table
 
-                self.check_db(self.hiveDB)
-                self.check_table(self.hiveDB, self.hiveTable)
+                self.check_db(self.hive_db)
+                self.check_table(self.hive_db, self.hive_table)
 
                 self.common_operations.set_hive_table(
-                    hive_db=self.hiveDB, hive_table=self.hiveTable
+                    hive_db=self.hive_db, hive_table=self.hive_table
                 )
                 self.hive_table_is_transactional = (
                     self.common_operations.is_table_transactional(
-                        hive_db=self.hiveDB, hive_table=self.hiveTable
+                        hive_db=self.hive_db, hive_table=self.hive_table
                     )
                 )
                 self.hive_table_is_view = self.common_operations.is_table_view(
-                    hive_db=self.hiveDB, hive_table=self.hiveTable
+                    hive_db=self.hive_db, hive_table=self.hive_table
                 )
 
             except invalidConfiguration as errMsg:
@@ -164,7 +164,7 @@ class operation(metaclass=Singleton):
             == True
         ):
             self.common_operations.remove_locks_by_force(
-                self.hiveExportTempDB, self.hiveExportTempTable
+                self.hive_export_temp_db, self.hive_export_temp_table
             )
 
     def check_table(self, hive_db, hive_table):
@@ -176,59 +176,59 @@ class operation(metaclass=Singleton):
             sys.exit(1)
 
     def update_atlas_with_export_data(self):
-        if self.atlasOperation.check_atlas_schema() == True:
-            target_schema = self.export_config.targetSchema
-            target_table = self.export_config.targetTable
+        if self.atlas_operation.check_atlas_schema() == True:
+            target_schema = self.export_config.target_schema
+            target_table = self.export_config.target_table
 
             if self.export_config.common_config.jdbc_servertype in (
                 constant.ORACLE,
                 constant.DB2_UDB,
             ):
-                target_schema = self.export_config.targetSchema.upper()
-                target_table = self.export_config.targetTable.upper()
+                target_schema = self.export_config.target_schema.upper()
+                target_table = self.export_config.target_table.upper()
 
             if self.export_config.common_config.jdbc_servertype in (
                 constant.POSTGRESQL
             ):
-                target_schema = self.export_config.targetSchema.lower()
-                target_table = self.export_config.targetTable.lower()
+                target_schema = self.export_config.target_schema.lower()
+                target_table = self.export_config.target_table.lower()
 
             config_object = (
                 self.export_config.common_config.get_atlas_discover_config_object()
             )
-            self.atlasOperation.set_configuration(config_object)
+            self.atlas_operation.set_configuration(config_object)
 
             start_stop_dict = self.export_config.stage.get_stage_start_stop(
-                stage=self.export_config.exportTool
+                stage=self.export_config.export_tool
             )
 
             # Fetch the remote system schema again as it might have been updated in the export
             self.export_config.common_config.get_jdbc_table_definition(
                 source_schema=target_schema, source_table=target_table, print_info=False
             )
-            self.atlasOperation.source_columns_df = (
+            self.atlas_operation.source_columns_df = (
                 self.export_config.common_config.source_columns_df
             )
-            self.atlasOperation.source_keys_df = (
+            self.atlas_operation.source_keys_df = (
                 self.export_config.common_config.source_keys_df
             )
 
             try:
-                self.atlasOperation.update_atlas_with_rdbms_data(
+                self.atlas_operation.update_atlas_with_rdbms_data(
                     schema_name=target_schema, table_name=target_table
                 )
 
-                self.atlasOperation.update_atlas_with_export_lineage(
-                    hive_db=self.hiveDB,
-                    hive_table=self.hiveTable,
-                    hive_export_temp_db=self.export_config.hiveExportTempDB,
-                    hive_export_temp_table=self.export_config.hiveExportTempTable,
+                self.atlas_operation.update_atlas_with_export_lineage(
+                    hive_db=self.hive_db,
+                    hive_table=self.hive_table,
+                    hive_export_temp_db=self.export_config.hive_export_temp_db,
+                    hive_export_temp_table=self.export_config.hive_export_temp_table,
                     target_schema=target_schema,
                     target_table=target_table,
-                    temp_table_needed=self.export_config.tempTableNeeded,
+                    temp_table_needed=self.export_config.temp_table_needed,
                     start_stop_dict=start_stop_dict,
-                    full_executed_command=self.export_config.fullExecutedCommand,
-                    export_tool=self.export_config.exportTool,
+                    full_executed_command=self.export_config.full_executed_command,
+                    export_tool=self.export_config.export_tool,
                 )
             except:
                 pass
@@ -249,8 +249,8 @@ class operation(metaclass=Singleton):
             self.export_config.update_last_update_from_hive()
             self.export_config.save_column_data(
                 columns_df=self.common_operations.get_columns(
-                    self.hiveDB,
-                    self.hiveTable,
+                    self.hive_db,
+                    self.hive_table,
                     include_type=True,
                     include_comment=True,
                     include_idx=True,
@@ -269,16 +269,16 @@ class operation(metaclass=Singleton):
 
     def drop_jdbc_table(self):
         try:
-            if self.export_config.truncateTargetTable == True:
+            if self.export_config.truncate_target_table == True:
                 if (
                     self.export_config.common_config.check_jdbc_table(
-                        schema=self.targetSchema, table=self.targetTable
+                        schema=self.target_schema, table=self.target_table
                     )
                     == True
                 ):
                     logging.info("Dropping Target Table")
                     self.export_config.common_config.drop_jdbc_table(
-                        schema=self.targetSchema, table=self.targetTable
+                        schema=self.target_schema, table=self.target_table
                     )
                 else:
                     logging.warning("Nothing to drop. Target table does not exists")
@@ -292,10 +292,10 @@ class operation(metaclass=Singleton):
             sys.exit(1)
 
     def truncate_jdbc_table(self, force=False):
-        if self.export_config.truncateTargetTable == True or force == True:
+        if self.export_config.truncate_target_table == True or force == True:
             logging.info("Truncating Target Table")
             self.export_config.common_config.truncate_jdbc_table(
-                schema=self.targetSchema, table=self.targetTable
+                schema=self.target_schema, table=self.target_table
             )
 
     def create_target_table(self):
@@ -317,7 +317,7 @@ class operation(metaclass=Singleton):
         except SQLerror as errMsg:
             if "ORA-22859: invalid modification of columns" in str(errMsg):
                 # We get this message from Oracle when we try to change a column type that is not supported
-                if self.export_config.exportIsIncremental == False:
+                if self.export_config.export_is_incremental == False:
                     try:
                         logging.info(
                             "There is a column type change that is not supported by Oracle. But because this export is a full export, we will drop the Target table and recreate it automatically"
@@ -515,7 +515,7 @@ class operation(metaclass=Singleton):
 
     def is_export_temp_table_needed(self):
         try:
-            self.tempTableNeeded = self.export_config.is_export_temp_table_needed(
+            self.temp_table_needed = self.export_config.is_export_temp_table_needed(
                 hive_table_is_transactional=self.hive_table_is_transactional,
                 hive_table_is_view=self.hive_table_is_view,
             )
@@ -530,15 +530,15 @@ class operation(metaclass=Singleton):
             self.export_config.remove_temporary_files()
             sys.exit(1)
 
-        return self.tempTableNeeded
+        return self.temp_table_needed
 
     def get_incr_maxvalue_from_hive(self, column=None, hive_db=None, hive_table=None):
         logging.debug("Executing export_operations.get_incr_maxvalue_from_hive()")
 
         if hive_db == None:
-            hive_db = self.hiveDB
+            hive_db = self.hive_db
         if hive_table == None:
-            hive_table = self.hiveTable
+            hive_table = self.hive_table
         if column == None:
             column = self.export_config.incr_column
 
@@ -557,13 +557,13 @@ class operation(metaclass=Singleton):
     ):
         if (
             self.common_operations.is_table_view(
-                hive_db=self.hiveDB, hive_table=self.hiveTable
+                hive_db=self.hive_db, hive_table=self.hive_table
             )
             == False
         ):
             logging.info("Updating the Hive statistics on the exported table")
             self.common_operations.update_hive_table_statistics(
-                self.hiveDB, self.hiveTable
+                self.hive_db, self.hive_table
             )
 
     def create_export_temp_table(self):
@@ -571,18 +571,18 @@ class operation(metaclass=Singleton):
 
         if (
             self.common_operations.check_table(
-                self.hiveExportTempDB, self.hiveExportTempTable
+                self.hive_export_temp_db, self.hive_export_temp_table
             )
             == False
         ):
             # Target table does not exist. We just create it in that case
             logging.info(
                 "Creating Export Temp table %s.%s in Hive",
-                self.hiveExportTempDB,
-                self.hiveExportTempTable,
+                self.hive_export_temp_db,
+                self.hive_export_temp_table,
             )
 
-            if self.export_config.exportTool == "sqoop":
+            if self.export_config.export_tool == "sqoop":
                 columns_df = self.export_config.get_columns_from_config_database(
                     exclude_columns=True, get_replaced_column_types=True
                 )
@@ -592,8 +592,8 @@ class operation(metaclass=Singleton):
                 )
 
             query = "create table `%s`.`%s` (" % (
-                self.hiveExportTempDB,
-                self.hiveExportTempTable,
+                self.hive_export_temp_db,
+                self.hive_export_temp_table,
             )
 
             first_loop = True
@@ -634,9 +634,9 @@ class operation(metaclass=Singleton):
 
         if self.global_hive_configuration_set == False:
             self.global_hive_configuration_set = True
-            if self.export_config.hiveJavaHeap != None:
+            if self.export_config.hive_java_heap != None:
                 query = "set hive.tez.container.size=%s" % (
-                    self.export_config.hiveJavaHeap
+                    self.export_config.hive_java_heap
                 )
                 self.common_operations.execute_hive_query(query)
 
@@ -651,14 +651,14 @@ class operation(metaclass=Singleton):
     def update_export_temp_table(self):
         """Update the Export Temp table based on the column information in the configuration database"""
         logging.debug("Executing export_operations.update_export_temp_table()")
-        hive_db = self.hiveExportTempDB
-        hive_table = self.hiveExportTempTable
+        hive_db = self.hive_export_temp_db
+        hive_table = self.hive_export_temp_table
 
         columns_hive = self.common_operations.get_columns(
             hive_db, hive_table, include_type=True, include_idx=False
         )
 
-        if self.export_config.exportTool == "sqoop":
+        if self.export_config.export_tool == "sqoop":
             columns_config = self.export_config.get_columns_from_config_database(
                 exclude_columns=True, get_replaced_column_types=True
             )
@@ -963,8 +963,8 @@ class operation(metaclass=Singleton):
         self,
     ):
         logging.info("Truncating Export Temp table in Hive")
-        self.common_operations.truncateHiveTable(
-            self.hiveExportTempDB, self.hiveExportTempTable
+        self.common_operations.truncate_hive_table(
+            self.hive_export_temp_db, self.hive_export_temp_table
         )
 
     def update_statistics_on_export_temp_table(
@@ -972,7 +972,7 @@ class operation(metaclass=Singleton):
     ):
         logging.info("Updating the Hive statistics on the Export Temp table")
         self.common_operations.update_hive_table_statistics(
-            self.hiveExportTempDB, self.hiveExportTempTable
+            self.hive_export_temp_db, self.hive_export_temp_table
         )
 
     def insert_data_into_export_temp_table(self):
@@ -987,8 +987,8 @@ class operation(metaclass=Singleton):
         )
 
         query = "insert into `%s`.`%s` (" % (
-            self.hiveExportTempDB,
-            self.hiveExportTempTable,
+            self.hive_export_temp_db,
+            self.hive_export_temp_table,
         )
 
         first_loop = True
@@ -1011,9 +1011,9 @@ class operation(metaclass=Singleton):
             query += "`%s`" % (row["hiveColumnName"])
             first_loop = False
 
-        query += " from `%s`.`%s` " % (self.hiveDB, self.hiveTable)
+        query += " from `%s`.`%s` " % (self.hive_db, self.hive_table)
 
-        if self.export_config.exportIsIncremental == True:
+        if self.export_config.export_is_incremental == True:
             query += "where "
             query += self.export_config.get_incr_where_statement()
 
@@ -1050,14 +1050,14 @@ class operation(metaclass=Singleton):
             constant.DB2_UDB,
         ):
             force_column_uppercase = True
-            target_schema = self.targetSchema.upper()
-            target_table = self.targetTable.upper()
+            target_schema = self.target_schema.upper()
+            target_table = self.target_table.upper()
         elif self.export_config.common_config.jdbc_servertype in (constant.POSTGRESQL):
-            target_schema = self.targetSchema.lower()
-            target_table = self.targetTable.lower()
+            target_schema = self.target_schema.lower()
+            target_table = self.target_table.lower()
         else:
-            target_schema = self.targetSchema
-            target_table = self.targetTable
+            target_schema = self.target_schema
+            target_table = self.target_table
 
         if self.export_config.common_config.jdbc_servertype == constant.AWS_S3:
             # As we cant verify schema on S3 files, we are just going to read what we have in Hive and export all columns
@@ -1094,11 +1094,11 @@ class operation(metaclass=Singleton):
                     column_starting_with_underscore_found = True
 
             if self.is_export_temp_table_needed() == True:
-                hive_db = self.hiveExportTempDB
-                hive_table = self.hiveExportTempTable
+                hive_db = self.hive_export_temp_db
+                hive_table = self.hive_export_temp_table
             else:
-                hive_db = self.hiveDB
-                hive_table = self.hiveTable
+                hive_db = self.hive_db
+                hive_table = self.hive_table
 
             spark_query = "select %s from `%s`.`%s`" % (
                 column_list,
@@ -1181,11 +1181,11 @@ class operation(metaclass=Singleton):
                         column_starting_with_underscore_found = True
 
             if self.is_export_temp_table_needed() == True:
-                hive_db = self.hiveExportTempDB
-                hive_table = self.hiveExportTempTable
+                hive_db = self.hive_export_temp_db
+                hive_table = self.hive_export_temp_table
             else:
-                hive_db = self.hiveDB
-                hive_table = self.hiveTable
+                hive_db = self.hive_db
+                hive_table = self.hive_table
 
             spark_query = "select %s from `%s`.`%s`" % (
                 column_list,
@@ -1207,7 +1207,7 @@ class operation(metaclass=Singleton):
                     spark_write_table = "%s.%s" % (target_schema, target_table)
 
         # Setup the additional path required to find the libraries/modules
-        for path in self.export_config.common_config.sparkPathAppend.split(","):
+        for path in self.export_config.common_config.spark_path_append.split(","):
             sys.path.append(path.strip())
 
         # Create a valid PYSPARK_SUBMIT_ARGS string
@@ -1215,8 +1215,8 @@ class operation(metaclass=Singleton):
         spark_jars = ""
 
         first_loop = True
-        if self.export_config.common_config.sparkJarFiles.strip() != "":
-            for jar_file in self.export_config.common_config.sparkJarFiles.split(","):
+        if self.export_config.common_config.spark_jar_files.strip() != "":
+            for jar_file in self.export_config.common_config.spark_jar_files.split(","):
                 if first_loop == False:
                     spark_pyspark_submit_args += ","
                     spark_jars += ","
@@ -1232,10 +1232,10 @@ class operation(metaclass=Singleton):
             spark_jars += jar_file.strip()
             first_loop = False
 
-        if self.export_config.common_config.sparkPyFiles.strip() != "":
+        if self.export_config.common_config.spark_py_files.strip() != "":
             spark_pyspark_submit_args += " --py-files "
             first_loop = True
-            for py_file in self.export_config.common_config.sparkPyFiles.split(","):
+            for py_file in self.export_config.common_config.spark_py_files.split(","):
                 if first_loop == False:
                     spark_pyspark_submit_args += ","
                 spark_pyspark_submit_args += py_file.strip()
@@ -1251,15 +1251,15 @@ class operation(metaclass=Singleton):
             "======================================================================="
         )
         logging.debug("sparkQuery: %s", spark_query)
-        logging.debug("parallell sessions: %s", self.export_config.sqlSessions)
+        logging.debug("parallell sessions: %s", self.export_config.sql_sessions)
         logging.debug(
             "Spark Executor Memory: %s",
-            self.export_config.common_config.sparkExecutorMemory,
+            self.export_config.common_config.spark_executor_memory,
         )
-        logging.debug("Spark Max Executors: %s", self.export_config.sparkMaxExecutors)
+        logging.debug("Spark Max Executors: %s", self.export_config.spark_max_executors)
         logging.debug(
             "Spark Dynamic Executors: %s",
-            self.export_config.common_config.sparkDynamicAllocation,
+            self.export_config.common_config.spark_dynamic_allocation,
         )
         logging.debug(
             "======================================================================="
@@ -1279,72 +1279,74 @@ class operation(metaclass=Singleton):
         from pyspark.sql import SparkSession
 
         conf = SparkConf()
-        conf.setMaster(self.export_config.common_config.sparkMaster)
+        conf.setMaster(self.export_config.common_config.spark_master)
         conf.set(
-            "spark.submit.deployMode", self.export_config.common_config.sparkDeployMode
+            "spark.submit.deployMode",
+            self.export_config.common_config.spark_deploy_mode,
         )
-        conf.setAppName("DBImport Export - %s.%s" % (self.hiveDB, self.hiveTable))
+        conf.setAppName("DBImport Export - %s.%s" % (self.hive_db, self.hive_table))
         conf.set("spark.jars", spark_jars)
         conf.set(
             "spark.executor.memory",
-            self.export_config.common_config.sparkExecutorMemory,
+            self.export_config.common_config.spark_executor_memory,
         )
-        conf.set("spark.yarn.queue", self.export_config.common_config.sparkYarnQueue)
+        conf.set("spark.yarn.queue", self.export_config.common_config.spark_yarn_queue)
         conf.set("spark.hadoop.yarn.timeline-service.enabled", "false")
         conf.set("spark.hive.llap.execution.mode", "only")
         conf.set("spark.sql.extensions", "com.hortonworks.spark.sql.rule.Extensions")
         conf.set("spark.datasource.hive.warehouse.read.mode", "DIRECT_READER_V1")
         conf.set("spark.sql.parquet.int96RebaseModeInWrite", "LEGACY")
 
-        if self.export_config.common_config.sparkDynamicAllocation == True:
+        if self.export_config.common_config.spark_dynamic_allocation == True:
             conf.set("spark.shuffle.service.enabled", "true")
             conf.set("spark.dynamicAllocation.enabled", "true")
             conf.set("spark.dynamicAllocation.minExecutors", "0")
             conf.set(
                 "spark.dynamicAllocation.maxExecutors",
-                str(self.export_config.sparkMaxExecutors),
+                str(self.export_config.spark_max_executors),
             )
             logging.info(
                 "Number of executors is dynamic with a max value of %s executors",
-                self.export_config.sparkMaxExecutors,
+                self.export_config.spark_max_executors,
             )
-            self.sqoopMappers = -1
+            self.sqoop_mappers = -1
         else:
             conf.set("spark.dynamicAllocation.enabled", "false")
             conf.set("spark.shuffle.service.enabled", "false")
-            if self.export_config.sqlSessions < self.export_config.sparkMaxExecutors:
+            if self.export_config.sql_sessions < self.export_config.spark_max_executors:
                 conf.set(
-                    "spark.executor.instances", str(self.export_config.sqlSessions)
-                )
-                logging.info(
-                    "Number of executors is fixed at %s", self.export_config.sqlSessions
-                )
-                self.sqoopMappers = self.export_config.sqlSessions
-            else:
-                conf.set(
-                    "spark.executor.instances",
-                    str(self.export_config.sparkMaxExecutors),
+                    "spark.executor.instances", str(self.export_config.sql_sessions)
                 )
                 logging.info(
                     "Number of executors is fixed at %s",
-                    self.export_config.sparkMaxExecutors,
+                    self.export_config.sql_sessions,
                 )
-                self.sqoopMappers = self.export_config.sparkMaxExecutors
+                self.sqoop_mappers = self.export_config.sql_sessions
+            else:
+                conf.set(
+                    "spark.executor.instances",
+                    str(self.export_config.spark_max_executors),
+                )
+                logging.info(
+                    "Number of executors is fixed at %s",
+                    self.export_config.spark_max_executors,
+                )
+                self.sqoop_mappers = self.export_config.spark_max_executors
 
         if self.export_config.common_config.jdbc_servertype == constant.AWS_S3:
             conf.set("spark.sql.parquet.datetimeRebaseModeInWrite", "LEGACY")
 
-            if self.export_config.common_config.awsS3proxyServer != None:
+            if self.export_config.common_config.aws_s3_proxy_server != None:
                 os.environ["HTTPS_PROXY"] = (
-                    self.export_config.common_config.awsS3proxyServer
+                    self.export_config.common_config.aws_s3_proxy_server
                 )
                 aws_s3_proxy_host = (
-                    self.export_config.common_config.awsS3proxyServer.split("//")[
+                    self.export_config.common_config.aws_s3_proxy_server.split("//")[
                         1
                     ].split(":")[0]
                 )
                 aws_s3_proxy_port = (
-                    self.export_config.common_config.awsS3proxyServer.split("//")[
+                    self.export_config.common_config.aws_s3_proxy_server.split("//")[
                         1
                     ].split(":")[1]
                 )
@@ -1353,51 +1355,54 @@ class operation(metaclass=Singleton):
                 logging.debug("awsS3proxyHost: %s", aws_s3_proxy_host)
                 logging.debug("awsS3proxyPort: %s", aws_s3_proxy_port)
 
-            if self.export_config.common_config.awsS3assumeRole != None:
+            if self.export_config.common_config.aws_s3_assume_role != None:
                 session = boto3.Session(
                     aws_access_key_id=self.export_config.common_config.jdbc_username,
                     aws_secret_access_key=self.export_config.common_config.jdbc_password,
-                    region_name=self.export_config.common_config.awsS3region,
+                    region_name=self.export_config.common_config.aws_s3_region,
                 )
 
                 sts = session.client("sts")
                 role_session_name = "DBImport_export_%s.%s" % (
-                    self.hiveDB,
-                    self.hiveTable,
+                    self.hive_db,
+                    self.hive_table,
                 )
 
                 if (
-                    self.export_config.common_config.awsS3externalId == None
-                    and self.export_config.common_config.awsS3assumeRoleDuration == None
+                    self.export_config.common_config.aws_s3_external_id == None
+                    and self.export_config.common_config.aws_s3_assume_role_duration
+                    == None
                 ):
                     response = sts.assume_role(
-                        RoleArn=self.export_config.common_config.awsS3assumeRole,
+                        RoleArn=self.export_config.common_config.aws_s3_assume_role,
                         RoleSessionName=role_session_name[0:64],
                     )
                 elif (
-                    self.export_config.common_config.awsS3externalId == None
-                    and self.export_config.common_config.awsS3assumeRoleDuration != None
+                    self.export_config.common_config.aws_s3_external_id == None
+                    and self.export_config.common_config.aws_s3_assume_role_duration
+                    != None
                 ):
                     response = sts.assume_role(
-                        RoleArn=self.export_config.common_config.awsS3assumeRole,
+                        RoleArn=self.export_config.common_config.aws_s3_assume_role,
                         RoleSessionName=role_session_name[0:64],
-                        DurationSeconds=self.export_config.common_config.awsS3assumeRoleDuration,
+                        DurationSeconds=self.export_config.common_config.aws_s3_assume_role_duration,
                     )
                 elif (
-                    self.export_config.common_config.awsS3externalId != None
-                    and self.export_config.common_config.awsS3assumeRoleDuration == None
+                    self.export_config.common_config.aws_s3_external_id != None
+                    and self.export_config.common_config.aws_s3_assume_role_duration
+                    == None
                 ):
                     response = sts.assume_role(
-                        RoleArn=self.export_config.common_config.awsS3assumeRole,
+                        RoleArn=self.export_config.common_config.aws_s3_assume_role,
                         RoleSessionName=role_session_name[0:64],
-                        ExternalId=self.export_config.common_config.awsS3externalId,
+                        ExternalId=self.export_config.common_config.aws_s3_external_id,
                     )
                 else:
                     response = sts.assume_role(
-                        RoleArn=self.export_config.common_config.awsS3assumeRole,
+                        RoleArn=self.export_config.common_config.aws_s3_assume_role,
                         RoleSessionName=role_session_name[0:64],
-                        ExternalId=self.export_config.common_config.awsS3externalId,
-                        DurationSeconds=self.export_config.common_config.awsS3assumeRoleDuration,
+                        ExternalId=self.export_config.common_config.aws_s3_external_id,
+                        DurationSeconds=self.export_config.common_config.aws_s3_assume_role_duration,
                     )
 
                 credentials = response["Credentials"]
@@ -1417,7 +1422,7 @@ class operation(metaclass=Singleton):
 
                 s3client = boto3.resource(
                     "s3",
-                    region_name=self.export_config.common_config.awsS3region,
+                    region_name=self.export_config.common_config.aws_s3_region,
                     config=boto3.session.Config(s3={"addressing_style": "virtual"}),
                     aws_access_key_id=credentials["AccessKeyId"],
                     aws_secret_access_key=credentials["SecretAccessKey"],
@@ -1442,7 +1447,7 @@ class operation(metaclass=Singleton):
 
             conf.set(
                 "spark.hadoop.fs.s3a.endpoint",
-                "s3.%s.amazonaws.com" % self.export_config.common_config.awsS3region,
+                "s3.%s.amazonaws.com" % self.export_config.common_config.aws_s3_region,
             )
         else:
             jdbc_connection_properties = {}
@@ -1458,24 +1463,27 @@ class operation(metaclass=Singleton):
 
         logging.debug(conf.getAll())
 
-        if self.export_config.common_config.sparkHiveLibrary == "HiveWarehouseSession":
+        if (
+            self.export_config.common_config.spark_hive_library
+            == "HiveWarehouseSession"
+        ):
             # Configuration for HDP 3.x and CDP
             from pyspark_llap import HiveWarehouseSession
 
             sc = SparkContext(conf=conf)
             spark = SparkSession(sc)
 
-        elif self.export_config.common_config.sparkHiveLibrary == "HiveContext":
+        elif self.export_config.common_config.spark_hive_library == "HiveContext":
             # Configuration for HDP 2.x
             sc = SparkContext(conf=conf)
             spark = SparkSession(sc)
 
-        self.yarnApplicationID = sc.applicationId
-        logging.info("Yarn application started with id %s" % (self.yarnApplicationID))
+        self.yarn_application_id = sc.applicationId
+        logging.info("Yarn application started with id %s" % (self.yarn_application_id))
         sys.stdout.flush()
 
         self.export_config.common_config.update_yarn_statistics(
-            self.yarnApplicationID, "spark"
+            self.yarn_application_id, "spark"
         )
 
         # Determine Spark version and find incompatable exports
@@ -1499,32 +1507,35 @@ class operation(metaclass=Singleton):
 
         sys.stdout.flush()
 
-        if self.export_config.common_config.sparkHiveLibrary == "HiveWarehouseSession":
+        if (
+            self.export_config.common_config.spark_hive_library
+            == "HiveWarehouseSession"
+        ):
             # Get DataFrame for HDP 3.x
             hive = HiveWarehouseSession.session(spark).build()
             df = hive.sql(spark_query)
 
-        elif self.export_config.common_config.sparkHiveLibrary == "HiveContext":
+        elif self.export_config.common_config.spark_hive_library == "HiveContext":
             # Get DataFrame for HDP 2.x
             df = HiveContext(sc).sql(spark_query)
 
-        if self.export_config.exportIsIncremental == True:
+        if self.export_config.export_is_incremental == True:
             df = df.filter(self.export_config.get_incr_where_statement())
 
-        if self.export_config.sqlWhereAddition != None:
-            df = df.filter("(%s)" % (self.export_config.sqlWhereAddition))
+        if self.export_config.sql_where_addition != None:
+            df = df.filter("(%s)" % (self.export_config.sql_where_addition))
 
         if self.export_config.common_config.jdbc_servertype == constant.AWS_S3:
             logging.info("Writing data to AWS S3 Bucket")
             sys.stdout.flush()
-            df.write.mode("overwrite").parquet(self.export_config.awsS3bucketPath)
+            df.write.mode("overwrite").parquet(self.export_config.aws_s3_bucket_path)
 
             logging.info("Writing schema to AWS S3 Bucket")
             sys.stdout.flush()
             df_schema = df.schema.json().encode("ascii")
             s3client.Object(
-                self.export_config.awsS3bucket,
-                f"{self.export_config.awsS3path}/_schema.json",
+                self.export_config.aws_s3_bucket,
+                f"{self.export_config.aws_s3_path}/_schema.json",
             ).put(Body=df_schema)
 
         else:
@@ -1536,12 +1547,12 @@ class operation(metaclass=Singleton):
             )
         spark_url = "%s/api/v1/applications/%s/allexecutors" % (
             sc.uiWebUrl,
-            self.yarnApplicationID,
+            self.yarn_application_id,
         )
-        self.kerberosPrincipal = configuration.get("Kerberos", "principal")
+        self.kerberos_principal = configuration.get("Kerberos", "principal")
         spark_auth = HTTPKerberosAuth(
             force_preemptive=True,
-            principal=self.kerberosPrincipal,
+            principal=self.kerberos_principal,
             mutual_authentication=OPTIONAL,
         )
 
@@ -1555,7 +1566,9 @@ class operation(metaclass=Singleton):
                 spark_executor_count += 1
 
         self.export_config.common_config.update_yarn_statistics(
-            self.yarnApplicationID, "spark", yarn_containers_total=spark_executor_count
+            self.yarn_application_id,
+            "spark",
+            yarn_containers_total=spark_executor_count,
         )
 
         time.sleep(
@@ -1572,7 +1585,7 @@ class operation(metaclass=Singleton):
 
         try:
             self.export_config.save_export_statistics(
-                self.spark_start_uts, sqoop_mappers=self.sqoopMappers
+                self.spark_start_uts, sqoop_mappers=self.sqoop_mappers
             )
         except:
             logging.error("Fatal error when saving spark statistics")
@@ -1586,7 +1599,7 @@ class operation(metaclass=Singleton):
         logging.debug("Executing export_operations.run_sqoop_export()")
 
         self.sqoop_start_timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
-        self.sqoopStartUTS = int(time.time())
+        self.sqoop_start_uts = int(time.time())
 
         force_column_uppercase = False
         if self.export_config.common_config.jdbc_servertype in (
@@ -1594,14 +1607,14 @@ class operation(metaclass=Singleton):
             constant.DB2_UDB,
         ):
             force_column_uppercase = True
-            target_schema = self.targetSchema.upper()
-            target_table = self.targetTable.upper()
+            target_schema = self.target_schema.upper()
+            target_table = self.target_table.upper()
         elif self.export_config.common_config.jdbc_servertype in (constant.POSTGRESQL):
-            target_schema = self.targetSchema.lower()
-            target_table = self.targetTable.lower()
+            target_schema = self.target_schema.lower()
+            target_table = self.target_table.lower()
         else:
-            target_schema = self.targetSchema
-            target_table = self.targetTable
+            target_schema = self.target_schema
+            target_table = self.target_table
 
         self.export_config.common_config.get_jdbc_table_definition(
             source_schema=target_schema, source_table=target_table
@@ -1618,11 +1631,11 @@ class operation(metaclass=Singleton):
         columns_target.drop("DEFAULT_VALUE", axis=1, inplace=True)
 
         if self.is_export_temp_table_needed() == True:
-            hive_db = self.hiveExportTempDB
-            hive_table = self.hiveExportTempTable
+            hive_db = self.hive_export_temp_db
+            hive_table = self.hive_export_temp_table
         else:
-            hive_db = self.hiveDB
-            hive_table = self.hiveTable
+            hive_db = self.hive_db
+            hive_table = self.hive_table
 
         logging.debug("forceColumnUppercase: %s", force_column_uppercase)
 
@@ -1710,7 +1723,7 @@ class operation(metaclass=Singleton):
         if len(map_column_java) > 0:
             sqoop_command.extend(["--map-column-java", ",".join(map_column_java)])
 
-        sqoop_command.extend(["--num-mappers", str(self.export_config.sqlSessions)])
+        sqoop_command.extend(["--num-mappers", str(self.export_config.sql_sessions)])
 
         # If we dont have a SQL query to use for sqoop, then we need to specify the table instead
         sqoop_command.extend(["--columns", ",".join(column_list)])
@@ -1760,12 +1773,12 @@ class operation(metaclass=Singleton):
         print("")
 
         # At this stage, the entire sqoop job is run and we fetched all data from the output. Lets parse and store it
-        if self.sqoopSize == None:
-            self.sqoopSize = 0
-        if self.sqoopRows == None:
-            self.sqoopRows = 0
-        if self.sqoopMappers == None:
-            self.sqoopMappers = 0
+        if self.sqoop_size == None:
+            self.sqoop_size = 0
+        if self.sqoop_rows == None:
+            self.sqoop_rows = 0
+        if self.sqoop_mappers == None:
+            self.sqoop_mappers = 0
 
         # Check for errors in output
         sqoop_warning = False
@@ -1795,10 +1808,10 @@ class operation(metaclass=Singleton):
 
         try:
             self.export_config.save_export_statistics(
-                self.sqoopStartUTS,
-                sqoop_size=self.sqoopSize,
-                sqoop_rows=self.sqoopRows,
-                sqoop_mappers=self.sqoopMappers,
+                self.sqoop_start_uts,
+                sqoop_size=self.sqoop_size,
+                sqoop_rows=self.sqoop_rows,
+                sqoop_mappers=self.sqoop_mappers,
             )
         except:
             logging.exception("Fatal error when saving sqoop statistics")
@@ -1810,40 +1823,40 @@ class operation(metaclass=Singleton):
     def parse_sqoop_output(self, row):
         # HDFS: Number of bytes written=17
         if "HDFS: Number of bytes read" in row:
-            self.sqoopSize = int(row.split("=")[1])
+            self.sqoop_size = int(row.split("=")[1])
 
         # 19/05/09 11:15:59 INFO mapreduce.ExportJobBase: Exported 8 records.
         if "mapreduce.ExportJobBase: Exported" in row:
-            self.sqoopRows = int(row.split(" ")[5])
+            self.sqoop_rows = int(row.split(" ")[5])
 
         # Launched map tasks=1
         if "Launched map tasks" in row:
-            self.sqoopMappers = int(row.split("=")[1])
+            self.sqoop_mappers = int(row.split("=")[1])
 
     def get_hive_table_validation_data(self):
-        if self.export_config.validateExport == False:
+        if self.export_config.validate_export == False:
             return
 
-        if self.export_config.validationMethod == constant.VALIDATION_METHOD_ROWCOUNT:
+        if self.export_config.validation_method == constant.VALIDATION_METHOD_ROWCOUNT:
             self.get_hive_table_row_count()
         else:
             self.run_custom_validation_query_on_hive_table()
 
     def get_target_table_validation_data(self):
-        if self.export_config.validateExport == False:
+        if self.export_config.validate_export == False:
             return
 
-        if self.export_config.validationMethod == constant.VALIDATION_METHOD_ROWCOUNT:
+        if self.export_config.validation_method == constant.VALIDATION_METHOD_ROWCOUNT:
             self.get_target_table_row_count()
         else:
             self.export_config.run_custom_validation_query_on_jdbc_table()
 
-    def validateExport(self):
-        if self.export_config.validateExport == False:
+    def validate_export(self):
+        if self.export_config.validate_export == False:
             logging.info("Validation disabled for this export")
             return
 
-        if self.export_config.validationMethod == constant.VALIDATION_METHOD_ROWCOUNT:
+        if self.export_config.validation_method == constant.VALIDATION_METHOD_ROWCOUNT:
             self.validate_row_count()
         else:
             self.export_config.validate_custom_query()
@@ -1852,8 +1865,8 @@ class operation(metaclass=Singleton):
         try:
             where_statement = None
 
-            hive_db = self.hiveDB
-            hive_table = self.hiveTable
+            hive_db = self.hive_db
+            hive_table = self.hive_table
 
             if self.export_config.incr_validation_method == "incr":
                 where_statement = self.export_config.get_incr_where_statement(
@@ -1861,17 +1874,17 @@ class operation(metaclass=Singleton):
                 )
             else:
                 # Needed to make sure that we are not validating against new rows that might have been saved in Hive
-                if self.export_config.exportIsIncremental == True:
+                if self.export_config.export_is_incremental == True:
                     where_statement = self.export_config.get_incr_where_statement(
                         exclude_min_value=True
                     )
 
-            if self.export_config.sqlWhereAddition != None:
+            if self.export_config.sql_where_addition != None:
                 if where_statement == None:
-                    where_statement = self.export_config.sqlWhereAddition
+                    where_statement = self.export_config.sql_where_addition
                 else:
                     where_statement += " and (%s)" % (
-                        self.export_config.sqlWhereAddition
+                        self.export_config.sql_where_addition
                     )
 
             hive_table_row_count = self.common_operations.get_hive_table_row_count(
@@ -1890,25 +1903,26 @@ class operation(metaclass=Singleton):
 
         logging.info("Executing custom validation query on Hive table.")
 
-        query = self.export_config.validationCustomQueryHiveSQL
-        query = query.replace("${HIVE_DB}", self.export_config.hiveDB)
-        query = query.replace("${HIVE_TABLE}", self.export_config.hiveTable)
+        query = self.export_config.validation_custom_query_hive_sql
+        query = query.replace("${HIVE_DB}", self.export_config.hive_db)
+        query = query.replace("${HIVE_TABLE}", self.export_config.hive_table)
 
-        if self.export_config.sqlWhereAddition != None:
+        if self.export_config.sql_where_addition != None:
             if " where " in query:
-                query += " and (%s)" % (self.export_config.sqlWhereAddition)
+                query += " and (%s)" % (self.export_config.sql_where_addition)
             else:
-                query += " where %s" % (self.export_config.sqlWhereAddition)
+                query += " where %s" % (self.export_config.sql_where_addition)
 
         logging.debug("Validation Query on Hive table: %s", query)
 
         result_df = self.common_operations.execute_hive_query(query)
         result_json = result_df.to_json(orient="values")
-        self.export_config.validationCustomQueryHiveValue = result_json
+        self.export_config.validation_custom_query_hive_value = result_json
 
-        if len(self.export_config.validationCustomQueryHiveValue) > 1024:
+        if len(self.export_config.validation_custom_query_hive_value) > 1024:
             logging.warning(
-                "'%s' is to large.", self.export_config.validationCustomQueryHiveValue
+                "'%s' is to large.",
+                self.export_config.validation_custom_query_hive_value,
             )
             raise invalidConfiguration(
                 "The size of the json document on the custom query exceeds 1024 bytes. Change the query to create a result with less than 512 bytes"

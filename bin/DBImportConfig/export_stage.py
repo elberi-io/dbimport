@@ -34,22 +34,22 @@ class stage:
     ) -> None:
         logging.debug("Executing stage.__init__()")
 
-        self.connectionAlias = connection_alias
-        self.targetSchema = target_schema
-        self.targetTable = target_table
+        self.connection_alias = connection_alias
+        self.target_schema = target_schema
+        self.target_table = target_table
 
         self.mysql_conn = mysql_conn
         self.mysql_cursor = self.mysql_conn.cursor(buffered=False)
         self.current_stage: int | None = None
         self.memory_stage = False
-        self.stageTimeStart: str | None = None
-        self.stageTimeStop: str | None = None
-        self.stageDurationStart = 0.0
-        self.stageDurationStop = 0.0
-        self.stageDurationTime = 0.0
+        self.stage_time_start: str | None = None
+        self.stage_time_stop: str | None = None
+        self.stage_duration_start = 0.0
+        self.stage_duration_stop = 0.0
+        self.stage_duration_time = 0.0
 
         self.common_config = common_config.config()
-        self.sendStatistics = sendStatistics.sendStatistics()
+        self.send_statistics = sendStatistics.sendStatistics()
 
     # 		if configuration.get("REST_statistics", "post_export_data").lower() == "true":
     # 			self.post_export_data = True
@@ -63,9 +63,9 @@ class stage:
     ) -> None:
         """Sets the parameters to work against a new Target table"""
 
-        self.connectionAlias = connection_alias
-        self.targetSchema = target_schema
-        self.targetTable = target_table
+        self.connection_alias = connection_alias
+        self.target_schema = target_schema
+        self.target_table = target_table
 
     def get_stage_description(self, stage: int) -> str:
         stage_description = ""
@@ -234,30 +234,30 @@ class stage:
         """Reads the export_stage_statistics and convert the information to a JSON document"""
         logging.debug("Executing export_stage.convert_stage_statistics_to_json()")
 
-        self.postDataToREST = self.common_config.get_config_value(
+        self.post_data_to_rest = self.common_config.get_config_value(
             key="post_data_to_rest"
         )
-        self.postDataToRESTextended = self.common_config.get_config_value(
+        self.post_data_to_rest_extended = self.common_config.get_config_value(
             key="post_data_to_rest_extended"
         )
-        self.postDataToKafka = self.common_config.get_config_value(
+        self.post_data_to_kafka = self.common_config.get_config_value(
             key="post_data_to_kafka"
         )
-        self.postDataToKafkaExtended = self.common_config.get_config_value(
+        self.post_data_to_kafka_extended = self.common_config.get_config_value(
             key="post_data_to_kafka_extended"
         )
         self.post_data_to_aws_sns = self.common_config.get_config_value(
             key="post_data_to_awssns"
         )
-        self.postDataToAWSSNSExtended = self.common_config.get_config_value(
+        self.post_data_to_aws_sns_extended = self.common_config.get_config_value(
             key="post_data_to_awssns_extended"
         )
 
-        # 		self.postDataToREST = True
+        # 		self.post_data_to_rest = True
 
         if (
-            self.postDataToREST == False
-            and self.postDataToKafka == False
+            self.post_data_to_rest == False
+            and self.post_data_to_kafka == False
             and self.post_data_to_aws_sns == False
         ):
             return
@@ -274,18 +274,18 @@ class stage:
             json_data_rest[key] = value
             json_data_aws_sns[key] = value
 
-        if self.postDataToKafkaExtended == False:
+        if self.post_data_to_kafka_extended == False:
             json_data_kafka.pop("sessions")
 
-        if self.postDataToRESTextended == False:
+        if self.post_data_to_rest_extended == False:
             json_data_rest.pop("sessions")
 
-        if self.postDataToAWSSNSExtended == False:
+        if self.post_data_to_aws_sns_extended == False:
             json_data_aws_sns.pop("sessions")
 
         query = "select stage, start, stop, duration from export_stage_statistics where dbalias = %s and target_schema = %s and target_table = %s"
         self.mysql_cursor.execute(
-            query, (self.connectionAlias, self.targetSchema, self.targetTable)
+            query, (self.connection_alias, self.target_schema, self.target_table)
         )
         logging.debug("SQL Statement executed: %s" % (self.mysql_cursor.statement))
 
@@ -305,17 +305,20 @@ class stage:
                 logging.error("Will put the raw stage number into the JSON document")
                 stage_short_name = str(stage)
 
-            if stage_short_name != "skip" and self.postDataToRESTextended == True:
+            if stage_short_name != "skip" and self.post_data_to_rest_extended == True:
                 json_data_rest[f"{stage_short_name}_start"] = str(stage_start)
                 json_data_rest[f"{stage_short_name}_stop"] = str(stage_stop)
                 json_data_rest[f"{stage_short_name}_duration"] = stage_duration
 
-            if stage_short_name != "skip" and self.postDataToKafkaExtended == True:
+            if stage_short_name != "skip" and self.post_data_to_kafka_extended == True:
                 json_data_kafka[f"{stage_short_name}_start"] = str(stage_start)
                 json_data_kafka[f"{stage_short_name}_stop"] = str(stage_stop)
                 json_data_kafka[f"{stage_short_name}_duration"] = stage_duration
 
-            if stage_short_name != "skip" and self.postDataToAWSSNSExtended == True:
+            if (
+                stage_short_name != "skip"
+                and self.post_data_to_aws_sns_extended == True
+            ):
                 json_data_aws_sns[f"{stage_short_name}_start"] = str(stage_start)
                 json_data_aws_sns[f"{stage_short_name}_stop"] = str(stage_stop)
                 json_data_aws_sns[f"{stage_short_name}_duration"] = stage_duration
@@ -344,8 +347,10 @@ class stage:
         # 		print("================================================")
         # 		print(jsonDataREST)
 
-        if self.postDataToKafka == True:
-            result = self.sendStatistics.publish_kafka_data(json.dumps(json_data_kafka))
+        if self.post_data_to_kafka == True:
+            result = self.send_statistics.publish_kafka_data(
+                json.dumps(json_data_kafka)
+            )
             if result == False:
                 logging.info("Kafka publish failed!")
                 logging.info("Saving the JSON to the json_to_send table instead")
@@ -353,8 +358,8 @@ class stage:
                     "import_statistics", "kafka", json.dumps(json_data_kafka)
                 )
 
-        if self.postDataToREST == True:
-            response = self.sendStatistics.send_rest_data(json.dumps(json_data_rest))
+        if self.post_data_to_rest == True:
+            response = self.send_statistics.send_rest_data(json.dumps(json_data_rest))
             if response != 200:
                 logging.info("REST call failed!")
                 logging.info("Saving the JSON to the json_to_send table instead")
@@ -363,7 +368,7 @@ class stage:
                 )
 
         if self.post_data_to_aws_sns == True:
-            result = self.sendStatistics.send_aws_sns_data(
+            result = self.send_statistics.send_aws_sns_data(
                 json.dumps(json_data_aws_sns)
             )
             if result == False:
@@ -393,7 +398,7 @@ class stage:
 
         query = "select stage, start, stop, duration from export_stage_statistics where dbalias = %s and target_schema = %s and target_table = %s"
         self.mysql_cursor.execute(
-            query, (self.connectionAlias, self.targetSchema, self.targetTable)
+            query, (self.connection_alias, self.target_schema, self.target_table)
         )
         logging.debug("SQL Statement executed: %s" % (self.mysql_cursor.statement))
 
@@ -468,7 +473,7 @@ class stage:
 
         query = "delete from export_statistics_last where dbalias = %s and target_schema = %s and target_table = %s"
         self.mysql_cursor.execute(
-            query, (self.connectionAlias, self.targetSchema, self.targetTable)
+            query, (self.connection_alias, self.target_schema, self.target_table)
         )
         self.mysql_conn.commit()
         logging.debug("SQL Statement executed: %s" % (self.mysql_cursor.statement))
@@ -487,7 +492,7 @@ class stage:
 
         query = "select stage, start, stop, duration from export_stage_statistics where dbalias = %s and target_schema = %s and target_table = %s"
         self.mysql_cursor.execute(
-            query, (self.connectionAlias, self.targetSchema, self.targetTable)
+            query, (self.connection_alias, self.target_schema, self.target_table)
         )
         logging.debug("SQL Statement executed: %s" % (self.mysql_cursor.statement))
 
@@ -519,14 +524,14 @@ class stage:
         if self.memory_stage == False:
             query = "delete from export_stage where dbalias = %s and target_schema = %s and target_table = %s"
             self.mysql_cursor.execute(
-                query, (self.connectionAlias, self.targetSchema, self.targetTable)
+                query, (self.connection_alias, self.target_schema, self.target_table)
             )
             self.mysql_conn.commit()
             logging.debug("SQL Statement executed: %s" % (self.mysql_cursor.statement))
 
             query = "delete from export_stage_statistics where dbalias = %s and target_schema = %s and target_table = %s"
             self.mysql_cursor.execute(
-                query, (self.connectionAlias, self.targetSchema, self.targetTable)
+                query, (self.connection_alias, self.target_schema, self.target_table)
             )
             self.mysql_conn.commit()
             logging.debug("SQL Statement executed: %s" % (self.mysql_cursor.statement))
@@ -543,7 +548,8 @@ class stage:
             else:
                 query = "select stage from export_stage where dbalias = %s and target_schema = %s and target_table = %s"
                 self.mysql_cursor.execute(
-                    query, (self.connectionAlias, self.targetSchema, self.targetTable)
+                    query,
+                    (self.connection_alias, self.target_schema, self.target_table),
                 )
                 logging.debug(
                     "SQL Statement executed: %s" % (self.mysql_cursor.statement)
@@ -555,11 +561,11 @@ class stage:
                 else:
                     self.current_stage = row[0]
 
-        self.stageTimeStart = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
-        self.stageTimeStop = None
-        self.stageDurationStart = time.monotonic()
-        self.stageDurationStop = 0.0
-        self.stageDurationTime = 0.0
+        self.stage_time_start = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
+        self.stage_time_stop = None
+        self.stage_duration_start = time.monotonic()
+        self.stage_duration_stop = 0.0
+        self.stage_duration_time = 0.0
 
         logging.debug("Executing stage.get_stage() - Finished")
         return self.current_stage
@@ -583,24 +589,23 @@ class stage:
             return
 
         # Calculate time and save to export_stage_statistics
+        self.stage_time_stop = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
         self.stage_duration_stop = time.monotonic()
-        self.stageTimeStop = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
-        self.stageDurationStop = time.monotonic()
-        self.stageDurationTime = self.stageDurationStop - self.stageDurationStart
+        self.stage_duration_time = self.stage_duration_stop - self.stage_duration_start
 
-        logging.debug("stageTimeStart: %s", self.stageTimeStart)
-        logging.debug("stageTimeStop:  %s", self.stageTimeStop)
-        logging.debug("stageDurationStart: %s", self.stageDurationStart)
-        logging.debug("stageDurationStop:  %s", self.stageDurationStop)
-        logging.debug("stageDurationTime:  %s", self.stageDurationTime)
+        logging.debug("stageTimeStart: %s", self.stage_time_start)
+        logging.debug("stageTimeStop:  %s", self.stage_time_stop)
+        logging.debug("stageDurationStart: %s", self.stage_duration_start)
+        logging.debug("stageDurationStop:  %s", self.stage_duration_stop)
+        logging.debug("stageDurationTime:  %s", self.stage_duration_time)
 
         query = "select count(stage) from export_stage_statistics where dbalias = %s and target_schema = %s and target_table = %s and stage = %s"
         self.mysql_cursor.execute(
             query,
             (
-                self.connectionAlias,
-                self.targetSchema,
-                self.targetTable,
+                self.connection_alias,
+                self.target_schema,
+                self.target_table,
                 self.current_stage,
             ),
         )
@@ -615,23 +620,23 @@ class stage:
             )
             query += "values "
             query += "( "
-            query += "	'%s', " % (self.connectionAlias)
-            query += "	'%s', " % (self.targetSchema)
-            query += "	'%s', " % (self.targetTable)
+            query += "	'%s', " % (self.connection_alias)
+            query += "	'%s', " % (self.target_schema)
+            query += "	'%s', " % (self.target_table)
             query += "	%s, " % (self.current_stage)
-            query += "	'%s', " % (self.stageTimeStart)
-            query += "	'%s', " % (self.stageTimeStop)
-            query += "	%s " % (round(self.stageDurationTime))
+            query += "	'%s', " % (self.stage_time_start)
+            query += "	'%s', " % (self.stage_time_stop)
+            query += "	%s " % (round(self.stage_duration_time))
             query += ") "
         else:
             query = "update export_stage_statistics set"
-            query += "	start = '%s', " % (self.stageTimeStart)
-            query += "	stop = '%s', " % (self.stageTimeStop)
-            query += "	duration = %s " % (round(self.stageDurationTime))
+            query += "	start = '%s', " % (self.stage_time_start)
+            query += "	stop = '%s', " % (self.stage_time_stop)
+            query += "	duration = %s " % (round(self.stage_duration_time))
             query += "where "
-            query += "	dbalias = '%s' " % (self.connectionAlias)
-            query += "	and target_schema = '%s' " % (self.targetSchema)
-            query += "	and target_table = '%s' " % (self.targetTable)
+            query += "	dbalias = '%s' " % (self.connection_alias)
+            query += "	and target_schema = '%s' " % (self.target_schema)
+            query += "	and target_table = '%s' " % (self.target_table)
             query += "	and stage = '%s' " % (self.current_stage)
 
         self.mysql_cursor.execute(query)
@@ -643,7 +648,7 @@ class stage:
         # Save stage information in export_stage
         query = "select count(stage) from export_stage where dbalias = %s and target_schema = %s and target_table = %s"
         self.mysql_cursor.execute(
-            query, (self.connectionAlias, self.targetSchema, self.targetTable)
+            query, (self.connection_alias, self.target_schema, self.target_table)
         )
         logging.debug("SQL Statement executed: %s" % (self.mysql_cursor.statement))
 
@@ -662,9 +667,9 @@ class stage:
             query += ") "
             query += "values "
             query += "( "
-            query += "	'%s', " % (self.connectionAlias)
-            query += "	'%s', " % (self.targetSchema)
-            query += "	'%s', " % (self.targetTable)
+            query += "	'%s', " % (self.connection_alias)
+            query += "	'%s', " % (self.target_schema)
+            query += "	'%s', " % (self.target_table)
             query += "	%s, " % (new_stage)
             query += "	'%s', " % (stage_description)
             query += "	'%s' " % (datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f"))
@@ -678,20 +683,20 @@ class stage:
                 datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
             )
             query += "where "
-            query += "	dbalias = '%s' " % (self.connectionAlias)
-            query += "	and target_schema = '%s' " % (self.targetSchema)
-            query += "	and target_table = '%s' " % (self.targetTable)
+            query += "	dbalias = '%s' " % (self.connection_alias)
+            query += "	and target_schema = '%s' " % (self.target_schema)
+            query += "	and target_table = '%s' " % (self.target_table)
 
         self.mysql_cursor.execute(query)
         self.mysql_conn.commit()
         logging.debug("SQL Statement executed: %s" % (self.mysql_cursor.statement))
 
         self.current_stage = new_stage
-        self.stageTimeStart = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
-        self.stageTimeStop = None
-        self.stageDurationStart = time.monotonic()
-        self.stageDurationStop = 0.0
-        self.stageDurationTime = 0.0
+        self.stage_time_start = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
+        self.stage_time_stop = None
+        self.stage_duration_start = time.monotonic()
+        self.stage_duration_stop = 0.0
+        self.stage_duration_time = 0.0
 
         logging.debug("Executing stage.set_stage() - Finished")
 
@@ -718,9 +723,9 @@ class stage:
         self.mysql_cursor.execute(
             query,
             (
-                self.connectionAlias,
-                self.targetSchema,
-                self.targetTable,
+                self.connection_alias,
+                self.target_schema,
+                self.target_table,
                 datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f"),
                 stage,
                 stage_description,

@@ -192,10 +192,10 @@ def main(argv):
     )
 
     # Save data down to export_operation
-    export_operation.export_config.fullExecutedCommand = full_executed_command
+    export_operation.export_config.full_executed_command = full_executed_command
 
-    export_phase = export_operation.export_config.exportPhase
-    export_phase_description = export_operation.export_config.exportPhaseDescription
+    export_phase = export_operation.export_config.export_phase
+    export_phase_description = export_operation.export_config.export_phase_description
 
     print("The following table will be exported")
     print(
@@ -203,30 +203,30 @@ def main(argv):
     )
     print("")
     print(f"Export Phase:             {export_phase_description}")
-    print("Export Tool:              %s" % (export_operation.export_config.exportTool))
+    print("Export Tool:              %s" % (export_operation.export_config.export_tool))
     if export_operation.export_config.common_config.db_awss3 == True:
         print(
             "Connection name:          %s"
-            % (export_operation.export_config.common_config.dbAlias)
+            % (export_operation.export_config.common_config.db_alias)
         )
     else:
         print(
             "JDBC Connection name:     %s"
-            % (export_operation.export_config.common_config.dbAlias)
+            % (export_operation.export_config.common_config.db_alias)
         )
-    print(f"Hive database:            {export_operation.export_config.hiveDB}")
-    print(f"Hive table:               {export_operation.export_config.hiveTable}")
+    print(f"Hive database:            {export_operation.export_config.hive_db}")
+    print(f"Hive table:               {export_operation.export_config.hive_table}")
     if export_operation.export_config.common_config.db_awss3 == True:
         print(
             "AWS Assume Role:          %s"
-            % (export_operation.export_config.common_config.awsS3assumeRole)
+            % (export_operation.export_config.common_config.aws_s3_assume_role)
         )
         print(
-            f"AWS Bucket and folder:    {export_operation.export_config.awsS3bucketPath}"
+            f"AWS Bucket and folder:    {export_operation.export_config.aws_s3_bucket_path}"
         )
         print(
             "AWS Fileformat:           %s"
-            % (export_operation.export_config.common_config.awsS3fileFormat)
+            % (export_operation.export_config.common_config.aws_s3_file_format)
         )
     else:
         print(
@@ -241,11 +241,13 @@ def main(argv):
             "Target database:          %s"
             % (export_operation.export_config.common_config.jdbc_database)
         )
-        if export_operation.export_config.targetSchema != "-":
+        if export_operation.export_config.target_schema != "-":
             print(
-                f"Target schema:            {export_operation.export_config.targetSchema}"
+                f"Target schema:            {export_operation.export_config.target_schema}"
             )
-        print(f"Target table:             {export_operation.export_config.targetTable}")
+        print(
+            f"Target table:             {export_operation.export_config.target_table}"
+        )
     print(
         "______________________________________________________________________________"
     )
@@ -385,11 +387,11 @@ def main(argv):
                     export_operation.update_target_table()
 
             if run_only_function == None or run_only_function == "exportData":
-                if export_operation.export_config.exportTool == "sqoop":
+                if export_operation.export_config.export_tool == "sqoop":
                     if export_operation.run_stage(109) == True:
                         export_operation.run_sqoop_export()
 
-                if export_operation.export_config.exportTool == "spark":
+                if export_operation.export_config.export_tool == "spark":
                     if export_operation.run_stage(110) == True:
                         export_operation.run_spark_export()
 
@@ -398,7 +400,7 @@ def main(argv):
                     export_operation.connect_to_hive()
                     export_operation.get_hive_table_validation_data()
                     export_operation.get_target_table_validation_data()
-                    export_operation.validateExport()
+                    export_operation.validate_export()
 
             if run_only_function == None or run_only_function == "updateAtlas":
                 if export_operation.run_stage(950) == True:
@@ -499,11 +501,11 @@ def main(argv):
             # 					export_operation.update_target_table()
 
             if run_only_function == None or run_only_function == "exportData":
-                # 				if export_operation.export_config.exportTool == "sqoop":
+                # 				if export_operation.export_config.export_tool == "sqoop":
                 # 					if export_operation.run_stage(109) == True:
                 # 						export_operation.run_sqoop_export()
                 #
-                # 				if export_operation.export_config.exportTool == "spark":
+                # 				if export_operation.export_config.export_tool == "spark":
                 if export_operation.run_stage(110) == True:
                     export_operation.run_spark_export()
 
@@ -512,7 +514,7 @@ def main(argv):
             # 					export_operation.connect_to_hive()
             # 					export_operation.get_hive_table_validation_data()
             # 					export_operation.get_target_table_validation_data()
-            # 					export_operation.validateExport()
+            # 					export_operation.validate_export()
             #
             # 			if runOnlyFunction == None or runOnlyFunction == "updateAtlas":
             # 				if export_operation.run_stage(950) == True:
@@ -614,12 +616,12 @@ def main(argv):
                     export_operation.update_target_table()
 
             if run_only_function == None or run_only_function == "exportData":
-                if export_operation.export_config.exportTool == "sqoop":
+                if export_operation.export_config.export_tool == "sqoop":
                     if export_operation.run_stage(159) == True:
                         if export_operation.is_there_incr_data_to_export() == True:
                             export_operation.run_sqoop_export()
 
-                if export_operation.export_config.exportTool == "spark":
+                if export_operation.export_config.export_tool == "spark":
                     if export_operation.run_stage(160) == True:
                         if export_operation.is_there_incr_data_to_export() == True:
                             export_operation.run_spark_export()
@@ -629,7 +631,7 @@ def main(argv):
                     export_operation.connect_to_hive()
                     export_operation.get_hive_table_validation_data()
                     export_operation.get_target_table_validation_data()
-                    export_operation.validateExport()
+                    export_operation.validate_export()
 
             if run_only_function == None:
                 if export_operation.run_stage(162) == True:

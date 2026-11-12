@@ -31,16 +31,16 @@ class glueCatalog(metaclass=Singleton):
     def __init__(self):
         logging.debug("Executing glueCatalog.__init__()")
 
-        self.debugLogLevel = False
-        # self.debugLogLevel = True
+        self.debug_log_level = False
+        # self.debug_log_level = True
 
         if logging.root.level == 10:  # DEBUG
-            self.debugLogLevel = True
+            self.debug_log_level = True
 
         self.common_config = common_config.config()
 
         self.glue_client = boto3.client(
-            "glue", region_name=self.common_config.awsRegion
+            "glue", region_name=self.common_config.aws_region
         )
 
         # self.check_db("amwsktst_history_uat")

@@ -30,44 +30,46 @@ from common.Exceptions import invalidConfiguration
 class crypto:
     def __init__(self) -> None:
         logging.debug("Executing crypto.__init__()")
-        self.privateKeyFile: str | None = None
-        self.publicKeyFile: str | None = None
+        self.private_key_file: str | None = None
+        self.public_key_file: str | None = None
         self.private_key_string: str | None = None
         self.public_key_string: str | None = None
-        self.privateKey: RsaKey | None = None
-        self.publicKey: RsaKey | None = None
+        self.private_key: RsaKey | None = None
+        self.public_key: RsaKey | None = None
 
     def set_private_key_file(self, private_key_file: str) -> None:
-        self.privateKeyFile = private_key_file
+        self.private_key_file = private_key_file
 
-        if self.privateKeyFile.startswith("/") == False:
-            self.privateKeyFile = (
-                os.environ["DBIMPORT_HOME"] + "/" + self.privateKeyFile
+        if self.private_key_file.startswith("/") == False:
+            self.private_key_file = (
+                os.environ["DBIMPORT_HOME"] + "/" + self.private_key_file
             )
 
-        if os.path.isfile(self.privateKeyFile) == False:
+        if os.path.isfile(self.private_key_file) == False:
             raise invalidConfiguration(
                 "The private key file cant be opened.\n"
                 + "Please check the path in the configuration file for settings Credentials/private_key"
             )
 
-        self.private_key_string = open(self.privateKeyFile).read()
-        self.privateKey = RSA.importKey(self.private_key_string)
+        self.private_key_string = open(self.private_key_file).read()
+        self.private_key = RSA.importKey(self.private_key_string)
 
     def set_public_key_file(self, public_key_file: str) -> None:
-        self.publicKeyFile = public_key_file
+        self.public_key_file = public_key_file
 
-        if self.publicKeyFile.startswith("/") == False:
-            self.publicKeyFile = os.environ["DBIMPORT_HOME"] + "/" + self.publicKeyFile
+        if self.public_key_file.startswith("/") == False:
+            self.public_key_file = (
+                os.environ["DBIMPORT_HOME"] + "/" + self.public_key_file
+            )
 
-        if os.path.isfile(self.publicKeyFile) == False:
+        if os.path.isfile(self.public_key_file) == False:
             raise invalidConfiguration(
                 "The public key file cant be opened.\n"
                 + "Please check the path in the configuration file for settings Credentials/public_key"
             )
 
-        self.public_key_string = open(self.publicKeyFile).read()
-        self.publicKey = RSA.importKey(self.public_key_string)
+        self.public_key_string = open(self.public_key_file).read()
+        self.public_key = RSA.importKey(self.public_key_string)
 
     def decrypt(self, str_to_decrypt: str | None) -> str | None:
 
@@ -76,9 +78,9 @@ class crypto:
 
         sentinel = get_random_bytes(16)
 
-        cipher = PKCS1_v1_5.new(self.privateKey)
+        cipher = PKCS1_v1_5.new(self.private_key)
         str_decrypted = cipher.decrypt(base64.b64decode(str_to_decrypt), sentinel)
-        # strDecrypted = self.privateKey.decrypt(base64.b64decode(strToDecrypt))
+        # strDecrypted = self.private_key.decrypt(base64.b64decode(strToDecrypt))
 
         try:
             if len(str_decrypted) > 0 and bytes(str_decrypted[:1]) == b"\x02":
@@ -97,7 +99,7 @@ class crypto:
 
     def encrypt(self, str_to_encrypt: str) -> str:
 
-        cipher = PKCS1_v1_5.new(self.publicKey)
+        cipher = PKCS1_v1_5.new(self.public_key)
 
         str_encrypted = cipher.encrypt(str_to_encrypt.encode())
         str_encrypted = base64.b64encode(str_encrypted).decode()

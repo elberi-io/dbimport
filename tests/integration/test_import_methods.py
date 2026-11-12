@@ -85,7 +85,10 @@ def test_get_import_config_valid_combination_sets_import_and_etl_phase(
         **(INCREMENTAL if import_phase_type == "incr" else {}),
     )
 
-    assert (config.importPhase, config.etlPhase) == (import_phase_type, etl_phase_type)
+    assert (config.import_phase, config.etl_phase) == (
+        import_phase_type,
+        etl_phase_type,
+    )
 
 
 @pytest.mark.parametrize(
@@ -145,7 +148,7 @@ def test_get_import_config_legacy_import_type_maps_to_phases(
         **(INCREMENTAL if expected_phases[0] == "incr" else {}),
     )
 
-    assert (config.importPhase, config.etlPhase) == expected_phases
+    assert (config.import_phase, config.etl_phase) == expected_phases
 
 
 def test_get_import_config_incremental_import_without_incr_column_raises(
@@ -187,7 +190,7 @@ def test_get_import_config_sqoop_with_spark_etl_engine_uses_hive(
         etl_engine="spark",
     )
 
-    assert config.etlEngine == "hive"
+    assert config.etl_engine == "hive"
 
 
 @pytest.mark.parametrize(
