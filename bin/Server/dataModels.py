@@ -19,24 +19,24 @@ class User(BaseModel):
     email: str | None = None
 
 
-class changeUser(BaseModel):
+class ChangeUser(BaseModel):
     disabled: bool | None = None
     fullname: str | None = None
     department: str | None = None
     email: str | None = None
 
 
-class changePassword(BaseModel):
+class ChangePassword(BaseModel):
     old_password: str | None = None
     new_password: str
 
 
-class status(BaseModel):
+class Status(BaseModel):
     status: str
     version: str
 
 
-class importDBs(BaseModel):
+class ImportDBs(BaseModel):
     name: str
     tables: int
     lastImport: str | None = None
@@ -48,7 +48,7 @@ class importDBs(BaseModel):
 # 	status: str
 
 
-class connectionSearch(BaseModel):
+class ConnectionSearch(BaseModel):
     name: str | None = None
     connectionString: str | None = None
     timeWindowTimezone: str | None = None
@@ -58,13 +58,13 @@ class connectionSearch(BaseModel):
     owner: str | None = None
 
 
-class connection(BaseModel):
+class Connection(BaseModel):
     name: str
     connectionString: str | None = None
     serverType: str | None = None
 
 
-class connectionDetails(BaseModel):
+class ConnectionDetails(BaseModel):
     name: str
     connectionString: str
     privateKeyPath: str | None = None
@@ -94,13 +94,13 @@ class connectionDetails(BaseModel):
 # 	result: str
 
 
-class encryptCredential(BaseModel):
+class EncryptCredential(BaseModel):
     connection: str
     username: str
     password: str
 
 
-class generateJDBCconnectionString(BaseModel):
+class GenerateJDBCConnectionString(BaseModel):
     databaseType: str
     version: str
     hostname: str
@@ -108,18 +108,18 @@ class generateJDBCconnectionString(BaseModel):
     database: str
 
 
-class generatedJDBCconnectionString(BaseModel):
+class GeneratedJDBCConnectionString(BaseModel):
     connectionString: str
 
 
-class jdbcDriver(BaseModel):
+class JDBCDriver(BaseModel):
     databaseType: str
     version: str
     driver: str
     classpath: str
 
 
-class configuration(BaseModel):
+class Configuration(BaseModel):
     airflow_aws_instanceids: str | None = None
     airflow_aws_pool_to_instanceid: bool | None = None
     airflow_create_pool_with_task: bool | None = None
@@ -195,7 +195,7 @@ class configuration(BaseModel):
     timestamp_with_timezone: bool | None = None
 
 
-class discoverImportTable(BaseModel):
+class DiscoverImportTable(BaseModel):
     database: str
     table: str
     connection: str
@@ -203,7 +203,7 @@ class discoverImportTable(BaseModel):
     sourceTable: str
 
 
-class discoverImportTableOptions(BaseModel):
+class DiscoverImportTableOptions(BaseModel):
     database: str
     connection: str
     schemaFilter: str | None
@@ -214,7 +214,7 @@ class discoverImportTableOptions(BaseModel):
     addCustomText: str | None
 
 
-class importTable(BaseModel):
+class ImportTable(BaseModel):
     database: str
     table: str
     connection: str
@@ -229,7 +229,7 @@ class importTable(BaseModel):
     operatorNotes: str | None = None
 
 
-class importTableColumnsRead(BaseModel):
+class ImportTableColumnsRead(BaseModel):
     # 	database: str
     # 	table: str
     columnName: str
@@ -251,7 +251,7 @@ class importTableColumnsRead(BaseModel):
     anonymizationFunction: str
 
 
-class importTableColumnsWrite(BaseModel):
+class ImportTableColumnsWrite(BaseModel):
     # 	database: str
     # 	table: str
     columnName: str
@@ -273,7 +273,7 @@ class importTableColumnsWrite(BaseModel):
     anonymizationFunction: str
 
 
-class importTableDetailsRead(BaseModel):
+class ImportTableDetailsRead(BaseModel):
     database: str
     table: str
     connection: str
@@ -343,10 +343,10 @@ class importTableDetailsRead(BaseModel):
     importTable: str | None = None
     historyDatabase: str | None = None
     historyTable: str | None = None
-    columns: list[importTableColumnsRead] = []
+    columns: list[ImportTableColumnsRead] = []
 
 
-class importTableDetailsWrite(BaseModel):
+class ImportTableDetailsWrite(BaseModel):
     # 	database: str
     # 	table: str
     connection: str
@@ -398,10 +398,10 @@ class importTableDetailsWrite(BaseModel):
     importTable: str | None = None
     historyDatabase: str | None = None
     historyTable: str | None = None
-    columns: list[importTableColumnsWrite] = []
+    columns: list[ImportTableColumnsWrite] = []
 
 
-class importTableSearch(BaseModel):
+class ImportTableSearch(BaseModel):
     database: str | None = None
     table: str | None = None
     connection: str | None = None
@@ -415,12 +415,12 @@ class importTableSearch(BaseModel):
     operatorNotes: str | None = None
 
 
-class importTablePK(BaseModel):
+class ImportTablePK(BaseModel):
     database: str
     table: str
 
 
-class importTableBulkUpdate(BaseModel):
+class ImportTableBulkUpdate(BaseModel):
     connection: str | None = None
     importPhaseType: str | None = None
     etlPhaseType: str | None = None
@@ -428,21 +428,21 @@ class importTableBulkUpdate(BaseModel):
     etlEngine: str | None = None
     includeInAirflow: bool | None = None
     operatorNotes: str | None = None
-    importTables: list[importTablePK]
+    importTables: list[ImportTablePK]
 
 
-class defaultResultResponse(BaseModel):
+class DefaultResultResponse(BaseModel):
     result: str
 
 
-class exportConnections(BaseModel):
+class ExportConnections(BaseModel):
     name: str
     tables: int
     lastExport: str | None = None
     lastRows: int | None = None
 
 
-class exportTableSearch(BaseModel):
+class ExportTableSearch(BaseModel):
     connection: str | None = None
     targetSchema: str | None = None
     targetTable: str | None = None
@@ -454,7 +454,7 @@ class exportTableSearch(BaseModel):
     operatorNotes: str | None = None
 
 
-class discoverExportTable(BaseModel):
+class DiscoverExportTable(BaseModel):
     database: str
     table: str
     connection: str
@@ -462,7 +462,7 @@ class discoverExportTable(BaseModel):
     targetTable: str
 
 
-class discoverExportTableOptions(BaseModel):
+class DiscoverExportTableOptions(BaseModel):
     connection: str
     targetSchema: str
     databaseFilter: str | None
@@ -473,7 +473,7 @@ class discoverExportTableOptions(BaseModel):
     addCustomText: str | None
 
 
-class exportTable(BaseModel):
+class ExportTable(BaseModel):
     connection: str
     targetSchema: str
     targetTable: str
@@ -486,7 +486,7 @@ class exportTable(BaseModel):
     operatorNotes: str | None = None
 
 
-class exportTableColumnsRead(BaseModel):
+class ExportTableColumnsRead(BaseModel):
     # 	connection: str
     # 	targetSchema: str
     # 	targetTable: str
@@ -501,7 +501,7 @@ class exportTableColumnsRead(BaseModel):
     operatorNotes: str | None = None
 
 
-class exportTableColumnsWrite(BaseModel):
+class ExportTableColumnsWrite(BaseModel):
     # 	connection: str
     # 	targetSchema: str
     # 	targetTable: str
@@ -516,7 +516,7 @@ class exportTableColumnsWrite(BaseModel):
     operatorNotes: str | None = None
 
 
-class exportTableDetailsRead(BaseModel):
+class ExportTableDetailsRead(BaseModel):
     connection: str
     targetSchema: str
     targetTable: str
@@ -554,10 +554,10 @@ class exportTableDetailsRead(BaseModel):
     hiveContainerSize: int | None = None
     createTargetTableSql: str | None = None
     operatorNotes: str | None = None
-    columns: list[exportTableColumnsRead] = []
+    columns: list[ExportTableColumnsRead] = []
 
 
-class exportTableDetailsWrite(BaseModel):
+class ExportTableDetailsWrite(BaseModel):
     # 	connection: str
     # 	targetSchema: str
     # 	targetTable: str
@@ -595,24 +595,24 @@ class exportTableDetailsWrite(BaseModel):
     hiveContainerSize: int | None = None
     createTargetTableSql: str | None = None
     operatorNotes: str | None = None
-    columns: list[exportTableColumnsWrite] = []
+    columns: list[ExportTableColumnsWrite] = []
 
 
-class exportTablePK(BaseModel):
+class ExportTablePK(BaseModel):
     connection: str
     targetSchema: str
     targetTable: str
 
 
-class exportTableBulkUpdate(BaseModel):
+class ExportTableBulkUpdate(BaseModel):
     exportType: str | None = None
     exportTool: str | None = None
     includeInAirflow: bool | None = None
     operatorNotes: str | None = None
-    exportTables: list[exportTablePK]
+    exportTables: list[ExportTablePK]
 
 
-class airflowAllDags(BaseModel):
+class AirflowAllDAGs(BaseModel):
     name: str
     type: str
     scheduleInterval: str | None = None
@@ -623,7 +623,7 @@ class airflowAllDags(BaseModel):
 # 	applicationNotes: str | None = None
 
 
-class airflowImportDags(BaseModel):
+class AirflowImportDAGs(BaseModel):
     name: str
     filterTable: str | None = None
     scheduleInterval: str | None = None
@@ -640,7 +640,7 @@ class airflowImportDags(BaseModel):
     concurrency: int | None = None
 
 
-class airflowExportDags(BaseModel):
+class AirflowExportDAGs(BaseModel):
     name: str
     filterConnection: str | None = None
     filterTargetSchema: str | None = None
@@ -659,7 +659,7 @@ class airflowExportDags(BaseModel):
     concurrency: int | None = None
 
 
-class airflowCustomDags(BaseModel):
+class AirflowCustomDAGs(BaseModel):
     name: str
     scheduleInterval: str | None = None
     autoRegenerateDag: bool
@@ -675,7 +675,7 @@ class airflowCustomDags(BaseModel):
     concurrency: int | None = None
 
 
-class airflowTask(BaseModel):
+class AirflowTask(BaseModel):
     name: str
     type: str
     placement: str
@@ -693,7 +693,7 @@ class airflowTask(BaseModel):
     sudoUser: str | None = None
 
 
-class airflowCustomDag(BaseModel):
+class AirflowCustomDAG(BaseModel):
     name: str
     scheduleInterval: str | None = None
     retries: int | None = None
@@ -711,10 +711,10 @@ class airflowCustomDag(BaseModel):
     retryExponentialBackoff: int | None = None
     concurrency: int | None = None
     airflowLink: str | None = None
-    tasks: list[airflowTask] = []
+    tasks: list[AirflowTask] = []
 
 
-class airflowExportDag(BaseModel):
+class AirflowExportDAG(BaseModel):
     name: str
     scheduleInterval: str | None = None
     filterConnection: str | None = None
@@ -735,10 +735,10 @@ class airflowExportDag(BaseModel):
     retryExponentialBackoff: int | None = None
     concurrency: int | None = None
     airflowLink: str | None = None
-    tasks: list[airflowTask] = []
+    tasks: list[AirflowTask] = []
 
 
-class airflowImportDag(BaseModel):
+class AirflowImportDAG(BaseModel):
     name: str
     scheduleInterval: str | None = None
     filterTable: str | None = None
@@ -764,14 +764,14 @@ class airflowImportDag(BaseModel):
     retryExponentialBackoff: bool | None = None
     concurrency: int | None = None
     airflowLink: str | None = None
-    tasks: list[airflowTask] = []
+    tasks: list[AirflowTask] = []
 
 
-class airflowDagPK(BaseModel):
+class AirflowDAGPK(BaseModel):
     name: str
 
 
-class airflowDagBulkUpdate(BaseModel):
+class AirflowDAGBulkUpdate(BaseModel):
     scheduleInterval: str | None = None
     autoRegenerateDag: bool | None = None
     operatorNotes: str | None = None
@@ -782,4 +782,4 @@ class airflowDagBulkUpdate(BaseModel):
     emailOnRetries: bool | None = None
     slaWarningTime: str | None = None
     concurrency: int | None = None
-    dags: list[airflowDagPK]
+    dags: list[AirflowDAGPK]

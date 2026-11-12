@@ -163,7 +163,7 @@ def main(argv):
                 logging_level=logging_level,
             )
 
-    d = daemon.serverDaemon(pidfile=pidfile)
+    d = daemon.ServerDaemon(pidfile=pidfile)
     d.set_config(action=action, log_format=log_format)
 
     if action == "start":

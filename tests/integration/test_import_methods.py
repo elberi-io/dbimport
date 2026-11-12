@@ -3,7 +3,7 @@
 import pytest
 import sqlalchemy as sa
 
-from common.Exceptions import invalidConfiguration
+from common.Exceptions import InvalidConfigurationError
 from DBImportConfig import common_config, import_config
 from tests.configdb import insert_row, set_driver_path
 
@@ -25,7 +25,7 @@ def _add_connection(
         dbalias=DBALIAS,
         jdbc_url="jdbc:mysql://source.example:3306/sourcedb",
     )
-    common_config.config().encrypt_user_password(DBALIAS, username, password)
+    common_config.Config().encrypt_user_password(DBALIAS, username, password)
 
 
 def _add_import_table(conn: sa.Connection, **settings: str | None) -> None:
@@ -43,10 +43,10 @@ def _add_import_table(conn: sa.Connection, **settings: str | None) -> None:
     )
 
 
-def _resolve(conn: sa.Connection, **settings: str | None) -> import_config.config:
+def _resolve(conn: sa.Connection, **settings: str | None) -> import_config.Config:
     _add_connection(conn, "user", "secret")
     _add_import_table(conn, **settings)
-    config = import_config.config(HIVE_DB, HIVE_TABLE)
+    config = import_config.Config(HIVE_DB, HIVE_TABLE)
     config.get_import_config()
     return config
 
@@ -107,7 +107,7 @@ def test_get_import_config_invalid_combination_raises(
     import_phase_type: str,
     etl_phase_type: str,
 ) -> None:
-    with pytest.raises(invalidConfiguration):
+    with pytest.raises(InvalidConfigurationError):
         _resolve(
             db_connection,
             import_phase_type=import_phase_type,
@@ -154,7 +154,7 @@ def test_get_import_config_legacy_import_type_maps_to_phases(
 def test_get_import_config_incremental_import_without_incr_column_raises(
     clean_config_db: None, db_connection: sa.Connection
 ) -> None:
-    with pytest.raises(invalidConfiguration, match="incr_column"):
+    with pytest.raises(InvalidConfigurationError, match="incr_column"):
         _resolve(
             db_connection,
             import_phase_type="incr",
@@ -168,7 +168,7 @@ def test_get_import_config_incremental_import_without_incr_column_raises(
 def test_get_import_config_legacy_and_new_import_type_together_raises(
     clean_config_db: None, db_connection: sa.Connection
 ) -> None:
-    with pytest.raises(invalidConfiguration):
+    with pytest.raises(InvalidConfigurationError):
         _resolve(
             db_connection,
             import_type="full",
@@ -208,7 +208,7 @@ def test_get_import_config_unsupported_tool_or_engine_raises(
     import_tool: str,
     etl_engine: str,
 ) -> None:
-    with pytest.raises(invalidConfiguration):
+    with pytest.raises(InvalidConfigurationError):
         _resolve(
             db_connection,
             import_phase_type=import_phase_type,
@@ -221,8 +221,8 @@ def test_get_import_config_unsupported_tool_or_engine_raises(
 def test_get_import_config_without_import_tables_row_raises(
     clean_config_db: None,
 ) -> None:
-    with pytest.raises(invalidConfiguration):
-        import_config.config(HIVE_DB, HIVE_TABLE).get_import_config()
+    with pytest.raises(InvalidConfigurationError):
+        import_config.Config(HIVE_DB, HIVE_TABLE).get_import_config()
 
 
 def test_lookup_connection_alias_returns_decrypted_credentials(
@@ -230,7 +230,7 @@ def test_lookup_connection_alias_returns_decrypted_credentials(
 ) -> None:
     _add_connection(db_connection, "user", "secret")
 
-    config = common_config.config()
+    config = common_config.Config()
     config.lookup_connection_alias(DBALIAS)
 
     assert (config.jdbc_username, config.jdbc_password) == ("user", "secret")
@@ -242,8 +242,8 @@ def test_lookup_connection_alias_with_seeded_driver_placeholder_raises(
     # setup seeds the driver classpath as "add path to JAR file".
     _add_connection(db_connection, "user", "secret", configure_driver=False)
 
-    with pytest.raises(invalidConfiguration):
-        common_config.config().lookup_connection_alias(DBALIAS)
+    with pytest.raises(InvalidConfigurationError):
+        common_config.Config().lookup_connection_alias(DBALIAS)
 
 
 @pytest.mark.xfail(
@@ -257,7 +257,7 @@ def test_lookup_connection_alias_keeps_password_with_space(
 ) -> None:
     _add_connection(db_connection, "user", "pass word")
 
-    config = common_config.config()
+    config = common_config.Config()
     config.lookup_connection_alias(DBALIAS)
 
     assert config.jdbc_password == "pass word"

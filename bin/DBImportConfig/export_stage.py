@@ -24,7 +24,7 @@ from typing import Any
 from DBImportConfig import common_config, sendStatistics
 
 
-class stage:
+class Stage:
     def __init__(
         self,
         mysql_conn: Any,
@@ -32,7 +32,7 @@ class stage:
         target_schema: str | None = None,
         target_table: str | None = None,
     ) -> None:
-        logging.debug("Executing stage.__init__()")
+        logging.debug("Executing Stage.__init__()")
 
         self.connection_alias = connection_alias
         self.target_schema = target_schema
@@ -48,8 +48,8 @@ class stage:
         self.stage_duration_stop = 0.0
         self.stage_duration_time = 0.0
 
-        self.common_config = common_config.config()
-        self.send_statistics = sendStatistics.sendStatistics()
+        self.common_config = common_config.Config()
+        self.send_statistics = sendStatistics.SendStatistics()
 
     # 		if configuration.get("REST_statistics", "post_export_data").lower() == "true":
     # 			self.post_export_data = True
@@ -380,7 +380,7 @@ class stage:
 
     def save_stage_statistics(self, **kwargs: Any) -> None:
         """Reads the export_stage_statistics and insert it to the export_statistics table"""
-        logging.debug("Executing stage.save_stage_statistics()")
+        logging.debug("Executing Stage.save_stage_statistics()")
 
         columns_part = []
         values_part = []
@@ -484,11 +484,11 @@ class stage:
         self.mysql_conn.commit()
         logging.debug("SQL Statement executed: %s" % (self.mysql_cursor.statement))
 
-        logging.debug("Executing stage.save_stage_statistics() - Finished")
+        logging.debug("Executing Stage.save_stage_statistics() - Finished")
 
     def get_stage_start_stop(self, stage: str | None) -> dict[str, str]:
         """Returns the start and stop time for a specific stage. If no info can be found, 1970-01-01T00:00:00.000000Z is returned for both"""
-        logging.debug("Executing stage.get_stage_start_stop()")
+        logging.debug("Executing Stage.get_stage_start_stop()")
 
         query = "select stage, start, stop, duration from export_stage_statistics where dbalias = %s and target_schema = %s and target_table = %s"
         self.mysql_cursor.execute(
@@ -519,7 +519,7 @@ class stage:
 
     def clear_stage(self) -> None:
         """Removes all stage information from the export_stage table"""
-        logging.debug("Executing stage.clear_stage()")
+        logging.debug("Executing Stage.clear_stage()")
 
         if not self.memory_stage:
             query = "delete from export_stage where dbalias = %s and target_schema = %s and target_table = %s"
@@ -536,11 +536,11 @@ class stage:
             self.mysql_conn.commit()
             logging.debug("SQL Statement executed: %s" % (self.mysql_cursor.statement))
 
-        logging.debug("Executing stage.clear_stage() - Finished")
+        logging.debug("Executing Stage.clear_stage() - Finished")
 
     def get_stage(self) -> int:
         """Fetches the stage from export_stage table and return stage value. If no stage, 0 is returned"""
-        logging.debug("Executing stage.get_stage()")
+        logging.debug("Executing Stage.get_stage()")
 
         if self.current_stage == None:
             if self.memory_stage:
@@ -567,24 +567,24 @@ class stage:
         self.stage_duration_stop = 0.0
         self.stage_duration_time = 0.0
 
-        logging.debug("Executing stage.get_stage() - Finished")
+        logging.debug("Executing Stage.get_stage() - Finished")
         return self.current_stage
 
     def set_stage(self, new_stage: int, force: bool = False) -> None:
         """Saves the stage information that is used for finding the correct step in the retries operations"""
-        logging.debug("Executing stage.set_stage()")
+        logging.debug("Executing Stage.set_stage()")
 
         if force == True:
             self.current_stage = 0
 
         if self.current_stage != None and self.current_stage > new_stage:
-            logging.debug("Executing stage.set_stage() - Finished (no stage set)")
+            logging.debug("Executing Stage.set_stage() - Finished (no stage set)")
             return
 
         if self.memory_stage:
             self.current_stage = new_stage
             logging.debug(
-                "Executing stage.set_stage() - Finished (stage only in memory)"
+                "Executing Stage.set_stage() - Finished (stage only in memory)"
             )
             return
 
@@ -698,11 +698,11 @@ class stage:
         self.stage_duration_stop = 0.0
         self.stage_duration_time = 0.0
 
-        logging.debug("Executing stage.set_stage() - Finished")
+        logging.debug("Executing Stage.set_stage() - Finished")
 
     def save_retry_attempt(self, stage: int) -> None:
         """Saves the retry attempt in the export_retries_log table"""
-        logging.debug("Executing stage.save_retry_attempt()")
+        logging.debug("Executing Stage.save_retry_attempt()")
 
         if self.memory_stage:
             return
@@ -734,4 +734,4 @@ class stage:
         self.mysql_conn.commit()
         logging.debug("SQL Statement executed: %s" % (self.mysql_cursor.statement))
 
-        logging.debug("Executing stage.save_retry_attempt() - Finished")
+        logging.debug("Executing Stage.save_retry_attempt() - Finished")

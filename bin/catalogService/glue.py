@@ -22,14 +22,18 @@ import boto3
 import botocore
 import pandas as pd
 
-from common.Exceptions import catalogError, databaseNotFound, undevelopedFeature
+from common.Exceptions import (
+    CatalogError,
+    DatabaseNotFoundError,
+    UndevelopedFeatureError,
+)
 from common.Singleton import Singleton
 from DBImportConfig import common_config
 
 
-class glueCatalog(metaclass=Singleton):
+class GlueCatalog(metaclass=Singleton):
     def __init__(self):
-        logging.debug("Executing glueCatalog.__init__()")
+        logging.debug("Executing GlueCatalog.__init__()")
 
         self.debug_log_level = False
         # self.debug_log_level = True
@@ -37,7 +41,7 @@ class glueCatalog(metaclass=Singleton):
         if logging.root.level == 10:  # DEBUG
             self.debug_log_level = True
 
-        self.common_config = common_config.config()
+        self.common_config = common_config.Config()
 
         self.glue_client = boto3.client(
             "glue", region_name=self.common_config.aws_region
@@ -52,25 +56,25 @@ class glueCatalog(metaclass=Singleton):
         # self.get_columns("etl_import_staging", "dbimport__import_tables_full_truncate_insert__staging")
         # self.get_tables()
 
-        logging.debug("Executing glueCatalog.__init__() - Finished")
+        logging.debug("Executing GlueCatalog.__init__() - Finished")
 
     def check_db(self, hive_db):
-        logging.debug("Executing glueCatalog.check_db()")
+        logging.debug("Executing GlueCatalog.check_db()")
 
         try:
             response = self.glue_client.get_database(Name=hive_db)
         # 			print(response)
         except botocore.exceptions.ClientError as error:
             logging.error(error)
-            raise databaseNotFound(
+            raise DatabaseNotFoundError(
                 "Can't find database '%s' in Glue Catalog" % (hive_db)
             )
-            # raise catalogError("Can't find database '%s' in Glue Catalog"%(hiveDB))
+            # raise CatalogError("Can't find database '%s' in Glue Catalog"%(hiveDB))
 
-        logging.debug("Executing glueCatalog.check_db() - Finished")
+        logging.debug("Executing GlueCatalog.check_db() - Finished")
 
     def check_table(self, hive_db, hive_table):
-        logging.debug("Executing glueCatalog.check_table()")
+        logging.debug("Executing GlueCatalog.check_table()")
 
         result = False
         try:
@@ -81,11 +85,11 @@ class glueCatalog(metaclass=Singleton):
             if error.response["Error"]["Code"] != "EntityNotFoundException":
                 logging.error(error)
 
-        logging.debug("Executing glueCatalog.check_table() - Finished")
+        logging.debug("Executing GlueCatalog.check_table() - Finished")
         return result
 
     def get_table_location(self, hive_db, hive_table):
-        logging.debug("Executing glueCatalog.get_table_location()")
+        logging.debug("Executing GlueCatalog.get_table_location()")
 
         try:
             response = self.glue_client.get_table(DatabaseName=hive_db, Name=hive_table)
@@ -93,29 +97,29 @@ class glueCatalog(metaclass=Singleton):
         # 			print(location)
         except botocore.exceptions.ClientError as error:
             logging.error(error)
-            raise catalogError("Error when reading table location from Glue Catalog")
+            raise CatalogError("Error when reading table location from Glue Catalog")
 
-        logging.debug("Executing glueCatalog.get_table_location() - Finished")
+        logging.debug("Executing GlueCatalog.get_table_location() - Finished")
         return location
 
     def is_table_external_orc_format(self, hive_db, hive_table):
-        logging.debug("Executing glueCatalog.is_table_external_orc_format()")
+        logging.debug("Executing GlueCatalog.is_table_external_orc_format()")
         logging.warning(
-            "glueCatalog.is_table_external_orc_format() is undeveloped. Please contact developer if this is needed"
+            "GlueCatalog.is_table_external_orc_format() is undeveloped. Please contact developer if this is needed"
         )
-        logging.debug("Executing glueCatalog.is_table_external_orc_format() - Finished")
+        logging.debug("Executing GlueCatalog.is_table_external_orc_format() - Finished")
 
     def is_table_external_parquet_format(self, hive_db, hive_table):
-        logging.debug("Executing glueCatalog.is_table_external_parquet_format()")
+        logging.debug("Executing GlueCatalog.is_table_external_parquet_format()")
         logging.warning(
-            "glueCatalog.is_table_external_parquet_format() is undeveloped. Please contact developer if this is needed"
+            "GlueCatalog.is_table_external_parquet_format() is undeveloped. Please contact developer if this is needed"
         )
         logging.debug(
-            "Executing glueCatalog.is_table_external_parquet_format() - Finished"
+            "Executing GlueCatalog.is_table_external_parquet_format() - Finished"
         )
 
     def is_table_external_iceberg_format(self, hive_db, hive_table):
-        logging.debug("Executing glueCatalog.is_table_external_iceberg_format()")
+        logging.debug("Executing GlueCatalog.is_table_external_iceberg_format()")
 
         return_value = False
         try:
@@ -132,15 +136,15 @@ class glueCatalog(metaclass=Singleton):
         # 			print("========================================")
         except botocore.exceptions.ClientError as error:
             logging.error(error)
-            raise catalogError("Error when checking table type in Glue Catalog")
+            raise CatalogError("Error when checking table type in Glue Catalog")
 
         logging.debug(
-            "Executing glueCatalog.is_table_external_iceberg_format() - Finished"
+            "Executing GlueCatalog.is_table_external_iceberg_format() - Finished"
         )
         return return_value
 
     def is_table_external(self, hive_db, hive_table):
-        logging.debug("Executing glueCatalog.is_table_external()")
+        logging.debug("Executing GlueCatalog.is_table_external()")
 
         return_value = False
         try:
@@ -156,14 +160,14 @@ class glueCatalog(metaclass=Singleton):
         # 			print("========================================")
         except botocore.exceptions.ClientError as error:
             logging.error(error)
-            raise catalogError("Error when checking table type in Glue Catalog")
+            raise CatalogError("Error when checking table type in Glue Catalog")
 
-        logging.debug("Executing glueCatalog.is_table_external() - Finished")
+        logging.debug("Executing GlueCatalog.is_table_external() - Finished")
         return return_value
 
     def get_pk(self, hive_db, hive_table, quoted_columns=False):
         """Reads the PK from the Hive Metadatabase and return a comma separated string with the information"""
-        logging.debug("Executing glueCatalog.get_pk()")
+        logging.debug("Executing GlueCatalog.get_pk()")
 
         logging.warning(
             "No support for Primary Key with Glue Catalog in current version of DBImport"
@@ -176,20 +180,20 @@ class glueCatalog(metaclass=Singleton):
         # 		PKerrorFound = False
         #
         # 		session = self.hive_meta_session()
-        # 		KEY_CONSTRAINTS = aliased(hiveSchema.KEY_CONSTRAINTS, name="K")
+        # 		KeyConstraints = aliased(hiveSchema.KeyConstraints, name="K")
         # 		TBLS = aliased(hiveSchema.TBLS, name="T")
-        # 		COLUMNS_V2 = aliased(hiveSchema.COLUMNS_V2, name="C")
+        # 		ColumnsV2 = aliased(hiveSchema.ColumnsV2, name="C")
         # 		DBS = aliased(hiveSchema.DBS, name="D")
         #
-        # 		for row in (session.query(COLUMNS_V2.COLUMN_NAME)
-        # 				.select_from(KEY_CONSTRAINTS)
-        # 				.join(TBLS, KEY_CONSTRAINTS.TBLS_PARENT)
-        # 				.join(COLUMNS_V2, (COLUMNS_V2.CD_ID == KEY_CONSTRAINTS.PARENT_CD_ID) & (COLUMNS_V2.INTEGER_IDX == KEY_CONSTRAINTS.PARENT_INTEGER_IDX))
+        # 		for row in (session.query(ColumnsV2.COLUMN_NAME)
+        # 				.select_from(KeyConstraints)
+        # 				.join(TBLS, KeyConstraints.TBLS_PARENT)
+        # 				.join(ColumnsV2, (ColumnsV2.CD_ID == KeyConstraints.PARENT_CD_ID) & (ColumnsV2.INTEGER_IDX == KeyConstraints.PARENT_INTEGER_IDX))
         # 				.join(DBS)
-        # 				.filter(KEY_CONSTRAINTS.CONSTRAINT_TYPE == 0)
+        # 				.filter(KeyConstraints.CONSTRAINT_TYPE == 0)
         # 				.filter(TBLS.TBL_NAME == hiveTable.lower())
         # 				.filter(DBS.NAME == hiveDB.lower())
-        # 				.order_by(KEY_CONSTRAINTS.POSITION)
+        # 				.order_by(KeyConstraints.POSITION)
         # 				.all()):
         #
         # 			if result != "":
@@ -205,12 +209,12 @@ class glueCatalog(metaclass=Singleton):
         # 		if PKerrorFound == True: result = ""
         #
         # 		logging.debug("Primary Key columns: %s"%(result))
-        logging.debug("Executing glueCatalog.get_pk() - Finished")
+        logging.debug("Executing GlueCatalog.get_pk() - Finished")
         return result
 
     def get_pk_name(self, hive_db, hive_table):
         """Returns the name of the Primary Key that exists on the table. Returns None if it doesnt exist"""
-        logging.debug("Executing glueCatalog.get_pk_name()")
+        logging.debug("Executing GlueCatalog.get_pk_name()")
 
         logging.warning(
             "No support for Primary Key with Glue Catalog in current version of DBImport"
@@ -220,7 +224,7 @@ class glueCatalog(metaclass=Singleton):
         # 			self.connect_to_hive_metastore_db()
         #
         # 		session = self.hive_meta_session()
-        # 		KEY = aliased(hiveSchema.KEY_CONSTRAINTS, name="K")
+        # 		KEY = aliased(hiveSchema.KeyConstraints, name="K")
         # 		TBLS = aliased(hiveSchema.TBLS, name="T")
         # 		DBS = aliased(hiveSchema.DBS, name="D")
         #
@@ -236,17 +240,17 @@ class glueCatalog(metaclass=Singleton):
         # 				.one())
         # 		except sa.orm.exc.NoResultFound:
         # 			logging.debug("PK Name: <None>")
-        # 			logging.debug("Executing glueCatalog.get_pk_name() - Finished")
+        # 			logging.debug("Executing GlueCatalog.get_pk_name() - Finished")
         # 			return None
         #
         # 		logging.debug("PK Name: %s"%(row[0]))
-        logging.debug("Executing glueCatalog.get_pk_name() - Finished")
+        logging.debug("Executing GlueCatalog.get_pk_name() - Finished")
         # 		return row[0]
         return None
 
     def get_fks(self, hive_db, hive_table):
         """Reads the ForeignKeys from the Hive Metastore tables and return the result in a Pandas DF"""
-        logging.debug("Executing glueCatalog.get_fks()")
+        logging.debug("Executing GlueCatalog.get_fks()")
 
         logging.warning(
             "No support for Foreign Key with Glue Catalog in current version of DBImport"
@@ -257,11 +261,11 @@ class glueCatalog(metaclass=Singleton):
         # 		result_df = None
         #
         # 		session = self.hive_meta_session()
-        # 		KEY = aliased(hiveSchema.KEY_CONSTRAINTS, name="K")
+        # 		KEY = aliased(hiveSchema.KeyConstraints, name="K")
         # 		TBLS_TP = aliased(hiveSchema.TBLS, name="TP")
         # 		TBLS_TC = aliased(hiveSchema.TBLS, name="TC")
-        # 		COLUMNS_CP = aliased(hiveSchema.COLUMNS_V2, name="CP")
-        # 		COLUMNS_CC = aliased(hiveSchema.COLUMNS_V2, name="CC")
+        # 		COLUMNS_CP = aliased(hiveSchema.ColumnsV2, name="CP")
+        # 		COLUMNS_CC = aliased(hiveSchema.ColumnsV2, name="CC")
         # 		DBS_DP = aliased(hiveSchema.DBS, name="DP")
         # 		DBS_DC = aliased(hiveSchema.DBS, name="DC")
         #
@@ -296,7 +300,7 @@ class glueCatalog(metaclass=Singleton):
         # 						'ref_column_name': lambda a: ",".join(a)})
         # 			.reset_index())
 
-        logging.debug("Executing glueCatalog.get_fks() - Finished")
+        logging.debug("Executing GlueCatalog.get_fks() - Finished")
         # 		return result_df.sort_values(by=['fk_name'], ascending=True)
         return pd.DataFrame(
             columns=[
@@ -312,9 +316,9 @@ class glueCatalog(metaclass=Singleton):
 
     def remove_locks_by_force(self, hive_db, hive_table):
         """Removes the locks on the Hive table from the Hive Metadatabase"""
-        logging.debug("Executing glueCatalog.remove_locks_by_force()")
+        logging.debug("Executing GlueCatalog.remove_locks_by_force()")
         # This is not needed with Glue Catalog, but code must be here anyway
-        logging.debug("Executing glueCatalog.remove_locks_by_force() - Finished")
+        logging.debug("Executing GlueCatalog.remove_locks_by_force() - Finished")
 
     def get_columns(
         self,
@@ -327,7 +331,7 @@ class glueCatalog(metaclass=Singleton):
         exclude_data_lake_columns=False,
     ):
         """Returns a pandas DataFrame with all columns in the specified table"""
-        logging.debug("Executing glueCatalog.get_columns()")
+        logging.debug("Executing GlueCatalog.get_columns()")
 
         # 		print(hiveDB)
         # 		print(hiveTable)
@@ -374,7 +378,7 @@ class glueCatalog(metaclass=Singleton):
         # 			print("========================================")
         except botocore.exceptions.ClientError as error:
             logging.error(error)
-            raise catalogError("Error when checking table type in Glue Catalog")
+            raise CatalogError("Error when checking table type in Glue Catalog")
 
         if include_type == False:
             result_df.drop("type", axis=1, inplace=True)
@@ -396,33 +400,33 @@ class glueCatalog(metaclass=Singleton):
         # 		# The merge will otherwise indicate that there is a difference and table will be recreated
         result_df.reset_index(drop=True, inplace=True)
 
-        logging.debug("Executing glueCatalog.get_columns() - Finished")
+        logging.debug("Executing GlueCatalog.get_columns() - Finished")
         return result_df
 
     #
     def is_table_transactional(self, hive_db, hive_table):
-        logging.debug("Executing glueCatalog.is_table_transactional()")
+        logging.debug("Executing GlueCatalog.is_table_transactional()")
         # Always True for Glue Catalog
-        logging.debug("Executing glueCatalog.is_table_transactional() - Finished")
+        logging.debug("Executing GlueCatalog.is_table_transactional() - Finished")
         return True
 
     def is_table_view(self, hive_db, hive_table):
-        logging.debug("Executing glueCatalog.is_table_view()")
+        logging.debug("Executing GlueCatalog.is_table_view()")
 
-        raise undevelopedFeature(
-            "glueCatalog.is_table_view() is undeveloped. Please contact the developers of DBImport"
+        raise UndevelopedFeatureError(
+            "GlueCatalog.is_table_view() is undeveloped. Please contact the developers of DBImport"
         )
 
         return_value = False
-        logging.debug("Executing glueCatalog.is_table_view() - Finished")
+        logging.debug("Executing GlueCatalog.is_table_view() - Finished")
         return return_value
 
     def get_tables(self, db_filter=None, table_filter=None):
         """Return all tables from specific Hive DB"""
-        logging.debug("Executing glueCatalog.get_tables()")
+        logging.debug("Executing GlueCatalog.get_tables()")
 
-        raise undevelopedFeature(
-            "glueCatalog.get_tables() is undeveloped. Please contact the developers of DBImport"
+        raise UndevelopedFeatureError(
+            "GlueCatalog.get_tables() is undeveloped. Please contact the developers of DBImport"
         )
 
         # 		if self.hive_meta_session == None:
@@ -458,7 +462,7 @@ class glueCatalog(metaclass=Singleton):
         # 		if len(result_df) == 0:
         # 			return pd.DataFrame(columns=['hiveDB', 'hiveTable'])
         #
-        logging.debug("Executing glueCatalog.get_tables() - Finished")
+        logging.debug("Executing GlueCatalog.get_tables() - Finished")
 
 
 # 		return result_df

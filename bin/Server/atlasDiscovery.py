@@ -29,17 +29,17 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import aliased, sessionmaker
 
 from common.Exceptions import (
-    atlasError,
-    connectionError,
-    foreignKeyError,
-    invalidConfiguration,
+    AtlasError,
+    ForeignKeyError,
+    InvalidConfigurationError,
+    JDBCConnectionError,
 )
 from ConfigReader import configuration
 from DBImportConfig import common_config, configSchema
 from DBImportOperation import atlas_operations
 
 
-class atlasCrawler(threading.Thread):
+class AtlasCrawler(threading.Thread):
     def __init__(
         self,
         name,
@@ -56,9 +56,9 @@ class atlasCrawler(threading.Thread):
         self.atlas_crawler_result_queue = atlas_crawler_result_queue
         self.thread_stop_event = thread_stop_event
         self.logger_name = logger_name
-        self.atlas_operation = atlas_operations.atlasOperation(logger_name)
+        self.atlas_operation = atlas_operations.AtlasOperation(logger_name)
 
-    # 		self.schema_reader = schemaReader.source()
+    # 		self.schema_reader = schemaReader.Source()
     # 		self.jdbc_conn = None
     # 		self.jdbc_cursor = None
 
@@ -90,16 +90,16 @@ class atlasCrawler(threading.Thread):
                     self.atlas_crawler_request, self.jdbc_connection_mutex
                 )
                 atlas_operation_result = self.atlas_operation.discover_atlas_rdbms()
-            except invalidConfiguration:
+            except InvalidConfigurationError:
                 response["result"] = False
                 response["blacklist"] = True
-            except atlasError:
+            except AtlasError:
                 response["result"] = False
                 response["blacklist"] = False
-            except foreignKeyError:
+            except ForeignKeyError:
                 response["result"] = False
                 response["blacklist"] = False
-            except connectionError:
+            except JDBCConnectionError:
                 response["result"] = False
                 response["blacklist"] = True
             except:
@@ -115,7 +115,7 @@ class atlasCrawler(threading.Thread):
         log.info("Atlas crawler thread %s stopped", self.name)
 
 
-class atlasDiscovery(threading.Thread):
+class AtlasDiscovery(threading.Thread):
     def __init__(self, thread_stop_event):
         threading.Thread.__init__(self)
         self.thread_stop_event = thread_stop_event
@@ -129,7 +129,7 @@ class atlasDiscovery(threading.Thread):
         self.config_db_engine = None
         self.debug_log_level = False
         atlas_enabled = True
-        # 		self.atlas_operation = atlas_operations.atlasOperation(logger)
+        # 		self.atlas_operation = atlas_operations.AtlasOperation(logger)
 
         if logging.root.level == 10:  # DEBUG
             self.debug_log_level = True
@@ -159,7 +159,7 @@ class atlasDiscovery(threading.Thread):
             # 			else:
             # 				distCPlogName = "distCP-thread%s"%(str(threadID))
 
-            thread = atlasCrawler(
+            thread = AtlasCrawler(
                 name=str(thread_id),
                 atlas_crawler_process_queue=self.atlas_crawler_process_queue,
                 atlas_crawler_result_queue=self.atlas_crawler_result_queue,
@@ -171,8 +171,8 @@ class atlasDiscovery(threading.Thread):
             thread.start()
             atlas_crawler_objects.append(thread)
 
-        self.common_config = common_config.config()
-        jdbc_connections = aliased(configSchema.jdbcConnections)
+        self.common_config = common_config.Config()
+        jdbc_connections = aliased(configSchema.JDBCConnections)
         self.failure_log = {}
         self.connections_sent_to_crawlers = []
 
@@ -220,7 +220,7 @@ class atlasDiscovery(threading.Thread):
                         )
                         .select_from(jdbc_connections)
                         .filter(jdbc_connections.atlas_discovery == 1)
-                        # 						.filter((jdbcConnections.atlas_last_discovery < atlasDiscoveryCheckTime) | (jdbcConnections.atlas_last_discovery == None))
+                        # 						.filter((JDBCConnections.atlas_last_discovery < atlasDiscoveryCheckTime) | (JDBCConnections.atlas_last_discovery == None))
                         .order_by(jdbc_connections.atlas_last_discovery)
                         .all()
                     )
@@ -255,7 +255,7 @@ class atlasDiscovery(threading.Thread):
                         self.common_config.mysql_conn.commit()
                         try:
                             self.common_config.lookup_connection_alias(db_alias)
-                        except invalidConfiguration as err:
+                        except InvalidConfigurationError as err:
                             if self.common_config.atlas_jdbc_source_support:
                                 log.error(
                                     "Connection '%s' have invalid configuration. Failed with '%s'",
@@ -351,7 +351,7 @@ class atlasDiscovery(threading.Thread):
                             )
 
             # ********************************
-            # Read response from atlasCrawler
+            # Read response from AtlasCrawler
             # ********************************
 
             try:
@@ -378,8 +378,8 @@ class atlasDiscovery(threading.Thread):
                     try:
                         session = self.get_dbimport_session()
                         (
-                            session.query(configSchema.jdbcConnections)
-                            .filter(configSchema.jdbcConnections.dbalias == db_alias)
+                            session.query(configSchema.JDBCConnections)
+                            .filter(configSchema.JDBCConnections.dbalias == db_alias)
                             .update(update_dict)
                         )
                         session.commit()

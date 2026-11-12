@@ -27,13 +27,13 @@ import numpy as np
 import pandas as pd
 
 from common import constants as constant
-from common.Exceptions import SQLerror, invalidConfiguration, validationError
+from common.Exceptions import DataValidationError, InvalidConfigurationError, SQLError
 from common.Singleton import Singleton
 from DBImportConfig import common_config, sendStatistics
 from DBImportConfig import import_stage as stage
 
 
-class config(metaclass=Singleton):
+class Config(metaclass=Singleton):
     def __init__(
         self, hive_db: str | None = None, hive_table: str | None = None
     ) -> None:
@@ -145,9 +145,9 @@ class config(metaclass=Singleton):
         self.full_executed_command: str | None = None
         self.mongo_import: bool | None = None
 
-        self.common_config = common_config.config(hive_db, hive_table)
+        self.common_config = common_config.Config(hive_db, hive_table)
         self.common_config.operation_type = "import"
-        self.send_statistics = sendStatistics.sendStatistics()
+        self.send_statistics = sendStatistics.SendStatistics()
 
         self.start_date = self.common_config.start_date
         self.mysql_conn = self.common_config.mysql_conn
@@ -155,7 +155,7 @@ class config(metaclass=Singleton):
         self.mysql_cursor02 = self.mysql_conn.cursor(buffered=True)
 
         # Initialize the stage class that will handle all stage operations for us
-        self.stage = stage.stage(self.mysql_conn, self.hive_db, self.hive_table)
+        self.stage = stage.Stage(self.mysql_conn, self.hive_db, self.hive_table)
 
         logging.debug("Executing import_config.__init__() - Finished")
 
@@ -453,7 +453,7 @@ class config(metaclass=Singleton):
         self.mysql_cursor01.execute(query, (self.hive_db, self.hive_table))
         logging.debug("SQL Statement executed: %s" % (self.mysql_cursor01.statement))
         if self.mysql_cursor01.rowcount != 1:
-            raise invalidConfiguration(
+            raise InvalidConfigurationError(
                 "The specified Hive Database and Table can't be found in the configuration database. Please check that you specified the correct database and table and that the configuration exists in the configuration database"
             )
 
@@ -557,7 +557,7 @@ class config(metaclass=Singleton):
             self.validation_method != constant.VALIDATION_METHOD_CUSTOMQUERY
             and self.validation_method != constant.VALIDATION_METHOD_ROWCOUNT
         ):
-            raise invalidConfiguration(
+            raise InvalidConfigurationError(
                 f"Only the values '{constant.VALIDATION_METHOD_ROWCOUNT}' or '{constant.VALIDATION_METHOD_CUSTOMQUERY}' is valid for column validationMethod in import_tables."
             )
 
@@ -567,17 +567,17 @@ class config(metaclass=Singleton):
                 "${HIVE_DB}" not in self.validation_custom_query_hive_sql
                 or "${HIVE_TABLE}" not in self.validation_custom_query_hive_sql
             ):
-                raise invalidConfiguration(
+                raise InvalidConfigurationError(
                     "When using customQuery as the validation method, the Hive query must have the strings ${HIVE_DB} and ${HIVE_TABLE} instead of the actual database and table names. This is needed as validation happens on both import and target table."
                 )
 
         if self.import_tool != "sqoop" and self.import_tool != "spark":
-            raise invalidConfiguration(
+            raise InvalidConfigurationError(
                 "Only the values 'sqoop' or 'spark' is valid for column import_tool in import_tables."
             )
 
         if self.validate_source != "query" and self.validate_source != "sqoop":
-            raise invalidConfiguration(
+            raise InvalidConfigurationError(
                 "Only the values 'query' or 'sqoop' is valid for column validate_source in import_tables."
             )
 
@@ -600,7 +600,7 @@ class config(metaclass=Singleton):
             self.incr_validation_method != "full"
             and self.incr_validation_method != "incr"
         ):
-            raise invalidConfiguration(
+            raise InvalidConfigurationError(
                 "Only the values 'full' or 'incr' is valid for column incr_validation_method in import_tables."
             )
 
@@ -652,14 +652,14 @@ class config(metaclass=Singleton):
         if self.import_type != None and (
             self.import_phase_type != None or self.etl_phase_type != None
         ):
-            raise invalidConfiguration(
+            raise InvalidConfigurationError(
                 "It's not supported to enter a value in 'import_type' at the same time as 'import_phase_type' or 'etl_phase_type' is not empty"
             )
 
         if self.import_type == None and (
             self.import_phase_type == None or self.etl_phase_type == None
         ):
-            raise invalidConfiguration(
+            raise InvalidConfigurationError(
                 "You need to enter a value in both 'import_phase_type' and 'etl_phase_type'"
             )
 
@@ -726,7 +726,7 @@ class config(metaclass=Singleton):
                 valid_combination = True
 
             if not valid_combination:
-                raise invalidConfiguration(
+                raise InvalidConfigurationError(
                     "The combination of '%s' and '%s' as import methods is not valid. Please check documentation for supported combinations"
                     % (self.import_phase_type, self.etl_phase_type)
                 )
@@ -888,12 +888,12 @@ class config(metaclass=Singleton):
             self.etl_phase_description = "Merge"
 
             if self.soft_delete_during_merge:
-                raise invalidConfiguration(
+                raise InvalidConfigurationError(
                     "Oracle Flashback imports doesnt support 'Soft delete during Merge'. Please check configuration"
                 )
 
             if self.import_tool != "sqoop":
-                raise invalidConfiguration(
+                raise InvalidConfigurationError(
                     "Oracle Flashback only supports imports with sqoop in this version"
                 )
 
@@ -910,12 +910,12 @@ class config(metaclass=Singleton):
             self.etl_phase_description = "Merge History Audit"
 
             if self.soft_delete_during_merge:
-                raise invalidConfiguration(
+                raise InvalidConfigurationError(
                     "Oracle Flashback imports doesnt support 'Soft delete during Merge'. Please check configuration"
                 )
 
             if self.import_tool != "sqoop":
-                raise invalidConfiguration(
+                raise InvalidConfigurationError(
                     "Oracle Flashback only supports imports with sqoop in this version"
                 )
 
@@ -958,13 +958,13 @@ class config(metaclass=Singleton):
 
         # Check Mongo ETL engine
         if self.mongo_import == True and self.etl_engine == constant.ETL_ENGINE_SPARK:
-            raise invalidConfiguration(
+            raise InvalidConfigurationError(
                 "Mongo Import only supports Hive as the ETL engine"
             )
 
         # Check SQL Anywhere engine
         if self.common_config.db_sqlanywhere == True and self.import_tool != "spark":
-            raise invalidConfiguration(
+            raise InvalidConfigurationError(
                 "SQL Anywhere only supports Spark as the import tool"
             )
 
@@ -973,7 +973,7 @@ class config(metaclass=Singleton):
             self.etl_engine == constant.ETL_ENGINE_SPARK
             and not etl_engine_spark_supported
         ):
-            raise invalidConfiguration(
+            raise InvalidConfigurationError(
                 "This import type does not support Spark as the ETL engine. Please change to Hive"
             )
 
@@ -982,7 +982,7 @@ class config(metaclass=Singleton):
             self.etl_engine == constant.ETL_ENGINE_SPARK
             and self.validation_method == constant.VALIDATION_METHOD_CUSTOMQUERY
         ):
-            raise invalidConfiguration(
+            raise InvalidConfigurationError(
                 "Spark ETL engine only supports row-count validation method. Please change and rerun the import"
             )
 
@@ -991,14 +991,14 @@ class config(metaclass=Singleton):
             self.mongo_import == True
             and self.validation_method == constant.VALIDATION_METHOD_CUSTOMQUERY
         ):
-            raise invalidConfiguration(
+            raise InvalidConfigurationError(
                 f"Mongo Import only supports {constant.VALIDATION_METHOD_ROWCOUNT} as a validation method"
             )
 
         # Check to see that we have a valid import type
         # This will only happen if the old 'import_type' column is used. For the import_phase_type we already check if we have a valid combo
         if self.import_phase is None or self.etl_phase is None:
-            raise invalidConfiguration(
+            raise InvalidConfigurationError(
                 "Import type '%s' is not a valid type. Please check configuration"
                 % (self.import_type)
             )
@@ -1006,17 +1006,17 @@ class config(metaclass=Singleton):
         # Check for MSSQL Change Tracking
         if self.import_phase == constant.IMPORT_PHASE_MSSQL_CHANGE_TRACKING:
             if self.soft_delete_during_merge:
-                raise invalidConfiguration(
+                raise InvalidConfigurationError(
                     "Microsoft SQL Change Tracking imports doesnt support 'Soft delete during Merge'. Please check configuration"
                 )
 
             if self.import_tool != "spark":
-                raise invalidConfiguration(
+                raise InvalidConfigurationError(
                     "Microsoft SQL Change Tracking imports only support spark as import tool. Please check configuration"
                 )
 
             if self.incr_validation_method != "full":
-                raise invalidConfiguration(
+                raise InvalidConfigurationError(
                     "Microsoft SQL Change Tracking imports only support 'full' validation. Please check configuration"
                 )
 
@@ -1025,7 +1025,9 @@ class config(metaclass=Singleton):
             self.import_phase == constant.IMPORT_PHASE_MONGO_FULL
             and self.import_tool != "spark"
         ):
-            raise invalidConfiguration("Import of MongoDB is only supported by spark")
+            raise InvalidConfigurationError(
+                "Import of MongoDB is only supported by spark"
+            )
 
         # Determine if it's an incremental import based on the importPhase
         if self.import_phase in (
@@ -1036,11 +1038,11 @@ class config(metaclass=Singleton):
             self.import_is_incremental = True
             if self.import_phase == constant.IMPORT_PHASE_INCR:
                 if self.sqoop_incr_column == None:
-                    raise invalidConfiguration(
+                    raise InvalidConfigurationError(
                         "An incremental import requires a valid column name specified in 'incr_column'. Please check configuration"
                     )
                 if self.incr_mode != "append" and self.incr_mode != "lastmodified":
-                    raise invalidConfiguration(
+                    raise InvalidConfigurationError(
                         "Only the values 'append' or 'lastmodified' is valid for column incr_mode in import_tables."
                     )
         else:
@@ -1105,7 +1107,7 @@ class config(metaclass=Singleton):
         logging.debug("SQL Statement executed: %s" % (self.mysql_cursor01.statement))
 
         if self.mysql_cursor01.rowcount != 1:
-            raise invalidConfiguration(
+            raise InvalidConfigurationError(
                 "The configured connection alias for this table cant be found in the 'jdbc_connections' table"
             )
 
@@ -1121,7 +1123,7 @@ class config(metaclass=Singleton):
             and self.etl_phase == constant.ETL_PHASE_INSERT
         ):
             if not self.create_datalake_import_column:
-                raise invalidConfiguration(
+                raise InvalidConfigurationError(
                     "Full Insert imports requires 'create_datalake_import' to be set in jdbc_connections table"
                 )
 
@@ -2126,7 +2128,7 @@ class config(metaclass=Singleton):
         # and raise an exception. This way, the user have a chance to fix the problem
 
         if column_name_reserved:
-            raise invalidConfiguration(
+            raise InvalidConfigurationError(
                 "There are columns with reserved words. DBImport cant continue until that is handled"
             )
 
@@ -2795,7 +2797,7 @@ class config(metaclass=Singleton):
                             self.sqoop_incr_minvalue_pending,
                             self.sqoop_incr_maxvalue_pending,
                         )
-                    except SQLerror as errMsg:
+                    except SQLError as errMsg:
                         # Some versions of Oracle dont have the V$FLASHBACK_DATABASE_LOG table. So it it's not found, we use the MINVALUE function instead
                         if "view does not exist" in str(errMsg):
                             where_statement = (
@@ -2803,7 +2805,7 @@ class config(metaclass=Singleton):
                                 % (self.sqoop_incr_maxvalue_pending)
                             )
                         else:
-                            raise SQLerror(str(errMsg))
+                            raise SQLError(str(errMsg))
 
                     where_statement += "WHERE VERSIONS_ENDTIME IS NULL AND (VERSIONS_OPERATION != 'D' OR VERSIONS_OPERATION IS NULL)"
 
@@ -2873,7 +2875,7 @@ class config(metaclass=Singleton):
                                 f"{dt}.{int(micro) // 1000:03d}"
                             )
                 except TypeError:
-                    raise invalidConfiguration(
+                    raise InvalidConfigurationError(
                         "Specified column for incremental loads does not look like it's a timestamp. If it's an integer based value, please select 'append' mode instead"
                     )
 
@@ -3038,7 +3040,7 @@ class config(metaclass=Singleton):
             logging.warning(
                 "'%s' is to large.", self.validation_custom_query_source_value
             )
-            raise invalidConfiguration(
+            raise InvalidConfigurationError(
                 "The size of the json document on the custom query exceeds 1024 bytes. Change the query to create a result with less than 512 bytes"
             )
 
@@ -3367,7 +3369,7 @@ class config(metaclass=Singleton):
             )
         except TypeError:
             # Cant read the value. It means permission error or that Change Tracking isnt available on the table
-            raise invalidConfiguration(
+            raise InvalidConfigurationError(
                 "Unable to read Change Tracking version. Verify that Change Tracking is enabled on the table and that the user that is accessing it have the correct permission"
             )
 
@@ -3682,7 +3684,7 @@ class config(metaclass=Singleton):
             logging.info(
                 "Result from Hive query:   %s", self.validation_custom_query_hive_value
             )
-            raise validationError()
+            raise DataValidationError()
 
         if (
             self.validation_custom_query_source_value
@@ -3698,7 +3700,7 @@ class config(metaclass=Singleton):
             logging.info(
                 "Result from Hive query:   %s", self.validation_custom_query_hive_value
             )
-            raise validationError()
+            raise DataValidationError()
 
         return True
 
@@ -4089,7 +4091,7 @@ class config(metaclass=Singleton):
             and "split-by" in self.sqoop_options.lower()
             and not self.split_added_to_sqoop_options
         ):
-            raise invalidConfiguration(
+            raise InvalidConfigurationError(
                 "Specifying both a '--split-by' in sqoop_options column and a value in 'split_by_column' is not supported. Please remove the '--split-by' statement in sqoop_options and rerun the import."
             )
 
@@ -4300,7 +4302,7 @@ class config(metaclass=Singleton):
                 ") values ( %s, %s, %s, %s, %s, 'spark' )"
             )
         else:
-            raise invalidConfiguration(
+            raise InvalidConfigurationError(
                 "catalog option supplied to import_config.add_import_table does not contain a valid option"
             )
 

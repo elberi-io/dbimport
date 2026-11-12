@@ -35,13 +35,13 @@ from sqlalchemy.sql import delete, func, update
 from sqlalchemy.sql.operators import like_op
 
 from common import constants as constant
-from common.Exceptions import SQLerror, invalidConfiguration
+from common.Exceptions import InvalidConfigurationError, SQLError
 from ConfigReader import configuration
 from DBImportConfig import common_config, configSchema
 from Server import dataModels
 
 
-class dbCalls:
+class DBCalls:
     def __init__(self):
 
         # 		logFormat = '%(asctime)s %(levelname)s - %(message)s'
@@ -60,7 +60,7 @@ class dbCalls:
         if logging.root.level == 10:  # DEBUG
             self.debug_log_level = True
 
-        self.common_config = common_config.config()
+        self.common_config = common_config.Config()
         # self.common_config.disconnect_config_database() # This is needed as we must connect with buffered=False and that is only available during reconnect
         # self.common_config.reconnect_config_database(printReconnectMessage=True, buffered=False)
 
@@ -191,14 +191,14 @@ class dbCalls:
             logging.error("%s", err)
             self.config_db_session = None
             self.config_db = None
-            raise SQLerror("Can't connect to DBImport database")
+            raise SQLError("Can't connect to DBImport database")
 
         except:
             print("Unexpected error: ")
             print(sys.exc_info())
             self.config_db_session = None
             self.config_db = None
-            raise SQLerror("Can't connect to DBImport database")
+            raise SQLError("Can't connect to DBImport database")
 
         else:
             # return self.config_db_session()
@@ -214,11 +214,11 @@ class dbCalls:
 
         try:
             session = self.get_dbimport_session()
-        except SQLerror:
+        except SQLError:
             self.disconnect_dbimport_db()
             return None
 
-        configuration_table = aliased(configSchema.configuration)
+        configuration_table = aliased(configSchema.Configuration)
 
         configuration = (
             session.query(
@@ -276,7 +276,7 @@ class dbCalls:
 
         try:
             session = self.get_dbimport_session()
-        except SQLerror:
+        except SQLError:
             self.disconnect_dbimport_db()
             return None
 
@@ -294,7 +294,7 @@ class dbCalls:
                 password=password_encoded, salt=salt
             ).decode("utf-8")
 
-            query = sa.insert(configSchema.authUsers).values(
+            query = sa.insert(configSchema.AuthUsers).values(
                 username=default_admin_user, password=hashed_password
             )
             session.execute(query)
@@ -309,13 +309,13 @@ class dbCalls:
 
         try:
             session = self.get_dbimport_session()
-        except SQLerror:
+        except SQLError:
             self.disconnect_dbimport_db()
             return None
 
         log.info("User '%s' created" % (user.username))
 
-        query = sa.insert(configSchema.authUsers).values(
+        query = sa.insert(configSchema.AuthUsers).values(
             username=user.username,
             password=user.password,
             disabled=user.disabled,
@@ -335,11 +335,11 @@ class dbCalls:
 
         try:
             session = self.get_dbimport_session()
-        except SQLerror:
+        except SQLError:
             self.disconnect_dbimport_db()
             return None
 
-        table_auth_users = aliased(configSchema.authUsers)
+        table_auth_users = aliased(configSchema.AuthUsers)
         auth_user = (
             session.query(
                 table_auth_users.username,
@@ -376,7 +376,7 @@ class dbCalls:
 
         try:
             session = self.get_dbimport_session()
-        except SQLerror:
+        except SQLError:
             self.disconnect_dbimport_db()
             return None
 
@@ -393,7 +393,7 @@ class dbCalls:
                 user["username"],
             )
 
-        table_auth_users = aliased(configSchema.authUsers)
+        table_auth_users = aliased(configSchema.AuthUsers)
         session.execute(
             update(table_auth_users),
             [
@@ -418,11 +418,11 @@ class dbCalls:
 
         try:
             session = self.get_dbimport_session()
-        except SQLerror:
+        except SQLError:
             self.disconnect_dbimport_db()
             return None
 
-        table_auth_users = aliased(configSchema.authUsers)
+        table_auth_users = aliased(configSchema.AuthUsers)
 
         (
             session.query(table_auth_users)
@@ -435,7 +435,7 @@ class dbCalls:
         session.remove()
 
     def generate_jdbc_connection_string(
-        self, connection_values: dataModels.generateJDBCconnectionString, current_user
+        self, connection_values: dataModels.GenerateJDBCConnectionString, current_user
     ):
         """Generates a JDBC connection string"""
         log = logging.getLogger(self.logger)
@@ -615,11 +615,11 @@ class dbCalls:
 
         try:
             session = self.get_dbimport_session()
-        except SQLerror:
+        except SQLError:
             self.disconnect_dbimport_db()
             return None
 
-        table_jdbc_connections_drivers = aliased(configSchema.jdbcConnectionsDrivers)
+        table_jdbc_connections_drivers = aliased(configSchema.JDBCConnectionsDrivers)
         jdbc_connections_drivers = (
             session.query(
                 table_jdbc_connections_drivers.database_type,
@@ -648,13 +648,13 @@ class dbCalls:
 
         return json_result
 
-    def update_jdbc_driver(self, jdbc_driver: dataModels.jdbcDriver, current_user):
+    def update_jdbc_driver(self, jdbc_driver: dataModels.JDBCDriver, current_user):
         """Returns all configuration items from the configuration table"""
         log = logging.getLogger(self.logger)
 
         try:
             session = self.get_dbimport_session()
-        except SQLerror:
+        except SQLError:
             self.disconnect_dbimport_db()
             return None
 
@@ -669,7 +669,7 @@ class dbCalls:
         log.debug("driver: %s" % jdbc_driver.driver)
         log.debug("classpath: %s" % jdbc_driver.classpath)
 
-        table_jdbc_connections_drivers = aliased(configSchema.jdbcConnectionsDrivers)
+        table_jdbc_connections_drivers = aliased(configSchema.JDBCConnectionsDrivers)
         result = "ok"
         return_code = 200
 
@@ -708,12 +708,12 @@ class dbCalls:
 
         try:
             session = self.get_dbimport_session()
-        except SQLerror:
+        except SQLError:
             self.disconnect_dbimport_db()
             return None
 
-        configuration_table = aliased(configSchema.configuration)
-        table_jdbc_connections = aliased(configSchema.jdbcConnections)
+        configuration_table = aliased(configSchema.Configuration)
+        table_jdbc_connections = aliased(configSchema.JDBCConnections)
 
         configurations = (
             session.query(
@@ -765,18 +765,18 @@ class dbCalls:
         return json_result
 
     def update_configuration(
-        self, configuration: dataModels.configuration, current_user
+        self, configuration: dataModels.Configuration, current_user
     ):
         """Update configuration items in the configuration table"""
         log = logging.getLogger(self.logger)
 
         try:
             session = self.get_dbimport_session()
-        except SQLerror:
+        except SQLError:
             self.disconnect_dbimport_db()
             return None
 
-        configuration_table = aliased(configSchema.configuration)
+        configuration_table = aliased(configSchema.Configuration)
 
         # First check to make sure we have valid options in the changed options
         try:
@@ -864,7 +864,7 @@ class dbCalls:
             self.common_config.lookup_connection_alias(
                 name, decrypt_credentials=False, jdbc_url=connection_string, quiet=True
             )
-        except invalidConfiguration:
+        except InvalidConfigurationError:
             pass
 
         server_type = None
@@ -903,11 +903,11 @@ class dbCalls:
 
         try:
             session = self.get_dbimport_session()
-        except SQLerror:
+        except SQLError:
             self.disconnect_dbimport_db()
             return None
 
-        table_jdbc_connections = aliased(configSchema.jdbcConnections)
+        table_jdbc_connections = aliased(configSchema.JDBCConnections)
         jdbc_connections = (
             session.query(
                 table_jdbc_connections.dbalias, table_jdbc_connections.jdbc_url
@@ -944,18 +944,18 @@ class dbCalls:
         return JSONResponse(content=json_result, headers=headers, status_code=200)
 
     def search_connections(
-        self, search_values: dataModels.connectionSearch, current_user
+        self, search_values: dataModels.ConnectionSearch, current_user
     ):
         """Search for import tables"""
         log = logging.getLogger(self.logger)
 
         try:
             session = self.get_dbimport_session()
-        except SQLerror:
+        except SQLError:
             self.disconnect_dbimport_db()
             return None
 
-        jdbc_connections = aliased(configSchema.jdbcConnections)
+        jdbc_connections = aliased(configSchema.JDBCConnections)
 
         attribute_to_column = {}
         attribute_to_column["name"] = jdbc_connections.dbalias
@@ -1039,17 +1039,17 @@ class dbCalls:
         }
         return JSONResponse(content=json_result, headers=headers, status_code=200)
 
-    def update_connection(self, connection: dataModels.connectionDetails, current_user):
+    def update_connection(self, connection: dataModels.ConnectionDetails, current_user):
         """Update or create a Connections"""
         log = logging.getLogger(self.logger)
 
         try:
             session = self.get_dbimport_session()
-        except SQLerror:
+        except SQLError:
             self.disconnect_dbimport_db()
             return None
 
-        table_jdbc_connections = aliased(configSchema.jdbcConnections)
+        table_jdbc_connections = aliased(configSchema.JDBCConnections)
         result = "ok"
         return_code = 200
 
@@ -1068,7 +1068,7 @@ class dbCalls:
             connection.atlasDiscovery = 1
 
         try:
-            query = insert(configSchema.jdbcConnections).values(
+            query = insert(configSchema.JDBCConnections).values(
                 dbalias=connection.name,
                 jdbc_url=connection.connectionString,
                 private_key_path=connection.privateKeyPath,
@@ -1122,7 +1122,7 @@ class dbCalls:
 
             session.execute(query)
             session.commit()
-        except SQLerror as err:
+        except SQLError as err:
             log.error(str(err))
             log.error(column)  # noqa: F821  # TODO(#164): column is undefined here
 
@@ -1139,11 +1139,11 @@ class dbCalls:
 
         try:
             session = self.get_dbimport_session()
-        except SQLerror:
+        except SQLError:
             self.disconnect_dbimport_db()
             return None
 
-        table_jdbc_connections = aliased(configSchema.jdbcConnections)
+        table_jdbc_connections = aliased(configSchema.JDBCConnections)
         row = (
             session.query(
                 table_jdbc_connections.dbalias,
@@ -1233,7 +1233,7 @@ class dbCalls:
 
         try:
             session = self.get_dbimport_session()
-        except SQLerror:
+        except SQLError:
             self.disconnect_dbimport_db()
             return None
 
@@ -1244,9 +1244,9 @@ class dbCalls:
 
         # Fetch the tableID as that is required to update/create data in import_columns
         row = (
-            session.query(configSchema.jdbcConnections.dbalias)
-            .select_from(configSchema.jdbcConnections)
-            .filter(configSchema.jdbcConnections.dbalias == connection)
+            session.query(configSchema.JDBCConnections.dbalias)
+            .select_from(configSchema.JDBCConnections)
+            .filter(configSchema.JDBCConnections.dbalias == connection)
             .one_or_none()
         )
         session.commit()
@@ -1256,8 +1256,8 @@ class dbCalls:
             return_code = 404
         else:
             (
-                session.query(configSchema.jdbcConnections)
-                .filter(configSchema.jdbcConnections.dbalias == connection)
+                session.query(configSchema.JDBCConnections)
+                .filter(configSchema.JDBCConnections.dbalias == connection)
                 .delete()
             )
             session.commit()
@@ -1267,7 +1267,7 @@ class dbCalls:
         return (result, return_code)
 
     def encrypted_credentials(
-        self, credentials: dataModels.encryptCredential, current_user
+        self, credentials: dataModels.EncryptCredential, current_user
     ):
         """Encrypt username and password with private key and store in connection"""
         log = logging.getLogger(self.logger)
@@ -1333,11 +1333,11 @@ class dbCalls:
 
         try:
             session = self.get_dbimport_session()
-        except SQLerror:
+        except SQLError:
             self.disconnect_dbimport_db()
             return None
 
-        import_tables = aliased(configSchema.importTables)
+        import_tables = aliased(configSchema.ImportTables)
 
         import_table_dbs = (
             session.query(
@@ -1388,7 +1388,7 @@ class dbCalls:
         return JSONResponse(content=json_result, headers=headers, status_code=200)
 
     def discover_import_tables(
-        self, data: dataModels.discoverImportTableOptions, current_user
+        self, data: dataModels.DiscoverImportTableOptions, current_user
     ):
         """Search for import tables"""
         log = logging.getLogger(self.logger)
@@ -1448,7 +1448,7 @@ class dbCalls:
         return (return_msg, return_code)
 
     def add_discovered_import_tables(
-        self, data: list[dataModels.discoverImportTable], current_user
+        self, data: list[dataModels.DiscoverImportTable], current_user
     ):
         """Add discovered import tables"""
         log = logging.getLogger(self.logger)
@@ -1459,7 +1459,7 @@ class dbCalls:
             database = record.database
             table = record.table
 
-            create_data = dataModels.importTableDetailsWrite(
+            create_data = dataModels.ImportTableDetailsWrite(
                 connection=record.connection,
                 sourceSchema=record.sourceSchema,
                 sourceTable=record.sourceTable,
@@ -1477,18 +1477,18 @@ class dbCalls:
         return (result_msg, return_code)
 
     def search_import_tables(
-        self, search_values: dataModels.importTableSearch, current_user
+        self, search_values: dataModels.ImportTableSearch, current_user
     ):
         """Search for import tables"""
         log = logging.getLogger(self.logger)
 
         try:
             session = self.get_dbimport_session()
-        except SQLerror:
+        except SQLError:
             self.disconnect_dbimport_db()
             return None
 
-        import_tables = aliased(configSchema.importTables)
+        import_tables = aliased(configSchema.ImportTables)
 
         attribute_to_column = {}
         attribute_to_column["database"] = import_tables.hive_db
@@ -1606,7 +1606,7 @@ class dbCalls:
         """Returns all import tables in a specific database"""
         log = logging.getLogger(self.logger)
 
-        search_values = dataModels.importTableSearch(
+        search_values = dataModels.ImportTableSearch(
             database="*", table="*", connection=connection
         )
 
@@ -1616,7 +1616,7 @@ class dbCalls:
         """Returns all import tables in a specific database"""
         log = logging.getLogger(self.logger)
 
-        search_values = dataModels.importTableSearch(database=database, table="*")
+        search_values = dataModels.ImportTableSearch(database=database, table="*")
 
         return self.search_import_tables(search_values, current_user)
 
@@ -1626,11 +1626,11 @@ class dbCalls:
 
         try:
             session = self.get_dbimport_session()
-        except SQLerror:
+        except SQLError:
             self.disconnect_dbimport_db()
             return None
 
-        import_tables = aliased(configSchema.importTables)
+        import_tables = aliased(configSchema.ImportTables)
 
         # Return a list of Hive tables with details
         row = (
@@ -1832,12 +1832,12 @@ class dbCalls:
 
         try:
             session = self.get_dbimport_session()
-        except SQLerror:
+        except SQLError:
             self.disconnect_dbimport_db()
             return None
 
-        import_columns = aliased(configSchema.importColumns)
-        import_tables = aliased(configSchema.importTables)
+        import_columns = aliased(configSchema.ImportColumns)
+        import_tables = aliased(configSchema.ImportTables)
         result = "ok"
         return_code = 200
 
@@ -1847,11 +1847,11 @@ class dbCalls:
 
         # Fetch the tableID as that is required to update/create data in import_columns
         row = (
-            session.query(configSchema.importTables.table_id)
-            .select_from(configSchema.importTables)
+            session.query(configSchema.ImportTables.table_id)
+            .select_from(configSchema.ImportTables)
             .filter(
-                (configSchema.importTables.hive_db == database)
-                & (configSchema.importTables.hive_table == table)
+                (configSchema.ImportTables.hive_db == database)
+                & (configSchema.ImportTables.hive_table == table)
             )
             .one_or_none()
         )
@@ -1864,8 +1864,8 @@ class dbCalls:
             table_id = row[0]
 
             (
-                session.query(configSchema.importTables)
-                .filter(configSchema.importTables.table_id == table_id)
+                session.query(configSchema.ImportTables)
+                .filter(configSchema.ImportTables.table_id == table_id)
                 .delete()
             )
             session.commit()
@@ -1875,7 +1875,7 @@ class dbCalls:
         return (result, return_code)
 
     def bulk_delete_import_table(
-        self, bulk_data: list[dataModels.importTablePK], current_user
+        self, bulk_data: list[dataModels.ImportTablePK], current_user
     ):
         """Bulk delete of import tables"""
         log = logging.getLogger(self.logger)
@@ -1889,14 +1889,14 @@ class dbCalls:
 
         try:
             session = self.get_dbimport_session()
-        except SQLerror:
+        except SQLError:
             self.disconnect_dbimport_db()
             return None
 
-        delete_statement = delete(configSchema.importTables)
+        delete_statement = delete(configSchema.ImportTables)
         delete_statement = delete_statement.where(
-            (configSchema.importTables.hive_db == bindparam("database"))
-            & (configSchema.importTables.hive_table == bindparam("table"))
+            (configSchema.ImportTables.hive_db == bindparam("database"))
+            & (configSchema.ImportTables.hive_table == bindparam("table"))
         )
 
         # Create a list of dicts that contain all the databas and table combinations that will be deleted
@@ -1914,7 +1914,7 @@ class dbCalls:
         return (result_msg, return_code)
 
     def bulk_update_import_table(
-        self, bulk_data: dataModels.importTableBulkUpdate, current_user
+        self, bulk_data: dataModels.ImportTableBulkUpdate, current_user
     ):
         """Bulk update of import tables"""
         log = logging.getLogger(self.logger)
@@ -1928,11 +1928,11 @@ class dbCalls:
 
         try:
             session = self.get_dbimport_session()
-        except SQLerror:
+        except SQLError:
             self.disconnect_dbimport_db()
             return None
 
-        import_tables = aliased(configSchema.importTables)
+        import_tables = aliased(configSchema.ImportTables)
         update_statement = update(import_tables)
         update_statement = update_statement.where(
             (import_tables.hive_db == bindparam("database"))
@@ -1987,19 +1987,19 @@ class dbCalls:
         return (result_msg, return_code)
 
     def update_import_table(
-        self, database, table, data: dataModels.importTableDetailsWrite, current_user
+        self, database, table, data: dataModels.ImportTableDetailsWrite, current_user
     ):
         """Update or create an import table"""
         log = logging.getLogger(self.logger)
 
         try:
             session = self.get_dbimport_session()
-        except SQLerror:
+        except SQLError:
             self.disconnect_dbimport_db()
             return None
 
-        import_columns = aliased(configSchema.importColumns)
-        import_tables = aliased(configSchema.importTables)
+        import_columns = aliased(configSchema.ImportColumns)
+        import_tables = aliased(configSchema.ImportTables)
         result = "ok"
         return_code = 200
 
@@ -2050,7 +2050,7 @@ class dbCalls:
         try:
             # 				hive_db = getattr(data, "database"),
             # 				hive_table = getattr(data, "table"),
-            query = insert(configSchema.importTables).values(
+            query = insert(configSchema.ImportTables).values(
                 hive_db=database,
                 hive_table=table,
                 dbalias=data.connection,
@@ -2160,7 +2160,7 @@ class dbCalls:
 
             session.execute(query)
             session.commit()
-        except SQLerror as err:
+        except SQLError as err:
             log.error(str(err))
             log.error(column)  # noqa: F821  # TODO(#164): column is undefined here
 
@@ -2181,7 +2181,7 @@ class dbCalls:
             )
             .one()
         )
-        # 				.filter((importTables.hive_db == getattr(table, "database")) & (importTables.hive_table == getattr(table, "table")))
+        # 				.filter((ImportTables.hive_db == getattr(table, "database")) & (ImportTables.hive_table == getattr(table, "table")))
 
         session.execute(query)
         table_id = row[0]
@@ -2217,7 +2217,7 @@ class dbCalls:
 
                     # 						hive_db = getattr(data, "database"),
                     # 						hive_table = getattr(data, "table"),
-                    query = sa.insert(configSchema.importColumns).values(
+                    query = sa.insert(configSchema.ImportColumns).values(
                         table_id=table_id,
                         hive_db=database,
                         hive_table=table,
@@ -2276,7 +2276,7 @@ class dbCalls:
                     )
 
                 session.commit()
-            except SQLerror as err:
+            except SQLError as err:
                 log.error(str(err))
                 log.error(column)
 
@@ -2300,11 +2300,11 @@ class dbCalls:
 
         try:
             session = self.get_dbimport_session()
-        except SQLerror:
+        except SQLError:
             self.disconnect_dbimport_db()
             return None
 
-        import_columns = aliased(configSchema.importColumns)
+        import_columns = aliased(configSchema.ImportColumns)
         list_of_columns = []
 
         # Return a list of Hive tables with details
@@ -2559,11 +2559,11 @@ class dbCalls:
 
         try:
             session = self.get_dbimport_session()
-        except SQLerror:
+        except SQLError:
             self.disconnect_dbimport_db()
             return None
 
-        export_tables = aliased(configSchema.exportTables)
+        export_tables = aliased(configSchema.ExportTables)
 
         export_table_dbs = (
             session.query(
@@ -2609,7 +2609,7 @@ class dbCalls:
         return JSONResponse(content=json_result, headers=headers, status_code=200)
 
     def discover_export_tables(
-        self, data: dataModels.discoverExportTableOptions, current_user
+        self, data: dataModels.DiscoverExportTableOptions, current_user
     ):
         """Search for import tables"""
         log = logging.getLogger(self.logger)
@@ -2697,7 +2697,7 @@ class dbCalls:
         return (return_msg, return_code)
 
     def add_discovered_export_tables(
-        self, data: list[dataModels.discoverExportTable], current_user
+        self, data: list[dataModels.DiscoverExportTable], current_user
     ):
         """Add discovered export tables"""
         log = logging.getLogger(self.logger)
@@ -2709,7 +2709,7 @@ class dbCalls:
             target_schema = record.targetSchema
             target_table = record.targetTable
 
-            create_data = dataModels.exportTableDetailsWrite(
+            create_data = dataModels.ExportTableDetailsWrite(
                 database=record.database,
                 table=record.table,
                 exportType="full",
@@ -2726,18 +2726,18 @@ class dbCalls:
         return (result_msg, return_code)
 
     def search_export_tables(
-        self, search_values: dataModels.exportTableSearch, current_user
+        self, search_values: dataModels.ExportTableSearch, current_user
     ):
         """Search for import tables"""
         log = logging.getLogger(self.logger)
 
         try:
             session = self.get_dbimport_session()
-        except SQLerror:
+        except SQLError:
             self.disconnect_dbimport_db()
             return None
 
-        export_tables = aliased(configSchema.exportTables)
+        export_tables = aliased(configSchema.ExportTables)
 
         attribute_to_column = {}
         attribute_to_column["connection"] = export_tables.dbalias
@@ -2848,7 +2848,7 @@ class dbCalls:
 
         if schema == None:
             schema = "*"
-        search_values = dataModels.exportTableSearch(
+        search_values = dataModels.ExportTableSearch(
             connection=connection, targetSchema=schema, targetTable="*"
         )
 
@@ -2860,11 +2860,11 @@ class dbCalls:
 
         try:
             session = self.get_dbimport_session()
-        except SQLerror:
+        except SQLError:
             self.disconnect_dbimport_db()
             return None
 
-        export_tables = aliased(configSchema.exportTables)
+        export_tables = aliased(configSchema.ExportTables)
 
         row = (
             session.query(
@@ -2983,12 +2983,12 @@ class dbCalls:
 
         try:
             session = self.get_dbimport_session()
-        except SQLerror:
+        except SQLError:
             self.disconnect_dbimport_db()
             return None
 
-        export_columns = aliased(configSchema.exportColumns)
-        export_tables = aliased(configSchema.exportTables)
+        export_columns = aliased(configSchema.ExportColumns)
+        export_tables = aliased(configSchema.ExportTables)
         list_of_columns = []
 
         # Return a list of Hive tables with details
@@ -3035,7 +3035,7 @@ class dbCalls:
                 result_dict["columnType"] = row[4]
 
             # ColumnOrder should start with 1 in API, but database stores is as a start with 0.
-            # For ImportColumns, it starts with 1. So we need to do a +1 here to have the same functionality as importColumns
+            # For ImportColumns, it starts with 1. So we need to do a +1 here to have the same functionality as ImportColumns
             if row[5] != None:
                 result_dict["columnOrder"] = int(row[5]) + 1
 
@@ -3068,12 +3068,12 @@ class dbCalls:
 
         try:
             session = self.get_dbimport_session()
-        except SQLerror:
+        except SQLError:
             self.disconnect_dbimport_db()
             return None
 
-        export_columns = aliased(configSchema.exportColumns)
-        export_tables = aliased(configSchema.exportTables)
+        export_columns = aliased(configSchema.ExportColumns)
+        export_tables = aliased(configSchema.ExportTables)
         result = "ok"
         return_code = 200
 
@@ -3087,12 +3087,12 @@ class dbCalls:
 
         # Fetch the tableID as that is required to update/create data in import_columns
         row = (
-            session.query(configSchema.exportTables.table_id)
-            .select_from(configSchema.exportTables)
+            session.query(configSchema.ExportTables.table_id)
+            .select_from(configSchema.ExportTables)
             .filter(
-                (configSchema.exportTables.dbalias == connection)
-                & (configSchema.exportTables.target_schema == schema)
-                & (configSchema.exportTables.target_table == table)
+                (configSchema.ExportTables.dbalias == connection)
+                & (configSchema.ExportTables.target_schema == schema)
+                & (configSchema.ExportTables.target_table == table)
             )
             .one_or_none()
         )
@@ -3105,8 +3105,8 @@ class dbCalls:
             table_id = row[0]
 
             (
-                session.query(configSchema.exportTables)
-                .filter(configSchema.exportTables.table_id == table_id)
+                session.query(configSchema.ExportTables)
+                .filter(configSchema.ExportTables.table_id == table_id)
                 .delete()
             )
             session.commit()
@@ -3116,7 +3116,7 @@ class dbCalls:
         return (result, return_code)
 
     def bulk_delete_export_table(
-        self, bulk_data: list[dataModels.exportTablePK], current_user
+        self, bulk_data: list[dataModels.ExportTablePK], current_user
     ):
         """Bulk delete of export tables"""
         log = logging.getLogger(self.logger)
@@ -3130,15 +3130,15 @@ class dbCalls:
 
         try:
             session = self.get_dbimport_session()
-        except SQLerror:
+        except SQLError:
             self.disconnect_dbimport_db()
             return None
 
-        delete_statement = delete(configSchema.exportTables)
+        delete_statement = delete(configSchema.ExportTables)
         delete_statement = delete_statement.where(
-            (configSchema.exportTables.dbalias == bindparam("connection"))
-            & (configSchema.exportTables.target_schema == bindparam("targetSchema"))
-            & (configSchema.exportTables.target_table == bindparam("targetTable"))
+            (configSchema.ExportTables.dbalias == bindparam("connection"))
+            & (configSchema.ExportTables.target_schema == bindparam("targetSchema"))
+            & (configSchema.ExportTables.target_table == bindparam("targetTable"))
         )
 
         # Create a list of dicts that contain all the connection, schema and table combinations that will be deleted
@@ -3162,7 +3162,7 @@ class dbCalls:
         return (result_msg, return_code)
 
     def bulk_update_export_table(
-        self, bulk_data: dataModels.exportTableBulkUpdate, current_user
+        self, bulk_data: dataModels.ExportTableBulkUpdate, current_user
     ):
         """Bulk update of export tables"""
         log = logging.getLogger(self.logger)
@@ -3176,11 +3176,11 @@ class dbCalls:
 
         try:
             session = self.get_dbimport_session()
-        except SQLerror:
+        except SQLError:
             self.disconnect_dbimport_db()
             return None
 
-        export_tables = aliased(configSchema.exportTables)
+        export_tables = aliased(configSchema.ExportTables)
         update_statement = update(export_tables)
         update_statement = update_statement.where(
             (export_tables.dbalias == bindparam("connection"))
@@ -3236,7 +3236,7 @@ class dbCalls:
         connection,
         schema,
         table,
-        data: dataModels.exportTableDetailsWrite,
+        data: dataModels.ExportTableDetailsWrite,
         current_user,
     ):
         """Update or create an export table"""
@@ -3244,12 +3244,12 @@ class dbCalls:
 
         try:
             session = self.get_dbimport_session()
-        except SQLerror:
+        except SQLError:
             self.disconnect_dbimport_db()
             return None
 
-        export_columns = aliased(configSchema.exportColumns)
-        export_tables = aliased(configSchema.exportTables)
+        export_columns = aliased(configSchema.ExportColumns)
+        export_tables = aliased(configSchema.ExportTables)
         result = "ok"
         return_code = 200
 
@@ -3281,7 +3281,7 @@ class dbCalls:
             data.incrValidationMethod = "full"
 
         try:
-            query = insert(configSchema.exportTables).values(
+            query = insert(configSchema.ExportTables).values(
                 dbalias=connection,
                 target_schema=schema,
                 target_table=table,
@@ -3339,7 +3339,7 @@ class dbCalls:
 
             session.execute(query)
             session.commit()
-        except SQLerror as err:
+        except SQLError as err:
             log.error(str(err))
             log.error(column)  # noqa: F821  # TODO(#164): column is undefined here
 
@@ -3399,7 +3399,7 @@ class dbCalls:
                 if row == None:
                     log.debug("Column does not exist")
 
-                    query = sa.insert(configSchema.exportColumns).values(
+                    query = sa.insert(configSchema.ExportColumns).values(
                         table_id=table_id,
                         column_name=column.columnName,
                         column_type=column.columnType,
@@ -3442,7 +3442,7 @@ class dbCalls:
                     )
 
                 session.commit()
-            except SQLerror as err:
+            except SQLError as err:
                 log.error(str(err))
                 log.error(column)
 
@@ -3465,13 +3465,13 @@ class dbCalls:
 
         try:
             session = self.get_dbimport_session()
-        except SQLerror:
+        except SQLError:
             self.disconnect_dbimport_db()
             return None
 
-        airflow_custom_dags = aliased(configSchema.airflowCustomDags)
-        airflow_export_dags = aliased(configSchema.airflowExportDags)
-        airflow_import_dags = aliased(configSchema.airflowImportDags)
+        airflow_custom_dags = aliased(configSchema.AirflowCustomDAGs)
+        airflow_export_dags = aliased(configSchema.AirflowExportDAGs)
+        airflow_import_dags = aliased(configSchema.AirflowImportDAGs)
         list_of_dags = []
         processed_dags = []
 
@@ -3548,13 +3548,13 @@ class dbCalls:
 
         try:
             session = self.get_dbimport_session()
-        except SQLerror:
+        except SQLError:
             self.disconnect_dbimport_db()
             return None
 
         airflow_url = self.get_config_value("airflow_url")
 
-        airflow_import_dags = aliased(configSchema.airflowImportDags)
+        airflow_import_dags = aliased(configSchema.AirflowImportDAGs)
         list_of_dags = []
 
         airflow_dags_data = (
@@ -3618,13 +3618,13 @@ class dbCalls:
 
         try:
             session = self.get_dbimport_session()
-        except SQLerror:
+        except SQLError:
             self.disconnect_dbimport_db()
             return None
 
         airflow_url = self.get_config_value("airflow_url")
 
-        airflow_export_dags = aliased(configSchema.airflowExportDags)
+        airflow_export_dags = aliased(configSchema.AirflowExportDAGs)
         list_of_dags = []
 
         airflow_dags_data = (
@@ -3690,13 +3690,13 @@ class dbCalls:
 
         try:
             session = self.get_dbimport_session()
-        except SQLerror:
+        except SQLError:
             self.disconnect_dbimport_db()
             return None
 
         airflow_url = self.get_config_value("airflow_url")
 
-        airflow_custom_dags = aliased(configSchema.airflowCustomDags)
+        airflow_custom_dags = aliased(configSchema.AirflowCustomDAGs)
         list_of_dags = []
 
         airflow_dags_data = (
@@ -3758,11 +3758,11 @@ class dbCalls:
 
         try:
             session = self.get_dbimport_session()
-        except SQLerror:
+        except SQLError:
             self.disconnect_dbimport_db()
             return None
 
-        airflow_tasks = aliased(configSchema.airflowTasks)
+        airflow_tasks = aliased(configSchema.AirflowTasks)
         list_of_tasks = []
 
         # Return a list of Hive tables with details
@@ -3820,13 +3820,13 @@ class dbCalls:
 
         try:
             session = self.get_dbimport_session()
-        except SQLerror:
+        except SQLError:
             self.disconnect_dbimport_db()
             return None
 
         airflow_url = self.get_config_value("airflow_url")
 
-        airflow_custom_dags = aliased(configSchema.airflowCustomDags)
+        airflow_custom_dags = aliased(configSchema.AirflowCustomDAGs)
 
         row = (
             session.query(
@@ -3898,13 +3898,13 @@ class dbCalls:
 
         try:
             session = self.get_dbimport_session()
-        except SQLerror:
+        except SQLError:
             self.disconnect_dbimport_db()
             return None
 
-        airflow_custom_dags = aliased(configSchema.airflowCustomDags)
-        airflow_export_dags = aliased(configSchema.airflowExportDags)
-        airflow_import_dags = aliased(configSchema.airflowImportDags)
+        airflow_custom_dags = aliased(configSchema.AirflowCustomDAGs)
+        airflow_export_dags = aliased(configSchema.AirflowExportDAGs)
+        airflow_import_dags = aliased(configSchema.AirflowImportDAGs)
         list_of_dags = []
         processed_dags = []
         dag_name_is_free = True
@@ -3951,14 +3951,14 @@ class dbCalls:
 
         try:
             session = self.get_dbimport_session()
-        except SQLerror:
+        except SQLError:
             self.disconnect_dbimport_db()
             return None
 
-        airflow_tasks = aliased(configSchema.airflowTasks)
+        airflow_tasks = aliased(configSchema.AirflowTasks)
 
         try:
-            query = insert(configSchema.airflowTasks).values(
+            query = insert(configSchema.AirflowTasks).values(
                 dag_name=dagname,
                 task_name=task.name,
                 task_type=task.type,
@@ -3998,7 +3998,7 @@ class dbCalls:
 
             session.execute(query)
             session.commit()
-        except SQLerror as err:
+        except SQLError as err:
             log.error(str(err))
             log.error(column)  # noqa: F821  # TODO(#164): column is undefined here
 
@@ -4015,13 +4015,13 @@ class dbCalls:
 
         try:
             session = self.get_dbimport_session()
-        except SQLerror:
+        except SQLError:
             self.disconnect_dbimport_db()
             return None
 
         airflow_url = self.get_config_value("airflow_url")
 
-        airflow_export_dags = aliased(configSchema.airflowExportDags)
+        airflow_export_dags = aliased(configSchema.AirflowExportDAGs)
 
         row = (
             session.query(
@@ -4097,13 +4097,13 @@ class dbCalls:
 
         try:
             session = self.get_dbimport_session()
-        except SQLerror:
+        except SQLError:
             self.disconnect_dbimport_db()
             return None
 
         airflow_url = self.get_config_value("airflow_url")
 
-        airflow_import_dags = aliased(configSchema.airflowImportDags)
+        airflow_import_dags = aliased(configSchema.AirflowImportDAGs)
 
         row = (
             session.query(
@@ -4189,13 +4189,13 @@ class dbCalls:
 
         try:
             session = self.get_dbimport_session()
-        except SQLerror:
+        except SQLError:
             self.disconnect_dbimport_db()
             return None
 
         (
-            session.query(configSchema.airflowTasks)
-            .filter(configSchema.airflowTasks.dag_name == dagname)
+            session.query(configSchema.AirflowTasks)
+            .filter(configSchema.AirflowTasks.dag_name == dagname)
             .delete()
         )
         session.commit()
@@ -4207,11 +4207,11 @@ class dbCalls:
 
         try:
             session = self.get_dbimport_session()
-        except SQLerror:
+        except SQLError:
             self.disconnect_dbimport_db()
             return None
 
-        airflow_import_dags = aliased(configSchema.airflowImportDags)
+        airflow_import_dags = aliased(configSchema.AirflowImportDAGs)
         result_msg = {"result": "ok"}
         return_code = 200
 
@@ -4224,11 +4224,11 @@ class dbCalls:
 
         # Fetch the tableID as that is required to update/create data in import_columns
         row = (
-            session.query(configSchema.airflowTasks.dag_name)
-            .select_from(configSchema.airflowTasks)
+            session.query(configSchema.AirflowTasks.dag_name)
+            .select_from(configSchema.AirflowTasks)
             .filter(
-                (configSchema.airflowTasks.dag_name == dagname)
-                & (configSchema.airflowTasks.task_name == taskname)
+                (configSchema.AirflowTasks.dag_name == dagname)
+                & (configSchema.AirflowTasks.task_name == taskname)
             )
             .one_or_none()
         )
@@ -4239,10 +4239,10 @@ class dbCalls:
             return_code = 404
         else:
             (
-                session.query(configSchema.airflowTasks)
+                session.query(configSchema.AirflowTasks)
                 .filter(
-                    (configSchema.airflowTasks.dag_name == dagname)
-                    & (configSchema.airflowTasks.task_name == taskname)
+                    (configSchema.AirflowTasks.dag_name == dagname)
+                    & (configSchema.AirflowTasks.task_name == taskname)
                 )
                 .delete()
             )
@@ -4257,11 +4257,11 @@ class dbCalls:
 
         try:
             session = self.get_dbimport_session()
-        except SQLerror:
+        except SQLError:
             self.disconnect_dbimport_db()
             return None
 
-        airflow_import_dags = aliased(configSchema.airflowImportDags)
+        airflow_import_dags = aliased(configSchema.AirflowImportDAGs)
         result = "ok"
         return_code = 200
 
@@ -4269,9 +4269,9 @@ class dbCalls:
 
         # Fetch the tableID as that is required to update/create data in import_columns
         row = (
-            session.query(configSchema.airflowImportDags.dag_name)
-            .select_from(configSchema.airflowImportDags)
-            .filter(configSchema.airflowImportDags.dag_name == dagname)
+            session.query(configSchema.AirflowImportDAGs.dag_name)
+            .select_from(configSchema.AirflowImportDAGs)
+            .filter(configSchema.AirflowImportDAGs.dag_name == dagname)
             .one_or_none()
         )
         session.commit()
@@ -4281,8 +4281,8 @@ class dbCalls:
             return_code = 404
         else:
             (
-                session.query(configSchema.airflowImportDags)
-                .filter(configSchema.airflowImportDags.dag_name == dagname)
+                session.query(configSchema.AirflowImportDAGs)
+                .filter(configSchema.AirflowImportDAGs.dag_name == dagname)
                 .delete()
             )
             session.commit()
@@ -4294,7 +4294,7 @@ class dbCalls:
         return (result, return_code)
 
     def bulk_delete_import_airflow_dag(
-        self, bulk_data: list[dataModels.airflowDagPK], current_user
+        self, bulk_data: list[dataModels.AirflowDAGPK], current_user
     ):
         """Bulk delete of Airflow import Dags"""
         log = logging.getLogger(self.logger)
@@ -4308,13 +4308,13 @@ class dbCalls:
 
         try:
             session = self.get_dbimport_session()
-        except SQLerror:
+        except SQLError:
             self.disconnect_dbimport_db()
             return None
 
-        delete_statement = delete(configSchema.airflowImportDags)
+        delete_statement = delete(configSchema.AirflowImportDAGs)
         delete_statement = delete_statement.where(
-            configSchema.airflowImportDags.dag_name == bindparam("dag")
+            configSchema.AirflowImportDAGs.dag_name == bindparam("dag")
         )
 
         # Create a list of dicts that contain all the databas and table combinations that will be deleted
@@ -4332,7 +4332,7 @@ class dbCalls:
         return (result_msg, return_code)
 
     def bulk_update_import_airflow_dag(
-        self, bulk_data: dataModels.airflowDagBulkUpdate, current_user
+        self, bulk_data: dataModels.AirflowDAGBulkUpdate, current_user
     ):
         """Bulk update of Airflow import Dags"""
         log = logging.getLogger(self.logger)
@@ -4346,12 +4346,12 @@ class dbCalls:
 
         try:
             session = self.get_dbimport_session()
-        except SQLerror:
+        except SQLError:
             self.disconnect_dbimport_db()
             return None
 
-        export_tables = aliased(configSchema.exportTables)
-        airflow_import_dags = aliased(configSchema.airflowImportDags)
+        export_tables = aliased(configSchema.ExportTables)
+        airflow_import_dags = aliased(configSchema.AirflowImportDAGs)
         update_statement = update(airflow_import_dags)
         update_statement = update_statement.where(
             airflow_import_dags.dag_name == bindparam("dag")
@@ -4413,18 +4413,18 @@ class dbCalls:
         return (result_msg, return_code)
 
     def update_import_airflow_dag(
-        self, dagname, airflow_dag: dataModels.airflowImportDag, current_user
+        self, dagname, airflow_dag: dataModels.AirflowImportDAG, current_user
     ):
         """Update or create an Airflow import DAG"""
         log = logging.getLogger(self.logger)
 
         try:
             session = self.get_dbimport_session()
-        except SQLerror:
+        except SQLError:
             self.disconnect_dbimport_db()
             return None
 
-        airflow_import_dags = aliased(configSchema.airflowImportDags)
+        airflow_import_dags = aliased(configSchema.AirflowImportDAGs)
         result = "ok"
         return_code = 200
 
@@ -4466,7 +4466,7 @@ class dbCalls:
             airflow_dag.retryExponentialBackoff = "0"
 
         try:
-            query = insert(configSchema.airflowImportDags).values(
+            query = insert(configSchema.AirflowImportDAGs).values(
                 dag_name=dagname,
                 schedule_interval=airflow_dag.scheduleInterval,
                 filter_hive=airflow_dag.filterTable,
@@ -4522,7 +4522,7 @@ class dbCalls:
 
             session.execute(query)
             session.commit()
-        except SQLerror as err:
+        except SQLError as err:
             log.error(str(err))
             log.error(column)  # noqa: F821  # TODO(#164): column is undefined here
 
@@ -4556,7 +4556,7 @@ class dbCalls:
 
         try:
             session = self.get_dbimport_session()
-        except SQLerror:
+        except SQLError:
             self.disconnect_dbimport_db()
             return None
 
@@ -4567,9 +4567,9 @@ class dbCalls:
 
         # Fetch the tableID as that is required to update/create data in import_columns
         row = (
-            session.query(configSchema.airflowExportDags.dag_name)
-            .select_from(configSchema.airflowExportDags)
-            .filter(configSchema.airflowExportDags.dag_name == dagname)
+            session.query(configSchema.AirflowExportDAGs.dag_name)
+            .select_from(configSchema.AirflowExportDAGs)
+            .filter(configSchema.AirflowExportDAGs.dag_name == dagname)
             .one_or_none()
         )
         session.commit()
@@ -4579,8 +4579,8 @@ class dbCalls:
             return_code = 404
         else:
             (
-                session.query(configSchema.airflowExportDags)
-                .filter(configSchema.airflowExportDags.dag_name == dagname)
+                session.query(configSchema.AirflowExportDAGs)
+                .filter(configSchema.AirflowExportDAGs.dag_name == dagname)
                 .delete()
             )
             session.commit()
@@ -4592,7 +4592,7 @@ class dbCalls:
         return (result, return_code)
 
     def bulk_delete_export_airflow_dag(
-        self, bulk_data: list[dataModels.airflowDagPK], current_user
+        self, bulk_data: list[dataModels.AirflowDAGPK], current_user
     ):
         """Bulk delete of Airflow import Dags"""
         log = logging.getLogger(self.logger)
@@ -4606,13 +4606,13 @@ class dbCalls:
 
         try:
             session = self.get_dbimport_session()
-        except SQLerror:
+        except SQLError:
             self.disconnect_dbimport_db()
             return None
 
-        delete_statement = delete(configSchema.airflowExportDags)
+        delete_statement = delete(configSchema.AirflowExportDAGs)
         delete_statement = delete_statement.where(
-            configSchema.airflowExportDags.dag_name == bindparam("dag")
+            configSchema.AirflowExportDAGs.dag_name == bindparam("dag")
         )
 
         # Create a list of dicts that contain all the databas and table combinations that will be deleted
@@ -4630,7 +4630,7 @@ class dbCalls:
         return (result_msg, return_code)
 
     def bulk_update_export_airflow_dag(
-        self, bulk_data: dataModels.airflowDagBulkUpdate, current_user
+        self, bulk_data: dataModels.AirflowDAGBulkUpdate, current_user
     ):
         """Bulk update of Airflow export Dags"""
         log = logging.getLogger(self.logger)
@@ -4644,12 +4644,12 @@ class dbCalls:
 
         try:
             session = self.get_dbimport_session()
-        except SQLerror:
+        except SQLError:
             self.disconnect_dbimport_db()
             return None
 
-        export_tables = aliased(configSchema.exportTables)
-        airflow_export_dags = aliased(configSchema.airflowExportDags)
+        export_tables = aliased(configSchema.ExportTables)
+        airflow_export_dags = aliased(configSchema.AirflowExportDAGs)
         update_statement = update(airflow_export_dags)
         update_statement = update_statement.where(
             airflow_export_dags.dag_name == bindparam("dag")
@@ -4711,18 +4711,18 @@ class dbCalls:
         return (result_msg, return_code)
 
     def update_export_airflow_dag(
-        self, dagname, airflow_dag: dataModels.airflowExportDag, current_user
+        self, dagname, airflow_dag: dataModels.AirflowExportDAG, current_user
     ):
         """Update or create an Airflow export DAG"""
         log = logging.getLogger(self.logger)
 
         try:
             session = self.get_dbimport_session()
-        except SQLerror:
+        except SQLError:
             self.disconnect_dbimport_db()
             return None
 
-        airflow_export_dags = aliased(configSchema.airflowExportDags)
+        airflow_export_dags = aliased(configSchema.AirflowExportDAGs)
         result = "ok"
         return_code = 200
 
@@ -4758,7 +4758,7 @@ class dbCalls:
             airflow_dag.retryExponentialBackoff = "0"
 
         try:
-            query = insert(configSchema.airflowExportDags).values(
+            query = insert(configSchema.AirflowExportDAGs).values(
                 dag_name=dagname,
                 schedule_interval=airflow_dag.scheduleInterval,
                 filter_dbalias=airflow_dag.filterConnection,
@@ -4804,7 +4804,7 @@ class dbCalls:
 
             session.execute(query)
             session.commit()
-        except SQLerror as err:
+        except SQLError as err:
             log.error(str(err))
             log.error(column)  # noqa: F821  # TODO(#164): column is undefined here
 
@@ -4838,7 +4838,7 @@ class dbCalls:
 
         try:
             session = self.get_dbimport_session()
-        except SQLerror:
+        except SQLError:
             self.disconnect_dbimport_db()
             return None
 
@@ -4849,9 +4849,9 @@ class dbCalls:
 
         # Fetch the tableID as that is required to update/create data in import_columns
         row = (
-            session.query(configSchema.airflowCustomDags.dag_name)
-            .select_from(configSchema.airflowCustomDags)
-            .filter(configSchema.airflowCustomDags.dag_name == dagname)
+            session.query(configSchema.AirflowCustomDAGs.dag_name)
+            .select_from(configSchema.AirflowCustomDAGs)
+            .filter(configSchema.AirflowCustomDAGs.dag_name == dagname)
             .one_or_none()
         )
         session.commit()
@@ -4861,8 +4861,8 @@ class dbCalls:
             return_code = 404
         else:
             (
-                session.query(configSchema.airflowCustomDags)
-                .filter(configSchema.airflowCustomDags.dag_name == dagname)
+                session.query(configSchema.AirflowCustomDAGs)
+                .filter(configSchema.AirflowCustomDAGs.dag_name == dagname)
                 .delete()
             )
             session.commit()
@@ -4874,7 +4874,7 @@ class dbCalls:
         return (result, return_code)
 
     def bulk_delete_custom_airflow_dag(
-        self, bulk_data: list[dataModels.airflowDagPK], current_user
+        self, bulk_data: list[dataModels.AirflowDAGPK], current_user
     ):
         """Bulk delete of Airflow custom Dags"""
         log = logging.getLogger(self.logger)
@@ -4888,13 +4888,13 @@ class dbCalls:
 
         try:
             session = self.get_dbimport_session()
-        except SQLerror:
+        except SQLError:
             self.disconnect_dbimport_db()
             return None
 
-        delete_statement = delete(configSchema.airflowCustomDags)
+        delete_statement = delete(configSchema.AirflowCustomDAGs)
         delete_statement = delete_statement.where(
-            configSchema.airflowCustomDags.dag_name == bindparam("dag")
+            configSchema.AirflowCustomDAGs.dag_name == bindparam("dag")
         )
 
         # Create a list of dicts that contain all the databas and table combinations that will be deleted
@@ -4912,7 +4912,7 @@ class dbCalls:
         return (result_msg, return_code)
 
     def bulk_update_custom_airflow_dag(
-        self, bulk_data: dataModels.airflowDagBulkUpdate, current_user
+        self, bulk_data: dataModels.AirflowDAGBulkUpdate, current_user
     ):
         """Bulk update of Airflow custom Dags"""
         log = logging.getLogger(self.logger)
@@ -4926,12 +4926,12 @@ class dbCalls:
 
         try:
             session = self.get_dbimport_session()
-        except SQLerror:
+        except SQLError:
             self.disconnect_dbimport_db()
             return None
 
-        export_tables = aliased(configSchema.exportTables)
-        airflow_custom_dags = aliased(configSchema.airflowCustomDags)
+        export_tables = aliased(configSchema.ExportTables)
+        airflow_custom_dags = aliased(configSchema.AirflowCustomDAGs)
         update_statement = update(airflow_custom_dags)
         update_statement = update_statement.where(
             airflow_custom_dags.dag_name == bindparam("dag")
@@ -4993,18 +4993,18 @@ class dbCalls:
         return (result_msg, return_code)
 
     def update_custom_airflow_dag(
-        self, dagname, airflow_dag: dataModels.airflowCustomDag, current_user
+        self, dagname, airflow_dag: dataModels.AirflowCustomDAG, current_user
     ):
         """Update or create an Airflow custom DAG"""
         log = logging.getLogger(self.logger)
 
         try:
             session = self.get_dbimport_session()
-        except SQLerror:
+        except SQLError:
             self.disconnect_dbimport_db()
             return None
 
-        airflow_custom_dags = aliased(configSchema.airflowCustomDags)
+        airflow_custom_dags = aliased(configSchema.AirflowCustomDAGs)
         result = "ok"
         return_code = 200
 
@@ -5038,7 +5038,7 @@ class dbCalls:
             airflow_dag.retryExponentialBackoff = "0"
 
         try:
-            query = insert(configSchema.airflowCustomDags).values(
+            query = insert(configSchema.AirflowCustomDAGs).values(
                 dag_name=dagname,
                 schedule_interval=airflow_dag.scheduleInterval,
                 retries=airflow_dag.retries,
@@ -5078,7 +5078,7 @@ class dbCalls:
 
             session.execute(query)
             session.commit()
-        except SQLerror as err:
+        except SQLError as err:
             log.error(str(err))
             log.error(column)  # noqa: F821  # TODO(#164): column is undefined here
 

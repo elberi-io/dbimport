@@ -143,23 +143,23 @@ def main(argv):
         )
 
     if operation == "createDB":
-        db_operations = database_operations.initialize()
+        db_operations = database_operations.Initialize()
         db_operations.create_db()
 
     if operation == "upgradeDB":
-        db_operations = database_operations.initialize()
+        db_operations = database_operations.Initialize()
         db_operations.upgrade_db()
 
     if operation == "downgradeDB":
-        db_operations = database_operations.initialize()
+        db_operations = database_operations.Initialize()
         db_operations.downgradeDB()
 
     if operation == "createSchemaRst":
-        db_operations = database_operations.initialize()
+        db_operations = database_operations.Initialize()
         db_operations.generate_schema_rst()
 
     if operation == "buildHTML":
-        web_operations = webServerOperations.webServerOperations()
+        web_operations = webServerOperations.WebServerOperations()
         web_operations.build_html()
 
 

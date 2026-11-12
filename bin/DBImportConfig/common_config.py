@@ -36,14 +36,18 @@ from mysql.connector import errorcode
 from sqlalchemy.orm import sessionmaker
 
 from common import constants as constant
-from common.Exceptions import SQLerror, invalidConfiguration, undevelopedFeature
+from common.Exceptions import (
+    InvalidConfigurationError,
+    SQLError,
+    UndevelopedFeatureError,
+)
 from common.Singleton import Singleton
 from ConfigReader import configuration
 from DBImportConfig import decryption as decryption
 from sourceSchemaReader import schemaReader
 
 
-class config(metaclass=Singleton):
+class Config(metaclass=Singleton):
     def __init__(
         self, hive_db: str | None = None, hive_table: str | None = None
     ) -> None:
@@ -150,7 +154,7 @@ class config(metaclass=Singleton):
         self.jdbc_conn: Any = None
         self.jdbc_cursor: Any = None
 
-        self.schema_reader = schemaReader.source()
+        self.schema_reader = schemaReader.Source()
 
         # SQLAlchemy connection variables
         self.config_db: Any = None
@@ -168,7 +172,7 @@ class config(metaclass=Singleton):
             self.spark_major_version = int(
                 configuration.get("Spark", "spark_major_version", exit_on_error=False)
             )
-        except invalidConfiguration:
+        except InvalidConfigurationError:
             logging.warning(
                 "Configuration option 'spark_major_version' under [Spark] in the configuration file is missing. Please update your config file"
             )
@@ -187,14 +191,14 @@ class config(metaclass=Singleton):
             self.spark_log_level = configuration.get(
                 "Spark", "spark_log_level", exit_on_error=False
             )
-        except invalidConfiguration:
+        except InvalidConfigurationError:
             pass
 
         try:
             self.spark_packages = configuration.get(
                 "Spark", "packages", exit_on_error=False
             )
-        except invalidConfiguration:
+        except InvalidConfigurationError:
             logging.warning(
                 "Configuration option 'packages' under [Spark] in the configuration file is missing. Please update your config file"
             )
@@ -223,7 +227,7 @@ class config(metaclass=Singleton):
                 "Spark", "s3_secret_access_key"
             )
 
-        except invalidConfiguration:
+        except InvalidConfigurationError:
             self.spark_s3_access_to_ozone = False
             self.spark_s3_access_key_id = ""
             self.spark_s3_secret_access_key = ""
@@ -231,7 +235,7 @@ class config(metaclass=Singleton):
         self.aws_region = None
         try:
             self.aws_region = configuration.get("AWS", "region", exit_on_error=False)
-        except invalidConfiguration:
+        except InvalidConfigurationError:
             pass
 
         if configuration.get("Spark", "dynamic_allocation").lower() == "true":
@@ -239,7 +243,7 @@ class config(metaclass=Singleton):
         else:
             self.spark_dynamic_allocation = False
 
-        self.crypto = decryption.crypto()
+        self.crypto = decryption.Crypto()
 
         # Sets and create a temporary directory
         self.tempdir = "/tmp/dbimport." + str(os.getpid()) + ".tmp"
@@ -300,8 +304,8 @@ class config(metaclass=Singleton):
                 aws_secret_name = configuration.get(
                     "Database", "aws_secret_name", exit_on_error=False
                 )
-            except invalidConfiguration:
-                raise invalidConfiguration(
+            except InvalidConfigurationError:
+                raise InvalidConfigurationError(
                     "Credentials configuration to configuration database in config file is incorrect. Either use username/password or a AWS Secret Manager name"
                 )
                 # pass
@@ -329,7 +333,7 @@ class config(metaclass=Singleton):
             mysql_password = rds_credentials["password"]
 
         elif mysql_password == "" or mysql_username == "":
-            raise invalidConfiguration(
+            raise InvalidConfigurationError(
                 "Credentials configuration to configuration database in config file is incorrect. Either use username/password or a AWS Secret Manager name"
             )
 
@@ -391,7 +395,7 @@ class config(metaclass=Singleton):
         self.mysql_cursor.execute(query, (db_alias,))
 
         if self.mysql_cursor.rowcount != 1:
-            raise invalidConfiguration(
+            raise InvalidConfigurationError(
                 "The requested connection alias cant be found in the 'jdbc_connections' table"
             )
 
@@ -752,7 +756,7 @@ class config(metaclass=Singleton):
         self.mysql_cursor.execute(query, (connection_alias,))
 
         if self.mysql_cursor.rowcount != 1:
-            raise invalidConfiguration(
+            raise InvalidConfigurationError(
                 "The requested connection alias cant be found in the 'jdbc_connections' table"
             )
 
@@ -796,7 +800,7 @@ class config(metaclass=Singleton):
         self.mysql_cursor.execute(query, (database_type, version))
 
         if self.mysql_cursor.rowcount != 1:
-            raise invalidConfiguration(
+            raise InvalidConfigurationError(
                 f"Error: Cant find JDBC driver with database_type as '{database_type}' and version as '{version}'"
             )
 
@@ -805,7 +809,7 @@ class config(metaclass=Singleton):
         class_path = row[1]
 
         if class_path == "add path to JAR file" or not class_path.startswith("/"):
-            raise invalidConfiguration(
+            raise InvalidConfigurationError(
                 "Error: You need to specify the full path to the JAR files in the table 'jdbc_connections_drivers'"
             )
 
@@ -850,7 +854,7 @@ class config(metaclass=Singleton):
             self.mysql_cursor.execute(query, (connection_alias,))
 
             if self.mysql_cursor.rowcount != 1:
-                raise invalidConfiguration(
+                raise InvalidConfigurationError(
                     "The requested connection alias cant be found in the 'jdbc_connections' table"
                 )
 
@@ -916,7 +920,7 @@ class config(metaclass=Singleton):
                 credentials = self.crypto.decrypt(jdbc_credentials)
 
             if credentials == None and exception_if_failure_to_decrypt:
-                raise invalidConfiguration(
+                raise InvalidConfigurationError(
                     "Cant decrypt username and password. Check private/public key in config file"
                 )
 
@@ -925,7 +929,7 @@ class config(metaclass=Singleton):
                     self.jdbc_username = credentials.split(" ")[0]
                     self.jdbc_password = credentials.split(" ")[1]
                 except IndexError:
-                    raise invalidConfiguration(
+                    raise InvalidConfigurationError(
                         "Cant decrypt username and password. Please encrypt new credentials with the 'manage --encryptCredentials' function"
                     )
 
@@ -1567,7 +1571,7 @@ class config(metaclass=Singleton):
         logging.debug("Executing common_config.lookup_connection_alias() - Finished")
 
         if exit_after_function:
-            raise invalidConfiguration
+            raise InvalidConfigurationError
 
     def get_jdbc_table_definition(
         self, source_schema: str, source_table: str, print_info: bool = True
@@ -1872,7 +1876,7 @@ class config(metaclass=Singleton):
             query = 'truncate table "%s"."%s"' % (schema, table)
 
         if query == None:
-            raise undevelopedFeature(
+            raise UndevelopedFeatureError(
                 "There is no support for this database type in common_config.truncate_jdbc_table()"
             )
 
@@ -1924,7 +1928,7 @@ class config(metaclass=Singleton):
             )
 
         if query == None:
-            raise undevelopedFeature(
+            raise UndevelopedFeatureError(
                 "There is no support for this database type in common_config.check_jdbc_table()"
             )
 
@@ -1949,7 +1953,7 @@ class config(metaclass=Singleton):
             self.connect_to_jdbc()
             self.jdbc_cursor.execute(query)
         except jaydebeapi.DatabaseError as errMsg:
-            raise SQLerror(errMsg)
+            raise SQLError(errMsg)
 
         result_df = pd.DataFrame()
         try:
@@ -1980,7 +1984,7 @@ class config(metaclass=Singleton):
             self.connect_to_impala()
             self.impala_jdbc_cursor.execute(query)
         except jaydebeapi.DatabaseError as errMsg:
-            raise SQLerror(errMsg)
+            raise SQLError(errMsg)
 
         result_df = pd.DataFrame()
         try:

@@ -22,7 +22,7 @@ from datetime import datetime
 from typing import Any
 
 
-class sparkUDFClass:
+class SparkUDFClass:
     def __init__(self) -> None:
 
         self.seed_string_encoded: bytes | None = None

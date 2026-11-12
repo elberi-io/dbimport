@@ -6,7 +6,7 @@ Base = declarative_base()
 metadata = Base.metadata
 
 
-class slotPool(Base):
+class SlotPool(Base):
     __tablename__ = "slot_pool"
 
     id = Column(Integer, primary_key=True, autoincrement=True)

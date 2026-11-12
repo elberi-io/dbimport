@@ -24,14 +24,14 @@ from typing import Any
 from DBImportConfig import common_config, sendStatistics
 
 
-class stage:
+class Stage:
     def __init__(
         self,
         mysql_conn: Any,
         hive_db: str | None,
         hive_table: str | None,
     ) -> None:
-        logging.debug("Executing stage.__init__()")
+        logging.debug("Executing Stage.__init__()")
 
         self.hive_db = hive_db
         self.hive_table = hive_table
@@ -45,13 +45,13 @@ class stage:
         self.stage_duration_stop = 0.0
         self.stage_duration_time = 0.0
 
-        self.common_config = common_config.config(hive_db, hive_table)
+        self.common_config = common_config.Config(hive_db, hive_table)
         # 		if configuration.get("REST_statistics", "post_import_data").lower() == "true":
         # 			self.post_import_data = True
         # 		else:
         # 			self.post_import_data = False
 
-        self.send_statistics = sendStatistics.sendStatistics()
+        self.send_statistics = sendStatistics.SendStatistics()
 
     def set_mysql_connection(self, mysql_conn: Any) -> None:
         self.mysql_conn = mysql_conn
@@ -1008,7 +1008,7 @@ class stage:
 
     def convert_stage_statistics_to_json(self, **kwargs: Any) -> None:
         """Reads the import_stage_statistics and convert the information to a JSON document"""
-        logging.debug("Executing stage.convert_stage_statistics_to_json()")
+        logging.debug("Executing Stage.convert_stage_statistics_to_json()")
 
         self.post_data_to_rest = self.common_config.get_config_value(
             key="post_data_to_rest"
@@ -1158,11 +1158,11 @@ class stage:
                     "import_statistics", "rest", json.dumps(json_data_aws_sns)
                 )
 
-        logging.debug("Executing stage.convert_stage_statistics_to_json() - Finished")
+        logging.debug("Executing Stage.convert_stage_statistics_to_json() - Finished")
 
     def save_stage_statistics(self, **kwargs: Any) -> None:
         """Reads the import_stage_statistics and insert it to the import_statistics table"""
-        logging.debug("Executing stage.save_stage_statistics()")
+        logging.debug("Executing Stage.save_stage_statistics()")
 
         columns_part = []
         values_part = []
@@ -1279,14 +1279,14 @@ class stage:
             self.mysql_conn.commit()
             logging.debug("SQL Statement executed: %s" % (self.mysql_cursor.statement))
 
-        logging.debug("Executing stage.save_stage_statistics() - Finished")
+        logging.debug("Executing Stage.save_stage_statistics() - Finished")
 
     def set_stage_only_in_memory(self) -> None:
         self.memory_stage = True
 
     def clear_stage(self) -> None:
         """Removes all stage information from the import_stage table"""
-        logging.debug("Executing stage.clear_stage()")
+        logging.debug("Executing Stage.clear_stage()")
 
         if not self.memory_stage:
             query = "delete from import_stage where hive_db = %s and hive_table = %s"
@@ -1299,11 +1299,11 @@ class stage:
             self.mysql_conn.commit()
             logging.debug("SQL Statement executed: %s" % (self.mysql_cursor.statement))
 
-        logging.debug("Executing stage.clear_stage() - Finished")
+        logging.debug("Executing Stage.clear_stage() - Finished")
 
     def get_stage(self) -> int:
         """Fetches the stage from import_stage table and return stage value. If no stage, 0 is returned"""
-        logging.debug("Executing stage.get_stage()")
+        logging.debug("Executing Stage.get_stage()")
 
         if self.current_stage == None:
             if self.memory_stage:
@@ -1327,12 +1327,12 @@ class stage:
         self.stage_duration_stop = 0.0
         self.stage_duration_time = 0.0
 
-        logging.debug("Executing stage.get_stage() - Finished")
+        logging.debug("Executing Stage.get_stage() - Finished")
         return self.current_stage
 
     def get_stage_start_stop(self, stage: str | None) -> dict[str, str]:
         """Returns the start and stop time for a specific stage. If no info can be found, 1970-01-01T00:00:00.000000Z is returned for both"""
-        logging.debug("Executing stage.get_stage_start_stop()")
+        logging.debug("Executing Stage.get_stage_start_stop()")
 
         query = "select stage, start, stop, duration from import_stage_statistics where hive_db = %s and hive_table = %s "
         self.mysql_cursor.execute(query, (self.hive_db, self.hive_table))
@@ -1358,19 +1358,19 @@ class stage:
 
     def set_stage(self, new_stage: int, force: bool = False) -> None:
         """Saves the stage information that is used for finding the correct step in the retries operations"""
-        logging.debug("Executing stage.set_stage()")
+        logging.debug("Executing Stage.set_stage()")
 
         if force == True:
             self.current_stage = 0
 
         if self.current_stage != None and self.current_stage > new_stage:
-            logging.debug("Executing stage.set_stage() - Finished (no stage set)")
+            logging.debug("Executing Stage.set_stage() - Finished (no stage set)")
             return
 
         if self.memory_stage:
             self.current_stage = new_stage
             logging.debug(
-                "Executing stage.set_stage() - Finished (stage only in memory)"
+                "Executing Stage.set_stage() - Finished (stage only in memory)"
             )
             return
 
@@ -1470,11 +1470,11 @@ class stage:
         self.stage_duration_stop = 0.0
         self.stage_duration_time = 0.0
 
-        logging.debug("Executing stage.set_stage() - Finished")
+        logging.debug("Executing Stage.set_stage() - Finished")
 
     def save_retry_attempt(self, stage: int) -> None:
         """Saves the retry attempt in the import_retries_log table"""
-        logging.debug("Executing stage.save_retry_attempt()")
+        logging.debug("Executing Stage.save_retry_attempt()")
 
         if self.memory_stage:
             return
@@ -1504,4 +1504,4 @@ class stage:
         self.mysql_conn.commit()
         logging.debug("SQL Statement executed: %s" % (self.mysql_cursor.statement))
 
-        logging.debug("Executing stage.save_retry_attempt() - Finished")
+        logging.debug("Executing Stage.save_retry_attempt() - Finished")

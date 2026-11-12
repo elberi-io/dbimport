@@ -16,53 +16,53 @@
 # under the License.
 
 
-class databaseNotFound(Exception):
+class DatabaseNotFoundError(Exception):
     pass
 
 
-class tableNotFound(Exception):
+class TableNotFoundError(Exception):
     pass
 
 
-class rowNotFound(Exception):
+class RowNotFoundError(Exception):
     pass
 
 
-class invalidConfiguration(Exception):
+class InvalidConfigurationError(Exception):
     pass
 
 
-class undevelopedFeature(Exception):
+class UndevelopedFeatureError(Exception):
     pass
 
 
-class SQLerror(Exception):
+class SQLError(Exception):
     pass
 
 
-class daemonExit(Exception):
+class DaemonExitError(Exception):
     pass
 
 
-class validationError(Exception):
+class DataValidationError(Exception):
     pass
 
 
-class foreignKeyError(Exception):
+class ForeignKeyError(Exception):
     pass
 
 
-class atlasError(Exception):
+class AtlasError(Exception):
     pass
 
 
-class connectionError(Exception):
+class JDBCConnectionError(Exception):
     pass
 
 
-class schemaError(Exception):
+class SchemaError(Exception):
     pass
 
 
-class catalogError(Exception):
+class CatalogError(Exception):
     pass

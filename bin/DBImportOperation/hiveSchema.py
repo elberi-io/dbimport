@@ -32,7 +32,7 @@ class DBS(Base):
     OWNER_TYPE = Column(String(10))
 
 
-class HIVE_LOCKS(Base):
+class HiveLocks(Base):
     __tablename__ = "HIVE_LOCKS"
 
     HL_LOCK_EXT_ID = Column(BigInteger, primary_key=True, nullable=False)
@@ -53,7 +53,7 @@ class HIVE_LOCKS(Base):
     HL_BLOCKEDBY_INT_ID = Column(BigInteger)
 
 
-class KEY_CONSTRAINTS(Base):
+class KeyConstraints(Base):
     __tablename__ = "KEY_CONSTRAINTS"
 
     #    CHILD_CD_ID = Column(BigInteger)
@@ -76,24 +76,24 @@ class KEY_CONSTRAINTS(Base):
     ENABLE_VALIDATE_RELY = Column(SmallInteger, nullable=False)
 
     TBLS_PARENT = relationship(
-        "TBLS", primaryjoin="KEY_CONSTRAINTS.PARENT_TBL_ID == TBLS.TBL_ID"
+        "TBLS", primaryjoin="KeyConstraints.PARENT_TBL_ID == TBLS.TBL_ID"
     )
     TBLS_CHILD = relationship(
-        "TBLS", primaryjoin="KEY_CONSTRAINTS.CHILD_TBL_ID == TBLS.TBL_ID"
+        "TBLS", primaryjoin="KeyConstraints.CHILD_TBL_ID == TBLS.TBL_ID"
     )
     COLUMNS_V2_PARENT_CD = relationship(
-        "COLUMNS_V2", primaryjoin="KEY_CONSTRAINTS.PARENT_CD_ID == COLUMNS_V2.CD_ID"
+        "ColumnsV2", primaryjoin="KeyConstraints.PARENT_CD_ID == ColumnsV2.CD_ID"
     )
     COLUMNS_V2_PARENT_IDX = relationship(
-        "COLUMNS_V2",
-        primaryjoin="KEY_CONSTRAINTS.PARENT_INTEGER_IDX == COLUMNS_V2.INTEGER_IDX",
+        "ColumnsV2",
+        primaryjoin="KeyConstraints.PARENT_INTEGER_IDX == ColumnsV2.INTEGER_IDX",
     )
     COLUMNS_V2_CHILD_CD = relationship(
-        "COLUMNS_V2", primaryjoin="KEY_CONSTRAINTS.CHILD_CD_ID == COLUMNS_V2.CD_ID"
+        "ColumnsV2", primaryjoin="KeyConstraints.CHILD_CD_ID == ColumnsV2.CD_ID"
     )
     COLUMNS_V2_CHILD_IDX = relationship(
-        "COLUMNS_V2",
-        primaryjoin="KEY_CONSTRAINTS.CHILD_INTEGER_IDX == COLUMNS_V2.INTEGER_IDX",
+        "ColumnsV2",
+        primaryjoin="KeyConstraints.CHILD_INTEGER_IDX == ColumnsV2.INTEGER_IDX",
     )
 
 
@@ -105,7 +105,7 @@ class VERSION(Base):
     VERSION_COMMENT = Column(String(255))
 
 
-class COLUMNS_V2(Base):
+class ColumnsV2(Base):
     __tablename__ = "COLUMNS_V2"
 
     CD_ID = Column(
@@ -183,7 +183,7 @@ class IDXS(Base):
     SDS = relationship("SDS")
 
 
-class TABLE_PARAMS(Base):
+class TableParams(Base):
     __tablename__ = "TABLE_PARAMS"
 
     TBL_ID = Column(

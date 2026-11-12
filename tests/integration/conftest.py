@@ -87,7 +87,7 @@ def config_db(engine: sa.Engine) -> None:
         for table in _tables(conn):
             conn.execute(sa.text(f"DROP TABLE `{table}`"))
         conn.execute(sa.text("SET FOREIGN_KEY_CHECKS = 1"))
-    setup = database.initialize()
+    setup = database.Initialize()
     try:
         setup.create_db()
     finally:
@@ -109,7 +109,7 @@ def clean_config_db(config_db: None, engine: sa.Engine) -> None:
             if table != "alembic_version":
                 conn.execute(sa.text(f"TRUNCATE TABLE `{table}`"))
         conn.execute(sa.text("SET FOREIGN_KEY_CHECKS = 1"))
-    setup = database.initialize()
+    setup = database.Initialize()
     try:
         setup.create_default_environment_types()
         setup.update_configuration_values()

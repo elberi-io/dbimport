@@ -26,12 +26,16 @@ import mysql.connector
 import pandas as pd
 
 from common import constants as constant
-from common.Exceptions import invalidConfiguration, undevelopedFeature, validationError
+from common.Exceptions import (
+    DataValidationError,
+    InvalidConfigurationError,
+    UndevelopedFeatureError,
+)
 from common.Singleton import Singleton
 from DBImportConfig import common_config, export_stage, sendStatistics
 
 
-class config(metaclass=Singleton):
+class Config(metaclass=Singleton):
     def __init__(
         self,
         connection_alias: str | None = None,
@@ -48,12 +52,12 @@ class config(metaclass=Singleton):
         self.target_schema = target_schema
         self.target_table = target_table
 
-        self.common_config = common_config.config()
+        self.common_config = common_config.Config()
         self.common_config.operation_type = "export"
         self.common_config.target_schema = target_schema
         self.common_config.target_table = target_table
 
-        self.send_statistics = sendStatistics.sendStatistics()
+        self.send_statistics = sendStatistics.SendStatistics()
 
         self.start_date = self.common_config.start_date
         self.mysql_conn = self.common_config.mysql_conn
@@ -100,7 +104,7 @@ class config(metaclass=Singleton):
         self.validation_custom_query_target_value: str | None = None
 
         # Initialize the stage class that will handle all stage operations for us
-        self.stage = export_stage.stage(
+        self.stage = export_stage.Stage(
             self.mysql_conn,
             connection_alias=connection_alias,
             target_schema=target_schema,
@@ -365,7 +369,7 @@ class config(metaclass=Singleton):
         logging.debug("SQL Statement executed: %s" % (self.mysql_cursor01.statement))
 
         if self.mysql_cursor01.rowcount != 1:
-            raise invalidConfiguration(
+            raise InvalidConfigurationError(
                 "The specified Hive Database and Table can't be found in the configuration database. Please check that you specified the correct database and table and that the configuration exists in the configuration database"
             )
 
@@ -413,7 +417,7 @@ class config(metaclass=Singleton):
             self.validation_method != constant.VALIDATION_METHOD_CUSTOMQUERY
             and self.validation_method != constant.VALIDATION_METHOD_ROWCOUNT
         ):
-            raise invalidConfiguration(
+            raise InvalidConfigurationError(
                 f"Only the values '{constant.VALIDATION_METHOD_ROWCOUNT}' or '{constant.VALIDATION_METHOD_CUSTOMQUERY}' is valid for column validationMethod in export_tables."
             )
 
@@ -421,13 +425,13 @@ class config(metaclass=Singleton):
             self.incr_validation_method != "full"
             and self.incr_validation_method != "incr"
         ):
-            raise invalidConfiguration(
+            raise InvalidConfigurationError(
                 "Only the values 'full' or 'incr' is valid for column incr_validation_method in export_tables."
             )
 
         if self.export_tool != "sqoop" and self.export_tool != "spark":
             logging.error("ERROR: Unsupported export Tool configured.")
-            raise invalidConfiguration(
+            raise InvalidConfigurationError(
                 "Unsupported export Tool configured (%s). Please check configuration"
                 % (self.export_tool)
             )
@@ -438,7 +442,7 @@ class config(metaclass=Singleton):
                 and self.sql_where_addition.strip() != ""
             ):
                 logging.error("ERROR: Unsupported export configuration")
-                raise invalidConfiguration(
+                raise InvalidConfigurationError(
                     "Using a SQL Where configuration in 'sql_where_addition' column is not supported with sqoop exports"
                 )
 
@@ -458,7 +462,7 @@ class config(metaclass=Singleton):
             self.export_phase_description = "Incremental Export"
 
         if self.export_type == "incr" and self.common_config.db_awss3 == True:
-            raise invalidConfiguration(
+            raise InvalidConfigurationError(
                 "Incremental exports to AWS S3 is not supported in this version of DBImport"
             )
 
@@ -481,7 +485,7 @@ class config(metaclass=Singleton):
             self.aws_s3_path = "/".join(self.aws_s3_bucket_path.split("/")[3:])
 
         if self.export_phase is None:
-            raise invalidConfiguration(
+            raise InvalidConfigurationError(
                 "Import type '%s' is not a valid type. Please check configuration"
                 % (self.import_type)
             )
@@ -489,7 +493,7 @@ class config(metaclass=Singleton):
         if self.export_phase == constant.EXPORT_PHASE_INCR:
             self.export_is_incremental = True
             if self.incr_column == None:
-                raise invalidConfiguration(
+                raise InvalidConfigurationError(
                     "Incremental import requires a column configured in the 'incr_column' column"
                 )
         else:
@@ -501,7 +505,7 @@ class config(metaclass=Singleton):
         logging.debug("SQL Statement executed: %s" % (self.mysql_cursor01.statement))
 
         if self.mysql_cursor01.rowcount != 1:
-            raise invalidConfiguration(
+            raise InvalidConfigurationError(
                 f"There is no JDBC Connection defined with the alias '{self.connection_alias}'"
             )
 
@@ -571,7 +575,7 @@ class config(metaclass=Singleton):
                 "Result from target query: %s",
                 self.validation_custom_query_target_value,
             )
-            raise validationError()
+            raise DataValidationError()
 
         if (
             self.validation_custom_query_target_value
@@ -587,7 +591,7 @@ class config(metaclass=Singleton):
                 "Result from target query: %s",
                 self.validation_custom_query_target_value,
             )
-            raise validationError()
+            raise DataValidationError()
 
         logging.info("Custom query validation successful!")
         return True
@@ -996,7 +1000,7 @@ class config(metaclass=Singleton):
                     column_type = "clob"
 
             if column_type == "string":
-                raise invalidConfiguration(
+                raise InvalidConfigurationError(
                     f"Error: Exports of column '{column_name}' with type 'string' to Oracle is not supported. Please set another columntype in 'target_column_type' or ignore this column in the export."
                 )
 
@@ -1987,7 +1991,7 @@ class config(metaclass=Singleton):
             logging.warning(
                 "'%s' is to large.", self.validation_custom_query_target_value
             )
-            raise invalidConfiguration(
+            raise InvalidConfigurationError(
                 "The size of the json document on the custom query exceeds 1024 bytes. Change the query to create a result with less than 512 bytes"
             )
 
@@ -2077,7 +2081,7 @@ class config(metaclass=Singleton):
                     validate_text_source = "Hive table (incr)"
                     validate_text = "Target table"
             else:
-                raise undevelopedFeature("Unsupported validation")
+                raise UndevelopedFeatureError("Unsupported validation")
 
             self.mysql_cursor01.execute(query, (self.table_id,))
             logging.debug(

@@ -32,13 +32,13 @@ import pendulum
 import sqlalchemy as sa
 from sqlalchemy.orm import Query, aliased, scoped_session, sessionmaker
 
-from common.Exceptions import SQLerror, invalidConfiguration
+from common.Exceptions import InvalidConfigurationError, SQLError
 from ConfigReader import configuration
 from DBImportConfig import common_config, configSchema, sendStatistics
 from Schedule import airflowSchema
 
 
-class initialize:
+class Initialize:
     def __init__(self):
         logging.debug("Executing Airflow.__init__()")
 
@@ -55,8 +55,8 @@ class initialize:
         if logging.root.level == 10:  # DEBUG
             self.debug_log_level = True
 
-        self.common_config = common_config.config()
-        self.send_statistics = sendStatistics.sendStatistics()
+        self.common_config = common_config.Config()
+        self.send_statistics = sendStatistics.SendStatistics()
 
         self.dbimport_command_path = self.get_config_value(
             "airflow_dbimport_commandpath"
@@ -107,14 +107,14 @@ class initialize:
                 "Airflow", "airflow_mode", exit_on_error=False
             )
             if self.airflow_mode != "default" and self.airflow_mode != "aws_mwaa":
-                raise invalidConfiguration(
+                raise InvalidConfigurationError(
                     "Invalid option specified for [Airflow][airflow_mode] in the configuration file."
                 )
         # 				log.error("Invalid option specified for [Airflow][airflow_mode] in the configuration file.")
         # 				self.common_config.remove_temporary_files()
         # 				sys.exit(1)
 
-        except invalidConfiguration:
+        except InvalidConfigurationError:
             pass
 
         if self.airflow_mode == "default" and self.create_pools_with_tasks == False:
@@ -128,12 +128,12 @@ class initialize:
                 self.airflow_db_session = sessionmaker(bind=self.airflow_db)
 
             except sa.exc.OperationalError as err:
-                raise SQLerror(err)
+                raise SQLError(err)
             # 				log.error("%s"%err)
             # 				self.common_config.remove_temporary_files()
             # 				sys.exit(1)
             except:
-                raise SQLerror(sys.exc_info())
+                raise SQLError(sys.exc_info())
         # 				print("Unexpected error: ")
         # 				print(sys.exc_info())
         # 				self.common_config.remove_temporary_files()
@@ -176,14 +176,14 @@ class initialize:
             log.error("%s", err)
             self.config_db_session = None
             self.config_db = None
-            raise SQLerror("Can't connect to DBImport database")
+            raise SQLError("Can't connect to DBImport database")
 
         except:
             print("Unexpected error: ")
             print(sys.exc_info())
             self.config_db_session = None
             self.config_db = None
-            raise SQLerror("Can't connect to DBImport database")
+            raise SQLError("Can't connect to DBImport database")
 
         else:
             # return self.config_db_session()
@@ -200,11 +200,11 @@ class initialize:
 
         try:
             session = self.get_dbimport_session()
-        except SQLerror:
+        except SQLError:
             self.disconnect_dbimport_db()
             return None
 
-        configuration_table = aliased(configSchema.configuration)
+        configuration_table = aliased(configSchema.Configuration)
 
         configuration = (
             session.query(
@@ -281,7 +281,7 @@ class initialize:
 
         try:
             self.generate_dag(name=name, write_dag=True)
-        except (invalidConfiguration, SQLerror, RuntimeError) as errMsg:
+        except (InvalidConfigurationError, SQLError, RuntimeError) as errMsg:
             result = str(errMsg)
             return_code = 500
         except:
@@ -304,10 +304,10 @@ class initialize:
 
         # session = self.config_db_session()
         session = self.get_dbimport_session()
-        airflow_custom_dags = aliased(configSchema.airflowCustomDags)
-        airflow_export_dags = aliased(configSchema.airflowExportDags)
-        airflow_import_dags = aliased(configSchema.airflowImportDags)
-        airflow_etl_dags = aliased(configSchema.airflowEtlDags)
+        airflow_custom_dags = aliased(configSchema.AirflowCustomDAGs)
+        airflow_export_dags = aliased(configSchema.AirflowExportDAGs)
+        airflow_import_dags = aliased(configSchema.AirflowImportDAGs)
+        airflow_etl_dags = aliased(configSchema.AirflowETLDAGs)
 
         export_dag = pd.DataFrame(
             session.query(
@@ -438,7 +438,7 @@ class initialize:
                 self.generate_custom_dag(dag=row)
 
         if not dag_found and name != None:
-            raise invalidConfiguration("Can't find DAG with that name")
+            raise InvalidConfigurationError("Can't find DAG with that name")
         # 			log.error("Can't find DAG with that name")
         # 			self.common_config.remove_temporary_files()
         # 			sys.exit(1)
@@ -524,7 +524,7 @@ class initialize:
 
         # session = self.config_db_session()
         session = self.get_dbimport_session()
-        export_tables = aliased(configSchema.exportTables)
+        export_tables = aliased(configSchema.ExportTables)
 
         export_tables_query = Query(
             [
@@ -583,7 +583,7 @@ class initialize:
                     )
                     previous_connection_alias = row["dbalias"]
 
-                except invalidConfiguration as errMsg:
+                except InvalidConfigurationError as errMsg:
                     log.warning(
                         "The connection alias '%s' cant be found in the configuration database"
                         % (row["dbalias"])
@@ -726,7 +726,7 @@ class initialize:
 
         # session = self.config_db_session()
         session = self.get_dbimport_session()
-        import_tables = aliased(configSchema.importTables)
+        import_tables = aliased(configSchema.ImportTables)
 
         import_tables_query = Query(
             [
@@ -756,12 +756,12 @@ class initialize:
                     or hive_table == ""
                 ):
                     self.dag_file.close()
-                    raise invalidConfiguration(
+                    raise InvalidConfigurationError(
                         "Syntax for filter_hive column is <HIVE_DB>.<HIVE_TABLE>;<HIVE_DB>.<HIVE_TABLE>;....."
                     )
             except IndexError:
                 self.dag_file.close()
-                raise invalidConfiguration(
+                raise InvalidConfigurationError(
                     "Syntax for filter_hive column is <HIVE_DB>.<HIVE_TABLE>;<HIVE_DB>.<HIVE_TABLE>;....."
                 )
             # 				log.error("Syntax for filter_hive column is <HIVE_DB>.<HIVE_TABLE>;<HIVE_DB>.<HIVE_TABLE>;.....")
@@ -1210,7 +1210,7 @@ class initialize:
 
         if self.airflow_mode == "default" and self.create_pools_with_tasks == False:
             session = self.airflow_db_session()
-            slot_pool = aliased(airflowSchema.slotPool)
+            slot_pool = aliased(airflowSchema.SlotPool)
 
             airflow_pools = pd.DataFrame(
                 session.query(slot_pool.pool, slot_pool.slots, slot_pool.description)
@@ -1235,7 +1235,7 @@ class initialize:
                             pool,
                             self.airflow_default_pool_size,
                         )
-                        new_pool = airflowSchema.slotPool(
+                        new_pool = airflowSchema.SlotPool(
                             pool=pool,
                             slots=self.airflow_default_pool_size,
                             include_deferred=0,
@@ -1285,7 +1285,7 @@ class initialize:
 
         # session = self.config_db_session()
         session = self.get_dbimport_session()
-        airflow_tasks = aliased(configSchema.airflowTasks)
+        airflow_tasks = aliased(configSchema.AirflowTasks)
 
         tasks = (
             session.query(airflow_tasks.task_name)
@@ -2158,7 +2158,7 @@ class initialize:
             self.dag_file.write("    dag=dag)\n")
             self.dag_file.write("\n")
 
-        airflow_dag_sensors = aliased(configSchema.airflowDagSensors, name="ads")
+        airflow_dag_sensors = aliased(configSchema.AirflowDAGSensors, name="ads")
         sensors = (
             session.query(airflow_dag_sensors.dag_name)
             .select_from(airflow_dag_sensors)
@@ -2169,7 +2169,7 @@ class initialize:
         if sensors > 0:
             tasks_sensors_exists = True
 
-        airflow_tasks = aliased(configSchema.airflowTasks)
+        airflow_tasks = aliased(configSchema.AirflowTasks)
         tasks = pd.DataFrame(
             session.query(airflow_tasks.dag_name, airflow_tasks.placement)
             .select_from(airflow_tasks)
@@ -2336,7 +2336,7 @@ class initialize:
         if default_sudo_user == None:
             default_sudo_user = ""
 
-        airflow_tasks = aliased(configSchema.airflowTasks)
+        airflow_tasks = aliased(configSchema.AirflowTasks)
 
         tasks = pd.DataFrame(
             session.query(
@@ -2399,10 +2399,10 @@ class initialize:
 
             if row["task_type"] == "DAG Sensor":
                 add_dag_sensor = True
-                airflow_custom_dags = aliased(configSchema.airflowCustomDags)
-                airflow_etl_dags = aliased(configSchema.airflowEtlDags)
-                airflow_export_dags = aliased(configSchema.airflowExportDags)
-                airflow_import_dags = aliased(configSchema.airflowImportDags)
+                airflow_custom_dags = aliased(configSchema.AirflowCustomDAGs)
+                airflow_etl_dags = aliased(configSchema.AirflowETLDAGs)
+                airflow_export_dags = aliased(configSchema.AirflowExportDAGs)
+                airflow_import_dags = aliased(configSchema.AirflowImportDAGs)
 
                 if "." in row["task_config"]:
                     wait_for_dag = row["task_config"].split(".")[0]
@@ -2972,11 +2972,11 @@ class initialize:
         # session = self.config_db_session()
         session = self.get_dbimport_session()
 
-        airflow_dag_sensors = aliased(configSchema.airflowDagSensors, name="ads")
-        airflow_custom_dags = aliased(configSchema.airflowCustomDags, name="acd")
-        airflow_etl_dags = aliased(configSchema.airflowEtlDags, name="aetld")
-        airflow_export_dags = aliased(configSchema.airflowExportDags, name="aed")
-        airflow_import_dags = aliased(configSchema.airflowImportDags, name="aid")
+        airflow_dag_sensors = aliased(configSchema.AirflowDAGSensors, name="ads")
+        airflow_custom_dags = aliased(configSchema.AirflowCustomDAGs, name="acd")
+        airflow_etl_dags = aliased(configSchema.AirflowETLDAGs, name="aetld")
+        airflow_export_dags = aliased(configSchema.AirflowExportDAGs, name="aed")
+        airflow_import_dags = aliased(configSchema.AirflowImportDAGs, name="aid")
 
         sensors = pd.DataFrame(
             session.query(

@@ -31,13 +31,13 @@ from TCLIService.ttypes import TOperationState
 
 from catalogService import glue, hiveDirect
 from common import constants as constant
-from common.Exceptions import SQLerror, invalidConfiguration
+from common.Exceptions import InvalidConfigurationError, SQLError
 from common.Singleton import Singleton
 from ConfigReader import configuration
 from DBImportConfig import common_config
 
 
-class operation(metaclass=Singleton):
+class Operation(metaclass=Singleton):
     def __init__(self, hive_db=None, hive_table=None):
         logging.debug("Executing common_operation.__init__()")
 
@@ -57,7 +57,7 @@ class operation(metaclass=Singleton):
             force_preemptive=True, principal=self.kerberos_principal
         )
 
-        self.common_config = common_config.config()
+        self.common_config = common_config.Config()
 
         # Fetch configuration details about Hive
         self.hive_servers = configuration.get("Hive", "servers")
@@ -81,13 +81,13 @@ class operation(metaclass=Singleton):
         # Metastore connections
         self.metastore_type = configuration.get("Metastore", "metastore_type")
         if self.metastore_type == constant.CATALOG_HIVE_DIRECT:
-            self.metastore = hiveDirect.hiveMetastoreDirect()
+            self.metastore = hiveDirect.HiveMetastoreDirect()
             self.spark_catalog_name = "hive"
         elif self.metastore_type == constant.CATALOG_GLUE:
-            self.metastore = glue.glueCatalog()
+            self.metastore = glue.GlueCatalog()
             self.spark_catalog_name = "glue"
         else:
-            raise invalidConfiguration(
+            raise InvalidConfigurationError(
                 "Configuration 'metastore_type' under [Metastore] in the configuration file contains an invalid option"
             )
 
@@ -443,9 +443,9 @@ class operation(metaclass=Singleton):
                     + second_quote_position
                     + 1
                 ]
-                raise SQLerror(sql_error_message)
+                raise SQLError(sql_error_message)
             else:
-                raise SQLerror(errMsg)
+                raise SQLError(errMsg)
 
         status = self.hive_cursor.poll().operationState
         headers = self.hive_cursor.poll().progressUpdateResponse.headerNames
