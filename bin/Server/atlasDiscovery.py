@@ -184,14 +184,14 @@ class atlasDiscovery(threading.Thread):
         # 		if atlasEnabled == True:
         # 			atlasEnabled = self.atlas_operation.check_atlas_schema(logger=logger)
 
-        if atlas_enabled == True:
+        if atlas_enabled:
             log.info("atlasDiscovery started")
             log.info(
                 "Atlas discovery interval is set to %s hours"
                 % (atlas_discovery_interval)
             )
 
-        while not self.thread_stop_event.isSet() and atlas_enabled == True:
+        while not self.thread_stop_event.isSet() and atlas_enabled:
             # ****************************************************************
             # Read data from jdbc_connection and put in queue for processing
             # ****************************************************************
@@ -236,11 +236,8 @@ class atlasDiscovery(threading.Thread):
                         db_alias = row["dbalias"]
 
                         # TODO(#229): Move this into the thread
-                        if (
-                            self.common_config.check_time_window(
-                                db_alias, atlas_discovery_mode=True
-                            )
-                            == False
+                        if not self.common_config.check_time_window(
+                            db_alias, atlas_discovery_mode=True
                         ):
                             continue
 
@@ -259,7 +256,7 @@ class atlasDiscovery(threading.Thread):
                         try:
                             self.common_config.lookup_connection_alias(db_alias)
                         except invalidConfiguration as err:
-                            if self.common_config.atlas_jdbc_source_support == True:
+                            if self.common_config.atlas_jdbc_source_support:
                                 log.error(
                                     "Connection '%s' have invalid configuration. Failed with '%s'",
                                     db_alias,
@@ -267,7 +264,7 @@ class atlasDiscovery(threading.Thread):
                                 )
                                 altas_operation_failed = True
 
-                        if self.common_config.atlas_jdbc_source_support == False:
+                        if not self.common_config.atlas_jdbc_source_support:
                             # This source type does not support Atlas discovery
                             log.debug(
                                 "Connection '%s' does not support Atlas discovery. Skipping..."
@@ -288,7 +285,7 @@ class atlasDiscovery(threading.Thread):
                             self.common_config.disconnect_from_jdbc()
 
                         # 						if altasOperationFailed == False and self.common_config.connect_to_jdbc(allJarFiles=True, exitIfFailure=False, logger=logger) == True:
-                        if altas_operation_failed == False:
+                        if not altas_operation_failed:
                             # 							self.common_config.atlas_enabled = True
                             self.connections_sent_to_crawlers.append(db_alias)
 
@@ -411,7 +408,7 @@ class atlasDiscovery(threading.Thread):
             time.sleep(1)
 
         self.disconnect_dbimport_db()
-        if atlas_enabled == True:
+        if atlas_enabled:
             log.info("atlasDiscovery stopped")
 
     def is_connection_blacklisted(self, db_alias):

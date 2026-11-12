@@ -40,12 +40,12 @@ class crypto:
     def set_private_key_file(self, private_key_file: str) -> None:
         self.private_key_file = private_key_file
 
-        if self.private_key_file.startswith("/") == False:
+        if not self.private_key_file.startswith("/"):
             self.private_key_file = (
                 os.environ["DBIMPORT_HOME"] + "/" + self.private_key_file
             )
 
-        if os.path.isfile(self.private_key_file) == False:
+        if not os.path.isfile(self.private_key_file):
             raise invalidConfiguration(
                 "The private key file cant be opened.\n"
                 + "Please check the path in the configuration file for settings Credentials/private_key"
@@ -57,12 +57,12 @@ class crypto:
     def set_public_key_file(self, public_key_file: str) -> None:
         self.public_key_file = public_key_file
 
-        if self.public_key_file.startswith("/") == False:
+        if not self.public_key_file.startswith("/"):
             self.public_key_file = (
                 os.environ["DBIMPORT_HOME"] + "/" + self.public_key_file
             )
 
-        if os.path.isfile(self.public_key_file) == False:
+        if not os.path.isfile(self.public_key_file):
             raise invalidConfiguration(
                 "The public key file cant be opened.\n"
                 + "Please check the path in the configuration file for settings Credentials/public_key"

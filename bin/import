@@ -211,14 +211,14 @@ def main(argv):
         elif opt == "--dropTargetTable":
             drop_target_table = True
 
-    if display_version == True:
+    if display_version:
         print(f"DBImport version: {constant.VERSION}")
         sys.exit(0)
 
     if hive_db is None or hive_table is None:
         print_help()
 
-    if run_import_phase == False and run_etl_phase == False and run_copy_phase == False:
+    if not run_import_phase and not run_etl_phase and not run_copy_phase:
         # If nothing is specified we run all stages
         run_import_phase = True
         run_copy_phase = True
@@ -254,7 +254,7 @@ def main(argv):
     # Initiate the logging functions with the correct level
 
     if logging_level == logging.DEBUG:
-        if log_with_timestamp == True:
+        if log_with_timestamp:
             logging.basicConfig(
                 stream=sys.stdout,
                 format="%(asctime)s %(levelname)s %(funcName)s - %(message)s",
@@ -268,7 +268,7 @@ def main(argv):
                 level=logging_level,
             )
     else:
-        if log_with_timestamp == True:
+        if log_with_timestamp:
             logging.basicConfig(
                 stream=sys.stdout,
                 format="%(asctime)s %(levelname)s - %(message)s",
@@ -398,7 +398,7 @@ def main(argv):
     else:
         first_row = True
         for dest in copy_destinations:
-            if first_row == True:
+            if first_row:
                 print("Copy destinations:        %s" % (dest.replace(";", " - ")))
                 first_row = False
             else:
@@ -464,7 +464,7 @@ def main(argv):
         import_operation.remove_temporary_files()
         sys.exit(1)
 
-    if reset_stage == True or stage == 9999:
+    if reset_stage or stage == 9999:
         import_operation.set_stage(0, force=True)
         stage = 0
 
@@ -479,19 +479,14 @@ def main(argv):
         import_operation.remove_temporary_files()
         sys.exit(1)
 
-    if (
-        ignore_time == False
-        and run_import_phase == True
-        and stage < 2000
-        and slave_table == False
-    ):
+    if not ignore_time and run_import_phase and stage < 2000 and slave_table == False:
         # Checking if we are allowed to use the configued JDBC connection at this time
         # We only need to check this if we are going to run the Import stage and the stage is under the copyPhase.
         # So if the previous import failed, and it's only the ETL part left, we should still be able to finish the import
         import_operation.check_time_window()
 
     if (
-        run_import_phase == True and run_etl_phase == False and run_copy_phase == False
+        run_import_phase and not run_etl_phase and not run_copy_phase
     ) and run_only_function is None:
         print(" _____________________ ")
         print("|                     |")
@@ -505,7 +500,7 @@ def main(argv):
             )
 
     if (
-        run_import_phase == False and run_etl_phase == False and run_copy_phase == True
+        not run_import_phase and not run_etl_phase and run_copy_phase
     ) and run_only_function is None:
         print(" ___________________")
         print("|                   |")
@@ -534,7 +529,7 @@ def main(argv):
             run_copy_phase_by_force = True
 
     if (
-        run_import_phase == False and run_etl_phase == True and run_copy_phase == False
+        not run_import_phase and run_etl_phase and not run_copy_phase
     ) and run_only_function is None:
         print(" __________________")
         print("|                  |")
@@ -555,11 +550,7 @@ def main(argv):
         import_operation.remove_temporary_files()
         sys.exit(1)
 
-    if (
-        run_import_phase == True
-        and run_etl_phase == False
-        and (stage == 1049 or stage == 1149)
-    ):
+    if run_import_phase and not run_etl_phase and (stage == 1049 or stage == 1149):
         print(" ______________________________________ ")
         print("|                                      |")
         print("| Import Phase is already completed.   |")
@@ -576,7 +567,7 @@ def main(argv):
             key="import_start_disable"
         )
         == True
-        and ignore_disabled == False
+        and not ignore_disabled
     ):
         logging.error("Import execution has been disabled from DBImport configuration")
         import_operation.remove_temporary_files()
@@ -590,7 +581,7 @@ def main(argv):
         if (
             slave_table == False
             and import_phase == constant.IMPORT_PHASE_FULL
-            and run_import_phase == True
+            and run_import_phase
         ):
             if stage >= 1000 and stage < 1049 and run_only_function is None:
                 import_operation.save_retry_attempt(stage)
@@ -641,7 +632,7 @@ def main(argv):
 
             if (
                 run_only_function is None or run_only_function == "importData"
-            ) and skip_import_data == False:
+            ) and not skip_import_data:
                 if import_operation.import_config.import_tool == "sqoop":
                     if import_operation.run_stage(1013) == True:
                         import_operation.run_sqoop_import(pk_only_import=False)
@@ -669,7 +660,7 @@ def main(argv):
         if (
             slave_table == False
             and import_phase == constant.IMPORT_PHASE_INCR
-            and run_import_phase == True
+            and run_import_phase
         ):
             stage = import_operation.get_stage()
             if stage >= 1100 and stage < 1149 and run_only_function is None:
@@ -710,7 +701,7 @@ def main(argv):
 
             if (
                 run_only_function is None or run_only_function == "importData"
-            ) and skip_import_data == False:
+            ) and not skip_import_data:
                 if import_operation.import_config.import_tool == "sqoop":
                     if import_operation.run_stage(1112) == True:
                         import_operation.save_incr_min_value()
@@ -763,7 +754,7 @@ def main(argv):
         if (
             slave_table == False
             and import_phase == constant.IMPORT_PHASE_ORACLE_FLASHBACK
-            and run_import_phase == True
+            and run_import_phase
         ):
             if stage >= 1200 and stage < 1249 and run_only_function is None:
                 import_operation.save_retry_attempt(stage)
@@ -809,7 +800,7 @@ def main(argv):
 
             if (
                 run_only_function is None or run_only_function == "importData"
-            ) and skip_import_data == False:
+            ) and not skip_import_data:
                 if import_operation.import_config.import_tool == "sqoop":
                     if import_operation.run_stage(1215) == True:
                         import_operation.run_sqoop_import(pk_only_import=False)
@@ -852,7 +843,7 @@ def main(argv):
         if (
             slave_table == False
             and import_phase == constant.IMPORT_PHASE_MSSQL_CHANGE_TRACKING
-            and run_import_phase == True
+            and run_import_phase
         ):
             if stage >= 1250 and stage < 1299 and run_only_function is None:
                 import_operation.save_retry_attempt(stage)
@@ -897,7 +888,7 @@ def main(argv):
 
             if (
                 run_only_function is None or run_only_function == "importData"
-            ) and skip_import_data == False:
+            ) and not skip_import_data:
                 # 				if import_operation.import_config.import_tool == "sqoop":
                 # 					if import_operation.run_stage(1264) == True:
                 # 						import_operation.run_sqoop_import(PKOnlyImport = False)
@@ -936,7 +927,7 @@ def main(argv):
         if (
             slave_table == False
             and import_phase == constant.IMPORT_PHASE_MONGO_FULL
-            and run_import_phase == True
+            and run_import_phase
         ):
             if stage >= 1300 and stage < 1349 and run_only_function is None:
                 import_operation.save_retry_attempt(stage)
@@ -973,7 +964,7 @@ def main(argv):
 
             if (
                 run_only_function is None or run_only_function == "importData"
-            ) and skip_import_data == False:
+            ) and not skip_import_data:
                 if import_operation.run_stage(1315) == True:
                     import_operation.run_spark_import_for_mongo()
                     import_operation.import_config.common_config.reconnect_jdbc()
@@ -997,11 +988,7 @@ def main(argv):
         # * Copy Phase
         # ******************************************
 
-        if (
-            slave_table == False
-            and copy_destinations != None
-            and run_copy_phase == True
-        ):
+        if slave_table == False and copy_destinations != None and run_copy_phase:
             # Only run if Import Phase was completed successfully
             stage = import_operation.get_stage()
             if (
@@ -1009,7 +996,7 @@ def main(argv):
                 or stage == 1149
                 or stage == 1249
                 or stage >= 2000
-                or run_copy_phase_by_force == True
+                or run_copy_phase_by_force
             ):
                 if run_only_function is None or run_only_function == "copyFiles":
                     if import_operation.run_stage(2001) == True:
@@ -1033,7 +1020,7 @@ def main(argv):
         if (
             import_phase == constant.IMPORT_PHASE_FULL
             and etl_phase == constant.ETL_PHASE_TRUNCATEINSERT
-            and run_etl_phase == True
+            and run_etl_phase
         ):
             stage = import_operation.get_stage()
             if (
@@ -1072,7 +1059,7 @@ def main(argv):
                 print("")
                 sys.stdout.flush()
 
-            if run_import_phase == False and stage < 1049:
+            if not run_import_phase and stage < 1049:
                 logging.error(
                     "You are trying to execute a ETL Phase only import, but there is no information about a completed import phase"
                 )
@@ -1110,7 +1097,7 @@ def main(argv):
             if run_only_function is None or run_only_function == "createTargetTable":
                 if import_operation.run_stage(3055) == True:
                     import_operation.connect_to_hive(force_skip_test=skip_hive_test)
-                    if drop_target_table == True:
+                    if drop_target_table:
                         import_operation.drop_target_table()
                     import_operation.create_target_table()
                     import_operation.update_target_table()
@@ -1167,7 +1154,7 @@ def main(argv):
         if (
             import_phase == constant.IMPORT_PHASE_FULL
             and etl_phase == constant.ETL_PHASE_INSERT
-            and run_etl_phase == True
+            and run_etl_phase
         ):
             stage = import_operation.get_stage()
             if (
@@ -1200,7 +1187,7 @@ def main(argv):
                 print("")
                 sys.stdout.flush()
 
-            if run_import_phase == False and stage < 1049:
+            if not run_import_phase and stage < 1049:
                 logging.error(
                     "You are trying to execute a ETL Phase only import, but there is no information about a completed import phase"
                 )
@@ -1239,7 +1226,7 @@ def main(argv):
             if run_only_function is None or run_only_function == "createTargetTable":
                 if import_operation.run_stage(3105) == True:
                     import_operation.connect_to_hive(force_skip_test=skip_hive_test)
-                    if drop_target_table == True:
+                    if drop_target_table:
                         import_operation.drop_target_table()
                     import_operation.create_target_table()
                     import_operation.update_target_table()
@@ -1291,7 +1278,7 @@ def main(argv):
         if (
             import_phase == constant.IMPORT_PHASE_INCR
             and etl_phase == constant.ETL_PHASE_INSERT
-            and run_etl_phase == True
+            and run_etl_phase
         ):
             stage = import_operation.get_stage()
             if (
@@ -1323,7 +1310,7 @@ def main(argv):
                 print("")
                 sys.stdout.flush()
 
-            if run_import_phase == False and stage < 1149:
+            if not run_import_phase and stage < 1149:
                 logging.error(
                     "You are trying to execute a ETL Phase only import, but there is no information about a completed import phase"
                 )
@@ -1376,7 +1363,7 @@ def main(argv):
             if run_only_function is None or run_only_function == "createTargetTable":
                 if import_operation.run_stage(3155) == True:
                     import_operation.connect_to_hive(force_skip_test=skip_hive_test)
-                    if drop_target_table == True:
+                    if drop_target_table:
                         import_operation.drop_target_table()
                     import_operation.create_target_table()
                     import_operation.update_target_table()
@@ -1434,7 +1421,7 @@ def main(argv):
         if (
             import_phase == constant.IMPORT_PHASE_FULL
             and etl_phase == constant.ETL_PHASE_MERGEHISTORYAUDIT
-            and run_etl_phase == True
+            and run_etl_phase
         ):
             stage = import_operation.get_stage()
             if (
@@ -1467,7 +1454,7 @@ def main(argv):
                 print("")
                 sys.stdout.flush()
 
-            if run_import_phase == False and stage < 1049:
+            if not run_import_phase and stage < 1049:
                 logging.error(
                     "You are trying to execute a ETL Phase only import, but there is no information about a completed import phase"
                 )
@@ -1511,7 +1498,7 @@ def main(argv):
             if run_only_function is None or run_only_function == "createTargetTable":
                 if import_operation.run_stage(3205) == True:
                     import_operation.connect_to_hive(force_skip_test=skip_hive_test)
-                    if drop_target_table == True:
+                    if drop_target_table:
                         import_operation.drop_target_table()
                     import_operation.create_target_table()
                     import_operation.convert_hive_table_to_acid()
@@ -1608,7 +1595,7 @@ def main(argv):
         if (
             import_phase == constant.IMPORT_PHASE_FULL
             and etl_phase == constant.ETL_PHASE_MERGEONLY
-            and run_etl_phase == True
+            and run_etl_phase
         ):
             stage = import_operation.get_stage()
             if (
@@ -1639,7 +1626,7 @@ def main(argv):
                 print("")
                 sys.stdout.flush()
 
-            if run_import_phase == False and stage < 1049:
+            if not run_import_phase and stage < 1049:
                 logging.error(
                     "You are trying to execute a ETL Phase only import, but there is no information about a completed import phase"
                 )
@@ -1680,7 +1667,7 @@ def main(argv):
             if run_only_function is None or run_only_function == "createTargetTable":
                 if import_operation.run_stage(3255) == True:
                     import_operation.connect_to_hive(force_skip_test=skip_hive_test)
-                    if drop_target_table == True:
+                    if drop_target_table:
                         import_operation.drop_target_table()
                     import_operation.create_target_table()
                     import_operation.convert_hive_table_to_acid()
@@ -1768,7 +1755,7 @@ def main(argv):
         if (
             import_phase == constant.IMPORT_PHASE_INCR
             and etl_phase == constant.ETL_PHASE_MERGEONLY
-            and run_etl_phase == True
+            and run_etl_phase
         ):
             stage = import_operation.get_stage()
             if (
@@ -1804,7 +1791,7 @@ def main(argv):
                 print("")
                 sys.stdout.flush()
 
-            if run_import_phase == False and stage < 1149:
+            if not run_import_phase and stage < 1149:
                 logging.error(
                     "You are trying to execute a ETL Phase only import, but there is no information about a completed import phase"
                 )
@@ -1856,7 +1843,7 @@ def main(argv):
             if run_only_function is None or run_only_function == "createTargetTable":
                 if import_operation.run_stage(3305) == True:
                     import_operation.connect_to_hive(force_skip_test=skip_hive_test)
-                    if drop_target_table == True:
+                    if drop_target_table:
                         import_operation.drop_target_table()
                     import_operation.create_target_table()
                     import_operation.convert_hive_table_to_acid()
@@ -1942,7 +1929,7 @@ def main(argv):
         if (
             import_phase == constant.IMPORT_PHASE_INCR
             and etl_phase == constant.ETL_PHASE_MERGEHISTORYAUDIT
-            and run_etl_phase == True
+            and run_etl_phase
         ):
             stage = import_operation.get_stage()
             if (
@@ -1974,7 +1961,7 @@ def main(argv):
                 print("")
                 sys.stdout.flush()
 
-            if run_import_phase == False and stage < 1149:
+            if not run_import_phase and stage < 1149:
                 logging.error(
                     "You are trying to execute a ETL Phase only import, but there is no information about a completed import phase"
                 )
@@ -2026,7 +2013,7 @@ def main(argv):
             if run_only_function is None or run_only_function == "createTargetTable":
                 if import_operation.run_stage(3355) == True:
                     import_operation.connect_to_hive(force_skip_test=skip_hive_test)
-                    if drop_target_table == True:
+                    if drop_target_table:
                         import_operation.drop_target_table()
                     import_operation.create_target_table()
                     import_operation.convert_hive_table_to_acid()
@@ -2121,7 +2108,7 @@ def main(argv):
         if (
             import_phase == constant.IMPORT_PHASE_ORACLE_FLASHBACK
             and etl_phase == constant.ETL_PHASE_MERGEONLY
-            and run_etl_phase == True
+            and run_etl_phase
         ):
             stage = import_operation.get_stage()
             if (
@@ -2153,7 +2140,7 @@ def main(argv):
                 print("")
                 sys.stdout.flush()
 
-            if run_import_phase == False and stage < 1249:
+            if not run_import_phase and stage < 1249:
                 logging.error(
                     "You are trying to execute a ETL Phase only import, but there is no information about a completed import phase"
                 )
@@ -2206,7 +2193,7 @@ def main(argv):
             if run_only_function is None or run_only_function == "createTargetTable":
                 if import_operation.run_stage(3405) == True:
                     import_operation.connect_to_hive(force_skip_test=skip_hive_test)
-                    if drop_target_table == True:
+                    if drop_target_table:
                         import_operation.drop_target_table()
                     import_operation.create_target_table()
                     import_operation.convert_hive_table_to_acid()
@@ -2304,7 +2291,7 @@ def main(argv):
                 etl_phase == constant.ETL_PHASE_NONE
                 or etl_phase == constant.ETL_PHASE_EXTERNAL
             )
-            and run_etl_phase == True
+            and run_etl_phase
         ):
             stage = import_operation.get_stage()
             if (
@@ -2335,7 +2322,7 @@ def main(argv):
                 print("")
                 sys.stdout.flush()
 
-            if run_import_phase == False and stage < 1049:
+            if not run_import_phase and stage < 1049:
                 logging.error(
                     "You are trying to execute a ETL Phase only import, but there is no information about a completed import phase"
                 )
@@ -2384,7 +2371,7 @@ def main(argv):
         if (
             import_phase == constant.IMPORT_PHASE_MONGO_FULL
             and etl_phase == constant.ETL_PHASE_TRUNCATEINSERT
-            and run_etl_phase == True
+            and run_etl_phase
         ):
             stage = import_operation.get_stage()
             if (
@@ -2417,7 +2404,7 @@ def main(argv):
                 print("")
                 sys.stdout.flush()
 
-            if run_import_phase == False and stage < 1349:
+            if not run_import_phase and stage < 1349:
                 logging.error(
                     "You are trying to execute a ETL Phase only import, but there is no information about a completed import phase"
                 )
@@ -2456,7 +2443,7 @@ def main(argv):
             if run_only_function is None or run_only_function == "createTargetTable":
                 if import_operation.run_stage(3505) == True:
                     import_operation.connect_to_hive(force_skip_test=skip_hive_test)
-                    if drop_target_table == True:
+                    if drop_target_table:
                         import_operation.drop_target_table()
                     import_operation.create_target_table()
                     import_operation.update_target_table()
@@ -2513,7 +2500,7 @@ def main(argv):
         if (
             import_phase == constant.IMPORT_PHASE_ORACLE_FLASHBACK
             and etl_phase == constant.ETL_PHASE_MERGEHISTORYAUDIT
-            and run_etl_phase == True
+            and run_etl_phase
         ):
             stage = import_operation.get_stage()
             if (
@@ -2545,7 +2532,7 @@ def main(argv):
                 print("")
                 sys.stdout.flush()
 
-            if run_import_phase == False and stage < 1249:
+            if not run_import_phase and stage < 1249:
                 logging.error(
                     "You are trying to execute a ETL Phase only import, but there is no information about a completed import phase"
                 )
@@ -2597,7 +2584,7 @@ def main(argv):
             if run_only_function is None or run_only_function == "createTargetTable":
                 if import_operation.run_stage(3555) == True:
                     import_operation.connect_to_hive(force_skip_test=skip_hive_test)
-                    if drop_target_table == True:
+                    if drop_target_table:
                         import_operation.drop_target_table()
                     import_operation.create_target_table()
                     import_operation.convert_hive_table_to_acid()
@@ -2698,7 +2685,7 @@ def main(argv):
         if (
             import_phase == constant.IMPORT_PHASE_MSSQL_CHANGE_TRACKING
             and etl_phase == constant.ETL_PHASE_MERGEONLY
-            and run_etl_phase == True
+            and run_etl_phase
         ):
             stage = import_operation.get_stage()
             if (
@@ -2732,7 +2719,7 @@ def main(argv):
                 print("")
                 sys.stdout.flush()
 
-            if run_import_phase == False and stage < 1299:
+            if not run_import_phase and stage < 1299:
                 logging.error(
                     "You are trying to execute a ETL Phase only import, but there is no information about a completed import phase"
                 )
@@ -2782,7 +2769,7 @@ def main(argv):
             if run_only_function is None or run_only_function == "createTargetTable":
                 if import_operation.run_stage(3605) == True:
                     import_operation.connect_to_hive(force_skip_test=skip_hive_test)
-                    if drop_target_table == True:
+                    if drop_target_table:
                         import_operation.drop_target_table()
                     import_operation.create_target_table()
                     import_operation.convert_hive_table_to_acid()
@@ -2878,7 +2865,7 @@ def main(argv):
         if (
             import_phase == constant.IMPORT_PHASE_MSSQL_CHANGE_TRACKING
             and etl_phase == constant.ETL_PHASE_MERGEHISTORYAUDIT
-            and run_etl_phase == True
+            and run_etl_phase
         ):
             stage = import_operation.get_stage()
             if (
@@ -2912,7 +2899,7 @@ def main(argv):
                 print("")
                 sys.stdout.flush()
 
-            if run_import_phase == False and stage < 1299:
+            if not run_import_phase and stage < 1299:
                 logging.error(
                     "You are trying to execute a ETL Phase only import, but there is no information about a completed import phase"
                 )
@@ -2962,7 +2949,7 @@ def main(argv):
             if run_only_function is None or run_only_function == "createTargetTable":
                 if import_operation.run_stage(3655) == True:
                     import_operation.connect_to_hive(force_skip_test=skip_hive_test)
-                    if drop_target_table == True:
+                    if drop_target_table:
                         import_operation.drop_target_table()
                     import_operation.create_target_table()
                     import_operation.convert_hive_table_to_acid()
@@ -3075,12 +3062,12 @@ def main(argv):
 
         if import_operation.get_stage() == 9999:
             if run_only_function is None:
-                if run_import_phase == True and run_etl_phase == False:
+                if run_import_phase and not run_etl_phase:
                     print(" ___________________________________ ")
                     print("|                                   |")
                     print("| Import Phase completed successful |")
                     print("|___________________________________|")
-                elif run_import_phase == False and run_etl_phase == True:
+                elif not run_import_phase and run_etl_phase:
                     print(" ________________________________ ")
                     print("|                                |")
                     print("| ETL Phase completed successful |")
@@ -3092,7 +3079,7 @@ def main(argv):
                     print("|_____________________________|")
                 print("")
 
-                if run_etl_phase == True:
+                if run_etl_phase:
                     # We can only clear the stage at the end of stage 2.
                     import_operation.clear_stage()
 

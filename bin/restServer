@@ -104,7 +104,7 @@ def main(argv):
     if action in ("start", "restart"):
         daemon_mode = True
 
-    if display_version == True:
+    if display_version:
         print(f"DBImport version: {constant.VERSION}")
         sys.exit(0)
 
@@ -116,14 +116,14 @@ def main(argv):
     rest_server_keyfile = configuration.get("Server", "restServer_keyfile")
     rest_server_certfile = configuration.get("Server", "restServer_certfile")
 
-    if os.path.isfile(rest_server_keyfile) == False:
+    if not os.path.isfile(rest_server_keyfile):
         print(
             "The restServer keyfile cant be opened.\n"
             + "Please check the path in the configuration file for settings Server/restServer_keyfile"
         )
         sys.exit(1)
 
-    if os.path.isfile(rest_server_certfile) == False:
+    if not os.path.isfile(rest_server_certfile):
         print(
             "The restServer certfile cant be opened.\n"
             + "Please check the path in the configuration file for settings Server/restServer_certfile"
@@ -135,7 +135,7 @@ def main(argv):
     else:
         log_format = "%(asctime)s %(levelname)s - %(message)s"
 
-    if daemon_mode == False:
+    if not daemon_mode:
         logging.basicConfig(stream=sys.stdout, format=log_format, level=logging_level)
         log_propagate = True
     else:
@@ -164,7 +164,7 @@ def main(argv):
     else:
         gunicorn_debug_level = "info"
 
-    if daemon_mode == True:
+    if daemon_mode:
         gunicorn_access_log = f"{logdir}/restServer_access.log"
         gunicorn_error_log = f"{logdir}/restServer.log"
     else:

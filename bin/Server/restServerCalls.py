@@ -249,7 +249,7 @@ class dbCalls:
                     )
                     return_value = None
 
-            if bool_value == True:
+            if bool_value:
                 if return_value == 1:
                     return_value = True
                 elif return_value == 0:
@@ -456,7 +456,7 @@ class dbCalls:
             ):
                 correct_driver_version = True
 
-        if correct_driver_version == False:
+        if not correct_driver_version:
             result = "Not a valid combination of databaseType and version"
             return_code = 404
             return (result, return_code)
@@ -992,7 +992,7 @@ class dbCalls:
 
             log.debug("search filter: %s = %s", column, value)
 
-            if like_search == True:
+            if like_search:
                 jdbc_connections_data = jdbc_connections_data.filter(
                     like_op(attribute_to_column[column], value)
                 )
@@ -1296,7 +1296,7 @@ class dbCalls:
             stdout, stderr = manage_session.communicate()
             process_killed = True
 
-        if manage_session.returncode != 0 or process_killed == True:
+        if manage_session.returncode != 0 or process_killed:
             return_code = 500
             result_msg = {
                 "result": re.sub("\n$", "", re.sub("^json: ", "", stdout.decode()))
@@ -1540,7 +1540,7 @@ class dbCalls:
 
             log.debug("search filter: %s = %s", column, value)
 
-            if like_search == True:
+            if like_search:
                 import_tables_data = import_tables_data.filter(
                     like_op(attribute_to_column[column], value)
                 )
@@ -2412,7 +2412,7 @@ class dbCalls:
             stdout, stderr = manage_session.communicate()
             process_killed = True
 
-        if manage_session.returncode != 0 or process_killed == True:
+        if manage_session.returncode != 0 or process_killed:
             return_code = 500
             result_msg = {
                 "result": re.sub("\n$", "", re.sub("^json: ", "", stdout.decode()))
@@ -2454,7 +2454,7 @@ class dbCalls:
             stdout, stderr = manage_session.communicate()
             process_killed = True
 
-        if manage_session.returncode != 0 or process_killed == True:
+        if manage_session.returncode != 0 or process_killed:
             return_code = 500
             result_msg = {
                 "result": re.sub("\n$", "", re.sub("^json: ", "", stdout.decode()))
@@ -2498,7 +2498,7 @@ class dbCalls:
             stdout, stderr = manage_session.communicate()
             process_killed = True
 
-        if manage_session.returncode != 0 or process_killed == True:
+        if manage_session.returncode != 0 or process_killed:
             return_code = 500
             result_msg = {
                 "result": re.sub("\n$", "", re.sub("^json: ", "", stdout.decode()))
@@ -2542,7 +2542,7 @@ class dbCalls:
             stdout, stderr = manage_session.communicate()
             process_killed = True
 
-        if manage_session.returncode != 0 or process_killed == True:
+        if manage_session.returncode != 0 or process_killed:
             return_code = 500
             result_msg = {
                 "result": re.sub("\n$", "", re.sub("^json: ", "", stdout.decode()))
@@ -2785,7 +2785,7 @@ class dbCalls:
 
             log.debug("search filter: %s = %s", column, value)
 
-            if like_search == True:
+            if like_search:
                 export_tables_data = export_tables_data.filter(
                     like_op(attribute_to_column[column], value)
                 )

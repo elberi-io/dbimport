@@ -275,7 +275,7 @@ class operation(metaclass=Singleton):
             destination = dest_and_method.split(";")[0]
             method = dest_and_method.split(";")[1]
 
-            if self.import_config.import_is_incremental == True:
+            if self.import_config.import_is_incremental:
                 result = (
                     session.query(copy_async_status)
                     .filter(copy_async_status.table_id == self.import_config.table_id)
@@ -296,7 +296,7 @@ class operation(metaclass=Singleton):
 
         session.close()
 
-        if ongoing_copy == True:
+        if ongoing_copy:
             return False
         else:
             return True
@@ -375,7 +375,7 @@ class operation(metaclass=Singleton):
                     # If not, we need to exit here to make sure that the other cluster first process the data before we
                     # write new data to it.
 
-                    if self.import_config.import_is_incremental == True:
+                    if self.import_config.import_is_incremental:
                         logging.error(
                             "This is an incremental import and the previous copy to the other cluster is not finnished yet."
                         )
@@ -385,7 +385,7 @@ class operation(metaclass=Singleton):
                         self.remove_temporary_files()
                         sys.exit(1)
 
-                    if self.import_config.import_with_history_table == True:
+                    if self.import_config.import_with_history_table:
                         logging.error(
                             "This is an import that will create a history table and the previous copy to the other cluster"
                         )
@@ -589,8 +589,7 @@ class operation(metaclass=Singleton):
             )
 
             if (
-                self.import_config.import_is_incremental == True
-                and includeIncrImports == False  # noqa: F821  # TODO(#163): not a parameter of this method
+                self.import_config.import_is_incremental and includeIncrImports == False  # noqa: F821  # TODO(#163): not a parameter of this method
             ):
                 logging.warning(
                     "Asynchronous copy for incremental table %s.%s skipped",
@@ -755,7 +754,7 @@ class operation(metaclass=Singleton):
                 )
 
                 if (
-                    self.import_config.import_is_incremental == True
+                    self.import_config.import_is_incremental
                     and include_incr_imports == False
                 ):
                     logging.warning(
@@ -1364,7 +1363,7 @@ class operation(metaclass=Singleton):
                     if name == "dbalias":
                         continue
 
-                    if sync_credentials == False and name in (
+                    if not sync_credentials and name in (
                         "credentials",
                         "private_key_path",
                         "public_key_path",
@@ -1600,7 +1599,7 @@ class operation(metaclass=Singleton):
             destination = dest_and_method.split(";")[0]
             method = dest_and_method.split(";")[1]
             if self.connect_remote_dbimport_instance(instance=destination):
-                if print_destination == True:
+                if print_destination:
                     logging.info(
                         "Copy schema definitions for %s.%s to instance '%s'",
                         hive_db,
@@ -1967,7 +1966,7 @@ class operation(metaclass=Singleton):
             if name == "dbalias":
                 continue
 
-            if sync_credentials == False and name in (
+            if not sync_credentials and name in (
                 "credentials",
                 "private_key_path",
                 "public_key_path",

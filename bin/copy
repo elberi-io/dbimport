@@ -385,17 +385,17 @@ def main(argv):
         print_main_help()
 
     if operation == "copyAirflowImportDAG" and (
-        airflow_dag is None or copy_destination is None or display_help == True
+        airflow_dag is None or copy_destination is None or display_help
     ):
         print_copy_airflow_import_dag_help()
 
     if operation == "copyAirflowExportDAG" and (
-        airflow_dag is None or copy_destination is None or display_help == True
+        airflow_dag is None or copy_destination is None or display_help
     ):
         print_copy_airflow_export_dag_help()
 
     if operation == "scheduleDAGasyncCopy" and (
-        airflow_dag is None or copy_destination is None or display_help == True
+        airflow_dag is None or copy_destination is None or display_help
     ):
         print_schedule_dag_async_copy_help()
 
@@ -403,23 +403,17 @@ def main(argv):
         hive_db is None
         or hive_table is None
         or copy_destination is None
-        or display_help == True
+        or display_help
     ):
         print_schedule_table_async_copy_help()
 
     if operation == "exportTable" and (
-        local_hdfs_path is None
-        or hive_db is None
-        or hive_table is None
-        or display_help == True
+        local_hdfs_path is None or hive_db is None or hive_table is None or display_help
     ):
         print_export_table_help()
 
     if operation == "importTable" and (
-        local_hdfs_path is None
-        or hive_db is None
-        or hive_table is None
-        or display_help == True
+        local_hdfs_path is None or hive_db is None or hive_table is None or display_help
     ):
         print_import_table_help()
 
@@ -427,7 +421,7 @@ def main(argv):
         local_hdfs_path is None
         or remote_hdfs_path is None
         or remote_instance is None
-        or display_help == True
+        or display_help
     ):
         print_copy_table_to_cluster_help()
 
@@ -435,11 +429,11 @@ def main(argv):
         local_hdfs_path is None
         or remote_hdfs_path is None
         or remote_instance is None
-        or display_help == True
+        or display_help
     ):
         print_copy_table_from_cluster_help()
 
-    if quiet_mode == False:
+    if not quiet_mode:
         print_header()
 
     # Initiate the logging functions with the correct level
@@ -457,7 +451,7 @@ def main(argv):
     if operation == "exportTable":
         copy_operation = copy_operations.operation()
         import_operation = import_operations.operation()
-        if concatenate_table == True:
+        if concatenate_table:
             import_operation.concatenate_table(hive_db=hive_db, hive_table=hive_table)
 
         copy_operation.export_table(

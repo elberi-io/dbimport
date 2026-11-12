@@ -103,7 +103,7 @@ def get_user(username: str, format_password: bool = True):
     if user_dict == None:
         return
 
-    if format_password == True:
+    if format_password:
         if user_dict["password"] == None or not user_dict["password"].startswith(
             "arn:aws:secretsmanager:"
         ):

@@ -94,7 +94,7 @@ def main(argv):
     if operation is None:
         print_help()
 
-    if print_header == True:
+    if print_header:
         # Font created at http://patorjk.com/software/taag/#p=display&f=Big&t=DBImport%20-%20Setup
         sys.stdout.write("\u001b[35m")  # Magenta
         sys.stdout.flush()

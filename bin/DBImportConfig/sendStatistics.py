@@ -175,7 +175,7 @@ class sendStatistics:
             logging.error("SSL Certificate error when communicating with Kafka")
             kafka_error = True
 
-        if kafka_error == True:
+        if kafka_error:
             result = False
 
         logging.debug("Executing sendStatistics.publish_kafka_data - Finished")

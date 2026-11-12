@@ -304,7 +304,7 @@ class config(metaclass=Singleton):
 
         if self.post_data_to_kafka == True:
             result = self.send_statistics.publish_kafka_data(json.dumps(json_data))
-            if result == False:
+            if not result:
                 logging.warning("Kafka publish failed! No start message posted")
 
         if self.post_data_to_rest == True:
@@ -314,7 +314,7 @@ class config(metaclass=Singleton):
 
         if self.post_data_to_aws_sns == True:
             result = self.send_statistics.send_aws_sns_data(json.dumps(json_data))
-            if result == False:
+            if not result:
                 logging.warning("AWS SNS publish failed! No start message posted")
 
         logging.debug("Executing export_config.send_start_json() - Finished")
@@ -596,7 +596,7 @@ class config(metaclass=Singleton):
         self, json_value: str, print_info: bool = True
     ) -> None:
         logging.debug("Executing export_config.save_custom_sql_validation_hive_value()")
-        if print_info == True:
+        if print_info:
             logging.info(
                 "Saving the custom SQL validation data from Hive table to the configuration database"
             )
@@ -617,7 +617,7 @@ class config(metaclass=Singleton):
         logging.debug(
             "Executing export_config.save_custom_sql_validation_target_value()"
         )
-        if print_info == True:
+        if print_info:
             logging.info(
                 "Saving the custom SQL validation data from target table to the configuration database"
             )
@@ -776,7 +776,7 @@ class config(metaclass=Singleton):
         if (
             hive_table_is_transactional == True
             or hive_table_is_view == True
-            or self.export_is_incremental == True
+            or self.export_is_incremental
         ):
             self.temp_table_needed = True
 
@@ -825,13 +825,13 @@ class config(metaclass=Singleton):
         hive_column_definition = ""
 
         query = "select "
-        if force_column_uppercase == False:
+        if not force_column_uppercase:
             query += "	c.column_name as hiveColumnName, "
             query += "	c.target_column_name as targetColumnName, "
         else:
             query += "	upper(c.column_name) as hiveColumnName, "
             query += "	upper(c.target_column_name) as targetColumnName, "
-        if get_replaced_column_types == True:
+        if get_replaced_column_types:
             query += "	if (c.target_column_type is not null and trim(c.target_column_type) != '', c.target_column_type, c.column_type) as columnType, "
         else:
             query += "	c.column_type as columnType, "
@@ -839,7 +839,7 @@ class config(metaclass=Singleton):
         query += "from export_tables t "
         query += "join export_columns c on t.table_id = c.table_id "
         query += "where t.table_id = %s and t.last_update_from_hive = c.last_update_from_hive "
-        if exclude_columns == True:
+        if exclude_columns:
             query += "   and c.include_in_export = 1 "
         query += "order by c.column_order"
 
@@ -955,7 +955,7 @@ class config(metaclass=Singleton):
                     else:
                         force_string = True
 
-                if force_string == True:
+                if force_string:
                     column_type = source_column_type
 
         if self.common_config.db_mssql == True:
@@ -1076,7 +1076,7 @@ class config(metaclass=Singleton):
                 hive_column_name, column_type
             )
 
-            if force_uppercase == True:
+            if force_uppercase:
                 column_name = column_name.upper()
                 column_type = column_type.upper()
 
@@ -1664,7 +1664,7 @@ class config(metaclass=Singleton):
         columns_target["comment"].replace("nan", None, inplace=True)
 
         if (
-            alter_table_executed == True
+            alter_table_executed
             and self.common_config.jdbc_servertype == constant.DB2_UDB
         ):
             # DB2 require a reorg if the table was changed
@@ -1774,7 +1774,7 @@ class config(metaclass=Singleton):
             else:
                 column_name = hive_column_name
 
-            if force_column_uppercase == True:
+            if force_column_uppercase:
                 column_name = column_name.upper()
 
             column_type, map_column_java = self.convert_column_type_for_target_table(
@@ -1834,10 +1834,10 @@ class config(metaclass=Singleton):
             else:
                 column_name = hive_column_name
 
-            if force_column_uppercase == True:
+            if force_column_uppercase:
                 column_name = column_name.upper()
 
-            if first_loop == False:
+            if not first_loop:
                 query += ", "
             else:
                 first_loop = False
@@ -1892,7 +1892,7 @@ class config(metaclass=Singleton):
         query = "update export_tables set "
         first_set = True
         if sqoop_start_uts is not None:
-            if first_set == False:
+            if not first_set:
                 query += " ,"
                 first_set = False
 
@@ -1900,7 +1900,7 @@ class config(metaclass=Singleton):
             query_param.append(sqoop_start_uts)
 
         if sqoop_size != None:
-            if first_set == False:
+            if not first_set:
                 query += " , "
                 first_set = False
 
@@ -1909,7 +1909,7 @@ class config(metaclass=Singleton):
             query_param.append(sqoop_size)
 
         if sqoop_rows != None:
-            if first_set == False:
+            if not first_set:
                 query += " , "
                 first_set = False
 
@@ -1918,7 +1918,7 @@ class config(metaclass=Singleton):
             query_param.append(sqoop_rows)
 
         if sqoop_incr_maxvalue_pending != None:
-            if first_set == False:
+            if not first_set:
                 query += " , "
                 first_set = False
 
@@ -1927,7 +1927,7 @@ class config(metaclass=Singleton):
             query_param.append(sqoop_incr_maxvalue_pending)
 
         if sqoop_mappers != None:
-            if first_set == False:
+            if not first_set:
                 query += " , "
                 first_set = False
 
@@ -1935,7 +1935,7 @@ class config(metaclass=Singleton):
             self.sqoop_last_mappers = sqoop_mappers
             query_param.append(sqoop_mappers)
 
-        if first_set == False:
+        if not first_set:
             # Only run this if any of the set columns are not None
             query += " where table_id = %s "
             query_param.append(self.table_id)
@@ -2063,9 +2063,8 @@ class config(metaclass=Singleton):
             # Reading the saved number from the configurationdatabase
             # 			if validateSqoop == False:
             if 1 == 1:
-                if self.export_is_incremental == False or (
-                    self.export_is_incremental == True
-                    and self.incr_validation_method == "full"
+                if self.export_is_incremental is False or (
+                    self.export_is_incremental and self.incr_validation_method == "full"
                 ):
                     # Standard full validation
                     query = "select hive_rowcount, target_rowcount from export_tables where table_id = %s "
@@ -2306,42 +2305,42 @@ class config(metaclass=Singleton):
         if min_value == None:
             exclude_min_value = True
 
-        if where_for_target == True and self.common_config.jdbc_servertype in (
+        if where_for_target and self.common_config.jdbc_servertype in (
             constant.ORACLE,
             constant.DB2_UDB,
         ):
             column_name = column_name.upper()
 
         if (
-            where_for_target == True
+            where_for_target
             and column_type == "timestamp"
             and self.common_config.jdbc_servertype == constant.MSSQL
         ):
             min_value = "CONVERT(datetime, '%s', 121) " % (min_value)
             max_value = "CONVERT(datetime, '%s', 121) " % (max_value)
         elif (
-            where_for_target == True
+            where_for_target
             and column_type == "timestamp"
             and self.common_config.jdbc_servertype == constant.MYSQL
         ):
             min_value = f"STR_TO_DATE('{min_value}', '%Y-%m-%d %H:%i:%s')"
             max_value = f"STR_TO_DATE('{max_value}', '%Y-%m-%d %H:%i:%s')"
         elif (
-            where_for_target == True
+            where_for_target
             and column_type == "timestamp"
             and self.common_config.jdbc_servertype == constant.ORACLE
         ):
             min_value = "TO_TIMESTAMP('%s', 'YYYY-MM-DD HH24:MI:SS.FF')" % (min_value)
             max_value = "TO_TIMESTAMP('%s', 'YYYY-MM-DD HH24:MI:SS.FF')" % (max_value)
         elif (
-            where_for_target == True
+            where_for_target
             and column_type == "timestamp"
             and self.common_config.jdbc_servertype == constant.SNOWFLAKE
         ):
             min_value = "TO_TIMESTAMP('%s', 'YYYY-MM-DD HH24:MI:SS.FF6')" % (min_value)
             max_value = "TO_TIMESTAMP('%s', 'YYYY-MM-DD HH24:MI:SS.FF6')" % (max_value)
         elif (
-            where_for_target == True
+            where_for_target
             and column_type == "timestamp"
             and self.common_config.jdbc_servertype == constant.POSTGRESQL
         ):
@@ -2361,22 +2360,19 @@ class config(metaclass=Singleton):
             min_value = '"%s"' % (min_value)
             max_value = '"%s"' % (max_value)
 
-        if (
-            where_for_target == True
-            and self.common_config.jdbc_servertype == constant.ORACLE
-        ):
+        if where_for_target and self.common_config.jdbc_servertype == constant.ORACLE:
             column_quotation = '"'
 
         if (
-            where_for_target == True
+            where_for_target
             and self.common_config.jdbc_servertype == constant.SNOWFLAKE
         ):
             column_quotation = '"'
 
-        if where_for_target == False:
+        if not where_for_target:
             column_quotation = "`"
 
-        if min_value != None and exclude_min_value == False:
+        if min_value != None and not exclude_min_value:
             where_statement += "%s%s%s > %s " % (
                 column_quotation,
                 column_name,

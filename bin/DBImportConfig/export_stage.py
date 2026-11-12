@@ -351,7 +351,7 @@ class stage:
             result = self.send_statistics.publish_kafka_data(
                 json.dumps(json_data_kafka)
             )
-            if result == False:
+            if not result:
                 logging.info("Kafka publish failed!")
                 logging.info("Saving the JSON to the json_to_send table instead")
                 self.common_config.save_json_to_database(
@@ -371,7 +371,7 @@ class stage:
             result = self.send_statistics.send_aws_sns_data(
                 json.dumps(json_data_aws_sns)
             )
-            if result == False:
+            if not result:
                 logging.info("AWS SNS publish failed!")
                 logging.info("Saving the JSON to the json_to_send table instead")
                 self.common_config.save_json_to_database(
@@ -521,7 +521,7 @@ class stage:
         """Removes all stage information from the export_stage table"""
         logging.debug("Executing stage.clear_stage()")
 
-        if self.memory_stage == False:
+        if not self.memory_stage:
             query = "delete from export_stage where dbalias = %s and target_schema = %s and target_table = %s"
             self.mysql_cursor.execute(
                 query, (self.connection_alias, self.target_schema, self.target_table)
@@ -543,7 +543,7 @@ class stage:
         logging.debug("Executing stage.get_stage()")
 
         if self.current_stage == None:
-            if self.memory_stage == True:
+            if self.memory_stage:
                 self.current_stage = 0
             else:
                 query = "select stage from export_stage where dbalias = %s and target_schema = %s and target_table = %s"
@@ -581,7 +581,7 @@ class stage:
             logging.debug("Executing stage.set_stage() - Finished (no stage set)")
             return
 
-        if self.memory_stage == True:
+        if self.memory_stage:
             self.current_stage = new_stage
             logging.debug(
                 "Executing stage.set_stage() - Finished (stage only in memory)"
@@ -704,7 +704,7 @@ class stage:
         """Saves the retry attempt in the export_retries_log table"""
         logging.debug("Executing stage.save_retry_attempt()")
 
-        if self.memory_stage == True:
+        if self.memory_stage:
             return
 
         stage_description = self.get_stage_description(stage)

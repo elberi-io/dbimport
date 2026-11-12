@@ -654,22 +654,22 @@ def main(argv):
         print_main_help()
 
     if operation == "clearImportStage" and (
-        hive_db is None or hive_table is None or display_help == True
+        hive_db is None or hive_table is None or display_help
     ):
         print_clear_import_stage_help()
 
     if operation == "repairIncrementalImport" and (
-        hive_db is None or hive_table is None or display_help == True
+        hive_db is None or hive_table is None or display_help
     ):
         print_repair_incremental_import_help()
 
     if operation == "resetIncrementalImport" and (
-        hive_db is None or hive_table is None or display_help == True
+        hive_db is None or hive_table is None or display_help
     ):
         print_reset_incremental_import_help()
 
     if operation == "resetCDCImport" and (
-        hive_db is None or hive_table is None or display_help == True
+        hive_db is None or hive_table is None or display_help
     ):
         print_reset_cdc_import_help()
 
@@ -677,7 +677,7 @@ def main(argv):
         connection_alias == None
         or jdbc_schema is None
         or jdbc_table is None
-        or display_help == True
+        or display_help
     ):
         print_clear_export_stage_help()
 
@@ -685,7 +685,7 @@ def main(argv):
         connection_alias == None
         or jdbc_schema is None
         or jdbc_table is None
-        or display_help == True
+        or display_help
     ):
         print_repair_incremental_export_help()
 
@@ -693,7 +693,7 @@ def main(argv):
         connection_alias == None
         or jdbc_schema is None
         or jdbc_table is None
-        or display_help == True
+        or display_help
     ):
         print_reset_incremental_export_help()
 
@@ -701,62 +701,52 @@ def main(argv):
         connection_alias == None
         or jdbc_schema is None
         or jdbc_table is None
-        or display_help == True
+        or display_help
     ):
         print_drop_export_table_help()
 
     if operation == "addImportTable" and (
-        hive_db is None or connection_alias == None or display_help == True
+        hive_db is None or connection_alias == None or display_help
     ):
         print_add_import_table_help()
 
     if operation == "addExportTable" and (
-        connection_alias == None or jdbc_schema is None or display_help == True
+        connection_alias == None or jdbc_schema is None or display_help
     ):
         print_add_export_table_help()
 
-    if operation == "testConnection" and (
-        connection_alias == None or display_help == True
-    ):
+    if operation == "testConnection" and (connection_alias == None or display_help):
         print_test_connection_help()
 
-    if operation == "runJDBCQuery" and (
-        connection_alias == None or display_help == True
-    ):
+    if operation == "runJDBCQuery" and (connection_alias == None or display_help):
         print_run_jdbc_query_help()
 
     if operation == "runHiveQuery" and (
-        jdbc_query is None or jdbc_query == "--help" or display_help == True
+        jdbc_query is None or jdbc_query == "--help" or display_help
     ):
         print_run_hive_script_help()
 
     if operation == "runHiveScript" and (
-        hive_script is None or hive_script == "--help" or display_help == True
+        hive_script is None or hive_script == "--help" or display_help
     ):
         print_run_hive_script_help()
 
-    if operation == "airflowGenerate" and display_help == True:
+    if operation == "airflowGenerate" and display_help:
         print_airflow_help()
 
-    if airflow_auto_dag_only == True and (
-        airflow_dag is not None or display_help == True
-    ):
+    if airflow_auto_dag_only and (airflow_dag is not None or display_help):
         print_airflow_help()
 
-    if operation == "discoverAtlasRdbms" and (
-        connection_alias == None or display_help == True
-    ):
+    if operation == "discoverAtlasRdbms" and (connection_alias == None or display_help):
         print_discover_atlas_rdbms_help()
 
-    if operation == "checkAirflowExecution" and display_help == True:
+    if operation == "checkAirflowExecution" and display_help:
         print_check_airflow_execution_help()
 
-    if operation == "sendAirflowStopMessage" and (
-        airflow_dag is None or display_help == True
-    ):
+    if operation == "sendAirflowStopMessage" and (airflow_dag is None or display_help):
         print_send_airflow_stop_message_help()
 
-    if quiet_mode == False:
+    if not quiet_mode:
         print_header()
 
     # Initiate the logging functions with the correct level
@@ -801,7 +791,7 @@ def main(argv):
         if operation == "discoverAtlasRdbms":
             common_config_obj = common_config.config()
             atlas_operation = atlas_operations.atlasOperation()
-            if common_config_obj.check_connection_alias(connection_alias) == False:
+            if not common_config_obj.check_connection_alias(connection_alias):
                 logging.error("The specified database connection does not exist.")
                 sys.exit(1)
 
@@ -817,7 +807,7 @@ def main(argv):
 
         if operation == "runJDBCQuery":
             common_config_obj = common_config.config()
-            if common_config_obj.check_connection_alias(connection_alias) == False:
+            if not common_config_obj.check_connection_alias(connection_alias):
                 logging.error("The specified database connection does not exist.")
                 sys.exit(1)
             common_config_obj.lookup_connection_alias(connection_alias)
@@ -854,7 +844,7 @@ def main(argv):
 
         if operation == "airflowGenerate":
             airflow = Airflow.initialize()
-            if airflow_auto_dag_only == False and airflow_dag is None:
+            if not airflow_auto_dag_only and airflow_dag is None:
                 print(
                     "You havent specified --airflowAutoDAGonly or a name of a DAG. That means that you want to generate ALL Airflow DAG"
                 )
@@ -933,7 +923,7 @@ def main(argv):
                         sys.exit(1)
 
                 common_config_obj = common_config.config()
-                if common_config_obj.check_connection_alias(connection_alias) == False:
+                if not common_config_obj.check_connection_alias(connection_alias):
                     logging.error("The specified database connection does not exist.")
                     sys.exit(1)
 
@@ -942,7 +932,7 @@ def main(argv):
                 )
 
                 try:
-                    if common_config_obj.db_awss3 == True:
+                    if common_config_obj.db_awss3:
                         username = input("AccessKeyId: ")
                         password = input("SecretAccessKey: ")
                     else:
@@ -977,7 +967,7 @@ def main(argv):
                     sys.exit(1)
 
                 common_config_obj = common_config.config()
-                if common_config_obj.check_connection_alias(connection_alias) == False:
+                if not common_config_obj.check_connection_alias(connection_alias):
                     logging.error("The specified database connection does not exist.")
                     sys.exit(1)
 
@@ -1016,7 +1006,7 @@ def main(argv):
             )
             print("used as the starting point for the next sqoop import.")
             print("")
-            if auto_yes_answer == False:
+            if not auto_yes_answer:
                 try:
                     answer = input("Are you sure you want to do this? (y/N): ")
                 except KeyboardInterrupt:
@@ -1045,7 +1035,7 @@ def main(argv):
                 import_operation.remove_temporary_files()
                 sys.exit(1)
 
-            if quiet_mode == False:
+            if not quiet_mode:
                 print(
                     "This command will try to repair an incremental import that have come out-of-sync between data in the source table"
                 )
@@ -1056,7 +1046,7 @@ def main(argv):
                     "that is used for the incremental loads. This value will then be used as the starting point for the next sqoop import"
                 )
                 print("")
-            if auto_yes_answer == False:
+            if not auto_yes_answer:
                 try:
                     answer = input("Are you sure you want to do this? (y/N): ")
                 except KeyboardInterrupt:
@@ -1085,13 +1075,13 @@ def main(argv):
                 import_operation.remove_temporary_files()
                 sys.exit(1)
 
-            if quiet_mode == False:
+            if not quiet_mode:
                 print(
                     "This command will truncate the Target Table and force the next import to be a full import."
                 )
                 print("")
 
-            if auto_yes_answer == False:
+            if not auto_yes_answer:
                 try:
                     answer = input("Are you sure you want to do this? (y/N): ")
                 except KeyboardInterrupt:
@@ -1121,13 +1111,13 @@ def main(argv):
                 import_operation.remove_temporary_files()
                 sys.exit(1)
 
-            if quiet_mode == False:
+            if not quiet_mode:
                 print(
                     "This command will truncate the Target Table and force the next import to be a full import."
                 )
                 print("")
 
-            if auto_yes_answer == False:
+            if not auto_yes_answer:
                 try:
                     answer = input("Are you sure you want to do this? (y/N): ")
                 except KeyboardInterrupt:
@@ -1146,13 +1136,13 @@ def main(argv):
                 logging.info("Didnt answer 'y'. No actions performed")
 
         if operation == "resetIncrementalExport":
-            if quiet_mode == False:
+            if not quiet_mode:
                 print(
                     "This command will truncate the Target Table and force the next export to be a full export."
                 )
                 print("")
 
-            if auto_yes_answer == False:
+            if not auto_yes_answer:
                 try:
                     answer = input("Are you sure you want to do this? (y/N): ")
                 except KeyboardInterrupt:
@@ -1176,14 +1166,14 @@ def main(argv):
                 logging.info("Didnt answer 'y'. No actions performed")
 
         if operation == "repairIncrementalExport":
-            if quiet_mode == False:
+            if not quiet_mode:
                 print(
                     "This command will repair an incremental import by reading the max value for the incremental column from the "
                 )
                 print("Target Table and use that as the max value for the next export.")
                 print("")
 
-            if auto_yes_answer == False:
+            if not auto_yes_answer:
                 try:
                     answer = input("Are you sure you want to do this? (y/N): ")
                 except KeyboardInterrupt:
@@ -1210,7 +1200,7 @@ def main(argv):
             )
             print("")
 
-            if auto_yes_answer == False:
+            if not auto_yes_answer:
                 try:
                     answer = input("Are you sure you want to do this? (y/N): ")
                 except KeyboardInterrupt:
@@ -1273,11 +1263,11 @@ def main(argv):
 
         if operation == "testConnection":
             common_config_obj = common_config.config()
-            if common_config_obj.check_connection_alias(connection_alias) == False:
+            if not common_config_obj.check_connection_alias(connection_alias):
                 logging.error("The specified database connection does not exist.")
                 sys.exit(1)
             common_config_obj.lookup_connection_alias(connection_alias)
-            if common_config_obj.db_awss3 == True:
+            if common_config_obj.db_awss3:
                 logging.error(
                     "AWS S3 is not supported for '--testConnection' operations"
                 )

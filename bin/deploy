@@ -201,16 +201,16 @@ def main(argv):
         print_main_help()
 
     if operation == "deployAirflowImportDAG" and (
-        airflow_dag is None or deploy_target is None or display_help == True
+        airflow_dag is None or deploy_target is None or display_help
     ):
         print_deploy_airflow_import_dag_help()
 
     if operation == "deployAirflowExportDAG" and (
-        airflow_dag is None or deploy_target is None or display_help == True
+        airflow_dag is None or deploy_target is None or display_help
     ):
         print_deploy_airflow_export_dag_help()
 
-    if quiet_mode == False:
+    if not quiet_mode:
         print_header()
 
     # Initiate the logging functions with the correct level

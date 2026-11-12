@@ -130,7 +130,7 @@ def main(argv):
         ):
             print_help()
 
-    if display_version == True:
+    if display_version:
         print(f"DBImport version: {constant.VERSION}")
         sys.exit(0)
 
@@ -254,7 +254,7 @@ def main(argv):
     print("")
     sys.stdout.flush()
 
-    if ignore_time == False:
+    if not ignore_time:
         # Checking if we are allowed to use the configued JDBC connection at this time
         export_operation.check_time_window()
 
@@ -276,7 +276,7 @@ def main(argv):
         export_operation.set_stage_only_in_memory()
 
     stage = export_operation.get_stage()
-    if reset_stage == True:
+    if reset_stage:
         export_operation.set_stage(0, force=True)
         stage = 0
 
