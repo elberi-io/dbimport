@@ -480,7 +480,7 @@ class config(metaclass=Singleton):
             ]  # Need to start on 2 as s3a:// is first
             self.aws_s3_path = "/".join(self.aws_s3_bucket_path.split("/")[3:])
 
-        if self.export_phase == None:
+        if self.export_phase is None:
             raise invalidConfiguration(
                 "Import type '%s' is not a valid type. Please check configuration"
                 % (self.import_type)
@@ -1891,7 +1891,7 @@ class config(metaclass=Singleton):
         query_param = []
         query = "update export_tables set "
         first_set = True
-        if sqoop_start_uts != None:
+        if sqoop_start_uts is not None:
             if first_set == False:
                 query += " ,"
                 first_set = False

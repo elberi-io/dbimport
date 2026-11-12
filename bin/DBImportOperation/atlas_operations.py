@@ -1493,7 +1493,7 @@ class atlasOperation:
             except ValueError:
                 column_length = None
 
-            if column_length != None:
+            if column_length is not None:
                 column_data["attributes"]["length"] = str(column_length)
 
             column_data["attributes"]["name"] = column_name

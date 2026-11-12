@@ -112,7 +112,7 @@ class distCP(threading.Thread):
             dist_cp_output = ""
 
             # Print Stdout and stderr while distcp is running
-            while sh_session.poll() == None:
+            while sh_session.poll() is None:
                 row = sh_session.stdout.readline().decode("utf-8").rstrip()
                 if row != "":
                     log.info("Thread %s: %s", self.name, row)
@@ -682,7 +682,7 @@ class serverDaemon(run.RunDaemon):
             log.error(sys.exc_info())
             return None
 
-        if db_credentials == None:
+        if db_credentials is None:
             log.warning(
                 "Cant decrypt username and password. Check private/public key in config file"
             )

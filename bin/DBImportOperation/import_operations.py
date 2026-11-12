@@ -2474,7 +2474,7 @@ class operation(metaclass=Singleton):
         )
 
         # Print Stdout and stderr while sqoop is running
-        while sh_session.poll() == None:
+        while sh_session.poll() is None:
             row = sh_session.stdout.readline().decode("utf-8").rstrip()
             if row != "":
                 print(row)
@@ -2510,17 +2510,17 @@ class operation(metaclass=Singleton):
         yarn_containers_total = 0
         yarn_containers_failed = 0
         yarn_containers_killed = 0
-        if self.sqoop_launched_map_tasks != None:
+        if self.sqoop_launched_map_tasks is not None:
             yarn_containers_total += self.sqoop_launched_map_tasks
-        if self.sqoop_launched_reduce_tasks != None:
+        if self.sqoop_launched_reduce_tasks is not None:
             yarn_containers_total += self.sqoop_launched_reduce_tasks
-        if self.sqoop_failed_map_tasks != None:
+        if self.sqoop_failed_map_tasks is not None:
             yarn_containers_failed += self.sqoop_failed_map_tasks
-        if self.sqoop_failed_reduce_tasks != None:
+        if self.sqoop_failed_reduce_tasks is not None:
             yarn_containers_failed += self.sqoop_failed_reduce_tasks
-        if self.sqoop_killed_map_tasks != None:
+        if self.sqoop_killed_map_tasks is not None:
             yarn_containers_killed += self.sqoop_killed_map_tasks
-        if self.sqoop_killed_reduce_tasks != None:
+        if self.sqoop_killed_reduce_tasks is not None:
             yarn_containers_killed += self.sqoop_killed_reduce_tasks
 
         self.import_config.common_config.update_yarn_statistics(

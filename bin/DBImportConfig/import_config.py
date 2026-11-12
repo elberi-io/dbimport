@@ -367,7 +367,7 @@ class config(metaclass=Singleton):
 
         # If this is called before getImportConfig is called, we dont know if it's a copy table or not. So we need to set this to false
         # This happens during table discovery for ./manage --addImportTable
-        if self.copy_slave == None:
+        if self.copy_slave is None:
             self.copy_slave = False
 
         self.common_config.lookup_connection_alias(
@@ -997,7 +997,7 @@ class config(metaclass=Singleton):
 
         # Check to see that we have a valid import type
         # This will only happen if the old 'import_type' column is used. For the import_phase_type we already check if we have a valid combo
-        if self.import_phase == None or self.etl_phase == None:
+        if self.import_phase is None or self.etl_phase is None:
             raise invalidConfiguration(
                 "Import type '%s' is not a valid type. Please check configuration"
                 % (self.import_type)
@@ -1788,7 +1788,7 @@ class config(metaclass=Singleton):
                 column_type = re.sub(
                     r"^decimal\(3,4\)", "decimal(8,4)", column_type
                 )  # Very stange Oracle type number(3,4), how can pricision be smaller than scale?
-                if re.search(r"^decimal\([0-9][0-9]\)$", column_type) != None:
+                if re.search(r"^decimal\([0-9][0-9]\)$", column_type) is not None:
                     column_type = re.sub(r"\)$", ",0)", column_type)
 
             if self.common_config.db_mysql == True:
@@ -1971,7 +1971,7 @@ class config(metaclass=Singleton):
                     self.sqoop_mapcolumnjava.append(
                         column_name + "=" + sqoop_column_type_override
                     )
-                elif sqoop_column_type != None:
+                elif sqoop_column_type is not None:
                     self.sqoop_mapcolumnjava.append(
                         column_name + "=" + sqoop_column_type
                     )
@@ -2640,7 +2640,7 @@ class config(metaclass=Singleton):
             return
 
         hdfs_blocksize = int(self.common_config.get_config_value(key="hdfs_blocksize"))
-        if hdfs_blocksize == None or hdfs_blocksize == 0:
+        if hdfs_blocksize is None or hdfs_blocksize == 0:
             logging.error(
                 "The setting 'hdfs_blocksize' in configuration table is incorrect. Please enter a correct size"
             )
@@ -3503,7 +3503,7 @@ class config(metaclass=Singleton):
                 spark_query = "select "
             else:
                 spark_query += ", "
-            if source_table_as_name == None:
+            if source_table_as_name is None:
                 if row["source_name"] != row["name"]:
                     spark_query += (
                         quote
@@ -3548,7 +3548,7 @@ class config(metaclass=Singleton):
                 schema=self.source_schema, table=self.source_table
             )
         )
-        if source_table_as_name != None:
+        if source_table_as_name is not None:
             spark_query += " as %s" % (source_table_as_name)
 
         logging.debug(

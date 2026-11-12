@@ -2474,9 +2474,11 @@ class initialize:
                 time_diff = "0"
 
                 if (
-                    main_dag_match_hour_min == None and wait_dag_match_hour_min != None
+                    main_dag_match_hour_min is None
+                    and wait_dag_match_hour_min is not None
                 ) or (
-                    main_dag_match_hour_min != None and wait_dag_match_hour_min == None
+                    main_dag_match_hour_min is not None
+                    and wait_dag_match_hour_min is None
                 ):
                     log.warning("Issue on DAG '%s'" % (dag_name))
                     log.warning(
@@ -2489,7 +2491,7 @@ class initialize:
                     self.add_failure_task(row["task_name"])
                     add_dag_sensor = False
 
-                if main_dag_match_hour_min != None and add_dag_sensor == True:
+                if main_dag_match_hour_min is not None and add_dag_sensor == True:
                     # Time is in HH:MM format for both DAG's. So now we can calculate the diff in time between them
                     noon = datetime.strptime("12:00", "%H:%M")
                     main_dag_schedule_date_time = datetime.strptime(
@@ -3079,8 +3081,10 @@ class initialize:
             time_diff = "0"
 
             if (
-                main_dag_match_hour_min == None and wait_dag_match_hour_min != None
-            ) or (main_dag_match_hour_min != None and wait_dag_match_hour_min == None):
+                main_dag_match_hour_min is None and wait_dag_match_hour_min is not None
+            ) or (
+                main_dag_match_hour_min is not None and wait_dag_match_hour_min is None
+            ):
                 log.warning("Issue on DAG '%s'" % (dag_name))
                 log.warning(
                     "Both the current DAG and the DAG the sensor is waiting for must have the same scheduling format (HH:MM or cron)"
@@ -3103,7 +3107,7 @@ class initialize:
             # 				self.common_config.remove_temporary_files()
             # 				sys.exit(1)
 
-            if main_dag_match_hour_min != None:
+            if main_dag_match_hour_min is not None:
                 # Time is in HH:MM format for both DAG's. So now we can calculate the diff in time between them
                 noon = datetime.strptime("12:00", "%H:%M")
                 main_dag_schedule_date_time = datetime.strptime(

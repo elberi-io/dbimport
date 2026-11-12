@@ -387,13 +387,13 @@ async def update_user_details(  # noqa: F811  # the delete handler above has thi
                 detail="You are only allowed to change your own user",
             )
 
-    if user_data.disabled != None:
+    if user_data.disabled is not None:
         user["disabled"] = user_data.disabled
-    if user_data.fullname != None:
+    if user_data.fullname is not None:
         user["fullname"] = user_data.fullname
-    if user_data.department != None:
+    if user_data.department is not None:
         user["department"] = user_data.department
-    if user_data.email != None:
+    if user_data.email is not None:
         user["email"] = user_data.email
 
     db_calls.update_user(

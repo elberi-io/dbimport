@@ -91,7 +91,7 @@ def main(argv):
             operation = "createSchemaRst"
             print_header = False
 
-    if operation == None:
+    if operation is None:
         print_help()
 
     if print_header == True:

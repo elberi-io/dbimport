@@ -381,60 +381,60 @@ def main(argv):
         elif opt == "--copyTableFromCluster":
             operation = "copyTableFromCluster"
 
-    if operation == None:
+    if operation is None:
         print_main_help()
 
     if operation == "copyAirflowImportDAG" and (
-        airflow_dag == None or copy_destination == None or display_help == True
+        airflow_dag is None or copy_destination is None or display_help == True
     ):
         print_copy_airflow_import_dag_help()
 
     if operation == "copyAirflowExportDAG" and (
-        airflow_dag == None or copy_destination == None or display_help == True
+        airflow_dag is None or copy_destination is None or display_help == True
     ):
         print_copy_airflow_export_dag_help()
 
     if operation == "scheduleDAGasyncCopy" and (
-        airflow_dag == None or copy_destination == None or display_help == True
+        airflow_dag is None or copy_destination is None or display_help == True
     ):
         print_schedule_dag_async_copy_help()
 
     if operation == "scheduleTableAsyncCopy" and (
-        hive_db == None
-        or hive_table == None
-        or copy_destination == None
+        hive_db is None
+        or hive_table is None
+        or copy_destination is None
         or display_help == True
     ):
         print_schedule_table_async_copy_help()
 
     if operation == "exportTable" and (
-        local_hdfs_path == None
-        or hive_db == None
-        or hive_table == None
+        local_hdfs_path is None
+        or hive_db is None
+        or hive_table is None
         or display_help == True
     ):
         print_export_table_help()
 
     if operation == "importTable" and (
-        local_hdfs_path == None
-        or hive_db == None
-        or hive_table == None
+        local_hdfs_path is None
+        or hive_db is None
+        or hive_table is None
         or display_help == True
     ):
         print_import_table_help()
 
     if operation == "copyTableToCluster" and (
-        local_hdfs_path == None
-        or remote_hdfs_path == None
-        or remote_instance == None
+        local_hdfs_path is None
+        or remote_hdfs_path is None
+        or remote_instance is None
         or display_help == True
     ):
         print_copy_table_to_cluster_help()
 
     if operation == "copyTableFromCluster" and (
-        local_hdfs_path == None
-        or remote_hdfs_path == None
-        or remote_instance == None
+        local_hdfs_path is None
+        or remote_hdfs_path is None
+        or remote_instance is None
         or display_help == True
     ):
         print_copy_table_from_cluster_help()

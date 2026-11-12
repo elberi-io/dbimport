@@ -650,68 +650,68 @@ def main(argv):
         elif opt == "--discoverAtlasRdbms":
             operation = "discoverAtlasRdbms"
 
-    if operation == None:
+    if operation is None:
         print_main_help()
 
     if operation == "clearImportStage" and (
-        hive_db == None or hive_table == None or display_help == True
+        hive_db is None or hive_table is None or display_help == True
     ):
         print_clear_import_stage_help()
 
     if operation == "repairIncrementalImport" and (
-        hive_db == None or hive_table == None or display_help == True
+        hive_db is None or hive_table is None or display_help == True
     ):
         print_repair_incremental_import_help()
 
     if operation == "resetIncrementalImport" and (
-        hive_db == None or hive_table == None or display_help == True
+        hive_db is None or hive_table is None or display_help == True
     ):
         print_reset_incremental_import_help()
 
     if operation == "resetCDCImport" and (
-        hive_db == None or hive_table == None or display_help == True
+        hive_db is None or hive_table is None or display_help == True
     ):
         print_reset_cdc_import_help()
 
     if operation == "clearExportStage" and (
         connection_alias == None
-        or jdbc_schema == None
-        or jdbc_table == None
+        or jdbc_schema is None
+        or jdbc_table is None
         or display_help == True
     ):
         print_clear_export_stage_help()
 
     if operation == "repairIncrementalExport" and (
         connection_alias == None
-        or jdbc_schema == None
-        or jdbc_table == None
+        or jdbc_schema is None
+        or jdbc_table is None
         or display_help == True
     ):
         print_repair_incremental_export_help()
 
     if operation == "resetIncrementalExport" and (
         connection_alias == None
-        or jdbc_schema == None
-        or jdbc_table == None
+        or jdbc_schema is None
+        or jdbc_table is None
         or display_help == True
     ):
         print_reset_incremental_export_help()
 
     if operation == "dropExportTable" and (
         connection_alias == None
-        or jdbc_schema == None
-        or jdbc_table == None
+        or jdbc_schema is None
+        or jdbc_table is None
         or display_help == True
     ):
         print_drop_export_table_help()
 
     if operation == "addImportTable" and (
-        hive_db == None or connection_alias == None or display_help == True
+        hive_db is None or connection_alias == None or display_help == True
     ):
         print_add_import_table_help()
 
     if operation == "addExportTable" and (
-        connection_alias == None or jdbc_schema == None or display_help == True
+        connection_alias == None or jdbc_schema is None or display_help == True
     ):
         print_add_export_table_help()
 
@@ -726,19 +726,21 @@ def main(argv):
         print_run_jdbc_query_help()
 
     if operation == "runHiveQuery" and (
-        jdbc_query == None or jdbc_query == "--help" or display_help == True
+        jdbc_query is None or jdbc_query == "--help" or display_help == True
     ):
         print_run_hive_script_help()
 
     if operation == "runHiveScript" and (
-        hive_script == None or hive_script == "--help" or display_help == True
+        hive_script is None or hive_script == "--help" or display_help == True
     ):
         print_run_hive_script_help()
 
     if operation == "airflowGenerate" and display_help == True:
         print_airflow_help()
 
-    if airflow_auto_dag_only == True and (airflow_dag != None or display_help == True):
+    if airflow_auto_dag_only == True and (
+        airflow_dag is not None or display_help == True
+    ):
         print_airflow_help()
 
     if operation == "discoverAtlasRdbms" and (
@@ -750,7 +752,7 @@ def main(argv):
         print_check_airflow_execution_help()
 
     if operation == "sendAirflowStopMessage" and (
-        airflow_dag == None or display_help == True
+        airflow_dag is None or display_help == True
     ):
         print_send_airflow_stop_message_help()
 
@@ -852,7 +854,7 @@ def main(argv):
 
         if operation == "airflowGenerate":
             airflow = Airflow.initialize()
-            if airflow_auto_dag_only == False and airflow_dag == None:
+            if airflow_auto_dag_only == False and airflow_dag is None:
                 print(
                     "You havent specified --airflowAutoDAGonly or a name of a DAG. That means that you want to generate ALL Airflow DAG"
                 )
@@ -915,7 +917,7 @@ def main(argv):
             copy_operation_obj.remove_temporary_files()
 
         if operation == "encryptCredentials":
-            if json_input == None:
+            if json_input is None:
                 print(
                     "This function will encrypt a username and password for the specified Database Connection. Any previous username/password will be overwritten"
                 )
@@ -1293,15 +1295,15 @@ def main(argv):
     except invalidConfiguration as errMsg:
         if str(errMsg) != "":
             logging.error(errMsg)
-        if common_config_obj != None:
+        if common_config_obj is not None:
             common_config_obj.remove_temporary_files()
-        if import_config_obj != None:
+        if import_config_obj is not None:
             import_config_obj.remove_temporary_files()
-        elif import_operation != None:
+        elif import_operation is not None:
             import_operation.import_config.remove_temporary_files()
-        elif export_operation != None:
+        elif export_operation is not None:
             export_operation.export_config.remove_temporary_files()
-        elif copy_operation != None:
+        elif copy_operation is not None:
             copy_operation.import_config.remove_temporary_files()
         sys.exit(1)
     except RuntimeError as errMsg:
@@ -1316,27 +1318,27 @@ def main(argv):
     except SQLerror as errMsg:
         logging.error("SQL Error detected")
         logging.error(errMsg)
-        if common_config_obj != None:
+        if common_config_obj is not None:
             common_config_obj.remove_temporary_files()
-        if import_config_obj != None:
+        if import_config_obj is not None:
             import_config_obj.remove_temporary_files()
-        elif import_operation != None:
+        elif import_operation is not None:
             import_operation.import_config.remove_temporary_files()
-        elif export_operation != None:
+        elif export_operation is not None:
             export_operation.export_config.remove_temporary_files()
-        elif copy_operation != None:
+        elif copy_operation is not None:
             copy_operation.import_config.remove_temporary_files()
         sys.exit(1)
     except:
-        if common_config_obj != None:
+        if common_config_obj is not None:
             common_config_obj.remove_temporary_files()
-        if import_config_obj != None:
+        if import_config_obj is not None:
             import_config_obj.remove_temporary_files()
-        elif import_operation != None:
+        elif import_operation is not None:
             import_operation.import_config.remove_temporary_files()
-        elif export_operation != None:
+        elif export_operation is not None:
             export_operation.export_config.remove_temporary_files()
-        elif copy_operation != None:
+        elif copy_operation is not None:
             copy_operation.import_config.remove_temporary_files()
         raise
         sys.exit(1)

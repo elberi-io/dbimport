@@ -553,8 +553,8 @@ class config(metaclass=Singleton):
 
         passed_midnight = False
         if (
-            time_window_start != None
-            and time_window_stop != None
+            time_window_start is not None
+            and time_window_stop is not None
             and time_window_start > time_window_stop
         ):
             # This happens if we pass midnight
@@ -564,13 +564,13 @@ class config(metaclass=Singleton):
         logging.debug("timeWindowStart: %s", time_window_start)
         logging.debug("timeWindowStop: %s", time_window_stop)
 
-        if time_window_start == None and time_window_stop == None:
+        if time_window_start is None and time_window_stop is None:
             if atlas_discovery_mode == False:
                 logging.info(
                     "SUCCESSFUL: This import is allowed to run at any time during the day."
                 )
             return True
-        elif time_window_start == None or time_window_stop == None:
+        elif time_window_start is None or time_window_stop is None:
             if atlas_discovery_mode == False:
                 logging.error(
                     "Atleast one of the TimeWindow settings are NULL in the database. Only way to disable the Time Window"
@@ -781,7 +781,7 @@ class config(metaclass=Singleton):
 
         encrypted_str = self.crypto.encrypt(str_to_encrypt)
 
-        if encrypted_str != None and encrypted_str != "":
+        if encrypted_str is not None and encrypted_str != "":
             query = "update jdbc_connections set credentials = %s where dbalias = %s "
             logging.debug("Executing the following SQL: %s", query)
             self.mysql_cursor.execute(query, (encrypted_str, connection_alias))
@@ -2588,7 +2588,7 @@ class config(metaclass=Singleton):
                 f"mongodb://{self.jdbc_hostname}:{self.jdbc_port}/"
             )
             self.mongo_db = self.mongo_client[self.jdbc_database.strip()]
-            if self.mongo_auth_source == None:
+            if self.mongo_auth_source is None:
                 self.mongo_db.authenticate(self.jdbc_username, self.jdbc_password)
             else:
                 self.mongo_db.authenticate(
@@ -2843,7 +2843,7 @@ class config(metaclass=Singleton):
                 self.mysql_conn.commit()
 
         else:
-            if self.yarn_application_start == None:
+            if self.yarn_application_start is None:
                 # This is just a protection-function and should under normal operations never happen as a query must start before we get any data up update about.
                 return
 

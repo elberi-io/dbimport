@@ -477,7 +477,7 @@ class operation(metaclass=Singleton):
                     )
 
                     # Print Stdout and stderr while distcp is running
-                    while sh_session.poll() == None:
+                    while sh_session.poll() is None:
                         row = sh_session.stdout.readline().decode("utf-8").rstrip()
                         if row != "":
                             print(row)
@@ -2055,7 +2055,7 @@ class operation(metaclass=Singleton):
         hdfs_deleteoutput = ""
 
         # Print Stdout and stderr while distcp is running
-        while sh_session.poll() == None:
+        while sh_session.poll() is None:
             row = sh_session.stdout.readline().decode("utf-8").rstrip()
             if row != "" and "No such file or directory" not in row:
                 logging.info(row)
@@ -2163,7 +2163,7 @@ class operation(metaclass=Singleton):
         dist_cp_output = ""
 
         # Print Stdout and stderr while distcp is running
-        while sh_session.poll() == None:
+        while sh_session.poll() is None:
             row = sh_session.stdout.readline().decode("utf-8").rstrip()
             if row != "":
                 logging.info(row)

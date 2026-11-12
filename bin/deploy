@@ -197,16 +197,16 @@ def main(argv):
     # 		elif opt == "--deployExportTable":
     # 			operation = "deployExportTable"
 
-    if operation == None:
+    if operation is None:
         print_main_help()
 
     if operation == "deployAirflowImportDAG" and (
-        airflow_dag == None or deploy_target == None or display_help == True
+        airflow_dag is None or deploy_target is None or display_help == True
     ):
         print_deploy_airflow_import_dag_help()
 
     if operation == "deployAirflowExportDAG" and (
-        airflow_dag == None or deploy_target == None or display_help == True
+        airflow_dag is None or deploy_target is None or display_help == True
     ):
         print_deploy_airflow_export_dag_help()
 

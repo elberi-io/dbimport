@@ -649,7 +649,7 @@ class operation(metaclass=Singleton):
         )
 
         # Print Stdout and stderr while beeline is running
-        while sh_session.poll() == None:
+        while sh_session.poll() is None:
             row = sh_session.stdout.readline().decode("utf-8").rstrip()
             if row != "":
                 print(row)
