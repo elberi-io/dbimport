@@ -269,7 +269,7 @@ class operation(metaclass=Singleton):
 
     def drop_jdbc_table(self):
         try:
-            if self.export_config.truncate_target_table == True:
+            if self.export_config.truncate_target_table:
                 if (
                     self.export_config.common_config.check_jdbc_table(
                         schema=self.target_schema, table=self.target_table
@@ -292,7 +292,7 @@ class operation(metaclass=Singleton):
             sys.exit(1)
 
     def truncate_jdbc_table(self, force=False):
-        if self.export_config.truncate_target_table == True or force == True:
+        if self.export_config.truncate_target_table or force == True:
             logging.info("Truncating Target Table")
             self.export_config.common_config.truncate_jdbc_table(
                 schema=self.target_schema, table=self.target_table
@@ -317,7 +317,7 @@ class operation(metaclass=Singleton):
         except SQLerror as errMsg:
             if "ORA-22859: invalid modification of columns" in str(errMsg):
                 # We get this message from Oracle when we try to change a column type that is not supported
-                if self.export_config.export_is_incremental == False:
+                if self.export_config.export_is_incremental is False:
                     try:
                         logging.info(
                             "There is a column type change that is not supported by Oracle. But because this export is a full export, we will drop the Target table and recreate it automatically"
@@ -481,10 +481,10 @@ class operation(metaclass=Singleton):
                     hive_table=row["hiveTable"],
                 )
 
-                if add_result == False:
+                if not add_result:
                     error_during_add = True
 
-            if error_during_add == False:
+            if not error_during_add:
                 print("All tables saved successfully in DBImport")
             else:
                 print("")
@@ -605,7 +605,7 @@ class operation(metaclass=Singleton):
                 else:
                     column_name = row["hiveColumnName"]
 
-                if first_loop == False:
+                if not first_loop:
                     query += ", "
                 query += "`%s` %s" % (column_name, row["columnType"])
                 if row["comment"] != None:
@@ -632,7 +632,7 @@ class operation(metaclass=Singleton):
             self.export_config.remove_temporary_files()
             sys.exit(1)
 
-        if self.global_hive_configuration_set == False:
+        if not self.global_hive_configuration_set:
             self.global_hive_configuration_set = True
             if self.export_config.hive_java_heap != None:
                 query = "set hive.tez.container.size=%s" % (
@@ -993,7 +993,7 @@ class operation(metaclass=Singleton):
 
         first_loop = True
         for _index, row in columns_config.iterrows():
-            if first_loop == False:
+            if not first_loop:
                 query += ", "
             target_column_name = row["targetColumnName"]
             column_name = row["hiveColumnName"]
@@ -1006,14 +1006,14 @@ class operation(metaclass=Singleton):
         query += ") select "
         first_loop = True
         for _index, row in columns_config.iterrows():
-            if first_loop == False:
+            if not first_loop:
                 query += ", "
             query += "`%s`" % (row["hiveColumnName"])
             first_loop = False
 
         query += " from `%s`.`%s` " % (self.hive_db, self.hive_table)
 
-        if self.export_config.export_is_incremental == True:
+        if self.export_config.export_is_incremental:
             query += "where "
             query += self.export_config.get_incr_where_statement()
 
@@ -1217,7 +1217,7 @@ class operation(metaclass=Singleton):
         first_loop = True
         if self.export_config.common_config.spark_jar_files.strip() != "":
             for jar_file in self.export_config.common_config.spark_jar_files.split(","):
-                if first_loop == False:
+                if not first_loop:
                     spark_pyspark_submit_args += ","
                     spark_jars += ","
                 spark_pyspark_submit_args += jar_file.strip()
@@ -1225,7 +1225,7 @@ class operation(metaclass=Singleton):
                 first_loop = False
 
         for jar_file in self.export_config.common_config.jdbc_classpath.split(":"):
-            if first_loop == False:
+            if not first_loop:
                 spark_pyspark_submit_args += ","
                 spark_jars += ","
             spark_pyspark_submit_args += jar_file.strip()
@@ -1236,7 +1236,7 @@ class operation(metaclass=Singleton):
             spark_pyspark_submit_args += " --py-files "
             first_loop = True
             for py_file in self.export_config.common_config.spark_py_files.split(","):
-                if first_loop == False:
+                if not first_loop:
                     spark_pyspark_submit_args += ","
                 spark_pyspark_submit_args += py_file.strip()
                 first_loop = False
@@ -1496,7 +1496,7 @@ class operation(metaclass=Singleton):
         )
         logging.info("Running with Spark Version %s", spark_version)
 
-        if spark_version < "2.3.2" and column_starting_with_underscore_found == True:
+        if spark_version < "2.3.2" and column_starting_with_underscore_found:
             logging.error(
                 "Spark version 2.3.2 or higher is required to export columns starting with '_'. This export is running with version %s",
                 spark_version,
@@ -1519,7 +1519,7 @@ class operation(metaclass=Singleton):
             # Get DataFrame for HDP 2.x
             df = HiveContext(sc).sql(spark_query)
 
-        if self.export_config.export_is_incremental == True:
+        if self.export_config.export_is_incremental:
             df = df.filter(self.export_config.get_incr_where_statement())
 
         if self.export_config.sql_where_addition != None:
@@ -1656,7 +1656,7 @@ class operation(metaclass=Singleton):
 
         column_list = []
         for _, row in columns_merge.loc[columns_merge["Exist"] == "both"].iterrows():
-            if force_column_uppercase == True:
+            if force_column_uppercase:
                 column_list.append(row["name"].upper())
             else:
                 column_list.append(row["name"])
@@ -1746,7 +1746,7 @@ class operation(metaclass=Singleton):
         )
 
         # Print Stdout and stderr while sqoop is running
-        while sh_session.poll() == None:
+        while sh_session.poll() is None:
             row = sh_session.stdout.readline().decode("utf-8").rstrip()
             if row != "":
                 print(row)
@@ -1794,7 +1794,7 @@ class operation(metaclass=Singleton):
                     logging.warning("Problem sending data to Atlas")
                     sqoop_warning = True
 
-            if sqoop_warning == False:
+            if not sqoop_warning:
                 # We detected the string ERROR in the output but we havent found a vaild reason for it in the IF statements above.
                 # We need to mark the sqoop command as error and exit the program
                 logging.error(
@@ -1874,7 +1874,7 @@ class operation(metaclass=Singleton):
                 )
             else:
                 # Needed to make sure that we are not validating against new rows that might have been saved in Hive
-                if self.export_config.export_is_incremental == True:
+                if self.export_config.export_is_incremental:
                     where_statement = self.export_config.get_incr_where_statement(
                         exclude_min_value=True
                     )
@@ -1969,6 +1969,6 @@ class operation(metaclass=Singleton):
             self.export_config.remove_temporary_files()
             sys.exit(1)
 
-        if validate_result == False:
+        if not validate_result:
             self.export_config.remove_temporary_files()
             sys.exit(1)

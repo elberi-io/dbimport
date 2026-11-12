@@ -49,7 +49,7 @@ try:
 except KeyError:
     pass
 
-if os.path.exists(config_file) == False:
+if not os.path.exists(config_file):
     print(f"Error: Configuration file can't be found on '{config_file}'")
     sys.exit(1)
 

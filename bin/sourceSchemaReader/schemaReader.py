@@ -189,7 +189,7 @@ class source:
                     )
                     return result_df
 
-            if oracle_origin_con_id_exists == True:
+            if oracle_origin_con_id_exists:
                 row_count = 0
                 for row in jdbc_cursor.fetchall():
                     oracle_origin_con_id = row[0]
@@ -217,7 +217,7 @@ class source:
             query += "LEFT JOIN ALL_TAB_COMMENTS ALL_TAB_COMMENTS "
             query += "  ON  ALL_TAB_COLUMNS.OWNER = ALL_TAB_COMMENTS.OWNER "
             query += "  AND ALL_TAB_COLUMNS.TABLE_NAME = ALL_TAB_COMMENTS.TABLE_NAME "
-            if oracle_origin_con_id_exists == True:
+            if oracle_origin_con_id_exists:
                 if oracle_origin_con_id == None:
                     query += "  AND ALL_TAB_COMMENTS.ORIGIN_CON_ID <= 1 "
                 else:
@@ -228,7 +228,7 @@ class source:
             query += "  ON  ALL_TAB_COLUMNS.OWNER = ALL_COL_COMMENTS.OWNER "
             query += "  AND ALL_TAB_COLUMNS.TABLE_NAME = ALL_COL_COMMENTS.TABLE_NAME "
             query += "  AND ALL_TAB_COLUMNS.COLUMN_NAME = ALL_COL_COMMENTS.COLUMN_NAME "
-            if oracle_origin_con_id_exists == True:
+            if oracle_origin_con_id_exists:
                 if oracle_origin_con_id == None:
                     query += "  AND ALL_COL_COMMENTS.ORIGIN_CON_ID <= 1 "
                 else:

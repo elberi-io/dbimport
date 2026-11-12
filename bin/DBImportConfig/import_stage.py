@@ -1131,7 +1131,7 @@ class stage:
             result = self.send_statistics.publish_kafka_data(
                 json.dumps(json_data_kafka)
             )
-            if result == False:
+            if not result:
                 logging.info("Kafka publish failed!")
                 logging.info("Saving the JSON to the json_to_send table instead")
                 self.common_config.save_json_to_database(
@@ -1151,7 +1151,7 @@ class stage:
             result = self.send_statistics.send_aws_sns_data(
                 json.dumps(json_data_aws_sns)
             )
-            if result == False:
+            if not result:
                 logging.info("AWS SNS publish failed!")
                 logging.info("Saving the JSON to the json_to_send table instead")
                 self.common_config.save_json_to_database(
@@ -1256,7 +1256,7 @@ class stage:
         # 		print("-------------------------------------------------")
         # 		print(insertQuery)
 
-        if duplicate_columns == True:
+        if duplicate_columns:
             logging.warning(
                 "There are duplicate column in the statistics. This usually happens when changing import_method on a ongoing import without reseting the stage in between. As a result, the statistics wont be saved for this import"
             )
@@ -1272,7 +1272,7 @@ class stage:
         self.mysql_conn.commit()
         logging.debug("SQL Statement executed: %s" % (self.mysql_cursor.statement))
 
-        if duplicate_columns == False:
+        if not duplicate_columns:
             query = "insert into import_statistics_last "
             query += insert_query
             self.mysql_cursor.execute(query, values_part)
@@ -1288,7 +1288,7 @@ class stage:
         """Removes all stage information from the import_stage table"""
         logging.debug("Executing stage.clear_stage()")
 
-        if self.memory_stage == False:
+        if not self.memory_stage:
             query = "delete from import_stage where hive_db = %s and hive_table = %s"
             self.mysql_cursor.execute(query, (self.hive_db, self.hive_table))
             self.mysql_conn.commit()
@@ -1306,7 +1306,7 @@ class stage:
         logging.debug("Executing stage.get_stage()")
 
         if self.current_stage == None:
-            if self.memory_stage == True:
+            if self.memory_stage:
                 self.current_stage = 0
             else:
                 query = "select stage from import_stage where hive_db = %s and hive_table = %s"
@@ -1367,7 +1367,7 @@ class stage:
             logging.debug("Executing stage.set_stage() - Finished (no stage set)")
             return
 
-        if self.memory_stage == True:
+        if self.memory_stage:
             self.current_stage = new_stage
             logging.debug(
                 "Executing stage.set_stage() - Finished (stage only in memory)"
@@ -1476,7 +1476,7 @@ class stage:
         """Saves the retry attempt in the import_retries_log table"""
         logging.debug("Executing stage.save_retry_attempt()")
 
-        if self.memory_stage == True:
+        if self.memory_stage:
             return
 
         stage_description = self.get_stage_description(stage)

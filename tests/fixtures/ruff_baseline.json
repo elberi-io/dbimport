@@ -1,12 +1,12 @@
 {
   "bin/ConfigReader/configuration.py": {
     "B904": 1,
-    "E712": 2
+    "E712": 1
   },
   "bin/DBImportConfig/common_config.py": {
     "B904": 4,
-    "E711": 82,
-    "E712": 96,
+    "E711": 73,
+    "E712": 14,
     "E722": 39,
     "F841": 2,
     "G002": 2,
@@ -14,47 +14,46 @@
   },
   "bin/DBImportConfig/decryption.py": {
     "B904": 1,
-    "E711": 1,
-    "E712": 4
+    "E711": 1
   },
   "bin/DBImportConfig/export_config.py": {
-    "E711": 25,
-    "E712": 54,
+    "E711": 23,
+    "E712": 22,
     "F841": 7,
     "G002": 41,
     "UP031": 102
   },
   "bin/DBImportConfig/export_stage.py": {
     "E711": 7,
-    "E712": 21,
+    "E712": 15,
     "F841": 1,
     "G002": 15,
     "UP031": 41
   },
   "bin/DBImportConfig/import_config.py": {
     "B904": 3,
-    "E711": 91,
-    "E712": 114,
+    "E711": 83,
+    "E712": 39,
     "F841": 4,
     "G002": 89,
     "UP031": 144
   },
   "bin/DBImportConfig/import_stage.py": {
     "E711": 7,
-    "E712": 23,
+    "E712": 15,
     "F841": 1,
     "G002": 15,
     "UP031": 37
   },
   "bin/DBImportConfig/sendStatistics.py": {
     "E711": 2,
-    "E712": 2,
+    "E712": 1,
     "F841": 1
   },
   "bin/DBImportOperation/atlas_operations.py": {
     "B904": 11,
-    "E711": 41,
-    "E712": 37,
+    "E711": 40,
+    "E712": 16,
     "E722": 4,
     "F841": 23,
     "G002": 41,
@@ -62,15 +61,15 @@
   },
   "bin/DBImportOperation/common_operations.py": {
     "B904": 2,
-    "E711": 13,
-    "E712": 25,
+    "E711": 12,
+    "E712": 17,
     "E722": 4,
     "G002": 4,
     "UP031": 32
   },
   "bin/DBImportOperation/copy_operations.py": {
-    "E711": 26,
-    "E712": 36,
+    "E711": 23,
+    "E712": 27,
     "E722": 3,
     "F841": 9,
     "G002": 24,
@@ -78,15 +77,15 @@
   },
   "bin/DBImportOperation/etl_operations.py": {
     "E711": 18,
-    "E712": 59,
+    "E712": 28,
     "E722": 1,
     "F841": 2,
     "G002": 1,
     "UP031": 120
   },
   "bin/DBImportOperation/export_operations.py": {
-    "E711": 34,
-    "E712": 48,
+    "E711": 33,
+    "E712": 29,
     "E722": 16,
     "F841": 2,
     "G002": 8,
@@ -95,8 +94,8 @@
   "bin/DBImportOperation/import_operations.py": {
     "B904": 3,
     "B905": 1,
-    "E711": 66,
-    "E712": 148,
+    "E711": 59,
+    "E712": 126,
     "E722": 17,
     "F841": 6,
     "G002": 20,
@@ -104,8 +103,8 @@
   },
   "bin/Schedule/Airflow.py": {
     "B904": 6,
-    "E711": 50,
-    "E712": 59,
+    "E711": 40,
+    "E712": 24,
     "E722": 5,
     "F841": 15,
     "G002": 16,
@@ -113,15 +112,15 @@
   },
   "bin/Server/atlasDiscovery.py": {
     "E711": 4,
-    "E712": 13,
+    "E712": 6,
     "E722": 2,
     "F841": 3,
     "G002": 6,
     "UP031": 6
   },
   "bin/Server/daemon.py": {
-    "E711": 7,
-    "E712": 3,
+    "E711": 5,
+    "E712": 2,
     "E722": 3,
     "F841": 3,
     "G002": 3,
@@ -129,14 +128,14 @@
   },
   "bin/Server/restServer.py": {
     "B904": 1,
-    "E711": 12,
-    "E712": 3,
+    "E711": 8,
+    "E712": 2,
     "N803": 21
   },
   "bin/Server/restServerCalls.py": {
     "B904": 3,
-    "E711": 119,
-    "E712": 27,
+    "E711": 50,
+    "E712": 17,
     "E722": 1,
     "F841": 59,
     "G002": 8,
@@ -151,7 +150,7 @@
   "bin/catalogService/hiveDirect.py": {
     "B904": 5,
     "E711": 19,
-    "E712": 9,
+    "E712": 8,
     "E722": 1,
     "F841": 3,
     "G002": 1,
@@ -165,42 +164,31 @@
     "E722": 1
   },
   "bin/copy": {
-    "E711": 22,
-    "E712": 10,
     "F841": 3,
     "UP031": 1
   },
   "bin/deploy": {
-    "E711": 5,
-    "E712": 3,
     "F841": 3
   },
   "bin/export": {
-    "E711": 43,
-    "E712": 49,
+    "E712": 46,
     "UP031": 11
   },
   "bin/import": {
-    "E711": 217,
-    "E712": 328,
+    "E711": 7,
+    "E712": 251,
     "F841": 1,
     "UP031": 34
   },
-  "bin/mainServer": {
-    "E712": 2
-  },
   "bin/manage": {
-    "E711": 50,
-    "E712": 48,
+    "E711": 10,
+    "E712": 7,
     "F841": 2
   },
   "bin/restServer": {
-    "E712": 5,
     "F841": 1
   },
   "bin/setup": {
-    "E711": 1,
-    "E712": 1,
     "F841": 3
   },
   "bin/setupOperation/database.py": {
@@ -210,7 +198,6 @@
   },
   "bin/sourceSchemaReader/schemaReader.py": {
     "E711": 115,
-    "E712": 3,
     "E722": 6,
     "G002": 26,
     "UP031": 172

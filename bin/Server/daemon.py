@@ -112,7 +112,7 @@ class distCP(threading.Thread):
             dist_cp_output = ""
 
             # Print Stdout and stderr while distcp is running
-            while sh_session.poll() == None:
+            while sh_session.poll() is None:
                 row = sh_session.stdout.readline().decode("utf-8").rstrip()
                 if row != "":
                     log.info("Thread %s: %s", self.name, row)
@@ -219,7 +219,7 @@ class serverDaemon(run.RunDaemon):
             log.info("Starting %s distCp threads", dist_cp_threads)
 
         for thread_id in range(0, dist_cp_threads):
-            if dist_cp_separate_logs == False:
+            if not dist_cp_separate_logs:
                 dist_cp_log_name = "distCP"
             else:
                 dist_cp_log_name = f"distCP-thread{thread_id}"
@@ -682,7 +682,7 @@ class serverDaemon(run.RunDaemon):
             log.error(sys.exc_info())
             return None
 
-        if db_credentials == None:
+        if db_credentials is None:
             log.warning(
                 "Cant decrypt username and password. Check private/public key in config file"
             )

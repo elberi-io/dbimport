@@ -251,8 +251,8 @@ class operation(metaclass=Singleton):
                 for column in pk_columns.split(","):
                     if row["targetName"] == column:
                         found_pk_column = True
-                if found_pk_column == False:
-                    if first_iteration == True:
+                if not found_pk_column:
+                    if first_iteration:
                         query += "   "
                         first_iteration = False
                     else:
@@ -271,7 +271,7 @@ class operation(metaclass=Singleton):
                     )
                     query += "\n"
 
-            if soft_delete == True and datalake_iud_exists == True:
+            if soft_delete == True and datalake_iud_exists:
                 # If a row is deleted and then inserted again with the same values in all fields, this will still trigger an update
                 # query += "   or T.datalake_iud = 'D' \n"
                 query += "   or T.%s = 'D' \n" % (
@@ -294,8 +294,8 @@ class operation(metaclass=Singleton):
             for column in pk_columns.split(","):
                 if row["targetName"] == column:
                     found_pk_column = True
-            if found_pk_column == False:
-                if first_iteration == True:
+            if not found_pk_column:
+                if first_iteration:
                     first_iteration = False
                     query += " \n"
                 else:
@@ -303,7 +303,7 @@ class operation(metaclass=Singleton):
                 query += "   `%s` = S.`%s`" % (row["targetName"], row["sourceName"])
                 non_pk_column_found = True
 
-        if non_pk_column_found == False:
+        if not non_pk_column_found:
             # This will happen if there are only columns that is part of the PK in the table. Impossible to merge it with full history
             logging.error(
                 "This table only have columns that is part of the PrimaryKey. Merge operations cant be used"
@@ -311,18 +311,18 @@ class operation(metaclass=Singleton):
             self.import_config.remove_temporary_files()
             sys.exit(1)
 
-        if datalake_iud_exists == True:
+        if datalake_iud_exists:
             # query += ", \n   `datalake_iud` = 'U'"
             query += ", \n   `%s` = 'U'" % (self.common_operations.hive_column_name_iud)
 
-        if datalake_update_exists == True:
+        if datalake_update_exists:
             # query += ", \n   `datalake_update` = TIMESTAMP('%s')"%(mergeTime)
             query += ", \n   `%s` = TIMESTAMP('%s')" % (
                 self.common_operations.hive_column_name_update,
                 merge_time,
             )
 
-        if datalake_source_exists == True and datalake_source != None:
+        if datalake_source_exists and datalake_source != None:
             # query += ", \n   `datalake_source` = '%s'"%(datalakeSource)
             query += ", \n   `%s` = '%s'" % (
                 self.common_operations.hive_column_name_source,
@@ -352,7 +352,7 @@ class operation(metaclass=Singleton):
         first_iteration = True
         for _index, row in target_columns.iterrows():
             column_name = row["name"]
-            if first_iteration == True:
+            if first_iteration:
                 first_iteration = False
                 query += " \n"
             else:
@@ -370,7 +370,7 @@ class operation(metaclass=Singleton):
                 .fillna("")
                 .iloc[0]
             )
-            if first_iteration == True:
+            if first_iteration:
                 first_iteration = False
                 query += " \n"
             else:
@@ -439,13 +439,13 @@ class operation(metaclass=Singleton):
             for _index, row in column_merge.loc[
                 column_merge["Exist"] == "both"
             ].iterrows():
-                if first_iteration == True:
+                if first_iteration:
                     first_iteration = False
                     query += " \n"
                 else:
                     query += ", \n"
                 query += "   `%s`" % (row["targetName"])
-            if datalake_source_exists == True:
+            if datalake_source_exists:
                 # query += ",\n   `datalake_source`"
                 query += ",\n   `%s`" % (self.common_operations.hive_column_name_source)
             # query += ",\n   `datalake_iud`"
@@ -461,13 +461,13 @@ class operation(metaclass=Singleton):
             for _index, row in column_merge.loc[
                 column_merge["Exist"] == "both"
             ].iterrows():
-                if first_iteration == True:
+                if first_iteration:
                     first_iteration = False
                     query += " \n"
                 else:
                     query += ", \n"
                 query += "   `%s`" % (row["targetName"])
-            if datalake_source_exists == True:
+            if datalake_source_exists:
                 query += ",\n   '%s'" % (datalake_source)
             # query += ",\n   `datalake_iud`"
             # query += ",\n   `datalake_update`"
@@ -536,13 +536,13 @@ class operation(metaclass=Singleton):
             for _index, row in column_merge.loc[
                 column_merge["Exist"] == "both"
             ].iterrows():
-                if first_iteration == True:
+                if first_iteration:
                     first_iteration = False
                     query += " \n"
                 else:
                     query += ", \n"
                 query += "   `%s`" % (row["targetName"])
-            if datalake_source_exists == True:
+            if datalake_source_exists:
                 # query += ",\n   `datalake_source`"
                 query += ",\n   `%s`" % (self.common_operations.hive_column_name_source)
             # query += ",\n   `datalake_iud`"
@@ -558,13 +558,13 @@ class operation(metaclass=Singleton):
             for _index, row in column_merge.loc[
                 column_merge["Exist"] == "both"
             ].iterrows():
-                if first_iteration == True:
+                if first_iteration:
                     first_iteration = False
                     query += " \n"
                 else:
                     query += ", \n"
                 query += "   `%s`" % (row["targetName"])
-            if datalake_source_exists == True:
+            if datalake_source_exists:
                 query += ",\n   '%s'" % (datalake_source)
             # query += ",\n   `datalake_flashback_operation` as `datalake_iud`"
             # query += ",\n   timestamp('%s') as `datalake_timestamp`"%(mergeTime)
@@ -592,13 +592,13 @@ class operation(metaclass=Singleton):
             for _index, row in column_merge.loc[
                 column_merge["Exist"] == "both"
             ].iterrows():
-                if first_iteration == True:
+                if first_iteration:
                     first_iteration = False
                     query += " \n"
                 else:
                     query += ", \n"
                 query += "   `%s`" % (row["targetName"])
-            if datalake_source_exists == True:
+            if datalake_source_exists:
                 # query += ",\n   `datalake_source`"
                 query += ",\n   `%s`" % (self.common_operations.hive_column_name_source)
             # query += ",\n   `datalake_iud`"
@@ -614,13 +614,13 @@ class operation(metaclass=Singleton):
             for _index, row in column_merge.loc[
                 column_merge["Exist"] == "both"
             ].iterrows():
-                if first_iteration == True:
+                if first_iteration:
                     first_iteration = False
                     query += " \n"
                 else:
                     query += ", \n"
                 query += "   `%s`" % (row["targetName"])
-            if datalake_source_exists == True:
+            if datalake_source_exists:
                 query += ",\n   '%s'" % (datalake_source)
             # query += ",\n   `datalake_mssql_changetrack_operation` as `datalake_iud`"
             # query += ",\n   timestamp('%s') as `datalake_timestamp`"%(mergeTime)
@@ -644,13 +644,13 @@ class operation(metaclass=Singleton):
             for _index, row in column_merge.loc[
                 column_merge["Exist"] == "both"
             ].iterrows():
-                if first_iteration == True:
+                if first_iteration:
                     first_iteration = False
                     query += " \n"
                 else:
                     query += ", \n"
                 query += "   `%s`" % (row["targetName"])
-            if datalake_source_exists == True:
+            if datalake_source_exists:
                 # query += ",\n   `datalake_source`"
                 query += ",\n   `%s`" % (self.common_operations.hive_column_name_source)
             # query += ",\n   `datalake_iud`"
@@ -666,13 +666,13 @@ class operation(metaclass=Singleton):
             for _index, row in column_merge.loc[
                 column_merge["Exist"] == "both"
             ].iterrows():
-                if first_iteration == True:
+                if first_iteration:
                     first_iteration = False
                     query += " \n"
                 else:
                     query += ", \n"
                 query += "   T.`%s`" % (row["targetName"])
-            if datalake_source_exists == True:
+            if datalake_source_exists:
                 query += ",\n   '%s' as `%s`" % (
                     datalake_source,
                     self.common_operations.hive_column_name_source,
@@ -727,13 +727,13 @@ class operation(metaclass=Singleton):
             for _index, row in column_merge.loc[
                 column_merge["Exist"] == "both"
             ].iterrows():
-                if first_iteration == True:
+                if first_iteration:
                     first_iteration = False
                     query += " \n"
                 else:
                     query += ", \n"
                 query += "   `%s`" % (row["targetName"])
-            if datalake_source_exists == True:
+            if datalake_source_exists:
                 # query += ",\n   `datalake_source`"
                 query += ",\n   `%s`" % (self.common_operations.hive_column_name_source)
             # query += ",\n   `datalake_iud`"
@@ -749,13 +749,13 @@ class operation(metaclass=Singleton):
             for _index, row in column_merge.loc[
                 column_merge["Exist"] == "both"
             ].iterrows():
-                if first_iteration == True:
+                if first_iteration:
                     first_iteration = False
                     query += " \n"
                 else:
                     query += ", \n"
                 query += "   T.`%s`" % (row["targetName"])
-            if datalake_source_exists == True:
+            if datalake_source_exists:
                 # query += ",\n   '%s' as `datalake_source`"%(datalakeSource)
                 query += ",\n   '%s' as `%s`" % (
                     datalake_source,

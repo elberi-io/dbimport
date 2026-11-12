@@ -74,7 +74,7 @@ def main(argv):
         elif opt in ("-v", "--debug"):
             logging_level = logging.DEBUG
 
-    if display_version == True:
+    if display_version:
         print(f"DBImport version: {constant.VERSION}")
         sys.exit(0)
 
@@ -142,7 +142,7 @@ def main(argv):
         log_propagate=log_propagate,
     )
 
-    if dist_cp_separate_logs == False:
+    if not dist_cp_separate_logs:
         dist_cp_logfile = f"{logdir}/distCP.log"
         setup_logger(
             name="distCP",

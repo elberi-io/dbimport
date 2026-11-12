@@ -249,7 +249,7 @@ class dbCalls:
                     )
                     return_value = None
 
-            if bool_value == True:
+            if bool_value:
                 if return_value == 1:
                     return_value = True
                 elif return_value == 0:
@@ -456,14 +456,14 @@ class dbCalls:
             ):
                 correct_driver_version = True
 
-        if correct_driver_version == False:
+        if not correct_driver_version:
             result = "Not a valid combination of databaseType and version"
             return_code = 404
             return (result, return_code)
 
         # Generate the connection string for each combo of databaseType and databaseVersion
         if database_type == "DB2 AS400" and database_version == "default":
-            if connection_values.port == None:
+            if connection_values.port is None:
                 jdbc_connection_string = "jdbc:as400://%s/%s" % (hostname, database)
             else:
                 jdbc_connection_string = "jdbc:as400://%s:%s/%s" % (
@@ -473,7 +473,7 @@ class dbCalls:
                 )
 
         if database_type == "DB2 UDB" and database_version == "default":
-            if connection_values.port == None:
+            if connection_values.port is None:
                 jdbc_connection_string = "jdbc:db2://%s/%s" % (hostname, database)
             else:
                 jdbc_connection_string = "jdbc:db2://%s:%s/%s" % (
@@ -483,7 +483,7 @@ class dbCalls:
                 )
 
         if database_type == "MySQL" and database_version == "default":
-            if connection_values.port == None:
+            if connection_values.port is None:
                 jdbc_connection_string = "jdbc:mysql://%s/%s" % (hostname, database)
             else:
                 jdbc_connection_string = "jdbc:mysql://%s:%s/%s" % (
@@ -493,7 +493,7 @@ class dbCalls:
                 )
 
         if database_type == "Oracle" and database_version == "default":
-            if connection_values.port == None:
+            if connection_values.port is None:
                 jdbc_connection_string = (
                     "jdbc:oracle:thin:@(DESCRIPTION=(ADDRESS_LIST=(ADDRESS=(PROTOCOL=TCP)(HOST=%s)))(CONNECT_DATA=(SERVICE_NAME=%s)))"
                     % (hostname, database)
@@ -505,7 +505,7 @@ class dbCalls:
                 )
 
         if database_type == "PostgreSQL" and database_version == "default":
-            if connection_values.port == None:
+            if connection_values.port is None:
                 jdbc_connection_string = "jdbc:postgresql://%s/%s" % (
                     hostname,
                     database,
@@ -518,7 +518,7 @@ class dbCalls:
                 )
 
         if database_type == "Progress DB" and database_version == "default":
-            if connection_values.port == None:
+            if connection_values.port is None:
                 jdbc_connection_string = "jdbc:datadirect:openedge://%s/%s" % (
                     hostname,
                     database,
@@ -531,7 +531,7 @@ class dbCalls:
                 )
 
         if database_type == "SQL Server" and database_version == "default":
-            if connection_values.port == None:
+            if connection_values.port is None:
                 jdbc_connection_string = "jdbc:sqlserver://%s;database=%s" % (
                     hostname,
                     database,
@@ -544,7 +544,7 @@ class dbCalls:
                 )
 
         if database_type == "SQL Server" and database_version == "jTDS":
-            if connection_values.port == None:
+            if connection_values.port is None:
                 jdbc_connection_string = (
                     "jdbc:jtds:sqlserver://%s;useNTLMv2=true;databaseName=%s"
                     % (hostname, database)
@@ -556,7 +556,7 @@ class dbCalls:
                 )
 
         if database_type == "CacheDB" and database_version == "default":
-            if connection_values.port == None:
+            if connection_values.port is None:
                 jdbc_connection_string = "jdbc:Cache://%s/%s" % (hostname, database)
             else:
                 jdbc_connection_string = "jdbc:Cache://%s:%s/%s" % (
@@ -566,7 +566,7 @@ class dbCalls:
                 )
 
         if database_type == "Snowflake" and database_version == "default":
-            if connection_values.port == None:
+            if connection_values.port is None:
                 jdbc_connection_string = "jdbc:snowflake://%s/?db=%s" % (
                     hostname,
                     database,
@@ -579,7 +579,7 @@ class dbCalls:
                 )
 
         if database_type == "Informix" and database_version == "default":
-            if connection_values.port == None:
+            if connection_values.port is None:
                 jdbc_connection_string = "jdbc:informix-sqli://%s/%s" % (
                     hostname,
                     database,
@@ -592,7 +592,7 @@ class dbCalls:
                 )
 
         if database_type == "SQL Anywhere" and database_version == "default":
-            if connection_values.port == None:
+            if connection_values.port is None:
                 jdbc_connection_string = "jdbc:sybase:Tds://%s/%s" % (
                     hostname,
                     database,
@@ -739,7 +739,7 @@ class dbCalls:
             value_column, bool_value = self.common_config.get_config_value_column(
                 row[0], ignore_error_output=True
             )
-            if value_column == None:
+            if value_column is None:
                 # If there is no handling of the value in self.common_config.get_config_value_column we will ignore it.
                 # But even if it's handling in that configuration, it must also exists in the datamodel for it to be shown
                 continue
@@ -992,7 +992,7 @@ class dbCalls:
 
             log.debug("search filter: %s = %s", column, value)
 
-            if like_search == True:
+            if like_search:
                 jdbc_connections_data = jdbc_connections_data.filter(
                     like_op(attribute_to_column[column], value)
                 )
@@ -1058,13 +1058,13 @@ class dbCalls:
             "User '%s' updated/created connection '%s'", current_user, connection.name
         )
 
-        if connection.forceString == None:
+        if connection.forceString is None:
             connection.forceString = 0
-        if connection.createDatalakeImport == None:
+        if connection.createDatalakeImport is None:
             connection.createDatalakeImport = 1
-        if connection.createForeignKey == None:
+        if connection.createForeignKey is None:
             connection.createForeignKey = 1
-        if connection.atlasDiscovery == None:
+        if connection.atlasDiscovery is None:
             connection.atlasDiscovery = 1
 
         try:
@@ -1296,7 +1296,7 @@ class dbCalls:
             stdout, stderr = manage_session.communicate()
             process_killed = True
 
-        if manage_session.returncode != 0 or process_killed == True:
+        if manage_session.returncode != 0 or process_killed:
             return_code = 500
             result_msg = {
                 "result": re.sub("\n$", "", re.sub("^json: ", "", stdout.decode()))
@@ -1540,7 +1540,7 @@ class dbCalls:
 
             log.debug("search filter: %s = %s", column, value)
 
-            if like_search == True:
+            if like_search:
                 import_tables_data = import_tables_data.filter(
                     like_op(attribute_to_column[column], value)
                 )
@@ -2013,38 +2013,38 @@ class dbCalls:
         )
 
         # Set default values
-        if data.includeInAirflow == None:
+        if data.includeInAirflow is None:
             data.includeInAirflow = 1
-        if data.validateImport == None:
+        if data.validateImport is None:
             data.validateImport = 1
-        if data.validationMethod == None:
+        if data.validationMethod is None:
             data.validationMethod = "rowCount"
-        if data.validateSource == None:
+        if data.validateSource is None:
             data.validateSource = "query"
-        if data.validateDiffAllowed == None:
+        if data.validateDiffAllowed is None:
             data.validateDiffAllowed = -1
-        if data.validationCustomQueryValidateImportTable == None:
+        if data.validationCustomQueryValidateImportTable is None:
             data.validationCustomQueryValidateImportTable = 1
-        if data.incrValidationMethod == None:
+        if data.incrValidationMethod is None:
             data.incrValidationMethod = "full"
             # 		if getattr(data, "truncateTable") == None:								setattr(data, "truncateTable", 1)
-        if data.sqlSessions == None:
+        if data.sqlSessions is None:
             data.sqlSessions = -1
-        if data.softDeleteDuringMerge == None:
+        if data.softDeleteDuringMerge is None:
             data.softDeleteDuringMerge = 0
-        if data.sqoopUseGeneratedSql == None:
+        if data.sqoopUseGeneratedSql is None:
             data.sqoopUseGeneratedSql = -1
-        if data.allowTextSplitter == None:
+        if data.allowTextSplitter is None:
             data.allowTextSplitter = 0
-        if data.forceString == None:
+        if data.forceString is None:
             data.forceString = -1
-        if data.invalidateImpala == None:
+        if data.invalidateImpala is None:
             data.invalidateImpala = -1
-        if data.mergeCompactionMethod == None:
+        if data.mergeCompactionMethod is None:
             data.mergeCompactionMethod = "default"
-        if data.createForeignKeys == None:
+        if data.createForeignKeys is None:
             data.createForeignKeys = -1
-        if data.copySlave == None:
+        if data.copySlave is None:
             data.copySlave = 0
 
         try:
@@ -2201,12 +2201,12 @@ class dbCalls:
 
             # Force set to Null if string is empty. This will otherwise cause problems during executions as it's not handled there
             if (
-                column.columnNameOverride != None
+                column.columnNameOverride is not None
                 and column.columnNameOverride.strip() == ""
             ):
                 column.columnNameOverride = None
             if (
-                column.columnTypeOverride != None
+                column.columnTypeOverride is not None
                 and column.columnTypeOverride.strip() == ""
             ):
                 column.columnTypeOverride = None
@@ -2412,7 +2412,7 @@ class dbCalls:
             stdout, stderr = manage_session.communicate()
             process_killed = True
 
-        if manage_session.returncode != 0 or process_killed == True:
+        if manage_session.returncode != 0 or process_killed:
             return_code = 500
             result_msg = {
                 "result": re.sub("\n$", "", re.sub("^json: ", "", stdout.decode()))
@@ -2454,7 +2454,7 @@ class dbCalls:
             stdout, stderr = manage_session.communicate()
             process_killed = True
 
-        if manage_session.returncode != 0 or process_killed == True:
+        if manage_session.returncode != 0 or process_killed:
             return_code = 500
             result_msg = {
                 "result": re.sub("\n$", "", re.sub("^json: ", "", stdout.decode()))
@@ -2498,7 +2498,7 @@ class dbCalls:
             stdout, stderr = manage_session.communicate()
             process_killed = True
 
-        if manage_session.returncode != 0 or process_killed == True:
+        if manage_session.returncode != 0 or process_killed:
             return_code = 500
             result_msg = {
                 "result": re.sub("\n$", "", re.sub("^json: ", "", stdout.decode()))
@@ -2542,7 +2542,7 @@ class dbCalls:
             stdout, stderr = manage_session.communicate()
             process_killed = True
 
-        if manage_session.returncode != 0 or process_killed == True:
+        if manage_session.returncode != 0 or process_killed:
             return_code = 500
             result_msg = {
                 "result": re.sub("\n$", "", re.sub("^json: ", "", stdout.decode()))
@@ -2785,7 +2785,7 @@ class dbCalls:
 
             log.debug("search filter: %s = %s", column, value)
 
-            if like_search == True:
+            if like_search:
                 export_tables_data = export_tables_data.filter(
                     like_op(attribute_to_column[column], value)
                 )
@@ -3263,21 +3263,21 @@ class dbCalls:
         )
 
         # Set default values
-        if data.includeInAirflow == None:
+        if data.includeInAirflow is None:
             data.includeInAirflow = 1
-        if data.forceCreateTempTable == None:
+        if data.forceCreateTempTable is None:
             data.forceCreateTempTable = 0
-        if data.validateExport == None:
+        if data.validateExport is None:
             data.validateExport = 1
-        if data.validationMethod == None:
+        if data.validationMethod is None:
             data.validationMethod = "rowCount"
-        if data.uppercaseColumns == None:
+        if data.uppercaseColumns is None:
             data.uppercaseColumns = -1
-        if data.truncateTarget == None:
+        if data.truncateTarget is None:
             data.truncateTarget = 1
-        if data.sqlSessions == None:
+        if data.sqlSessions is None:
             data.sqlSessions = -1
-        if data.incrValidationMethod == None:
+        if data.incrValidationMethod is None:
             data.incrValidationMethod = "full"
 
         try:
@@ -3381,17 +3381,17 @@ class dbCalls:
 
             try:
                 column_order = None
-                if column.columnOrder != None:
+                if column.columnOrder is not None:
                     column_order = int(column.columnOrder) - 1
 
                 # Force set to Null if string is empty. This will otherwise cause problems during executions as it's not handled there
                 if (
-                    column.targetColumnName != None
+                    column.targetColumnName is not None
                     and column.targetColumnName.strip() == ""
                 ):
                     column.targetColumnName = None
                 if (
-                    column.targetColumnType != None
+                    column.targetColumnType is not None
                     and column.targetColumnType.strip() == ""
                 ):
                     column.targetColumnType = None
@@ -4444,25 +4444,25 @@ class dbCalls:
         )
 
         # Set default values
-        if airflow_dag.scheduleInterval == None:
+        if airflow_dag.scheduleInterval is None:
             airflow_dag.scheduleInterval = "None"
-        if airflow_dag.filterTable == None:
+        if airflow_dag.filterTable is None:
             airflow_dag.filterTable = ""
-        if airflow_dag.finishAllStage1First == None:
+        if airflow_dag.finishAllStage1First is None:
             airflow_dag.finishAllStage1First = "0"
-        if airflow_dag.retries == None:
+        if airflow_dag.retries is None:
             airflow_dag.retries = "5"
-        if airflow_dag.autoRegenerateDag == None:
+        if airflow_dag.autoRegenerateDag is None:
             airflow_dag.autoRegenerateDag = "1"
-        if airflow_dag.runImportAndEtlSeparate == None:
+        if airflow_dag.runImportAndEtlSeparate is None:
             airflow_dag.runImportAndEtlSeparate = "0"
-        if airflow_dag.metadataImport == None:
+        if airflow_dag.metadataImport is None:
             airflow_dag.metadataImport = "0"
-        if airflow_dag.emailOnFailure == None:
+        if airflow_dag.emailOnFailure is None:
             airflow_dag.emailOnFailure = "0"
-        if airflow_dag.emailOnRetries == None:
+        if airflow_dag.emailOnRetries is None:
             airflow_dag.emailOnRetries = "0"
-        if airflow_dag.retryExponentialBackoff == None:
+        if airflow_dag.retryExponentialBackoff is None:
             airflow_dag.retryExponentialBackoff = "0"
 
         try:
@@ -4742,19 +4742,19 @@ class dbCalls:
         )
 
         # Set default values
-        if airflow_dag.scheduleInterval == None:
+        if airflow_dag.scheduleInterval is None:
             airflow_dag.scheduleInterval = "None"
-        if airflow_dag.filterConnection == None:
+        if airflow_dag.filterConnection is None:
             airflow_dag.filterConnection = ""
-        if airflow_dag.retries == None:
+        if airflow_dag.retries is None:
             airflow_dag.retries = "5"
-        if airflow_dag.autoRegenerateDag == None:
+        if airflow_dag.autoRegenerateDag is None:
             airflow_dag.autoRegenerateDag = "1"
-        if airflow_dag.emailOnFailure == None:
+        if airflow_dag.emailOnFailure is None:
             airflow_dag.emailOnFailure = "0"
-        if airflow_dag.emailOnRetries == None:
+        if airflow_dag.emailOnRetries is None:
             airflow_dag.emailOnRetries = "0"
-        if airflow_dag.retryExponentialBackoff == None:
+        if airflow_dag.retryExponentialBackoff is None:
             airflow_dag.retryExponentialBackoff = "0"
 
         try:
@@ -5024,17 +5024,17 @@ class dbCalls:
         )
 
         # Set default values
-        if airflow_dag.scheduleInterval == None:
+        if airflow_dag.scheduleInterval is None:
             airflow_dag.scheduleInterval = "None"
-        if airflow_dag.retries == None:
+        if airflow_dag.retries is None:
             airflow_dag.retries = "0"
-        if airflow_dag.autoRegenerateDag == None:
+        if airflow_dag.autoRegenerateDag is None:
             airflow_dag.autoRegenerateDag = "1"
-        if airflow_dag.emailOnFailure == None:
+        if airflow_dag.emailOnFailure is None:
             airflow_dag.emailOnFailure = "0"
-        if airflow_dag.emailOnRetries == None:
+        if airflow_dag.emailOnRetries is None:
             airflow_dag.emailOnRetries = "0"
-        if airflow_dag.retryExponentialBackoff == None:
+        if airflow_dag.retryExponentialBackoff is None:
             airflow_dag.retryExponentialBackoff = "0"
 
         try:

@@ -327,7 +327,7 @@ class hiveMetastoreDirect(metaclass=Singleton):
             else:
                 result += "`%s`" % (row[0])
 
-        if pk_error_found == True:
+        if pk_error_found:
             result = ""
 
         logging.debug("Primary Key columns: %s", result)

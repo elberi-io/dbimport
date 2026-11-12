@@ -324,7 +324,7 @@ class operation(metaclass=Singleton):
                             "Connecting to Hive at %s:%s", hive_hostname, hive_port
                         )
 
-                    if self.hive_use_ssl == True:
+                    if self.hive_use_ssl:
                         transport = puretransport.transport_factory(
                             host=hive_hostname,
                             port=hive_port,
@@ -488,7 +488,7 @@ class operation(metaclass=Singleton):
 
             # Print the progress of the query
             for row in self.hive_cursor.poll().progressUpdateResponse.rows:
-                if first_output_line == True:
+                if first_output_line:
                     # If it's the first one, we print the header and read how many vertexes there is
                     lines_to_jump_up = (
                         len(self.hive_cursor.poll().progressUpdateResponse.rows) + 1
@@ -520,7 +520,7 @@ class operation(metaclass=Singleton):
             sys.stdout.write("\u001b[0m")  # Reset
             sys.stdout.flush()
 
-            if first_output_line == False:
+            if not first_output_line:
                 # This means that we printed atleast one chunk of mappers and reducers. Because of that, we will now move the cursor up
                 # This information was found on http://www.lihaoyi.com/post/BuildyourownCommandLinewithANSIescapecodes.html
                 sys.stdout.write(
@@ -547,7 +547,7 @@ class operation(metaclass=Singleton):
             except IndexError:
                 print(headers)
             rows_printed = True
-        if rows_printed == True:
+        if rows_printed:
             print("")  # So we get passed the elapsed time message
         print("")
 
@@ -575,10 +575,10 @@ class operation(metaclass=Singleton):
             for message in logs:
                 if message.lower().startswith("error"):
                     errors_found = True
-                if errors_found == True:
+                if errors_found:
                     print(message)
 
-        if errors_found == True:
+        if errors_found:
             raise Exception("Hive Query Error")
 
         result_df = pd.DataFrame()
@@ -612,7 +612,7 @@ class operation(metaclass=Singleton):
         self.connect_to_hive(force_skip_test=True, quiet=True)
         self.disconnect_from_hive()
 
-        if self.hive_use_ssl == False:
+        if not self.hive_use_ssl:
             beeline_connect_str = "jdbc:hive2://%s:%s/%s;principal=%s/_HOST@%s" % (
                 self.hive_hostname,
                 self.hive_port,
@@ -649,7 +649,7 @@ class operation(metaclass=Singleton):
         )
 
         # Print Stdout and stderr while beeline is running
-        while sh_session.poll() == None:
+        while sh_session.poll() is None:
             row = sh_session.stdout.readline().decode("utf-8").rstrip()
             if row != "":
                 print(row)
@@ -858,7 +858,7 @@ class operation(metaclass=Singleton):
         query += "select "
         query += "%s" % (", ".join(hive_columns_insert))
         if create_merge_columns == True:
-            if datalake_import_exists == True:
+            if datalake_import_exists:
                 # query += ", 'I', datalake_import, datalake_import"
                 query += ", 'I', %s, %s" % (
                     self.hive_column_name_import,

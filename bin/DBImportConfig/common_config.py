@@ -347,7 +347,7 @@ class config(metaclass=Singleton):
 
     def reconnect_config_database(self, print_reconnect_message: bool = True) -> None:
         if self.mysql_conn == None or self.mysql_conn.is_connected() == False:
-            if print_reconnect_message == True:
+            if print_reconnect_message:
                 logging.warning("Connection to MySQL have been lost. Reconnecting...")
 
             mysql_credentials = self.get_mysql_credentials()
@@ -451,7 +451,7 @@ class config(metaclass=Singleton):
 
         except sa.exc.OperationalError as err:
             logging.error("%s", err)
-            if exit_if_failure == True:
+            if exit_if_failure:
                 self.remove_temporary_files()
                 sys.exit(1)
             else:
@@ -461,7 +461,7 @@ class config(metaclass=Singleton):
         except:
             print("Unexpected error: ")
             print(sys.exc_info())
-            if exit_if_failure == True:
+            if exit_if_failure:
                 self.remove_temporary_files()
                 sys.exit(1)
             else:
@@ -487,7 +487,7 @@ class config(metaclass=Singleton):
         logging.debug("Executing common_config.remove_temporary_files()")
 
         # Remove the kerberos ticket file
-        if self.kerberos_initiated == True:
+        if self.kerberos_initiated:
             try:
                 klist_command_list = ["kdestroy"]
                 klist_proc = subprocess.Popen(
@@ -511,7 +511,7 @@ class config(metaclass=Singleton):
         self, connection_alias: str, atlas_discovery_mode: bool = False
     ) -> bool:
         logging.debug("Executing common_config.check_time_window()")
-        if atlas_discovery_mode == False:
+        if not atlas_discovery_mode:
             logging.info(
                 "Checking if we are allowed to use this jdbc connection at this time"
             )
@@ -553,8 +553,8 @@ class config(metaclass=Singleton):
 
         passed_midnight = False
         if (
-            time_window_start != None
-            and time_window_stop != None
+            time_window_start is not None
+            and time_window_stop is not None
             and time_window_start > time_window_stop
         ):
             # This happens if we pass midnight
@@ -564,14 +564,14 @@ class config(metaclass=Singleton):
         logging.debug("timeWindowStart: %s", time_window_start)
         logging.debug("timeWindowStop: %s", time_window_stop)
 
-        if time_window_start == None and time_window_stop == None:
-            if atlas_discovery_mode == False:
+        if time_window_start is None and time_window_stop is None:
+            if not atlas_discovery_mode:
                 logging.info(
                     "SUCCESSFUL: This import is allowed to run at any time during the day."
                 )
             return True
-        elif time_window_start == None or time_window_stop == None:
-            if atlas_discovery_mode == False:
+        elif time_window_start is None or time_window_stop is None:
+            if not atlas_discovery_mode:
                 logging.error(
                     "Atleast one of the TimeWindow settings are NULL in the database. Only way to disable the Time Window"
                 )
@@ -585,7 +585,7 @@ class config(metaclass=Singleton):
             else:
                 return False
         elif time_window_start == time_window_stop:
-            if atlas_discovery_mode == False:
+            if not atlas_discovery_mode:
                 logging.error(
                     "The value in timewindow_start column is the same as the value in timewindow_stop."
                 )
@@ -600,7 +600,7 @@ class config(metaclass=Singleton):
             if current_time > time_window_start and current_time < time_window_stop:
                 allowed_time = True
 
-            if passed_midnight == True:
+            if passed_midnight:
                 # If we passed midnight, it means that we added one day to the stop time. But depending on what time it is, and when the
                 # window starts, we might be on the previous days window and should be allowed to run. So we need to test for that aswell
                 time_window_start = time_window_start.add(days=-1)
@@ -611,8 +611,8 @@ class config(metaclass=Singleton):
                 if current_time > time_window_start and current_time < time_window_stop:
                     allowed_time = True
 
-            if allowed_time == False:
-                if atlas_discovery_mode == False:
+            if not allowed_time:
+                if not atlas_discovery_mode:
                     logging.error(
                         "We are not allowed to run this import outside the configured Time Window"
                     )
@@ -632,7 +632,7 @@ class config(metaclass=Singleton):
                 else:
                     return False
             else:
-                if atlas_discovery_mode == False:
+                if not atlas_discovery_mode:
                     logging.info(
                         "SUCCESSFUL: There is a configured Time Window for this operation, and we are running inside that window."
                     )
@@ -781,7 +781,7 @@ class config(metaclass=Singleton):
 
         encrypted_str = self.crypto.encrypt(str_to_encrypt)
 
-        if encrypted_str != None and encrypted_str != "":
+        if encrypted_str is not None and encrypted_str != "":
             query = "update jdbc_connections set credentials = %s where dbalias = %s "
             logging.debug("Executing the following SQL: %s", query)
             self.mysql_cursor.execute(query, (encrypted_str, connection_alias))
@@ -841,7 +841,7 @@ class config(metaclass=Singleton):
         self.jdbc_servertype = None
 
         # Fetch data from jdbc_connection table
-        if jdbc_url != None and decrypt_credentials == False:
+        if jdbc_url != None and not decrypt_credentials:
             # This is required from RestAPI when looking up all connections and returning a full list including database types. No need to do the lookup here as well
             self.jdbc_url = jdbc_url
         else:
@@ -862,7 +862,7 @@ class config(metaclass=Singleton):
             public_key_file = row[3]
             self.jdbc_environment = row[4]
 
-        if decrypt_credentials == True and copy_slave == False:
+        if decrypt_credentials and not copy_slave:
             if jdbc_credentials is not None and jdbc_credentials.startswith(
                 "arn:aws:secretsmanager:"
             ):
@@ -915,7 +915,7 @@ class config(metaclass=Singleton):
 
                 credentials = self.crypto.decrypt(jdbc_credentials)
 
-            if credentials == None and exception_if_failure_to_decrypt == True:
+            if credentials == None and exception_if_failure_to_decrypt:
                 raise invalidConfiguration(
                     "Cant decrypt username and password. Check private/public key in config file"
                 )
@@ -967,7 +967,7 @@ class config(metaclass=Singleton):
             try:
                 self.jdbc_database = self.jdbc_url.split("database=")[1].split(";")[0]
             except:
-                if quiet == False:
+                if not quiet:
                     logging.error("Cant determine database based on jdbc_string")
                 exit_after_function = True
 
@@ -1041,7 +1041,7 @@ class config(metaclass=Singleton):
                     0
                 ]
             except:
-                if quiet == False:
+                if not quiet:
                     logging.error("Cant determine database based on jdbc_string")
                 exit_after_function = True
 
@@ -1062,7 +1062,7 @@ class config(metaclass=Singleton):
                 pattern = r"@ldap://([^:/]+):(\d+)/([^,]+),"
                 r = re.search(pattern, self.jdbc_url)
                 if r is None:
-                    if quiet == False:
+                    if not quiet:
                         logging.error(
                             "jdbc_string for ldap must be of the form jdbc:oracle:thin@ldap://<ldap_host>:<ldap_port>/<db>"
                         )
@@ -1071,14 +1071,14 @@ class config(metaclass=Singleton):
                 try:
                     self.jdbc_hostname = self.jdbc_url.split("(HOST=")[1].split(")")[0]
                 except:
-                    if quiet == False:
+                    if not quiet:
                         logging.error("Cant determine hostname based on jdbc_string")
                     exit_after_function = True
 
                 try:
                     self.jdbc_port = self.jdbc_url.split("(PORT=")[1].split(")")[0]
                 except:
-                    if quiet == False:
+                    if not quiet:
                         logging.error("Cant determine port based on jdbc_string")
                     exit_after_function = True
 
@@ -1098,7 +1098,7 @@ class config(metaclass=Singleton):
                     self.jdbc_oracle_sid == None
                     and self.jdbc_oracle_servicename == None
                 ):
-                    if quiet == False:
+                    if not quiet:
                         logging.error(
                             "Cant find either SID or SERVICE_NAME in Oracle URL"
                         )
@@ -1131,7 +1131,7 @@ class config(metaclass=Singleton):
                     self.jdbc_url[13:].split("/")[1].split(";")[0].split("?")[0]
                 )
             except:
-                if quiet == False:
+                if not quiet:
                     logging.error("Cant determine database based on jdbc_string")
                 exit_after_function = True
 
@@ -1160,7 +1160,7 @@ class config(metaclass=Singleton):
             try:
                 self.jdbc_database = self.jdbc_url[18:].split("/")[1].split(";")[0]
             except:
-                if quiet == False:
+                if not quiet:
                     logging.error("Cant determine database based on jdbc_string")
                 exit_after_function = True
 
@@ -1189,7 +1189,7 @@ class config(metaclass=Singleton):
                     0
                 ]
             except:
-                if quiet == False:
+                if not quiet:
                     logging.error("Cant determine database based on jdbc_string")
                 exit_after_function = True
 
@@ -1220,7 +1220,7 @@ class config(metaclass=Singleton):
                     self.jdbc_url[11:].split("/")[1].split(";")[0].split(":")[0]
                 )
             except:
-                if quiet == False:
+                if not quiet:
                     logging.error("Cant determine database based on jdbc_string")
                 exit_after_function = True
 
@@ -1274,7 +1274,7 @@ class config(metaclass=Singleton):
                     self.jdbc_url[13:].split("/")[1].split(";")[0].split(":")[0]
                 )
             except:
-                if quiet == False:
+                if not quiet:
                     logging.error("Cant determine database based on jdbc_string")
                 exit_after_function = True
 
@@ -1331,7 +1331,7 @@ class config(metaclass=Singleton):
                     self.jdbc_url[13:].split("/")[1].split(";")[0].split(":")[0]
                 )
             except:
-                if quiet == False:
+                if not quiet:
                     logging.error("Cant determine database based on jdbc_string")
                 exit_after_function = True
 
@@ -1352,7 +1352,7 @@ class config(metaclass=Singleton):
 
             database_pos = self.jdbc_url.split("?")[1].find("db")
             if database_pos == -1:
-                if quiet == False:
+                if not quiet:
                     logging.error("Cant determine database based on jdbc_string")
                 exit_after_function = True
             else:
@@ -1363,7 +1363,7 @@ class config(metaclass=Singleton):
                         .split("&")[0]
                     )
                 except:
-                    if quiet == False:
+                    if not quiet:
                         logging.error("Cant determine database based on jdbc_string")
                     exit_after_function = True
 
@@ -1404,11 +1404,11 @@ class config(metaclass=Singleton):
                     0
                 ]
                 if self.aws_s3_file_format != "parquet":
-                    if quiet == False:
+                    if not quiet:
                         logging.error("Only parquet files are supported for AWS S3")
                     exit_after_function = True
             except:
-                if quiet == False:
+                if not quiet:
                     logging.error(
                         "For AWS S3, you need to specify what file format to use"
                     )
@@ -1417,7 +1417,7 @@ class config(metaclass=Singleton):
             try:
                 self.aws_s3_region = self.jdbc_url.split(";region=")[1].split(";")[0]
             except:
-                if quiet == False:
+                if not quiet:
                     logging.error(
                         "For AWS S3, you need to specify what AWS region to work with in the jdbc_url string"
                     )
@@ -1457,12 +1457,12 @@ class config(metaclass=Singleton):
                     self.jdbc_url[21:].split("/")[1].split(";")[0].split(":")[0]
                 )
             except:
-                if quiet == False:
+                if not quiet:
                     logging.error("Cant determine database based on jdbc_string")
                 exit_after_function = True
 
             if "delimident=" not in self.jdbc_url.lower():
-                if quiet == False:
+                if not quiet:
                     logging.error(
                         "Informix requires DELIMIDENT=Y setting on the JDBC connection string"
                     )
@@ -1501,9 +1501,8 @@ class config(metaclass=Singleton):
             self.impala_address = configuration.get(
                 "Impala", "address", exit_on_error=False
             )
-            if (
-                self.impala_driver != None
-                and self.impala_driver.startswith("/path/to/") == False
+            if self.impala_driver != None and not self.impala_driver.startswith(
+                "/path/to/"
             ):
                 self.jdbc_classpath += f":{self.impala_driver}"
                 self.jdbc_classpath_for_python = self.jdbc_classpath
@@ -1512,11 +1511,11 @@ class config(metaclass=Singleton):
 
         # Check to make sure that we have a supported JDBC string
         if self.jdbc_servertype == "":
-            if quiet == False:
+            if not quiet:
                 logging.error("JDBC Connection '%s' is not supported.", self.jdbc_url)
             exit_after_function = True
 
-        if copy_slave == True:
+        if copy_slave:
             self.jdbc_hostname = None
             self.jdbc_port = None
             self.jdbc_database = None
@@ -1567,14 +1566,14 @@ class config(metaclass=Singleton):
         logging.debug("    self.aws_s3_region = %s", self.aws_s3_region)
         logging.debug("Executing common_config.lookup_connection_alias() - Finished")
 
-        if exit_after_function == True:
+        if exit_after_function:
             raise invalidConfiguration
 
     def get_jdbc_table_definition(
         self, source_schema: str, source_table: str, print_info: bool = True
     ) -> None:
         logging.debug("Executing common_config.get_jdbc_table_definition()")
-        if print_info == True:
+        if print_info:
             logging.info("Reading SQL table definitions from source database")
         self.source_schema = source_schema
         self.source_table = source_table
@@ -1623,7 +1622,7 @@ class config(metaclass=Singleton):
         log = logging.getLogger(logger)
         log.debug("Disconnect from JDBC database")
 
-        if self.db_mongodb == True:
+        if self.db_mongodb:
             # This is a MongoDB connection. Lets rediret to disconnectFromMongo instead
             return self.disconnect_from_mongo()
 
@@ -1693,11 +1692,11 @@ class config(metaclass=Singleton):
     ) -> bool:
         log = logging.getLogger(logger)
 
-        if self.db_mongodb == True:
+        if self.db_mongodb:
             # This is a MongoDB connection. Lets rediret to connectToMongo instead
             return self.connect_to_mongo(exit_if_failure=exit_if_failure, logger=logger)
 
-        if all_jar_files == True:
+        if all_jar_files:
             query = "select classpath from jdbc_connections_drivers"
             log.debug("Executing the following SQL: %s", query)
             self.mysql_cursor.execute(
@@ -1736,23 +1735,23 @@ class config(metaclass=Singleton):
                 )
                 self.jdbc_cursor = self.jdbc_conn.cursor()
             except TypeError as exception:
-                if print_error == True:
+                if print_error:
                     log.error(
                         "Connection to database over JDBC failed with the following error:"
                     )
                     log.error(str(exception))
-                if exit_if_failure == True:
+                if exit_if_failure:
                     self.remove_temporary_files()
                     sys.exit(1)
                 else:
                     return False
             except Exception as exception:
-                if print_error == True:
+                if print_error:
                     log.error(
                         "Connection to database over JDBC failed with the following error:"
                     )
                     log.error(exception.message())
-                if exit_if_failure == True:
+                if exit_if_failure:
                     self.remove_temporary_files()
                     sys.exit(1)
                 else:
@@ -1768,7 +1767,7 @@ class config(metaclass=Singleton):
         self.connect_to_jdbc()
         query = None
 
-        if self.db_mssql == True:
+        if self.db_mssql:
             query = "select max(%s) from [%s].[%s].[%s]" % (
                 column,
                 self.jdbc_database,
@@ -1776,52 +1775,52 @@ class config(metaclass=Singleton):
                 source_table,
             )
 
-        if self.db_oracle == True:
+        if self.db_oracle:
             query = 'select max(%s) from "%s"."%s"' % (
                 column,
                 source_schema.upper(),
                 source_table.upper(),
             )
 
-        if self.db_mysql == True:
+        if self.db_mysql:
             query = "select max(%s) from %s" % (column, source_table)
 
-        if self.db_postgresql == True:
+        if self.db_postgresql:
             query = 'select max(%s) from "%s"."%s"' % (
                 column,
                 source_schema.lower(),
                 source_table.lower(),
             )
 
-        if self.db_progress == True:
+        if self.db_progress:
             query = 'select max(%s) from "%s"."%s"' % (
                 column,
                 source_schema,
                 source_table,
             )
 
-        if self.db_db2udb == True:
+        if self.db_db2udb:
             query = 'select max(%s) from "%s"."%s"' % (
                 column,
                 source_schema,
                 source_table,
             )
 
-        if self.db_db2as400 == True:
+        if self.db_db2as400:
             query = 'select max(%s) from "%s"."%s"' % (
                 column,
                 source_schema,
                 source_table,
             )
 
-        if self.db_snowflake == True:
+        if self.db_snowflake:
             query = 'select max("%s") from "%s"."%s"' % (
                 column,
                 source_schema,
                 source_table,
             )
 
-        if self.db_informix == True:
+        if self.db_informix:
             query = 'select max("%s") from "%s"."%s"' % (
                 column,
                 source_schema,
@@ -1851,25 +1850,25 @@ class config(metaclass=Singleton):
         self.connect_to_jdbc()
         query = None
 
-        if self.db_oracle == True:
+        if self.db_oracle:
             query = 'truncate table "%s"."%s"' % (schema.upper(), table.upper())
 
-        if self.db_mssql == True:
+        if self.db_mssql:
             query = "truncate table %s.%s" % (schema, table)
 
-        if self.db_db2udb == True:
+        if self.db_db2udb:
             query = 'truncate table "%s"."%s" immediate' % (
                 schema.upper(),
                 table.upper(),
             )
 
-        if self.db_mysql == True:
+        if self.db_mysql:
             query = "truncate table %s" % (table)
 
-        if self.db_postgresql == True:
+        if self.db_postgresql:
             query = "truncate table %s.%s" % (schema.lower(), table.lower())
 
-        if self.db_snowflake == True:
+        if self.db_snowflake:
             query = 'truncate table "%s"."%s"' % (schema, table)
 
         if query == None:
@@ -1888,37 +1887,37 @@ class config(metaclass=Singleton):
         self.connect_to_jdbc()
         query = None
 
-        if self.db_oracle == True:
+        if self.db_oracle:
             query = (
                 "select count(owner) from all_tables where owner = '%s' and table_name = '%s'"
                 % (schema.upper(), table.upper())
             )
 
-        if self.db_mssql == True:
+        if self.db_mssql:
             query = (
                 "select count(table_name) from INFORMATION_SCHEMA.COLUMNS where table_schema = '%s' and table_name = '%s'"
                 % (schema, table)
             )
 
-        if self.db_db2udb == True:
+        if self.db_db2udb:
             query = (
                 "select count(name) from SYSIBM.SYSTABLES where upper(creator) = '%s' and upper(name) = '%s'"
                 % (schema.upper(), table.upper())
             )
 
-        if self.db_mysql == True:
+        if self.db_mysql:
             query = (
                 "select count(table_name) from information_schema.tables where table_schema = '%s' and table_name = '%s'"
                 % (self.jdbc_database, table)
             )
 
-        if self.db_postgresql == True:
+        if self.db_postgresql:
             query = (
                 "select count(table_name) from information_schema.tables where table_catalog = '%s' and table_schema = '%s' and table_name = '%s'"
                 % (self.jdbc_database, schema.lower(), table.lower())
             )
 
-        if self.db_snowflake == True:
+        if self.db_snowflake:
             query = (
                 "select count(table_name) from information_schema.tables where table_catalog = '%s' and table_schema = '%s' and table_name = '%s'"
                 % (self.jdbc_database, schema, table)
@@ -2011,47 +2010,47 @@ class config(metaclass=Singleton):
         self.connect_to_jdbc()
         query = None
 
-        if self.db_mssql == True:
+        if self.db_mssql:
             query = "select count_big(1) from [%s].[%s].[%s]" % (
                 self.jdbc_database,
                 source_schema,
                 source_table,
             )
 
-        if self.db_oracle == True:
+        if self.db_oracle:
             query = 'select count(1) from "%s"."%s"' % (
                 source_schema.upper(),
                 source_table.upper(),
             )
 
-        if self.db_mysql == True:
+        if self.db_mysql:
             query = "select count(1) from %s" % source_table
 
-        if self.db_postgresql == True:
+        if self.db_postgresql:
             query = 'select count(1) from "%s"."%s"' % (
                 source_schema.lower(),
                 source_table.lower(),
             )
 
-        if self.db_progress == True:
+        if self.db_progress:
             query = 'select count(1) from "%s"."%s"' % (source_schema, source_table)
 
-        if self.db_db2udb == True:
+        if self.db_db2udb:
             query = 'select cast(count(1) as bigint) from "%s"."%s"' % (
                 source_schema,
                 source_table,
             )
 
-        if self.db_db2as400 == True:
+        if self.db_db2as400:
             query = 'select count(1) from "%s"."%s"' % (source_schema, source_table)
 
-        if self.db_snowflake == True:
+        if self.db_snowflake:
             query = 'select count(1) from "%s"."%s"' % (source_schema, source_table)
 
-        if self.db_informix == True:
+        if self.db_informix:
             query = "select count(1) from %s.%s" % (source_schema, source_table)
 
-        if self.db_sqlanywhere == True:
+        if self.db_sqlanywhere:
             query = "select count(1) from %s.%s" % (source_schema, source_table)
 
         if where_statement != None and where_statement != "":
@@ -2507,7 +2506,7 @@ class config(metaclass=Singleton):
         ):
             value_column = "valueStr"
         else:
-            if ignore_error_output == False:
+            if not ignore_error_output:
                 # This is needed from the REST interface, as it's parsing everything in the database. And entries may exists that isnt a valid config anymore
                 logging.error("There is no configuration with the name '%s'", key)
                 self.remove_temporary_files()
@@ -2551,7 +2550,7 @@ class config(metaclass=Singleton):
                     self.remove_temporary_files()
                     sys.exit(1)
 
-            if bool_value == True:
+            if bool_value:
                 if return_value == 1:
                     return_value = True
                 elif return_value == 0:
@@ -2588,7 +2587,7 @@ class config(metaclass=Singleton):
                 f"mongodb://{self.jdbc_hostname}:{self.jdbc_port}/"
             )
             self.mongo_db = self.mongo_client[self.jdbc_database.strip()]
-            if self.mongo_auth_source == None:
+            if self.mongo_auth_source is None:
                 self.mongo_db.authenticate(self.jdbc_username, self.jdbc_password)
             else:
                 self.mongo_db.authenticate(
@@ -2603,7 +2602,7 @@ class config(metaclass=Singleton):
                 self.jdbc_hostname,
                 self.jdbc_port,
             )
-            if exit_if_failure == True:
+            if exit_if_failure:
                 self.remove_temporary_files()
                 sys.exit(1)
             else:
@@ -2721,7 +2720,7 @@ class config(metaclass=Singleton):
         seed_file = row[0]
 
         if seed_file != None:
-            if os.path.exists(seed_file) == False:
+            if not os.path.exists(seed_file):
                 logging.error(
                     "The connection have a seed file configured, but the tool is unable to find that file."
                 )
@@ -2843,7 +2842,7 @@ class config(metaclass=Singleton):
                 self.mysql_conn.commit()
 
         else:
-            if self.yarn_application_start == None:
+            if self.yarn_application_start is None:
                 # This is just a protection-function and should under normal operations never happen as a query must start before we get any data up update about.
                 return
 

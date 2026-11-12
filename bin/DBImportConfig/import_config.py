@@ -280,7 +280,7 @@ class config(metaclass=Singleton):
         json_data["status"] = "started"
         json_data["database"] = self.hive_db
         json_data["table"] = self.hive_table
-        if self.import_with_history_table == True:
+        if self.import_with_history_table:
             json_data["history_database"] = self.hive_history_db
             json_data["history_table"] = self.hive_history_table
         else:
@@ -298,7 +298,7 @@ class config(metaclass=Singleton):
 
         if self.post_data_to_kafka == True:
             result = self.send_statistics.publish_kafka_data(json.dumps(json_data))
-            if result == False:
+            if not result:
                 logging.warning("Kafka publish failed! No start message posted")
 
         if self.post_data_to_rest == True:
@@ -308,7 +308,7 @@ class config(metaclass=Singleton):
 
         if self.post_data_to_aws_sns == True:
             result = self.send_statistics.send_aws_sns_data(json.dumps(json_data))
-            if result == False:
+            if not result:
                 logging.warning("AWS SNS publish failed! No start message posted")
 
         logging.debug("Executing import_config.send_start_json() - Finished")
@@ -332,7 +332,7 @@ class config(metaclass=Singleton):
 
     def convert_stage_statistics_to_json(self) -> None:
 
-        if self.import_with_history_table == True:
+        if self.import_with_history_table:
             history_db_for_json = self.hive_history_db
             history_table_for_json = self.hive_history_table
         else:
@@ -367,7 +367,7 @@ class config(metaclass=Singleton):
 
         # If this is called before getImportConfig is called, we dont know if it's a copy table or not. So we need to set this to false
         # This happens during table discovery for ./manage --addImportTable
-        if self.copy_slave == None:
+        if self.copy_slave is None:
             self.copy_slave = False
 
         self.common_config.lookup_connection_alias(
@@ -725,7 +725,7 @@ class config(metaclass=Singleton):
             ):
                 valid_combination = True
 
-            if valid_combination == False:
+            if not valid_combination:
                 raise invalidConfiguration(
                     "The combination of '%s' and '%s' as import methods is not valid. Please check documentation for supported combinations"
                     % (self.import_phase_type, self.etl_phase_type)
@@ -887,7 +887,7 @@ class config(metaclass=Singleton):
             self.copy_phase_description = "No cluster copy"
             self.etl_phase_description = "Merge"
 
-            if self.soft_delete_during_merge == True:
+            if self.soft_delete_during_merge:
                 raise invalidConfiguration(
                     "Oracle Flashback imports doesnt support 'Soft delete during Merge'. Please check configuration"
                 )
@@ -909,7 +909,7 @@ class config(metaclass=Singleton):
             self.copy_phase_description = "No cluster copy"
             self.etl_phase_description = "Merge History Audit"
 
-            if self.soft_delete_during_merge == True:
+            if self.soft_delete_during_merge:
                 raise invalidConfiguration(
                     "Oracle Flashback imports doesnt support 'Soft delete during Merge'. Please check configuration"
                 )
@@ -946,7 +946,7 @@ class config(metaclass=Singleton):
             self.etl_phase_description = "Merge History Audit"
 
         # If this is a slave table, we will disable the import phase as thats already done on the Master instance
-        if self.copy_slave == True:
+        if self.copy_slave:
             self.import_phase_description = "No Import phase (slave table)"
 
         # Check ETL engine
@@ -971,7 +971,7 @@ class config(metaclass=Singleton):
         # Check if import type is supported with Spark as the ETL engine
         if (
             self.etl_engine == constant.ETL_ENGINE_SPARK
-            and etl_engine_spark_supported == False
+            and not etl_engine_spark_supported
         ):
             raise invalidConfiguration(
                 "This import type does not support Spark as the ETL engine. Please change to Hive"
@@ -997,7 +997,7 @@ class config(metaclass=Singleton):
 
         # Check to see that we have a valid import type
         # This will only happen if the old 'import_type' column is used. For the import_phase_type we already check if we have a valid combo
-        if self.import_phase == None or self.etl_phase == None:
+        if self.import_phase is None or self.etl_phase is None:
             raise invalidConfiguration(
                 "Import type '%s' is not a valid type. Please check configuration"
                 % (self.import_type)
@@ -1005,7 +1005,7 @@ class config(metaclass=Singleton):
 
         # Check for MSSQL Change Tracking
         if self.import_phase == constant.IMPORT_PHASE_MSSQL_CHANGE_TRACKING:
-            if self.soft_delete_during_merge == True:
+            if self.soft_delete_during_merge:
                 raise invalidConfiguration(
                     "Microsoft SQL Change Tracking imports doesnt support 'Soft delete during Merge'. Please check configuration"
                 )
@@ -1120,7 +1120,7 @@ class config(metaclass=Singleton):
             self.import_phase == constant.IMPORT_PHASE_FULL
             and self.etl_phase == constant.ETL_PHASE_INSERT
         ):
-            if self.create_datalake_import_column == False:
+            if not self.create_datalake_import_column:
                 raise invalidConfiguration(
                     "Full Insert imports requires 'create_datalake_import' to be set in jdbc_connections table"
                 )
@@ -1788,7 +1788,7 @@ class config(metaclass=Singleton):
                 column_type = re.sub(
                     r"^decimal\(3,4\)", "decimal(8,4)", column_type
                 )  # Very stange Oracle type number(3,4), how can pricision be smaller than scale?
-                if re.search(r"^decimal\([0-9][0-9]\)$", column_type) != None:
+                if re.search(r"^decimal\([0-9][0-9]\)$", column_type) is not None:
                     column_type = re.sub(r"\)$", ",0)", column_type)
 
             if self.common_config.db_mysql == True:
@@ -1946,7 +1946,7 @@ class config(metaclass=Singleton):
                 or column_type.startswith("varchar(") == True
             ):
                 column_force_string = self.get_column_force_string(column_name)
-                if column_force_string == True:
+                if column_force_string:
                     column_type = "string"
 
             if self.etl_engine == constant.ETL_ENGINE_SPARK:
@@ -1966,12 +1966,12 @@ class config(metaclass=Singleton):
                 if column_type in ("tinyint", "smallint"):
                     column_type = "int"
 
-            if include_column_in_import == True:
+            if include_column_in_import:
                 if sqoop_column_type_override != None:
                     self.sqoop_mapcolumnjava.append(
                         column_name + "=" + sqoop_column_type_override
                     )
-                elif sqoop_column_type != None:
+                elif sqoop_column_type is not None:
                     self.sqoop_mapcolumnjava.append(
                         column_name + "=" + sqoop_column_type
                     )
@@ -2021,11 +2021,8 @@ class config(metaclass=Singleton):
                             + quote
                         )
 
-                    if (
-                        self.is_column_name_reserved_in_sqoop(
-                            column_name_parquet_supported
-                        )
-                        == True
+                    if self.is_column_name_reserved_in_sqoop(
+                        column_name_parquet_supported
                     ):
                         column_name_reserved = True
                         logging.warning(
@@ -2037,10 +2034,7 @@ class config(metaclass=Singleton):
                 else:
                     self.sql_generated_sqoop_query += quote + source_column_name + quote
 
-                    if (
-                        self.is_column_name_reserved_in_sqoop(source_column_name)
-                        == True
-                    ):
+                    if self.is_column_name_reserved_in_sqoop(source_column_name):
                         column_name_reserved = True
                         logging.warning(
                             "The column '%s' is a reserved column namn in Sqoop. Please rename the column in 'column_name_override'"
@@ -2131,7 +2125,7 @@ class config(metaclass=Singleton):
         # the columns with columnNameReserved = True and saves the data. After the save we check if it's equal to True
         # and raise an exception. This way, the user have a chance to fix the problem
 
-        if column_name_reserved == True:
+        if column_name_reserved:
             raise invalidConfiguration(
                 "There are columns with reserved words. DBImport cant continue until that is handled"
             )
@@ -2192,7 +2186,7 @@ class config(metaclass=Singleton):
             .replace('"', "")
         )
 
-        if column_name.startswith("_") == True:
+        if column_name.startswith("_"):
             # 			column_name = column_name[1:]
             column_name = f"underscore{column_name}"
 
@@ -2554,7 +2548,7 @@ class config(metaclass=Singleton):
         if self.generated_pk_columns == "":
             self.generated_pk_columns = None
 
-        if self.sqoop_use_generated_sql == True:
+        if self.sqoop_use_generated_sql:
             sqoop_use_generated_sql_local = 1
         else:
             sqoop_use_generated_sql_local = 0
@@ -2640,7 +2634,7 @@ class config(metaclass=Singleton):
             return
 
         hdfs_blocksize = int(self.common_config.get_config_value(key="hdfs_blocksize"))
-        if hdfs_blocksize == None or hdfs_blocksize == 0:
+        if hdfs_blocksize is None or hdfs_blocksize == 0:
             logging.error(
                 "The setting 'hdfs_blocksize' in configuration table is incorrect. Please enter a correct size"
             )
@@ -2745,7 +2739,7 @@ class config(metaclass=Singleton):
 
         where_statement = None
 
-        if self.import_is_incremental == False:
+        if self.import_is_incremental is False:
             logging.debug(
                 "Executing import_config.get_incr_where_statement() - Exited (Not an incremental import)"
             )
@@ -2753,7 +2747,7 @@ class config(metaclass=Singleton):
 
         if self.import_phase == constant.IMPORT_PHASE_ORACLE_FLASHBACK:
             # This is where we handle the specific where statement for Oracle FlashBack Imports
-            if where_for_sqoop == True:
+            if where_for_sqoop:
                 max_scn = int(
                     self.common_config.execute_jdbc_query(
                         "SELECT CURRENT_SCN FROM V$DATABASE"
@@ -2790,7 +2784,7 @@ class config(metaclass=Singleton):
             if self.incr_maxvalue == None:
                 # There is no MaxValue stored form previous imports. That means we need to do a full import up to SCN number
                 # It also means that this will only be executed by sqoop, as after sqoop there will be a maxvalue present
-                if where_for_source_table == True or where_for_sqoop == True:
+                if where_for_source_table or where_for_sqoop:
                     try:
                         self.sqoop_incr_minvalue_pending = int(
                             self.common_config.execute_jdbc_query(
@@ -2814,12 +2808,12 @@ class config(metaclass=Singleton):
                     where_statement += "WHERE VERSIONS_ENDTIME IS NULL AND (VERSIONS_OPERATION != 'D' OR VERSIONS_OPERATION IS NULL)"
 
             else:
-                if where_for_source_table == True or where_for_sqoop == True:
+                if where_for_source_table or where_for_sqoop:
                     where_statement = "VERSIONS BETWEEN SCN %s AND %s " % (
                         self.sqoop_incr_minvalue_pending,
                         self.sqoop_incr_maxvalue_pending,
                     )
-                    if force_incr == True or where_for_sqoop == True:
+                    if force_incr or where_for_sqoop:
                         where_statement += (
                             "WHERE VERSIONS_STARTSCN > %s AND VERSIONS_STARTSCN  <= %s AND VERSIONS_OPERATION IS NOT NULL AND VERSIONS_ENDTIME IS NULL "
                             % (
@@ -2836,17 +2830,14 @@ class config(metaclass=Singleton):
                             self.sqoop_last_execution_timestamp
                         )
 
-            if (
-                self.get_sql_where_addition() != None
-                and ignore_sql_where_addition == False
-            ):
+            if self.get_sql_where_addition() != None and not ignore_sql_where_addition:
                 if where_statement != None:
                     where_statement += "AND %s " % (self.get_sql_where_addition())
                 else:
                     where_statement = "%s " % (self.get_sql_where_addition())
 
         else:
-            if where_for_sqoop == True:
+            if where_for_sqoop:
                 # If it is the where for sqoop, we need to get the max value for the configured column and save that into the config database
 
                 if incremental_max != None:
@@ -2918,14 +2909,14 @@ class config(metaclass=Singleton):
 
             if self.sqoop_incr_mode == "lastmodified":
                 if self.common_config.jdbc_servertype == constant.MSSQL and (
-                    where_for_source_table == True or where_for_sqoop == True
+                    where_for_source_table or where_for_sqoop
                 ):
                     where_statement = "%s <= CONVERT(datetime, '%s', 121) " % (
                         self.sqoop_incr_column,
                         self.sqoop_incr_maxvalue_pending,
                     )
                 elif self.common_config.jdbc_servertype == constant.MYSQL and (
-                    where_for_source_table == True or where_for_sqoop == True
+                    where_for_source_table or where_for_sqoop
                 ):
                     where_statement = (
                         "%s <= STR_TO_DATE('%s', "
@@ -2933,13 +2924,13 @@ class config(metaclass=Singleton):
                         + "'%Y-%m-%d %H:%i:%s') "
                     )
                 elif self.common_config.jdbc_servertype == constant.SNOWFLAKE and (
-                    where_for_source_table == True or where_for_sqoop == True
+                    where_for_source_table or where_for_sqoop
                 ):
                     where_statement = (
                         "\"%s\" <= TO_TIMESTAMP('%s', 'yyyy-mm-dd hh24:mi:ss.ff6') "
                         % (self.sqoop_incr_column, self.sqoop_incr_maxvalue_pending)
                     )
-                elif where_for_source_table == True or where_for_sqoop == True:
+                elif where_for_source_table or where_for_sqoop:
                     if self.sqoop_incr_maxvalue_pending != None:
                         where_statement = (
                             "%s <= TO_TIMESTAMP('%s', 'YYYY-MM-DD HH24:MI:SS.FF') "
@@ -2951,7 +2942,7 @@ class config(metaclass=Singleton):
                         self.sqoop_incr_maxvalue_pending,
                     )
             else:
-                if where_for_source_table == True or where_for_sqoop == True:
+                if where_for_source_table or where_for_sqoop:
                     where_statement = "%s <= %s " % (
                         self.sqoop_incr_column,
                         self.sqoop_incr_maxvalue_pending,
@@ -2964,27 +2955,24 @@ class config(metaclass=Singleton):
 
             where_statement_saved = where_statement
 
-            if (
-                self.get_sql_where_addition() != None
-                and ignore_sql_where_addition == False
-            ):
+            if self.get_sql_where_addition() != None and not ignore_sql_where_addition:
                 where_statement += "and %s " % (self.get_sql_where_addition())
 
             if (
                 self.sqoop_incr_validation_method == "incr"
-                or force_incr == True
-                or where_for_sqoop == True
+                or force_incr
+                or where_for_sqoop
             ) and self.sqoop_incr_lastvalue != None:
                 if self.sqoop_incr_mode == "lastmodified":
                     if self.common_config.jdbc_servertype == constant.MSSQL and (
-                        where_for_source_table == True or where_for_sqoop == True
+                        where_for_source_table or where_for_sqoop
                     ):
                         where_statement += "and %s > CONVERT(datetime, '%s', 121) " % (
                             self.sqoop_incr_column,
                             self.sqoop_incr_lastvalue,
                         )
                     elif self.common_config.jdbc_servertype == constant.MYSQL and (
-                        where_for_source_table == True or where_for_sqoop == True
+                        where_for_source_table or where_for_sqoop
                     ):
                         where_statement += (
                             "and %s > STR_TO_DATE('%s', "
@@ -2992,13 +2980,13 @@ class config(metaclass=Singleton):
                             + "'%Y-%m-%d %H:%i:%s') "
                         )
                     elif self.common_config.jdbc_servertype == constant.SNOWFLAKE and (
-                        where_for_source_table == True or where_for_sqoop == True
+                        where_for_source_table or where_for_sqoop
                     ):
                         where_statement += (
                             "and \"%s\" > TO_TIMESTAMP('%s', 'yyyy-mm-dd hh24:mi:ss.ff6') "
                             % (self.sqoop_incr_column, self.sqoop_incr_lastvalue)
                         )
-                    elif where_for_source_table == True or where_for_sqoop == True:
+                    elif where_for_source_table or where_for_sqoop:
                         where_statement += (
                             "and %s > TO_TIMESTAMP('%s', 'YYYY-MM-DD HH24:MI:SS.FF') "
                             % (self.sqoop_incr_column, self.sqoop_incr_lastvalue)
@@ -3009,7 +2997,7 @@ class config(metaclass=Singleton):
                             self.sqoop_incr_lastvalue,
                         )
                 else:
-                    if where_for_source_table == True or where_for_sqoop == True:
+                    if where_for_source_table or where_for_sqoop:
                         where_statement += "and %s > %s " % (
                             self.sqoop_incr_column,
                             self.sqoop_incr_lastvalue,
@@ -3021,10 +3009,7 @@ class config(metaclass=Singleton):
                         )
 
             logging.debug("whereStatement = %s", where_statement)
-            if (
-                where_statement_saved == where_statement
-                and ignore_if_only_incr_max == True
-            ):
+            if where_statement_saved == where_statement and ignore_if_only_incr_max:
                 # We have only added the MAX value to there WHERE statement and have a setting to ignore it if that is the only value
                 where_statement = None
 
@@ -3085,7 +3070,7 @@ class config(metaclass=Singleton):
         where_statement = None
 
         if (
-            self.import_is_incremental == True
+            self.import_is_incremental
             and self.import_phase != constant.IMPORT_PHASE_MSSQL_CHANGE_TRACKING
         ):
             # MSSQL Change Tracking only supports full incremental validation
@@ -3195,7 +3180,7 @@ class config(metaclass=Singleton):
         logging.debug(
             "Executing import_config.save_custom_sql_validation_source_value()"
         )
-        if print_info == True:
+        if print_info:
             logging.info(
                 "Saving the custom SQL validation data from Source Table to the configuration database"
             )
@@ -3214,7 +3199,7 @@ class config(metaclass=Singleton):
         self, json_value: str, print_info: bool = True
     ) -> None:
         logging.debug("Executing import_config.save_custom_sql_validation_hive_value()")
-        if print_info == True:
+        if print_info:
             logging.info(
                 "Saving the custom SQL validation data from Hive Table to the configuration database"
             )
@@ -3233,7 +3218,7 @@ class config(metaclass=Singleton):
         self, row_count: int, incr: bool = False, print_info: bool = True
     ) -> None:
         logging.debug("Executing import_config.save_source_table_row_count()")
-        if print_info == True:
+        if print_info:
             logging.info(
                 "Saving the number of rows in the Source Table to the configuration database"
             )
@@ -3344,7 +3329,7 @@ class config(metaclass=Singleton):
             logging.info(
                 "Saving the imported row count as the number of rows in the source system."
             )
-            if self.import_is_incremental == True:
+            if self.import_is_incremental:
                 query += "  ,source_rowcount = NULL "
                 query += "  ,source_rowcount_incr = %s "
             else:
@@ -3503,7 +3488,7 @@ class config(metaclass=Singleton):
                 spark_query = "select "
             else:
                 spark_query += ", "
-            if source_table_as_name == None:
+            if source_table_as_name is None:
                 if row["source_name"] != row["name"]:
                     spark_query += (
                         quote
@@ -3548,7 +3533,7 @@ class config(metaclass=Singleton):
                 schema=self.source_schema, table=self.source_table
             )
         )
-        if source_table_as_name != None:
+        if source_table_as_name is not None:
             spark_query += " as %s" % (source_table_as_name)
 
         logging.debug(
@@ -3578,7 +3563,7 @@ class config(metaclass=Singleton):
         query += "join import_columns c on t.table_id = c.table_id "
         query += "where t.table_id = %s and t.last_update_from_source = c.last_update_from_source "
 
-        if include_all_columns == False:
+        if not include_all_columns:
             query += " and c.include_in_import = 1 "
 
         if restrict_columns_list != []:
@@ -3648,7 +3633,7 @@ class config(metaclass=Singleton):
                 "${MAX_VALUE}", str(self.sqoop_incr_maxvalue_pending)
             )
 
-        if print_custom_sql == True and self.print_sql_where_addition == True:
+        if print_custom_sql and self.print_sql_where_addition:
             logging.info(
                 "Values have been replaced in the SQL where addition. New value is:"
             )
@@ -3729,10 +3714,10 @@ class config(metaclass=Singleton):
         logging.debug("incremental = %s", incremental)
         return_value = None
 
-        if self.validate_import == True:
+        if self.validate_import:
             # Reading the saved number from the configurationdatabase
-            if validate_sqoop == False:
-                if self.import_is_incremental == False:
+            if not validate_sqoop:
+                if self.import_is_incremental is False:
                     logging.debug(
                         "validateSqoop == False & self.import_is_incremental == False"
                     )
@@ -3744,9 +3729,7 @@ class config(metaclass=Singleton):
                         validate_text_target = "Target table"
                     validate_text_source = "Source table"
                     validate_text = validate_text_target
-                elif (
-                    self.sqoop_incr_validation_method == "full" and incremental == False
-                ):
+                elif self.sqoop_incr_validation_method == "full" and not incremental:
                     logging.debug(
                         "validateSqoop == False & self.sqoop_incr_validation_method == 'full' and incremental == False"
                     )
@@ -3765,7 +3748,7 @@ class config(metaclass=Singleton):
                     validate_text_source = "Source table (incr)"
                     validate_text = "Hive table"
             else:
-                if self.import_is_incremental == False:
+                if self.import_is_incremental is False:
                     logging.debug(
                         "validateSqoop == True & self.import_is_incremental == False"
                     )
@@ -3792,7 +3775,7 @@ class config(metaclass=Singleton):
 
             row = self.mysql_cursor01.fetchone()
             source_rowcount = row[0]
-            if validate_sqoop == False:
+            if not validate_sqoop:
                 target_rowcount = row[1]
             else:
                 target_rowcount = self.sqoop_last_rows
@@ -3900,7 +3883,7 @@ class config(metaclass=Singleton):
         if (
             self.pk_column_override != None
             and self.pk_column_override.strip() != ""
-            and pk_for_merge == False
+            and not pk_for_merge
         ):
             logging.debug("Executing import_config.get_pk_columns() - Finished")
             self.pk_column_override = re.sub(
@@ -3912,7 +3895,7 @@ class config(metaclass=Singleton):
         if (
             self.pk_column_override_mergeonly != None
             and self.pk_column_override_mergeonly.strip() != ""
-            and pk_for_merge == True
+            and pk_for_merge
         ):
             logging.debug("Executing import_config.get_pk_columns() - Finished")
             self.pk_column_override_mergeonly = re.sub(
@@ -3926,7 +3909,7 @@ class config(metaclass=Singleton):
         elif (
             self.pk_column_override != None
             and self.pk_column_override.strip() != ""
-            and pk_for_merge == True
+            and pk_for_merge
         ):
             logging.debug("Executing import_config.get_pk_columns() - Finished")
             self.pk_column_override = re.sub(
@@ -3951,7 +3934,7 @@ class config(metaclass=Singleton):
             else:
                 return_value += "," + str(row[0])
 
-            if convert_to_lower == True:
+            if convert_to_lower:
                 return_value = return_value.lower()
 
         return return_value
@@ -4104,7 +4087,7 @@ class config(metaclass=Singleton):
             self.split_by_column != None
             and self.split_by_column.strip() != ""
             and "split-by" in self.sqoop_options.lower()
-            and self.split_added_to_sqoop_options == False
+            and not self.split_added_to_sqoop_options
         ):
             raise invalidConfiguration(
                 "Specifying both a '--split-by' in sqoop_options column and a value in 'split_by_column' is not supported. Please remove the '--split-by' statement in sqoop_options and rerun the import."
@@ -4125,7 +4108,7 @@ class config(metaclass=Singleton):
         elif (
             "split-by" in self.sqoop_options.lower()
             and self.effective_split_by_column == ""
-            and self.split_added_to_sqoop_options == False
+            and not self.split_added_to_sqoop_options
         ):
             # Try to read the column from the --split-by config in sqoop_options
             for id, value in enumerate(self.sqoop_options.split(" ")):
@@ -4218,13 +4201,13 @@ class config(metaclass=Singleton):
         min_value = min_max_values.iloc[0].values[0]
         max_value = min_max_values.iloc[0].values[1]
 
-        if isinstance(min_value, np.float64) == True:
+        if isinstance(min_value, np.float64):
             if min_value < 0 and max_value > 0:
                 min_value = np.int64(min_value) - 1
             else:
                 min_value = np.int64(min_value)
 
-        if isinstance(max_value, np.float64) == True:
+        if isinstance(max_value, np.float64):
             if max_value < 0:
                 max_value = np.int64(max_value) - 1
             else:
@@ -4433,7 +4416,7 @@ class config(metaclass=Singleton):
 
             first_row = True
             for pk_column in self.get_pk_columns().split(","):
-                if first_row == True:
+                if first_row:
                     select_query += "   S.%s = G.%s" % (pk_column, pk_column)
                     first_row = False
                 else:

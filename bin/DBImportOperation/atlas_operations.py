@@ -154,7 +154,7 @@ class atlasOperation:
         """Returns a dict that contains the referredEntities part for the RDBMS update rest call"""
         logging.debug("Executing atlas_operations.getAtlasReferredEntities()")
 
-        if self.atlas_enabled == False:
+        if not self.atlas_enabled:
             return None
 
         return_dict = self.get_atlas_rdbms_names(
@@ -316,10 +316,10 @@ class atlasOperation:
         log.debug("Executing atlas_operations.check_atlas_schema()")
 
         # We only check the Atlas schema ones per execution. This will otherwise add more requests to Atlas for the same data
-        if self.atlas_schema_checked == True:
+        if self.atlas_schema_checked:
             return self.atlas_enabled
 
-        if self.atlas_enabled == True:
+        if self.atlas_enabled:
             log.info("Checking Atlas connection")
             response = self.atlas_get_data(
                 url=self.atlas_rest_type_def_dbimport_process, logger=logger
@@ -340,18 +340,18 @@ class atlasOperation:
                     log.warning("Disable Atlas integration")
                     self.atlas_enabled = False
 
-        if self.atlas_enabled == True and status_code == 404:
+        if self.atlas_enabled and status_code == 404:
             # The TypeDef was not found
             log.warning(
                 "The Atlas typeDef 'DBImport_Process' was not found. Did you run the Atlas setup for DBImport?"
             )
             self.atlas_enabled = False
 
-        elif self.atlas_enabled == True and status_code != 200:
+        elif self.atlas_enabled and status_code != 200:
             log.warning("Atlas communication failed with response %s", status_code)
             self.atlas_enabled = False
 
-        if self.atlas_enabled == True:
+        if self.atlas_enabled:
             # if self.atlas_enabled = True at this stage, it means that we have a valid json response in DBImportProcessJSON
             type_def_version = response_data["typeVersion"]
             if type_def_version != "1.2":
@@ -390,7 +390,7 @@ class atlasOperation:
         log.debug("Executing atlas_operations.atlas_communicate()")
 
         return_value = None
-        if self.atlas_enabled == True:
+        if self.atlas_enabled:
             try:
                 if request_type == "POST":
                     response = requests.post(
@@ -1116,7 +1116,7 @@ class atlasOperation:
         db_uri = atlas_name_dict["dbUri"]
 
         # if there are no tables in the database, we need to create it in Atlas manually
-        if create_empty_database_in_atlas == True:
+        if create_empty_database_in_atlas:
             table_uri = atlas_name_dict["tableUri"]
             db_name = atlas_name_dict["dbName"]
             instance_uri = atlas_name_dict["instanceUri"]
@@ -1245,7 +1245,7 @@ class atlasOperation:
                 except IndexError:
                     pass
 
-            if process_table_for_delete == False:
+            if not process_table_for_delete:
                 continue
 
             tables_found_in_db_dict = {}
@@ -1303,9 +1303,9 @@ class atlasOperation:
                 log.warning(response["data"])
                 raise atlasError
 
-        if atlas_error_detected == True:
+        if atlas_error_detected:
             raise atlasError
-        if atlas_foreign_key_error_detected == True:
+        if atlas_foreign_key_error_detected:
             raise foreignKeyError
 
         log.info("Finished Atlas discovery on connection '%s'" % (self.db_alias))
@@ -1408,7 +1408,7 @@ class atlasOperation:
         log = logging.getLogger(self.logger_name)
         log.debug("Executing atlas_operations.updateAtlasWithSourceSchema()")
 
-        if self.atlas_enabled == False:
+        if not self.atlas_enabled:
             return False
 
         delete_column_error_found = False
@@ -1493,7 +1493,7 @@ class atlasOperation:
             except ValueError:
                 column_length = None
 
-            if column_length != None:
+            if column_length is not None:
                 column_data["attributes"]["length"] = str(column_length)
 
             column_data["attributes"]["name"] = column_name
@@ -1578,10 +1578,7 @@ class atlasOperation:
                     ):
                         found_source_column = True
 
-                if (
-                    found_source_column == False
-                    and json_ref_entity["status"] == "ACTIVE"
-                ):
+                if not found_source_column and json_ref_entity["status"] == "ACTIVE":
                     # The column defined in Atlas cant be found on the source, and it's still marked as ACTIVE. Lets delete it!
                     log.debug(
                         "Deleting Atlas column with qualifiedName = '%s'"
@@ -1617,7 +1614,7 @@ class atlasOperation:
             for fk_name in self.source_keys_df.loc[
                 self.source_keys_df["CONSTRAINT_TYPE"] == constant.FOREIGN_KEY
             ][["CONSTRAINT_NAME"]].CONSTRAINT_NAME.unique():
-                if text_printed == False:
+                if not text_printed:
                     if print_info == True:
                         log.info("Updating Atlas with remote database foreign keys")
                     text_printed = True
@@ -1756,7 +1753,7 @@ class atlasOperation:
                 json_data["entities"] = []
                 json_data["entities"].append(entities_data)
 
-                if ref_table_exists == True:
+                if ref_table_exists:
                     log.debug(json.dumps(json_data, indent=3))
 
                     response = self.atlas_post_data(
@@ -1792,9 +1789,9 @@ class atlasOperation:
                     foreign_key_error_found = True
 
         if error_on_warning == True:
-            if foreign_key_error_found == True:
+            if foreign_key_error_found:
                 raise foreignKeyError
-            if delete_column_error_found == True:
+            if delete_column_error_found:
                 raise atlasError
 
         log.debug("Executing atlas_operations.updateAtlasWithSourceSchema() - Finished")
@@ -1804,7 +1801,7 @@ class atlasOperation:
         log = logging.getLogger(self.logger_name)
         log.debug("Executing atlas_operations.get_atlas_rdbms_column_uri()")
 
-        if self.atlas_enabled == False:
+        if not self.atlas_enabled:
             return None
 
         if self.jdbc_servertype == constant.ORACLE:
@@ -1915,7 +1912,7 @@ class atlasOperation:
         instance_type = None
         environment_type = None
 
-        if self.atlas_enabled == False:
+        if not self.atlas_enabled:
             return None
 
         if self.jdbc_environment == None:
@@ -2104,7 +2101,7 @@ class atlasOperation:
         log = logging.getLogger(self.logger_name)
         log.debug("Executing atlas_operations.update_atlas_with_import_lineage()")
 
-        if self.atlas_enabled == False:
+        if not self.atlas_enabled:
             return
 
         log.info("Updating Atlas with import lineage")
@@ -2193,7 +2190,7 @@ class atlasOperation:
         log = logging.getLogger(self.logger_name)
         log.debug("Executing atlas_operations.update_atlas_with_export_lineage()")
 
-        if self.atlas_enabled == False:
+        if not self.atlas_enabled:
             return
 
         log.info("Updating Atlas with export lineage")

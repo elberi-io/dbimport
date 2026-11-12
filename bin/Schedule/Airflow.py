@@ -235,7 +235,7 @@ class initialize:
                     )
                     return_value = None
 
-            if bool_value == True:
+            if bool_value:
                 if return_value == 1:
                     return_value = True
                 elif return_value == 0:
@@ -437,7 +437,7 @@ class initialize:
             for _index, row in custom_dag.iterrows():
                 self.generate_custom_dag(dag=row)
 
-        if dag_found == False and name != None:
+        if not dag_found and name != None:
             raise invalidConfiguration("Can't find DAG with that name")
         # 			log.error("Can't find DAG with that name")
         # 			self.common_config.remove_temporary_files()
@@ -615,7 +615,7 @@ class initialize:
             if row["export_type"] == "full":
                 clear_stage_required = True
 
-            if clear_stage_required == True:
+            if clear_stage_required:
                 self.dag_file.write("%s_clearStage = BashOperator(\n" % (task_id))
                 self.dag_file.write("    task_id='%s_clearStage',\n" % (task_id))
                 self.dag_file.write(
@@ -651,7 +651,7 @@ class initialize:
             self.dag_file.write("    dag=dag)\n")
             self.dag_file.write("\n")
 
-            if clear_stage_required == True:
+            if clear_stage_required:
                 self.dag_file.write(
                     "%s.set_downstream(%s_clearStage)\n"
                     % (self.main_start_task, task_id)
@@ -868,7 +868,7 @@ class initialize:
             ):
                 clear_stage_required = True
 
-            if clear_stage_required == True:
+            if clear_stage_required:
                 if self.airflow_mode == "default":
                     self.dag_file.write("%s_clearStage = BashOperator(\n" % (task_id))
                     self.dag_file.write("    task_id='%s_clearStage',\n" % (task_id))
@@ -900,11 +900,8 @@ class initialize:
                     self.dag_file.write("    dag=dag)\n")
                     self.dag_file.write("\n")
 
-            if (
-                dag["finish_all_stage1_first"] == 1
-                or run_import_and_etl_separate == True
-            ):
-                if import_phase_as_sensor == True:
+            if dag["finish_all_stage1_first"] == 1 or run_import_and_etl_separate:
+                if import_phase_as_sensor:
                     # Running Import phase as a sensor
                     self.dag_file.write("%s_sensor = SqlSensor(\n" % (task_id))
                     self.dag_file.write("    task_id='%s_sensor',\n" % (task_id))
@@ -982,12 +979,12 @@ class initialize:
                     self.dag_file.write("    dag=dag)\n")
                     self.dag_file.write("\n")
 
-                if clear_stage_required == True and dag["finish_all_stage1_first"] == 1:
+                if clear_stage_required and dag["finish_all_stage1_first"] == 1:
                     self.dag_file.write(
                         "%s.set_downstream(%s_clearStage)\n"
                         % (self.main_start_task, task_id)
                     )
-                    if import_phase_as_sensor == True:
+                    if import_phase_as_sensor:
                         self.dag_file.write(
                             "%s_clearStage.set_downstream(%s_sensor)\n"
                             % (task_id, task_id)
@@ -1010,13 +1007,13 @@ class initialize:
                         "%s_etl.set_downstream(%s)\n" % (task_id, self.main_stop_task)
                     )
                 elif (
-                    clear_stage_required == True and dag["finish_all_stage1_first"] == 0
+                    clear_stage_required and dag["finish_all_stage1_first"] == 0
                 ):  # This means that runImportAndEtlSeparate == True
                     self.dag_file.write(
                         "%s.set_downstream(%s_clearStage)\n"
                         % (self.main_start_task, task_id)
                     )
-                    if import_phase_as_sensor == True:
+                    if import_phase_as_sensor:
                         self.dag_file.write(
                             "%s_clearStage.set_downstream(%s_sensor)\n"
                             % (task_id, task_id)
@@ -1035,11 +1032,8 @@ class initialize:
                     self.dag_file.write(
                         "%s_etl.set_downstream(%s)\n" % (task_id, self.main_stop_task)
                     )
-                elif (
-                    clear_stage_required == False
-                    and dag["finish_all_stage1_first"] == 1
-                ):
-                    if import_phase_as_sensor == True:
+                elif not clear_stage_required and dag["finish_all_stage1_first"] == 1:
+                    if import_phase_as_sensor:
                         self.dag_file.write(
                             "%s.set_downstream(%s_sensor)\n"
                             % (self.main_start_task, task_id)
@@ -1062,7 +1056,7 @@ class initialize:
                         "%s_etl.set_downstream(%s)\n" % (task_id, self.main_stop_task)
                     )
                 else:
-                    if import_phase_as_sensor == True:
+                    if import_phase_as_sensor:
                         self.dag_file.write(
                             "%s.set_downstream(%s_sensor)\n"
                             % (self.main_start_task, task_id)
@@ -1084,7 +1078,7 @@ class initialize:
                 self.dag_file.write("\n")
 
             else:
-                if import_phase_as_sensor == True:
+                if import_phase_as_sensor:
                     # Running Import phase as a sensor
                     self.dag_file.write("%s_sensor = SqlSensor(\n" % (task_id))
                     self.dag_file.write("    task_id='%s_sensor',\n" % (task_id))
@@ -1144,8 +1138,8 @@ class initialize:
                     self.dag_file.write("    dag=dag)\n")
                     self.dag_file.write("\n")
 
-                if clear_stage_required == True:
-                    if import_phase_as_sensor == True:
+                if clear_stage_required:
+                    if import_phase_as_sensor:
                         self.dag_file.write(
                             "%s.set_downstream(%s_clearStage)\n"
                             % (self.main_start_task, task_id)
@@ -1172,7 +1166,7 @@ class initialize:
                             "%s.set_downstream(%s)\n" % (task_id, self.main_stop_task)
                         )
                 else:
-                    if import_phase_as_sensor == True:
+                    if import_phase_as_sensor:
                         self.dag_file.write(
                             "%s.set_downstream(%s_sensor)\n"
                             % (self.main_start_task, task_id)
@@ -2196,7 +2190,7 @@ class initialize:
         if len(tasks.loc[tasks["placement"] == "after main"]) > 0:
             tasks_after_main_exists = True
 
-        if tasks_before_main_exists == True:
+        if tasks_before_main_exists:
             self.dag_file.write(f"{self.pre_stop_task} = DummyOperator(\n")
             self.dag_file.write("    task_id='%s',\n" % (self.pre_stop_task))
             if self.task_queue_for_dummy != None:
@@ -2208,7 +2202,7 @@ class initialize:
             self.dag_file.write("    dag=dag)\n")
             self.dag_file.write("\n")
 
-        if tasks_after_main_exists == True:
+        if tasks_after_main_exists:
             self.dag_file.write(f"{self.post_start_task} = DummyOperator(\n")
             self.dag_file.write("    task_id='%s',\n" % (self.post_start_task))
             if self.task_queue_for_dummy != None:
@@ -2220,7 +2214,7 @@ class initialize:
             self.dag_file.write("    dag=dag)\n")
             self.dag_file.write("\n")
 
-        if tasks_sensors_exists == True:
+        if tasks_sensors_exists:
             self.dag_file.write(f"{self.sensor_stop_task} = DummyOperator(\n")
             self.dag_file.write("    task_id='%s',\n" % (self.sensor_stop_task))
             if self.task_queue_for_dummy != None:
@@ -2232,17 +2226,17 @@ class initialize:
             self.dag_file.write("    dag=dag)\n")
             self.dag_file.write("\n")
 
-        if tasks_sensors_exists == False and tasks_before_main_exists == True:
+        if not tasks_sensors_exists and tasks_before_main_exists:
             self.main_start_task = self.pre_stop_task
 
-        if tasks_sensors_exists == True and tasks_before_main_exists == False:
+        if tasks_sensors_exists and not tasks_before_main_exists:
             self.main_start_task = self.sensor_stop_task
 
-        if tasks_sensors_exists == True and tasks_before_main_exists == True:
+        if tasks_sensors_exists and tasks_before_main_exists:
             self.pre_start_task = self.sensor_stop_task
             self.main_start_task = self.pre_stop_task
 
-        if tasks_after_main_exists == True:
+        if tasks_after_main_exists:
             self.main_stop_task = self.post_start_task
 
         session.close()
@@ -2474,9 +2468,11 @@ class initialize:
                 time_diff = "0"
 
                 if (
-                    main_dag_match_hour_min == None and wait_dag_match_hour_min != None
+                    main_dag_match_hour_min is None
+                    and wait_dag_match_hour_min is not None
                 ) or (
-                    main_dag_match_hour_min != None and wait_dag_match_hour_min == None
+                    main_dag_match_hour_min is not None
+                    and wait_dag_match_hour_min is None
                 ):
                     log.warning("Issue on DAG '%s'" % (dag_name))
                     log.warning(
@@ -2489,7 +2485,7 @@ class initialize:
                     self.add_failure_task(row["task_name"])
                     add_dag_sensor = False
 
-                if main_dag_match_hour_min != None and add_dag_sensor == True:
+                if main_dag_match_hour_min is not None and add_dag_sensor:
                     # Time is in HH:MM format for both DAG's. So now we can calculate the diff in time between them
                     noon = datetime.strptime("12:00", "%H:%M")
                     main_dag_schedule_date_time = datetime.strptime(
@@ -2530,7 +2526,7 @@ class initialize:
                         minus_text = "-"
 
                     time_diff = str(minus_text + str(time_diff.seconds))
-                elif add_dag_sensor == True:
+                elif add_dag_sensor:
                     if main_dag_schedule != wait_dag_schedule:
                         log.warning("Issue on DAG '%s'" % (dag_name))
                         log.warning(
@@ -2543,7 +2539,7 @@ class initialize:
                         self.add_failure_task(row["task_name"])
                         add_dag_sensor = False
 
-                if add_dag_sensor == True:
+                if add_dag_sensor:
                     self.dag_file.write(
                         "%s = ExternalTaskSensor(\n" % (row["task_name"])
                     )
@@ -2816,7 +2812,7 @@ class initialize:
                     row["task_name"] == dep_row["task_dependency_upstream"]
                     or row["task_name"] == dep_row["task_dependency_downstream"]
                 ) and row["placement"] != dep_row["placement"]:
-                    if task_dependency_warning_printed == False:
+                    if not task_dependency_warning_printed:
                         log.warning("Issue on DAG '%s'" % (dag_name))
                         log.warning(
                             "There are custom tasks that have dependencies between 'in_main' and 'after_main'. This is not supported and the dependencies will be incorrect in Airflow"
@@ -2923,13 +2919,13 @@ class initialize:
                         )
                         up_stream_found = True
 
-                if up_stream_found == False:
+                if not up_stream_found:
                     task_dependencies += "%s.set_downstream(%s)\n" % (
                         temp_start_task,
                         row["task_name"],
                     )
 
-                if down_stream_found == False:
+                if not down_stream_found:
                     task_dependencies += "%s.set_downstream(%s)\n" % (
                         row["task_name"],
                         temp_stop_task,
@@ -3079,8 +3075,10 @@ class initialize:
             time_diff = "0"
 
             if (
-                main_dag_match_hour_min == None and wait_dag_match_hour_min != None
-            ) or (main_dag_match_hour_min != None and wait_dag_match_hour_min == None):
+                main_dag_match_hour_min is None and wait_dag_match_hour_min is not None
+            ) or (
+                main_dag_match_hour_min is not None and wait_dag_match_hour_min is None
+            ):
                 log.warning("Issue on DAG '%s'" % (dag_name))
                 log.warning(
                     "Both the current DAG and the DAG the sensor is waiting for must have the same scheduling format (HH:MM or cron)"
@@ -3103,7 +3101,7 @@ class initialize:
             # 				self.common_config.remove_temporary_files()
             # 				sys.exit(1)
 
-            if main_dag_match_hour_min != None:
+            if main_dag_match_hour_min is not None:
                 # Time is in HH:MM format for both DAG's. So now we can calculate the diff in time between them
                 noon = datetime.strptime("12:00", "%H:%M")
                 main_dag_schedule_date_time = datetime.strptime(
@@ -3232,7 +3230,7 @@ class initialize:
 
         if self.post_data_to_kafka == True:
             result = self.send_statistics.publish_kafka_data(json.dumps(json_data))
-            if result == False:
+            if not result:
                 log.warning("Kafka publish failed! No start message posted")
 
         if self.post_data_to_rest == True:

@@ -777,7 +777,7 @@ class operation(metaclass=Singleton):
                     if add_result == False:
                         error_during_add = True
 
-                if error_during_add == False:
+                if not error_during_add:
                     print("All tables saved successfully in DBImport")
                 else:
                     print("")
@@ -956,7 +956,7 @@ class operation(metaclass=Singleton):
         first_loop = True
         if self.import_config.common_config.spark_jar_files.strip() != "":
             for jar_file in self.import_config.common_config.spark_jar_files.split(","):
-                if first_loop == False:
+                if not first_loop:
                     spark_pyspark_submit_args += ","
                     spark_jars += ","
                 spark_pyspark_submit_args += jar_file.strip()
@@ -964,7 +964,7 @@ class operation(metaclass=Singleton):
                 first_loop = False
 
         for jar_file in self.import_config.common_config.jdbc_classpath.split(":"):
-            if first_loop == False:
+            if not first_loop:
                 spark_pyspark_submit_args += ","
                 spark_jars += ","
             spark_pyspark_submit_args += jar_file.strip()
@@ -975,7 +975,7 @@ class operation(metaclass=Singleton):
             spark_pyspark_submit_args += " --py-files "
             first_loop = True
             for py_file in self.import_config.common_config.spark_py_files.split(","):
-                if first_loop == False:
+                if not first_loop:
                     spark_pyspark_submit_args += ","
                 spark_pyspark_submit_args += py_file.strip()
                 first_loop = False
@@ -1334,7 +1334,7 @@ class operation(metaclass=Singleton):
         first_loop = True
         if self.import_config.common_config.spark_jar_files.strip() != "":
             for jar_file in self.import_config.common_config.spark_jar_files.split(","):
-                if first_loop == False:
+                if not first_loop:
                     spark_pyspark_submit_args += ","
                     spark_jars += ","
                 spark_pyspark_submit_args += jar_file.strip()
@@ -1342,7 +1342,7 @@ class operation(metaclass=Singleton):
                 first_loop = False
 
         for jar_file in self.import_config.common_config.jdbc_classpath.split(":"):
-            if first_loop == False:
+            if not first_loop:
                 spark_pyspark_submit_args += ","
                 spark_jars += ","
             spark_pyspark_submit_args += jar_file.strip()
@@ -1353,7 +1353,7 @@ class operation(metaclass=Singleton):
             spark_pyspark_submit_args += " --py-files "
             first_loop = True
             for py_file in self.import_config.common_config.spark_py_files.split(","):
-                if first_loop == False:
+                if not first_loop:
                     spark_pyspark_submit_args += ","
                 spark_pyspark_submit_args += py_file.strip()
                 first_loop = False
@@ -2474,7 +2474,7 @@ class operation(metaclass=Singleton):
         )
 
         # Print Stdout and stderr while sqoop is running
-        while sh_session.poll() == None:
+        while sh_session.poll() is None:
             row = sh_session.stdout.readline().decode("utf-8").rstrip()
             if row != "":
                 print(row)
@@ -2510,17 +2510,17 @@ class operation(metaclass=Singleton):
         yarn_containers_total = 0
         yarn_containers_failed = 0
         yarn_containers_killed = 0
-        if self.sqoop_launched_map_tasks != None:
+        if self.sqoop_launched_map_tasks is not None:
             yarn_containers_total += self.sqoop_launched_map_tasks
-        if self.sqoop_launched_reduce_tasks != None:
+        if self.sqoop_launched_reduce_tasks is not None:
             yarn_containers_total += self.sqoop_launched_reduce_tasks
-        if self.sqoop_failed_map_tasks != None:
+        if self.sqoop_failed_map_tasks is not None:
             yarn_containers_failed += self.sqoop_failed_map_tasks
-        if self.sqoop_failed_reduce_tasks != None:
+        if self.sqoop_failed_reduce_tasks is not None:
             yarn_containers_failed += self.sqoop_failed_reduce_tasks
-        if self.sqoop_killed_map_tasks != None:
+        if self.sqoop_killed_map_tasks is not None:
             yarn_containers_killed += self.sqoop_killed_map_tasks
-        if self.sqoop_killed_reduce_tasks != None:
+        if self.sqoop_killed_reduce_tasks is not None:
             yarn_containers_killed += self.sqoop_killed_reduce_tasks
 
         self.import_config.common_config.update_yarn_statistics(
@@ -2578,7 +2578,7 @@ class operation(metaclass=Singleton):
                 if " ERROR " in row and "The HCatalog field" in row:
                     sqoop_warning = True
 
-            if sqoop_warning == False:
+            if not sqoop_warning:
                 # We detected the string ERROR in the output but we havent found a vaild reason for it in the IF statements above.
                 # We need to mark the sqoop command as error and exit the program
                 logging.error(
@@ -2665,7 +2665,7 @@ class operation(metaclass=Singleton):
             self.import_config.remove_temporary_files()
             sys.exit(1)
 
-        if self.global_hive_configuration_set == False:
+        if not self.global_hive_configuration_set:
             self.global_hive_configuration_set = True
             if self.import_config.hive_java_heap != None:
                 query = "set hive.tez.container.size=%s" % (
@@ -2824,7 +2824,7 @@ class operation(metaclass=Singleton):
                 query += ", `datalake_mssql_changetrack_operation` varchar(2)"
 
             for _index, row in columns_df.iterrows():
-                if first_loop == False:
+                if not first_loop:
                     query += ", "
 
                 query += "`%s` %s" % (row["name"], row["type"])
@@ -3297,7 +3297,7 @@ class operation(metaclass=Singleton):
             if restrict_columns_list != []:
                 if row["name"] not in restrict_columns_list:
                     continue
-            if first_loop == False:
+            if not first_loop:
                 query += ", "
             query += "`%s` %s" % (row["name"], row["type"])
             if row["comment"] != None:
@@ -3342,7 +3342,7 @@ class operation(metaclass=Singleton):
                     for column in self.import_config.get_pk_columns(
                         pk_for_merge=True
                     ).split(","):
-                        if first_column == False:
+                        if not first_column:
                             query += ", "
                         query += "`" + column + "`"
                         first_column = False
@@ -3973,7 +3973,7 @@ class operation(metaclass=Singleton):
                         if hive_index != index_in_config:
                             found_column_error = True
 
-                if found_column_error == True:
+                if found_column_error:
                     # There was an error with the column order. We need to drop and recreate
                     logging.warning(
                         "The column order was not correct in the External Import Table. As this is a ORC table, we will have to drop and recreate it. This is needed because Hive tables based on ORC files does not support reordering of columns"
@@ -4264,7 +4264,7 @@ class operation(metaclass=Singleton):
             column_name = row["name"]
             column_type = row["type"]
 
-            if column_types_changed == True:
+            if column_types_changed:
                 # This means that we compare with another value than will be used in the alter. We need to get the correct alter column type
                 column_type = columns_config_saved.loc[
                     columns_config_saved["name"] == column_name
@@ -4397,7 +4397,7 @@ class operation(metaclass=Singleton):
             column_type = row["type"]
             column_comment = row["comment"]
 
-            if column_types_changed == True:
+            if column_types_changed:
                 # This means that we compare with another value than will be used in the alter. We need to get the correct alter column type
                 column_type = columns_config_saved.loc[
                     columns_config_saved["name"] == column_name
@@ -4491,7 +4491,7 @@ class operation(metaclass=Singleton):
 
                 first_column = True
                 for column in self.import_config.get_pk_columns().split(","):
-                    if first_column == False:
+                    if not first_column:
                         query += ", "
                     query += "`" + column + "`"
                     first_column = False
@@ -4599,7 +4599,7 @@ class operation(metaclass=Singleton):
                     )
                     first_loop = True
                     for column in row["source_column_name"].split(","):
-                        if first_loop == False:
+                        if not first_loop:
                             query += ", "
                         query += "`%s`" % (column)
                         first_loop = False
@@ -4610,7 +4610,7 @@ class operation(metaclass=Singleton):
                     )
                     first_loop = True
                     for column in row["ref_column_name"].split(","):
-                        if first_loop == False:
+                        if not first_loop:
                             query += ", "
                         query += "`%s`" % (column)
                         first_loop = False
@@ -4712,7 +4712,7 @@ class operation(metaclass=Singleton):
             )
 
             try:
-                if and_wait == False:
+                if not and_wait:
                     self.common_operations.execute_hive_query(
                         "alter table `%s`.`%s` compact '%s' "
                         % (self.hive_db, self.hive_table, compaction_method)
@@ -4823,9 +4823,9 @@ class operation(metaclass=Singleton):
         column_definition_source = ""
         column_definition_target = ""
         for _index, row in column_merge.loc[column_merge["Exist"] == "both"].iterrows():
-            if first_loop == False:
+            if not first_loop:
                 column_definition_source += ", "
-            if first_loop == False:
+            if not first_loop:
                 column_definition_target += ", "
             column_definition_source += "`%s`" % (row["sourceName"])
             column_definition_target += "`%s`" % (row["targetName"])
@@ -4965,7 +4965,7 @@ class operation(metaclass=Singleton):
             self.reset_incr_max_value(hive_db, hive_table)
             logging.info("")
 
-        if tables_repaired == False:
+        if not tables_repaired:
             logging.info(
                 "\n\u001b[32mNo incremental tables found that could be repaired\u001b[0m\n"
             )
