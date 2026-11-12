@@ -27,7 +27,7 @@ import pandas as pd
 import sqlalchemy as sa
 from sqlalchemy.orm import aliased, sessionmaker
 
-from common.Exceptions import invalidConfiguration
+from common.Exceptions import InvalidConfigurationError
 from common.Singleton import Singleton
 from ConfigReader import configuration
 from DBImportConfig import configSchema, import_config
@@ -578,7 +578,7 @@ class operation(metaclass=Singleton):
 
             try:
                 self.import_config.get_import_config()
-            except invalidConfiguration as errMsg:
+            except InvalidConfigurationError as errMsg:
                 logging.error(errMsg)
                 self.import_config.remove_temporary_files()
                 sys.exit(1)
@@ -742,7 +742,7 @@ class operation(metaclass=Singleton):
 
                 try:
                     self.import_config.get_import_config()
-                except invalidConfiguration as errMsg:
+                except InvalidConfigurationError as errMsg:
                     logging.error(errMsg)
                     self.import_config.remove_temporary_files()
                     sys.exit(1)

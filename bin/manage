@@ -22,7 +22,7 @@ import logging
 import sys
 
 from common import constants as constant
-from common.Exceptions import SQLerror, daemonExit, invalidConfiguration
+from common.Exceptions import DaemonExitError, InvalidConfigurationError, SQLError
 from DBImportConfig import common_config, import_config
 from DBImportOperation import (
     atlas_operations,
@@ -770,7 +770,7 @@ def main(argv):
                 hive_script_file=hive_script, use_db=hive_db
             )
             if return_code != 0:
-                raise SQLerror("Hive Query Error")
+                raise SQLError("Hive Query Error")
             common_operation.common_config.remove_temporary_files()
 
         if operation == "runHiveQuery":
@@ -1282,7 +1282,7 @@ def main(argv):
             common_config_obj.remove_temporary_files()
 
     # Error handling for the entire stage block
-    except invalidConfiguration as errMsg:
+    except InvalidConfigurationError as errMsg:
         if str(errMsg) != "":
             logging.error(errMsg)
         if common_config_obj is not None:
@@ -1299,13 +1299,13 @@ def main(argv):
     except RuntimeError as errMsg:
         import_operation.import_config.remove_temporary_files()
         sys.exit(1)
-    except daemonExit as errMsg:
+    except DaemonExitError as errMsg:
         logging.error(
             "Program exit because requested to do so by developer. %s", errMsg
         )
         import_operation.import_config.remove_temporary_files()
         sys.exit(1)
-    except SQLerror as errMsg:
+    except SQLError as errMsg:
         logging.error("SQL Error detected")
         logging.error(errMsg)
         if common_config_obj is not None:

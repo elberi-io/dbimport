@@ -24,7 +24,7 @@ from Crypto.PublicKey import RSA
 from Crypto.PublicKey.RSA import RsaKey
 from Crypto.Random import get_random_bytes
 
-from common.Exceptions import invalidConfiguration
+from common.Exceptions import InvalidConfigurationError
 
 
 class crypto:
@@ -46,7 +46,7 @@ class crypto:
             )
 
         if not os.path.isfile(self.private_key_file):
-            raise invalidConfiguration(
+            raise InvalidConfigurationError(
                 "The private key file cant be opened.\n"
                 + "Please check the path in the configuration file for settings Credentials/private_key"
             )
@@ -63,7 +63,7 @@ class crypto:
             )
 
         if not os.path.isfile(self.public_key_file):
-            raise invalidConfiguration(
+            raise InvalidConfigurationError(
                 "The public key file cant be opened.\n"
                 + "Please check the path in the configuration file for settings Credentials/public_key"
             )
@@ -93,7 +93,7 @@ class crypto:
             else:
                 return None
         except UnicodeDecodeError:
-            raise invalidConfiguration(
+            raise InvalidConfigurationError(
                 "Unable to decrypt using private/public keys. Are the keys setup correct?"
             )
 

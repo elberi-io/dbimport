@@ -22,7 +22,11 @@ import boto3
 import botocore
 import pandas as pd
 
-from common.Exceptions import catalogError, databaseNotFound, undevelopedFeature
+from common.Exceptions import (
+    CatalogError,
+    DatabaseNotFoundError,
+    UndevelopedFeatureError,
+)
 from common.Singleton import Singleton
 from DBImportConfig import common_config
 
@@ -62,10 +66,10 @@ class glueCatalog(metaclass=Singleton):
         # 			print(response)
         except botocore.exceptions.ClientError as error:
             logging.error(error)
-            raise databaseNotFound(
+            raise DatabaseNotFoundError(
                 "Can't find database '%s' in Glue Catalog" % (hive_db)
             )
-            # raise catalogError("Can't find database '%s' in Glue Catalog"%(hiveDB))
+            # raise CatalogError("Can't find database '%s' in Glue Catalog"%(hiveDB))
 
         logging.debug("Executing glueCatalog.check_db() - Finished")
 
@@ -93,7 +97,7 @@ class glueCatalog(metaclass=Singleton):
         # 			print(location)
         except botocore.exceptions.ClientError as error:
             logging.error(error)
-            raise catalogError("Error when reading table location from Glue Catalog")
+            raise CatalogError("Error when reading table location from Glue Catalog")
 
         logging.debug("Executing glueCatalog.get_table_location() - Finished")
         return location
@@ -132,7 +136,7 @@ class glueCatalog(metaclass=Singleton):
         # 			print("========================================")
         except botocore.exceptions.ClientError as error:
             logging.error(error)
-            raise catalogError("Error when checking table type in Glue Catalog")
+            raise CatalogError("Error when checking table type in Glue Catalog")
 
         logging.debug(
             "Executing glueCatalog.is_table_external_iceberg_format() - Finished"
@@ -156,7 +160,7 @@ class glueCatalog(metaclass=Singleton):
         # 			print("========================================")
         except botocore.exceptions.ClientError as error:
             logging.error(error)
-            raise catalogError("Error when checking table type in Glue Catalog")
+            raise CatalogError("Error when checking table type in Glue Catalog")
 
         logging.debug("Executing glueCatalog.is_table_external() - Finished")
         return return_value
@@ -374,7 +378,7 @@ class glueCatalog(metaclass=Singleton):
         # 			print("========================================")
         except botocore.exceptions.ClientError as error:
             logging.error(error)
-            raise catalogError("Error when checking table type in Glue Catalog")
+            raise CatalogError("Error when checking table type in Glue Catalog")
 
         if include_type == False:
             result_df.drop("type", axis=1, inplace=True)
@@ -409,7 +413,7 @@ class glueCatalog(metaclass=Singleton):
     def is_table_view(self, hive_db, hive_table):
         logging.debug("Executing glueCatalog.is_table_view()")
 
-        raise undevelopedFeature(
+        raise UndevelopedFeatureError(
             "glueCatalog.is_table_view() is undeveloped. Please contact the developers of DBImport"
         )
 
@@ -421,7 +425,7 @@ class glueCatalog(metaclass=Singleton):
         """Return all tables from specific Hive DB"""
         logging.debug("Executing glueCatalog.get_tables()")
 
-        raise undevelopedFeature(
+        raise UndevelopedFeatureError(
             "glueCatalog.get_tables() is undeveloped. Please contact the developers of DBImport"
         )
 

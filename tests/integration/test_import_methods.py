@@ -3,7 +3,7 @@
 import pytest
 import sqlalchemy as sa
 
-from common.Exceptions import invalidConfiguration
+from common.Exceptions import InvalidConfigurationError
 from DBImportConfig import common_config, import_config
 from tests.configdb import insert_row, set_driver_path
 
@@ -107,7 +107,7 @@ def test_get_import_config_invalid_combination_raises(
     import_phase_type: str,
     etl_phase_type: str,
 ) -> None:
-    with pytest.raises(invalidConfiguration):
+    with pytest.raises(InvalidConfigurationError):
         _resolve(
             db_connection,
             import_phase_type=import_phase_type,
@@ -154,7 +154,7 @@ def test_get_import_config_legacy_import_type_maps_to_phases(
 def test_get_import_config_incremental_import_without_incr_column_raises(
     clean_config_db: None, db_connection: sa.Connection
 ) -> None:
-    with pytest.raises(invalidConfiguration, match="incr_column"):
+    with pytest.raises(InvalidConfigurationError, match="incr_column"):
         _resolve(
             db_connection,
             import_phase_type="incr",
@@ -168,7 +168,7 @@ def test_get_import_config_incremental_import_without_incr_column_raises(
 def test_get_import_config_legacy_and_new_import_type_together_raises(
     clean_config_db: None, db_connection: sa.Connection
 ) -> None:
-    with pytest.raises(invalidConfiguration):
+    with pytest.raises(InvalidConfigurationError):
         _resolve(
             db_connection,
             import_type="full",
@@ -208,7 +208,7 @@ def test_get_import_config_unsupported_tool_or_engine_raises(
     import_tool: str,
     etl_engine: str,
 ) -> None:
-    with pytest.raises(invalidConfiguration):
+    with pytest.raises(InvalidConfigurationError):
         _resolve(
             db_connection,
             import_phase_type=import_phase_type,
@@ -221,7 +221,7 @@ def test_get_import_config_unsupported_tool_or_engine_raises(
 def test_get_import_config_without_import_tables_row_raises(
     clean_config_db: None,
 ) -> None:
-    with pytest.raises(invalidConfiguration):
+    with pytest.raises(InvalidConfigurationError):
         import_config.config(HIVE_DB, HIVE_TABLE).get_import_config()
 
 
@@ -242,7 +242,7 @@ def test_lookup_connection_alias_with_seeded_driver_placeholder_raises(
     # setup seeds the driver classpath as "add path to JAR file".
     _add_connection(db_connection, "user", "secret", configure_driver=False)
 
-    with pytest.raises(invalidConfiguration):
+    with pytest.raises(InvalidConfigurationError):
         common_config.config().lookup_connection_alias(DBALIAS)
 
 

@@ -29,10 +29,10 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import aliased, sessionmaker
 
 from common.Exceptions import (
-    atlasError,
-    connectionError,
-    foreignKeyError,
-    invalidConfiguration,
+    AtlasError,
+    ForeignKeyError,
+    InvalidConfigurationError,
+    JDBCConnectionError,
 )
 from ConfigReader import configuration
 from DBImportConfig import common_config, configSchema
@@ -90,16 +90,16 @@ class atlasCrawler(threading.Thread):
                     self.atlas_crawler_request, self.jdbc_connection_mutex
                 )
                 atlas_operation_result = self.atlas_operation.discover_atlas_rdbms()
-            except invalidConfiguration:
+            except InvalidConfigurationError:
                 response["result"] = False
                 response["blacklist"] = True
-            except atlasError:
+            except AtlasError:
                 response["result"] = False
                 response["blacklist"] = False
-            except foreignKeyError:
+            except ForeignKeyError:
                 response["result"] = False
                 response["blacklist"] = False
-            except connectionError:
+            except JDBCConnectionError:
                 response["result"] = False
                 response["blacklist"] = True
             except:
@@ -255,7 +255,7 @@ class atlasDiscovery(threading.Thread):
                         self.common_config.mysql_conn.commit()
                         try:
                             self.common_config.lookup_connection_alias(db_alias)
-                        except invalidConfiguration as err:
+                        except InvalidConfigurationError as err:
                             if self.common_config.atlas_jdbc_source_support:
                                 log.error(
                                     "Connection '%s' have invalid configuration. Failed with '%s'",

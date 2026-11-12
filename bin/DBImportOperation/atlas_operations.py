@@ -34,12 +34,12 @@ from sqlalchemy.orm import aliased, sessionmaker
 
 from common import constants as constant
 from common.Exceptions import (
-    SQLerror,
-    atlasError,
-    connectionError,
-    foreignKeyError,
-    invalidConfiguration,
-    schemaError,
+    AtlasError,
+    ForeignKeyError,
+    InvalidConfigurationError,
+    JDBCConnectionError,
+    SchemaError,
+    SQLError,
 )
 from ConfigReader import configuration
 from DBImportConfig import configSchema
@@ -556,7 +556,7 @@ class atlasOperation:
             if self.jdbc_connection_mutex != None:
                 self.jdbc_connection_mutex.release()
                 log.debug("JDBC connection Mutex released")
-            raise connectionError
+            raise JDBCConnectionError
 
         try:
             # Get a list of all schemas and tables that can be found on the database connection
@@ -573,7 +573,7 @@ class atlasOperation:
             if self.jdbc_connection_mutex != None:
                 self.jdbc_connection_mutex.release()
                 log.debug("JDBC connection Mutex released")
-            raise schemaError
+            raise SchemaError
 
         if self.jdbc_connection_mutex != None:
             self.jdbc_connection_mutex.release()
@@ -687,11 +687,11 @@ class atlasOperation:
                 )
 
                 self.disconnect_from_jdbc()
-            except connectionError:
+            except JDBCConnectionError:
                 if self.jdbc_connection_mutex != None:
                     self.jdbc_connection_mutex.release()
                     log.debug("JDBC connection Mutex released")
-                raise connectionError
+                raise JDBCConnectionError
             except:
                 log.error(
                     "Unknown error during reading of columns and keys for schema '%s' on '%s'",
@@ -701,7 +701,7 @@ class atlasOperation:
                 if self.jdbc_connection_mutex != None:
                     self.jdbc_connection_mutex.release()
                     log.debug("JDBC connection Mutex released")
-                raise schemaError
+                raise SchemaError
 
             if self.jdbc_connection_mutex != None:
                 self.jdbc_connection_mutex.release()
@@ -750,7 +750,7 @@ class atlasOperation:
                 log.error(str(e.__dict__["orig"]))
                 session.rollback()
                 self.disconnect_dbimport_db()
-                raise SQLerror
+                raise SQLError
 
             if len(full_cache_source_column_df) > 0:
                 # Set oldes timestamp to 1970-01-01 00:00:00.000
@@ -796,7 +796,7 @@ class atlasOperation:
                 log.error(str(e.__dict__["orig"]))
                 session.rollback()
                 self.disconnect_dbimport_db()
-                raise SQLerror
+                raise SQLError
 
             log.debug(
                 "Key cache for schema '%s' was received from the database", schema
@@ -1010,13 +1010,13 @@ class atlasOperation:
                         print_info=False,
                         error_on_warning=True,
                     )
-                except atlasError:
+                except AtlasError:
                     atlas_error_detected = True
                     continue
-                except foreignKeyError:
+                except ForeignKeyError:
                     atlas_foreign_key_error_detected = False
                     continue
-                except invalidConfiguration:
+                except InvalidConfigurationError:
                     atlas_error_detected = True
                     continue
                 # 				result = self.update_atlas_with_rdbms_data(schemaName = schema, tableName = table, printInfo = False, errorOnWarning=True)
@@ -1075,7 +1075,7 @@ class atlasOperation:
                         log.error(str(e.__dict__["orig"]))
                         session.rollback()
                         self.disconnect_dbimport_db()
-                        raise SQLerror
+                        raise SQLError
 
                 if cache_operation == "insert" or cache_operation == "update":
                     try:
@@ -1099,7 +1099,7 @@ class atlasOperation:
                         log.error(str(e.__dict__["orig"]))
                         session.rollback()
                         self.disconnect_dbimport_db()
-                        raise SQLerror
+                        raise SQLError
 
         self.disconnect_from_jdbc()
 
@@ -1160,7 +1160,7 @@ class atlasOperation:
                 log.warning(
                     "No response from POST rest call to Atlas when creating an empty database"
                 )
-                raise atlasError
+                raise AtlasError
 
             status_code = response["statusCode"]
             if status_code != 200:
@@ -1170,7 +1170,7 @@ class atlasOperation:
                 )
                 log.warning("%s" % (response["data"]))
                 self.atlas_enabled == False  # noqa: B015  # TODO(#182): = was meant
-                raise atlasError
+                raise AtlasError
 
         # query the rdbms_db object in Atlas
         atlas_rest_url = "%s/rdbms_db?minExtInfo=true&attr:qualifiedName=%s" % (
@@ -1183,7 +1183,7 @@ class atlasOperation:
             log.warning(
                 "No response from GET rest call to Atlas when reading table object for deletion"
             )
-            raise atlasError
+            raise AtlasError
 
         status_code = response["statusCode"]
         response_data = json.loads(response["data"])
@@ -1194,7 +1194,7 @@ class atlasOperation:
             )
             log.warning("%s" % (response["data"]))
             self.atlas_enabled == False  # noqa: B015  # TODO(#182): = was meant
-            raise atlasError
+            raise AtlasError
 
         # Fetch all tables defined on the rdbms_db object
         tables_found_in_db_list = []
@@ -1293,7 +1293,7 @@ class atlasOperation:
                 log.warning(
                     "No response from DELETE rest call to Atlas when deleting table object"
                 )
-                raise atlasError
+                raise AtlasError
 
             status_code = response["statusCode"]
             if status_code != 200:
@@ -1301,12 +1301,12 @@ class atlasOperation:
                     "Request from Atlas when deleting table was %s." % (status_code)
                 )
                 log.warning(response["data"])
-                raise atlasError
+                raise AtlasError
 
         if atlas_error_detected:
-            raise atlasError
+            raise AtlasError
         if atlas_foreign_key_error_detected:
-            raise foreignKeyError
+            raise ForeignKeyError
 
         log.info("Finished Atlas discovery on connection '%s'" % (self.db_alias))
         log.debug("Executing atlas_operations.discover_atlas_rdbms() - Finished")
@@ -1362,7 +1362,7 @@ class atlasOperation:
             except jpype.JavaException as exception:
                 # 				log.error("Connection to database over JDBC failed with the following error:")
                 log.error(exception.message())
-                raise connectionError
+                raise JDBCConnectionError
 
     def get_dbimport_session(self):
         log = logging.getLogger(self.logger_name)
@@ -1384,9 +1384,9 @@ class atlasOperation:
             self.config_db_session = sessionmaker(bind=self.config_db_engine)
 
         except sa.exc.OperationalError as err:
-            raise SQLerror(err)
+            raise SQLError(err)
         except:
-            raise SQLerror(sys.exc_info())
+            raise SQLError(sys.exc_info())
 
         log.info("Connected successful against DBImport database")
 
@@ -1420,7 +1420,7 @@ class atlasOperation:
                 "Atlas opertions class was not initialized correctly. source_columns_df is empty. Atlas integrations disabled"
             )
             log.warning("No columns could be found on the source system.")
-            raise invalidConfiguration
+            raise InvalidConfigurationError
 
         if print_info == True:
             log.info("Updating Atlas with remote database schema")
@@ -1442,7 +1442,7 @@ class atlasOperation:
             log.warning(
                 "Invalid configuration/data when calculating Atlas names for Rdbms table"
             )
-            raise invalidConfiguration
+            raise InvalidConfigurationError
 
         table_uri = return_dict["tableUri"]
         db_uri = return_dict["dbUri"]
@@ -1519,7 +1519,7 @@ class atlasOperation:
             log.warning(
                 "No response from POST rest call to Atlas when sending the new/updated table object"
             )
-            raise atlasError
+            raise AtlasError
 
         status_code = response["statusCode"]
         if status_code != 200:
@@ -1528,7 +1528,7 @@ class atlasOperation:
             )
             log.warning("%s" % (response["data"]))
             self.atlas_enabled == False  # noqa: B015  # TODO(#182): = was meant
-            raise atlasError
+            raise AtlasError
 
         # We now have to find columns that exists in DBImport but not in the source anymore.
         # These columns need to be deleted from Atlas
@@ -1543,7 +1543,7 @@ class atlasOperation:
             log.warning(
                 "No response from GET rest call to Atlas when reading the table"
             )
-            raise atlasError
+            raise AtlasError
 
         status_code = response["statusCode"]
         response_data = json.loads(response["data"])
@@ -1554,7 +1554,7 @@ class atlasOperation:
             )
             log.warning("%s" % (response["data"]))
             self.atlas_enabled == False  # noqa: B015  # TODO(#182): = was meant
-            raise atlasError
+            raise AtlasError
 
         for json_ref_entities in response_data["referredEntities"]:
             json_ref_entity = response_data["referredEntities"][json_ref_entities]
@@ -1594,7 +1594,7 @@ class atlasOperation:
                         log.warning(
                             "No response from DELETE rest call to Atlas when deleting non-existing columns"
                         )
-                        raise atlasError
+                        raise AtlasError
 
                     status_code = response["statusCode"]
                     if status_code != 200:
@@ -1645,7 +1645,7 @@ class atlasOperation:
                             log.warning(
                                 "No response from GET rest call to Atlas when checking if table that is used for ForeignKeys exists in Atlas"
                             )
-                            raise atlasError
+                            raise AtlasError
 
                         status_code = response["statusCode"]
                         if status_code == 200:
@@ -1763,7 +1763,7 @@ class atlasOperation:
                         log.warning(
                             "No response from POST rest call to Atlas when adding/changeing ForeignKeys data"
                         )
-                        raise atlasError
+                        raise AtlasError
 
                     status_code = response["statusCode"]
                     if status_code != 200:
@@ -1790,9 +1790,9 @@ class atlasOperation:
 
         if error_on_warning == True:
             if foreign_key_error_found:
-                raise foreignKeyError
+                raise ForeignKeyError
             if delete_column_error_found:
-                raise atlasError
+                raise AtlasError
 
         log.debug("Executing atlas_operations.updateAtlasWithSourceSchema() - Finished")
 

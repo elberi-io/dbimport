@@ -11,7 +11,7 @@ from gunicorn.app.wsgiapp import WSGIApplication
 from jose import JWTError, jwt
 
 from common import constants as constant
-from common.Exceptions import invalidConfiguration
+from common.Exceptions import InvalidConfigurationError
 from ConfigReader import configuration
 from DBImportConfig import common_config
 from Schedule import Airflow
@@ -28,7 +28,7 @@ ACCESS_TOKEN_EXPIRE_MINUTES = common_config.get_config_value("restserver_token_t
 ALGORITHM = "HS256"
 try:
     AWS_REGION = configuration.get("AWS", "region", exit_on_error=False)
-except invalidConfiguration:
+except InvalidConfigurationError:
     AWS_REGION = ""
 
 

@@ -22,7 +22,7 @@ import pandas as pd
 import sqlalchemy as sa
 from sqlalchemy.orm import aliased, sessionmaker
 
-from common.Exceptions import databaseNotFound, rowNotFound
+from common.Exceptions import DatabaseNotFoundError, RowNotFoundError
 from common.Singleton import Singleton
 from ConfigReader import configuration
 from DBImportConfig import common_config
@@ -81,7 +81,7 @@ class hiveMetastoreDirect(metaclass=Singleton):
         try:
             row = session.query(dbs.NAME).filter(dbs.NAME == hive_db).one()
         except sa.orm.exc.NoResultFound:
-            raise databaseNotFound("Can't find database '%s' in Hive" % (hive_db))
+            raise DatabaseNotFoundError("Can't find database '%s' in Hive" % (hive_db))
 
         logging.debug("Executing hiveMetastoreDirect.check_db() - Finished")
 
@@ -133,7 +133,7 @@ class hiveMetastoreDirect(metaclass=Singleton):
                 .one()
             )
         except sa.orm.exc.NoResultFound:
-            raise rowNotFound(
+            raise RowNotFoundError(
                 f"Cant get SDS.LOCATION from Hive Meta Database for {hive_db}.{hive_table}"
             )
 
@@ -167,7 +167,7 @@ class hiveMetastoreDirect(metaclass=Singleton):
                 .one()
             )
         except sa.orm.exc.NoResultFound:
-            raise rowNotFound(
+            raise RowNotFoundError(
                 f"Cant get SDS.INPUT_FORMAT from Hive Meta Database for {hive_db}.{hive_table}"
             )
 
@@ -206,7 +206,7 @@ class hiveMetastoreDirect(metaclass=Singleton):
                 .one()
             )
         except sa.orm.exc.NoResultFound:
-            raise rowNotFound(
+            raise RowNotFoundError(
                 f"Cant get SDS.INPUT_FORMAT from Hive Meta Database for {hive_db}.{hive_table}"
             )
 
@@ -277,7 +277,7 @@ class hiveMetastoreDirect(metaclass=Singleton):
                 .one()
             )
         except sa.orm.exc.NoResultFound:
-            raise rowNotFound("Cant get TBLS.TBL_TYPE from Hive Meta Database")
+            raise RowNotFoundError("Cant get TBLS.TBL_TYPE from Hive Meta Database")
 
         if row[0] == "EXTERNAL_TABLE":
             return True

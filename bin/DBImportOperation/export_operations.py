@@ -28,7 +28,7 @@ import requests
 from requests_kerberos import OPTIONAL, HTTPKerberosAuth
 
 from common import constants as constant
-from common.Exceptions import SQLerror, databaseNotFound, invalidConfiguration
+from common.Exceptions import DatabaseNotFoundError, InvalidConfigurationError, SQLError
 from common.Singleton import Singleton
 from ConfigReader import configuration
 from DBImportConfig import export_config
@@ -90,7 +90,7 @@ class operation(metaclass=Singleton):
                     hive_db=self.hive_db, hive_table=self.hive_table
                 )
 
-            except invalidConfiguration as errMsg:
+            except InvalidConfigurationError as errMsg:
                 logging.error(errMsg)
                 self.export_config.remove_temporary_files()
                 sys.exit(1)
@@ -236,7 +236,7 @@ class operation(metaclass=Singleton):
     def check_db(self, hive_db):
         try:
             self.common_operations.check_db(hive_db)
-        except databaseNotFound as errMsg:
+        except DatabaseNotFoundError as errMsg:
             logging.error(errMsg)
             self.export_config.remove_temporary_files()
             sys.exit(1)
@@ -256,7 +256,7 @@ class operation(metaclass=Singleton):
                     include_idx=True,
                 )
             )
-        except invalidConfiguration as errMsg:
+        except InvalidConfigurationError as errMsg:
             logging.error(errMsg)
             self.export_config.remove_temporary_files()
             sys.exit(1)
@@ -282,7 +282,7 @@ class operation(metaclass=Singleton):
                     )
                 else:
                     logging.warning("Nothing to drop. Target table does not exists")
-        except invalidConfiguration as errMsg:
+        except InvalidConfigurationError as errMsg:
             logging.error(errMsg)
             self.export_config.remove_temporary_files()
             sys.exit(1)
@@ -302,7 +302,7 @@ class operation(metaclass=Singleton):
         try:
             if self.export_config.check_jdbc_table() == False:
                 self.export_config.create_target_table()
-        except SQLerror as errMsg:
+        except SQLError as errMsg:
             logging.error(errMsg)
             self.export_config.remove_temporary_files()
             sys.exit(1)
@@ -314,7 +314,7 @@ class operation(metaclass=Singleton):
     def update_target_table(self):
         try:
             self.export_config.update_target_table()
-        except SQLerror as errMsg:
+        except SQLError as errMsg:
             if "ORA-22859: invalid modification of columns" in str(errMsg):
                 # We get this message from Oracle when we try to change a column type that is not supported
                 if self.export_config.export_is_incremental is False:
@@ -325,7 +325,7 @@ class operation(metaclass=Singleton):
                         self.drop_jdbc_table()
                         self.create_target_table()
                         self.export_config.update_target_table()
-                    except invalidConfiguration as errMsg:
+                    except InvalidConfigurationError as errMsg:
                         logging.error(errMsg)
                         self.export_config.remove_temporary_files()
                         sys.exit(1)
@@ -343,7 +343,7 @@ class operation(metaclass=Singleton):
                 logging.error(errMsg)
                 self.export_config.remove_temporary_files()
                 sys.exit(1)
-        except invalidConfiguration as errMsg:
+        except InvalidConfigurationError as errMsg:
             logging.error(errMsg)
             self.export_config.remove_temporary_files()
             sys.exit(1)
@@ -502,7 +502,7 @@ class operation(metaclass=Singleton):
     def clear_validation_data(self):
         try:
             self.export_config.clear_validation_data()
-        except invalidConfiguration as errMsg:
+        except InvalidConfigurationError as errMsg:
             logging.error(errMsg)
             self.export_config.remove_temporary_files()
             sys.exit(1)
@@ -519,7 +519,7 @@ class operation(metaclass=Singleton):
                 hive_table_is_transactional=self.hive_table_is_transactional,
                 hive_table_is_view=self.hive_table_is_view,
             )
-        except invalidConfiguration as errMsg:
+        except InvalidConfigurationError as errMsg:
             logging.error(errMsg)
             self.export_config.remove_temporary_files()
             sys.exit(1)
@@ -1924,7 +1924,7 @@ class operation(metaclass=Singleton):
                 "'%s' is to large.",
                 self.export_config.validation_custom_query_hive_value,
             )
-            raise invalidConfiguration(
+            raise InvalidConfigurationError(
                 "The size of the json document on the custom query exceeds 1024 bytes. Change the query to create a result with less than 512 bytes"
             )
 

@@ -19,7 +19,7 @@ import configparser
 import os
 import sys
 
-from common.Exceptions import invalidConfiguration
+from common.Exceptions import InvalidConfigurationError
 
 
 def get(section: str, key: str, exit_on_error: bool = True) -> str:
@@ -32,7 +32,7 @@ def get(section: str, key: str, exit_on_error: bool = True) -> str:
             )
             sys.exit(1)
         else:
-            raise invalidConfiguration(
+            raise InvalidConfigurationError(
                 f"[{section}] '{key}' Key was not found in configuration file. Please check settings"
             )
 

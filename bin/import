@@ -23,11 +23,11 @@ import sys
 
 from common import constants as constant
 from common.Exceptions import (
-    SQLerror,
-    catalogError,
-    daemonExit,
-    invalidConfiguration,
-    validationError,
+    CatalogError,
+    DaemonExitError,
+    DataValidationError,
+    InvalidConfigurationError,
+    SQLError,
 )
 from DBImportOperation import copy_operations, etl_operations, import_operations
 
@@ -328,17 +328,17 @@ def main(argv):
         if import_operation is not None:
             import_operation.import_config.remove_temporary_files()
         sys.exit(1)
-    except invalidConfiguration as errMsg:
+    except InvalidConfigurationError as errMsg:
         logging.error(errMsg)
         if import_operation is not None:
             import_operation.import_config.remove_temporary_files()
         sys.exit(1)
-    except catalogError as errMsg:
+    except CatalogError as errMsg:
         logging.error(errMsg)
         if import_operation is not None:
             import_operation.import_config.remove_temporary_files()
         sys.exit(1)
-    except daemonExit as errMsg:
+    except DaemonExitError as errMsg:
         logging.error(
             "Program exit because requested to do so by developer. %s", errMsg
         )
@@ -3087,23 +3087,23 @@ def main(argv):
         import_operation.remove_temporary_files()
 
     # Error handling for the entire stage block
-    except SQLerror as errMsg:
+    except SQLError as errMsg:
         logging.error(errMsg)
         import_operation.import_config.remove_temporary_files()
         sys.exit(1)
-    except validationError as errMsg:
+    except DataValidationError as errMsg:
         logging.error(errMsg)
         import_operation.import_config.remove_temporary_files()
         sys.exit(1)
-    except invalidConfiguration as errMsg:
+    except InvalidConfigurationError as errMsg:
         logging.error(errMsg)
         import_operation.import_config.remove_temporary_files()
         sys.exit(1)
-    except catalogError as errMsg:
+    except CatalogError as errMsg:
         logging.error(errMsg)
         import_operation.import_config.remove_temporary_files()
         sys.exit(1)
-    except daemonExit as errMsg:
+    except DaemonExitError as errMsg:
         logging.error(
             "Program exit because requested to do so by developer. %s", errMsg
         )

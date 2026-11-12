@@ -35,7 +35,7 @@ from sqlalchemy.sql import delete, func, update
 from sqlalchemy.sql.operators import like_op
 
 from common import constants as constant
-from common.Exceptions import SQLerror, invalidConfiguration
+from common.Exceptions import InvalidConfigurationError, SQLError
 from ConfigReader import configuration
 from DBImportConfig import common_config, configSchema
 from Server import dataModels
@@ -191,14 +191,14 @@ class dbCalls:
             logging.error("%s", err)
             self.config_db_session = None
             self.config_db = None
-            raise SQLerror("Can't connect to DBImport database")
+            raise SQLError("Can't connect to DBImport database")
 
         except:
             print("Unexpected error: ")
             print(sys.exc_info())
             self.config_db_session = None
             self.config_db = None
-            raise SQLerror("Can't connect to DBImport database")
+            raise SQLError("Can't connect to DBImport database")
 
         else:
             # return self.config_db_session()
@@ -214,7 +214,7 @@ class dbCalls:
 
         try:
             session = self.get_dbimport_session()
-        except SQLerror:
+        except SQLError:
             self.disconnect_dbimport_db()
             return None
 
@@ -276,7 +276,7 @@ class dbCalls:
 
         try:
             session = self.get_dbimport_session()
-        except SQLerror:
+        except SQLError:
             self.disconnect_dbimport_db()
             return None
 
@@ -309,7 +309,7 @@ class dbCalls:
 
         try:
             session = self.get_dbimport_session()
-        except SQLerror:
+        except SQLError:
             self.disconnect_dbimport_db()
             return None
 
@@ -335,7 +335,7 @@ class dbCalls:
 
         try:
             session = self.get_dbimport_session()
-        except SQLerror:
+        except SQLError:
             self.disconnect_dbimport_db()
             return None
 
@@ -376,7 +376,7 @@ class dbCalls:
 
         try:
             session = self.get_dbimport_session()
-        except SQLerror:
+        except SQLError:
             self.disconnect_dbimport_db()
             return None
 
@@ -418,7 +418,7 @@ class dbCalls:
 
         try:
             session = self.get_dbimport_session()
-        except SQLerror:
+        except SQLError:
             self.disconnect_dbimport_db()
             return None
 
@@ -615,7 +615,7 @@ class dbCalls:
 
         try:
             session = self.get_dbimport_session()
-        except SQLerror:
+        except SQLError:
             self.disconnect_dbimport_db()
             return None
 
@@ -654,7 +654,7 @@ class dbCalls:
 
         try:
             session = self.get_dbimport_session()
-        except SQLerror:
+        except SQLError:
             self.disconnect_dbimport_db()
             return None
 
@@ -708,7 +708,7 @@ class dbCalls:
 
         try:
             session = self.get_dbimport_session()
-        except SQLerror:
+        except SQLError:
             self.disconnect_dbimport_db()
             return None
 
@@ -772,7 +772,7 @@ class dbCalls:
 
         try:
             session = self.get_dbimport_session()
-        except SQLerror:
+        except SQLError:
             self.disconnect_dbimport_db()
             return None
 
@@ -864,7 +864,7 @@ class dbCalls:
             self.common_config.lookup_connection_alias(
                 name, decrypt_credentials=False, jdbc_url=connection_string, quiet=True
             )
-        except invalidConfiguration:
+        except InvalidConfigurationError:
             pass
 
         server_type = None
@@ -903,7 +903,7 @@ class dbCalls:
 
         try:
             session = self.get_dbimport_session()
-        except SQLerror:
+        except SQLError:
             self.disconnect_dbimport_db()
             return None
 
@@ -951,7 +951,7 @@ class dbCalls:
 
         try:
             session = self.get_dbimport_session()
-        except SQLerror:
+        except SQLError:
             self.disconnect_dbimport_db()
             return None
 
@@ -1045,7 +1045,7 @@ class dbCalls:
 
         try:
             session = self.get_dbimport_session()
-        except SQLerror:
+        except SQLError:
             self.disconnect_dbimport_db()
             return None
 
@@ -1122,7 +1122,7 @@ class dbCalls:
 
             session.execute(query)
             session.commit()
-        except SQLerror as err:
+        except SQLError as err:
             log.error(str(err))
             log.error(column)  # noqa: F821  # TODO(#164): column is undefined here
 
@@ -1139,7 +1139,7 @@ class dbCalls:
 
         try:
             session = self.get_dbimport_session()
-        except SQLerror:
+        except SQLError:
             self.disconnect_dbimport_db()
             return None
 
@@ -1233,7 +1233,7 @@ class dbCalls:
 
         try:
             session = self.get_dbimport_session()
-        except SQLerror:
+        except SQLError:
             self.disconnect_dbimport_db()
             return None
 
@@ -1333,7 +1333,7 @@ class dbCalls:
 
         try:
             session = self.get_dbimport_session()
-        except SQLerror:
+        except SQLError:
             self.disconnect_dbimport_db()
             return None
 
@@ -1484,7 +1484,7 @@ class dbCalls:
 
         try:
             session = self.get_dbimport_session()
-        except SQLerror:
+        except SQLError:
             self.disconnect_dbimport_db()
             return None
 
@@ -1626,7 +1626,7 @@ class dbCalls:
 
         try:
             session = self.get_dbimport_session()
-        except SQLerror:
+        except SQLError:
             self.disconnect_dbimport_db()
             return None
 
@@ -1832,7 +1832,7 @@ class dbCalls:
 
         try:
             session = self.get_dbimport_session()
-        except SQLerror:
+        except SQLError:
             self.disconnect_dbimport_db()
             return None
 
@@ -1889,7 +1889,7 @@ class dbCalls:
 
         try:
             session = self.get_dbimport_session()
-        except SQLerror:
+        except SQLError:
             self.disconnect_dbimport_db()
             return None
 
@@ -1928,7 +1928,7 @@ class dbCalls:
 
         try:
             session = self.get_dbimport_session()
-        except SQLerror:
+        except SQLError:
             self.disconnect_dbimport_db()
             return None
 
@@ -1994,7 +1994,7 @@ class dbCalls:
 
         try:
             session = self.get_dbimport_session()
-        except SQLerror:
+        except SQLError:
             self.disconnect_dbimport_db()
             return None
 
@@ -2160,7 +2160,7 @@ class dbCalls:
 
             session.execute(query)
             session.commit()
-        except SQLerror as err:
+        except SQLError as err:
             log.error(str(err))
             log.error(column)  # noqa: F821  # TODO(#164): column is undefined here
 
@@ -2276,7 +2276,7 @@ class dbCalls:
                     )
 
                 session.commit()
-            except SQLerror as err:
+            except SQLError as err:
                 log.error(str(err))
                 log.error(column)
 
@@ -2300,7 +2300,7 @@ class dbCalls:
 
         try:
             session = self.get_dbimport_session()
-        except SQLerror:
+        except SQLError:
             self.disconnect_dbimport_db()
             return None
 
@@ -2559,7 +2559,7 @@ class dbCalls:
 
         try:
             session = self.get_dbimport_session()
-        except SQLerror:
+        except SQLError:
             self.disconnect_dbimport_db()
             return None
 
@@ -2733,7 +2733,7 @@ class dbCalls:
 
         try:
             session = self.get_dbimport_session()
-        except SQLerror:
+        except SQLError:
             self.disconnect_dbimport_db()
             return None
 
@@ -2860,7 +2860,7 @@ class dbCalls:
 
         try:
             session = self.get_dbimport_session()
-        except SQLerror:
+        except SQLError:
             self.disconnect_dbimport_db()
             return None
 
@@ -2983,7 +2983,7 @@ class dbCalls:
 
         try:
             session = self.get_dbimport_session()
-        except SQLerror:
+        except SQLError:
             self.disconnect_dbimport_db()
             return None
 
@@ -3068,7 +3068,7 @@ class dbCalls:
 
         try:
             session = self.get_dbimport_session()
-        except SQLerror:
+        except SQLError:
             self.disconnect_dbimport_db()
             return None
 
@@ -3130,7 +3130,7 @@ class dbCalls:
 
         try:
             session = self.get_dbimport_session()
-        except SQLerror:
+        except SQLError:
             self.disconnect_dbimport_db()
             return None
 
@@ -3176,7 +3176,7 @@ class dbCalls:
 
         try:
             session = self.get_dbimport_session()
-        except SQLerror:
+        except SQLError:
             self.disconnect_dbimport_db()
             return None
 
@@ -3244,7 +3244,7 @@ class dbCalls:
 
         try:
             session = self.get_dbimport_session()
-        except SQLerror:
+        except SQLError:
             self.disconnect_dbimport_db()
             return None
 
@@ -3339,7 +3339,7 @@ class dbCalls:
 
             session.execute(query)
             session.commit()
-        except SQLerror as err:
+        except SQLError as err:
             log.error(str(err))
             log.error(column)  # noqa: F821  # TODO(#164): column is undefined here
 
@@ -3442,7 +3442,7 @@ class dbCalls:
                     )
 
                 session.commit()
-            except SQLerror as err:
+            except SQLError as err:
                 log.error(str(err))
                 log.error(column)
 
@@ -3465,7 +3465,7 @@ class dbCalls:
 
         try:
             session = self.get_dbimport_session()
-        except SQLerror:
+        except SQLError:
             self.disconnect_dbimport_db()
             return None
 
@@ -3548,7 +3548,7 @@ class dbCalls:
 
         try:
             session = self.get_dbimport_session()
-        except SQLerror:
+        except SQLError:
             self.disconnect_dbimport_db()
             return None
 
@@ -3618,7 +3618,7 @@ class dbCalls:
 
         try:
             session = self.get_dbimport_session()
-        except SQLerror:
+        except SQLError:
             self.disconnect_dbimport_db()
             return None
 
@@ -3690,7 +3690,7 @@ class dbCalls:
 
         try:
             session = self.get_dbimport_session()
-        except SQLerror:
+        except SQLError:
             self.disconnect_dbimport_db()
             return None
 
@@ -3758,7 +3758,7 @@ class dbCalls:
 
         try:
             session = self.get_dbimport_session()
-        except SQLerror:
+        except SQLError:
             self.disconnect_dbimport_db()
             return None
 
@@ -3820,7 +3820,7 @@ class dbCalls:
 
         try:
             session = self.get_dbimport_session()
-        except SQLerror:
+        except SQLError:
             self.disconnect_dbimport_db()
             return None
 
@@ -3898,7 +3898,7 @@ class dbCalls:
 
         try:
             session = self.get_dbimport_session()
-        except SQLerror:
+        except SQLError:
             self.disconnect_dbimport_db()
             return None
 
@@ -3951,7 +3951,7 @@ class dbCalls:
 
         try:
             session = self.get_dbimport_session()
-        except SQLerror:
+        except SQLError:
             self.disconnect_dbimport_db()
             return None
 
@@ -3998,7 +3998,7 @@ class dbCalls:
 
             session.execute(query)
             session.commit()
-        except SQLerror as err:
+        except SQLError as err:
             log.error(str(err))
             log.error(column)  # noqa: F821  # TODO(#164): column is undefined here
 
@@ -4015,7 +4015,7 @@ class dbCalls:
 
         try:
             session = self.get_dbimport_session()
-        except SQLerror:
+        except SQLError:
             self.disconnect_dbimport_db()
             return None
 
@@ -4097,7 +4097,7 @@ class dbCalls:
 
         try:
             session = self.get_dbimport_session()
-        except SQLerror:
+        except SQLError:
             self.disconnect_dbimport_db()
             return None
 
@@ -4189,7 +4189,7 @@ class dbCalls:
 
         try:
             session = self.get_dbimport_session()
-        except SQLerror:
+        except SQLError:
             self.disconnect_dbimport_db()
             return None
 
@@ -4207,7 +4207,7 @@ class dbCalls:
 
         try:
             session = self.get_dbimport_session()
-        except SQLerror:
+        except SQLError:
             self.disconnect_dbimport_db()
             return None
 
@@ -4257,7 +4257,7 @@ class dbCalls:
 
         try:
             session = self.get_dbimport_session()
-        except SQLerror:
+        except SQLError:
             self.disconnect_dbimport_db()
             return None
 
@@ -4308,7 +4308,7 @@ class dbCalls:
 
         try:
             session = self.get_dbimport_session()
-        except SQLerror:
+        except SQLError:
             self.disconnect_dbimport_db()
             return None
 
@@ -4346,7 +4346,7 @@ class dbCalls:
 
         try:
             session = self.get_dbimport_session()
-        except SQLerror:
+        except SQLError:
             self.disconnect_dbimport_db()
             return None
 
@@ -4420,7 +4420,7 @@ class dbCalls:
 
         try:
             session = self.get_dbimport_session()
-        except SQLerror:
+        except SQLError:
             self.disconnect_dbimport_db()
             return None
 
@@ -4522,7 +4522,7 @@ class dbCalls:
 
             session.execute(query)
             session.commit()
-        except SQLerror as err:
+        except SQLError as err:
             log.error(str(err))
             log.error(column)  # noqa: F821  # TODO(#164): column is undefined here
 
@@ -4556,7 +4556,7 @@ class dbCalls:
 
         try:
             session = self.get_dbimport_session()
-        except SQLerror:
+        except SQLError:
             self.disconnect_dbimport_db()
             return None
 
@@ -4606,7 +4606,7 @@ class dbCalls:
 
         try:
             session = self.get_dbimport_session()
-        except SQLerror:
+        except SQLError:
             self.disconnect_dbimport_db()
             return None
 
@@ -4644,7 +4644,7 @@ class dbCalls:
 
         try:
             session = self.get_dbimport_session()
-        except SQLerror:
+        except SQLError:
             self.disconnect_dbimport_db()
             return None
 
@@ -4718,7 +4718,7 @@ class dbCalls:
 
         try:
             session = self.get_dbimport_session()
-        except SQLerror:
+        except SQLError:
             self.disconnect_dbimport_db()
             return None
 
@@ -4804,7 +4804,7 @@ class dbCalls:
 
             session.execute(query)
             session.commit()
-        except SQLerror as err:
+        except SQLError as err:
             log.error(str(err))
             log.error(column)  # noqa: F821  # TODO(#164): column is undefined here
 
@@ -4838,7 +4838,7 @@ class dbCalls:
 
         try:
             session = self.get_dbimport_session()
-        except SQLerror:
+        except SQLError:
             self.disconnect_dbimport_db()
             return None
 
@@ -4888,7 +4888,7 @@ class dbCalls:
 
         try:
             session = self.get_dbimport_session()
-        except SQLerror:
+        except SQLError:
             self.disconnect_dbimport_db()
             return None
 
@@ -4926,7 +4926,7 @@ class dbCalls:
 
         try:
             session = self.get_dbimport_session()
-        except SQLerror:
+        except SQLError:
             self.disconnect_dbimport_db()
             return None
 
@@ -5000,7 +5000,7 @@ class dbCalls:
 
         try:
             session = self.get_dbimport_session()
-        except SQLerror:
+        except SQLError:
             self.disconnect_dbimport_db()
             return None
 
@@ -5078,7 +5078,7 @@ class dbCalls:
 
             session.execute(query)
             session.commit()
-        except SQLerror as err:
+        except SQLError as err:
             log.error(str(err))
             log.error(column)  # noqa: F821  # TODO(#164): column is undefined here
 

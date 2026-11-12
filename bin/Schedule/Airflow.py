@@ -32,7 +32,7 @@ import pendulum
 import sqlalchemy as sa
 from sqlalchemy.orm import Query, aliased, scoped_session, sessionmaker
 
-from common.Exceptions import SQLerror, invalidConfiguration
+from common.Exceptions import InvalidConfigurationError, SQLError
 from ConfigReader import configuration
 from DBImportConfig import common_config, configSchema, sendStatistics
 from Schedule import airflowSchema
@@ -107,14 +107,14 @@ class initialize:
                 "Airflow", "airflow_mode", exit_on_error=False
             )
             if self.airflow_mode != "default" and self.airflow_mode != "aws_mwaa":
-                raise invalidConfiguration(
+                raise InvalidConfigurationError(
                     "Invalid option specified for [Airflow][airflow_mode] in the configuration file."
                 )
         # 				log.error("Invalid option specified for [Airflow][airflow_mode] in the configuration file.")
         # 				self.common_config.remove_temporary_files()
         # 				sys.exit(1)
 
-        except invalidConfiguration:
+        except InvalidConfigurationError:
             pass
 
         if self.airflow_mode == "default" and self.create_pools_with_tasks == False:
@@ -128,12 +128,12 @@ class initialize:
                 self.airflow_db_session = sessionmaker(bind=self.airflow_db)
 
             except sa.exc.OperationalError as err:
-                raise SQLerror(err)
+                raise SQLError(err)
             # 				log.error("%s"%err)
             # 				self.common_config.remove_temporary_files()
             # 				sys.exit(1)
             except:
-                raise SQLerror(sys.exc_info())
+                raise SQLError(sys.exc_info())
         # 				print("Unexpected error: ")
         # 				print(sys.exc_info())
         # 				self.common_config.remove_temporary_files()
@@ -176,14 +176,14 @@ class initialize:
             log.error("%s", err)
             self.config_db_session = None
             self.config_db = None
-            raise SQLerror("Can't connect to DBImport database")
+            raise SQLError("Can't connect to DBImport database")
 
         except:
             print("Unexpected error: ")
             print(sys.exc_info())
             self.config_db_session = None
             self.config_db = None
-            raise SQLerror("Can't connect to DBImport database")
+            raise SQLError("Can't connect to DBImport database")
 
         else:
             # return self.config_db_session()
@@ -200,7 +200,7 @@ class initialize:
 
         try:
             session = self.get_dbimport_session()
-        except SQLerror:
+        except SQLError:
             self.disconnect_dbimport_db()
             return None
 
@@ -281,7 +281,7 @@ class initialize:
 
         try:
             self.generate_dag(name=name, write_dag=True)
-        except (invalidConfiguration, SQLerror, RuntimeError) as errMsg:
+        except (InvalidConfigurationError, SQLError, RuntimeError) as errMsg:
             result = str(errMsg)
             return_code = 500
         except:
@@ -438,7 +438,7 @@ class initialize:
                 self.generate_custom_dag(dag=row)
 
         if not dag_found and name != None:
-            raise invalidConfiguration("Can't find DAG with that name")
+            raise InvalidConfigurationError("Can't find DAG with that name")
         # 			log.error("Can't find DAG with that name")
         # 			self.common_config.remove_temporary_files()
         # 			sys.exit(1)
@@ -583,7 +583,7 @@ class initialize:
                     )
                     previous_connection_alias = row["dbalias"]
 
-                except invalidConfiguration as errMsg:
+                except InvalidConfigurationError as errMsg:
                     log.warning(
                         "The connection alias '%s' cant be found in the configuration database"
                         % (row["dbalias"])
@@ -756,12 +756,12 @@ class initialize:
                     or hive_table == ""
                 ):
                     self.dag_file.close()
-                    raise invalidConfiguration(
+                    raise InvalidConfigurationError(
                         "Syntax for filter_hive column is <HIVE_DB>.<HIVE_TABLE>;<HIVE_DB>.<HIVE_TABLE>;....."
                     )
             except IndexError:
                 self.dag_file.close()
-                raise invalidConfiguration(
+                raise InvalidConfigurationError(
                     "Syntax for filter_hive column is <HIVE_DB>.<HIVE_TABLE>;<HIVE_DB>.<HIVE_TABLE>;....."
                 )
             # 				log.error("Syntax for filter_hive column is <HIVE_DB>.<HIVE_TABLE>;<HIVE_DB>.<HIVE_TABLE>;.....")

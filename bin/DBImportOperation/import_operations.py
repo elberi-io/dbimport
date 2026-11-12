@@ -32,10 +32,10 @@ from requests_kerberos import OPTIONAL, HTTPKerberosAuth
 from common import constants as constant
 from common import sparkUDF as sparkUDF
 from common.Exceptions import (
-    SQLerror,
-    databaseNotFound,
-    invalidConfiguration,
-    undevelopedFeature,
+    DatabaseNotFoundError,
+    InvalidConfigurationError,
+    SQLError,
+    UndevelopedFeatureError,
 )
 from common.Singleton import Singleton
 from ConfigReader import configuration
@@ -251,7 +251,7 @@ class operation(metaclass=Singleton):
     def check_db(self, hive_db):
         try:
             self.common_operations.check_db(hive_db)
-        except databaseNotFound as errMsg:
+        except DatabaseNotFoundError as errMsg:
             logging.error(errMsg)
             self.import_config.remove_temporary_files()
             sys.exit(1)
@@ -293,7 +293,7 @@ class operation(metaclass=Singleton):
     def get_target_table_validation_data(self, incremental_max=None):
         if self.import_config.validation_method == "customQuery":
             if self.import_config.etl_engine == constant.ETL_ENGINE_SPARK:
-                raise invalidConfiguration(
+                raise InvalidConfigurationError(
                     "Custom Query validation is not supported with Spark as the ETL engine (yet)"
                 )
             else:
@@ -323,7 +323,7 @@ class operation(metaclass=Singleton):
                 "'%s' is to large.",
                 self.import_config.validation_custom_query_hive_value,
             )
-            raise invalidConfiguration(
+            raise InvalidConfigurationError(
                 "The size of the json document on the custom query exceeds 1024 bytes. Change the query to create a result with less than 512 bytes"
             )
 
@@ -359,7 +359,7 @@ class operation(metaclass=Singleton):
                 "'%s' is to large.",
                 self.import_config.validation_custom_query_hive_value,
             )
-            raise invalidConfiguration(
+            raise InvalidConfigurationError(
                 "The size of the json document on the custom query exceeds 1024 bytes. Change the query to create a result with less than 512 bytes"
             )
 
@@ -539,7 +539,7 @@ class operation(metaclass=Singleton):
     def validate_target_table(self):
         if self.import_config.validation_method == "customQuery":
             if self.import_config.etl_engine == constant.ETL_ENGINE_SPARK:
-                raise invalidConfiguration(
+                raise InvalidConfigurationError(
                     "Custom Query validation is not supported with Spark as the ETL engine (yet)"
                 )
 
@@ -606,7 +606,7 @@ class operation(metaclass=Singleton):
             self.import_config.save_key_data()
             self.import_config.save_index_data()
             self.import_config.save_generated_data()
-        except invalidConfiguration as errMsg:
+        except InvalidConfigurationError as errMsg:
             logging.error(errMsg)
             self.import_config.remove_temporary_files()
             sys.exit(1)
@@ -822,7 +822,7 @@ class operation(metaclass=Singleton):
 
         try:
             self.import_config.common_config.execute_jdbc_query(query)
-        except SQLerror as e:
+        except SQLError as e:
             error_msg = str(e)
             if (
                 "java.sql.SQLException: ORA-08181:" in error_msg
@@ -1568,7 +1568,7 @@ class operation(metaclass=Singleton):
             and self.import_config.etl_engine == constant.ETL_ENGINE_SPARK
         ):
             self.stop_spark()
-            raise invalidConfiguration(
+            raise InvalidConfigurationError(
                 "Using Spark as the ETL engine is only supported in Spark3."
             )
         elif spark_major_version == 3 and spark_minor_version != 4:
@@ -3531,7 +3531,7 @@ class operation(metaclass=Singleton):
                     == False
                 ):
                     # Table exists and is not an Iceberg table
-                    raise undevelopedFeature(
+                    raise UndevelopedFeatureError(
                         "The history table already exists, but it's not an Iceberg table. Convertion between manage table and external Iceberg table is not handled automatically. Please save the data and drop the table manually to continue with the import"
                     )
                 else:
@@ -3676,7 +3676,7 @@ class operation(metaclass=Singleton):
                             self.hive_db, self.hive_table
                         )
                     else:
-                        raise undevelopedFeature(
+                        raise UndevelopedFeatureError(
                             "This is an incremental import and the target table already exists, but it's not an Iceberg table. Convertion between manage table and external Iceberg table is not handled automatically. Please save the data and drop the table manually to continue with the import"
                         )
 
@@ -3903,7 +3903,7 @@ class operation(metaclass=Singleton):
         # 		print("==============================================")
         # 		print(columnsHive)
 
-        # 		raise undevelopedFeature("Stopping here to debug")
+        # 		raise UndevelopedFeatureError("Stopping here to debug")
 
         # If we are working on the import table, we need to change some column types to handle Parquet files
         if self.import_config.import_tool == "sqoop":
@@ -4255,7 +4255,7 @@ class operation(metaclass=Singleton):
         # 						self.spark.sql(query)
         #
         # 					except pyspark.sql.utils.AnalysisException as e:
-        # 						raise SQLerror(str(e))
+        # 						raise SQLError(str(e))
 
         for _index, row in columns_merge_only_name_type.loc[
             columns_merge_only_name_type["Exist"] == "left_only"
@@ -4328,7 +4328,7 @@ class operation(metaclass=Singleton):
                                 self.spark.sql(query)
 
                             except pyspark.sql.utils.AnalysisException as e:
-                                raise SQLerror(str(e))
+                                raise SQLError(str(e))
                         else:
                             logging.error(
                                 "The source table schema have changed. During alter of column to change the type in the Iceberg table, Spark returned an error."
@@ -4339,9 +4339,9 @@ class operation(metaclass=Singleton):
                             logging.error(
                                 "To get out of this problem, the table needs to be recreated manually before a successful import can be executed again"
                             )
-                            raise SQLerror(str(e))
+                            raise SQLError(str(e))
                     else:
-                        raise SQLerror(str(e))
+                        raise SQLError(str(e))
 
             # Get the previous column type from the Pandas DF with right_only in Exist column
             previous_column_type = (

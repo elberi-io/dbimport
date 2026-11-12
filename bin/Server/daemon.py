@@ -30,7 +30,7 @@ from daemons.prefab import run
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import aliased, sessionmaker
 
-from common.Exceptions import SQLerror
+from common.Exceptions import SQLError
 from ConfigReader import configuration
 from DBImportConfig import common_config, configSchema
 from Server import atlasDiscovery
@@ -275,7 +275,7 @@ class serverDaemon(run.RunDaemon):
                 self.common_config.remove_temporary_files()
                 sys.exit(1)
 
-            except SQLerror:
+            except SQLError:
                 log.error("Server startup failed. Cant connect to config database")
                 self.disconnect_dbimport_db()
                 self.common_config.remove_temporary_files()
@@ -384,7 +384,7 @@ class serverDaemon(run.RunDaemon):
                     session.rollback()
                     self.disconnect_dbimport_db()
 
-                except SQLerror:
+                except SQLError:
                     self.disconnect_dbimport_db()
 
                 # ------------------------------------------
@@ -429,7 +429,7 @@ class serverDaemon(run.RunDaemon):
                         session.rollback()
                         self.disconnect_dbimport_db()
 
-                    except SQLerror:
+                    except SQLError:
                         self.disconnect_dbimport_db()
 
                 # ------------------------------------------
@@ -460,7 +460,7 @@ class serverDaemon(run.RunDaemon):
                     session.rollback()
                     self.disconnect_dbimport_db()
 
-                except SQLerror:
+                except SQLError:
                     self.disconnect_dbimport_db()
 
                 else:
@@ -539,7 +539,7 @@ class serverDaemon(run.RunDaemon):
                                 session.rollback()
                                 self.disconnect_dbimport_db()
 
-                            except SQLerror:
+                            except SQLError:
                                 self.disconnect_dbimport_db()
 
                             else:
@@ -577,7 +577,7 @@ class serverDaemon(run.RunDaemon):
         log = logging.getLogger("server")
         if self.config_db_session == None:
             if self.connect_dbimport_db() == False:
-                raise SQLerror("Can't connect to DBImport database")
+                raise SQLError("Can't connect to DBImport database")
 
         return self.config_db_session()
 
@@ -644,7 +644,7 @@ class serverDaemon(run.RunDaemon):
 
         try:
             session = self.get_dbimport_session()
-        except SQLerror:
+        except SQLError:
             self.disconnect_dbimport_db()
             return None
 

@@ -31,7 +31,7 @@ from TCLIService.ttypes import TOperationState
 
 from catalogService import glue, hiveDirect
 from common import constants as constant
-from common.Exceptions import SQLerror, invalidConfiguration
+from common.Exceptions import InvalidConfigurationError, SQLError
 from common.Singleton import Singleton
 from ConfigReader import configuration
 from DBImportConfig import common_config
@@ -87,7 +87,7 @@ class operation(metaclass=Singleton):
             self.metastore = glue.glueCatalog()
             self.spark_catalog_name = "glue"
         else:
-            raise invalidConfiguration(
+            raise InvalidConfigurationError(
                 "Configuration 'metastore_type' under [Metastore] in the configuration file contains an invalid option"
             )
 
@@ -443,9 +443,9 @@ class operation(metaclass=Singleton):
                     + second_quote_position
                     + 1
                 ]
-                raise SQLerror(sql_error_message)
+                raise SQLError(sql_error_message)
             else:
-                raise SQLerror(errMsg)
+                raise SQLError(errMsg)
 
         status = self.hive_cursor.poll().operationState
         headers = self.hive_cursor.poll().progressUpdateResponse.headerNames
