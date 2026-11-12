@@ -252,7 +252,7 @@ async def login_for_access_token(
     return {"access_token": access_token, "token_type": "bearer"}
 
 
-@app.get("/status", response_model=dataModels.status, tags=["General"])
+@app.get("/status", response_model=dataModels.Status, tags=["General"])
 # async def get_restServer_status(current_user: Annotated[dataModels.User, Depends(get_current_user)]):
 async def get_server_status():
     return json.loads(json.dumps({"status": "ok", "version": constant.VERSION}))
@@ -299,7 +299,7 @@ async def get_user_details(
 @app.post("/users/{user}/changePassword", tags=["Credentials"])
 async def change_the_user_password(
     user: str,
-    password_data: dataModels.changePassword,
+    password_data: dataModels.ChangePassword,
     current_user: Annotated[dataModels.User, Depends(get_current_user)],
 ):
     user = get_user(user, format_password=False)
@@ -340,7 +340,7 @@ async def change_the_user_password(
 @app.delete("/users/{user}/delete", tags=["Credentials"])
 async def update_user_details(
     user: str,
-    user_data: dataModels.changeUser,
+    user_data: dataModels.ChangeUser,
     current_user: Annotated[dataModels.User, Depends(get_current_user)],
 ):
     username = user
@@ -370,7 +370,7 @@ async def update_user_details(
 @app.post("/users/{user}/update", response_model=dataModels.User, tags=["Credentials"])
 async def update_user_details(  # noqa: F811  # the delete handler above has this name; renaming changes its operationId
     user: str,
-    user_data: dataModels.changeUser,
+    user_data: dataModels.ChangeUser,
     current_user: Annotated[dataModels.User, Depends(get_current_user)],
 ):
     username = user
@@ -406,7 +406,7 @@ async def update_user_details(  # noqa: F811  # the delete handler above has thi
     return user
 
 
-# @app.get("/config/getJDBCdrivers", response_model=dataModels.jdbcDriver)
+# @app.get("/config/getJDBCdrivers", response_model=dataModels.JDBCDriver)
 @app.get("/config/getJDBCdrivers", tags=["Configuration"])
 async def get_all_configured_jdbc_drivers(
     current_user: Annotated[dataModels.User, Depends(get_current_user)],
@@ -416,7 +416,7 @@ async def get_all_configured_jdbc_drivers(
 
 @app.post("/config/updateJDBCdriver", tags=["Configuration"])
 async def change_configuration_for_jdbc_drivers(
-    jdbcDriver: dataModels.jdbcDriver,
+    jdbcDriver: dataModels.JDBCDriver,
     current_user: Annotated[dataModels.User, Depends(get_current_user)],
     response: Response,
 ):
@@ -428,7 +428,7 @@ async def change_configuration_for_jdbc_drivers(
 
 
 @app.get(
-    "/config/getConfig", response_model=dataModels.configuration, tags=["Configuration"]
+    "/config/getConfig", response_model=dataModels.Configuration, tags=["Configuration"]
 )
 async def get_global_configuration(
     current_user: Annotated[dataModels.User, Depends(get_current_user)],
@@ -438,7 +438,7 @@ async def get_global_configuration(
 
 @app.post("/config/updateConfig", tags=["Configuration"])
 async def update_global_configuration(
-    configuration: dataModels.configuration,
+    configuration: dataModels.Configuration,
     current_user: Annotated[dataModels.User, Depends(get_current_user)],
     response: Response,
 ):
@@ -449,7 +449,7 @@ async def update_global_configuration(
 
 
 @app.get(
-    "/connection", response_model=list[dataModels.connection], tags=["Connections"]
+    "/connection", response_model=list[dataModels.Connection], tags=["Connections"]
 )
 async def get_all_connections(
     current_user: Annotated[dataModels.User, Depends(get_current_user)],
@@ -460,7 +460,7 @@ async def get_all_connections(
 
 @app.post("/connection", tags=["Connections"])
 async def update_connection(
-    connection: dataModels.connectionDetails,
+    connection: dataModels.ConnectionDetails,
     current_user: Annotated[dataModels.User, Depends(get_current_user)],
     response: Response,
 ):
@@ -472,7 +472,7 @@ async def update_connection(
 
 @app.get(
     "/connection/{connection}",
-    response_model=dataModels.connectionDetails,
+    response_model=dataModels.ConnectionDetails,
     tags=["Connections"],
 )
 async def get_connection_details(
@@ -495,12 +495,12 @@ async def delete_connection(
 
 @app.post(
     "/connection/encryptCredentials",
-    response_model=dataModels.defaultResultResponse,
+    response_model=dataModels.DefaultResultResponse,
     tags=["Connections"],
 )
 # @app.post("/connection/encryptCredentials", response_model=dataModels.encryptCredentialResult, tags=["Connections"])
 async def encrypt_credentials_and_store_in_connection(
-    credentials: dataModels.encryptCredential,
+    credentials: dataModels.EncryptCredential,
     current_user: Annotated[dataModels.User, Depends(get_current_user)],
     response: Response,
 ):
@@ -512,11 +512,11 @@ async def encrypt_credentials_and_store_in_connection(
 
 @app.post(
     "/connection/generateJDBCconnectionString",
-    response_model=dataModels.generatedJDBCconnectionString,
+    response_model=dataModels.GeneratedJDBCConnectionString,
     tags=["Connections"],
 )
 async def generate_a_jdbc_connection_string(
-    connectionValues: dataModels.generateJDBCconnectionString,
+    connectionValues: dataModels.GenerateJDBCConnectionString,
     current_user: Annotated[dataModels.User, Depends(get_current_user)],
     response: Response,
 ):
@@ -528,11 +528,11 @@ async def generate_a_jdbc_connection_string(
 
 @app.post(
     "/connection/search",
-    response_model=list[dataModels.connection],
+    response_model=list[dataModels.Connection],
     tags=["Connections"],
 )
 async def search_connections(
-    searchValues: dataModels.connectionSearch,
+    searchValues: dataModels.ConnectionSearch,
     current_user: Annotated[dataModels.User, Depends(get_current_user)],
     response: Response,
 ):
@@ -541,7 +541,7 @@ async def search_connections(
 
 @app.get(
     "/connection/testConnection/{connection}",
-    response_model=dataModels.defaultResultResponse,
+    response_model=dataModels.DefaultResultResponse,
     tags=["Connections"],
 )
 async def test_a_connection(
@@ -555,7 +555,7 @@ async def test_a_connection(
     return return_msg
 
 
-@app.get("/import/db", response_model=list[dataModels.importDBs], tags=["Imports"])
+@app.get("/import/db", response_model=list[dataModels.ImportDBs], tags=["Imports"])
 async def get_all_import_databases(
     current_user: Annotated[dataModels.User, Depends(get_current_user)],
 ):
@@ -564,11 +564,11 @@ async def get_all_import_databases(
 
 @app.post(
     "/import/discover/search",
-    response_model=list[dataModels.discoverImportTable],
+    response_model=list[dataModels.DiscoverImportTable],
     tags=["Imports"],
 )
 async def discover_new_import_tables(
-    data: dataModels.discoverImportTableOptions,
+    data: dataModels.DiscoverImportTableOptions,
     current_user: Annotated[dataModels.User, Depends(get_current_user)],
     response: Response,
 ):
@@ -580,11 +580,11 @@ async def discover_new_import_tables(
 
 @app.post(
     "/import/discover/add",
-    response_model=dataModels.defaultResultResponse,
+    response_model=dataModels.DefaultResultResponse,
     tags=["Imports"],
 )
 async def add_discovered_import_tables(
-    data: list[dataModels.discoverImportTable],
+    data: list[dataModels.DiscoverImportTable],
     current_user: Annotated[dataModels.User, Depends(get_current_user)],
     response: Response,
 ):
@@ -595,10 +595,10 @@ async def add_discovered_import_tables(
 
 
 @app.post(
-    "/import/search", response_model=list[dataModels.importTable], tags=["Imports"]
+    "/import/search", response_model=list[dataModels.ImportTable], tags=["Imports"]
 )
 async def search_import_tables(
-    searchValues: dataModels.importTableSearch,
+    searchValues: dataModels.ImportTableSearch,
     current_user: Annotated[dataModels.User, Depends(get_current_user)],
     response: Response,
 ):
@@ -606,10 +606,10 @@ async def search_import_tables(
 
 
 @app.post(
-    "/import/table", response_model=dataModels.defaultResultResponse, tags=["Imports"]
+    "/import/table", response_model=dataModels.DefaultResultResponse, tags=["Imports"]
 )
 async def multi_record_update_import_table(
-    bulkData: dataModels.importTableBulkUpdate,
+    bulkData: dataModels.ImportTableBulkUpdate,
     current_user: Annotated[dataModels.User, Depends(get_current_user)],
     response: Response,
 ):
@@ -620,10 +620,10 @@ async def multi_record_update_import_table(
 
 
 @app.delete(
-    "/import/table", response_model=dataModels.defaultResultResponse, tags=["Imports"]
+    "/import/table", response_model=dataModels.DefaultResultResponse, tags=["Imports"]
 )
 async def multi_record_delete_import_table(
-    bulkData: list[dataModels.importTablePK],
+    bulkData: list[dataModels.ImportTablePK],
     current_user: Annotated[dataModels.User, Depends(get_current_user)],
     response: Response,
 ):
@@ -635,7 +635,7 @@ async def multi_record_delete_import_table(
 
 @app.get(
     "/import/table/{connection}",
-    response_model=list[dataModels.importTable],
+    response_model=list[dataModels.ImportTable],
     tags=["Imports"],
 )
 async def get_import_tables_on_a_connection(
@@ -648,7 +648,7 @@ async def get_import_tables_on_a_connection(
 
 @app.get(
     "/import/table/{database}",
-    response_model=list[dataModels.importTable],
+    response_model=list[dataModels.ImportTable],
     tags=["Imports"],
 )
 async def get_import_tables_in_database(
@@ -659,7 +659,7 @@ async def get_import_tables_in_database(
 
 @app.get(
     "/import/table/{database}/{table}",
-    response_model=dataModels.importTableDetailsRead,
+    response_model=dataModels.ImportTableDetailsRead,
     tags=["Imports"],
 )
 async def get_import_table_details(
@@ -688,7 +688,7 @@ async def delete_import_table(
 
 @app.post(
     "/import/table/{database}/{table}/repair",
-    response_model=dataModels.defaultResultResponse,
+    response_model=dataModels.DefaultResultResponse,
     tags=["Imports"],
 )
 async def repair_import_table(
@@ -705,7 +705,7 @@ async def repair_import_table(
 
 @app.post(
     "/import/table/{database}/{table}/reset",
-    response_model=dataModels.defaultResultResponse,
+    response_model=dataModels.DefaultResultResponse,
     tags=["Imports"],
 )
 async def reset_import_table(
@@ -724,7 +724,7 @@ async def reset_import_table(
 async def create_or_update_import_table(
     database: str,
     table: str,
-    data: dataModels.importTableDetailsWrite,
+    data: dataModels.ImportTableDetailsWrite,
     current_user: Annotated[dataModels.User, Depends(get_current_user)],
     response: Response,
 ):
@@ -736,7 +736,7 @@ async def create_or_update_import_table(
 
 @app.get(
     "/export/connection",
-    response_model=list[dataModels.exportConnections],
+    response_model=list[dataModels.ExportConnections],
     tags=["Exports"],
 )
 async def get_all_connections_with_exports(
@@ -747,11 +747,11 @@ async def get_all_connections_with_exports(
 
 @app.post(
     "/export/discover/search",
-    response_model=list[dataModels.discoverExportTable],
+    response_model=list[dataModels.DiscoverExportTable],
     tags=["Exports"],
 )
 async def discover_new_export_tables(
-    data: dataModels.discoverExportTableOptions,
+    data: dataModels.DiscoverExportTableOptions,
     current_user: Annotated[dataModels.User, Depends(get_current_user)],
     response: Response,
 ):
@@ -763,11 +763,11 @@ async def discover_new_export_tables(
 
 @app.post(
     "/export/discover/add",
-    response_model=dataModels.defaultResultResponse,
+    response_model=dataModels.DefaultResultResponse,
     tags=["Exports"],
 )
 async def add_discovered_export_tables(
-    data: list[dataModels.discoverExportTable],
+    data: list[dataModels.DiscoverExportTable],
     current_user: Annotated[dataModels.User, Depends(get_current_user)],
     response: Response,
 ):
@@ -778,10 +778,10 @@ async def add_discovered_export_tables(
 
 
 @app.post(
-    "/export/search", response_model=list[dataModels.exportTable], tags=["Exports"]
+    "/export/search", response_model=list[dataModels.ExportTable], tags=["Exports"]
 )
 async def search_export_tables(
-    searchValues: dataModels.exportTableSearch,
+    searchValues: dataModels.ExportTableSearch,
     current_user: Annotated[dataModels.User, Depends(get_current_user)],
     response: Response,
 ):
@@ -789,10 +789,10 @@ async def search_export_tables(
 
 
 @app.post(
-    "/export/table", response_model=dataModels.defaultResultResponse, tags=["Exports"]
+    "/export/table", response_model=dataModels.DefaultResultResponse, tags=["Exports"]
 )
 async def multi_record_update_export_table(
-    bulkData: dataModels.exportTableBulkUpdate,
+    bulkData: dataModels.ExportTableBulkUpdate,
     current_user: Annotated[dataModels.User, Depends(get_current_user)],
     response: Response,
 ):
@@ -803,10 +803,10 @@ async def multi_record_update_export_table(
 
 
 @app.delete(
-    "/export/table", response_model=dataModels.defaultResultResponse, tags=["Exports"]
+    "/export/table", response_model=dataModels.DefaultResultResponse, tags=["Exports"]
 )
 async def multi_record_delete_export_table(
-    bulkData: list[dataModels.exportTablePK],
+    bulkData: list[dataModels.ExportTablePK],
     current_user: Annotated[dataModels.User, Depends(get_current_user)],
     response: Response,
 ):
@@ -818,7 +818,7 @@ async def multi_record_delete_export_table(
 
 @app.get(
     "/export/table/{connection}",
-    response_model=list[dataModels.exportTable],
+    response_model=list[dataModels.ExportTable],
     tags=["Exports"],
 )
 async def get_export_tables_on_connection(
@@ -833,7 +833,7 @@ async def get_export_tables_on_connection(
 
 @app.get(
     "/export/table/{connection}/{schema}",
-    response_model=list[dataModels.exportTable],
+    response_model=list[dataModels.ExportTable],
     tags=["Exports"],
 )
 async def get_export_tables_on_connection_and_schema(
@@ -849,7 +849,7 @@ async def get_export_tables_on_connection_and_schema(
 
 @app.get(
     "/export/table/{connection}/{schema}/{table}",
-    response_model=dataModels.exportTableDetailsRead,
+    response_model=dataModels.ExportTableDetailsRead,
     tags=["Exports"],
 )
 async def get_export_table_details(
@@ -872,7 +872,7 @@ async def create_or_update_export_table(
     connection: str,
     schema: str,
     table: str,
-    data: dataModels.exportTableDetailsWrite,
+    data: dataModels.ExportTableDetailsWrite,
     current_user: Annotated[dataModels.User, Depends(get_current_user)],
     response: Response,
 ):
@@ -898,7 +898,7 @@ async def delete_export_table(
 
 @app.post(
     "/export/table/{connection}/{schema}/{table}/repair",
-    response_model=dataModels.defaultResultResponse,
+    response_model=dataModels.DefaultResultResponse,
     tags=["Exports"],
 )
 async def repair_export_table(
@@ -916,7 +916,7 @@ async def repair_export_table(
 
 @app.post(
     "/export/table/{connection}/{schema}/{table}/reset",
-    response_model=dataModels.defaultResultResponse,
+    response_model=dataModels.DefaultResultResponse,
     tags=["Exports"],
 )
 async def reset_export_table(
@@ -933,7 +933,7 @@ async def reset_export_table(
 
 
 @app.get(
-    "/airflow/dags", response_model=list[dataModels.airflowAllDags], tags=["Airflow"]
+    "/airflow/dags", response_model=list[dataModels.AirflowAllDAGs], tags=["Airflow"]
 )
 async def get_all_airflow_dags(
     current_user: Annotated[dataModels.User, Depends(get_current_user)],
@@ -955,7 +955,7 @@ async def generate_airflow_dag(
 
 @app.get(
     "/airflow/dags/import",
-    response_model=list[dataModels.airflowImportDags],
+    response_model=list[dataModels.AirflowImportDAGs],
     tags=["Airflow"],
 )
 async def get_import_airflow_dags(
@@ -966,11 +966,11 @@ async def get_import_airflow_dags(
 
 @app.post(
     "/airflow/dags/import",
-    response_model=dataModels.defaultResultResponse,
+    response_model=dataModels.DefaultResultResponse,
     tags=["Airflow"],
 )
 async def multi_record_update_import_airflow_dag(
-    bulkData: dataModels.airflowDagBulkUpdate,
+    bulkData: dataModels.AirflowDAGBulkUpdate,
     current_user: Annotated[dataModels.User, Depends(get_current_user)],
     response: Response,
 ):
@@ -982,11 +982,11 @@ async def multi_record_update_import_airflow_dag(
 
 @app.delete(
     "/airflow/dags/import",
-    response_model=dataModels.defaultResultResponse,
+    response_model=dataModels.DefaultResultResponse,
     tags=["Airflow"],
 )
 async def multi_record_delete_import_airflow_dag(
-    bulkData: list[dataModels.airflowDagPK],
+    bulkData: list[dataModels.AirflowDAGPK],
     current_user: Annotated[dataModels.User, Depends(get_current_user)],
     response: Response,
 ):
@@ -998,7 +998,7 @@ async def multi_record_delete_import_airflow_dag(
 
 @app.get(
     "/airflow/dags/import/{dagname}",
-    response_model=dataModels.airflowImportDag,
+    response_model=dataModels.AirflowImportDAG,
     tags=["Airflow"],
 )
 async def get_import_airflow_dag(
@@ -1010,7 +1010,7 @@ async def get_import_airflow_dag(
 @app.post("/airflow/dags/import/{dagname}", tags=["Airflow"])
 async def create_or_update_import_airflow_dag(
     dagname: str,
-    airflowDag: dataModels.airflowImportDag,
+    airflowDag: dataModels.AirflowImportDAG,
     current_user: Annotated[dataModels.User, Depends(get_current_user)],
     response: Response,
 ):
@@ -1047,7 +1047,7 @@ async def delete_task_from_import_airflow_dag(
 
 @app.get(
     "/airflow/dags/export",
-    response_model=list[dataModels.airflowExportDags],
+    response_model=list[dataModels.AirflowExportDAGs],
     tags=["Airflow"],
 )
 async def get_export_airflow_dags(
@@ -1058,11 +1058,11 @@ async def get_export_airflow_dags(
 
 @app.post(
     "/airflow/dags/export",
-    response_model=dataModels.defaultResultResponse,
+    response_model=dataModels.DefaultResultResponse,
     tags=["Airflow"],
 )
 async def multi_record_update_export_airflow_dag(
-    bulkData: dataModels.airflowDagBulkUpdate,
+    bulkData: dataModels.AirflowDAGBulkUpdate,
     current_user: Annotated[dataModels.User, Depends(get_current_user)],
     response: Response,
 ):
@@ -1074,11 +1074,11 @@ async def multi_record_update_export_airflow_dag(
 
 @app.delete(
     "/airflow/dags/export",
-    response_model=dataModels.defaultResultResponse,
+    response_model=dataModels.DefaultResultResponse,
     tags=["Airflow"],
 )
 async def multi_record_delete_export_airflow_dag(
-    bulkData: list[dataModels.airflowDagPK],
+    bulkData: list[dataModels.AirflowDAGPK],
     current_user: Annotated[dataModels.User, Depends(get_current_user)],
     response: Response,
 ):
@@ -1090,7 +1090,7 @@ async def multi_record_delete_export_airflow_dag(
 
 @app.get(
     "/airflow/dags/export/{dagname}",
-    response_model=dataModels.airflowExportDag,
+    response_model=dataModels.AirflowExportDAG,
     tags=["Airflow"],
 )
 async def get_export_airflow_dag(
@@ -1102,7 +1102,7 @@ async def get_export_airflow_dag(
 @app.post("/airflow/dags/export/{dagname}", tags=["Airflow"])
 async def create_or_update_export_airflow_dag(
     dagname: str,
-    airflowDag: dataModels.airflowExportDag,
+    airflowDag: dataModels.AirflowExportDAG,
     current_user: Annotated[dataModels.User, Depends(get_current_user)],
     response: Response,
 ):
@@ -1139,7 +1139,7 @@ async def delete_task_from_export_airflow_dag(
 
 @app.get(
     "/airflow/dags/custom",
-    response_model=list[dataModels.airflowCustomDags],
+    response_model=list[dataModels.AirflowCustomDAGs],
     tags=["Airflow"],
 )
 async def get_custom_airflow_dags(
@@ -1150,11 +1150,11 @@ async def get_custom_airflow_dags(
 
 @app.post(
     "/airflow/dags/custom",
-    response_model=dataModels.defaultResultResponse,
+    response_model=dataModels.DefaultResultResponse,
     tags=["Airflow"],
 )
 async def multi_record_update_custom_airflow_dag(
-    bulkData: dataModels.airflowDagBulkUpdate,
+    bulkData: dataModels.AirflowDAGBulkUpdate,
     current_user: Annotated[dataModels.User, Depends(get_current_user)],
     response: Response,
 ):
@@ -1166,11 +1166,11 @@ async def multi_record_update_custom_airflow_dag(
 
 @app.delete(
     "/airflow/dags/custom",
-    response_model=dataModels.defaultResultResponse,
+    response_model=dataModels.DefaultResultResponse,
     tags=["Airflow"],
 )
 async def multi_record_delete_custom_airflow_dag(
-    bulkData: list[dataModels.airflowDagPK],
+    bulkData: list[dataModels.AirflowDAGPK],
     current_user: Annotated[dataModels.User, Depends(get_current_user)],
     response: Response,
 ):
@@ -1182,7 +1182,7 @@ async def multi_record_delete_custom_airflow_dag(
 
 @app.get(
     "/airflow/dags/custom/{dagname}",
-    response_model=dataModels.airflowCustomDag,
+    response_model=dataModels.AirflowCustomDAG,
     tags=["Airflow"],
 )
 async def get_custom_airflow_dag(
@@ -1194,7 +1194,7 @@ async def get_custom_airflow_dag(
 @app.post("/airflow/dags/custom/{dagname}", tags=["Airflow"])
 async def create_or_update_custom_airflow_dag(
     dagname: str,
-    airflowDag: dataModels.airflowCustomDag,
+    airflowDag: dataModels.AirflowCustomDAG,
     current_user: Annotated[dataModels.User, Depends(get_current_user)],
     response: Response,
 ):
