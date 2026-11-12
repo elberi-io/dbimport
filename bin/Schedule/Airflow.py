@@ -204,7 +204,7 @@ class initialize:
             self.disconnect_dbimport_db()
             return None
 
-        configuration_table = aliased(configSchema.configuration)
+        configuration_table = aliased(configSchema.Configuration)
 
         configuration = (
             session.query(
@@ -304,10 +304,10 @@ class initialize:
 
         # session = self.config_db_session()
         session = self.get_dbimport_session()
-        airflow_custom_dags = aliased(configSchema.airflowCustomDags)
-        airflow_export_dags = aliased(configSchema.airflowExportDags)
-        airflow_import_dags = aliased(configSchema.airflowImportDags)
-        airflow_etl_dags = aliased(configSchema.airflowEtlDags)
+        airflow_custom_dags = aliased(configSchema.AirflowCustomDAGs)
+        airflow_export_dags = aliased(configSchema.AirflowExportDAGs)
+        airflow_import_dags = aliased(configSchema.AirflowImportDAGs)
+        airflow_etl_dags = aliased(configSchema.AirflowETLDAGs)
 
         export_dag = pd.DataFrame(
             session.query(
@@ -524,7 +524,7 @@ class initialize:
 
         # session = self.config_db_session()
         session = self.get_dbimport_session()
-        export_tables = aliased(configSchema.exportTables)
+        export_tables = aliased(configSchema.ExportTables)
 
         export_tables_query = Query(
             [
@@ -726,7 +726,7 @@ class initialize:
 
         # session = self.config_db_session()
         session = self.get_dbimport_session()
-        import_tables = aliased(configSchema.importTables)
+        import_tables = aliased(configSchema.ImportTables)
 
         import_tables_query = Query(
             [
@@ -1210,7 +1210,7 @@ class initialize:
 
         if self.airflow_mode == "default" and self.create_pools_with_tasks == False:
             session = self.airflow_db_session()
-            slot_pool = aliased(airflowSchema.slotPool)
+            slot_pool = aliased(airflowSchema.SlotPool)
 
             airflow_pools = pd.DataFrame(
                 session.query(slot_pool.pool, slot_pool.slots, slot_pool.description)
@@ -1235,7 +1235,7 @@ class initialize:
                             pool,
                             self.airflow_default_pool_size,
                         )
-                        new_pool = airflowSchema.slotPool(
+                        new_pool = airflowSchema.SlotPool(
                             pool=pool,
                             slots=self.airflow_default_pool_size,
                             include_deferred=0,
@@ -1285,7 +1285,7 @@ class initialize:
 
         # session = self.config_db_session()
         session = self.get_dbimport_session()
-        airflow_tasks = aliased(configSchema.airflowTasks)
+        airflow_tasks = aliased(configSchema.AirflowTasks)
 
         tasks = (
             session.query(airflow_tasks.task_name)
@@ -2158,7 +2158,7 @@ class initialize:
             self.dag_file.write("    dag=dag)\n")
             self.dag_file.write("\n")
 
-        airflow_dag_sensors = aliased(configSchema.airflowDagSensors, name="ads")
+        airflow_dag_sensors = aliased(configSchema.AirflowDAGSensors, name="ads")
         sensors = (
             session.query(airflow_dag_sensors.dag_name)
             .select_from(airflow_dag_sensors)
@@ -2169,7 +2169,7 @@ class initialize:
         if sensors > 0:
             tasks_sensors_exists = True
 
-        airflow_tasks = aliased(configSchema.airflowTasks)
+        airflow_tasks = aliased(configSchema.AirflowTasks)
         tasks = pd.DataFrame(
             session.query(airflow_tasks.dag_name, airflow_tasks.placement)
             .select_from(airflow_tasks)
@@ -2336,7 +2336,7 @@ class initialize:
         if default_sudo_user == None:
             default_sudo_user = ""
 
-        airflow_tasks = aliased(configSchema.airflowTasks)
+        airflow_tasks = aliased(configSchema.AirflowTasks)
 
         tasks = pd.DataFrame(
             session.query(
@@ -2399,10 +2399,10 @@ class initialize:
 
             if row["task_type"] == "DAG Sensor":
                 add_dag_sensor = True
-                airflow_custom_dags = aliased(configSchema.airflowCustomDags)
-                airflow_etl_dags = aliased(configSchema.airflowEtlDags)
-                airflow_export_dags = aliased(configSchema.airflowExportDags)
-                airflow_import_dags = aliased(configSchema.airflowImportDags)
+                airflow_custom_dags = aliased(configSchema.AirflowCustomDAGs)
+                airflow_etl_dags = aliased(configSchema.AirflowETLDAGs)
+                airflow_export_dags = aliased(configSchema.AirflowExportDAGs)
+                airflow_import_dags = aliased(configSchema.AirflowImportDAGs)
 
                 if "." in row["task_config"]:
                     wait_for_dag = row["task_config"].split(".")[0]
@@ -2972,11 +2972,11 @@ class initialize:
         # session = self.config_db_session()
         session = self.get_dbimport_session()
 
-        airflow_dag_sensors = aliased(configSchema.airflowDagSensors, name="ads")
-        airflow_custom_dags = aliased(configSchema.airflowCustomDags, name="acd")
-        airflow_etl_dags = aliased(configSchema.airflowEtlDags, name="aetld")
-        airflow_export_dags = aliased(configSchema.airflowExportDags, name="aed")
-        airflow_import_dags = aliased(configSchema.airflowImportDags, name="aid")
+        airflow_dag_sensors = aliased(configSchema.AirflowDAGSensors, name="ads")
+        airflow_custom_dags = aliased(configSchema.AirflowCustomDAGs, name="acd")
+        airflow_etl_dags = aliased(configSchema.AirflowETLDAGs, name="aetld")
+        airflow_export_dags = aliased(configSchema.AirflowExportDAGs, name="aed")
+        airflow_import_dags = aliased(configSchema.AirflowImportDAGs, name="aid")
 
         sensors = pd.DataFrame(
             session.query(

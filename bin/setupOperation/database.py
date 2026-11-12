@@ -272,17 +272,17 @@ class initialize:
         session = self.config_db_session()
 
         number_of_environemnt_types = session.query(
-            configSchema.jdbcConnectionsEnvironments.__table__
+            configSchema.JDBCConnectionsEnvironments.__table__
         ).count()
         if number_of_environemnt_types == 0:
             objects_to_add = [
-                configSchema.jdbcConnectionsEnvironments(environment="Production"),
-                configSchema.jdbcConnectionsEnvironments(
+                configSchema.JDBCConnectionsEnvironments(environment="Production"),
+                configSchema.JDBCConnectionsEnvironments(
                     environment="Integration Test"
                 ),
-                configSchema.jdbcConnectionsEnvironments(environment="System Test"),
-                configSchema.jdbcConnectionsEnvironments(environment="Development"),
-                configSchema.jdbcConnectionsEnvironments(environment="Sandbox"),
+                configSchema.JDBCConnectionsEnvironments(environment="System Test"),
+                configSchema.JDBCConnectionsEnvironments(environment="Development"),
+                configSchema.JDBCConnectionsEnvironments(environment="Sandbox"),
             ]
             session.add_all(objects_to_add)
             session.commit()
@@ -292,8 +292,8 @@ class initialize:
 
         # Create a list of all available JDBC drivers
         result_df = (
-            session.query(configSchema.jdbcConnectionsDrivers.database_type)
-            .select_from(configSchema.jdbcConnectionsDrivers)
+            session.query(configSchema.JDBCConnectionsDrivers.database_type)
+            .select_from(configSchema.JDBCConnectionsDrivers)
             .all()
         )
 
@@ -303,8 +303,8 @@ class initialize:
 
         # Create a list of all available configuration keys
         result_df = (
-            session.query(configSchema.configuration.configKey)
-            .select_from(configSchema.configuration)
+            session.query(configSchema.Configuration.configKey)
+            .select_from(configSchema.Configuration)
             .all()
         )
 
@@ -314,7 +314,7 @@ class initialize:
 
         # JDBC Connection Drivers table
         if "DB2 AS400" not in list_of_db_types:
-            query = sa.insert(configSchema.jdbcConnectionsDrivers).values(
+            query = sa.insert(configSchema.JDBCConnectionsDrivers).values(
                 database_type="DB2 AS400",
                 version="default",
                 driver="com.ibm.as400.access.AS400JDBCDriver",
@@ -324,7 +324,7 @@ class initialize:
             session.commit()
 
         if "DB2 UDB" not in list_of_db_types:
-            query = sa.insert(configSchema.jdbcConnectionsDrivers).values(
+            query = sa.insert(configSchema.JDBCConnectionsDrivers).values(
                 database_type="DB2 UDB",
                 version="default",
                 driver="com.ibm.db2.jcc.DB2Driver",
@@ -334,7 +334,7 @@ class initialize:
             session.commit()
 
         if "MySQL" not in list_of_db_types:
-            query = sa.insert(configSchema.jdbcConnectionsDrivers).values(
+            query = sa.insert(configSchema.JDBCConnectionsDrivers).values(
                 database_type="MySQL",
                 version="default",
                 driver="com.mysql.jdbc.Driver",
@@ -344,7 +344,7 @@ class initialize:
             session.commit()
 
         if "Oracle" not in list_of_db_types:
-            query = sa.insert(configSchema.jdbcConnectionsDrivers).values(
+            query = sa.insert(configSchema.JDBCConnectionsDrivers).values(
                 database_type="Oracle",
                 version="default",
                 driver="oracle.jdbc.driver.OracleDriver",
@@ -354,7 +354,7 @@ class initialize:
             session.commit()
 
         if "PostgreSQL" not in list_of_db_types:
-            query = sa.insert(configSchema.jdbcConnectionsDrivers).values(
+            query = sa.insert(configSchema.JDBCConnectionsDrivers).values(
                 database_type="PostgreSQL",
                 version="default",
                 driver="org.postgresql.Driver",
@@ -364,7 +364,7 @@ class initialize:
             session.commit()
 
         if "Progress DB" not in list_of_db_types:
-            query = sa.insert(configSchema.jdbcConnectionsDrivers).values(
+            query = sa.insert(configSchema.JDBCConnectionsDrivers).values(
                 database_type="Progress DB",
                 version="default",
                 driver="com.ddtek.jdbc.openedge.OpenEdgeDriver",
@@ -374,7 +374,7 @@ class initialize:
             session.commit()
 
         if "SQL Server" not in list_of_db_types:
-            query = sa.insert(configSchema.jdbcConnectionsDrivers).values(
+            query = sa.insert(configSchema.JDBCConnectionsDrivers).values(
                 database_type="SQL Server",
                 version="default",
                 driver="com.microsoft.sqlserver.jdbc.SQLServerDriver",
@@ -383,7 +383,7 @@ class initialize:
             session.execute(query)
             session.commit()
 
-            query = sa.insert(configSchema.jdbcConnectionsDrivers).values(
+            query = sa.insert(configSchema.JDBCConnectionsDrivers).values(
                 database_type="SQL Server",
                 version="jTDS",
                 driver="net.sourceforge.jtds.jdbc.Driver",
@@ -393,7 +393,7 @@ class initialize:
             session.commit()
 
         if "CacheDB" not in list_of_db_types:
-            query = sa.insert(configSchema.jdbcConnectionsDrivers).values(
+            query = sa.insert(configSchema.JDBCConnectionsDrivers).values(
                 database_type="CacheDB",
                 version="default",
                 driver="com.intersys.jdbc.CacheDriver",
@@ -403,7 +403,7 @@ class initialize:
             session.commit()
 
         if "Snowflake" not in list_of_db_types:
-            query = sa.insert(configSchema.jdbcConnectionsDrivers).values(
+            query = sa.insert(configSchema.JDBCConnectionsDrivers).values(
                 database_type="Snowflake",
                 version="default",
                 driver="net.snowflake.client.jdbc.SnowflakeDriver",
@@ -413,7 +413,7 @@ class initialize:
             session.commit()
 
         if "Informix" not in list_of_db_types:
-            query = sa.insert(configSchema.jdbcConnectionsDrivers).values(
+            query = sa.insert(configSchema.JDBCConnectionsDrivers).values(
                 database_type="Informix",
                 version="default",
                 driver="com.informix.jdbc.IfxDriver",
@@ -423,7 +423,7 @@ class initialize:
             session.commit()
 
         if "SQL Anywhere" not in list_of_db_types:
-            query = sa.insert(configSchema.jdbcConnectionsDrivers).values(
+            query = sa.insert(configSchema.JDBCConnectionsDrivers).values(
                 database_type="SQL Anywhere",
                 version="default",
                 driver="com.sybase.jdbc4.jdbc.SybDriver",
@@ -435,7 +435,7 @@ class initialize:
         # Configuration table
 
         if "airflow_disable" not in list_of_conf_keys:
-            query = sa.insert(configSchema.configuration).values(
+            query = sa.insert(configSchema.Configuration).values(
                 configKey="airflow_disable",
                 valueInt="0",
                 description='Disable All executions from Airflow. This is what the "start" Task is looking at',
@@ -444,7 +444,7 @@ class initialize:
             session.commit()
 
         if "export_stage_disable" not in list_of_conf_keys:
-            query = sa.insert(configSchema.configuration).values(
+            query = sa.insert(configSchema.Configuration).values(
                 configKey="export_stage_disable",
                 valueInt="0",
                 description="With 1, you prevent new Export tasks from starting and running tasks will stop after the current stage is completed.",
@@ -453,7 +453,7 @@ class initialize:
             session.commit()
 
         if "export_staging_database" not in list_of_conf_keys:
-            query = sa.insert(configSchema.configuration).values(
+            query = sa.insert(configSchema.Configuration).values(
                 configKey="export_staging_database",
                 valueStr="etl_export_staging",
                 description="Name of staging database to use during Exports",
@@ -462,7 +462,7 @@ class initialize:
             session.commit()
 
         if "export_start_disable" not in list_of_conf_keys:
-            query = sa.insert(configSchema.configuration).values(
+            query = sa.insert(configSchema.Configuration).values(
                 configKey="export_start_disable",
                 valueInt="0",
                 description="With 1, you prevent new Export tasks from starting. Running tasks will be completed",
@@ -471,7 +471,7 @@ class initialize:
             session.commit()
 
         if "import_stage_disable" not in list_of_conf_keys:
-            query = sa.insert(configSchema.configuration).values(
+            query = sa.insert(configSchema.Configuration).values(
                 configKey="import_stage_disable",
                 valueInt="0",
                 description="With 1, you prevent new tasks from starting and running Import tasks will stop after the current stage is completed.",
@@ -480,7 +480,7 @@ class initialize:
             session.commit()
 
         if "import_staging_database" not in list_of_conf_keys:
-            query = sa.insert(configSchema.configuration).values(
+            query = sa.insert(configSchema.Configuration).values(
                 configKey="import_staging_database",
                 valueStr="etl_import_staging",
                 description="Name of staging database to use during Imports. {DATABASE} is supported within the name and will be replaced during import with the name of the import database.",
@@ -489,7 +489,7 @@ class initialize:
             session.commit()
 
         if "import_staging_table" not in list_of_conf_keys:
-            query = sa.insert(configSchema.configuration).values(
+            query = sa.insert(configSchema.Configuration).values(
                 configKey="import_staging_table",
                 valueStr="{DATABASE}__{TABLE}__staging",
                 description='Name of staging table to use during Imports. Both {DATABASE} and {TABLE} is supported within the name and will be replaced during import with the name of the import database and table.  Both {DATABASE} and {TABLE} must be used once, but {DATABASE} could be specified in the "import_staging_database" setting instead',
@@ -498,7 +498,7 @@ class initialize:
             session.commit()
 
         if "import_work_database" not in list_of_conf_keys:
-            query = sa.insert(configSchema.configuration).values(
+            query = sa.insert(configSchema.Configuration).values(
                 configKey="import_work_database",
                 valueStr="etl_import_staging",
                 description="Name of work database to use during Imports. This is used for internal tables and should not be accessed by end-users. {DATABASE} is supported within the name and will be replaced during import with the name of the import database.",
@@ -507,7 +507,7 @@ class initialize:
             session.commit()
 
         if "import_work_table" not in list_of_conf_keys:
-            query = sa.insert(configSchema.configuration).values(
+            query = sa.insert(configSchema.Configuration).values(
                 configKey="import_work_table",
                 valueStr="{DATABASE}__{TABLE}__staging",
                 description='Prefix-name of work tables to use during Imports. These tables is used for internal DBImport tables and should not be access by end-users. Both {DATABASE} and {TABLE} is supported within the name and will be replaced during import with the name of the import database and table.  Both {DATABASE} and {TABLE} must be used once, but {DATABASE} could be specified in the "import_work_database" setting instead',
@@ -516,7 +516,7 @@ class initialize:
             session.commit()
 
         if "import_history_database" not in list_of_conf_keys:
-            query = sa.insert(configSchema.configuration).values(
+            query = sa.insert(configSchema.Configuration).values(
                 configKey="import_history_database",
                 valueStr="{DATABASE}",
                 description="Name of history database to use during Imports. {DATABASE} is supported within the name and will be replaced during import with the name of the import database.",
@@ -525,7 +525,7 @@ class initialize:
             session.commit()
 
         if "import_history_table" not in list_of_conf_keys:
-            query = sa.insert(configSchema.configuration).values(
+            query = sa.insert(configSchema.Configuration).values(
                 configKey="import_history_table",
                 valueStr="{TABLE}_history",
                 description='Name of history table to use during Imports. Both {DATABASE} and {TABLE} is supported within the name and will be replaced during import with the name of the import database and table.  Both {DATABASE} and {TABLE} must be used once, but {DATABASE} could be specified in the "import_history_database" setting instead',
@@ -534,7 +534,7 @@ class initialize:
             session.commit()
 
         if "import_start_disable" not in list_of_conf_keys:
-            query = sa.insert(configSchema.configuration).values(
+            query = sa.insert(configSchema.Configuration).values(
                 configKey="import_start_disable",
                 valueInt="0",
                 description="With 1, you prevent new Import tasks from starting. Running tasks will be completed",
@@ -543,7 +543,7 @@ class initialize:
             session.commit()
 
         if "hive_remove_locks_by_force" not in list_of_conf_keys:
-            query = sa.insert(configSchema.configuration).values(
+            query = sa.insert(configSchema.Configuration).values(
                 configKey="hive_remove_locks_by_force",
                 valueInt="0",
                 description="With 1, DBImport will remove Hive locks before import by force",
@@ -552,7 +552,7 @@ class initialize:
             session.commit()
 
         if "hive_major_compact_after_merge" not in list_of_conf_keys:
-            query = sa.insert(configSchema.configuration).values(
+            query = sa.insert(configSchema.Configuration).values(
                 configKey="hive_major_compact_after_merge",
                 valueInt="0",
                 description="With 1, DBImport will run a major compaction after the merge operations is completed",
@@ -561,7 +561,7 @@ class initialize:
             session.commit()
 
         if "hive_validate_before_execution" not in list_of_conf_keys:
-            query = sa.insert(configSchema.configuration).values(
+            query = sa.insert(configSchema.Configuration).values(
                 configKey="hive_validate_before_execution",
                 valueInt="1",
                 description="With 1, DBImport will run a group by query agains the validate table and verify the result against reference values hardcoded in DBImport",
@@ -570,7 +570,7 @@ class initialize:
             session.commit()
 
         if "hive_validate_table" not in list_of_conf_keys:
-            query = sa.insert(configSchema.configuration).values(
+            query = sa.insert(configSchema.Configuration).values(
                 configKey="hive_validate_table",
                 valueStr="dbimport.validate_table",
                 description="The table to run the validate query against",
@@ -579,7 +579,7 @@ class initialize:
             session.commit()
 
         if "hive_print_messages" not in list_of_conf_keys:
-            query = sa.insert(configSchema.configuration).values(
+            query = sa.insert(configSchema.Configuration).values(
                 configKey="hive_print_messages",
                 valueInt="0",
                 description="With 1, Hive will print additional messages during SQL operations",
@@ -588,7 +588,7 @@ class initialize:
             session.commit()
 
         if "airflow_dbimport_commandpath" not in list_of_conf_keys:
-            query = sa.insert(configSchema.configuration).values(
+            query = sa.insert(configSchema.Configuration).values(
                 configKey="airflow_dbimport_commandpath",
                 valueStr="sudo -iu ${SUDO_USER} /usr/local/dbimport/",
                 description="This is the path to DBImport. If sudo is required, this can be added here aswell. Use the variable ${SUDO_USER} instead of hardcoding the sudo username. Must end with a /",
@@ -597,7 +597,7 @@ class initialize:
             session.commit()
 
         if "airflow_sudo_user" not in list_of_conf_keys:
-            query = sa.insert(configSchema.configuration).values(
+            query = sa.insert(configSchema.Configuration).values(
                 configKey="airflow_sudo_user",
                 valueStr="dbimport",
                 description="What user will Airflow sudo to for executing DBImport. This value will replace the ${SUDO_USER} variable in airflow_dbimport_commandpath setting",
@@ -606,7 +606,7 @@ class initialize:
             session.commit()
 
         if "airflow_major_version" not in list_of_conf_keys:
-            query = sa.insert(configSchema.configuration).values(
+            query = sa.insert(configSchema.Configuration).values(
                 configKey="airflow_major_version",
                 valueInt="2",
                 description="What is the major version of Airflow? 1 or 2 is valid options. Controls how the DAG files are generated",
@@ -615,7 +615,7 @@ class initialize:
             session.commit()
 
         if "airflow_default_pool_size" not in list_of_conf_keys:
-            query = sa.insert(configSchema.configuration).values(
+            query = sa.insert(configSchema.Configuration).values(
                 configKey="airflow_default_pool_size",
                 valueInt="24",
                 description="If DBImport creates the Airflow pool, this is the initial size of it",
@@ -624,7 +624,7 @@ class initialize:
             session.commit()
 
         if "airflow_create_pool_with_task" not in list_of_conf_keys:
-            query = sa.insert(configSchema.configuration).values(
+            query = sa.insert(configSchema.Configuration).values(
                 configKey="airflow_create_pool_with_task",
                 valueInt="1",
                 description="If 1, then the Airflow pool will be created with standard tasks. If 0, then a direct database connection is required to add the pool through sql commands directly the airflow database. Connection details are available in dbimport.cfg for this.",
@@ -633,7 +633,7 @@ class initialize:
             session.commit()
 
         if "airflow_aws_pool_to_instanceid" not in list_of_conf_keys:
-            query = sa.insert(configSchema.configuration).values(
+            query = sa.insert(configSchema.Configuration).values(
                 configKey="airflow_aws_pool_to_instanceid",
                 valueInt="1",
                 description="When using AWS, should the Airflow pool be set to the same name as the instance id?",
@@ -642,7 +642,7 @@ class initialize:
             session.commit()
 
         if "airflow_aws_instanceids" not in list_of_conf_keys:
-            query = sa.insert(configSchema.configuration).values(
+            query = sa.insert(configSchema.Configuration).values(
                 configKey="airflow_aws_instanceids",
                 valueStr="i-xxxxxxxxxxxxxxxxx",
                 description="AWS Instance IDs to start the DBImport commands on. Comma-separated list of instance IDs. Tasks will be randomly assigned to one of the EMR clusters specified.",
@@ -651,7 +651,7 @@ class initialize:
             session.commit()
 
         if "airflow_dag_directory" not in list_of_conf_keys:
-            query = sa.insert(configSchema.configuration).values(
+            query = sa.insert(configSchema.Configuration).values(
                 configKey="airflow_dag_directory",
                 valueStr="/usr/local/airflow/dags",
                 description="Airflow path to DAG directory",
@@ -660,7 +660,7 @@ class initialize:
             session.commit()
 
         if "airflow_dag_staging_directory" not in list_of_conf_keys:
-            query = sa.insert(configSchema.configuration).values(
+            query = sa.insert(configSchema.Configuration).values(
                 configKey="airflow_dag_staging_directory",
                 valueStr="/usr/local/airflow/dags_generated_from_dbimport",
                 description="Airflow path to staging DAG directory",
@@ -669,7 +669,7 @@ class initialize:
             session.commit()
 
         if "airflow_dummy_task_queue" not in list_of_conf_keys:
-            query = sa.insert(configSchema.configuration).values(
+            query = sa.insert(configSchema.Configuration).values(
                 configKey="airflow_dummy_task_queue",
                 valueStr="default",
                 description="Queue to use for dummy tasks (stop, stage_one_complete and more)",
@@ -678,7 +678,7 @@ class initialize:
             session.commit()
 
         if "airflow_dag_file_permission" not in list_of_conf_keys:
-            query = sa.insert(configSchema.configuration).values(
+            query = sa.insert(configSchema.Configuration).values(
                 configKey="airflow_dag_file_permission",
                 valueStr="660",
                 description="File permission of created DAG file",
@@ -687,7 +687,7 @@ class initialize:
             session.commit()
 
         if "airflow_dag_file_group" not in list_of_conf_keys:
-            query = sa.insert(configSchema.configuration).values(
+            query = sa.insert(configSchema.Configuration).values(
                 configKey="airflow_dag_file_group",
                 valueStr="airflow",
                 description="Group owner of created DAG file",
@@ -696,7 +696,7 @@ class initialize:
             session.commit()
 
         if "airflow_url" not in list_of_conf_keys:
-            query = sa.insert(configSchema.configuration).values(
+            query = sa.insert(configSchema.Configuration).values(
                 configKey="airflow_url",
                 valueStr="http://localhost:8080",
                 description="URL to Airflow webUI",
@@ -705,7 +705,7 @@ class initialize:
             session.commit()
 
         if "timezone" not in list_of_conf_keys:
-            query = sa.insert(configSchema.configuration).values(
+            query = sa.insert(configSchema.Configuration).values(
                 configKey="timezone",
                 valueStr="UTC",
                 description="The timezone that the configured times are meant for (example is Europe/Stockholm) ",
@@ -714,7 +714,7 @@ class initialize:
             session.commit()
 
         if "timestamp_with_timezone" not in list_of_conf_keys:
-            query = sa.insert(configSchema.configuration).values(
+            query = sa.insert(configSchema.Configuration).values(
                 configKey="timestamp_with_timezone",
                 valueInt="0",
                 description="With Spark as the ETL engine, it's possible to save timestamp columns with or without the timezone",
@@ -723,7 +723,7 @@ class initialize:
             session.commit()
 
         if "cluster_name" not in list_of_conf_keys:
-            query = sa.insert(configSchema.configuration).values(
+            query = sa.insert(configSchema.Configuration).values(
                 configKey="cluster_name",
                 valueStr="hadoopcluster",
                 description="Name of Hadoop cluster",
@@ -732,7 +732,7 @@ class initialize:
             session.commit()
 
         if "hdfs_address" not in list_of_conf_keys:
-            query = sa.insert(configSchema.configuration).values(
+            query = sa.insert(configSchema.Configuration).values(
                 configKey="hdfs_address",
                 valueStr="hdfs://hadoopcluster:8020",
                 description="Address to HDFS",
@@ -741,7 +741,7 @@ class initialize:
             session.commit()
 
         if "hdfs_blocksize" not in list_of_conf_keys:
-            query = sa.insert(configSchema.configuration).values(
+            query = sa.insert(configSchema.Configuration).values(
                 configKey="hdfs_blocksize",
                 valueStr="134217728",
                 description="The HDFS blocksize in bytes. Can usually be found in /etc/hadoop/conf/hdfs-site.xml (search for dfs.blocksize)",
@@ -750,7 +750,7 @@ class initialize:
             session.commit()
 
         if "hdfs_basedir" not in list_of_conf_keys:
-            query = sa.insert(configSchema.configuration).values(
+            query = sa.insert(configSchema.Configuration).values(
                 configKey="hdfs_basedir",
                 valueStr="/apps/dbimport",
                 description="The base dir to write data to. Example /apps/dbimport",
@@ -759,7 +759,7 @@ class initialize:
             session.commit()
 
         if "export_default_sessions" not in list_of_conf_keys:
-            query = sa.insert(configSchema.configuration).values(
+            query = sa.insert(configSchema.Configuration).values(
                 configKey="export_default_sessions",
                 valueInt="4",
                 description="How many SQL sessions should be used for tables that have never been exported before",
@@ -768,7 +768,7 @@ class initialize:
             session.commit()
 
         if "export_max_sessions" not in list_of_conf_keys:
-            query = sa.insert(configSchema.configuration).values(
+            query = sa.insert(configSchema.Configuration).values(
                 configKey="export_max_sessions",
                 valueInt="32",
                 description="The maximum number of SQL sessions to use during export",
@@ -777,7 +777,7 @@ class initialize:
             session.commit()
 
         if "import_default_sessions" not in list_of_conf_keys:
-            query = sa.insert(configSchema.configuration).values(
+            query = sa.insert(configSchema.Configuration).values(
                 configKey="import_default_sessions",
                 valueInt="4",
                 description="How many SQL sessions should be used for tables that have never been imported before",
@@ -786,7 +786,7 @@ class initialize:
             session.commit()
 
         if "import_max_sessions" not in list_of_conf_keys:
-            query = sa.insert(configSchema.configuration).values(
+            query = sa.insert(configSchema.Configuration).values(
                 configKey="import_max_sessions",
                 valueInt="32",
                 description="The maximum number of SQL sessions to use during imports",
@@ -795,7 +795,7 @@ class initialize:
             session.commit()
 
         if "spark_max_executors" not in list_of_conf_keys:
-            query = sa.insert(configSchema.configuration).values(
+            query = sa.insert(configSchema.Configuration).values(
                 configKey="spark_max_executors",
                 valueInt="128",
                 description="The default value for maximum number of spark executors",
@@ -804,7 +804,7 @@ class initialize:
             session.commit()
 
         if "atlas_discovery_interval" not in list_of_conf_keys:
-            query = sa.insert(configSchema.configuration).values(
+            query = sa.insert(configSchema.Configuration).values(
                 configKey="atlas_discovery_interval",
                 valueInt="24",
                 description="How many hours there should pass between each Atlas discovery of a jdbc connection",
@@ -813,7 +813,7 @@ class initialize:
             session.commit()
 
         if "import_process_empty" not in list_of_conf_keys:
-            query = sa.insert(configSchema.configuration).values(
+            query = sa.insert(configSchema.Configuration).values(
                 configKey="import_process_empty",
                 valueInt="0",
                 description="If 1, then the import will do a full processing of import even if they contain no data.",
@@ -822,7 +822,7 @@ class initialize:
             session.commit()
 
         if "hive_insert_only_tables" not in list_of_conf_keys:
-            query = sa.insert(configSchema.configuration).values(
+            query = sa.insert(configSchema.Configuration).values(
                 configKey="hive_insert_only_tables",
                 valueInt="1",
                 description="If 1, then the non-merge tables in Hive will be ACID insert-only",
@@ -831,7 +831,7 @@ class initialize:
             session.commit()
 
         if "hive_acid_with_clusteredby" not in list_of_conf_keys:
-            query = sa.insert(configSchema.configuration).values(
+            query = sa.insert(configSchema.Configuration).values(
                 configKey="hive_acid_with_clusteredby",
                 valueInt="0",
                 description="If 1, then ACID tables will be created with a clustered by option based on the PK. Not required with Hive3 and later",
@@ -840,7 +840,7 @@ class initialize:
             session.commit()
 
         if "post_airflow_dag_operations" not in list_of_conf_keys:
-            query = sa.insert(configSchema.configuration).values(
+            query = sa.insert(configSchema.Configuration).values(
                 configKey="post_airflow_dag_operations",
                 valueInt="0",
                 description="Post start and stop activities for Airflow DAGs to Kafka and/or Rest, depending on what is enabled",
@@ -849,7 +849,7 @@ class initialize:
             session.commit()
 
         if "post_data_to_rest" not in list_of_conf_keys:
-            query = sa.insert(configSchema.configuration).values(
+            query = sa.insert(configSchema.Configuration).values(
                 configKey="post_data_to_rest",
                 valueInt="0",
                 description="Enable the REST endpoint to be able to receive information regarding completed imports and exports",
@@ -858,7 +858,7 @@ class initialize:
             session.commit()
 
         if "post_data_to_rest_extended" not in list_of_conf_keys:
-            query = sa.insert(configSchema.configuration).values(
+            query = sa.insert(configSchema.Configuration).values(
                 configKey="post_data_to_rest_extended",
                 valueInt="0",
                 description="Enable extended statistics in the REST data",
@@ -867,7 +867,7 @@ class initialize:
             session.commit()
 
         if "post_data_to_awssns" not in list_of_conf_keys:
-            query = sa.insert(configSchema.configuration).values(
+            query = sa.insert(configSchema.Configuration).values(
                 configKey="post_data_to_awssns",
                 valueInt="0",
                 description="Enable the AWS SNS endpoint to be able to receive information regarding completed imports and exports",
@@ -876,7 +876,7 @@ class initialize:
             session.commit()
 
         if "post_data_to_awssns_extended" not in list_of_conf_keys:
-            query = sa.insert(configSchema.configuration).values(
+            query = sa.insert(configSchema.Configuration).values(
                 configKey="post_data_to_awssns_extended",
                 valueInt="0",
                 description="Enable extended statistics in AWS SNS data",
@@ -885,7 +885,7 @@ class initialize:
             session.commit()
 
         if "post_data_to_awssns_topic" not in list_of_conf_keys:
-            query = sa.insert(configSchema.configuration).values(
+            query = sa.insert(configSchema.Configuration).values(
                 configKey="post_data_to_awssns_topic",
                 valueStr="arn:aws:sns:region:account:topic",
                 description="Full ARN to AWS SNS Topic where the json message will be sent",
@@ -894,7 +894,7 @@ class initialize:
             session.commit()
 
         if "post_data_to_kafka" not in list_of_conf_keys:
-            query = sa.insert(configSchema.configuration).values(
+            query = sa.insert(configSchema.Configuration).values(
                 configKey="post_data_to_kafka",
                 valueInt="0",
                 description="Enable the Kafka endpoint to be able to receive information regarding completed imports and exports",
@@ -903,7 +903,7 @@ class initialize:
             session.commit()
 
         if "post_data_to_kafka_extended" not in list_of_conf_keys:
-            query = sa.insert(configSchema.configuration).values(
+            query = sa.insert(configSchema.Configuration).values(
                 configKey="post_data_to_kafka_extended",
                 valueInt="0",
                 description="Enable extended statistics in Kafka data",
@@ -912,7 +912,7 @@ class initialize:
             session.commit()
 
         if "kafka_brokers" not in list_of_conf_keys:
-            query = sa.insert(configSchema.configuration).values(
+            query = sa.insert(configSchema.Configuration).values(
                 configKey="kafka_brokers",
                 valueStr="localhost:9092",
                 description="Comma separeted list of Kafka brokers",
@@ -921,7 +921,7 @@ class initialize:
             session.commit()
 
         if "kafka_trustcafile" not in list_of_conf_keys:
-            query = sa.insert(configSchema.configuration).values(
+            query = sa.insert(configSchema.Configuration).values(
                 configKey="kafka_trustcafile",
                 valueStr="/etc/pki/tls/certs/ca-bundle.crt",
                 description="Kafka CA Trust file for SSL",
@@ -930,7 +930,7 @@ class initialize:
             session.commit()
 
         if "kafka_securityprotocol" not in list_of_conf_keys:
-            query = sa.insert(configSchema.configuration).values(
+            query = sa.insert(configSchema.Configuration).values(
                 configKey="kafka_securityprotocol",
                 valueStr="SASL_SSL",
                 description="Kafka Security Protocol",
@@ -939,7 +939,7 @@ class initialize:
             session.commit()
 
         if "kafka_saslmechanism" not in list_of_conf_keys:
-            query = sa.insert(configSchema.configuration).values(
+            query = sa.insert(configSchema.Configuration).values(
                 configKey="kafka_saslmechanism",
                 valueStr="GSSAPI",
                 description="Kafka SASL mechanism",
@@ -948,7 +948,7 @@ class initialize:
             session.commit()
 
         if "kafka_topic" not in list_of_conf_keys:
-            query = sa.insert(configSchema.configuration).values(
+            query = sa.insert(configSchema.Configuration).values(
                 configKey="kafka_topic",
                 valueStr="dbimport_topic",
                 description="Kafka topic to send the data to",
@@ -957,7 +957,7 @@ class initialize:
             session.commit()
 
         if "rest_url" not in list_of_conf_keys:
-            query = sa.insert(configSchema.configuration).values(
+            query = sa.insert(configSchema.Configuration).values(
                 configKey="rest_url",
                 valueStr="https://localhost:8443/dbimport",
                 description="Rest server URL",
@@ -966,7 +966,7 @@ class initialize:
             session.commit()
 
         if "rest_timeout" not in list_of_conf_keys:
-            query = sa.insert(configSchema.configuration).values(
+            query = sa.insert(configSchema.Configuration).values(
                 configKey="rest_timeout",
                 valueInt="5",
                 description="Timeout for the REST call",
@@ -975,7 +975,7 @@ class initialize:
             session.commit()
 
         if "rest_verifyssl" not in list_of_conf_keys:
-            query = sa.insert(configSchema.configuration).values(
+            query = sa.insert(configSchema.Configuration).values(
                 configKey="rest_verifyssl",
                 valueInt="1",
                 description="Verify SSL certificate during REST call",
@@ -984,7 +984,7 @@ class initialize:
             session.commit()
 
         if "rest_trustcafile" not in list_of_conf_keys:
-            query = sa.insert(configSchema.configuration).values(
+            query = sa.insert(configSchema.Configuration).values(
                 configKey="rest_trustcafile",
                 valueStr="/etc/pki/tls/certs/ca-bundle.crt",
                 description="REST CA Trust file for SSL",
@@ -993,7 +993,7 @@ class initialize:
             session.commit()
 
         if "impala_invalidate_metadata" not in list_of_conf_keys:
-            query = sa.insert(configSchema.configuration).values(
+            query = sa.insert(configSchema.Configuration).values(
                 configKey="impala_invalidate_metadata",
                 valueInt="0",
                 description="If 1, then DBImport will connect to Impala and invalidate or refresh the metadata after import is completed",
@@ -1002,7 +1002,7 @@ class initialize:
             session.commit()
 
         if "import_columnname_import" not in list_of_conf_keys:
-            query = sa.insert(configSchema.configuration).values(
+            query = sa.insert(configSchema.Configuration).values(
                 configKey="import_columnname_import",
                 valueStr="datalake_import",
                 description="Column name for timestamp column added to table during none-merge operations",
@@ -1011,7 +1011,7 @@ class initialize:
             session.commit()
 
         if "import_columnname_insert" not in list_of_conf_keys:
-            query = sa.insert(configSchema.configuration).values(
+            query = sa.insert(configSchema.Configuration).values(
                 configKey="import_columnname_insert",
                 valueStr="datalake_insert",
                 description="Column name for timestamp column with insert time that is added to table during merge operations",
@@ -1020,7 +1020,7 @@ class initialize:
             session.commit()
 
         if "import_columnname_update" not in list_of_conf_keys:
-            query = sa.insert(configSchema.configuration).values(
+            query = sa.insert(configSchema.Configuration).values(
                 configKey="import_columnname_update",
                 valueStr="datalake_update",
                 description="Column name for timestamp column with update time that is added to table during merge operations",
@@ -1029,7 +1029,7 @@ class initialize:
             session.commit()
 
         if "import_columnname_delete" not in list_of_conf_keys:
-            query = sa.insert(configSchema.configuration).values(
+            query = sa.insert(configSchema.Configuration).values(
                 configKey="import_columnname_delete",
                 valueStr="datalake_delete",
                 description="Column name for timestamp column with delete date that is added to table during merge operations. Only exists if soft-delete is enabled for the import",
@@ -1038,7 +1038,7 @@ class initialize:
             session.commit()
 
         if "import_columnname_iud" not in list_of_conf_keys:
-            query = sa.insert(configSchema.configuration).values(
+            query = sa.insert(configSchema.Configuration).values(
                 configKey="import_columnname_iud",
                 valueStr="datalake_iud",
                 description="Column name for char(1) column added to table during merge operations with information if the last operation is an insert, update or delete",
@@ -1047,7 +1047,7 @@ class initialize:
             session.commit()
 
         if "import_columnname_histtime" not in list_of_conf_keys:
-            query = sa.insert(configSchema.configuration).values(
+            query = sa.insert(configSchema.Configuration).values(
                 configKey="import_columnname_histtime",
                 valueStr="datalake_timestamp",
                 description="Column name for timestamp column added to history table to contain information about when the insert, update or delete operation was done",
@@ -1056,7 +1056,7 @@ class initialize:
             session.commit()
 
         if "import_columnname_source" not in list_of_conf_keys:
-            query = sa.insert(configSchema.configuration).values(
+            query = sa.insert(configSchema.Configuration).values(
                 configKey="import_columnname_source",
                 valueStr="dbimport_source",
                 description="Column name for source information if that is configured in jdbc_connections table",
@@ -1065,7 +1065,7 @@ class initialize:
             session.commit()
 
         if "restserver_secret_key" not in list_of_conf_keys:
-            query = sa.insert(configSchema.configuration).values(
+            query = sa.insert(configSchema.Configuration).values(
                 configKey="restserver_secret_key",
                 valueStr="".join(random.choices(string.ascii_letters, k=64)),
                 description="Secret key used for oauth2 tokens",
@@ -1074,7 +1074,7 @@ class initialize:
             session.commit()
 
         if "restserver_token_ttl" not in list_of_conf_keys:
-            query = sa.insert(configSchema.configuration).values(
+            query = sa.insert(configSchema.Configuration).values(
                 configKey="restserver_token_ttl",
                 valueInt="120",
                 description="Time-to-live, in minutes, that the oauth2 tokens are valid",
@@ -1083,7 +1083,7 @@ class initialize:
             session.commit()
 
         if "restserver_admin_user" not in list_of_conf_keys:
-            query = sa.insert(configSchema.configuration).values(
+            query = sa.insert(configSchema.Configuration).values(
                 configKey="restserver_admin_user",
                 valueStr="admin",
                 description="Username of administrator on the REST server with all permission",
@@ -1092,7 +1092,7 @@ class initialize:
             session.commit()
 
         if "restserver_authentication_method" not in list_of_conf_keys:
-            query = sa.insert(configSchema.configuration).values(
+            query = sa.insert(configSchema.Configuration).values(
                 configKey="restserver_authentication_method",
                 valueStr="local",
                 description="REST server authentication method. The following options are supported: local, pam",
@@ -1101,8 +1101,8 @@ class initialize:
             session.commit()
 
         query = (
-            sa.update(configSchema.configuration)
-            .where(configSchema.configuration.configKey == "airflow_dag_directory")
+            sa.update(configSchema.Configuration)
+            .where(configSchema.Configuration.configKey == "airflow_dag_directory")
             .values(
                 description="Airflow path to DAG directory. When using AWS MWAA, this is the name of the S3 bucket."
             )
@@ -1111,8 +1111,8 @@ class initialize:
         session.commit()
 
         query = (
-            sa.update(configSchema.configuration)
-            .where(configSchema.configuration.configKey == "import_staging_database")
+            sa.update(configSchema.Configuration)
+            .where(configSchema.Configuration.configKey == "import_staging_database")
             .values(
                 description="Name of staging database to use during Imports. {DATABASE} is supported within the name and will be replaced during import with the name of the import database."
             )
@@ -1121,8 +1121,8 @@ class initialize:
         session.commit()
 
         query = (
-            sa.update(configSchema.configuration)
-            .where(configSchema.configuration.configKey == "airflow_aws_instanceids")
+            sa.update(configSchema.Configuration)
+            .where(configSchema.Configuration.configKey == "airflow_aws_instanceids")
             .values(
                 description="AWS Instance IDs to start the DBImport commands on. Comma-separated list of instance IDs. Tasks will be randomly assigned to one of the EMR clusters specified."
             )

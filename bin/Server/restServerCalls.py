@@ -218,7 +218,7 @@ class dbCalls:
             self.disconnect_dbimport_db()
             return None
 
-        configuration_table = aliased(configSchema.configuration)
+        configuration_table = aliased(configSchema.Configuration)
 
         configuration = (
             session.query(
@@ -294,7 +294,7 @@ class dbCalls:
                 password=password_encoded, salt=salt
             ).decode("utf-8")
 
-            query = sa.insert(configSchema.authUsers).values(
+            query = sa.insert(configSchema.AuthUsers).values(
                 username=default_admin_user, password=hashed_password
             )
             session.execute(query)
@@ -315,7 +315,7 @@ class dbCalls:
 
         log.info("User '%s' created" % (user.username))
 
-        query = sa.insert(configSchema.authUsers).values(
+        query = sa.insert(configSchema.AuthUsers).values(
             username=user.username,
             password=user.password,
             disabled=user.disabled,
@@ -339,7 +339,7 @@ class dbCalls:
             self.disconnect_dbimport_db()
             return None
 
-        table_auth_users = aliased(configSchema.authUsers)
+        table_auth_users = aliased(configSchema.AuthUsers)
         auth_user = (
             session.query(
                 table_auth_users.username,
@@ -393,7 +393,7 @@ class dbCalls:
                 user["username"],
             )
 
-        table_auth_users = aliased(configSchema.authUsers)
+        table_auth_users = aliased(configSchema.AuthUsers)
         session.execute(
             update(table_auth_users),
             [
@@ -422,7 +422,7 @@ class dbCalls:
             self.disconnect_dbimport_db()
             return None
 
-        table_auth_users = aliased(configSchema.authUsers)
+        table_auth_users = aliased(configSchema.AuthUsers)
 
         (
             session.query(table_auth_users)
@@ -619,7 +619,7 @@ class dbCalls:
             self.disconnect_dbimport_db()
             return None
 
-        table_jdbc_connections_drivers = aliased(configSchema.jdbcConnectionsDrivers)
+        table_jdbc_connections_drivers = aliased(configSchema.JDBCConnectionsDrivers)
         jdbc_connections_drivers = (
             session.query(
                 table_jdbc_connections_drivers.database_type,
@@ -669,7 +669,7 @@ class dbCalls:
         log.debug("driver: %s" % jdbc_driver.driver)
         log.debug("classpath: %s" % jdbc_driver.classpath)
 
-        table_jdbc_connections_drivers = aliased(configSchema.jdbcConnectionsDrivers)
+        table_jdbc_connections_drivers = aliased(configSchema.JDBCConnectionsDrivers)
         result = "ok"
         return_code = 200
 
@@ -712,8 +712,8 @@ class dbCalls:
             self.disconnect_dbimport_db()
             return None
 
-        configuration_table = aliased(configSchema.configuration)
-        table_jdbc_connections = aliased(configSchema.jdbcConnections)
+        configuration_table = aliased(configSchema.Configuration)
+        table_jdbc_connections = aliased(configSchema.JDBCConnections)
 
         configurations = (
             session.query(
@@ -776,7 +776,7 @@ class dbCalls:
             self.disconnect_dbimport_db()
             return None
 
-        configuration_table = aliased(configSchema.configuration)
+        configuration_table = aliased(configSchema.Configuration)
 
         # First check to make sure we have valid options in the changed options
         try:
@@ -907,7 +907,7 @@ class dbCalls:
             self.disconnect_dbimport_db()
             return None
 
-        table_jdbc_connections = aliased(configSchema.jdbcConnections)
+        table_jdbc_connections = aliased(configSchema.JDBCConnections)
         jdbc_connections = (
             session.query(
                 table_jdbc_connections.dbalias, table_jdbc_connections.jdbc_url
@@ -955,7 +955,7 @@ class dbCalls:
             self.disconnect_dbimport_db()
             return None
 
-        jdbc_connections = aliased(configSchema.jdbcConnections)
+        jdbc_connections = aliased(configSchema.JDBCConnections)
 
         attribute_to_column = {}
         attribute_to_column["name"] = jdbc_connections.dbalias
@@ -1049,7 +1049,7 @@ class dbCalls:
             self.disconnect_dbimport_db()
             return None
 
-        table_jdbc_connections = aliased(configSchema.jdbcConnections)
+        table_jdbc_connections = aliased(configSchema.JDBCConnections)
         result = "ok"
         return_code = 200
 
@@ -1068,7 +1068,7 @@ class dbCalls:
             connection.atlasDiscovery = 1
 
         try:
-            query = insert(configSchema.jdbcConnections).values(
+            query = insert(configSchema.JDBCConnections).values(
                 dbalias=connection.name,
                 jdbc_url=connection.connectionString,
                 private_key_path=connection.privateKeyPath,
@@ -1143,7 +1143,7 @@ class dbCalls:
             self.disconnect_dbimport_db()
             return None
 
-        table_jdbc_connections = aliased(configSchema.jdbcConnections)
+        table_jdbc_connections = aliased(configSchema.JDBCConnections)
         row = (
             session.query(
                 table_jdbc_connections.dbalias,
@@ -1244,9 +1244,9 @@ class dbCalls:
 
         # Fetch the tableID as that is required to update/create data in import_columns
         row = (
-            session.query(configSchema.jdbcConnections.dbalias)
-            .select_from(configSchema.jdbcConnections)
-            .filter(configSchema.jdbcConnections.dbalias == connection)
+            session.query(configSchema.JDBCConnections.dbalias)
+            .select_from(configSchema.JDBCConnections)
+            .filter(configSchema.JDBCConnections.dbalias == connection)
             .one_or_none()
         )
         session.commit()
@@ -1256,8 +1256,8 @@ class dbCalls:
             return_code = 404
         else:
             (
-                session.query(configSchema.jdbcConnections)
-                .filter(configSchema.jdbcConnections.dbalias == connection)
+                session.query(configSchema.JDBCConnections)
+                .filter(configSchema.JDBCConnections.dbalias == connection)
                 .delete()
             )
             session.commit()
@@ -1337,7 +1337,7 @@ class dbCalls:
             self.disconnect_dbimport_db()
             return None
 
-        import_tables = aliased(configSchema.importTables)
+        import_tables = aliased(configSchema.ImportTables)
 
         import_table_dbs = (
             session.query(
@@ -1488,7 +1488,7 @@ class dbCalls:
             self.disconnect_dbimport_db()
             return None
 
-        import_tables = aliased(configSchema.importTables)
+        import_tables = aliased(configSchema.ImportTables)
 
         attribute_to_column = {}
         attribute_to_column["database"] = import_tables.hive_db
@@ -1630,7 +1630,7 @@ class dbCalls:
             self.disconnect_dbimport_db()
             return None
 
-        import_tables = aliased(configSchema.importTables)
+        import_tables = aliased(configSchema.ImportTables)
 
         # Return a list of Hive tables with details
         row = (
@@ -1836,8 +1836,8 @@ class dbCalls:
             self.disconnect_dbimport_db()
             return None
 
-        import_columns = aliased(configSchema.importColumns)
-        import_tables = aliased(configSchema.importTables)
+        import_columns = aliased(configSchema.ImportColumns)
+        import_tables = aliased(configSchema.ImportTables)
         result = "ok"
         return_code = 200
 
@@ -1847,11 +1847,11 @@ class dbCalls:
 
         # Fetch the tableID as that is required to update/create data in import_columns
         row = (
-            session.query(configSchema.importTables.table_id)
-            .select_from(configSchema.importTables)
+            session.query(configSchema.ImportTables.table_id)
+            .select_from(configSchema.ImportTables)
             .filter(
-                (configSchema.importTables.hive_db == database)
-                & (configSchema.importTables.hive_table == table)
+                (configSchema.ImportTables.hive_db == database)
+                & (configSchema.ImportTables.hive_table == table)
             )
             .one_or_none()
         )
@@ -1864,8 +1864,8 @@ class dbCalls:
             table_id = row[0]
 
             (
-                session.query(configSchema.importTables)
-                .filter(configSchema.importTables.table_id == table_id)
+                session.query(configSchema.ImportTables)
+                .filter(configSchema.ImportTables.table_id == table_id)
                 .delete()
             )
             session.commit()
@@ -1893,10 +1893,10 @@ class dbCalls:
             self.disconnect_dbimport_db()
             return None
 
-        delete_statement = delete(configSchema.importTables)
+        delete_statement = delete(configSchema.ImportTables)
         delete_statement = delete_statement.where(
-            (configSchema.importTables.hive_db == bindparam("database"))
-            & (configSchema.importTables.hive_table == bindparam("table"))
+            (configSchema.ImportTables.hive_db == bindparam("database"))
+            & (configSchema.ImportTables.hive_table == bindparam("table"))
         )
 
         # Create a list of dicts that contain all the databas and table combinations that will be deleted
@@ -1932,7 +1932,7 @@ class dbCalls:
             self.disconnect_dbimport_db()
             return None
 
-        import_tables = aliased(configSchema.importTables)
+        import_tables = aliased(configSchema.ImportTables)
         update_statement = update(import_tables)
         update_statement = update_statement.where(
             (import_tables.hive_db == bindparam("database"))
@@ -1998,8 +1998,8 @@ class dbCalls:
             self.disconnect_dbimport_db()
             return None
 
-        import_columns = aliased(configSchema.importColumns)
-        import_tables = aliased(configSchema.importTables)
+        import_columns = aliased(configSchema.ImportColumns)
+        import_tables = aliased(configSchema.ImportTables)
         result = "ok"
         return_code = 200
 
@@ -2050,7 +2050,7 @@ class dbCalls:
         try:
             # 				hive_db = getattr(data, "database"),
             # 				hive_table = getattr(data, "table"),
-            query = insert(configSchema.importTables).values(
+            query = insert(configSchema.ImportTables).values(
                 hive_db=database,
                 hive_table=table,
                 dbalias=data.connection,
@@ -2181,7 +2181,7 @@ class dbCalls:
             )
             .one()
         )
-        # 				.filter((importTables.hive_db == getattr(table, "database")) & (importTables.hive_table == getattr(table, "table")))
+        # 				.filter((ImportTables.hive_db == getattr(table, "database")) & (ImportTables.hive_table == getattr(table, "table")))
 
         session.execute(query)
         table_id = row[0]
@@ -2217,7 +2217,7 @@ class dbCalls:
 
                     # 						hive_db = getattr(data, "database"),
                     # 						hive_table = getattr(data, "table"),
-                    query = sa.insert(configSchema.importColumns).values(
+                    query = sa.insert(configSchema.ImportColumns).values(
                         table_id=table_id,
                         hive_db=database,
                         hive_table=table,
@@ -2304,7 +2304,7 @@ class dbCalls:
             self.disconnect_dbimport_db()
             return None
 
-        import_columns = aliased(configSchema.importColumns)
+        import_columns = aliased(configSchema.ImportColumns)
         list_of_columns = []
 
         # Return a list of Hive tables with details
@@ -2563,7 +2563,7 @@ class dbCalls:
             self.disconnect_dbimport_db()
             return None
 
-        export_tables = aliased(configSchema.exportTables)
+        export_tables = aliased(configSchema.ExportTables)
 
         export_table_dbs = (
             session.query(
@@ -2737,7 +2737,7 @@ class dbCalls:
             self.disconnect_dbimport_db()
             return None
 
-        export_tables = aliased(configSchema.exportTables)
+        export_tables = aliased(configSchema.ExportTables)
 
         attribute_to_column = {}
         attribute_to_column["connection"] = export_tables.dbalias
@@ -2864,7 +2864,7 @@ class dbCalls:
             self.disconnect_dbimport_db()
             return None
 
-        export_tables = aliased(configSchema.exportTables)
+        export_tables = aliased(configSchema.ExportTables)
 
         row = (
             session.query(
@@ -2987,8 +2987,8 @@ class dbCalls:
             self.disconnect_dbimport_db()
             return None
 
-        export_columns = aliased(configSchema.exportColumns)
-        export_tables = aliased(configSchema.exportTables)
+        export_columns = aliased(configSchema.ExportColumns)
+        export_tables = aliased(configSchema.ExportTables)
         list_of_columns = []
 
         # Return a list of Hive tables with details
@@ -3035,7 +3035,7 @@ class dbCalls:
                 result_dict["columnType"] = row[4]
 
             # ColumnOrder should start with 1 in API, but database stores is as a start with 0.
-            # For ImportColumns, it starts with 1. So we need to do a +1 here to have the same functionality as importColumns
+            # For ImportColumns, it starts with 1. So we need to do a +1 here to have the same functionality as ImportColumns
             if row[5] != None:
                 result_dict["columnOrder"] = int(row[5]) + 1
 
@@ -3072,8 +3072,8 @@ class dbCalls:
             self.disconnect_dbimport_db()
             return None
 
-        export_columns = aliased(configSchema.exportColumns)
-        export_tables = aliased(configSchema.exportTables)
+        export_columns = aliased(configSchema.ExportColumns)
+        export_tables = aliased(configSchema.ExportTables)
         result = "ok"
         return_code = 200
 
@@ -3087,12 +3087,12 @@ class dbCalls:
 
         # Fetch the tableID as that is required to update/create data in import_columns
         row = (
-            session.query(configSchema.exportTables.table_id)
-            .select_from(configSchema.exportTables)
+            session.query(configSchema.ExportTables.table_id)
+            .select_from(configSchema.ExportTables)
             .filter(
-                (configSchema.exportTables.dbalias == connection)
-                & (configSchema.exportTables.target_schema == schema)
-                & (configSchema.exportTables.target_table == table)
+                (configSchema.ExportTables.dbalias == connection)
+                & (configSchema.ExportTables.target_schema == schema)
+                & (configSchema.ExportTables.target_table == table)
             )
             .one_or_none()
         )
@@ -3105,8 +3105,8 @@ class dbCalls:
             table_id = row[0]
 
             (
-                session.query(configSchema.exportTables)
-                .filter(configSchema.exportTables.table_id == table_id)
+                session.query(configSchema.ExportTables)
+                .filter(configSchema.ExportTables.table_id == table_id)
                 .delete()
             )
             session.commit()
@@ -3134,11 +3134,11 @@ class dbCalls:
             self.disconnect_dbimport_db()
             return None
 
-        delete_statement = delete(configSchema.exportTables)
+        delete_statement = delete(configSchema.ExportTables)
         delete_statement = delete_statement.where(
-            (configSchema.exportTables.dbalias == bindparam("connection"))
-            & (configSchema.exportTables.target_schema == bindparam("targetSchema"))
-            & (configSchema.exportTables.target_table == bindparam("targetTable"))
+            (configSchema.ExportTables.dbalias == bindparam("connection"))
+            & (configSchema.ExportTables.target_schema == bindparam("targetSchema"))
+            & (configSchema.ExportTables.target_table == bindparam("targetTable"))
         )
 
         # Create a list of dicts that contain all the connection, schema and table combinations that will be deleted
@@ -3180,7 +3180,7 @@ class dbCalls:
             self.disconnect_dbimport_db()
             return None
 
-        export_tables = aliased(configSchema.exportTables)
+        export_tables = aliased(configSchema.ExportTables)
         update_statement = update(export_tables)
         update_statement = update_statement.where(
             (export_tables.dbalias == bindparam("connection"))
@@ -3248,8 +3248,8 @@ class dbCalls:
             self.disconnect_dbimport_db()
             return None
 
-        export_columns = aliased(configSchema.exportColumns)
-        export_tables = aliased(configSchema.exportTables)
+        export_columns = aliased(configSchema.ExportColumns)
+        export_tables = aliased(configSchema.ExportTables)
         result = "ok"
         return_code = 200
 
@@ -3281,7 +3281,7 @@ class dbCalls:
             data.incrValidationMethod = "full"
 
         try:
-            query = insert(configSchema.exportTables).values(
+            query = insert(configSchema.ExportTables).values(
                 dbalias=connection,
                 target_schema=schema,
                 target_table=table,
@@ -3399,7 +3399,7 @@ class dbCalls:
                 if row == None:
                     log.debug("Column does not exist")
 
-                    query = sa.insert(configSchema.exportColumns).values(
+                    query = sa.insert(configSchema.ExportColumns).values(
                         table_id=table_id,
                         column_name=column.columnName,
                         column_type=column.columnType,
@@ -3469,9 +3469,9 @@ class dbCalls:
             self.disconnect_dbimport_db()
             return None
 
-        airflow_custom_dags = aliased(configSchema.airflowCustomDags)
-        airflow_export_dags = aliased(configSchema.airflowExportDags)
-        airflow_import_dags = aliased(configSchema.airflowImportDags)
+        airflow_custom_dags = aliased(configSchema.AirflowCustomDAGs)
+        airflow_export_dags = aliased(configSchema.AirflowExportDAGs)
+        airflow_import_dags = aliased(configSchema.AirflowImportDAGs)
         list_of_dags = []
         processed_dags = []
 
@@ -3554,7 +3554,7 @@ class dbCalls:
 
         airflow_url = self.get_config_value("airflow_url")
 
-        airflow_import_dags = aliased(configSchema.airflowImportDags)
+        airflow_import_dags = aliased(configSchema.AirflowImportDAGs)
         list_of_dags = []
 
         airflow_dags_data = (
@@ -3624,7 +3624,7 @@ class dbCalls:
 
         airflow_url = self.get_config_value("airflow_url")
 
-        airflow_export_dags = aliased(configSchema.airflowExportDags)
+        airflow_export_dags = aliased(configSchema.AirflowExportDAGs)
         list_of_dags = []
 
         airflow_dags_data = (
@@ -3696,7 +3696,7 @@ class dbCalls:
 
         airflow_url = self.get_config_value("airflow_url")
 
-        airflow_custom_dags = aliased(configSchema.airflowCustomDags)
+        airflow_custom_dags = aliased(configSchema.AirflowCustomDAGs)
         list_of_dags = []
 
         airflow_dags_data = (
@@ -3762,7 +3762,7 @@ class dbCalls:
             self.disconnect_dbimport_db()
             return None
 
-        airflow_tasks = aliased(configSchema.airflowTasks)
+        airflow_tasks = aliased(configSchema.AirflowTasks)
         list_of_tasks = []
 
         # Return a list of Hive tables with details
@@ -3826,7 +3826,7 @@ class dbCalls:
 
         airflow_url = self.get_config_value("airflow_url")
 
-        airflow_custom_dags = aliased(configSchema.airflowCustomDags)
+        airflow_custom_dags = aliased(configSchema.AirflowCustomDAGs)
 
         row = (
             session.query(
@@ -3902,9 +3902,9 @@ class dbCalls:
             self.disconnect_dbimport_db()
             return None
 
-        airflow_custom_dags = aliased(configSchema.airflowCustomDags)
-        airflow_export_dags = aliased(configSchema.airflowExportDags)
-        airflow_import_dags = aliased(configSchema.airflowImportDags)
+        airflow_custom_dags = aliased(configSchema.AirflowCustomDAGs)
+        airflow_export_dags = aliased(configSchema.AirflowExportDAGs)
+        airflow_import_dags = aliased(configSchema.AirflowImportDAGs)
         list_of_dags = []
         processed_dags = []
         dag_name_is_free = True
@@ -3955,10 +3955,10 @@ class dbCalls:
             self.disconnect_dbimport_db()
             return None
 
-        airflow_tasks = aliased(configSchema.airflowTasks)
+        airflow_tasks = aliased(configSchema.AirflowTasks)
 
         try:
-            query = insert(configSchema.airflowTasks).values(
+            query = insert(configSchema.AirflowTasks).values(
                 dag_name=dagname,
                 task_name=task.name,
                 task_type=task.type,
@@ -4021,7 +4021,7 @@ class dbCalls:
 
         airflow_url = self.get_config_value("airflow_url")
 
-        airflow_export_dags = aliased(configSchema.airflowExportDags)
+        airflow_export_dags = aliased(configSchema.AirflowExportDAGs)
 
         row = (
             session.query(
@@ -4103,7 +4103,7 @@ class dbCalls:
 
         airflow_url = self.get_config_value("airflow_url")
 
-        airflow_import_dags = aliased(configSchema.airflowImportDags)
+        airflow_import_dags = aliased(configSchema.AirflowImportDAGs)
 
         row = (
             session.query(
@@ -4194,8 +4194,8 @@ class dbCalls:
             return None
 
         (
-            session.query(configSchema.airflowTasks)
-            .filter(configSchema.airflowTasks.dag_name == dagname)
+            session.query(configSchema.AirflowTasks)
+            .filter(configSchema.AirflowTasks.dag_name == dagname)
             .delete()
         )
         session.commit()
@@ -4211,7 +4211,7 @@ class dbCalls:
             self.disconnect_dbimport_db()
             return None
 
-        airflow_import_dags = aliased(configSchema.airflowImportDags)
+        airflow_import_dags = aliased(configSchema.AirflowImportDAGs)
         result_msg = {"result": "ok"}
         return_code = 200
 
@@ -4224,11 +4224,11 @@ class dbCalls:
 
         # Fetch the tableID as that is required to update/create data in import_columns
         row = (
-            session.query(configSchema.airflowTasks.dag_name)
-            .select_from(configSchema.airflowTasks)
+            session.query(configSchema.AirflowTasks.dag_name)
+            .select_from(configSchema.AirflowTasks)
             .filter(
-                (configSchema.airflowTasks.dag_name == dagname)
-                & (configSchema.airflowTasks.task_name == taskname)
+                (configSchema.AirflowTasks.dag_name == dagname)
+                & (configSchema.AirflowTasks.task_name == taskname)
             )
             .one_or_none()
         )
@@ -4239,10 +4239,10 @@ class dbCalls:
             return_code = 404
         else:
             (
-                session.query(configSchema.airflowTasks)
+                session.query(configSchema.AirflowTasks)
                 .filter(
-                    (configSchema.airflowTasks.dag_name == dagname)
-                    & (configSchema.airflowTasks.task_name == taskname)
+                    (configSchema.AirflowTasks.dag_name == dagname)
+                    & (configSchema.AirflowTasks.task_name == taskname)
                 )
                 .delete()
             )
@@ -4261,7 +4261,7 @@ class dbCalls:
             self.disconnect_dbimport_db()
             return None
 
-        airflow_import_dags = aliased(configSchema.airflowImportDags)
+        airflow_import_dags = aliased(configSchema.AirflowImportDAGs)
         result = "ok"
         return_code = 200
 
@@ -4269,9 +4269,9 @@ class dbCalls:
 
         # Fetch the tableID as that is required to update/create data in import_columns
         row = (
-            session.query(configSchema.airflowImportDags.dag_name)
-            .select_from(configSchema.airflowImportDags)
-            .filter(configSchema.airflowImportDags.dag_name == dagname)
+            session.query(configSchema.AirflowImportDAGs.dag_name)
+            .select_from(configSchema.AirflowImportDAGs)
+            .filter(configSchema.AirflowImportDAGs.dag_name == dagname)
             .one_or_none()
         )
         session.commit()
@@ -4281,8 +4281,8 @@ class dbCalls:
             return_code = 404
         else:
             (
-                session.query(configSchema.airflowImportDags)
-                .filter(configSchema.airflowImportDags.dag_name == dagname)
+                session.query(configSchema.AirflowImportDAGs)
+                .filter(configSchema.AirflowImportDAGs.dag_name == dagname)
                 .delete()
             )
             session.commit()
@@ -4312,9 +4312,9 @@ class dbCalls:
             self.disconnect_dbimport_db()
             return None
 
-        delete_statement = delete(configSchema.airflowImportDags)
+        delete_statement = delete(configSchema.AirflowImportDAGs)
         delete_statement = delete_statement.where(
-            configSchema.airflowImportDags.dag_name == bindparam("dag")
+            configSchema.AirflowImportDAGs.dag_name == bindparam("dag")
         )
 
         # Create a list of dicts that contain all the databas and table combinations that will be deleted
@@ -4350,8 +4350,8 @@ class dbCalls:
             self.disconnect_dbimport_db()
             return None
 
-        export_tables = aliased(configSchema.exportTables)
-        airflow_import_dags = aliased(configSchema.airflowImportDags)
+        export_tables = aliased(configSchema.ExportTables)
+        airflow_import_dags = aliased(configSchema.AirflowImportDAGs)
         update_statement = update(airflow_import_dags)
         update_statement = update_statement.where(
             airflow_import_dags.dag_name == bindparam("dag")
@@ -4424,7 +4424,7 @@ class dbCalls:
             self.disconnect_dbimport_db()
             return None
 
-        airflow_import_dags = aliased(configSchema.airflowImportDags)
+        airflow_import_dags = aliased(configSchema.AirflowImportDAGs)
         result = "ok"
         return_code = 200
 
@@ -4466,7 +4466,7 @@ class dbCalls:
             airflow_dag.retryExponentialBackoff = "0"
 
         try:
-            query = insert(configSchema.airflowImportDags).values(
+            query = insert(configSchema.AirflowImportDAGs).values(
                 dag_name=dagname,
                 schedule_interval=airflow_dag.scheduleInterval,
                 filter_hive=airflow_dag.filterTable,
@@ -4567,9 +4567,9 @@ class dbCalls:
 
         # Fetch the tableID as that is required to update/create data in import_columns
         row = (
-            session.query(configSchema.airflowExportDags.dag_name)
-            .select_from(configSchema.airflowExportDags)
-            .filter(configSchema.airflowExportDags.dag_name == dagname)
+            session.query(configSchema.AirflowExportDAGs.dag_name)
+            .select_from(configSchema.AirflowExportDAGs)
+            .filter(configSchema.AirflowExportDAGs.dag_name == dagname)
             .one_or_none()
         )
         session.commit()
@@ -4579,8 +4579,8 @@ class dbCalls:
             return_code = 404
         else:
             (
-                session.query(configSchema.airflowExportDags)
-                .filter(configSchema.airflowExportDags.dag_name == dagname)
+                session.query(configSchema.AirflowExportDAGs)
+                .filter(configSchema.AirflowExportDAGs.dag_name == dagname)
                 .delete()
             )
             session.commit()
@@ -4610,9 +4610,9 @@ class dbCalls:
             self.disconnect_dbimport_db()
             return None
 
-        delete_statement = delete(configSchema.airflowExportDags)
+        delete_statement = delete(configSchema.AirflowExportDAGs)
         delete_statement = delete_statement.where(
-            configSchema.airflowExportDags.dag_name == bindparam("dag")
+            configSchema.AirflowExportDAGs.dag_name == bindparam("dag")
         )
 
         # Create a list of dicts that contain all the databas and table combinations that will be deleted
@@ -4648,8 +4648,8 @@ class dbCalls:
             self.disconnect_dbimport_db()
             return None
 
-        export_tables = aliased(configSchema.exportTables)
-        airflow_export_dags = aliased(configSchema.airflowExportDags)
+        export_tables = aliased(configSchema.ExportTables)
+        airflow_export_dags = aliased(configSchema.AirflowExportDAGs)
         update_statement = update(airflow_export_dags)
         update_statement = update_statement.where(
             airflow_export_dags.dag_name == bindparam("dag")
@@ -4722,7 +4722,7 @@ class dbCalls:
             self.disconnect_dbimport_db()
             return None
 
-        airflow_export_dags = aliased(configSchema.airflowExportDags)
+        airflow_export_dags = aliased(configSchema.AirflowExportDAGs)
         result = "ok"
         return_code = 200
 
@@ -4758,7 +4758,7 @@ class dbCalls:
             airflow_dag.retryExponentialBackoff = "0"
 
         try:
-            query = insert(configSchema.airflowExportDags).values(
+            query = insert(configSchema.AirflowExportDAGs).values(
                 dag_name=dagname,
                 schedule_interval=airflow_dag.scheduleInterval,
                 filter_dbalias=airflow_dag.filterConnection,
@@ -4849,9 +4849,9 @@ class dbCalls:
 
         # Fetch the tableID as that is required to update/create data in import_columns
         row = (
-            session.query(configSchema.airflowCustomDags.dag_name)
-            .select_from(configSchema.airflowCustomDags)
-            .filter(configSchema.airflowCustomDags.dag_name == dagname)
+            session.query(configSchema.AirflowCustomDAGs.dag_name)
+            .select_from(configSchema.AirflowCustomDAGs)
+            .filter(configSchema.AirflowCustomDAGs.dag_name == dagname)
             .one_or_none()
         )
         session.commit()
@@ -4861,8 +4861,8 @@ class dbCalls:
             return_code = 404
         else:
             (
-                session.query(configSchema.airflowCustomDags)
-                .filter(configSchema.airflowCustomDags.dag_name == dagname)
+                session.query(configSchema.AirflowCustomDAGs)
+                .filter(configSchema.AirflowCustomDAGs.dag_name == dagname)
                 .delete()
             )
             session.commit()
@@ -4892,9 +4892,9 @@ class dbCalls:
             self.disconnect_dbimport_db()
             return None
 
-        delete_statement = delete(configSchema.airflowCustomDags)
+        delete_statement = delete(configSchema.AirflowCustomDAGs)
         delete_statement = delete_statement.where(
-            configSchema.airflowCustomDags.dag_name == bindparam("dag")
+            configSchema.AirflowCustomDAGs.dag_name == bindparam("dag")
         )
 
         # Create a list of dicts that contain all the databas and table combinations that will be deleted
@@ -4930,8 +4930,8 @@ class dbCalls:
             self.disconnect_dbimport_db()
             return None
 
-        export_tables = aliased(configSchema.exportTables)
-        airflow_custom_dags = aliased(configSchema.airflowCustomDags)
+        export_tables = aliased(configSchema.ExportTables)
+        airflow_custom_dags = aliased(configSchema.AirflowCustomDAGs)
         update_statement = update(airflow_custom_dags)
         update_statement = update_statement.where(
             airflow_custom_dags.dag_name == bindparam("dag")
@@ -5004,7 +5004,7 @@ class dbCalls:
             self.disconnect_dbimport_db()
             return None
 
-        airflow_custom_dags = aliased(configSchema.airflowCustomDags)
+        airflow_custom_dags = aliased(configSchema.AirflowCustomDAGs)
         result = "ok"
         return_code = 200
 
@@ -5038,7 +5038,7 @@ class dbCalls:
             airflow_dag.retryExponentialBackoff = "0"
 
         try:
-            query = insert(configSchema.airflowCustomDags).values(
+            query = insert(configSchema.AirflowCustomDAGs).values(
                 dag_name=dagname,
                 schedule_interval=airflow_dag.scheduleInterval,
                 retries=airflow_dag.retries,

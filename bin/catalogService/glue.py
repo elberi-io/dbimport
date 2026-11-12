@@ -176,20 +176,20 @@ class glueCatalog(metaclass=Singleton):
         # 		PKerrorFound = False
         #
         # 		session = self.hive_meta_session()
-        # 		KEY_CONSTRAINTS = aliased(hiveSchema.KEY_CONSTRAINTS, name="K")
+        # 		KeyConstraints = aliased(hiveSchema.KeyConstraints, name="K")
         # 		TBLS = aliased(hiveSchema.TBLS, name="T")
-        # 		COLUMNS_V2 = aliased(hiveSchema.COLUMNS_V2, name="C")
+        # 		ColumnsV2 = aliased(hiveSchema.ColumnsV2, name="C")
         # 		DBS = aliased(hiveSchema.DBS, name="D")
         #
-        # 		for row in (session.query(COLUMNS_V2.COLUMN_NAME)
-        # 				.select_from(KEY_CONSTRAINTS)
-        # 				.join(TBLS, KEY_CONSTRAINTS.TBLS_PARENT)
-        # 				.join(COLUMNS_V2, (COLUMNS_V2.CD_ID == KEY_CONSTRAINTS.PARENT_CD_ID) & (COLUMNS_V2.INTEGER_IDX == KEY_CONSTRAINTS.PARENT_INTEGER_IDX))
+        # 		for row in (session.query(ColumnsV2.COLUMN_NAME)
+        # 				.select_from(KeyConstraints)
+        # 				.join(TBLS, KeyConstraints.TBLS_PARENT)
+        # 				.join(ColumnsV2, (ColumnsV2.CD_ID == KeyConstraints.PARENT_CD_ID) & (ColumnsV2.INTEGER_IDX == KeyConstraints.PARENT_INTEGER_IDX))
         # 				.join(DBS)
-        # 				.filter(KEY_CONSTRAINTS.CONSTRAINT_TYPE == 0)
+        # 				.filter(KeyConstraints.CONSTRAINT_TYPE == 0)
         # 				.filter(TBLS.TBL_NAME == hiveTable.lower())
         # 				.filter(DBS.NAME == hiveDB.lower())
-        # 				.order_by(KEY_CONSTRAINTS.POSITION)
+        # 				.order_by(KeyConstraints.POSITION)
         # 				.all()):
         #
         # 			if result != "":
@@ -220,7 +220,7 @@ class glueCatalog(metaclass=Singleton):
         # 			self.connect_to_hive_metastore_db()
         #
         # 		session = self.hive_meta_session()
-        # 		KEY = aliased(hiveSchema.KEY_CONSTRAINTS, name="K")
+        # 		KEY = aliased(hiveSchema.KeyConstraints, name="K")
         # 		TBLS = aliased(hiveSchema.TBLS, name="T")
         # 		DBS = aliased(hiveSchema.DBS, name="D")
         #
@@ -257,11 +257,11 @@ class glueCatalog(metaclass=Singleton):
         # 		result_df = None
         #
         # 		session = self.hive_meta_session()
-        # 		KEY = aliased(hiveSchema.KEY_CONSTRAINTS, name="K")
+        # 		KEY = aliased(hiveSchema.KeyConstraints, name="K")
         # 		TBLS_TP = aliased(hiveSchema.TBLS, name="TP")
         # 		TBLS_TC = aliased(hiveSchema.TBLS, name="TC")
-        # 		COLUMNS_CP = aliased(hiveSchema.COLUMNS_V2, name="CP")
-        # 		COLUMNS_CC = aliased(hiveSchema.COLUMNS_V2, name="CC")
+        # 		COLUMNS_CP = aliased(hiveSchema.ColumnsV2, name="CP")
+        # 		COLUMNS_CC = aliased(hiveSchema.ColumnsV2, name="CC")
         # 		DBS_DP = aliased(hiveSchema.DBS, name="DP")
         # 		DBS_DC = aliased(hiveSchema.DBS, name="DC")
         #

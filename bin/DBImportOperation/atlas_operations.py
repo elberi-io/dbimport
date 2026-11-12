@@ -631,8 +631,8 @@ class atlasOperation:
             inplace=True,
         )
 
-        atlas_column_cache = aliased(configSchema.atlasColumnCache)
-        atlas_key_cache = aliased(configSchema.atlasKeyCache)
+        atlas_column_cache = aliased(configSchema.AtlasColumnCache)
+        atlas_key_cache = aliased(configSchema.AtlasKeyCache)
         self.source_columns_df = pd.DataFrame()
         self.source_keys_df = pd.DataFrame()
 
@@ -1030,41 +1030,41 @@ class atlasOperation:
                         session = self.get_dbimport_session()
 
                         (
-                            session.query(configSchema.atlasColumnCache)
+                            session.query(configSchema.AtlasColumnCache)
                             .filter(
-                                configSchema.atlasColumnCache.hostname
+                                configSchema.AtlasColumnCache.hostname
                                 == self.jdbc_hostname
                             )
                             .filter(
-                                configSchema.atlasColumnCache.port == self.jdbc_port
+                                configSchema.AtlasColumnCache.port == self.jdbc_port
                             )
                             .filter(
-                                configSchema.atlasColumnCache.database_name
+                                configSchema.AtlasColumnCache.database_name
                                 == self.jdbc_database
                             )
                             .filter(
-                                configSchema.atlasColumnCache.schema_name
+                                configSchema.AtlasColumnCache.schema_name
                                 == schema.strip()
                             )
-                            .filter(configSchema.atlasColumnCache.table_name == table)
+                            .filter(configSchema.AtlasColumnCache.table_name == table)
                             .delete()
                         )
 
                         (
-                            session.query(configSchema.atlasKeyCache)
+                            session.query(configSchema.AtlasKeyCache)
                             .filter(
-                                configSchema.atlasKeyCache.hostname
+                                configSchema.AtlasKeyCache.hostname
                                 == self.jdbc_hostname
                             )
-                            .filter(configSchema.atlasKeyCache.port == self.jdbc_port)
+                            .filter(configSchema.AtlasKeyCache.port == self.jdbc_port)
                             .filter(
-                                configSchema.atlasKeyCache.database_name
+                                configSchema.AtlasKeyCache.database_name
                                 == self.jdbc_database
                             )
                             .filter(
-                                configSchema.atlasKeyCache.schema_name == schema.strip()
+                                configSchema.AtlasKeyCache.schema_name == schema.strip()
                             )
-                            .filter(configSchema.atlasKeyCache.table_name == table)
+                            .filter(configSchema.AtlasKeyCache.table_name == table)
                             .delete()
                         )
 

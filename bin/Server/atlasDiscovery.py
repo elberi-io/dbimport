@@ -172,7 +172,7 @@ class atlasDiscovery(threading.Thread):
             atlas_crawler_objects.append(thread)
 
         self.common_config = common_config.config()
-        jdbc_connections = aliased(configSchema.jdbcConnections)
+        jdbc_connections = aliased(configSchema.JDBCConnections)
         self.failure_log = {}
         self.connections_sent_to_crawlers = []
 
@@ -220,7 +220,7 @@ class atlasDiscovery(threading.Thread):
                         )
                         .select_from(jdbc_connections)
                         .filter(jdbc_connections.atlas_discovery == 1)
-                        # 						.filter((jdbcConnections.atlas_last_discovery < atlasDiscoveryCheckTime) | (jdbcConnections.atlas_last_discovery == None))
+                        # 						.filter((JDBCConnections.atlas_last_discovery < atlasDiscoveryCheckTime) | (JDBCConnections.atlas_last_discovery == None))
                         .order_by(jdbc_connections.atlas_last_discovery)
                         .all()
                     )
@@ -378,8 +378,8 @@ class atlasDiscovery(threading.Thread):
                     try:
                         session = self.get_dbimport_session()
                         (
-                            session.query(configSchema.jdbcConnections)
-                            .filter(configSchema.jdbcConnections.dbalias == db_alias)
+                            session.query(configSchema.JDBCConnections)
+                            .filter(configSchema.JDBCConnections.dbalias == db_alias)
                             .update(update_dict)
                         )
                         session.commit()

@@ -231,7 +231,7 @@ class hiveMetastoreDirect(metaclass=Singleton):
 
         session = self.hive_meta_session()
         tbls = aliased(hiveSchema.TBLS, name="T")
-        table_params = aliased(hiveSchema.TABLE_PARAMS, name="TP")
+        table_params = aliased(hiveSchema.TableParams, name="TP")
         dbs = aliased(hiveSchema.DBS, name="D")
         sds = aliased(hiveSchema.SDS, name="S")
 
@@ -296,9 +296,9 @@ class hiveMetastoreDirect(metaclass=Singleton):
         pk_error_found = False
 
         session = self.hive_meta_session()
-        key_constraints = aliased(hiveSchema.KEY_CONSTRAINTS, name="K")
+        key_constraints = aliased(hiveSchema.KeyConstraints, name="K")
         tbls = aliased(hiveSchema.TBLS, name="T")
-        columns_v2 = aliased(hiveSchema.COLUMNS_V2, name="C")
+        columns_v2 = aliased(hiveSchema.ColumnsV2, name="C")
         dbs = aliased(hiveSchema.DBS, name="D")
 
         for row in (
@@ -342,7 +342,7 @@ class hiveMetastoreDirect(metaclass=Singleton):
             self.connect_to_hive_metastore_db()
 
         session = self.hive_meta_session()
-        key = aliased(hiveSchema.KEY_CONSTRAINTS, name="K")
+        key = aliased(hiveSchema.KeyConstraints, name="K")
         tbls = aliased(hiveSchema.TBLS, name="T")
         dbs = aliased(hiveSchema.DBS, name="D")
 
@@ -377,11 +377,11 @@ class hiveMetastoreDirect(metaclass=Singleton):
         result_df = None
 
         session = self.hive_meta_session()
-        key = aliased(hiveSchema.KEY_CONSTRAINTS, name="K")
+        key = aliased(hiveSchema.KeyConstraints, name="K")
         tbls_tp = aliased(hiveSchema.TBLS, name="TP")
         tbls_tc = aliased(hiveSchema.TBLS, name="TC")
-        columns_cp = aliased(hiveSchema.COLUMNS_V2, name="CP")
-        columns_cc = aliased(hiveSchema.COLUMNS_V2, name="CC")
+        columns_cp = aliased(hiveSchema.ColumnsV2, name="CP")
+        columns_cc = aliased(hiveSchema.ColumnsV2, name="CC")
         dbs_dp = aliased(hiveSchema.DBS, name="DP")
         dbs_dc = aliased(hiveSchema.DBS, name="DC")
 
@@ -465,9 +465,9 @@ class hiveMetastoreDirect(metaclass=Singleton):
         session = self.hive_meta_session()
 
         lock_count = (
-            session.query(hiveSchema.HIVE_LOCKS)
-            .filter(hiveSchema.HIVE_LOCKS.HL_DB == hive_db)
-            .filter(hiveSchema.HIVE_LOCKS.HL_TABLE == hive_table)
+            session.query(hiveSchema.HiveLocks)
+            .filter(hiveSchema.HiveLocks.HL_DB == hive_db)
+            .filter(hiveSchema.HiveLocks.HL_TABLE == hive_table)
             .count()
         )
 
@@ -486,9 +486,9 @@ class hiveMetastoreDirect(metaclass=Singleton):
             )
 
         (
-            session.query(hiveSchema.HIVE_LOCKS)
-            .filter(hiveSchema.HIVE_LOCKS.HL_DB == hive_db)
-            .filter(hiveSchema.HIVE_LOCKS.HL_TABLE == hive_table)
+            session.query(hiveSchema.HiveLocks)
+            .filter(hiveSchema.HiveLocks.HL_DB == hive_db)
+            .filter(hiveSchema.HiveLocks.HL_TABLE == hive_table)
             .delete()
         )
         session.commit()
@@ -515,7 +515,7 @@ class hiveMetastoreDirect(metaclass=Singleton):
 
         session = self.hive_meta_session()
         tbls = aliased(hiveSchema.TBLS, name="T")
-        columns = aliased(hiveSchema.COLUMNS_V2, name="C")
+        columns = aliased(hiveSchema.ColumnsV2, name="C")
         dbs = aliased(hiveSchema.DBS, name="D")
         sds = aliased(hiveSchema.SDS, name="S")
         cds = aliased(hiveSchema.CDS)
@@ -572,7 +572,7 @@ class hiveMetastoreDirect(metaclass=Singleton):
             self.connect_to_hive_metastore_db()
 
         session = self.hive_meta_session()
-        table_params = aliased(hiveSchema.TABLE_PARAMS, name="TP")
+        table_params = aliased(hiveSchema.TableParams, name="TP")
         tbls = aliased(hiveSchema.TBLS, name="T")
         dbs = aliased(hiveSchema.DBS, name="D")
 

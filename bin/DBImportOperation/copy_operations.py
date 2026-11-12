@@ -66,7 +66,7 @@ class operation(metaclass=Singleton):
         """Checks if instance exists in the dbimport_instances table"""
 
         session = self.config_db_session()
-        dbimport_instances = aliased(configSchema.dbimportInstances)
+        dbimport_instances = aliased(configSchema.DBImportInstances)
 
         result = (
             session.query(dbimport_instances.name)
@@ -99,7 +99,7 @@ class operation(metaclass=Singleton):
             sys.exit(1)
 
         session = self.config_db_session()
-        dbimport_instances = aliased(configSchema.dbimportInstances)
+        dbimport_instances = aliased(configSchema.DBImportInstances)
 
         dbimport_instance = (
             session.query(dbimport_instances)
@@ -114,7 +114,7 @@ class operation(metaclass=Singleton):
         """Return the Copy Phase that the specified table have"""
 
         session = self.config_db_session()
-        copy_tables = aliased(configSchema.copyTables)
+        copy_tables = aliased(configSchema.CopyTables)
 
         self.copy_destinations = []
 
@@ -172,7 +172,7 @@ class operation(metaclass=Singleton):
 
         connect_status = True
         session = self.config_db_session()
-        dbimport_instances = aliased(configSchema.dbimportInstances)
+        dbimport_instances = aliased(configSchema.DBImportInstances)
 
         row = (
             session.query(
@@ -264,7 +264,7 @@ class operation(metaclass=Singleton):
         If it is a full import, then it will return True if the previous copy have status 0 (not started)."""
 
         session = self.config_db_session()
-        copy_async_status = aliased(configSchema.copyASyncStatus)
+        copy_async_status = aliased(configSchema.CopyAsyncStatus)
 
         if self.copy_destinations == None:
             return True
@@ -316,7 +316,7 @@ class operation(metaclass=Singleton):
             method = dest_and_method.split(";")[1]
 
             # Calculate the source and target HDFS directories
-            dbimport_instances = aliased(configSchema.dbimportInstances)
+            dbimport_instances = aliased(configSchema.DBImportInstances)
 
             row = (
                 session.query(
@@ -341,7 +341,7 @@ class operation(metaclass=Singleton):
             )
 
             if method == "Asynchronous":
-                copy_async_status = aliased(configSchema.copyASyncStatus)
+                copy_async_status = aliased(configSchema.CopyAsyncStatus)
 
                 result = (
                     session.query(copy_async_status)
@@ -352,7 +352,7 @@ class operation(metaclass=Singleton):
 
                 if result == 0:
                     # No current copy ongoing for this table. Just insert it into the table
-                    newcopy_async_status = configSchema.copyASyncStatus(
+                    newcopy_async_status = configSchema.CopyAsyncStatus(
                         table_id=self.import_config.table_id,
                         hive_db=self.import_config.hive_db,
                         hive_table=self.import_config.hive_table,
@@ -423,15 +423,15 @@ class operation(metaclass=Singleton):
                             target_hdfs_dir,
                         )
 
-                        # Update the date in copyASyncStatus table
+                        # Update the date in CopyAsyncStatus table
                         (
-                            session.query(configSchema.copyASyncStatus)
+                            session.query(configSchema.CopyAsyncStatus)
                             .filter(
-                                configSchema.copyASyncStatus.table_id
+                                configSchema.CopyAsyncStatus.table_id
                                 == self.import_config.table_id
                             )
                             .filter(
-                                configSchema.copyASyncStatus.destination == destination
+                                configSchema.CopyAsyncStatus.destination == destination
                             )
                             .update(update_dict)
                         )
@@ -511,8 +511,8 @@ class operation(metaclass=Singleton):
         hive_filter_table = hive_filter_table.replace("*", "%").strip()
 
         local_session = self.config_db_session()
-        import_tables = aliased(configSchema.importTables)
-        copy_async_status = aliased(configSchema.copyASyncStatus)
+        import_tables = aliased(configSchema.ImportTables)
+        copy_async_status = aliased(configSchema.CopyAsyncStatus)
 
         # Check if there are any tabled in this DAG that is marked for copy against the specified destination
         result = (
@@ -534,7 +534,7 @@ class operation(metaclass=Singleton):
             sys.exit(1)
 
         # Calculate the source and target HDFS directories
-        dbimport_instances = aliased(configSchema.dbimportInstances)
+        dbimport_instances = aliased(configSchema.DBImportInstances)
 
         source_hdfs_address = self.common_operations.hdfs_address
         source_hdfs_basedir = self.common_operations.hdfs_basedir
@@ -619,7 +619,7 @@ class operation(metaclass=Singleton):
             )
 
             if result == 0:
-                newcopy_async_status = configSchema.copyASyncStatus(
+                newcopy_async_status = configSchema.CopyAsyncStatus(
                     table_id=row["table_id"],
                     hive_db=row["hive_db"],
                     hive_table=row["hive_table"],
@@ -648,9 +648,9 @@ class operation(metaclass=Singleton):
             sys.exit(1)
 
         local_session = self.config_db_session()
-        airflow_import_dags = aliased(configSchema.airflowImportDags)
-        import_tables = aliased(configSchema.importTables)
-        copy_async_status = aliased(configSchema.copyASyncStatus)
+        airflow_import_dags = aliased(configSchema.AirflowImportDAGs)
+        import_tables = aliased(configSchema.ImportTables)
+        copy_async_status = aliased(configSchema.CopyAsyncStatus)
 
         hive_filter_str = (
             local_session.query(airflow_import_dags.filter_hive)
@@ -686,7 +686,7 @@ class operation(metaclass=Singleton):
                 sys.exit(1)
 
         # Calculate the source and target HDFS directories
-        dbimport_instances = aliased(configSchema.dbimportInstances)
+        dbimport_instances = aliased(configSchema.DBImportInstances)
 
         source_hdfs_address = self.common_operations.hdfs_address
         source_hdfs_basedir = self.common_operations.hdfs_basedir
@@ -797,7 +797,7 @@ class operation(metaclass=Singleton):
                 )
 
                 if result == 0:
-                    newcopy_async_status = configSchema.copyASyncStatus(
+                    newcopy_async_status = configSchema.CopyAsyncStatus(
                         table_id=row["table_id"],
                         hive_db=row["hive_db"],
                         hive_table=row["hive_table"],
@@ -828,14 +828,14 @@ class operation(metaclass=Singleton):
             sys.exit(1)
 
         local_session = self.config_db_session()
-        airflow_export_dags = aliased(configSchema.airflowExportDags)
-        airflow_tasks = aliased(configSchema.airflowTasks)
-        export_tables = aliased(configSchema.exportTables)
+        airflow_export_dags = aliased(configSchema.AirflowExportDAGs)
+        airflow_tasks = aliased(configSchema.AirflowTasks)
+        export_tables = aliased(configSchema.ExportTables)
 
         # Check if Airflow DAG exists with that name, and if so, get all the details
         airflow_dag = pd.DataFrame(
-            local_session.query(configSchema.airflowExportDags.__table__).filter(
-                configSchema.airflowExportDags.dag_name == airflow_dag_name
+            local_session.query(configSchema.AirflowExportDAGs.__table__).filter(
+                configSchema.AirflowExportDAGs.dag_name == airflow_dag_name
             )
         )
 
@@ -857,7 +857,7 @@ class operation(metaclass=Singleton):
 
             if result == 0:
                 # Table does not exist in target system. Lets create a skeleton record
-                new_airflow_export_dags = configSchema.airflowExportDags(
+                new_airflow_export_dags = configSchema.AirflowExportDAGs(
                     dag_name=airflow_dag_name, filter_dbalias="None"
                 )
                 remote_session.add(new_airflow_export_dags)
@@ -899,8 +899,8 @@ class operation(metaclass=Singleton):
 
             # Update the values in airflow_import_dag on the remote instance
             (
-                remote_session.query(configSchema.airflowExportDags)
-                .filter(configSchema.airflowExportDags.dag_name == airflow_dag_name)
+                remote_session.query(configSchema.AirflowExportDAGs)
+                .filter(configSchema.AirflowExportDAGs.dag_name == airflow_dag_name)
                 .update(update_dict)
             )
             remote_session.commit()
@@ -934,8 +934,8 @@ class operation(metaclass=Singleton):
             # **************************
 
             airflow_tasks_result = pd.DataFrame(
-                local_session.query(configSchema.airflowTasks.__table__).filter(
-                    configSchema.airflowTasks.dag_name == airflow_dag_name
+                local_session.query(configSchema.AirflowTasks.__table__).filter(
+                    configSchema.AirflowTasks.dag_name == airflow_dag_name
                 )
             )
 
@@ -949,8 +949,8 @@ class operation(metaclass=Singleton):
                 )
 
                 if result == 0:
-                    # Create a new row in importColumns if it doesnt exists
-                    new_airflow_task = configSchema.airflowTasks(
+                    # Create a new row in ImportColumns if it doesnt exists
+                    new_airflow_task = configSchema.AirflowTasks(
                         dag_name=airflow_dag_name, task_name=row["task_name"]
                     )
                     remote_session.add(new_airflow_task)
@@ -965,9 +965,9 @@ class operation(metaclass=Singleton):
 
                 # Update the values in airflow_tasks on the remote instance
                 (
-                    remote_session.query(configSchema.airflowTasks)
-                    .filter(configSchema.airflowTasks.dag_name == airflow_dag_name)
-                    .filter(configSchema.airflowTasks.task_name == row["task_name"])
+                    remote_session.query(configSchema.AirflowTasks)
+                    .filter(configSchema.AirflowTasks.dag_name == airflow_dag_name)
+                    .filter(configSchema.AirflowTasks.task_name == row["task_name"])
                     .update(update_dict)
                 )
                 remote_session.commit()
@@ -985,8 +985,8 @@ class operation(metaclass=Singleton):
             # **************************
 
             airflow_dag_sensors_result = pd.DataFrame(
-                local_session.query(configSchema.airflowDagSensors.__table__).filter(
-                    configSchema.airflowDagSensors.dag_name == airflow_dag_name
+                local_session.query(configSchema.AirflowDAGSensors.__table__).filter(
+                    configSchema.AirflowDAGSensors.dag_name == airflow_dag_name
                 )
             )
 
@@ -1000,8 +1000,8 @@ class operation(metaclass=Singleton):
                 )
 
                 if result == 0:
-                    # Create a new row in importColumns if it doesnt exists
-                    new_airflow_task = configSchema.airflowTasks(
+                    # Create a new row in ImportColumns if it doesnt exists
+                    new_airflow_task = configSchema.AirflowTasks(
                         dag_name=airflow_dag_name, task_name=row["sensor_name"]
                     )
                     remote_session.add(new_airflow_task)
@@ -1020,9 +1020,9 @@ class operation(metaclass=Singleton):
 
                 # Update the values in airflow_tasks on the remote instance
                 (
-                    remote_session.query(configSchema.airflowTasks)
-                    .filter(configSchema.airflowTasks.dag_name == airflow_dag_name)
-                    .filter(configSchema.airflowTasks.task_name == row["sensor_name"])
+                    remote_session.query(configSchema.AirflowTasks)
+                    .filter(configSchema.AirflowTasks.dag_name == airflow_dag_name)
+                    .filter(configSchema.AirflowTasks.task_name == row["sensor_name"])
                     .update(update_dict)
                 )
                 remote_session.commit()
@@ -1041,7 +1041,7 @@ class operation(metaclass=Singleton):
             sys.exit(1)
 
         local_session = self.config_db_session()
-        alembic_version = aliased(configSchema.alembicVersion)
+        alembic_version = aliased(configSchema.AlembicVersion)
 
         if self.connect_remote_dbimport_instance(instance=remote_instance):
             remote_session = self.remote_instance_config_db_session()
@@ -1084,14 +1084,14 @@ class operation(metaclass=Singleton):
             sys.exit(1)
 
         local_session = self.config_db_session()
-        airflow_import_dags = aliased(configSchema.airflowImportDags)
-        airflow_tasks = aliased(configSchema.airflowTasks)
-        import_tables = aliased(configSchema.importTables)
+        airflow_import_dags = aliased(configSchema.AirflowImportDAGs)
+        airflow_tasks = aliased(configSchema.AirflowTasks)
+        import_tables = aliased(configSchema.ImportTables)
 
         # Check if Airflow DAG exists with that name, and if so, get all the details
         airflow_dag = pd.DataFrame(
-            local_session.query(configSchema.airflowImportDags.__table__).filter(
-                configSchema.airflowImportDags.dag_name == airflow_dag_name
+            local_session.query(configSchema.AirflowImportDAGs.__table__).filter(
+                configSchema.AirflowImportDAGs.dag_name == airflow_dag_name
             )
         )
 
@@ -1113,7 +1113,7 @@ class operation(metaclass=Singleton):
 
             if result == 0:
                 # Table does not exist in target system. Lets create a skeleton record
-                new_airflow_import_dags = configSchema.airflowImportDags(
+                new_airflow_import_dags = configSchema.AirflowImportDAGs(
                     dag_name=airflow_dag_name, filter_hive="None"
                 )
                 remote_session.add(new_airflow_import_dags)
@@ -1142,8 +1142,8 @@ class operation(metaclass=Singleton):
 
             # Update the values in airflow_import_dag on the remote instance
             (
-                remote_session.query(configSchema.airflowImportDags)
-                .filter(configSchema.airflowImportDags.dag_name == airflow_dag_name)
+                remote_session.query(configSchema.AirflowImportDAGs)
+                .filter(configSchema.AirflowImportDAGs.dag_name == airflow_dag_name)
                 .update(update_dict)
             )
             remote_session.commit()
@@ -1199,8 +1199,8 @@ class operation(metaclass=Singleton):
             # **************************
 
             airflow_tasks_result = pd.DataFrame(
-                local_session.query(configSchema.airflowTasks.__table__).filter(
-                    configSchema.airflowTasks.dag_name == airflow_dag_name
+                local_session.query(configSchema.AirflowTasks.__table__).filter(
+                    configSchema.AirflowTasks.dag_name == airflow_dag_name
                 )
             )
 
@@ -1215,8 +1215,8 @@ class operation(metaclass=Singleton):
                 )
 
                 if result == 0:
-                    # Create a new row in importColumns if it doesnt exists
-                    new_airflow_task = configSchema.airflowTasks(
+                    # Create a new row in ImportColumns if it doesnt exists
+                    new_airflow_task = configSchema.AirflowTasks(
                         dag_name=airflow_dag_name, task_name=row["task_name"]
                     )
                     remote_session.add(new_airflow_task)
@@ -1239,9 +1239,9 @@ class operation(metaclass=Singleton):
 
                 # Update the values in airflow_tasks on the remote instance
                 (
-                    remote_session.query(configSchema.airflowTasks)
-                    .filter(configSchema.airflowTasks.dag_name == airflow_dag_name)
-                    .filter(configSchema.airflowTasks.task_name == row["task_name"])
+                    remote_session.query(configSchema.AirflowTasks)
+                    .filter(configSchema.AirflowTasks.dag_name == airflow_dag_name)
+                    .filter(configSchema.AirflowTasks.task_name == row["task_name"])
                     .update(update_dict)
                 )
                 remote_session.commit()
@@ -1272,10 +1272,10 @@ class operation(metaclass=Singleton):
     ):
         """Copy the schema definitions to the target instances"""
         local_session = self.config_db_session()
-        export_tables = aliased(configSchema.exportTables)
-        export_columns = aliased(configSchema.exportColumns)
-        jdbc_connections = aliased(configSchema.jdbcConnections)
-        dbimport_instances = aliased(configSchema.dbimportInstances)
+        export_tables = aliased(configSchema.ExportTables)
+        export_columns = aliased(configSchema.ExportColumns)
+        jdbc_connections = aliased(configSchema.JDBCConnections)
+        dbimport_instances = aliased(configSchema.DBImportInstances)
 
         if self.connect_remote_dbimport_instance(instance=destination):
             remote_session = self.remote_instance_config_db_session()
@@ -1337,7 +1337,7 @@ class operation(metaclass=Singleton):
                 )
 
                 if result == 0:
-                    new_jdbc_connection = configSchema.jdbcConnections(
+                    new_jdbc_connection = configSchema.JDBCConnections(
                         dbalias=row["dbalias"], jdbc_url=""
                     )
                     remote_session.add(new_jdbc_connection)
@@ -1345,15 +1345,15 @@ class operation(metaclass=Singleton):
 
                 # Read the entire import_table row from the source database
                 source_jdbc_connection = pd.DataFrame(
-                    local_session.query(configSchema.jdbcConnections.__table__).filter(
-                        configSchema.jdbcConnections.dbalias == row["dbalias"]
+                    local_session.query(configSchema.JDBCConnections.__table__).filter(
+                        configSchema.JDBCConnections.dbalias == row["dbalias"]
                     )
                 )
 
                 # Table to update with values from import_table source
                 remote_jdbc_connection = (
-                    remote_session.query(configSchema.jdbcConnections.__table__)
-                    .filter(configSchema.jdbcConnections.dbalias == row["dbalias"])
+                    remote_session.query(configSchema.JDBCConnections.__table__)
+                    .filter(configSchema.JDBCConnections.dbalias == row["dbalias"])
                     .one()
                 )
 
@@ -1378,8 +1378,8 @@ class operation(metaclass=Singleton):
 
                 # Update the values in import_table on the remote instance
                 (
-                    remote_session.query(configSchema.jdbcConnections)
-                    .filter(configSchema.jdbcConnections.dbalias == row["dbalias"])
+                    remote_session.query(configSchema.JDBCConnections)
+                    .filter(configSchema.JDBCConnections.dbalias == row["dbalias"])
                     .update(update_dict)
                 )
                 remote_session.commit()
@@ -1399,7 +1399,7 @@ class operation(metaclass=Singleton):
 
                 if result == 0:
                     # Table does not exist in target system. Lets create a skeleton record
-                    new_export_table = configSchema.exportTables(
+                    new_export_table = configSchema.ExportTables(
                         dbalias=row["dbalias"],
                         target_schema=row["target_schema"],
                         target_table=row["target_table"],
@@ -1423,15 +1423,15 @@ class operation(metaclass=Singleton):
 
                 # Read the entire export_table row from the source database
                 source_table_definition = pd.DataFrame(
-                    local_session.query(configSchema.exportTables.__table__).filter(
-                        configSchema.exportTables.table_id == row["table_id"]
+                    local_session.query(configSchema.ExportTables.__table__).filter(
+                        configSchema.ExportTables.table_id == row["table_id"]
                     )
                 )
 
                 # Table to update with values from import_table source
                 remote_table_definition = (
-                    remote_session.query(configSchema.exportTables.__table__)
-                    .filter(configSchema.exportTables.table_id == remote_table_id)
+                    remote_session.query(configSchema.ExportTables.__table__)
+                    .filter(configSchema.ExportTables.table_id == remote_table_id)
                     .one()
                 )
 
@@ -1455,8 +1455,8 @@ class operation(metaclass=Singleton):
 
                 # Update the values in import_table on the remote instance
                 (
-                    remote_session.query(configSchema.exportTables)
-                    .filter(configSchema.exportTables.table_id == remote_table_id)
+                    remote_session.query(configSchema.ExportTables)
+                    .filter(configSchema.ExportTables.table_id == remote_table_id)
                     .update(update_dict)
                 )
                 remote_session.commit()
@@ -1467,8 +1467,8 @@ class operation(metaclass=Singleton):
 
                 # Read the entire export_columns row from the source database
                 source_all_column_definitions = pd.DataFrame(
-                    local_session.query(configSchema.exportColumns.__table__).filter(
-                        configSchema.exportColumns.table_id == row["table_id"]
+                    local_session.query(configSchema.ExportColumns.__table__).filter(
+                        configSchema.ExportColumns.table_id == row["table_id"]
                     )
                 )
 
@@ -1485,8 +1485,8 @@ class operation(metaclass=Singleton):
                     )
 
                     if result == 0:
-                        # Create a new row in exportColumns if it doesnt exists
-                        new_export_column = configSchema.exportColumns(
+                        # Create a new row in ExportColumns if it doesnt exists
+                        new_export_column = configSchema.ExportColumns(
                             table_id=remote_table_id,
                             column_name=column_row["column_name"],
                             last_update_from_hive=str(
@@ -1510,18 +1510,18 @@ class operation(metaclass=Singleton):
                     # Read the entire export_columnis row from the source database
                     source_column_definition = pd.DataFrame(
                         local_session.query(
-                            configSchema.exportColumns.__table__
+                            configSchema.ExportColumns.__table__
                         ).filter(
-                            configSchema.exportColumns.column_id
+                            configSchema.ExportColumns.column_id
                             == column_row["column_id"]
                         )
                     )
 
                     # Table to update with values from export_columns source
                     remote_column_definition = (
-                        remote_session.query(configSchema.exportColumns.__table__)
+                        remote_session.query(configSchema.ExportColumns.__table__)
                         .filter(
-                            configSchema.exportColumns.column_id == remote_column_id
+                            configSchema.ExportColumns.column_id == remote_column_id
                         )
                         .one()
                     )
@@ -1540,9 +1540,9 @@ class operation(metaclass=Singleton):
 
                     # Update the values in export_table on the remote instance
                     (
-                        remote_session.query(configSchema.exportColumns)
+                        remote_session.query(configSchema.ExportColumns)
                         .filter(
-                            configSchema.exportColumns.column_id == remote_column_id
+                            configSchema.ExportColumns.column_id == remote_column_id
                         )
                         .update(update_dict)
                     )
@@ -1619,10 +1619,10 @@ class operation(metaclass=Singleton):
                         )
                 remote_session = self.remote_instance_config_db_session()
 
-                jdbc_connections = aliased(configSchema.jdbcConnections)
-                import_tables = aliased(configSchema.importTables)
-                import_columns = aliased(configSchema.importColumns)
-                dbimport_instances = aliased(configSchema.dbimportInstances)
+                jdbc_connections = aliased(configSchema.JDBCConnections)
+                import_tables = aliased(configSchema.ImportTables)
+                import_columns = aliased(configSchema.ImportColumns)
+                dbimport_instances = aliased(configSchema.DBImportInstances)
 
                 # Check if if we are going to sync the credentials for this destination
                 result = (
@@ -1647,7 +1647,7 @@ class operation(metaclass=Singleton):
 
                 if result == 0:
                     # Table does not exist in target system. Lets create a skeleton record
-                    new_import_table = configSchema.importTables(
+                    new_import_table = configSchema.ImportTables(
                         hive_db=hive_db,
                         hive_table=hive_table,
                         dbalias=connection_alias,
@@ -1685,15 +1685,15 @@ class operation(metaclass=Singleton):
 
                 # Read the entire import_table row from the source database
                 source_all_column_definitions = pd.DataFrame(
-                    local_session.query(configSchema.importColumns.__table__)
-                    .filter(configSchema.importColumns.table_id == table_id)
-                    .order_by(configSchema.importColumns.column_order)
+                    local_session.query(configSchema.ImportColumns.__table__)
+                    .filter(configSchema.ImportColumns.table_id == table_id)
+                    .order_by(configSchema.ImportColumns.column_order)
                 )
 
                 target_all_column_definitions = pd.DataFrame(
-                    remote_session.query(configSchema.importColumns.__table__)
-                    .filter(configSchema.importColumns.table_id == remote_table_id)
-                    .order_by(configSchema.importColumns.column_order)
+                    remote_session.query(configSchema.ImportColumns.__table__)
+                    .filter(configSchema.ImportColumns.table_id == remote_table_id)
+                    .order_by(configSchema.ImportColumns.column_order)
                 )
 
                 if not source_all_column_definitions.empty:
@@ -1766,7 +1766,7 @@ class operation(metaclass=Singleton):
                                 "Source Column Name '%s' does not exists in target"
                                 % (source_column_name)
                             )
-                            new_import_column = configSchema.importColumns(
+                            new_import_column = configSchema.ImportColumns(
                                 table_id=remote_table_id,
                                 column_name=column_row["column_name"],
                                 hive_db=hive_db,
@@ -1821,9 +1821,9 @@ class operation(metaclass=Singleton):
 
                         # Update the values in import_table on the remote instance
                         (
-                            remote_session.query(configSchema.importColumns)
+                            remote_session.query(configSchema.ImportColumns)
                             .filter(
-                                configSchema.importColumns.column_id == remote_column_id
+                                configSchema.ImportColumns.column_id == remote_column_id
                             )
                             .update(update_dict)
                         )
@@ -1835,15 +1835,15 @@ class operation(metaclass=Singleton):
 
                 # Read the entire import_table row from the source database
                 source_table_definition = pd.DataFrame(
-                    local_session.query(configSchema.importTables.__table__).filter(
-                        configSchema.importTables.table_id == table_id
+                    local_session.query(configSchema.ImportTables.__table__).filter(
+                        configSchema.ImportTables.table_id == table_id
                     )
                 )
 
                 # Table to update with values from import_table source
                 remote_table_definition = (
-                    remote_session.query(configSchema.importTables.__table__)
-                    .filter(configSchema.importTables.table_id == remote_table_id)
+                    remote_session.query(configSchema.ImportTables.__table__)
+                    .filter(configSchema.ImportTables.table_id == remote_table_id)
                     .one()
                 )
 
@@ -1884,8 +1884,8 @@ class operation(metaclass=Singleton):
 
                 # Update the values in import_table on the remote instance
                 (
-                    remote_session.query(configSchema.importTables)
-                    .filter(configSchema.importTables.table_id == remote_table_id)
+                    remote_session.query(configSchema.ImportTables)
+                    .filter(configSchema.ImportTables.table_id == remote_table_id)
                     .update(update_dict)
                 )
                 remote_session.commit()
@@ -1916,8 +1916,8 @@ class operation(metaclass=Singleton):
 
         remote_session = self.remote_instance_config_db_session()
 
-        jdbc_connections = aliased(configSchema.jdbcConnections)
-        dbimport_instances = aliased(configSchema.dbimportInstances)
+        jdbc_connections = aliased(configSchema.JDBCConnections)
+        dbimport_instances = aliased(configSchema.DBImportInstances)
 
         # Check if if we are going to sync the credentials for this destination
         result = (
@@ -1940,7 +1940,7 @@ class operation(metaclass=Singleton):
         )
 
         if result == 0:
-            new_jdbc_connection = configSchema.jdbcConnections(
+            new_jdbc_connection = configSchema.JDBCConnections(
                 dbalias=jdbc_connection, jdbc_url=""
             )
             remote_session.add(new_jdbc_connection)
@@ -1948,15 +1948,15 @@ class operation(metaclass=Singleton):
 
         # Read the entire import_table row from the source database
         source_jdbc_connection = pd.DataFrame(
-            local_session.query(configSchema.jdbcConnections.__table__).filter(
-                configSchema.jdbcConnections.dbalias == jdbc_connection
+            local_session.query(configSchema.JDBCConnections.__table__).filter(
+                configSchema.JDBCConnections.dbalias == jdbc_connection
             )
         )
 
         # Table to update with values from import_table source
         remote_jdbc_connection = (
-            remote_session.query(configSchema.jdbcConnections.__table__)
-            .filter(configSchema.jdbcConnections.dbalias == jdbc_connection)
+            remote_session.query(configSchema.JDBCConnections.__table__)
+            .filter(configSchema.JDBCConnections.dbalias == jdbc_connection)
             .one()
         )
 
@@ -1981,8 +1981,8 @@ class operation(metaclass=Singleton):
 
         # Update the values in jdbc_connections on the remote instance
         (
-            remote_session.query(configSchema.jdbcConnections)
-            .filter(configSchema.jdbcConnections.dbalias == jdbc_connection)
+            remote_session.query(configSchema.JDBCConnections)
+            .filter(configSchema.JDBCConnections.dbalias == jdbc_connection)
             .update(update_dict)
         )
         remote_session.commit()
@@ -2120,7 +2120,7 @@ class operation(metaclass=Singleton):
 
         # Calculate the source and target HDFS directories
         session = self.config_db_session()
-        dbimport_instances = aliased(configSchema.dbimportInstances)
+        dbimport_instances = aliased(configSchema.DBImportInstances)
 
         row = (
             session.query(dbimport_instances.hdfs_address)

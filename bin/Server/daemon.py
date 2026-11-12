@@ -255,8 +255,8 @@ class serverDaemon(run.RunDaemon):
                 session = self.get_dbimport_session()
 
                 (
-                    session.query(configSchema.copyASyncStatus)
-                    .filter(configSchema.copyASyncStatus.copy_status == 1)
+                    session.query(configSchema.CopyAsyncStatus)
+                    .filter(configSchema.CopyAsyncStatus.copy_status == 1)
                     .update(update_dict)
                 )
                 session.commit()
@@ -281,9 +281,9 @@ class serverDaemon(run.RunDaemon):
                 self.common_config.remove_temporary_files()
                 sys.exit(1)
 
-        import_tables = aliased(configSchema.importTables)
-        dbimport_instances = aliased(configSchema.dbimportInstances)
-        copy_async_status = aliased(configSchema.copyASyncStatus)
+        import_tables = aliased(configSchema.ImportTables)
+        dbimport_instances = aliased(configSchema.DBImportInstances)
+        copy_async_status = aliased(configSchema.CopyAsyncStatus)
 
         while True:
             # ***********************************
@@ -300,7 +300,7 @@ class serverDaemon(run.RunDaemon):
                     # status 3 = Data returned from distCP and was a success
 
                     # ------------------------------------------
-                    # Fetch all rows from copyASyncStatus that contains the status 0 and send them to distCP threads
+                    # Fetch all rows from CopyAsyncStatus that contains the status 0 and send them to distCP threads
                     # ------------------------------------------
 
                     # TODO(#229): make the 1 min interval a configured param
@@ -352,10 +352,10 @@ class serverDaemon(run.RunDaemon):
                         )
 
                         (
-                            session.query(configSchema.copyASyncStatus)
-                            .filter(configSchema.copyASyncStatus.table_id == table_id)
+                            session.query(configSchema.CopyAsyncStatus)
+                            .filter(configSchema.CopyAsyncStatus.table_id == table_id)
                             .filter(
-                                configSchema.copyASyncStatus.destination == destination
+                                configSchema.CopyAsyncStatus.destination == destination
                             )
                             .update(update_dict)
                         )
@@ -410,13 +410,13 @@ class serverDaemon(run.RunDaemon):
                     try:
                         session = self.get_dbimport_session()
                         (
-                            session.query(configSchema.copyASyncStatus)
+                            session.query(configSchema.CopyAsyncStatus)
                             .filter(
-                                configSchema.copyASyncStatus.table_id
+                                configSchema.CopyAsyncStatus.table_id
                                 == dist_cp_response.get("tableID")
                             )
                             .filter(
-                                configSchema.copyASyncStatus.destination
+                                configSchema.CopyAsyncStatus.destination
                                 == dist_cp_response.get("destination")
                             )
                             .update(update_dict)
@@ -433,8 +433,8 @@ class serverDaemon(run.RunDaemon):
                         self.disconnect_dbimport_db()
 
                 # ------------------------------------------
-                # Fetch all rows from copyASyncStatus that contains the status 3 and update the remote DBImport instance database
-                # Also dlete the record from the copyASyncStatus table
+                # Fetch all rows from CopyAsyncStatus that contains the status 3 and update the remote DBImport instance database
+                # Also dlete the record from the CopyAsyncStatus table
                 # ------------------------------------------
 
                 try:
@@ -499,9 +499,9 @@ class serverDaemon(run.RunDaemon):
 
                             # Update the values in import_table on the remote instance
                             (
-                                remote_session.query(configSchema.importTables)
+                                remote_session.query(configSchema.ImportTables)
                                 .filter(
-                                    configSchema.importTables.table_id
+                                    configSchema.ImportTables.table_id
                                     == remote_table_id
                                 )
                                 .update(update_dict)
@@ -516,17 +516,17 @@ class serverDaemon(run.RunDaemon):
                             self.disconnect_remote_session(destination)
 
                         else:
-                            # Delete the record from copyASyncStatus
+                            # Delete the record from CopyAsyncStatus
                             try:
                                 session = self.get_dbimport_session()
                                 (
-                                    session.query(configSchema.copyASyncStatus)
+                                    session.query(configSchema.CopyAsyncStatus)
                                     .filter(
-                                        configSchema.copyASyncStatus.table_id
+                                        configSchema.CopyAsyncStatus.table_id
                                         == table_id
                                     )
                                     .filter(
-                                        configSchema.copyASyncStatus.destination
+                                        configSchema.CopyAsyncStatus.destination
                                         == destination
                                     )
                                     .delete()
@@ -648,7 +648,7 @@ class serverDaemon(run.RunDaemon):
             self.disconnect_dbimport_db()
             return None
 
-        dbimport_instances = aliased(configSchema.dbimportInstances)
+        dbimport_instances = aliased(configSchema.DBImportInstances)
 
         row = (
             session.query(

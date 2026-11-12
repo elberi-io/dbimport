@@ -20,13 +20,13 @@ Base = declarative_base()
 metadata = Base.metadata
 
 
-class alembicVersion(Base):
+class AlembicVersion(Base):
     __tablename__ = "alembic_version"
 
     version_num = Column(String(32), primary_key=True, nullable=False)
 
 
-class dbimportInstances(Base):
+class DBImportInstances(Base):
     __tablename__ = "dbimport_instances"
     __table_args__ = {
         "comment": "This table contains all DBInstance that will receive data from this instance during the copy phase"
@@ -69,7 +69,7 @@ class dbimportInstances(Base):
     )
 
 
-class copyTables(Base):
+class CopyTables(Base):
     __tablename__ = "copy_tables"
     __table_args__ = {
         "comment": "When the copy phase starts, it will look in this table to understand if its going to copy its data and to what DBImport instances."
@@ -100,10 +100,10 @@ class copyTables(Base):
         server_default=text("'Synchronous'"),
     )
 
-    dbimport_instances = relationship("dbimportInstances")
+    dbimport_instances = relationship("DBImportInstances")
 
 
-class copyASyncStatus(Base):
+class CopyAsyncStatus(Base):
     __tablename__ = "copy_async_status"
     __table_args__ = {
         "comment": "The status table for asynchronous copy between DBImport instances."
@@ -150,7 +150,7 @@ class copyASyncStatus(Base):
     )
 
 
-class airflowCustomDags(Base):
+class AirflowCustomDAGs(Base):
     __tablename__ = "airflow_custom_dags"
     __table_args__ = {
         "comment": 'Its possible to construct a DAG that have no import, export or ETL definitions in it, but instead just Tasks from the airflow_task table. That might nbe useful to for example run custom Hive Code after an import is completed as a separate DAG. Defining a DAG in here also requires you to have at least one task in airflow_tasks defined "in main"'
@@ -233,7 +233,7 @@ class airflowCustomDags(Base):
     )
 
 
-class airflowDagSensors(Base):
+class AirflowDAGSensors(Base):
     __tablename__ = "airflow_dag_sensors"
     __table_args__ = {"comment": "This table is used only in Legacy DBImport"}
 
@@ -262,7 +262,7 @@ class airflowDagSensors(Base):
     )
 
 
-class airflowEtlDags(Base):
+class AirflowETLDAGs(Base):
     __tablename__ = "airflow_etl_dags"
     __table_args__ = {
         "comment": "To create a DAG in Airflow for only ETL jobs, this is the table that holds all definitions of the DAG configuration, including the filter that defines what ETL jobs to run, schedules times, pool names and much more. "
@@ -354,7 +354,7 @@ class airflowEtlDags(Base):
     )
 
 
-class airflowExportDags(Base):
+class AirflowExportDAGs(Base):
     __tablename__ = "airflow_export_dags"
     __table_args__ = {
         "comment": "To create a DAG in Airflow for Exports, this is the table that holds all definitions of the DAG configuration, including the filter that defines what tables to export, schedules times, pool names and much more. "
@@ -456,7 +456,7 @@ class airflowExportDags(Base):
     )
 
 
-class airflowImportDags(Base):
+class AirflowImportDAGs(Base):
     __tablename__ = "airflow_import_dags"
     __table_args__ = {
         "comment": "To create a DAG in Airflow for Imports, this is the table that holds all definitions of the DAG configuration, including the filter that defines what tables to import, schedules times, pool names and much more."
@@ -583,7 +583,7 @@ class airflowImportDags(Base):
     )
 
 
-class autoDiscoveredTable(Base):
+class AutoDiscoveredTable(Base):
     __tablename__ = "auto_discovered_tables"
 
     hive_db = Column(String(256), primary_key=True, nullable=False)
@@ -598,7 +598,7 @@ class autoDiscoveredTable(Base):
     )
 
 
-class configuration(Base):
+class Configuration(Base):
     __tablename__ = "configuration"
     __table_args__ = {
         "comment": "This is the DBImport global configuration table. In here you can configure items such as the name of the staging database, disable global executions, max number of mappers and much more. "
@@ -615,7 +615,7 @@ class configuration(Base):
     description = Column(Text, comment="Description on the setting")
 
 
-class etlJobs(Base):
+class ETLJobs(Base):
     __tablename__ = "etl_jobs"
 
     job = Column(String(64), primary_key=True, nullable=False)
@@ -632,7 +632,7 @@ class etlJobs(Base):
     )
 
 
-class exportRetriesLog(Base):
+class ExportRetriesLog(Base):
     __tablename__ = "export_retries_log"
     __table_args__ = {"comment": "Log of all retries that have happened. "}
 
@@ -668,7 +668,7 @@ class exportRetriesLog(Base):
     stage_description = Column(Text, nullable=False, comment="Description of the stage")
 
 
-class exportStage(Base):
+class ExportStage(Base):
     __tablename__ = "export_stage"
     __table_args__ = {
         "comment": 'The export tool keeps track of how far in the export the tool have succeeded. So in case of an error, lets say that Hive is not responding, the next time an export is executed it will skip the first part and continue from where it ended in error on the previous run. If you want to rerun from the begining, the information in this table needs to be cleared. This is done with the "manage --clearExportStage" tool. Keep in mind that clearing the stage of an incremental export might result in the loss of the data.'
@@ -703,7 +703,7 @@ class exportStage(Base):
     )
 
 
-class exportStageStatistic(Base):
+class ExportStageStatistic(Base):
     __tablename__ = "export_stage_statistics"
     __table_args__ = {
         "comment": "As DBImport progress through the different stages of the export, it also keeps track of start and stop time for each stage together with the duration. That information is kept in this table"
@@ -738,7 +738,7 @@ class exportStageStatistic(Base):
     duration = Column(Integer, nullable=False, comment="Duration of stage")
 
 
-class exportStatistic(Base):
+class ExportStatistic(Base):
     __tablename__ = "export_statistics"
     __table_args__ = (
         Index(
@@ -819,7 +819,7 @@ class exportStatistic(Base):
     atlas_schema_stop = Column(DateTime)
 
 
-class exportStatisticsLast(Base):
+class ExportStatisticsLast(Base):
     __tablename__ = "export_statistics_last"
     __table_args__ = {
         "comment": "The last entry in table export_statistics is also stored in this table. This makes it easier to find the latest data without first grouping to find the latest entry. When export_statistics table grows to a high number of million rows, it saves alot of cpu power for the database server."
@@ -903,7 +903,7 @@ class exportStatisticsLast(Base):
     atlas_schema_stop = Column(DateTime)
 
 
-class exportTables(Base):
+class ExportTables(Base):
     __tablename__ = "export_tables"
     __table_args__ = {
         "comment": "Main table where all tables that we can export are stored. "
@@ -1076,7 +1076,7 @@ class exportTables(Base):
     )
 
 
-class importFailureLog(Base):
+class ImportFailureLog(Base):
     __tablename__ = "import_failure_log"
     __table_args__ = (
         Index("hive_db_hive_table", "hive_db", "hive_table"),
@@ -1115,7 +1115,7 @@ class importFailureLog(Base):
 # )
 
 
-class importRetriesLog(Base):
+class ImportRetriesLog(Base):
     __tablename__ = "import_retries_log"
     __table_args__ = {"comment": "Log of all retries that have happened. "}
 
@@ -1137,7 +1137,7 @@ class importRetriesLog(Base):
     stage_description = Column(Text, nullable=False, comment="Description of the stage")
 
 
-class importStage(Base):
+class ImportStage(Base):
     __tablename__ = "import_stage"
     __table_args__ = {
         "comment": 'The import tool keeps track of how far in the import the tool have succeeded. So in case of an error, lets say that Hive is not responding, the next time an import is executed it will skip the first part and continue from where it ended in error on the previous run. If you want to rerun from the begining, the information in this table needs to be cleared. This is done with the "manage --clearImportStage" tool. Keep in mind that clearing the stage of an incremental import might result in the loss of the data.'
@@ -1161,7 +1161,7 @@ class importStage(Base):
     )
 
 
-class importStageStatistic(Base):
+class ImportStageStatistic(Base):
     __tablename__ = "import_stage_statistics"
     __table_args__ = {
         "comment": "As DBImport progress through the different stages of the import, it also keeps track of start and stop time for each stage together with the duration. That information is kept in this table"
@@ -1184,7 +1184,7 @@ class importStageStatistic(Base):
     duration = Column(Integer, nullable=False, comment="Duration of stage")
 
 
-class importStatistic(Base):
+class ImportStatistic(Base):
     __tablename__ = "import_statistics"
     __table_args__ = (
         Index("hive_db_hive_table", "hive_db", "hive_table"),
@@ -1293,7 +1293,7 @@ class importStatistic(Base):
     atlas_schema_stop = Column(DateTime)
 
 
-class importStatisticsLast(Base):
+class ImportStatisticsLast(Base):
     __tablename__ = "import_statistics_last"
     __table_args__ = {
         "comment": "The last entry in table import_statistics is also stored in this table. This makes it easier to find the latest data without first grouping to find the latest entry. When import_statistics table grows to a high number of million rows, it saves alot of cpu power for the database server."
@@ -1393,7 +1393,7 @@ class importStatisticsLast(Base):
     atlas_schema_stop = Column(DateTime)
 
 
-class importTables(Base):
+class ImportTables(Base):
     __tablename__ = "import_tables"
     __table_args__ = (
         Index(
@@ -1708,7 +1708,7 @@ class importTables(Base):
     )
 
 
-class jdbcConnectionsEnvironments(Base):
+class JDBCConnectionsEnvironments(Base):
     __tablename__ = "jdbc_connections_environments"
     __table_args__ = {
         "comment": "Environments types. Used in jdbc_connections table to define what kind of connection type it is"
@@ -1722,7 +1722,7 @@ class jdbcConnectionsEnvironments(Base):
     )
 
 
-class jdbcConnections(Base):
+class JDBCConnections(Base):
     __tablename__ = "jdbc_connections"
     __table_args__ = {"comment": "Database connection definitions"}
 
@@ -1813,10 +1813,10 @@ class jdbcConnections(Base):
         comment="File that will be used to fetch the custom seed that will be used for anonymization functions on data from the connection",
     )
 
-    jdbc_connections_environments = relationship("jdbcConnectionsEnvironments")
+    jdbc_connections_environments = relationship("JDBCConnectionsEnvironments")
 
 
-class jdbcConnectionsDrivers(Base):
+class JDBCConnectionsDrivers(Base):
     __tablename__ = "jdbc_connections_drivers"
 
     database_type = Column(
@@ -1852,7 +1852,7 @@ class jdbcConnectionsDrivers(Base):
     )
 
 
-class jdbcTableChangeHistory(Base):
+class JDBCTableChangeHistory(Base):
     __tablename__ = "jdbc_table_change_history"
     __table_args__ = (
         Index(
@@ -1892,7 +1892,7 @@ class jdbcTableChangeHistory(Base):
     )
 
 
-class jsonToSend(Base):
+class JSONToSend(Base):
     __tablename__ = "json_to_send"
     __table_args__ = {
         "comment": "Temporary storage of JSON payloads that will be sent to a REST interface if the tool is configured to do so."
@@ -1923,7 +1923,7 @@ class jsonToSend(Base):
     jsondata = Column(Text, nullable=False, comment="The payload to send")
 
 
-class tableChangeHistory(Base):
+class TableChangeHistory(Base):
     __tablename__ = "table_change_history"
     __table_args__ = (
         Index("hive_db_hive_table", "hive_db", "hive_table"),
@@ -1950,7 +1950,7 @@ class tableChangeHistory(Base):
     )
 
 
-class airflowTasks(Base):
+class AirflowTasks(Base):
     __tablename__ = "airflow_tasks"
     __table_args__ = {
         "comment": "All DAGs can be customized by adding Tasks into the DAG. Depending on what placement and type of Tasks that is created, DBImport will add custom placeholders to keep the DAG separated in three different parts. Before, In and After Main. In main is where all regular Imports, export or ETL jobs are executed. If you want to execute something before these, you place it in Before Main. And if you want to execute something after, you place it in After main. Please check the Airflow Integration part of the documentation for more examples and better understanding of the data you can put into this table"
@@ -2036,10 +2036,10 @@ class airflowTasks(Base):
         String(64), comment="The task will use this user for sudo instead of default"
     )
 
-    jdbc_connection = relationship("jdbcConnections")
+    jdbc_connection = relationship("JDBCConnections")
 
 
-class exportColumns(Base):
+class ExportColumns(Base):
     __tablename__ = "export_columns"
     __table_args__ = {
         "comment": "This table contains all columns that exists on all tables that we are exporting. Unlike the export_tables table, this one gets created automatically by the export tool"
@@ -2108,10 +2108,10 @@ class exportColumns(Base):
         Text, comment="Free text field to write a note about the import. "
     )
 
-    table = relationship("exportTables")
+    table = relationship("ExportTables")
 
 
-class importColumns(Base):
+class ImportColumns(Base):
     __tablename__ = "import_columns"
     __table_args__ = (
         Index("table_id_source_column_name", "table_id", "source_column_name"),
@@ -2207,10 +2207,10 @@ class importColumns(Base):
         server_default=text("'None'"),
     )
 
-    table = relationship("importTables")
+    table = relationship("ImportTables")
 
 
-class importForeignKeys(Base):
+class ImportForeignKeys(Base):
     __tablename__ = "import_foreign_keys"
     __table_args__ = (
         ForeignKeyConstraint(
@@ -2257,16 +2257,16 @@ class importForeignKeys(Base):
     key_position = Column(Integer, nullable=False, comment="Position of the key")
 
     fk_column = relationship(
-        "importColumns",
-        primaryjoin="importForeignKeys.fk_column_id == importColumns.column_id",
+        "ImportColumns",
+        primaryjoin="ImportForeignKeys.fk_column_id == ImportColumns.column_id",
     )
     column = relationship(
-        "importColumns",
-        primaryjoin="importForeignKeys.column_id == importColumns.column_id",
+        "ImportColumns",
+        primaryjoin="ImportForeignKeys.column_id == ImportColumns.column_id",
     )
 
 
-class atlasColumnCache(Base):
+class AtlasColumnCache(Base):
     __tablename__ = "atlas_column_cache"
     __table_args__ = {
         "comment": "Atlas discovery uses this table to cache values in order to detect changes instead of putting a heavy load on the Atlas server."
@@ -2307,7 +2307,7 @@ class atlasColumnCache(Base):
     default_value = Column(Text, nullable=True, comment="Default value of the column")
 
 
-class atlasKeyCache(Base):
+class AtlasKeyCache(Base):
     __tablename__ = "atlas_key_cache"
     __table_args__ = {
         "comment": "Atlas discovery uses this table to cache values in order to detect changes instead of putting a heavy load on the Atlas server."
@@ -2350,7 +2350,7 @@ class atlasKeyCache(Base):
     col_key_position = Column(Integer, nullable=True, comment="Position of the key")
 
 
-class authUsers(Base):
+class AuthUsers(Base):
     __tablename__ = "auth_users"
     __table_args__ = {"comment": "User database for rest interface and ui"}
 
