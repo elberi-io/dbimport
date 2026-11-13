@@ -1593,10 +1593,10 @@ class Operation(metaclass=Singleton):
         self.spark_context.addPyFile(os.path.join(SPARK_UDF_DIR, "spark_udf2.py"))
         import spark_udf2
 
-        spark_udf = spark_udf2.SparkUDFClass()
+        anonymization_udfs = spark_udf2.SparkUDFClass()
 
         # Anonymization of data in columns
-        spark_udf.set_seed_string(
+        anonymization_udfs.set_seed_string(
             self.import_config.common_config.get_anonymization_seed()
         )
 
@@ -1604,23 +1604,27 @@ class Operation(metaclass=Singleton):
             from pyspark.sql.functions import udf
 
             self.udf_hash_column = udf(
-                spark_udf.hash_column, pyspark.sql.types.StringType()
+                anonymization_udfs.hash_column, pyspark.sql.types.StringType()
             )
             self.udf_replace_char_with_star = udf(
-                spark_udf.replace_char_with_star, pyspark.sql.types.StringType()
+                anonymization_udfs.replace_char_with_star,
+                pyspark.sql.types.StringType(),
             )
             self.udf_show_first_four_characters = udf(
-                spark_udf.show_first_four_characters, pyspark.sql.types.StringType()
+                anonymization_udfs.show_first_four_characters,
+                pyspark.sql.types.StringType(),
             )
         else:
             self.udf_hash_column = pyspark.sql.functions.udf(
-                spark_udf.hash_column, pyspark.sql.types.StringType()
+                anonymization_udfs.hash_column, pyspark.sql.types.StringType()
             )
             self.udf_replace_char_with_star = pyspark.sql.functions.udf(
-                spark_udf.replace_char_with_star, pyspark.sql.types.StringType()
+                anonymization_udfs.replace_char_with_star,
+                pyspark.sql.types.StringType(),
             )
             self.udf_show_first_four_characters = pyspark.sql.functions.udf(
-                spark_udf.show_first_four_characters, pyspark.sql.types.StringType()
+                anonymization_udfs.show_first_four_characters,
+                pyspark.sql.types.StringType(),
             )
 
         # get Yarn info

@@ -16,7 +16,6 @@
 # under the License.
 
 import logging
-import os
 import random
 import string
 import sys
@@ -30,7 +29,6 @@ from alembic.config import Config
 from mysql.connector import errorcode
 from sqlalchemy.orm import sessionmaker
 
-import dbimport
 from dbimport.config_db import common_config, config_schema
 
 
@@ -74,9 +72,7 @@ class Initialize:
             sys.exit(1)
 
         # Setup configuration for Alembic
-        self.alembic_schema_dir = os.path.join(
-            os.path.dirname(dbimport.__file__), "migrations"
-        )
+        self.alembic_schema_dir = "dbimport:migrations"
         self.alembic_config = Config()
         self.alembic_config.set_main_option("script_location", self.alembic_schema_dir)
         self.connect_str = self.connect_str.replace("%", "%%")
