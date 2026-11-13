@@ -34,8 +34,8 @@ from sqlalchemy.orm import Query, aliased, scoped_session, sessionmaker
 
 from dbimport.common.exceptions import InvalidConfigurationError, SQLError
 from dbimport.config_db import common_config, config_schema, send_statistics
-from dbimport.config_reader import configuration
 from dbimport.schedule import airflow_schema
+from dbimport.settings import get_settings
 
 
 class Initialize:
@@ -102,24 +102,13 @@ class Initialize:
         self.created_pools = []
         self.aws_instance_id_assigned_pools = {}
 
-        try:
-            self.airflow_mode = configuration.get(
-                "Airflow", "airflow_mode", exit_on_error=False
-            )
-            if self.airflow_mode != "default" and self.airflow_mode != "aws_mwaa":
-                raise InvalidConfigurationError(
-                    "Invalid option specified for [Airflow][airflow_mode] in the configuration file."
-                )
-        # 				log.error("Invalid option specified for [Airflow][airflow_mode] in the configuration file.")
-        # 				self.common_config.remove_temporary_files()
-        # 				sys.exit(1)
-
-        except InvalidConfigurationError:
-            pass
+        self.airflow_mode = get_settings().airflow.airflow_mode
 
         if self.airflow_mode == "default" and self.create_pools_with_tasks == False:
             # Establish a SQLAlchemy connection to the Airflow database
-            airflow_connect_str = configuration.get("Airflow", "airflow_alchemy_conn")
+            airflow_connect_str = (
+                get_settings().airflow.airflow_alchemy_conn.get_secret_value()
+            )
             try:
                 self.airflow_db = sa.create_engine(
                     airflow_connect_str, echo=self.debug_log_level

@@ -1,9 +1,9 @@
 """Test setup shared by all tests.
 
-DBImport reads its configuration file once, when dbimport.config_reader.configuration
-is first imported, and exits if DBIMPORT_HOME or the file is missing. The
-environment is therefore prepared in pytest_configure, before any test
-module imports DBImport code.
+DBImport reads its configuration file once, on the first call of
+dbimport.settings.get_settings(), and exits if DBIMPORT_HOME or the file
+is missing. The environment is therefore prepared in pytest_configure,
+before any test runs DBImport code.
 """
 
 import os

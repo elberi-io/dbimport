@@ -54,7 +54,7 @@
     "E722": 1
   },
   "src/dbimport/config_db/common_config.py": {
-    "B904": 4,
+    "B904": 3,
     "E711": 73,
     "E712": 14,
     "E722": 39,

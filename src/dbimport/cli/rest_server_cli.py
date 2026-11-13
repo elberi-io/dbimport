@@ -25,12 +25,12 @@ from gunicorn import glogging
 from gunicorn.app.wsgiapp import WSGIApplication
 
 from dbimport.common import constants as constant
-from dbimport.config_reader import configuration
 
 # Kept although unused: importing dbimport.server.rest_server connects to the
 # configuration database. Without it, the gunicorn workers would make
 # that connection after they fork.
 from dbimport.server import rest_server  # noqa: F401
+from dbimport.settings import get_settings
 
 
 class StandaloneApplication(WSGIApplication):
@@ -106,13 +106,13 @@ def main(argv):
         print(f"DBImport version: {constant.VERSION}")
         sys.exit(0)
 
-    logdir = configuration.get("Server", "logdir")
-    pidfile = configuration.get("Server", "pidfile")
-    rest_server_address = configuration.get("Server", "restServer_address")
-    rest_server_port = configuration.get("Server", "restServer_port")
-    rest_server_workers = configuration.get("Server", "restServer_workers")
-    rest_server_keyfile = configuration.get("Server", "restServer_keyfile")
-    rest_server_certfile = configuration.get("Server", "restServer_certfile")
+    logdir = get_settings().server.logdir
+    pidfile = get_settings().server.pidfile
+    rest_server_address = get_settings().server.restserver_address
+    rest_server_port = get_settings().server.restserver_port
+    rest_server_workers = get_settings().server.restserver_workers
+    rest_server_keyfile = get_settings().server.restserver_keyfile
+    rest_server_certfile = get_settings().server.restserver_certfile
 
     if not os.path.isfile(rest_server_keyfile):
         print(

@@ -34,7 +34,7 @@ from dbimport.common import constants as constant
 from dbimport.common.exceptions import InvalidConfigurationError, SQLError
 from dbimport.common.singleton import Singleton
 from dbimport.config_db import common_config
-from dbimport.config_reader import configuration
+from dbimport.settings import get_settings
 
 
 class Operation(metaclass=Singleton):
@@ -52,7 +52,7 @@ class Operation(metaclass=Singleton):
             self.debug_log_level = True
 
         # Fetch and initialize the Kerberos configuration
-        self.kerberos_principal = configuration.get("Kerberos", "principal")
+        self.kerberos_principal = get_settings().kerberos.principal
         self.web_hcat_auth = HTTPKerberosAuth(
             force_preemptive=True, principal=self.kerberos_principal
         )
@@ -60,15 +60,13 @@ class Operation(metaclass=Singleton):
         self.common_config = common_config.Config()
 
         # Fetch configuration details about Hive
-        self.hive_servers = configuration.get("Hive", "servers")
-        self.hive_kerberos_service_name = configuration.get(
-            "Hive", "kerberos_service_name"
-        )
-        self.hive_kerberos_realm = configuration.get("Hive", "kerberos_realm")
+        self.hive_servers = get_settings().hive.servers
+        self.hive_kerberos_service_name = get_settings().hive.kerberos_service_name
+        self.hive_kerberos_realm = get_settings().hive.kerberos_realm
         self.hive_print_messages = self.common_config.get_config_value(
             key="hive_print_messages"
         )
-        if configuration.get("Hive", "use_ssl").lower() == "true":
+        if get_settings().hive.use_ssl:
             self.hive_use_ssl = True
         else:
             self.hive_use_ssl = False
@@ -79,7 +77,7 @@ class Operation(metaclass=Singleton):
         self.hdfs_blocksize = self.common_config.get_config_value(key="hdfs_blocksize")
 
         # Metastore connections
-        self.metastore_type = configuration.get("Metastore", "metastore_type")
+        self.metastore_type = get_settings().metastore.metastore_type
         if self.metastore_type == constant.CATALOG_HIVE_DIRECT:
             self.metastore = hive_direct.HiveMetastoreDirect()
             self.spark_catalog_name = "hive"

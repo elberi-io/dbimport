@@ -35,8 +35,8 @@ from dbimport.common.exceptions import (
     JDBCConnectionError,
 )
 from dbimport.config_db import common_config, config_schema
-from dbimport.config_reader import configuration
 from dbimport.operations import atlas_operations
+from dbimport.settings import get_settings
 
 
 class AtlasCrawler(threading.Thread):
@@ -139,14 +139,14 @@ class AtlasDiscovery(threading.Thread):
         self.jdbc_connection_mutex = threading.Lock()
 
         # Fetch configuration about MySQL database and how to connect to it
-        self.config_hostname = configuration.get("Database", "mysql_hostname")
-        self.config_port = configuration.get("Database", "mysql_port")
-        self.config_database = configuration.get("Database", "mysql_database")
-        self.config_username = configuration.get("Database", "mysql_username")
-        self.config_password = configuration.get("Database", "mysql_password")
+        self.config_hostname = get_settings().database.mysql_hostname
+        self.config_port = get_settings().database.mysql_port
+        self.config_database = get_settings().database.mysql_database
+        self.config_username = get_settings().database.mysql_username
+        self.config_password = get_settings().database.mysql_password.get_secret_value()
 
         atlas_crawler_objects = []
-        atlas_crawler_threads = int(configuration.get("Server", "atlas_threads"))
+        atlas_crawler_threads = get_settings().server.atlas_threads
         if atlas_crawler_threads == 0:
             log.info("Atlas discovery disabled as the number of threads is set to 0")
             atlas_enabled = False

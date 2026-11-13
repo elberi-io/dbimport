@@ -30,8 +30,8 @@ from sqlalchemy.orm import aliased, sessionmaker
 from dbimport.common.exceptions import InvalidConfigurationError
 from dbimport.common.singleton import Singleton
 from dbimport.config_db import config_schema, import_config
-from dbimport.config_reader import configuration
 from dbimport.operations import common_operations
+from dbimport.settings import get_settings
 
 
 class Operation(metaclass=Singleton):
@@ -85,10 +85,8 @@ class Operation(metaclass=Singleton):
     def encrypt_user_password(self, instance, username, password):
         """Encrypts the username and password and store them in the 'credentials column' of 'dbimport_instances' table"""
 
-        self.crypto.set_private_key_file(
-            configuration.get("Credentials", "private_key")
-        )
-        self.crypto.set_public_key_file(configuration.get("Credentials", "public_key"))
+        self.crypto.set_private_key_file(get_settings().credentials.private_key)
+        self.crypto.set_public_key_file(get_settings().credentials.public_key)
 
         str_to_encrypt = "%s %s\n" % (username, password)
         encrypted_str = self.crypto.encrypt(str_to_encrypt)
@@ -193,10 +191,8 @@ class Operation(metaclass=Singleton):
             return False
 
         # Set the keys to the value in the configuration file. This is needed if the key was overridden in jdbc_connections
-        self.crypto.set_private_key_file(
-            configuration.get("Credentials", "private_key")
-        )
-        self.crypto.set_public_key_file(configuration.get("Credentials", "public_key"))
+        self.crypto.set_private_key_file(get_settings().credentials.private_key)
+        self.crypto.set_public_key_file(get_settings().credentials.public_key)
 
         try:
             db_credentials = self.crypto.decrypt(row[3])
@@ -458,7 +454,7 @@ class Operation(metaclass=Singleton):
                         "-D",
                         "yarn.timeline-service.enabled=false",
                         "-D",
-                        f"mapreduce.job.queuename={configuration.get('Sqoop', 'yarnqueue')}",
+                        f"mapreduce.job.queuename={get_settings().sqoop.yarnqueue}",
                         "-overwrite",
                         "-delete",
                         "%s%s" % (source_hdfs_address, source_hdfs_dir),
@@ -2149,7 +2145,7 @@ class Operation(metaclass=Singleton):
             "hadoop",
             "distcp",
             "-D",
-            f"mapreduce.job.queuename={configuration.get('Sqoop', 'yarnqueue')}",
+            f"mapreduce.job.queuename={get_settings().sqoop.yarnqueue}",
             "-overwrite",
             "-delete",
             hdfs_source_path,
