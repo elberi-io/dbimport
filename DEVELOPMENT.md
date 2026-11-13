@@ -24,8 +24,11 @@ under `~/work`), not under `/mnt/c`.
 
 ## Python environment
 
-uv installs Python 3.11 if it is not already available and creates the
-environment from `uv.lock`:
+uv installs Python 3.11 if it is not already available, creates the
+environment from `uv.lock` and installs DBImport itself (the package
+`dbimport` in `src/dbimport`, ADR-0001) in editable mode, with its
+console scripts (`dbimport-import`, `dbimport-manage`, ...). The files in
+`bin/` are wrappers around the same commands:
 
 ```bash
 uv sync --locked
@@ -108,11 +111,11 @@ before you open one:
 uv run ruff format --check
 uv run ruff check
 uv run mypy
-PYTHONPATH=bin uv run lint-imports
+uv run lint-imports
 uv run pytest
 ```
 
-For the web UI, in `bin/Server/html`:
+For the web UI, in `ui/`:
 
 ```bash
 npm ci
@@ -123,11 +126,10 @@ npm run build
 All Python code is formatted with `ruff format` and checked with one
 rule set, `select` in `pyproject.toml` (pycodestyle E4, E7 and E9,
 pyflakes, bugbear, logging format, pyupgrade, import sorting with the
-packages in `bin/` as first party, PEP 8 naming, invalid escape
-sequences, explicit conversions in f-strings, unused `noqa`).
-Names that are contracts are not checked yet: class names, class-level
-fields (they include the JSON field names of the REST API) and module
-names. Existing modules that still break some of these rules are listed under
+`dbimport` package and the tests as first party, PEP 8 naming, invalid
+escape sequences, explicit conversions in f-strings, unused `noqa`).
+Class-level fields are not checked for names yet (N815): they include
+the ORM attributes and the JSON field names of the REST API. Existing modules that still break some of these rules are listed under
 `per-file-ignores`, each with exactly the rule codes it breaks.
 `tests/unit/test_ruff_ratchet.py` checks these modules without the
 ignores: it fails when a listed code no longer occurs in its module, and
@@ -141,9 +143,10 @@ that a rule reports is marked on its line with `noqa` and a `TODO` that
 names the issue. import-linter checks the package layering defined in
 `pyproject.toml`.
 
-`uv run mypy` checks `tests/` and the typed packages `bin/common` and
-`bin/ConfigReader` in strict mode (`files` in `pyproject.toml`). The
-other code in `bin/` has almost no type annotations;
+`uv run mypy` checks `tests/` and the typed packages `dbimport.common`
+and `dbimport.config_reader` in strict mode (`files` in
+`pyproject.toml`). The other code in `src/dbimport` and the launchers
+has almost no type annotations;
 `tests/unit/test_mypy_ratchet.py` checks it
 (packages and launchers, all function bodies, with the settings of its
 override in `pyproject.toml`) and fails when the number of errors per
@@ -157,7 +160,7 @@ its commit message lists each one. A `# type: ignore` must
 name the error code. Libraries without type information are listed
 under `ignore_missing_imports`.
 
-The commits that reformatted `bin/` are listed in `.git-blame-ignore-revs`.
+The commits that only reformatted or renamed code are listed in `.git-blame-ignore-revs`.
 GitHub skips them in the blame view; to skip them in `git blame` locally,
 run once:
 
@@ -172,7 +175,7 @@ Do not edit these by hand; regenerate them and review the diff:
 | File | Command |
 |---|---|
 | `uv.lock` | `uv lock` (after changing dependencies in `pyproject.toml`) |
-| `bin/requirements.txt` | `uv export --locked --no-dev --format requirements-txt -o bin/requirements.txt` |
+| `bin/requirements.txt` | `uv export --locked --no-dev --no-emit-project --format requirements-txt -o bin/requirements.txt` |
 | `tests/fixtures/dags/*.py.txt` | `DBIMPORT_UPDATE_EXPECTED_DAGS=1 uv run pytest tests/integration/test_airflow_dag_generation.py` |
 | `tests/fixtures/ruff_baseline.json` | `DBIMPORT_UPDATE_RUFF_BASELINE=1 uv run pytest tests/unit/test_ruff_ratchet.py` |
 | `tests/fixtures/mypy_baseline.json` | `DBIMPORT_UPDATE_MYPY_BASELINE=1 uv run pytest tests/unit/test_mypy_ratchet.py` |

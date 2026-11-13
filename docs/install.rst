@@ -20,13 +20,18 @@ Some of the packages are built from source during installation. This requires a 
 
 **Python 3.11**
 
-Install the Python packages with::
+Install the Python packages and then DBImport itself with::
 
         python3.11 -m pip install -r bin/requirements.txt
+        python3.11 -m pip install --no-deps .
 
-If you use `uv <https://docs.astral.sh/uv/>`_, you can create the environment from the lock file instead::
+The second command builds DBImport with its build backend *uv_build*, which pip downloads from PyPI. On a host without internet access, provide the *uv_build* wheel, or install a DBImport wheel built elsewhere (``uv build --wheel``) instead of the source directory.
+
+If you use `uv <https://docs.astral.sh/uv/>`_, you can create the environment from the lock file instead. This also installs DBImport::
 
         uv sync --locked
+
+The commands in *bin* (*import*, *export*, *manage*, ...) work as before. The same commands are also installed into the environment as *dbimport-import*, *dbimport-export*, *dbimport-manage* and so on.
 
 
 
