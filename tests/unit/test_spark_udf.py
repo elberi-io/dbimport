@@ -1,8 +1,8 @@
-"""SparkUDFClass in common.sparkUDF2 behaves like the functions in common.sparkUDF."""
+"""SparkUDFClass in dbimport.common.spark_udf2 behaves like the functions in spark_udf."""
 
 import pytest
 
-from common import sparkUDF, sparkUDF2
+from dbimport.common import spark_udf, spark_udf2
 
 
 @pytest.mark.parametrize(
@@ -17,14 +17,14 @@ from common import sparkUDF, sparkUDF2
 def test_spark_udf_class_base64_encode_array_matches_module_function(
     value: object,
 ) -> None:
-    expected = sparkUDF.base64_encode_array(value)
+    expected = spark_udf.base64_encode_array(value)
 
-    result = sparkUDF2.SparkUDFClass().base64_encode_array(value)
+    result = spark_udf2.SparkUDFClass().base64_encode_array(value)
 
     assert result == expected
 
 
 def test_spark_udf_class_base64_encode_array_binary_pair_is_encoded() -> None:
-    result = sparkUDF2.SparkUDFClass().base64_encode_array([[[1, b"hi"]]])
+    result = spark_udf2.SparkUDFClass().base64_encode_array([[[1, b"hi"]]])
 
     assert result == [[[1, "aGk="]]]

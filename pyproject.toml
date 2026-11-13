@@ -1,6 +1,6 @@
 [project]
 name = "dbimport"
-# Must match VERSION in bin/common/constants.py.
+# Must match VERSION in src/dbimport/common/constants.py.
 version = "1.00.006"
 description = "Ingest relational and NoSQL sources into Hive or Iceberg, export back, and generate Airflow DAGs"
 readme = "README.rst"
@@ -85,9 +85,22 @@ dependencies = [
     "websockets==12.0",
 ]
 
+[project.scripts]
+dbimport-copy = "dbimport.cli.copy_cli:run"
+dbimport-deploy = "dbimport.cli.deploy_cli:run"
+dbimport-export = "dbimport.cli.export_cli:run"
+dbimport-import = "dbimport.cli.import_cli:run"
+dbimport-main-server = "dbimport.cli.main_server_cli:run"
+dbimport-manage = "dbimport.cli.manage_cli:run"
+dbimport-rest-server = "dbimport.cli.rest_server_cli:run"
+dbimport-setup = "dbimport.cli.setup_cli:run"
+
+[build-system]
+# The package lives in src/dbimport; the launchers in bin/ import it.
+requires = ["uv_build>=0.13.7,<0.14"]
+build-backend = "uv_build"
+
 [tool.uv]
-# DBImport is not installed as a package; bin/ is run in place.
-package = false
 # DBImport only runs on Linux (Kerberos, /tmp paths, Hadoop tooling).
 environments = ["sys_platform == 'linux'"]
 
@@ -114,19 +127,18 @@ extend-include = [
     "bin/restServer",
     "bin/setup",
 ]
-# Import sorting treats the packages in bin/ and the tests as first party.
-src = ["bin", "."]
+# Import sorting treats the dbimport package and the tests as first party.
+src = ["src", "."]
 
 [tool.ruff.lint]
 # One rule set for all Python code (#159). RUF100 reports noqa comments
 # that are no longer needed, so a suppression is removed together with
 # the bug it hides.
 select = ["B", "E4", "E7", "E9", "F", "G", "I", "N", "UP", "W605", "RUF010", "RUF100"]
-# Names that are contracts wait for the refactoring (#202): class-level
-# fields, which include the REST model fields and so the JSON field
-# names of the API (N815), and module and package names, which are
-# import paths (N999).
-ignore = ["N815", "N999"]
+# Class-level fields wait for the refactoring (#238): they include the ORM
+# attributes and the REST model fields, which are the JSON field names of
+# the API (N815).
+ignore = ["N815"]
 
 [tool.ruff.lint.per-file-ignores]
 # The Sphinx configuration is outside #159: it sets sys.path before its
@@ -139,38 +151,38 @@ ignore = ["N815", "N999"]
 # the module is refactored, and the module's line goes. A
 # module not listed here must pass the full set. Known bugs are marked
 # on their line with noqa and TODO(#issue) instead.
-"bin/ConfigReader/configuration.py" = ["B904", "E712"]
-"bin/DBImportConfig/common_config.py" = ["B904", "E711", "E712", "E722", "F841", "G002", "UP031"]
-"bin/DBImportConfig/decryption.py" = ["B904", "E711"]
-"bin/DBImportConfig/export_config.py" = ["E711", "E712", "F841", "G002", "UP031"]
-"bin/DBImportConfig/export_stage.py" = ["E711", "E712", "F841", "G002", "UP031"]
-"bin/DBImportConfig/import_config.py" = ["B904", "E711", "E712", "F841", "G002", "UP031"]
-"bin/DBImportConfig/import_stage.py" = ["E711", "E712", "F841", "G002", "UP031"]
-"bin/DBImportConfig/sendStatistics.py" = ["E711", "E712", "F841"]
-"bin/DBImportOperation/atlas_operations.py" = ["B904", "E711", "E712", "E722", "F841", "G002", "UP031"]
-"bin/DBImportOperation/common_operations.py" = ["B904", "E711", "E712", "E722", "G002", "UP031"]
-"bin/DBImportOperation/copy_operations.py" = ["E711", "E712", "E722", "F841", "G002", "UP031"]
-"bin/DBImportOperation/etl_operations.py" = ["E711", "E712", "E722", "F841", "G002", "UP031"]
-"bin/DBImportOperation/export_operations.py" = ["E711", "E712", "E722", "F841", "G002", "UP031"]
-"bin/DBImportOperation/import_operations.py" = ["B904", "B905", "E711", "E712", "E722", "F841", "G002", "UP031"]
-"bin/Schedule/Airflow.py" = ["B904", "E711", "E712", "E722", "F841", "G002", "UP031"]
-"bin/Server/atlasDiscovery.py" = ["E711", "E712", "E722", "F841", "G002", "UP031"]
-"bin/Server/daemon.py" = ["E711", "E712", "E722", "F841", "G002", "UP031"]
-"bin/Server/restServer.py" = ["B904", "E711", "E712", "N803"]
-"bin/Server/restServerCalls.py" = ["B904", "E711", "E712", "E722", "F841", "G002", "UP031"]
-"bin/catalogService/glue.py" = ["B904", "E712", "F841", "UP031"]
-"bin/catalogService/hiveDirect.py" = ["B904", "E711", "E712", "E722", "F841", "G002", "UP031"]
-"bin/common/sparkUDF.py" = ["E722"]
-"bin/common/sparkUDF2.py" = ["E711", "E722"]
-"bin/copy" = ["F841", "UP031"]
-"bin/deploy" = ["F841"]
-"bin/export" = ["E712", "UP031"]
-"bin/import" = ["E711", "E712", "F841", "UP031"]
-"bin/manage" = ["E711", "E712", "F841"]
-"bin/restServer" = ["F841"]
-"bin/setup" = ["F841"]
-"bin/setupOperation/database.py" = ["E711", "E722", "UP031"]
-"bin/sourceSchemaReader/schemaReader.py" = ["E711", "E722", "G002", "UP031"]
+"src/dbimport/config_reader/configuration.py" = ["B904", "E712"]
+"src/dbimport/config_db/common_config.py" = ["B904", "E711", "E712", "E722", "F841", "G002", "UP031"]
+"src/dbimport/config_db/decryption.py" = ["B904", "E711"]
+"src/dbimport/config_db/export_config.py" = ["E711", "E712", "F841", "G002", "UP031"]
+"src/dbimport/config_db/export_stage.py" = ["E711", "E712", "F841", "G002", "UP031"]
+"src/dbimport/config_db/import_config.py" = ["B904", "E711", "E712", "F841", "G002", "UP031"]
+"src/dbimport/config_db/import_stage.py" = ["E711", "E712", "F841", "G002", "UP031"]
+"src/dbimport/config_db/send_statistics.py" = ["E711", "E712", "F841"]
+"src/dbimport/operations/atlas_operations.py" = ["B904", "E711", "E712", "E722", "F841", "G002", "UP031"]
+"src/dbimport/operations/common_operations.py" = ["B904", "E711", "E712", "E722", "G002", "UP031"]
+"src/dbimport/operations/copy_operations.py" = ["E711", "E712", "E722", "F841", "G002", "UP031"]
+"src/dbimport/operations/etl_operations.py" = ["E711", "E712", "E722", "F841", "G002", "UP031"]
+"src/dbimport/operations/export_operations.py" = ["E711", "E712", "E722", "F841", "G002", "UP031"]
+"src/dbimport/operations/import_operations.py" = ["B904", "B905", "E711", "E712", "E722", "F841", "G002", "UP031"]
+"src/dbimport/schedule/airflow_dags.py" = ["B904", "E711", "E712", "E722", "F841", "G002", "UP031"]
+"src/dbimport/server/atlas_discovery.py" = ["E711", "E712", "E722", "F841", "G002", "UP031"]
+"src/dbimport/server/daemon.py" = ["E711", "E712", "E722", "F841", "G002", "UP031"]
+"src/dbimport/server/rest_server.py" = ["B904", "E711", "E712", "N803"]
+"src/dbimport/server/rest_server_calls.py" = ["B904", "E711", "E712", "E722", "F841", "G002", "UP031"]
+"src/dbimport/catalog/glue.py" = ["B904", "E712", "F841", "UP031"]
+"src/dbimport/catalog/hive_direct.py" = ["B904", "E711", "E712", "E722", "F841", "G002", "UP031"]
+"src/dbimport/common/spark_udf.py" = ["E722"]
+"src/dbimport/common/spark_udf2.py" = ["E711", "E722"]
+"src/dbimport/cli/copy_cli.py" = ["F841", "UP031"]
+"src/dbimport/cli/deploy_cli.py" = ["F841"]
+"src/dbimport/cli/export_cli.py" = ["E712", "UP031"]
+"src/dbimport/cli/import_cli.py" = ["E711", "E712", "F841", "UP031"]
+"src/dbimport/cli/manage_cli.py" = ["E711", "E712", "F841"]
+"src/dbimport/cli/rest_server_cli.py" = ["F841"]
+"src/dbimport/cli/setup_cli.py" = ["F841"]
+"src/dbimport/setup/database.py" = ["E711", "E722", "UP031"]
+"src/dbimport/source_schema/schema_reader.py" = ["E711", "E722", "G002", "UP031"]
 
 [tool.ruff.format]
 # bin/ was formatted in one commit per package, listed in
@@ -179,24 +191,25 @@ exclude = ["docs/**"]
 
 [tool.mypy]
 python_version = "3.11"
-files = ["tests", "bin/common", "bin/ConfigReader"]
-mypy_path = ["bin", "."]
+files = ["tests", "src/dbimport/common", "src/dbimport/config_reader"]
+mypy_path = ["src", "."]
 explicit_package_bases = true
 strict = true
 enable_error_code = ["ignore-without-code"]
 # Calls from typed tests into the existing, untyped code are allowed.
 untyped_calls_exclude = [
-    "DBImportConfig",
-    "DBImportOperation",
-    "Schedule",
-    "Server",
-    "catalogService",
-    "setupOperation",
-    "sourceSchemaReader",
+    "dbimport.cli",
+    "dbimport.config_db",
+    "dbimport.operations",
+    "dbimport.schedule",
+    "dbimport.server",
+    "dbimport.catalog",
+    "dbimport.setup",
+    "dbimport.source_schema",
 ]
 
 [[tool.mypy.overrides]]
-# Existing code in bin/ (packages and launchers) that has no type
+# Existing code (dbimport packages and bin/ launchers) that has no type
 # annotations yet. tests/unit/test_mypy_ratchet.py checks it with these
 # settings and counts its errors against tests/fixtures/mypy_baseline.json
 # (#202); when tests/ are checked, errors in these modules are not shown.
@@ -204,14 +217,15 @@ untyped_calls_exclude = [
 # on its own as __main__, because a module named copy would shadow the
 # standard library.
 module = [
-    "DBImportConfig.*",
-    "DBImportOperation.*",
-    "Schedule.*",
-    "SchemaUpgrade.*",
-    "Server.*",
-    "catalogService.*",
-    "setupOperation.*",
-    "sourceSchemaReader.*",
+    "dbimport.cli.*",
+    "dbimport.config_db.*",
+    "dbimport.operations.*",
+    "dbimport.schedule.*",
+    "dbimport.migrations.*",
+    "dbimport.server.*",
+    "dbimport.catalog.*",
+    "dbimport.setup.*",
+    "dbimport.source_schema.*",
     "__main__",
     "deploy",
     "export",
@@ -234,17 +248,17 @@ strict_equality = false
 extra_checks = false
 
 [[tool.mypy.overrides]]
-# Modules in bin/ whose functions all have type hints (#202): a function
+# Modules whose functions all have type hints (#202): a function
 # without them fails. The other relaxed settings above still apply, and
 # query results stay untyped (Any) until the data layer is rebuilt.
 module = [
-    "DBImportConfig.common_config",
-    "DBImportConfig.decryption",
-    "DBImportConfig.export_config",
-    "DBImportConfig.export_stage",
-    "DBImportConfig.import_config",
-    "DBImportConfig.import_stage",
-    "DBImportConfig.sendStatistics",
+    "dbimport.config_db.common_config",
+    "dbimport.config_db.decryption",
+    "dbimport.config_db.export_config",
+    "dbimport.config_db.export_stage",
+    "dbimport.config_db.import_config",
+    "dbimport.config_db.import_stage",
+    "dbimport.config_db.send_statistics",
 ]
 disallow_untyped_defs = true
 disallow_incomplete_defs = true
@@ -252,8 +266,8 @@ warn_unreachable = true
 
 [[tool.mypy.overrides]]
 # Libraries without type information. pyspark and pyspark_llap are not
-# installed (they come with the cluster); sparkUDF and sparkUDF2 are
-# bin/common modules that Spark imports by file name.
+# installed (they come with the cluster); spark_udf and spark_udf2 are
+# dbimport.common modules that Spark imports by file name.
 module = [
     "TCLIService.*",
     "boto3.*",
@@ -272,52 +286,43 @@ module = [
     "pyspark.*",
     "pyspark_llap.*",
     "requests_kerberos",
-    "sparkUDF",
-    "sparkUDF2",
+    "spark_udf",
+    "spark_udf2",
 ]
 ignore_missing_imports = true
 
 [tool.importlinter]
-# The packages live in bin/, so run with bin/ on the path:
-#   PYTHONPATH=bin uv run lint-imports
-root_packages = [
-    "ConfigReader",
-    "DBImportConfig",
-    "DBImportOperation",
-    "Schedule",
-    "Server",
-    "catalogService",
-    "common",
-    "setupOperation",
-    "sourceSchemaReader",
-]
+root_package = "dbimport"
 
 [[tool.importlinter.contracts]]
 # Current layering of the existing code, highest layer first. A package
-# may only import packages in the layers below it. Server and
-# setupOperation do not import each other.
+# may only import packages in the layers below it. cli holds the command
+# line programs; server and setup do not import each other.
 name = "Package layers"
 type = "layers"
+containers = ["dbimport"]
 layers = [
-    "Server | setupOperation",
-    "Schedule",
-    "DBImportOperation",
-    "catalogService",
-    "DBImportConfig",
-    "sourceSchemaReader",
-    "ConfigReader",
+    "cli",
+    "server | setup",
+    "schedule",
+    "operations",
+    "catalog",
+    "config_db",
+    "source_schema",
+    "config_reader",
     "common",
 ]
 ignore_imports = [
     # Existing exception: the Hive catalog service uses the Hive metastore
-    # table definitions in DBImportOperation.hiveSchema.
-    "catalogService.hiveDirect -> DBImportOperation.hiveSchema",
+    # table definitions in operations.hive_schema.
+    "dbimport.catalog.hive_direct -> dbimport.operations.hive_schema",
 ]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-# "." makes the shared test helpers importable as tests.configdb.
-pythonpath = ["bin", "."]
+# "." makes the shared test helpers importable as tests.configdb; the
+# dbimport package itself is installed into the environment by uv sync.
+pythonpath = ["."]
 addopts = ["--strict-markers"]
 xfail_strict = true
 markers = [

@@ -31,7 +31,7 @@ conf
 # Directories
 run/
 /html/
-bin/Server/html/dist/
+ui/dist/
 
 # Local working notes and local AI assistant instructions
 /tmp/

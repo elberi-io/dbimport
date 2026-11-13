@@ -6,10 +6,10 @@ from alembic.autogenerate import compare_metadata
 from alembic.migration import MigrationContext
 from alembic.script import ScriptDirectory
 
-from DBImportConfig import configSchema
+from dbimport.config_db import config_schema
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-SCHEMA_UPGRADE_DIR = REPO_ROOT / "bin" / "SchemaUpgrade"
+SCHEMA_UPGRADE_DIR = REPO_ROOT / "src" / "dbimport" / "migrations"
 KNOWN_DRIFT_FILE = REPO_ROOT / "tests" / "fixtures" / "orm_schema_drift.txt"
 
 
@@ -76,7 +76,7 @@ def test_orm_differs_from_migrated_schema_only_by_known_drift(
     clean_config_db: None, db_connection: sa.Connection
 ) -> None:
     context = MigrationContext.configure(db_connection)
-    diffs = compare_metadata(context, configSchema.Base.metadata)
+    diffs = compare_metadata(context, config_schema.Base.metadata)
 
     actual = sorted(line for diff in diffs for line in _describe(diff))
 

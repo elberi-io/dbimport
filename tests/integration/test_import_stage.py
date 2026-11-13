@@ -1,7 +1,7 @@
 import pytest
 import sqlalchemy as sa
 
-from DBImportConfig import common_config, import_stage
+from dbimport.config_db import common_config, import_stage
 
 HIVE_DB = "testdb"
 HIVE_TABLE = "testtable"

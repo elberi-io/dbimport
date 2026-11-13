@@ -1,0 +1,1347 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+
+import getopt
+import json
+import logging
+import sys
+
+from dbimport.common import constants as constant
+from dbimport.common.exceptions import (
+    DaemonExitError,
+    InvalidConfigurationError,
+    SQLError,
+)
+from dbimport.config_db import common_config, import_config
+from dbimport.operations import (
+    atlas_operations,
+    common_operations,
+    copy_operations,
+    export_operations,
+    import_operations,
+)
+from dbimport.schedule import airflow_dags
+
+
+def print_header():
+    # Font created at http://patorjk.com/software/taag/#p=display&f=Big&t=DBImport%20-%20setup
+    sys.stdout.write("\u001b[35m")  # Magenta
+    sys.stdout.flush()
+    print("")
+    print(
+        " _____  ____ _____                            _              __  __                               "
+    )
+    print(
+        r"|  __ \|  _ \_   _|                          | |            |  \/  |                              "
+    )
+    print(
+        r"| |  | | |_) || |  _ __ ___  _ __   ___  _ __| |_   ______  | \  / | __ _ _ __   __ _  __ _  ___  "
+    )
+    print(
+        r"| |  | |  _ < | | | '_ ` _ \| '_ \ / _ \| '__| __| |______| | |\/| |/ _` | '_ \ / _` |/ _` |/ _ \ "
+    )
+    print(
+        "| |__| | |_) || |_| | | | | | |_) | (_) | |  | |_           | |  | | (_| | | | | (_| | (_| |  __/ "
+    )
+    print(
+        r"|_____/|____/_____|_| |_| |_| .__/ \___/|_|   \__|          |_|  |_|\__,_|_| |_|\__,_|\__, |\___| "
+    )
+    print(
+        "                            | |                                                        __/ |      "
+    )
+    print(
+        "                            |_|                                                       |___/       "
+    )
+    sys.stdout.write("\u001b[0m")  # Reset
+    sys.stdout.flush()
+    print("")
+    print(f"Version: {constant.VERSION}")
+    print("")
+
+
+def print_main_help():
+    print_header()
+    print("Options:")
+    print("  --clearImportStage                Clear an Import stage.")
+    print("  --clearExportStage                Clear an Export stage.")
+    print(
+        "  --testConnection                  Connect to the [Connection] and verifies if we can connect successfully"
+    )
+    print(
+        "  --encryptCredentials              Encrypt username and password for a Database Connection"
+    )
+    print(
+        "  --encryptInstance                 Encrypt username and password for a DBImport Instance"
+    )
+    print(
+        "  --encryptString                   Encrypt a string. Used for encryption of configuration in config file"
+    )
+    # 	print ("  --sendJSONdata                    Posts the JSON data in the 'json_to_send' table to the configured destinations")
+    print(
+        "  --repairIncrementalImport         Repairs an incremental import that is out-of-sync with source system"
+    )
+    print(
+        "  --repairAllIncrementalImports     Repairs all incremental import that have an active stage."
+    )
+    print(
+        "  --resetIncrementalImport          Resets an incremental import. This will truncate the Hive table"
+    )
+    print(
+        "  --resetCDCImport                  Resets an CDC import that is out-of-sync with source system. This will truncate the Hive table"
+    )
+    print(
+        "  --repairIncrementalExport         Repairs an incremental export that is out-of-sync with target system"
+    )
+    print(
+        "  --resetIncrementalExport          Resets an incremental export. Will truncate the target table"
+    )
+    print("  --dropExportTable                 Drops an Export table on target system")
+    print(
+        "  --addImportTable                  Connects to the source database and reads tables and view"
+    )
+    print(
+        "  --addExportTable                  Add export definitions for tables in Hive"
+    )
+    print(
+        "  --checkAirflowExecution           Checks if it's allowed to start Airflow DAG's or not"
+    )
+    print(
+        "  --sendAirflowStopMessage          Sends a message to Kafka and/or Rest saying that the specified Airflow DAG have finished"
+    )
+    print("  --airflowGenerate                 Generate Airflow DAG")
+    print(
+        "  --discoverAtlasRdbms              Discover all object on a Database Connection and update Atlas with the information"
+    )
+    print(
+        "  --runJDBCQuery                    Run a SQL command against a JDBC connection"
+    )
+    print("  --runHiveQuery                    Run a SQL command against Hive")
+    print("  --runHiveScript                   Run a SQL script against Hive")
+    print("")
+    print("General parameters to all commands:")
+    print("  -y, --yes          Auto answer 'Yes' to all questions")
+    print("  --help             Show this help message and exit")
+    print(
+        "  -v, --debug        Turn on extensive debug output. This will print passwords in cleartext, so use with caution"
+    )
+    print("  --quiet            Suppress logo and version output")
+
+    sys.exit(1)
+
+
+def print_clear_import_stage_help():
+    print_header()
+    print(
+        "This will remove the staging information for a given import. The result will be that the next import will start"
+    )
+    print(
+        "from the begining regardless of where the previous import failed and stopped"
+    )
+    print("")
+    print("Required parameters:")
+    print("  -h [Hive Database], --hiveDB=[Hive Database]     Hive database")
+    print("  -t [Hive Table], --hiveTable=[Hive Table]        Hive table")
+    print("")
+    sys.exit(1)
+
+
+def print_clear_export_stage_help():
+    print_header()
+    print(
+        "This will remove the staging information for a given export. The result will be that the next export will start"
+    )
+    print(
+        "from the begining regardless of where the previous export failed and stopped"
+    )
+    print("")
+    print("Required parameters:")
+    print("  -a [Connection], --dbAlias=[Connection]  The alias of the JDBC connection")
+    print(
+        "  -S [Schema], --schema=[Schema]           Schema name of the table to export"
+    )
+    print("  -T [Table], --table=[Table]              Table to export")
+    print("")
+    sys.exit(1)
+
+
+def print_repair_incremental_import_help():
+    print_header()
+    print(
+        "Repairs an incremental import by getting the max value for the incremental column in the source system and set that"
+    )
+    print("as a starting point for the next import.")
+    print("")
+    print("Required parameters:")
+    print("  -h [Hive Database], --hiveDB=[Hive Database]     Hive database")
+    print("  -t [Hive Table], --hiveTable=[Hive Table]        Hive table")
+    print("")
+    sys.exit(1)
+
+
+def print_reset_incremental_import_help():
+    print_header()
+    print(
+        "Resets an incremental import. This will truncate the Target table in Hive and force the next import"
+    )
+    print("to start from the begining with a full import.")
+    print("")
+    print("Required parameters:")
+    print("  -h [Hive Database], --hiveDB=[Hive Database]     Hive database")
+    print("  -t [Hive Table], --hiveTable=[Hive Table]        Hive table")
+    print("")
+    sys.exit(1)
+
+
+def print_reset_cdc_import_help():
+    print_header()
+    print(
+        "Resets an CDC import. This will truncate the Target table in Hive and force the next import"
+    )
+    print("to do an initial load with a full import.")
+    print("")
+    print("Required parameters:")
+    print("  -h [Hive Database], --hiveDB=[Hive Database]     Hive database")
+    print("  -t [Hive Table], --hiveTable=[Hive Table]        Hive table")
+    print("")
+    sys.exit(1)
+
+
+def print_repair_incremental_export_help():
+    print_header()
+    print(
+        "Repairs an incremental export by reading the max value for the incremental column from the "
+    )
+    print("Target Table and use that as the max value for the next export.")
+    print("")
+    print("Required parameters:")
+    print("  -a [Connection], --dbAlias=[Connection]  The alias of the JDBC connection")
+    print(
+        "  -S [Schema], --schema=[Schema]           Schema name of the table to export"
+    )
+    print("  -T [Table], --table=[Table]              Table to export")
+    print("")
+    sys.exit(1)
+
+
+def print_reset_incremental_export_help():
+    print_header()
+    print(
+        "Resets an incremental export. This will truncate the Target table and force the next export"
+    )
+    print("to start from the begining with a full export.")
+    print("")
+    print("Required parameters:")
+    print("  -a [Connection], --dbAlias=[Connection]  The alias of the JDBC connection")
+    print(
+        "  -S [Schema], --schema=[Schema]           Schema name of the table to export"
+    )
+    print("  -T [Table], --table=[Table]              Table to export")
+    print("")
+    sys.exit(1)
+
+
+def print_drop_export_table_help():
+    print_header()
+    print(
+        "Drops an Export table and forces an incremental export to start from a full export."
+    )
+    print("")
+    print("Required parameters:")
+    print("  -a [Connection], --dbAlias=[Connection]  The alias of the JDBC connection")
+    print(
+        "  -S [Schema], --schema=[Schema]           Schema name of the table to export"
+    )
+    print("  -T [Table], --table=[Table]              Table to export")
+    print("")
+    sys.exit(1)
+
+
+def print_add_import_table_help():
+    print_header()
+    print(
+        "Connects to the source database and reads all tables and view, or a selection if [Schema] or [Table]"
+    )
+    print("is specified and insert those tables/views to import_tables.")
+    print("")
+    print("Required parameters:")
+    print(
+        "  -a [Connection], --dbAlias=[Connection]        The alias of the JDBC connection"
+    )
+    print("  -h [Hive Database], --hiveDB=[Hive Database]   Hive database")
+    print("")
+    print("Optional parameters:")
+    print(
+        "  -S [Schema], --schema=[Schema]                 Filter for Schema name. Wildcard (*) is supported"
+    )
+    print(
+        "  -T [Table], --table=[Table]                    Filter for Table name. Wildcard (*) is supported"
+    )
+    print(
+        "  --addSchemaToTable                             The schema on the source database is added to the Hive Table name"
+    )
+    print(
+        "  --addCounterToTable                            A counter starting from [Start] is added to begining of the Table name"
+    )
+    print(
+        "  --counterStart=[Start]                         The number to start with when using --addCounterToTable"
+    )
+    print(
+        "  --addCustomText=[Custom Text]                  Add the custom text to the Table name"
+    )
+    print(
+        "  --jsonOutput                                   Only create a json output with tables that can be added"
+    )
+    print("")
+    sys.exit(1)
+
+
+def print_add_export_table_help():
+    print_header()
+    print(
+        "Add export definitions for all tables in Hive, or just specific tables if filters for "
+    )
+    print("[Hive Database] or [Hive Table]")
+    print("")
+    print("Required parameters:")
+    print(
+        "  -a [Connection], --dbAlias=[Connection]        The alias of the JDBC connection"
+    )
+    print(
+        "  -S [Schema], --schema=[Schema]                 The schema to create the tables in on the target system"
+    )
+    print("")
+    print("Optional parameters:")
+    print(
+        "  -h [Hive Database], --hiveDB=[Hive Database]   Filter for database name. Wildcard (*) is supported"
+    )
+    print(
+        "  -t [Hive Table], --hiveTable=[Hive Table]      Filter for Table name. Wildcard (*) is supported"
+    )
+    print(
+        "  --addDBToTable                                 The Hive database is added to the Target Table name"
+    )
+    print(
+        "  --addCounterToTable                            A counter starting from [Start] is added to begining of the Table name"
+    )
+    print(
+        "  --counterStart=[Start]                         The number to start with when using --addCounterToTable"
+    )
+    print(
+        "  --addCustomText=[Custom Text]                  Add the custom text to the Table name"
+    )
+    print("")
+    sys.exit(1)
+
+
+def print_test_connection_help():
+    print_header()
+    print(
+        "Connect to the [Connection] and verifies that DBImport can connect successfully"
+    )
+    print("")
+    print("Required parameters:")
+    print("  -a [Connection], --dbAlias=[Connection]  The alias of the JDBC connection")
+    print("")
+    sys.exit(1)
+
+
+def print_discover_atlas_rdbms_help():
+    print_header()
+    print(
+        "Discover all object on a Database Connection and update Atlas with the information."
+    )
+    print("")
+    print("Required parameters:")
+    print("  -a [Connection], --dbAlias=[Connection]  The alias of the JDBC connection")
+    print("")
+    sys.exit(1)
+
+
+def print_run_jdbc_query_help():
+    print_header()
+    print("Run the SQL defined in [SQL] against the specified [Connection].")
+    print("")
+    print("Required parameters:")
+    print("  --runJDBCQuery=[SQL]                     The SQL to execute")
+    print("  -a [Connection], --dbAlias=[Connection]  The alias of the JDBC connection")
+    print("")
+    sys.exit(1)
+
+
+def print_run_hive_query_help():
+    print_header()
+    print("Run the SQL defined in [SQL] against Hive")
+    print("")
+    print("Required parameters:")
+    print("  --runHiveQuery=[SQL]       The SQL to execute")
+    print("")
+    sys.exit(1)
+
+
+def print_run_hive_script_help():
+    print_header()
+    print(
+        "Run the SQL's defined in [FILE]. This is actually executing beeline in the background and acts as a wrapper around it"
+    )
+    print("")
+    print("Required parameters:")
+    print(
+        "  --runHiveScript=[FILE]                         File to execute SQL commands from"
+    )
+    print("")
+    print("Optional parameters:")
+    print(
+        "  -h [Hive Database], --hiveDB=[Hive Database]   Will add the database name to the connection string"
+    )
+    print("")
+    sys.exit(1)
+
+
+def print_check_airflow_execution_help():
+    print_header()
+    print(
+        "Checks if the Airflow Execution is allowed or not. This is usually done first in each DAG and is used to globaly disable all DAG's that is controlled by DBImport"
+    )
+    print("")
+    print("Optional parameters:")
+    print(
+        "  --airflowDAG=[DAG Name]              If this is supplied and the post_to_kafka or post_to_rest is enabled, a message will be posted saying that this DAG started"
+    )
+    print("")
+    sys.exit(1)
+
+
+def print_send_airflow_stop_message_help():
+    print_header()
+    print(
+        "Sends a message to Kafka and/or Rest saying that the specified Airflow DAG have finished"
+    )
+    print("")
+    print("Required parameters:")
+    print("  --airflowDAG=[DAG Name] ")
+    print("")
+    sys.exit(1)
+
+
+def print_airflow_help():
+    print_header()
+    print(
+        "Generate the Airflow DAG file. If no DAG is specified, all configured DAG's are generated"
+    )
+    print("")
+    print("Required parameters:")
+    print(
+        "  --airflowGenerate             Generate the Airflow DAG file. If no DAG is specified, all configured DAG's are generated"
+    )
+    print("")
+    print("Optional parameters:")
+    print(
+        "  --airflowDAG=[DAG name]       Name of the DAG to generate. Cant be specified at the same time as --airflowAutoDAGonly"
+    )
+    print(
+        "  --airflowAutoDAGonly          Will only generate those DAGs that is marked as 'auto_regenerate_dag = 1'"
+    )
+    print(
+        "  -w, --airflowWriteDAG         If specified, the DAG is created directly in Airflow. If not, it's created in the temp folder"
+    )
+    print("")
+    sys.exit(1)
+
+
+def main(argv):
+    try:
+        opts, args = getopt.getopt(
+            argv,
+            "?yvwh:t:a:S:T:",
+            [
+                "quiet",
+                "yes",
+                "help",
+                "resetIncrementalExport",
+                "repairAllIncrementalImports",
+                "repairIncrementalImport",
+                "resetIncrementalImport",
+                "resetCDCImport",
+                "sendJSONstatistics",
+                "encryptCredentials",
+                "clearImportStage",
+                "Hive_DB=",
+                "hiveDB=",
+                "Hive_Table=",
+                "hiveTable=",
+                "dbAlias=",
+                "schema=",
+                "table=",
+                "debug",
+                "repairIncrementalExport",
+                "clearExportStage",
+                "dropExportTable",
+                "addImportTable",
+                "addSchemaToTable",
+                "addExportTable",
+                "addCounterToTable",
+                "addDBToTable",
+                "counterStart=",
+                "addCustomText=",
+                "testConnection",
+                "airflowGenerate",
+                "airflowAutoDAGonly",
+                "airflowDAG=",
+                "airflowDAGFolder=",
+                "checkAirflowExecution",
+                "runJDBCQuery=",
+                "runHiveQuery=",
+                "airflowWriteDAG",
+                "runHiveScript=",
+                "encryptString",
+                "encryptInstance",
+                "destination=",
+                "discoverAtlasRdbms",
+                "getAllConnectionPasswords",
+                "sendAirflowStopMessage",
+                "jsonOutput",
+                "jsonInput",
+            ],
+        )
+    except getopt.GetoptError:
+        if "--runJDBCQuery" in argv:
+            print_run_jdbc_query_help()
+        if "--runHiveQuery" in argv:
+            print_run_hive_query_help()
+        if "--runHiveScript" in argv:
+            print_run_hive_script_help()
+        else:
+            print_main_help()
+
+    hive_db = None
+    hive_table = None
+    display_help = False
+    operation = None
+    logging_level = logging.INFO
+    connection_alias = None
+    jdbc_schema = None
+    jdbc_table = None
+    jdbc_query = None
+    add_schema_to_table = False
+    add_counter_to_table = False
+    add_db_to_table = False
+    add_custom_text = None
+    counter_start = None
+    auto_yes_answer = False
+    airflow_auto_dag_only = False
+    airflow_dag = None
+    airflow_write_dag = False
+    airflow_dag_folder = None
+    copy_destination = None
+    quiet_mode = False
+    json_output = False
+    json_input = None
+    hive_script = None
+    common_config_obj = None
+    import_config_obj = None
+    import_operation = None
+    export_operation = None
+    copy_operation = None
+
+    if len(opts) == 0:
+        print_main_help()
+
+    for opt, arg in opts:
+        if opt in ("-?", "--help"):
+            display_help = True
+        elif opt in ("-y", "--yes"):
+            auto_yes_answer = True
+        elif opt in ("-v", "--debug"):
+            logging_level = logging.DEBUG
+        elif opt in ("-h", "--hiveDB", "--Hive_DB"):
+            hive_db = arg
+        elif opt in ("-t", "--hiveTable", "--Hive_Table"):
+            hive_table = arg
+        elif opt in ("-a", "--dbAlias"):
+            connection_alias = arg
+        elif opt in ("-S", "--schema"):
+            jdbc_schema = arg
+        elif opt in ("-T", "--table"):
+            jdbc_table = arg
+        elif opt == "--quiet":
+            quiet_mode = True
+        elif opt == "--jsonOutput":
+            json_output = True
+        elif opt == "--jsonInput":
+            json_input = str(arg)
+        elif opt == "--addSchemaToTable":
+            add_schema_to_table = True
+        elif opt == "--addCounterToTable":
+            add_counter_to_table = True
+        elif opt == "--addDBToTable":
+            add_db_to_table = True
+        elif opt == "--addCustomText":
+            add_custom_text = arg
+        elif opt == "--counterStart":
+            counter_start = str(arg)
+        elif opt == "--runJDBCQuery":
+            jdbc_query = str(arg)
+            operation = "runJDBCQuery"
+        elif opt == "--runHiveScript":
+            hive_script = str(arg)
+            operation = "runHiveScript"
+        elif opt == "--runHiveQuery":
+            jdbc_query = str(arg)
+            operation = "runHiveQuery"
+        elif opt == "--destination":
+            copy_destination = str(arg)
+        elif opt in ("-w", "--airflowWriteDAG"):
+            airflow_write_dag = True
+        elif opt == "--airflowAutoDAGonly":
+            airflow_auto_dag_only = True
+        elif opt == "--airflowDAG":
+            airflow_dag = str(arg)
+        elif opt == "--airflowDAGFolder":
+            airflow_dag_folder = str(arg)
+        elif opt == "--airflowGenerate":
+            operation = "airflowGenerate"
+        elif opt == "--checkAirflowExecution":
+            operation = "checkAirflowExecution"
+        elif opt == "--sendAirflowStopMessage":
+            operation = "sendAirflowStopMessage"
+        elif opt == "--clearImportStage":
+            operation = "clearImportStage"
+        elif opt == "--clearExportStage":
+            operation = "clearExportStage"
+        elif opt == "--encryptString":
+            operation = "encryptString"
+        elif opt == "--encryptCredentials":
+            operation = "encryptCredentials"
+        elif opt == "--sendJSONstatistics":
+            operation = "sendJSONstatistics"
+        elif opt == "--repairIncrementalImport":
+            operation = "repairIncrementalImport"
+        elif opt == "--repairAllIncrementalImports":
+            operation = "repairAllIncrementalImports"
+        elif opt == "--resetIncrementalImport":
+            operation = "resetIncrementalImport"
+        elif opt == "--resetCDCImport":
+            operation = "resetCDCImport"
+        elif opt == "--resetIncrementalExport":
+            operation = "resetIncrementalExport"
+        elif opt == "--repairIncrementalExport":
+            operation = "repairIncrementalExport"
+        elif opt == "--dropExportTable":
+            operation = "dropExportTable"
+        elif opt == "--addImportTable":
+            operation = "addImportTable"
+        elif opt == "--addExportTable":
+            operation = "addExportTable"
+        elif opt == "--testConnection":
+            operation = "testConnection"
+        elif opt == "--encryptInstance":
+            operation = "encryptInstance"
+        elif opt == "--discoverAtlasRdbms":
+            operation = "discoverAtlasRdbms"
+
+    if operation is None:
+        print_main_help()
+
+    if operation == "clearImportStage" and (
+        hive_db is None or hive_table is None or display_help
+    ):
+        print_clear_import_stage_help()
+
+    if operation == "repairIncrementalImport" and (
+        hive_db is None or hive_table is None or display_help
+    ):
+        print_repair_incremental_import_help()
+
+    if operation == "resetIncrementalImport" and (
+        hive_db is None or hive_table is None or display_help
+    ):
+        print_reset_incremental_import_help()
+
+    if operation == "resetCDCImport" and (
+        hive_db is None or hive_table is None or display_help
+    ):
+        print_reset_cdc_import_help()
+
+    if operation == "clearExportStage" and (
+        connection_alias == None
+        or jdbc_schema is None
+        or jdbc_table is None
+        or display_help
+    ):
+        print_clear_export_stage_help()
+
+    if operation == "repairIncrementalExport" and (
+        connection_alias == None
+        or jdbc_schema is None
+        or jdbc_table is None
+        or display_help
+    ):
+        print_repair_incremental_export_help()
+
+    if operation == "resetIncrementalExport" and (
+        connection_alias == None
+        or jdbc_schema is None
+        or jdbc_table is None
+        or display_help
+    ):
+        print_reset_incremental_export_help()
+
+    if operation == "dropExportTable" and (
+        connection_alias == None
+        or jdbc_schema is None
+        or jdbc_table is None
+        or display_help
+    ):
+        print_drop_export_table_help()
+
+    if operation == "addImportTable" and (
+        hive_db is None or connection_alias == None or display_help
+    ):
+        print_add_import_table_help()
+
+    if operation == "addExportTable" and (
+        connection_alias == None or jdbc_schema is None or display_help
+    ):
+        print_add_export_table_help()
+
+    if operation == "testConnection" and (connection_alias == None or display_help):
+        print_test_connection_help()
+
+    if operation == "runJDBCQuery" and (connection_alias == None or display_help):
+        print_run_jdbc_query_help()
+
+    if operation == "runHiveQuery" and (
+        jdbc_query is None or jdbc_query == "--help" or display_help
+    ):
+        print_run_hive_script_help()
+
+    if operation == "runHiveScript" and (
+        hive_script is None or hive_script == "--help" or display_help
+    ):
+        print_run_hive_script_help()
+
+    if operation == "airflowGenerate" and display_help:
+        print_airflow_help()
+
+    if airflow_auto_dag_only and (airflow_dag is not None or display_help):
+        print_airflow_help()
+
+    if operation == "discoverAtlasRdbms" and (connection_alias == None or display_help):
+        print_discover_atlas_rdbms_help()
+
+    if operation == "checkAirflowExecution" and display_help:
+        print_check_airflow_execution_help()
+
+    if operation == "sendAirflowStopMessage" and (airflow_dag is None or display_help):
+        print_send_airflow_stop_message_help()
+
+    if not quiet_mode:
+        print_header()
+
+    # Initiate the logging functions with the correct level
+    if logging_level == logging.DEBUG:
+        logging.basicConfig(
+            stream=sys.stdout,
+            format="%(levelname)s %(funcName)s - %(message)s",
+            level=logging_level,
+        )
+    else:
+        logging.basicConfig(
+            stream=sys.stdout, format="%(levelname)s - %(message)s", level=logging_level
+        )
+
+    # Actual operation is started here and is handled in one big Try block
+    try:
+        if operation == "runHiveScript":
+            common_operation = common_operations.Operation()
+            common_operation.common_config.check_kerberos_ticket()
+            return_code = common_operation.execute_beeline_script(
+                hive_script_file=hive_script, use_db=hive_db
+            )
+            if return_code != 0:
+                raise SQLError("Hive Query Error")
+            common_operation.common_config.remove_temporary_files()
+
+        if operation == "runHiveQuery":
+            common_operation = common_operations.Operation()
+            common_operation.common_config.check_kerberos_ticket()
+            common_operation.connect_to_hive(force_skip_test=True, quiet=quiet_mode)
+            result = common_operation.execute_hive_query(
+                query=jdbc_query, quiet=quiet_mode
+            )
+            if result.empty == True:
+                print("SQL generated no output")
+            else:
+                blank_index = [""] * len(result)
+                result.index = blank_index
+                print(result.to_string())
+            common_operation.common_config.remove_temporary_files()
+
+        if operation == "discoverAtlasRdbms":
+            common_config_obj = common_config.Config()
+            atlas_operation = atlas_operations.AtlasOperation()
+            if not common_config_obj.check_connection_alias(connection_alias):
+                logging.error("The specified database connection does not exist.")
+                sys.exit(1)
+
+            # Check if the schema is correct
+            if atlas_operation.check_atlas_schema() == False:
+                sys.exit(1)
+
+            config_object = common_config_obj.get_atlas_discover_config_object(
+                connection_alias
+            )
+            atlas_operation.set_configuration(config_object)
+            atlas_operation.discover_atlas_rdbms()
+
+        if operation == "runJDBCQuery":
+            common_config_obj = common_config.Config()
+            if not common_config_obj.check_connection_alias(connection_alias):
+                logging.error("The specified database connection does not exist.")
+                sys.exit(1)
+            common_config_obj.lookup_connection_alias(connection_alias)
+            common_config_obj.connect_to_jdbc()
+            result = common_config_obj.execute_jdbc_query(query=jdbc_query)
+            if result.empty == True:
+                print("SQL generated no output")
+            else:
+                blank_index = [""] * len(result)
+                result.index = blank_index
+                print(result.to_string())
+            common_config_obj.remove_temporary_files()
+
+        if operation == "clearImportStage":
+            import_config_obj = import_config.Config(hive_db, hive_table)
+            import_config_obj.clear_stage()
+            logging.info("Stage information cleared for %s.%s", hive_db, hive_table)
+            import_config_obj.remove_temporary_files()
+
+        if operation == "checkAirflowExecution":
+            common_operation = common_operations.Operation()
+            common_operation.common_config.check_kerberos_ticket()
+            airflow = airflow_dags.Initialize()
+            airflow.check_execution()
+            airflow.send_json(airflow_dag=airflow_dag, status="started")
+            airflow.common_config.remove_temporary_files()
+
+        if operation == "sendAirflowStopMessage":
+            common_operation = common_operations.Operation()
+            common_operation.common_config.check_kerberos_ticket()
+            airflow = airflow_dags.Initialize()
+            airflow.send_json(airflow_dag=airflow_dag, status="finished")
+            airflow.common_config.remove_temporary_files()
+
+        if operation == "airflowGenerate":
+            airflow = airflow_dags.Initialize()
+            if not airflow_auto_dag_only and airflow_dag is None:
+                print(
+                    "You havent specified --airflowAutoDAGonly or a name of a DAG. That means that you want to generate ALL Airflow DAG"
+                )
+                print(
+                    "More information about valid options can be found if executed with --help"
+                )
+                try:
+                    answer = input("Are you sure you want to do this? (y/N): ")
+                except KeyboardInterrupt:
+                    print("")
+                    logging.warning("Aborting command by user request")
+                    sys.exit(1)
+
+                if answer.lower() != "y":
+                    logging.info("No generation of Airflow DAG's will happen")
+                    sys.exit(1)
+
+            airflow.generate_dag(
+                name=airflow_dag,
+                auto_dag_only=airflow_auto_dag_only,
+                write_dag=airflow_write_dag,
+                dag_folder=airflow_dag_folder,
+            )
+            airflow.common_config.remove_temporary_files()
+
+        if operation == "encryptInstance":
+            print(
+                "This function will encrypt a username and password for the specified DBImport Instance. Any previous username/password will be overwritten"
+            )
+            print(
+                "There is no undo function for this, so if you want to cancel, please press Ctrl-C"
+            )
+
+            try:
+                dbimport_instance = input("DBImport Instance: ")
+            except KeyboardInterrupt:
+                print("")
+                logging.warning("Aborting command by user request")
+                sys.exit(1)
+
+            copy_operation = copy_operations.Operation()
+            if (
+                copy_operation.check_dbimport_instance(instance=dbimport_instance)
+                == False
+            ):
+                logging.error("The specified DBImport instance does not exist.")
+                sys.exit(1)
+
+            try:
+                username = input("Username: ")
+                password = input("Password: ")
+            except KeyboardInterrupt:
+                print("")
+                logging.warning("Aborting command by user request")
+                sys.exit(1)
+
+            copy_operation.encrypt_user_password(
+                instance=dbimport_instance, username=username, password=password
+            )
+            copy_operation.remove_temporary_files()
+
+        if operation == "encryptCredentials":
+            if json_input is None:
+                print(
+                    "This function will encrypt a username and password for the specified Database Connection. Any previous username/password will be overwritten"
+                )
+                print(
+                    "There is no undo function for this, so if you want to cancel, please press Ctrl-C"
+                )
+                if connection_alias == None:
+                    try:
+                        connection_alias = input("DataBase Connection (dbalias): ")
+                    except KeyboardInterrupt:
+                        print("")
+                        logging.warning("Aborting command by user request")
+                        sys.exit(1)
+
+                common_config_obj = common_config.Config()
+                if not common_config_obj.check_connection_alias(connection_alias):
+                    logging.error("The specified database connection does not exist.")
+                    sys.exit(1)
+
+                common_config_obj.lookup_connection_alias(
+                    connection_alias=connection_alias, decrypt_credentials=False
+                )
+
+                try:
+                    if common_config_obj.db_awss3:
+                        username = input("AccessKeyId: ")
+                        password = input("SecretAccessKey: ")
+                    else:
+                        username = input("Username: ")
+                        password = input("Password: ")
+                except KeyboardInterrupt:
+                    print("")
+                    logging.warning("Aborting command by user request")
+                    sys.exit(1)
+            else:
+                try:
+                    json_doc = input("json: ")
+                except KeyboardInterrupt:
+                    print("")
+                    logging.warning("Aborting command by user request")
+                    sys.exit(1)
+
+                try:
+                    input_dict = json.loads(json_doc)
+                except json.decoder.JSONDecodeError:
+                    logging.error("Input was not a valid JSON")
+                    sys.exit(1)
+
+                try:
+                    connection_alias = input_dict["connection"]
+                    username = input_dict["username"]
+                    password = input_dict["password"]
+                except KeyError:
+                    logging.error(
+                        "JSON must include fields connection, username and password"
+                    )
+                    sys.exit(1)
+
+                common_config_obj = common_config.Config()
+                if not common_config_obj.check_connection_alias(connection_alias):
+                    logging.error("The specified database connection does not exist.")
+                    sys.exit(1)
+
+                common_config_obj.lookup_connection_alias(
+                    connection_alias=connection_alias, decrypt_credentials=False
+                )
+
+            common_config_obj.encrypt_user_password(
+                connection_alias, username, password
+            )
+            common_config_obj.remove_temporary_files()
+
+        if operation == "encryptString":
+            print(
+                "This function will encrypt a string. That string can then be used as a username or password in the configuration file."
+            )
+            try:
+                str_to_encrypt = input("String: ")
+            except KeyboardInterrupt:
+                print("")
+                logging.warning("Aborting command by user request")
+                sys.exit(1)
+
+            common_config_obj = common_config.Config()
+            print(str_to_encrypt)
+            encrypted_str = common_config_obj.encrypt_string(str_to_encrypt)
+            print(encrypted_str)
+            common_config_obj.remove_temporary_files()
+
+        if operation == "repairAllIncrementalImports":
+            print(
+                "This command will search for incremental tables that have an entry in 'import_stage'. If the entry exists,"
+            )
+            print(
+                "it will fetch the max value from the hive table and update the MySQL database. This value will then be used"
+            )
+            print("used as the starting point for the next sqoop import.")
+            print("")
+            if not auto_yes_answer:
+                try:
+                    answer = input("Are you sure you want to do this? (y/N): ")
+                except KeyboardInterrupt:
+                    print("")
+                    logging.warning("Aborting command by user request")
+                    sys.exit(1)
+            else:
+                answer = "y"
+
+            if answer.lower() == "y":
+                import_operation = import_operations.Operation()
+                import_operation.repair_all_incremental_imports()
+                import_operation.remove_temporary_files()
+            else:
+                logging.info("Didnt answer 'y'. No actions performed")
+
+        if operation == "repairIncrementalImport":
+            import_operation = import_operations.Operation(hive_db, hive_table)
+            if (
+                import_operation.import_config.common_config.check_kerberos_ticket()
+                == False
+            ):
+                logging.error(
+                    "There is no valid Kerberos ticket available. Please create one before running this command"
+                )
+                import_operation.remove_temporary_files()
+                sys.exit(1)
+
+            if not quiet_mode:
+                print(
+                    "This command will try to repair an incremental import that have come out-of-sync between data in the source table"
+                )
+                print(
+                    "and the hive table. The tool will connect to the hive database and read the max value for the column"
+                )
+                print(
+                    "that is used for the incremental loads. This value will then be used as the starting point for the next sqoop import"
+                )
+                print("")
+            if not auto_yes_answer:
+                try:
+                    answer = input("Are you sure you want to do this? (y/N): ")
+                except KeyboardInterrupt:
+                    print("")
+                    logging.warning("Aborting command by user request")
+                    sys.exit(1)
+            else:
+                answer = "y"
+
+            if answer.lower() == "y":
+                import_operation.reset_incr_max_value()
+                import_operation.clear_stage()
+                import_operation.remove_temporary_files()
+            else:
+                logging.info("Didnt answer 'y'. No actions performed")
+
+        if operation == "resetIncrementalImport":
+            import_operation = import_operations.Operation(hive_db, hive_table)
+            if (
+                import_operation.import_config.common_config.check_kerberos_ticket()
+                == False
+            ):
+                logging.error(
+                    "There is no valid Kerberos ticket available. Please create one before running this command"
+                )
+                import_operation.remove_temporary_files()
+                sys.exit(1)
+
+            if not quiet_mode:
+                print(
+                    "This command will truncate the Target Table and force the next import to be a full import."
+                )
+                print("")
+
+            if not auto_yes_answer:
+                try:
+                    answer = input("Are you sure you want to do this? (y/N): ")
+                except KeyboardInterrupt:
+                    print("")
+                    logging.warning("Aborting command by user request")
+                    sys.exit(1)
+            else:
+                answer = "y"
+
+            if answer.lower() == "y":
+                import_operation.reset_incr_min_max_values(max_value=None)
+                import_operation.truncate_target_table()
+                import_operation.clear_stage()
+                import_operation.remove_temporary_files()
+            else:
+                logging.info("Didnt answer 'y'. No actions performed")
+
+        if operation == "resetCDCImport":
+            import_operation = import_operations.Operation(hive_db, hive_table)
+            if (
+                import_operation.import_config.common_config.check_kerberos_ticket()
+                == False
+            ):
+                logging.error(
+                    "There is no valid Kerberos ticket available. Please create one before running this command"
+                )
+                import_operation.remove_temporary_files()
+                sys.exit(1)
+
+            if not quiet_mode:
+                print(
+                    "This command will truncate the Target Table and force the next import to be a full import."
+                )
+                print("")
+
+            if not auto_yes_answer:
+                try:
+                    answer = input("Are you sure you want to do this? (y/N): ")
+                except KeyboardInterrupt:
+                    print("")
+                    logging.warning("Aborting command by user request")
+                    sys.exit(1)
+            else:
+                answer = "y"
+
+            if answer.lower() == "y":
+                import_operation.reset_incr_min_max_values(max_value=None)
+                import_operation.truncate_target_table()
+                import_operation.clear_stage()
+                import_operation.remove_temporary_files()
+            else:
+                logging.info("Didnt answer 'y'. No actions performed")
+
+        if operation == "resetIncrementalExport":
+            if not quiet_mode:
+                print(
+                    "This command will truncate the Target Table and force the next export to be a full export."
+                )
+                print("")
+
+            if not auto_yes_answer:
+                try:
+                    answer = input("Are you sure you want to do this? (y/N): ")
+                except KeyboardInterrupt:
+                    print("")
+                    logging.warning("Aborting command by user request")
+                    sys.exit(1)
+            else:
+                answer = "y"
+
+            if answer.lower() == "y":
+                export_operation = export_operations.Operation(
+                    connection_alias=connection_alias,
+                    target_schema=jdbc_schema,
+                    target_table=jdbc_table,
+                )
+                export_operation.truncate_jdbc_table(force=True)
+                export_operation.reset_incr_min_max_values(max_value=None)
+                export_operation.clear_stage()
+                export_operation.remove_temporary_files()
+            else:
+                logging.info("Didnt answer 'y'. No actions performed")
+
+        if operation == "repairIncrementalExport":
+            if not quiet_mode:
+                print(
+                    "This command will repair an incremental import by reading the max value for the incremental column from the "
+                )
+                print("Target Table and use that as the max value for the next export.")
+                print("")
+
+            if not auto_yes_answer:
+                try:
+                    answer = input("Are you sure you want to do this? (y/N): ")
+                except KeyboardInterrupt:
+                    print("")
+                    logging.warning("Aborting command by user request")
+                    sys.exit(1)
+            else:
+                answer = "y"
+
+            if answer.lower() == "y":
+                export_operation = export_operations.Operation(
+                    connection_alias=connection_alias,
+                    target_schema=jdbc_schema,
+                    target_table=jdbc_table,
+                )
+                export_operation.reset_max_value_from_target()
+                export_operation.remove_temporary_files()
+            else:
+                logging.info("Didnt answer 'y'. No actions performed")
+
+        if operation == "dropExportTable":
+            print(
+                "This command will drop the Target Table and if it's an incremental export, force the next export to be a full export."
+            )
+            print("")
+
+            if not auto_yes_answer:
+                try:
+                    answer = input("Are you sure you want to do this? (y/N): ")
+                except KeyboardInterrupt:
+                    print("")
+                    logging.warning("Aborting command by user request")
+                    sys.exit(1)
+            else:
+                answer = "y"
+
+            if answer.lower() == "y":
+                export_operation = export_operations.Operation(
+                    connection_alias=connection_alias,
+                    target_schema=jdbc_schema,
+                    target_table=jdbc_table,
+                )
+                export_operation.drop_jdbc_table()
+                export_operation.reset_incr_min_max_values(max_value=None)
+                export_operation.clear_stage()
+                export_operation.remove_temporary_files()
+            else:
+                logging.info("Didnt answer 'y'. No actions performed")
+
+        if operation == "clearExportStage":
+            export_operation = export_operations.Operation(
+                connection_alias=connection_alias,
+                target_schema=jdbc_schema,
+                target_table=jdbc_table,
+            )
+            export_operation.clear_stage()
+            logging.info("Stage information cleared")
+
+            export_operation.remove_temporary_files()
+
+        if operation == "addImportTable":
+            import_operation = import_operations.Operation()
+            import_operation.discover_and_add_tables_from_source(
+                dbalias=connection_alias,
+                hive_db=hive_db,
+                schema_filter=jdbc_schema,
+                table_filter=jdbc_table,
+                add_schema_to_table=add_schema_to_table,
+                add_custom_text=add_custom_text,
+                add_counter_to_table=add_counter_to_table,
+                counter_start=counter_start,
+                only_json_output=json_output,
+            )
+
+        if operation == "addExportTable":
+            export_operation = export_operations.Operation()
+            export_operation.discover_and_add_tables_from_hive(
+                db_filter=hive_db,
+                table_filter=hive_table,
+                dbalias=connection_alias,
+                schema=jdbc_schema,
+                add_db_to_table=add_db_to_table,
+                add_custom_text=add_custom_text,
+                add_counter_to_table=add_counter_to_table,
+                counter_start=counter_start,
+            )
+
+        if operation == "testConnection":
+            common_config_obj = common_config.Config()
+            if not common_config_obj.check_connection_alias(connection_alias):
+                logging.error("The specified database connection does not exist.")
+                sys.exit(1)
+            common_config_obj.lookup_connection_alias(connection_alias)
+            if common_config_obj.db_awss3:
+                logging.error(
+                    "AWS S3 is not supported for '--testConnection' operations"
+                )
+            else:
+                common_config_obj.connect_to_jdbc()
+                print("Connected successfully")
+
+            common_config_obj.disconnect_from_jdbc()
+            # 			common_config_obj.connect_to_impala()
+            # 			common_config_obj.disconnect_from_impala()
+
+            common_config_obj.remove_temporary_files()
+
+    # Error handling for the entire stage block
+    except InvalidConfigurationError as errMsg:
+        if str(errMsg) != "":
+            logging.error(errMsg)
+        if common_config_obj is not None:
+            common_config_obj.remove_temporary_files()
+        if import_config_obj is not None:
+            import_config_obj.remove_temporary_files()
+        elif import_operation is not None:
+            import_operation.import_config.remove_temporary_files()
+        elif export_operation is not None:
+            export_operation.export_config.remove_temporary_files()
+        elif copy_operation is not None:
+            copy_operation.import_config.remove_temporary_files()
+        sys.exit(1)
+    except RuntimeError as errMsg:
+        import_operation.import_config.remove_temporary_files()
+        sys.exit(1)
+    except DaemonExitError as errMsg:
+        logging.error(
+            "Program exit because requested to do so by developer. %s", errMsg
+        )
+        import_operation.import_config.remove_temporary_files()
+        sys.exit(1)
+    except SQLError as errMsg:
+        logging.error("SQL Error detected")
+        logging.error(errMsg)
+        if common_config_obj is not None:
+            common_config_obj.remove_temporary_files()
+        if import_config_obj is not None:
+            import_config_obj.remove_temporary_files()
+        elif import_operation is not None:
+            import_operation.import_config.remove_temporary_files()
+        elif export_operation is not None:
+            export_operation.export_config.remove_temporary_files()
+        elif copy_operation is not None:
+            copy_operation.import_config.remove_temporary_files()
+        sys.exit(1)
+    except:
+        if common_config_obj is not None:
+            common_config_obj.remove_temporary_files()
+        if import_config_obj is not None:
+            import_config_obj.remove_temporary_files()
+        elif import_operation is not None:
+            import_operation.import_config.remove_temporary_files()
+        elif export_operation is not None:
+            export_operation.export_config.remove_temporary_files()
+        elif copy_operation is not None:
+            copy_operation.import_config.remove_temporary_files()
+        raise
+        sys.exit(1)
+
+    sys.exit(0)
+
+
+def run() -> None:
+    main(sys.argv[1:])
+
+
+if __name__ == "__main__":
+    run()

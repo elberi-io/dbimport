@@ -3,8 +3,8 @@
 import pytest
 import sqlalchemy as sa
 
-from common.Exceptions import InvalidConfigurationError
-from DBImportConfig import common_config, import_config
+from dbimport.common.exceptions import InvalidConfigurationError
+from dbimport.config_db import common_config, import_config
 from tests.configdb import insert_row, set_driver_path
 
 HIVE_DB = "testdb"

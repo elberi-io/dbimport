@@ -3,30 +3,34 @@
 Each one is imported in a new Python process, so a name that is missing
 at import time, or an import that only works after another module was
 imported first, fails here. The launchers are loaded under a name other
-than "__main__", so only their imports and definitions run. An
-integration test because Server.restServer connects to the configuration
-database when it is imported.
+than "__main__", so only their imports and definitions run, and the
+console scripts installed from pyproject.toml must point at a function.
+An integration test because dbimport.server.rest_server connects to the
+configuration database when it is imported.
 """
 
 import os
 import subprocess
 import sys
+import tomllib
 from pathlib import Path
 
 import pytest
 
-BIN_DIR = Path(__file__).resolve().parents[2] / "bin"
+REPO_ROOT = Path(__file__).resolve().parents[2]
+BIN_DIR = REPO_ROOT / "bin"
+PACKAGE_DIR = REPO_ROOT / "src" / "dbimport"
 # Alembic loads the migration scripts itself; they are not importable.
-NOT_IMPORTED = {"SchemaUpgrade"}
+NOT_IMPORTED = {"migrations"}
 PACKAGES = sorted(
     d.name
-    for d in BIN_DIR.iterdir()
+    for d in PACKAGE_DIR.iterdir()
     if d.is_dir() and d.name not in NOT_IMPORTED and any(d.glob("*.py"))
 )
 MODULES = [
-    f"{package}.{path.stem}"
+    f"dbimport.{package}.{path.stem}"
     for package in PACKAGES
-    for path in sorted((BIN_DIR / package).glob("*.py"))
+    for path in sorted((PACKAGE_DIR / package).glob("*.py"))
     if path.stem != "__init__"
 ]
 LAUNCHERS = sorted(
@@ -37,7 +41,15 @@ LAUNCHERS = sorted(
     and p.read_text().startswith("#!/usr/bin/env python")
 )
 
+with (REPO_ROOT / "pyproject.toml").open("rb") as pyproject:
+    SCRIPTS: dict[str, str] = tomllib.load(pyproject)["project"]["scripts"]
+
 IMPORT_MODULE = "import importlib, sys; importlib.import_module(sys.argv[1])"
+# The target of a console script, "module:function", must be a callable.
+LOAD_SCRIPT_TARGET = (
+    "import importlib, sys; module, _, name = sys.argv[1].partition(':');"
+    "assert callable(getattr(importlib.import_module(module), name))"
+)
 LOAD_LAUNCHER = (
     "import importlib.machinery, importlib.util, sys;"
     "loader = importlib.machinery.SourceFileLoader('launcher', sys.argv[1]);"
@@ -48,12 +60,11 @@ LOAD_LAUNCHER = (
 
 
 def _run(code: str, arg: str) -> subprocess.CompletedProcess[str]:
-    env = {**os.environ, "PYTHONPATH": str(BIN_DIR)}
     return subprocess.run(
         [sys.executable, "-c", code, arg],
         capture_output=True,
         text=True,
-        env=env,
+        env=os.environ.copy(),
         timeout=120,
         check=False,
     )
@@ -73,5 +84,12 @@ def test_launcher_load_in_new_process_succeeds(
     clean_config_db: None, name: str
 ) -> None:
     result = _run(LOAD_LAUNCHER, str(BIN_DIR / name))
+
+    assert result.returncode == 0, result.stderr
+
+
+@pytest.mark.parametrize("script", sorted(SCRIPTS))
+def test_console_script_target_is_callable(clean_config_db: None, script: str) -> None:
+    result = _run(LOAD_SCRIPT_TARGET, SCRIPTS[script])
 
     assert result.returncode == 0, result.stderr

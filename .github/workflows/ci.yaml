@@ -48,8 +48,6 @@ jobs:
 
       - name: Check import layers
         run: uv run lint-imports
-        env:
-          PYTHONPATH: bin
 
       - name: Start the configuration database
         run: docker compose up -d --wait
@@ -63,7 +61,7 @@ jobs:
     timeout-minutes: 15
     defaults:
       run:
-        working-directory: bin/Server/html
+        working-directory: ui
     permissions:
       contents: read
     steps:
@@ -75,7 +73,7 @@ jobs:
         with:
           node-version: "22"
           cache: npm
-          cache-dependency-path: bin/Server/html/package-lock.json
+          cache-dependency-path: ui/package-lock.json
 
       - name: Install dependencies
         run: npm ci

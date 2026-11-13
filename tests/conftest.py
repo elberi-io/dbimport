@@ -1,6 +1,6 @@
 """Test setup shared by all tests.
 
-DBImport reads its configuration file once, when ConfigReader.configuration
+DBImport reads its configuration file once, when dbimport.config_reader.configuration
 is first imported, and exits if DBIMPORT_HOME or the file is missing. The
 environment is therefore prepared in pytest_configure, before any test
 module imports DBImport code.
@@ -73,9 +73,9 @@ def pytest_unconfigure(config: pytest.Config) -> None:
 
 @pytest.fixture(autouse=True)
 def _reset_singletons() -> Iterator[None]:
-    """Give every test fresh DBImport singletons (common.Singleton)."""
+    """Give every test fresh DBImport singletons (dbimport.common.singleton)."""
     yield
-    from common.Singleton import Singleton
+    from dbimport.common.singleton import Singleton
 
     for instance in Singleton._instances.values():
         close_dbimport_connections(instance)

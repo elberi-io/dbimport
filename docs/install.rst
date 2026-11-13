@@ -20,13 +20,18 @@ Some of the packages are built from source during installation. This requires a 
 
 **Python 3.11**
 
-Install the Python packages with::
+Install the Python packages and then DBImport itself with::
 
         python3.11 -m pip install -r bin/requirements.txt
+        python3.11 -m pip install --no-deps .
 
-If you use `uv <https://docs.astral.sh/uv/>`_, you can create the environment from the lock file instead::
+The second command builds DBImport with its build backend *uv_build*, which pip downloads from PyPI, and installs it into the environment: DBImport runs from there, not from the unpacked files. Use one virtual environment per DBImport installation. On a host without internet access, provide the *uv_build* wheel, or install a DBImport wheel built elsewhere (``uv build --wheel``) instead of the source directory.
+
+If you use `uv <https://docs.astral.sh/uv/>`_, you can create the environment from the lock file instead. This also installs DBImport::
 
         uv sync --locked
+
+The commands in *bin* (*import*, *export*, *manage*, ...) work as before. The same commands are also installed into the environment as *dbimport-import*, *dbimport-export*, *dbimport-manage* and so on.
 
 
 
@@ -264,11 +269,18 @@ If the number of *distcp* commands running in parallel gets to high, the log fil
 Upgrading
 --------------------
 
-In order to upgrade DBImport, all files from the source package needs to be replaced with new versions. Many versions also needs a configuration database schema upgrade. To be sure that you are on the last schema for the configuration database, please run the following after upgrading the binary files::
+In order to upgrade DBImport, all files from the source package needs to be replaced with new versions. Then install the Python packages and DBImport itself again, as during the installation, so that the environment runs the new version::
+
+        python3.11 -m pip install -r bin/requirements.txt
+        python3.11 -m pip install --no-deps .
+
+With uv, run *uv sync --locked* instead. Many versions also needs a configuration database schema upgrade. To be sure that you are on the last schema for the configuration database, please run the following after upgrading::
 
         ./setup --upgradeDB
 
 This command will only upgrade the schema if it's not in the last version. So it's safe to run it even if there are no new schema.
+
+When upgrading from 1.00.006 or earlier: the code moved from *bin/* into the *dbimport* package and the web UI from *bin/Server/html* to *ui*. Change *root* in *conf/webserver.cfg* to */usr/local/dbimport/ui/dist* (see *conf/webserver.cfg.dist*) and build the UI again with *setup --buildHTML*.
 
 There might also be changes in the *conf/dbimport.cfg* configuration file. Please compare your local version with the default config file available in the release. If you are missing certain settings in your local configuration, please add those. If you dont do that, you will most likely get an error saying that you cant find a specific key in the configuration. 
 

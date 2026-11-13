@@ -1,7 +1,8 @@
 # Commits that only reformatted code (ruff format, #159), only renamed
 # identifiers to snake_case or classes to CapWords (#202), only changed
-# how strings are formatted (#202) or only changed how comparisons with
-# None, True and False are written (#202).
+# how strings are formatted (#202), only changed how comparisons with
+# None, True and False are written (#202), or moved the code into the
+# dbimport package and rewrote its imports (#238).
 # GitHub skips them in the blame view. Locally, run once:
 #   git config blame.ignoreRevsFile .git-blame-ignore-revs
 # Keep the hashes valid: merge with a merge commit, do not rebase or squash.
@@ -131,3 +132,6 @@ efa4947f57452c84afb788a77541cd4f282307a9
 
 # refactor: rename the remaining classes to CapWords
 f4229a106771a1e25521ecdadc7cd54be23f60c1
+
+# refactor: move the code into the dbimport package under src/
+f7efd887cb255bb188172de9e5b1e3e7a5756273

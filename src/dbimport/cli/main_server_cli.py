@@ -1,0 +1,204 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+
+import getopt
+import logging
+import os
+import sys
+
+import psutil
+
+from dbimport.common import constants as constant
+from dbimport.config_reader import configuration
+from dbimport.server import daemon
+
+
+def print_help():
+    print("Usage: ./mainServer <action> <options>")
+    print("Actions:")
+    print("  start              Start the DBImport Main server")
+    print("  stop               Stop the DBImport Main server")
+    print("  restart            Restart the DBImport Main server")
+    print("  status             Check status of DBImport Main server")
+    print("")
+    print("Options:")
+    print("  --help             Show this help message and exit")
+    print("  -v, --debug        Turn on extensive debug output.")
+    print("  -V, --version      Displays the version of DBImport")
+    sys.exit(1)
+
+
+def setup_logger(name, logfile, log_format, logging_level, log_propagate=True):
+    new_logger = logging.getLogger(name)
+    new_logger.propagate = log_propagate
+    log_handler = logging.FileHandler(logfile)
+    log_handler.setFormatter(logging.Formatter(log_format))
+    log_handler.setLevel(logging_level)
+    new_logger.addHandler(log_handler)
+
+
+def main(argv):
+
+    if argv == []:
+        print_help()
+
+    try:
+        action = sys.argv[1]
+        opts, args = getopt.getopt(argv[1:], "vVh", ["version", "help", "debug"])
+    except getopt.GetoptError:
+        print_help()
+
+    logging_level = logging.INFO
+    display_version = False
+
+    for opt, _arg in opts:
+        if opt in ("-h", "--help"):
+            print_help()
+        elif opt in ("-V", "--version"):
+            display_version = True
+        elif opt in ("-v", "--debug"):
+            logging_level = logging.DEBUG
+
+    if display_version:
+        print(f"DBImport version: {constant.VERSION}")
+        sys.exit(0)
+
+    logdir = configuration.get("Server", "logdir")
+    pidfile = configuration.get("Server", "pidfile")
+    if configuration.get("Server", "distCP_separate_logs").lower() == "true":
+        dist_cp_separate_logs = True
+    else:
+        dist_cp_separate_logs = False
+
+    # Initiate the logging functions with the correct level
+    if logging_level == logging.DEBUG and action == "noDaemon":
+        log_format = "%(asctime)s %(levelname)s %(name)s %(funcName)s - %(message)s"
+    elif logging_level == logging.DEBUG and action != "noDaemon":
+        log_format = "%(asctime)s %(levelname)s %(funcName)s - %(message)s"
+    elif logging_level != logging.DEBUG and action == "noDaemon":
+        log_format = "%(asctime)s %(levelname)s %(name)s - %(message)s"
+    elif logging_level != logging.DEBUG and action != "noDaemon":
+        log_format = "%(asctime)s %(levelname)s - %(message)s"
+
+    if action == "noDaemon":
+        logging.basicConfig(stream=sys.stdout, format=log_format, level=logging_level)
+        log_propagate = True
+    else:
+        # If we run in daemon mode, we log everything from the root logger to /dev/null.
+        logging.basicConfig(
+            filename="/dev/null", format=log_format, level=logging_level
+        )
+        log_propagate = False
+
+    # Setup the loggers
+    setup_logger(
+        name="server",
+        logfile=f"{logdir}/dbimport_server.log",
+        log_format=log_format,
+        logging_level=logging_level,
+        log_propagate=log_propagate,
+    )
+    setup_logger(
+        name="atlasDiscovery",
+        logfile=f"{logdir}/atlasDiscovery.log",
+        log_format=log_format,
+        logging_level=logging_level,
+        log_propagate=log_propagate,
+    )
+    setup_logger(
+        name="restServer",
+        logfile=f"{logdir}/restServer.log",
+        log_format=log_format,
+        logging_level=logging_level,
+        log_propagate=log_propagate,
+    )
+    setup_logger(
+        name="werkzeug",
+        logfile=f"{logdir}/restServer.log",
+        log_format=log_format,
+        logging_level=logging_level,
+        log_propagate=log_propagate,
+    )
+    setup_logger(
+        name="waitress",
+        logfile=f"{logdir}/restServer.log",
+        log_format=log_format,
+        logging_level=logging_level,
+        log_propagate=log_propagate,
+    )
+
+    if not dist_cp_separate_logs:
+        dist_cp_logfile = f"{logdir}/distCP.log"
+        setup_logger(
+            name="distCP",
+            logfile=dist_cp_logfile,
+            log_format=log_format,
+            logging_level=logging_level,
+        )
+    else:
+        dist_cp_threads = int(configuration.get("Server", "distCP_threads"))
+
+        for thread_id in range(0, dist_cp_threads):
+            dist_cp_log_name = f"distCP-thread{thread_id}"
+            dist_cp_logfile = f"{logdir}/distCP-thread{thread_id}.log"
+            setup_logger(
+                name=dist_cp_log_name,
+                logfile=dist_cp_logfile,
+                log_format=log_format,
+                logging_level=logging_level,
+            )
+
+    d = daemon.ServerDaemon(pidfile=pidfile)
+    d.set_config(action=action, log_format=log_format)
+
+    if action == "start":
+        print("Starting DBImport Main Server")
+        d.start()
+    elif action == "noDaemon":
+        d.run()
+    elif action == "stop":
+        print("Stopping DBImport Main Server")
+        d.stop()
+    elif action == "restart":
+        d.restart()
+    elif action == "status":
+        if os.path.isfile(pidfile):
+            with open(pidfile) as f:
+                pid = int(f.readline().strip())
+
+            if psutil.pid_exists(pid):
+                print(f"DBImport Main Server is running with pid {pid}")
+                sys.exit(0)
+            else:
+                print("DBImport Main Server is not running")
+                sys.exit(1)
+        else:
+            print("DBImport Main Server is not running")
+            sys.exit(1)
+    else:
+        print_help()
+
+
+def run() -> None:
+    try:
+        main(sys.argv[1:])
+    except getopt.GetoptError:
+        print_help()
+
+
+if __name__ == "__main__":
+    run()

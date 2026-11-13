@@ -80,7 +80,7 @@ def config_db(engine: sa.Engine) -> None:
     Drops all tables, then runs the `setup --createDB` code: Alembic
     upgrade to head plus seed data.
     """
-    from setupOperation import database
+    from dbimport.setup import database
 
     with engine.connect() as conn:
         conn.execute(sa.text("SET FOREIGN_KEY_CHECKS = 0"))
@@ -101,7 +101,7 @@ def clean_config_db(config_db: None, engine: sa.Engine) -> None:
     Empties every table except alembic_version, then runs the same seeding
     as `setup --createDB`.
     """
-    from setupOperation import database
+    from dbimport.setup import database
 
     with engine.connect() as conn:
         conn.execute(sa.text("SET FOREIGN_KEY_CHECKS = 0"))
