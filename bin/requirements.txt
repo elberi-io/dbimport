@@ -297,9 +297,9 @@ gssapi==1.12.0 ; sys_platform == 'linux' \
     # via
     #   dbimport
     #   pyspnego
-gunicorn==21.2.0 ; sys_platform == 'linux' \
-    --hash=sha256:3213aa5e8c24949e792bcacfc176fef362e7aac80b76c56f6b5122bf350722f0 \
-    --hash=sha256:88ec8bff1d634f98e61b9f65bc4bf3cd918a90806c6f5c48bc5603849ec81033
+gunicorn==26.2.0 ; sys_platform == 'linux' \
+    --hash=sha256:62b864895d9ebff0b2f9867ba04fe811c93121596540830c9c916d0769668447 \
+    --hash=sha256:bd249d0b3f7972f7432f0a6b6ff3b3ee2d129f70cd1ff6c09a9dd9e29a2b88e3
     # via dbimport
 h11==0.16.0 ; sys_platform == 'linux' \
     --hash=sha256:4e35b956cf45792e4caa5885e69fba00bdbc6ffafbfa020300e549b208ee5ff1 \
