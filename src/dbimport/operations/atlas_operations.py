@@ -105,13 +105,7 @@ class AtlasOperation:
                 "Accept": "application/json",
             }
 
-            try:
-                self.atlas_timeout = get_settings().atlas.timeout
-            except ValueError:
-                self.atlas_timeout = 5
-                logging.warning(
-                    "Atlas timeout configuration does not contain a valid number. Setting the timeout to 5 seconds"
-                )
+            self.atlas_timeout = get_settings().atlas.timeout
 
             if not get_settings().atlas.ssl_verify:
                 self.atlas_ssl_verify = False

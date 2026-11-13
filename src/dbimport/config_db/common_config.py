@@ -189,10 +189,7 @@ class Config(metaclass=Singleton):
 
         self.aws_region = get_settings().aws.region
 
-        if get_settings().spark.dynamic_allocation:
-            self.spark_dynamic_allocation = True
-        else:
-            self.spark_dynamic_allocation = False
+        self.spark_dynamic_allocation = get_settings().spark.dynamic_allocation
 
         self.crypto = decryption.Crypto()
 

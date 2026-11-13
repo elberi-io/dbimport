@@ -79,10 +79,7 @@ def main(argv):
 
     logdir = get_settings().server.logdir
     pidfile = get_settings().server.pidfile
-    if get_settings().server.distcp_separate_logs:
-        dist_cp_separate_logs = True
-    else:
-        dist_cp_separate_logs = False
+    dist_cp_separate_logs = get_settings().server.distcp_separate_logs
 
     # Initiate the logging functions with the correct level
     if logging_level == logging.DEBUG and action == "noDaemon":

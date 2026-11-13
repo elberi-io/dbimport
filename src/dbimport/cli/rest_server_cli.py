@@ -171,7 +171,7 @@ def main(argv):
 
     options = {
         "bind": f"{rest_server_address}:{rest_server_port}",
-        "workers": int(rest_server_workers),
+        "workers": rest_server_workers,
         "worker_class": "uvicorn.workers.UvicornWorker",
         "loglevel": gunicorn_debug_level,
         "accesslog": gunicorn_access_log,

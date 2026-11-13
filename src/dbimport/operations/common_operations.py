@@ -66,10 +66,7 @@ class Operation(metaclass=Singleton):
         self.hive_print_messages = self.common_config.get_config_value(
             key="hive_print_messages"
         )
-        if get_settings().hive.use_ssl:
-            self.hive_use_ssl = True
-        else:
-            self.hive_use_ssl = False
+        self.hive_use_ssl = get_settings().hive.use_ssl
 
         # HDFS Settings
         self.hdfs_address = self.common_config.get_config_value(key="hdfs_address")

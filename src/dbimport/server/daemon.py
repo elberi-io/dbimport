@@ -204,10 +204,7 @@ class ServerDaemon(run.RunDaemon):
         self.atlas_discovery_thread.start()
 
         # Start the DistCP threads
-        if get_settings().server.distcp_separate_logs:
-            dist_cp_separate_logs = True
-        else:
-            dist_cp_separate_logs = False
+        dist_cp_separate_logs = get_settings().server.distcp_separate_logs
 
         dist_cp_objects = []
         dist_cp_threads = get_settings().server.distcp_threads
