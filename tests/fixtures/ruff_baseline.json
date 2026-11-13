@@ -1,32 +1,4 @@
 {
-  "bin/copy": {
-    "F841": 3,
-    "UP031": 1
-  },
-  "bin/deploy": {
-    "F841": 3
-  },
-  "bin/export": {
-    "E712": 46,
-    "UP031": 11
-  },
-  "bin/import": {
-    "E711": 7,
-    "E712": 251,
-    "F841": 1,
-    "UP031": 34
-  },
-  "bin/manage": {
-    "E711": 10,
-    "E712": 7,
-    "F841": 2
-  },
-  "bin/restServer": {
-    "F841": 1
-  },
-  "bin/setup": {
-    "F841": 3
-  },
   "docs/conf.py": {
     "E402": 1,
     "F401": 1
@@ -45,6 +17,34 @@
     "F841": 3,
     "G002": 1,
     "UP031": 4
+  },
+  "src/dbimport/cli/copy_cli.py": {
+    "F841": 3,
+    "UP031": 1
+  },
+  "src/dbimport/cli/deploy_cli.py": {
+    "F841": 3
+  },
+  "src/dbimport/cli/export_cli.py": {
+    "E712": 46,
+    "UP031": 11
+  },
+  "src/dbimport/cli/import_cli.py": {
+    "E711": 7,
+    "E712": 251,
+    "F841": 1,
+    "UP031": 34
+  },
+  "src/dbimport/cli/manage_cli.py": {
+    "E711": 10,
+    "E712": 7,
+    "F841": 2
+  },
+  "src/dbimport/cli/rest_server_cli.py": {
+    "F841": 1
+  },
+  "src/dbimport/cli/setup_cli.py": {
+    "F841": 3
   },
   "src/dbimport/common/spark_udf.py": {
     "E722": 1

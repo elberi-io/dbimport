@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements.  See the NOTICE file
 # distributed with this work for additional information
@@ -3116,5 +3115,9 @@ def main(argv):
         sys.exit(1)
 
 
-if __name__ == "__main__":
+def run() -> None:
     main(sys.argv[1:])
+
+
+if __name__ == "__main__":
+    run()

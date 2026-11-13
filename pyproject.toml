@@ -85,6 +85,16 @@ dependencies = [
     "websockets==12.0",
 ]
 
+[project.scripts]
+dbimport-copy = "dbimport.cli.copy_cli:run"
+dbimport-deploy = "dbimport.cli.deploy_cli:run"
+dbimport-export = "dbimport.cli.export_cli:run"
+dbimport-import = "dbimport.cli.import_cli:run"
+dbimport-main-server = "dbimport.cli.main_server_cli:run"
+dbimport-manage = "dbimport.cli.manage_cli:run"
+dbimport-rest-server = "dbimport.cli.rest_server_cli:run"
+dbimport-setup = "dbimport.cli.setup_cli:run"
+
 [build-system]
 # The package lives in src/dbimport; the launchers in bin/ import it.
 requires = ["uv_build>=0.13.7,<0.14"]
@@ -165,13 +175,13 @@ ignore = ["N815", "N999"]
 "src/dbimport/catalog/hive_direct.py" = ["B904", "E711", "E712", "E722", "F841", "G002", "UP031"]
 "src/dbimport/common/spark_udf.py" = ["E722"]
 "src/dbimport/common/spark_udf2.py" = ["E711", "E722"]
-"bin/copy" = ["F841", "UP031"]
-"bin/deploy" = ["F841"]
-"bin/export" = ["E712", "UP031"]
-"bin/import" = ["E711", "E712", "F841", "UP031"]
-"bin/manage" = ["E711", "E712", "F841"]
-"bin/restServer" = ["F841"]
-"bin/setup" = ["F841"]
+"src/dbimport/cli/copy_cli.py" = ["F841", "UP031"]
+"src/dbimport/cli/deploy_cli.py" = ["F841"]
+"src/dbimport/cli/export_cli.py" = ["E712", "UP031"]
+"src/dbimport/cli/import_cli.py" = ["E711", "E712", "F841", "UP031"]
+"src/dbimport/cli/manage_cli.py" = ["E711", "E712", "F841"]
+"src/dbimport/cli/rest_server_cli.py" = ["F841"]
+"src/dbimport/cli/setup_cli.py" = ["F841"]
 "src/dbimport/setup/database.py" = ["E711", "E722", "UP031"]
 "src/dbimport/source_schema/schema_reader.py" = ["E711", "E722", "G002", "UP031"]
 
@@ -189,6 +199,7 @@ strict = true
 enable_error_code = ["ignore-without-code"]
 # Calls from typed tests into the existing, untyped code are allowed.
 untyped_calls_exclude = [
+    "dbimport.cli",
     "dbimport.config_db",
     "dbimport.operations",
     "dbimport.schedule",
@@ -207,6 +218,7 @@ untyped_calls_exclude = [
 # on its own as __main__, because a module named copy would shadow the
 # standard library.
 module = [
+    "dbimport.cli.*",
     "dbimport.config_db.*",
     "dbimport.operations.*",
     "dbimport.schedule.*",
@@ -285,12 +297,13 @@ root_package = "dbimport"
 
 [[tool.importlinter.contracts]]
 # Current layering of the existing code, highest layer first. A package
-# may only import packages in the layers below it. server and setup do
-# not import each other.
+# may only import packages in the layers below it. cli holds the command
+# line programs; server and setup do not import each other.
 name = "Package layers"
 type = "layers"
 containers = ["dbimport"]
 layers = [
+    "cli",
     "server | setup",
     "schedule",
     "operations",

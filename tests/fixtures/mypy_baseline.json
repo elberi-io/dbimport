@@ -1,23 +1,23 @@
 {
-  "bin/export": {
-    "union-attr": 11
-  },
-  "bin/import": {
-    "union-attr": 201
-  },
-  "bin/manage": {
-    "arg-type": 6,
-    "union-attr": 13
-  },
-  "bin/setup": {
-    "attr-defined": 1
-  },
   "src/dbimport/catalog/glue.py": {
     "var-annotated": 1
   },
   "src/dbimport/catalog/hive_direct.py": {
     "attr-defined": 8,
     "misc": 15
+  },
+  "src/dbimport/cli/export_cli.py": {
+    "union-attr": 11
+  },
+  "src/dbimport/cli/import_cli.py": {
+    "union-attr": 201
+  },
+  "src/dbimport/cli/manage_cli.py": {
+    "arg-type": 6,
+    "union-attr": 13
+  },
+  "src/dbimport/cli/setup_cli.py": {
+    "attr-defined": 1
   },
   "src/dbimport/config_db/common_config.py": {
     "arg-type": 5,
