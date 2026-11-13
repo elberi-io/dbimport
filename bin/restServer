@@ -41,13 +41,12 @@ class StandaloneApplication(WSGIApplication):
         super().__init__()
 
     def load_config(self):
-        config = {
-            key: value
-            for key, value in self.options.items()
-            if key in self.cfg.settings and value is not None
-        }
-        for key, value in config.items():
-            self.cfg.set(key.lower(), value)
+        unknown = sorted(key for key in self.options if key not in self.cfg.settings)
+        if unknown:
+            raise ValueError(f"Unknown gunicorn settings: {', '.join(unknown)}")
+        for key, value in self.options.items():
+            if value is not None:
+                self.cfg.set(key.lower(), value)
 
 
 def print_help():
@@ -179,9 +178,9 @@ def main(argv):
         "accesslog": gunicorn_access_log,
         "errorlog": gunicorn_error_log,
         "daemon": daemon_mode,
-        "threaded": "True",
         "keyfile": rest_server_keyfile,
         "certfile": rest_server_certfile,
+        "control_socket_disable": True,
     }
 
     if action == "start":
