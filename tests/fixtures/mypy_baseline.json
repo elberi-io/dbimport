@@ -1,141 +1,4 @@
 {
-  "bin/DBImportConfig/common_config.py": {
-    "arg-type": 5,
-    "assignment": 11,
-    "attr-defined": 4,
-    "operator": 4,
-    "return-value": 2,
-    "union-attr": 7
-  },
-  "bin/DBImportConfig/configSchema.py": {
-    "misc": 38,
-    "valid-type": 38,
-    "var-annotated": 21
-  },
-  "bin/DBImportConfig/decryption.py": {
-    "arg-type": 2,
-    "assignment": 3,
-    "return-value": 3
-  },
-  "bin/DBImportConfig/export_config.py": {
-    "arg-type": 21,
-    "attr-defined": 1,
-    "operator": 13,
-    "union-attr": 127
-  },
-  "bin/DBImportConfig/export_stage.py": {
-    "assignment": 3
-  },
-  "bin/DBImportConfig/import_config.py": {
-    "arg-type": 35,
-    "assignment": 2,
-    "operator": 17,
-    "return-value": 2,
-    "union-attr": 116
-  },
-  "bin/DBImportConfig/import_stage.py": {
-    "assignment": 3,
-    "operator": 1
-  },
-  "bin/DBImportOperation/atlas_operations.py": {
-    "assignment": 8,
-    "attr-defined": 3,
-    "index": 48,
-    "misc": 1,
-    "union-attr": 2,
-    "var-annotated": 1
-  },
-  "bin/DBImportOperation/common_operations.py": {
-    "assignment": 1,
-    "attr-defined": 1,
-    "union-attr": 15
-  },
-  "bin/DBImportOperation/copy_operations.py": {
-    "assignment": 19,
-    "misc": 21,
-    "name-defined": 1,
-    "union-attr": 10
-  },
-  "bin/DBImportOperation/etl_operations.py": {
-    "union-attr": 1
-  },
-  "bin/DBImportOperation/export_operations.py": {
-    "arg-type": 4,
-    "attr-defined": 1,
-    "list-item": 4,
-    "misc": 1,
-    "operator": 7,
-    "union-attr": 97
-  },
-  "bin/DBImportOperation/hiveSchema.py": {
-    "misc": 11,
-    "valid-type": 11,
-    "var-annotated": 15
-  },
-  "bin/DBImportOperation/import_operations.py": {
-    "arg-type": 15,
-    "assignment": 11,
-    "attr-defined": 1,
-    "list-item": 6,
-    "misc": 5,
-    "operator": 13,
-    "union-attr": 824,
-    "var-annotated": 1
-  },
-  "bin/Schedule/Airflow.py": {
-    "arg-type": 5,
-    "assignment": 6,
-    "attr-defined": 2,
-    "type-var": 1,
-    "union-attr": 326,
-    "var-annotated": 2
-  },
-  "bin/Schedule/airflowSchema.py": {
-    "misc": 1,
-    "valid-type": 1
-  },
-  "bin/SchemaUpgrade/env.py": {
-    "arg-type": 1
-  },
-  "bin/SchemaUpgrade/versions/0cb3d65c99b0_version_0_71_001.py": {
-    "name-defined": 1
-  },
-  "bin/SchemaUpgrade/versions/82bb45ccaca2_version_0_69_001.py": {
-    "name-defined": 1
-  },
-  "bin/SchemaUpgrade/versions/9f02bade6c68_version_0_80_001.py": {
-    "name-defined": 1
-  },
-  "bin/Server/atlasDiscovery.py": {
-    "misc": 1,
-    "var-annotated": 3
-  },
-  "bin/Server/daemon.py": {
-    "assignment": 4,
-    "misc": 1,
-    "union-attr": 2,
-    "var-annotated": 2
-  },
-  "bin/Server/restServer.py": {
-    "assignment": 1,
-    "attr-defined": 4,
-    "index": 62,
-    "no-redef": 1
-  },
-  "bin/Server/restServerCalls.py": {
-    "arg-type": 3,
-    "assignment": 37,
-    "has-type": 4,
-    "name-defined": 5,
-    "used-before-def": 2
-  },
-  "bin/catalogService/glue.py": {
-    "var-annotated": 1
-  },
-  "bin/catalogService/hiveDirect.py": {
-    "attr-defined": 8,
-    "misc": 15
-  },
   "bin/export": {
     "union-attr": 11
   },
@@ -149,7 +12,144 @@
   "bin/setup": {
     "attr-defined": 1
   },
-  "bin/setupOperation/database.py": {
+  "src/dbimport/catalog/glue.py": {
+    "var-annotated": 1
+  },
+  "src/dbimport/catalog/hive_direct.py": {
+    "attr-defined": 8,
+    "misc": 15
+  },
+  "src/dbimport/config_db/common_config.py": {
+    "arg-type": 5,
+    "assignment": 11,
+    "attr-defined": 4,
+    "operator": 4,
+    "return-value": 2,
+    "union-attr": 7
+  },
+  "src/dbimport/config_db/config_schema.py": {
+    "misc": 38,
+    "valid-type": 38,
+    "var-annotated": 21
+  },
+  "src/dbimport/config_db/decryption.py": {
+    "arg-type": 2,
+    "assignment": 3,
+    "return-value": 3
+  },
+  "src/dbimport/config_db/export_config.py": {
+    "arg-type": 21,
+    "attr-defined": 1,
+    "operator": 13,
+    "union-attr": 127
+  },
+  "src/dbimport/config_db/export_stage.py": {
+    "assignment": 3
+  },
+  "src/dbimport/config_db/import_config.py": {
+    "arg-type": 35,
+    "assignment": 2,
+    "operator": 17,
+    "return-value": 2,
+    "union-attr": 116
+  },
+  "src/dbimport/config_db/import_stage.py": {
+    "assignment": 3,
+    "operator": 1
+  },
+  "src/dbimport/migrations/env.py": {
+    "arg-type": 1
+  },
+  "src/dbimport/migrations/versions/0cb3d65c99b0_version_0_71_001.py": {
+    "name-defined": 1
+  },
+  "src/dbimport/migrations/versions/82bb45ccaca2_version_0_69_001.py": {
+    "name-defined": 1
+  },
+  "src/dbimport/migrations/versions/9f02bade6c68_version_0_80_001.py": {
+    "name-defined": 1
+  },
+  "src/dbimport/operations/atlas_operations.py": {
+    "assignment": 8,
+    "attr-defined": 3,
+    "index": 48,
+    "misc": 1,
+    "union-attr": 2,
+    "var-annotated": 1
+  },
+  "src/dbimport/operations/common_operations.py": {
+    "assignment": 1,
+    "attr-defined": 1,
+    "union-attr": 15
+  },
+  "src/dbimport/operations/copy_operations.py": {
+    "assignment": 19,
+    "misc": 21,
+    "name-defined": 1,
+    "union-attr": 10
+  },
+  "src/dbimport/operations/etl_operations.py": {
+    "union-attr": 1
+  },
+  "src/dbimport/operations/export_operations.py": {
+    "arg-type": 4,
+    "attr-defined": 1,
+    "list-item": 4,
+    "misc": 1,
+    "operator": 7,
+    "union-attr": 97
+  },
+  "src/dbimport/operations/hive_schema.py": {
+    "misc": 11,
+    "valid-type": 11,
+    "var-annotated": 15
+  },
+  "src/dbimport/operations/import_operations.py": {
+    "arg-type": 15,
+    "assignment": 11,
+    "attr-defined": 1,
+    "list-item": 6,
+    "misc": 5,
+    "operator": 13,
+    "union-attr": 824,
+    "var-annotated": 1
+  },
+  "src/dbimport/schedule/airflow_dags.py": {
+    "arg-type": 5,
+    "assignment": 6,
+    "attr-defined": 2,
+    "type-var": 1,
+    "union-attr": 326,
+    "var-annotated": 2
+  },
+  "src/dbimport/schedule/airflow_schema.py": {
+    "misc": 1,
+    "valid-type": 1
+  },
+  "src/dbimport/server/atlas_discovery.py": {
+    "misc": 1,
+    "var-annotated": 3
+  },
+  "src/dbimport/server/daemon.py": {
+    "assignment": 4,
+    "misc": 1,
+    "union-attr": 2,
+    "var-annotated": 2
+  },
+  "src/dbimport/server/rest_server.py": {
+    "assignment": 1,
+    "attr-defined": 4,
+    "index": 62,
+    "no-redef": 1
+  },
+  "src/dbimport/server/rest_server_calls.py": {
+    "arg-type": 3,
+    "assignment": 37,
+    "has-type": 4,
+    "name-defined": 5,
+    "used-before-def": 2
+  },
+  "src/dbimport/setup/database.py": {
     "arg-type": 7,
     "assignment": 4,
     "index": 8,
@@ -157,7 +157,7 @@
     "str-bytes-safe": 3,
     "union-attr": 6
   },
-  "bin/sourceSchemaReader/schemaReader.py": {
+  "src/dbimport/source_schema/schema_reader.py": {
     "dict-item": 19
   }
 }

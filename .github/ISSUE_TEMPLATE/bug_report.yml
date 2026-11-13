@@ -44,7 +44,7 @@ body:
     id: version
     attributes:
       label: DBImport version
-      description: Output of `import --version` or the version in `bin/common/constants.py`.
+      description: Output of `import --version` or the version in `src/dbimport/common/constants.py`.
       placeholder: "1.00.006"
     validations:
       required: true

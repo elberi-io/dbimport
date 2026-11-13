@@ -246,7 +246,7 @@ sdist = { url = "https://files.pythonhosted.org/packages/fa/d8/65926b1d4eae0232d
 [[package]]
 name = "dbimport"
 version = "1.0.6"
-source = { virtual = "." }
+source = { editable = "." }
 dependencies = [
     { name = "alembic" },
     { name = "annotated-types" },

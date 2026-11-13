@@ -1,7 +1,7 @@
 import pytest
 
-from ConfigReader import configuration
-from DBImportConfig import decryption
+from dbimport.config_db import decryption
+from dbimport.config_reader import configuration
 
 
 @pytest.fixture

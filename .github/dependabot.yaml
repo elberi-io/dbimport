@@ -27,7 +27,7 @@ updates:
         versions: [">=0.28"]
 
   - package-ecosystem: "npm"
-    directory: "/bin/Server/html"
+    directory: "/ui"
     schedule:
       interval: daily
     cooldown:

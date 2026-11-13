@@ -3,7 +3,7 @@
 import pytest
 import sqlalchemy as sa
 
-from DBImportConfig import common_config, export_config
+from dbimport.config_db import common_config, export_config
 from tests.configdb import insert_row, set_driver_path
 
 DBALIAS = "test_target"

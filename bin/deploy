@@ -20,8 +20,8 @@ import getopt
 import logging
 import sys
 
-from common import constants as constant
-from DBImportOperation import copy_operations
+from dbimport.common import constants as constant
+from dbimport.operations import copy_operations
 
 
 def print_header():

@@ -1,7 +1,7 @@
 import tomllib
 from pathlib import Path
 
-from common import constants
+from dbimport.common import constants
 
 PYPROJECT = Path(__file__).resolve().parents[2] / "pyproject.toml"
 

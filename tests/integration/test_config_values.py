@@ -1,7 +1,7 @@
 import pytest
 import sqlalchemy as sa
 
-from DBImportConfig import common_config
+from dbimport.config_db import common_config
 
 
 def _set_config_row(conn: sa.Connection, key: str, column: str, value: object) -> None:

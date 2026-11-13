@@ -4,7 +4,7 @@ Each one is imported in a new Python process, so a name that is missing
 at import time, or an import that only works after another module was
 imported first, fails here. The launchers are loaded under a name other
 than "__main__", so only their imports and definitions run. An
-integration test because Server.restServer connects to the configuration
+integration test because dbimport.server.rest_server connects to the configuration
 database when it is imported.
 """
 
@@ -15,18 +15,20 @@ from pathlib import Path
 
 import pytest
 
-BIN_DIR = Path(__file__).resolve().parents[2] / "bin"
+REPO_ROOT = Path(__file__).resolve().parents[2]
+BIN_DIR = REPO_ROOT / "bin"
+PACKAGE_DIR = REPO_ROOT / "src" / "dbimport"
 # Alembic loads the migration scripts itself; they are not importable.
-NOT_IMPORTED = {"SchemaUpgrade"}
+NOT_IMPORTED = {"migrations"}
 PACKAGES = sorted(
     d.name
-    for d in BIN_DIR.iterdir()
+    for d in PACKAGE_DIR.iterdir()
     if d.is_dir() and d.name not in NOT_IMPORTED and any(d.glob("*.py"))
 )
 MODULES = [
-    f"{package}.{path.stem}"
+    f"dbimport.{package}.{path.stem}"
     for package in PACKAGES
-    for path in sorted((BIN_DIR / package).glob("*.py"))
+    for path in sorted((PACKAGE_DIR / package).glob("*.py"))
     if path.stem != "__init__"
 ]
 LAUNCHERS = sorted(
@@ -48,12 +50,11 @@ LOAD_LAUNCHER = (
 
 
 def _run(code: str, arg: str) -> subprocess.CompletedProcess[str]:
-    env = {**os.environ, "PYTHONPATH": str(BIN_DIR)}
     return subprocess.run(
         [sys.executable, "-c", code, arg],
         capture_output=True,
         text=True,
-        env=env,
+        env=os.environ.copy(),
         timeout=120,
         check=False,
     )

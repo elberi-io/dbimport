@@ -1,168 +1,4 @@
 {
-  "bin/ConfigReader/configuration.py": {
-    "B904": 1,
-    "E712": 1
-  },
-  "bin/DBImportConfig/common_config.py": {
-    "B904": 4,
-    "E711": 73,
-    "E712": 14,
-    "E722": 39,
-    "F841": 2,
-    "G002": 2,
-    "UP031": 54
-  },
-  "bin/DBImportConfig/decryption.py": {
-    "B904": 1,
-    "E711": 1
-  },
-  "bin/DBImportConfig/export_config.py": {
-    "E711": 23,
-    "E712": 22,
-    "F841": 7,
-    "G002": 41,
-    "UP031": 102
-  },
-  "bin/DBImportConfig/export_stage.py": {
-    "E711": 7,
-    "E712": 15,
-    "F841": 1,
-    "G002": 15,
-    "UP031": 41
-  },
-  "bin/DBImportConfig/import_config.py": {
-    "B904": 3,
-    "E711": 83,
-    "E712": 39,
-    "F841": 4,
-    "G002": 89,
-    "UP031": 144
-  },
-  "bin/DBImportConfig/import_stage.py": {
-    "E711": 7,
-    "E712": 15,
-    "F841": 1,
-    "G002": 15,
-    "UP031": 37
-  },
-  "bin/DBImportConfig/sendStatistics.py": {
-    "E711": 2,
-    "E712": 1,
-    "F841": 1
-  },
-  "bin/DBImportOperation/atlas_operations.py": {
-    "B904": 11,
-    "E711": 40,
-    "E712": 16,
-    "E722": 4,
-    "F841": 23,
-    "G002": 41,
-    "UP031": 87
-  },
-  "bin/DBImportOperation/common_operations.py": {
-    "B904": 2,
-    "E711": 12,
-    "E712": 17,
-    "E722": 4,
-    "G002": 4,
-    "UP031": 32
-  },
-  "bin/DBImportOperation/copy_operations.py": {
-    "E711": 23,
-    "E712": 27,
-    "E722": 3,
-    "F841": 9,
-    "G002": 24,
-    "UP031": 58
-  },
-  "bin/DBImportOperation/etl_operations.py": {
-    "E711": 18,
-    "E712": 28,
-    "E722": 1,
-    "F841": 2,
-    "G002": 1,
-    "UP031": 120
-  },
-  "bin/DBImportOperation/export_operations.py": {
-    "E711": 33,
-    "E712": 29,
-    "E722": 16,
-    "F841": 2,
-    "G002": 8,
-    "UP031": 49
-  },
-  "bin/DBImportOperation/import_operations.py": {
-    "B904": 3,
-    "B905": 1,
-    "E711": 59,
-    "E712": 126,
-    "E722": 17,
-    "F841": 6,
-    "G002": 20,
-    "UP031": 167
-  },
-  "bin/Schedule/Airflow.py": {
-    "B904": 6,
-    "E711": 40,
-    "E712": 24,
-    "E722": 5,
-    "F841": 15,
-    "G002": 16,
-    "UP031": 217
-  },
-  "bin/Server/atlasDiscovery.py": {
-    "E711": 4,
-    "E712": 6,
-    "E722": 2,
-    "F841": 3,
-    "G002": 6,
-    "UP031": 6
-  },
-  "bin/Server/daemon.py": {
-    "E711": 5,
-    "E712": 2,
-    "E722": 3,
-    "F841": 3,
-    "G002": 3,
-    "UP031": 6
-  },
-  "bin/Server/restServer.py": {
-    "B904": 1,
-    "E711": 8,
-    "E712": 2,
-    "N803": 21
-  },
-  "bin/Server/restServerCalls.py": {
-    "B904": 3,
-    "E711": 50,
-    "E712": 17,
-    "E722": 1,
-    "F841": 59,
-    "G002": 8,
-    "UP031": 42
-  },
-  "bin/catalogService/glue.py": {
-    "B904": 5,
-    "E712": 3,
-    "F841": 2,
-    "UP031": 1
-  },
-  "bin/catalogService/hiveDirect.py": {
-    "B904": 5,
-    "E711": 19,
-    "E712": 8,
-    "E722": 1,
-    "F841": 3,
-    "G002": 1,
-    "UP031": 4
-  },
-  "bin/common/sparkUDF.py": {
-    "E722": 1
-  },
-  "bin/common/sparkUDF2.py": {
-    "E711": 3,
-    "E722": 1
-  },
   "bin/copy": {
     "F841": 3,
     "UP031": 1
@@ -191,19 +27,183 @@
   "bin/setup": {
     "F841": 3
   },
-  "bin/setupOperation/database.py": {
+  "docs/conf.py": {
+    "E402": 1,
+    "F401": 1
+  },
+  "src/dbimport/catalog/glue.py": {
+    "B904": 5,
+    "E712": 3,
+    "F841": 2,
+    "UP031": 1
+  },
+  "src/dbimport/catalog/hive_direct.py": {
+    "B904": 5,
+    "E711": 19,
+    "E712": 8,
+    "E722": 1,
+    "F841": 3,
+    "G002": 1,
+    "UP031": 4
+  },
+  "src/dbimport/common/spark_udf.py": {
+    "E722": 1
+  },
+  "src/dbimport/common/spark_udf2.py": {
+    "E711": 3,
+    "E722": 1
+  },
+  "src/dbimport/config_db/common_config.py": {
+    "B904": 4,
+    "E711": 73,
+    "E712": 14,
+    "E722": 39,
+    "F841": 2,
+    "G002": 2,
+    "UP031": 54
+  },
+  "src/dbimport/config_db/decryption.py": {
+    "B904": 1,
+    "E711": 1
+  },
+  "src/dbimport/config_db/export_config.py": {
+    "E711": 23,
+    "E712": 22,
+    "F841": 7,
+    "G002": 41,
+    "UP031": 102
+  },
+  "src/dbimport/config_db/export_stage.py": {
+    "E711": 7,
+    "E712": 15,
+    "F841": 1,
+    "G002": 15,
+    "UP031": 41
+  },
+  "src/dbimport/config_db/import_config.py": {
+    "B904": 3,
+    "E711": 83,
+    "E712": 39,
+    "F841": 4,
+    "G002": 89,
+    "UP031": 144
+  },
+  "src/dbimport/config_db/import_stage.py": {
+    "E711": 7,
+    "E712": 15,
+    "F841": 1,
+    "G002": 15,
+    "UP031": 37
+  },
+  "src/dbimport/config_db/send_statistics.py": {
+    "E711": 2,
+    "E712": 1,
+    "F841": 1
+  },
+  "src/dbimport/config_reader/configuration.py": {
+    "B904": 1,
+    "E712": 1
+  },
+  "src/dbimport/operations/atlas_operations.py": {
+    "B904": 11,
+    "E711": 40,
+    "E712": 16,
+    "E722": 4,
+    "F841": 23,
+    "G002": 41,
+    "UP031": 87
+  },
+  "src/dbimport/operations/common_operations.py": {
+    "B904": 2,
+    "E711": 12,
+    "E712": 17,
+    "E722": 4,
+    "G002": 4,
+    "UP031": 32
+  },
+  "src/dbimport/operations/copy_operations.py": {
+    "E711": 23,
+    "E712": 27,
+    "E722": 3,
+    "F841": 9,
+    "G002": 24,
+    "UP031": 58
+  },
+  "src/dbimport/operations/etl_operations.py": {
+    "E711": 18,
+    "E712": 28,
+    "E722": 1,
+    "F841": 2,
+    "G002": 1,
+    "UP031": 120
+  },
+  "src/dbimport/operations/export_operations.py": {
+    "E711": 33,
+    "E712": 29,
+    "E722": 16,
+    "F841": 2,
+    "G002": 8,
+    "UP031": 49
+  },
+  "src/dbimport/operations/import_operations.py": {
+    "B904": 3,
+    "B905": 1,
+    "E711": 59,
+    "E712": 126,
+    "E722": 17,
+    "F841": 6,
+    "G002": 20,
+    "UP031": 167
+  },
+  "src/dbimport/schedule/airflow_dags.py": {
+    "B904": 6,
+    "E711": 40,
+    "E712": 24,
+    "E722": 5,
+    "F841": 15,
+    "G002": 16,
+    "UP031": 217
+  },
+  "src/dbimport/server/atlas_discovery.py": {
+    "E711": 4,
+    "E712": 6,
+    "E722": 2,
+    "F841": 3,
+    "G002": 6,
+    "UP031": 6
+  },
+  "src/dbimport/server/daemon.py": {
+    "E711": 5,
+    "E712": 2,
+    "E722": 3,
+    "F841": 3,
+    "G002": 3,
+    "UP031": 6
+  },
+  "src/dbimport/server/rest_server.py": {
+    "B904": 1,
+    "E711": 8,
+    "E712": 2,
+    "N803": 21
+  },
+  "src/dbimport/server/rest_server_calls.py": {
+    "B904": 3,
+    "E711": 50,
+    "E712": 17,
+    "E722": 1,
+    "F841": 59,
+    "G002": 8,
+    "UP031": 42
+  },
+  "src/dbimport/setup/database.py": {
     "E711": 1,
     "E722": 1,
     "UP031": 3
   },
-  "bin/sourceSchemaReader/schemaReader.py": {
+  "src/dbimport/source_schema/schema_reader.py": {
     "E711": 115,
     "E722": 6,
     "G002": 26,
     "UP031": 172
-  },
-  "docs/conf.py": {
-    "E402": 1,
-    "F401": 1
   }
 }

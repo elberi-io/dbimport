@@ -1,4 +1,4 @@
-"""Basic behaviour of the REST API in Server.restServer."""
+"""Basic behaviour of the REST API in dbimport.server.rest_server."""
 
 import importlib
 import sys
@@ -9,7 +9,7 @@ import pytest
 import sqlalchemy as sa
 from fastapi.testclient import TestClient
 
-from common import constants
+from dbimport.common import constants
 from tests.configdb import insert_row
 
 USERNAME = "tester"
@@ -18,13 +18,13 @@ PASSWORD = "secret"
 
 @pytest.fixture
 def rest_server(clean_config_db: None) -> ModuleType:
-    # Imported here, not at module level: Server.restServer connects to the
+    # Imported here, not at module level: dbimport.server.rest_server connects to the
     # configuration database when it is imported. Reloaded for every later
     # test, because its module-level objects keep the DBImport singletons
     # that are closed after each test.
-    module = sys.modules.get("Server.restServer")
+    module = sys.modules.get("dbimport.server.rest_server")
     if module is None:
-        return importlib.import_module("Server.restServer")
+        return importlib.import_module("dbimport.server.rest_server")
     return importlib.reload(module)
 
 

@@ -25,13 +25,13 @@ import sys
 from gunicorn import glogging
 from gunicorn.app.wsgiapp import WSGIApplication
 
-from common import constants as constant
-from ConfigReader import configuration
+from dbimport.common import constants as constant
+from dbimport.config_reader import configuration
 
-# Kept although unused: importing Server.restServer connects to the
+# Kept although unused: importing dbimport.server.rest_server connects to the
 # configuration database. Without it, the gunicorn workers would make
 # that connection after they fork.
-from Server import restServer  # noqa: F401
+from dbimport.server import rest_server  # noqa: F401
 
 
 class StandaloneApplication(WSGIApplication):
@@ -185,10 +185,10 @@ def main(argv):
 
     if action == "start":
         print("Starting DBImport REST Server")
-        StandaloneApplication("Server.restServer:app", options).run()
+        StandaloneApplication("dbimport.server.rest_server:app", options).run()
 
     elif action == "noDaemon":
-        StandaloneApplication("Server.restServer:app", options).run()
+        StandaloneApplication("dbimport.server.rest_server:app", options).run()
 
     elif action == "stop":
         print("Stopping DBImport REST Server")
@@ -210,7 +210,7 @@ def main(argv):
             os.kill(pid, signal.SIGTERM)
 
         print("Starting DBImport REST Server")
-        StandaloneApplication("Server.restServer:app", options).run()
+        StandaloneApplication("dbimport.server.rest_server:app", options).run()
 
     elif action == "status":
         processes = os.popen('ps ax|grep "/restServer start$"|grep -v grep').read()

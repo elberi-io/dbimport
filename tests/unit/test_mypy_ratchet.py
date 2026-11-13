@@ -1,6 +1,6 @@
-"""The mypy errors in bin/ can only go down.
+"""The mypy errors in the dbimport package and the launchers can only go down.
 
-The existing code in bin/ (packages and launchers) has almost no type
+The existing code (src/dbimport and the bin/ launchers) has almost no type
 annotations. mypy checks it with the settings in pyproject.toml (#202):
 the relaxed override, or strict for the packages that are already typed.
 The errors per module and error code must equal
@@ -59,7 +59,7 @@ def _mypy_errors() -> Findings:
         path for path in LAUNCHERS if Path(path).name in sys.stdlib_module_names
     ]
     others = [path for path in LAUNCHERS if path not in shadowing]
-    errors = _run_mypy("--scripts-are-modules", "bin", *others)
+    errors = _run_mypy("--scripts-are-modules", "src/dbimport", *others)
     for path in shadowing:
         errors += _run_mypy(path)
     return errors
@@ -83,7 +83,7 @@ def _read_baseline() -> Findings:
     )
 
 
-def test_mypy_errors_in_bin_match_baseline() -> None:
+def test_mypy_errors_match_baseline() -> None:
     current = _mypy_errors()
     if UPDATE_BASELINE:
         _write_baseline(current)

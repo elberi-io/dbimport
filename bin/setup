@@ -20,9 +20,9 @@ import getopt
 import logging
 import sys
 
-from common import constants as constant
-from setupOperation import database as database_operations
-from setupOperation import webServerOperations
+from dbimport.common import constants as constant
+from dbimport.setup import database as database_operations
+from dbimport.setup import web_server_operations
 
 
 def print_help():
@@ -159,7 +159,7 @@ def main(argv):
         db_operations.generate_schema_rst()
 
     if operation == "buildHTML":
-        web_operations = webServerOperations.WebServerOperations()
+        web_operations = web_server_operations.WebServerOperations()
         web_operations.build_html()
 
 

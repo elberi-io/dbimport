@@ -21,17 +21,21 @@ import json
 import logging
 import sys
 
-from common import constants as constant
-from common.Exceptions import DaemonExitError, InvalidConfigurationError, SQLError
-from DBImportConfig import common_config, import_config
-from DBImportOperation import (
+from dbimport.common import constants as constant
+from dbimport.common.exceptions import (
+    DaemonExitError,
+    InvalidConfigurationError,
+    SQLError,
+)
+from dbimport.config_db import common_config, import_config
+from dbimport.operations import (
     atlas_operations,
     common_operations,
     copy_operations,
     export_operations,
     import_operations,
 )
-from Schedule import Airflow
+from dbimport.schedule import airflow_dags
 
 
 def print_header():
@@ -830,7 +834,7 @@ def main(argv):
         if operation == "checkAirflowExecution":
             common_operation = common_operations.Operation()
             common_operation.common_config.check_kerberos_ticket()
-            airflow = Airflow.Initialize()
+            airflow = airflow_dags.Initialize()
             airflow.check_execution()
             airflow.send_json(airflow_dag=airflow_dag, status="started")
             airflow.common_config.remove_temporary_files()
@@ -838,12 +842,12 @@ def main(argv):
         if operation == "sendAirflowStopMessage":
             common_operation = common_operations.Operation()
             common_operation.common_config.check_kerberos_ticket()
-            airflow = Airflow.Initialize()
+            airflow = airflow_dags.Initialize()
             airflow.send_json(airflow_dag=airflow_dag, status="finished")
             airflow.common_config.remove_temporary_files()
 
         if operation == "airflowGenerate":
-            airflow = Airflow.Initialize()
+            airflow = airflow_dags.Initialize()
             if not airflow_auto_dag_only and airflow_dag is None:
                 print(
                     "You havent specified --airflowAutoDAGonly or a name of a DAG. That means that you want to generate ALL Airflow DAG"

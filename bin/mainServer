@@ -23,9 +23,9 @@ import sys
 
 import psutil
 
-from common import constants as constant
-from ConfigReader import configuration
-from Server import daemon
+from dbimport.common import constants as constant
+from dbimport.config_reader import configuration
+from dbimport.server import daemon
 
 
 def print_help():
