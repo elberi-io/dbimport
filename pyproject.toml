@@ -135,11 +135,10 @@ src = ["src", "."]
 # that are no longer needed, so a suppression is removed together with
 # the bug it hides.
 select = ["B", "E4", "E7", "E9", "F", "G", "I", "N", "UP", "W605", "RUF010", "RUF100"]
-# Names that are contracts wait for the refactoring (#202): class-level
-# fields, which include the REST model fields and so the JSON field
-# names of the API (N815), and module and package names, which are
-# import paths (N999).
-ignore = ["N815", "N999"]
+# Class-level fields wait for the refactoring (#238): they include the ORM
+# attributes and the REST model fields, which are the JSON field names of
+# the API (N815).
+ignore = ["N815"]
 
 [tool.ruff.lint.per-file-ignores]
 # The Sphinx configuration is outside #159: it sets sys.path before its
