@@ -106,9 +106,13 @@ class Initialize:
 
         if self.airflow_mode == "default" and self.create_pools_with_tasks == False:
             # Establish a SQLAlchemy connection to the Airflow database
-            airflow_connect_str = (
-                get_settings().airflow.airflow_alchemy_conn.get_secret_value()
-            )
+            airflow_alchemy_conn = get_settings().airflow.airflow_alchemy_conn
+            if airflow_alchemy_conn is None:
+                print(
+                    "[Airflow] 'airflow_alchemy_conn' Key was not found in configuration file. Please check settings"
+                )
+                sys.exit(1)
+            airflow_connect_str = airflow_alchemy_conn.get_secret_value()
             try:
                 self.airflow_db = sa.create_engine(
                     airflow_connect_str, echo=self.debug_log_level

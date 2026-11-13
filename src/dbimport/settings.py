@@ -17,10 +17,12 @@
 """The DBImport configuration file as typed settings (ADR-0002).
 
 The INI file is `DBIMPORT_CONFIGFILE`, else
-`$DBIMPORT_HOME/conf/dbimport.cfg.dist`. An environment variable
-`DBIMPORT_<SECTION>__<KEY>` overrides a value from the file. The file is
-read and validated on the first `get_settings()` call; a missing or
-invalid value ends the program with one message per problem.
+`$DBIMPORT_HOME/conf/dbimport.cfg.dist`, read as configparser always
+read it (`%%` is a literal `%`). A blank value of an optional key means
+the key is not set. An environment variable `DBIMPORT_<SECTION>__<KEY>`
+overrides a value from the file. The file is read and validated on the
+first `get_settings()` call; a missing or invalid value ends the program
+with one message per problem.
 """
 
 import configparser
@@ -43,6 +45,7 @@ from pydantic_settings import (
     BaseSettings,
     PydanticBaseSettingsSource,
     SettingsConfigDict,
+    SettingsError,
 )
 
 
@@ -120,19 +123,22 @@ class SqoopSettings(BaseModel):
 
 class AirflowSettings(BaseModel):
     airflow_mode: Literal["default", "aws_mwaa"] = "default"
-    airflow_alchemy_conn: SecretStr
+    # Only needed for the Airflow database integration, which checks it.
+    airflow_alchemy_conn: SecretStr | None = None
 
 
 class AtlasSettings(BaseModel):
-    address: str
-    timeout: int
-    ssl_verify: bool
-    ssl_cert_path: str
-    authentication_type: Annotated[
-        Literal["kerberos", "username"], BeforeValidator(_lower)
-    ]
-    username: str
-    password: SecretStr
+    # Only read when Atlas is used (address set); the defaults are the
+    # values the code used before when a key was missing or invalid.
+    address: str = ""
+    timeout: int = 5
+    ssl_verify: bool = True
+    ssl_cert_path: str = ""
+    authentication_type: (
+        Annotated[Literal["kerberos", "username"], BeforeValidator(_lower)] | None
+    ) = None
+    username: str = ""
+    password: SecretStr = SecretStr("")
 
 
 class CredentialsSettings(BaseModel):
@@ -158,16 +164,53 @@ class AnonymizationSettings(BaseModel):
     seed: SecretStr
 
 
+class ConfigFileError(Exception):
+    """The configuration file cannot be read; `problems` lists why (no values)."""
+
+    def __init__(self, problems: list[str]) -> None:
+        super().__init__("; ".join(problems))
+        self.problems = problems
+
+
 class _IniSource(PydanticBaseSettingsSource):
-    """Sections and keys of the INI file, both lowercased (keys as configparser does)."""
+    """Sections and keys of the INI file, both lowercased (keys as configparser does).
+
+    A blank value of a key that has a default is left out, so the default
+    applies.
+    """
 
     def __init__(self, settings_cls: type[BaseSettings], path: Path) -> None:
         super().__init__(settings_cls)
-        parser = configparser.ConfigParser(interpolation=None)
-        parser.read(path)
-        self._data = {
-            section.lower(): dict(parser[section]) for section in parser.sections()
-        }
+        parser = configparser.ConfigParser()
+        try:
+            with path.open(encoding="utf-8") as config_file:
+                parser.read_file(config_file)
+        except (OSError, UnicodeDecodeError, configparser.Error) as error:
+            raise ConfigFileError([f"{path}: {type(error).__name__}"]) from error
+        problems = []
+        self._data: dict[str, dict[str, str]] = {}
+        for section in parser.sections():
+            name = section.lower()
+            field = settings_cls.model_fields.get(name)
+            model = field.annotation if field else None
+            keys = (
+                model.model_fields
+                if isinstance(model, type) and issubclass(model, BaseModel)
+                else {}
+            )
+            values = {}
+            for key in parser[section]:
+                try:
+                    value = parser.get(section, key)
+                except configparser.InterpolationError:
+                    problems.append(f"[{section}] {key}: a '%' must be written as '%%'")
+                    continue
+                if value.strip() == "" and key in keys and not keys[key].is_required():
+                    continue
+                values[key] = value
+            self._data[name] = values
+        if problems:
+            raise ConfigFileError(problems)
 
     def get_field_value(
         self, field: FieldInfo, field_name: str
@@ -195,8 +238,8 @@ class Settings(BaseSettings):
     impala: ImpalaSettings = ImpalaSettings()
     spark: SparkSettings
     sqoop: SqoopSettings
-    airflow: AirflowSettings
-    atlas: AtlasSettings
+    airflow: AirflowSettings = AirflowSettings()
+    atlas: AtlasSettings = AtlasSettings()
     credentials: CredentialsSettings
     server: ServerSettings
     anonymization: AnonymizationSettings
@@ -226,7 +269,7 @@ def config_file_path() -> Path:
             os.path.join(os.environ["DBIMPORT_HOME"], "conf", "dbimport.cfg.dist"),
         )
     )
-    if not path.exists():
+    if not path.is_file():
         print(f"Error: Configuration file can't be found on '{path}'")
         sys.exit(1)
     return path
@@ -266,7 +309,11 @@ def _problems(error: ValidationError) -> list[str]:
 
 
 def load_settings(path: Path | None = None) -> Settings:
-    """Read and validate the configuration file; raises ValidationError."""
+    """Read and validate the configuration file.
+
+    Raises ConfigFileError, ValidationError, or SettingsError for a value
+    from the environment that cannot be parsed.
+    """
     # The other fields come from the file and the environment, which mypy
     # does not see; pydantic checks them.
     return Settings(config_file=path or config_file_path())  # type: ignore[call-arg]
@@ -278,7 +325,12 @@ def get_settings() -> Settings:
     try:
         return load_settings()
     except ValidationError as error:
-        print("Error: The configuration file is not valid:")
-        for line in _problems(error):
-            print(f"  {line}")
-        sys.exit(1)
+        problems = _problems(error)
+    except ConfigFileError as error:
+        problems = error.problems
+    except SettingsError as error:
+        problems = [str(error)]
+    print("Error: The configuration file is not valid:")
+    for line in problems:
+        print(f"  {line}")
+    sys.exit(1)

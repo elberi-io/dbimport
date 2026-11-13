@@ -9,7 +9,7 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
-from dbimport.settings import load_settings
+from dbimport.settings import ConfigFileError, load_settings
 
 TEMPLATE = Path(__file__).resolve().parents[1] / "fixtures" / "dbimport.test.cfg"
 
@@ -132,3 +132,56 @@ def test_get_settings_invalid_file_exits_without_printing_values(
     assert "[Database] mysql_port" in result.stdout
     assert "[Anonymization] seed" in result.stdout
     assert "hidden-value" not in result.stdout + result.stderr
+
+
+def test_load_settings_double_percent_is_one_percent(tmp_path: Path) -> None:
+    settings = load_settings(_config(tmp_path, mysql_password="ab%%cd"))
+
+    assert settings.database.mysql_password.get_secret_value() == "ab%cd"
+
+
+def test_load_settings_single_percent_fails_without_the_value(tmp_path: Path) -> None:
+    with pytest.raises(ConfigFileError) as error:
+        load_settings(_config(tmp_path, mysql_password="ab%cd"))
+
+    assert error.value.problems == [
+        "[Database] mysql_password: a '%' must be written as '%%'"
+    ]
+    assert "ab%cd" not in str(error.value)
+
+
+@pytest.mark.parametrize(
+    ("key", "attribute", "default"),
+    [
+        ("spark_major_version", ("spark", "spark_major_version"), 3),
+        ("region", ("aws", "region"), None),
+        ("aws_secret_name", ("database", "aws_secret_name"), None),
+        ("timeout", ("atlas", "timeout"), 5),
+        ("authentication_type", ("atlas", "authentication_type"), None),
+    ],
+)
+def test_load_settings_blank_optional_key_gets_default(
+    tmp_path: Path, key: str, attribute: tuple[str, str], default: object
+) -> None:
+    settings = load_settings(_config(tmp_path, **{key: ""}))
+
+    assert getattr(getattr(settings, attribute[0]), attribute[1]) == default
+
+
+def test_load_settings_without_atlas_and_airflow_connection_uses_defaults(
+    tmp_path: Path,
+) -> None:
+    text = _config(tmp_path).read_text()
+    text = re.sub(r"(?ms)^\[Atlas\].*?(?=^\[)", "", text)
+    path = tmp_path / "no_atlas.cfg"
+    path.write_text(re.sub(r"(?m)^airflow_alchemy_conn\s*=.*$\n?", "", text))
+
+    settings = load_settings(path)
+
+    assert settings.atlas.address == ""
+    assert settings.airflow.airflow_alchemy_conn is None
+
+
+def test_load_settings_unreadable_file_fails_with_file_error(tmp_path: Path) -> None:
+    with pytest.raises(ConfigFileError, match="IsADirectoryError"):
+        load_settings(tmp_path)

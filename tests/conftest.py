@@ -61,6 +61,12 @@ def pytest_configure(config: pytest.Config) -> None:
     config.stash[_WORKDIR_KEY] = workdir
     os.environ["DBIMPORT_HOME"] = str(REPO_ROOT)
     os.environ["DBIMPORT_CONFIGFILE"] = str(_write_test_config(workdir))
+    # Settings overrides from the developer's shell (DBIMPORT_<SECTION>__<KEY>)
+    # would point the tests at another database or change their values.
+    for name in [
+        n for n in os.environ if n.upper().startswith("DBIMPORT_") and "__" in n
+    ]:
+        del os.environ[name]
 
 
 def pytest_unconfigure(config: pytest.Config) -> None:
