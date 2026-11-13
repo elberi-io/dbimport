@@ -45,8 +45,11 @@ UI in `ui/` and other files outside the package.
   (N999); git keeps the history of moved files.
 - Negative: installing from the tarball needs a second step (`pip
   install --no-deps .`), which downloads `uv_build`; hosts without
-  internet access need its wheel or a built DBImport wheel. Import paths
-  changed for anyone importing DBImport modules directly.
+  internet access need its wheel or a built DBImport wheel. The code runs
+  from the environment, not from the unpacked files: an upgrade installs
+  the package again, and each installation needs its own virtual
+  environment. Import paths changed for anyone importing DBImport modules
+  directly.
 - Follow-up: the `bin/` wrappers stay until the CLI is rebuilt (later
   phase) and the DAGs are regenerated with new commands; regrouping the
   packages into the target layers is phase 2 work.
