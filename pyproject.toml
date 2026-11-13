@@ -153,7 +153,6 @@ ignore = ["N815"]
 # the module is refactored, and the module's line goes. A
 # module not listed here must pass the full set. Known bugs are marked
 # on their line with noqa and TODO(#issue) instead.
-"src/dbimport/config_reader/configuration.py" = ["B904", "E712"]
 "src/dbimport/config_db/common_config.py" = ["B904", "E711", "E712", "E722", "F841", "G002", "UP031"]
 "src/dbimport/config_db/decryption.py" = ["B904", "E711"]
 "src/dbimport/config_db/export_config.py" = ["E711", "E712", "F841", "G002", "UP031"]
@@ -193,7 +192,7 @@ exclude = ["docs/**"]
 
 [tool.mypy]
 python_version = "3.11"
-files = ["tests", "src/dbimport/common", "src/dbimport/config_reader", "src/dbimport/settings.py"]
+files = ["tests", "src/dbimport/common", "src/dbimport/settings.py"]
 mypy_path = ["src", "."]
 explicit_package_bases = true
 strict = true
@@ -311,7 +310,7 @@ layers = [
     "catalog",
     "config_db",
     "source_schema",
-    "config_reader | settings",
+    "settings",
     "common",
 ]
 ignore_imports = [
