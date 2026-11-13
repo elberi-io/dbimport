@@ -43,7 +43,7 @@ from dbimport.common.exceptions import (
 )
 from dbimport.common.singleton import Singleton
 from dbimport.config_db import decryption as decryption
-from dbimport.config_reader import configuration
+from dbimport.settings import get_settings
 from dbimport.source_schema import schema_reader
 
 
@@ -165,83 +165,31 @@ class Config(metaclass=Singleton):
         if logging.root.level == 10:  # DEBUG
             self.debug_log_level = True
 
-        self.kerberos_principal = configuration.get("Kerberos", "principal")
-        self.kerberos_keytab = configuration.get("Kerberos", "keytab")
+        self.kerberos_principal = get_settings().kerberos.principal
+        self.kerberos_keytab = get_settings().kerberos.keytab
 
-        try:
-            self.spark_major_version = int(
-                configuration.get("Spark", "spark_major_version", exit_on_error=False)
-            )
-        except InvalidConfigurationError:
-            logging.warning(
-                "Configuration option 'spark_major_version' under [Spark] in the configuration file is missing. Please update your config file"
-            )
-            self.spark_major_version = 3
-        except ValueError:
-            logging.warning(
-                "Configuration option 'spark_major_version' under [Spark] in the configuration file must be an integer. Please update your config file"
-            )
-            self.spark_major_version = 3
+        self.spark_major_version = get_settings().spark.spark_major_version
+        self.spark_log_level = get_settings().spark.spark_log_level
+        self.spark_packages = get_settings().spark.packages
 
-        if self.spark_major_version < 2 or self.spark_major_version > 4:
-            logging.error("Only Spark version 2, 3 and 4 is supported.")
-            sys.exit(1)
+        self.spark_path_append = get_settings().spark.path_append
+        self.spark_jar_files = get_settings().spark.jar_files
+        self.spark_py_files = get_settings().spark.py_files
+        self.spark_master = get_settings().spark.master
+        self.spark_deploy_mode = get_settings().spark.deploymode
+        self.spark_yarn_queue = get_settings().spark.yarnqueue
+        self.spark_executor_memory = get_settings().spark.executor_memory
+        self.spark_hive_library = get_settings().spark.hive_library
 
-        try:
-            self.spark_log_level = configuration.get(
-                "Spark", "spark_log_level", exit_on_error=False
-            )
-        except InvalidConfigurationError:
-            pass
+        self.spark_s3_access_to_ozone = get_settings().spark.s3_access_to_ozone
+        self.spark_s3_access_key_id = get_settings().spark.s3_access_key_id
+        self.spark_s3_secret_access_key = (
+            get_settings().spark.s3_secret_access_key.get_secret_value()
+        )
 
-        try:
-            self.spark_packages = configuration.get(
-                "Spark", "packages", exit_on_error=False
-            )
-        except InvalidConfigurationError:
-            logging.warning(
-                "Configuration option 'packages' under [Spark] in the configuration file is missing. Please update your config file"
-            )
+        self.aws_region = get_settings().aws.region
 
-        self.spark_path_append = configuration.get("Spark", "path_append")
-        self.spark_jar_files = configuration.get("Spark", "jar_files")
-        self.spark_py_files = configuration.get("Spark", "py_files")
-        self.spark_master = configuration.get("Spark", "master")
-        self.spark_deploy_mode = configuration.get("Spark", "deployMode")
-        self.spark_yarn_queue = configuration.get("Spark", "yarnqueue")
-        self.spark_executor_memory = configuration.get("Spark", "executor_memory")
-        self.spark_hive_library = configuration.get("Spark", "hive_library")
-
-        try:
-            if (
-                configuration.get(
-                    "Spark", "s3_access_to_ozone", exit_on_error=False
-                ).lower()
-                == "true"
-            ):
-                self.spark_s3_access_to_ozone = True
-            else:
-                self.spark_s3_access_to_ozone = False
-            self.spark_s3_access_key_id = configuration.get("Spark", "s3_access_key_id")
-            self.spark_s3_secret_access_key = configuration.get(
-                "Spark", "s3_secret_access_key"
-            )
-
-        except InvalidConfigurationError:
-            self.spark_s3_access_to_ozone = False
-            self.spark_s3_access_key_id = ""
-            self.spark_s3_secret_access_key = ""
-
-        self.aws_region = None
-        try:
-            self.aws_region = configuration.get("AWS", "region", exit_on_error=False)
-        except InvalidConfigurationError:
-            pass
-
-        if configuration.get("Spark", "dynamic_allocation").lower() == "true":
-            self.spark_dynamic_allocation = True
-        else:
-            self.spark_dynamic_allocation = False
+        self.spark_dynamic_allocation = get_settings().spark.dynamic_allocation
 
         self.crypto = decryption.Crypto()
 
@@ -290,25 +238,19 @@ class Config(metaclass=Singleton):
             # This information is already fetched from the configuration. Just return the fetched values
             return self.mysql_connection_details
 
-        mysql_hostname = configuration.get("Database", "mysql_hostname")
-        mysql_port = configuration.get("Database", "mysql_port")
-        mysql_database = configuration.get("Database", "mysql_database")
-        mysql_username = configuration.get("Database", "mysql_username")
-        mysql_password = configuration.get("Database", "mysql_password")
+        mysql_hostname = get_settings().database.mysql_hostname
+        mysql_port = get_settings().database.mysql_port
+        mysql_database = get_settings().database.mysql_database
+        mysql_username = get_settings().database.mysql_username
+        mysql_password = get_settings().database.mysql_password.get_secret_value()
 
         if mysql_password == "" and mysql_username == "" and self.aws_region != None:
             # No password is configured. Lets try the AWS get_secret function if configured
-            aws_secret_name = None
-
-            try:
-                aws_secret_name = configuration.get(
-                    "Database", "aws_secret_name", exit_on_error=False
-                )
-            except InvalidConfigurationError:
+            aws_secret_name = get_settings().database.aws_secret_name
+            if aws_secret_name is None:
                 raise InvalidConfigurationError(
                     "Credentials configuration to configuration database in config file is incorrect. Either use username/password or a AWS Secret Manager name"
                 )
-                # pass
 
             import boto3
             from botocore.exceptions import ClientError
@@ -339,7 +281,7 @@ class Config(metaclass=Singleton):
 
         self.mysql_connection_details = {}
         self.mysql_connection_details["mysql_hostname"] = mysql_hostname
-        self.mysql_connection_details["mysql_port"] = mysql_port
+        self.mysql_connection_details["mysql_port"] = str(mysql_port)
         self.mysql_connection_details["mysql_database"] = mysql_database
         self.mysql_connection_details["mysql_username"] = mysql_username
         self.mysql_connection_details["mysql_password"] = mysql_password
@@ -738,10 +680,8 @@ class Config(metaclass=Singleton):
             return False
 
     def encrypt_string(self, str_to_encrypt: str) -> str:
-        self.crypto.set_private_key_file(
-            configuration.get("Credentials", "private_key")
-        )
-        self.crypto.set_public_key_file(configuration.get("Credentials", "public_key"))
+        self.crypto.set_private_key_file(get_settings().credentials.private_key)
+        self.crypto.set_public_key_file(get_settings().credentials.public_key)
 
         encrypted_str = self.crypto.encrypt(str_to_encrypt)
         return encrypted_str
@@ -774,12 +714,8 @@ class Config(metaclass=Singleton):
             self.crypto.set_private_key_file(private_key_file)
             self.crypto.set_public_key_file(public_key_file)
         else:
-            self.crypto.set_private_key_file(
-                configuration.get("Credentials", "private_key")
-            )
-            self.crypto.set_public_key_file(
-                configuration.get("Credentials", "public_key")
-            )
+            self.crypto.set_private_key_file(get_settings().credentials.private_key)
+            self.crypto.set_public_key_file(get_settings().credentials.public_key)
 
         str_to_encrypt = f"{username} {password}\n"
 
@@ -911,10 +847,10 @@ class Config(metaclass=Singleton):
                     self.crypto.set_public_key_file(public_key_file)
                 else:
                     self.crypto.set_private_key_file(
-                        configuration.get("Credentials", "private_key")
+                        get_settings().credentials.private_key
                     )
                     self.crypto.set_public_key_file(
-                        configuration.get("Credentials", "public_key")
+                        get_settings().credentials.public_key
                     )
 
                 credentials = self.crypto.decrypt(jdbc_credentials)
@@ -1496,15 +1432,9 @@ class Config(metaclass=Singleton):
 
         # Add Impala drivers to CP if configured in config file
         try:
-            self.impala_driver = configuration.get(
-                "Impala", "driver", exit_on_error=False
-            )
-            self.impala_classpath = configuration.get(
-                "Impala", "class", exit_on_error=False
-            )
-            self.impala_address = configuration.get(
-                "Impala", "address", exit_on_error=False
-            )
+            self.impala_driver = get_settings().impala.driver
+            self.impala_classpath = get_settings().impala.class_
+            self.impala_address = get_settings().impala.address
             if self.impala_driver != None and not self.impala_driver.startswith(
                 "/path/to/"
             ):
@@ -2714,7 +2644,7 @@ class Config(metaclass=Singleton):
         logging.debug("Executing common_config.get_anonymization_seed()")
 
         # Set the default seed from the configuration file
-        seed = configuration.get("Anonymization", "seed")
+        seed = get_settings().anonymization.seed.get_secret_value()
 
         query = "select seed_file from jdbc_connections where dbalias = %s "
         logging.debug("Executing the following SQL: %s", query)

@@ -1,15 +1,15 @@
 import pytest
 
 from dbimport.config_db import decryption
-from dbimport.config_reader import configuration
+from dbimport.settings import get_settings
 
 
 @pytest.fixture
 def crypto() -> decryption.Crypto:
     """crypto object with the key pair from the test configuration."""
     obj = decryption.Crypto()
-    obj.set_private_key_file(configuration.get("Credentials", "private_key"))
-    obj.set_public_key_file(configuration.get("Credentials", "public_key"))
+    obj.set_private_key_file(get_settings().credentials.private_key)
+    obj.set_public_key_file(get_settings().credentials.public_key)
     return obj
 
 

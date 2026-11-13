@@ -32,8 +32,8 @@ from sqlalchemy.orm import aliased, sessionmaker
 
 from dbimport.common.exceptions import SQLError
 from dbimport.config_db import common_config, config_schema
-from dbimport.config_reader import configuration
 from dbimport.server import atlas_discovery
+from dbimport.settings import get_settings
 
 
 class DistCP(threading.Thread):
@@ -51,7 +51,7 @@ class DistCP(threading.Thread):
         log = logging.getLogger(self.logger_name)
         log.info("distCP %s started", self.name)
 
-        yarn_queue = configuration.get("Server", "distCP_yarnqueue")
+        yarn_queue = get_settings().server.distcp_yarnqueue
 
         while not self.thread_stop_event.isSet():
             dist_cp_request = self.dist_cp_req_queue.get()
@@ -179,13 +179,11 @@ class ServerDaemon(run.RunDaemon):
 
         self.common_config = common_config.Config()
 
-        self.logdir = configuration.get("Server", "logdir")
+        self.logdir = get_settings().server.logdir
 
         self.crypto = self.common_config.crypto
-        self.crypto.set_private_key_file(
-            configuration.get("Credentials", "private_key")
-        )
-        self.crypto.set_public_key_file(configuration.get("Credentials", "public_key"))
+        self.crypto.set_private_key_file(get_settings().credentials.private_key)
+        self.crypto.set_public_key_file(get_settings().credentials.public_key)
 
         self.remote_dbimport_engines = {}
         self.remote_dbimport_sessions = {}
@@ -206,13 +204,10 @@ class ServerDaemon(run.RunDaemon):
         self.atlas_discovery_thread.start()
 
         # Start the DistCP threads
-        if configuration.get("Server", "distCP_separate_logs").lower() == "true":
-            dist_cp_separate_logs = True
-        else:
-            dist_cp_separate_logs = False
+        dist_cp_separate_logs = get_settings().server.distcp_separate_logs
 
         dist_cp_objects = []
-        dist_cp_threads = int(configuration.get("Server", "distCP_threads"))
+        dist_cp_threads = get_settings().server.distcp_threads
         if dist_cp_threads == 0:
             log.info("Distcp disabled as the number of threads is set to 0")
         else:
@@ -236,11 +231,11 @@ class ServerDaemon(run.RunDaemon):
             dist_cp_objects.append(thread)
 
         # Fetch configuration about MySQL database and how to connect to it
-        self.config_hostname = configuration.get("Database", "mysql_hostname")
-        self.config_port = configuration.get("Database", "mysql_port")
-        self.config_database = configuration.get("Database", "mysql_database")
-        self.config_username = configuration.get("Database", "mysql_username")
-        self.config_password = configuration.get("Database", "mysql_password")
+        self.config_hostname = get_settings().database.mysql_hostname
+        self.config_port = get_settings().database.mysql_port
+        self.config_database = get_settings().database.mysql_database
+        self.config_username = get_settings().database.mysql_username
+        self.config_password = get_settings().database.mysql_password.get_secret_value()
 
         # Set all rows that have copy_status = 1 to 0. This is needed in the startup as if they are 1 in this stage, it means that a previous
         # server marked it as 1 but didnt finish the copy. We need to retry that copy here and now

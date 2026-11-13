@@ -38,7 +38,7 @@ The commands in *bin* (*import*, *export*, *manage*, ...) work as before. The sa
 Base configuration
 ------------------
 
-There is a file inside the *conf* directory called *dbimport.cfg*. This file contains configuration that is required to connect databases, HDFS and such. Before running any DBImport commands, this file needs to be configured. The important settings that you must configure is the following
+There is a file inside the *conf* directory called *dbimport.cfg*. This file contains configuration that is required to connect databases, HDFS and such. Before running any DBImport commands, this file needs to be configured. DBImport checks the whole file when a command starts: a missing required setting or a value of the wrong type (for example a port that is not a number) stops the command with a list of every problem. The Atlas settings and *airflow_alchemy_conn* are only needed when Atlas or the Airflow database integration is used, and a blank value of an optional setting counts as not set. A literal *%* in a value is written as *%%*. Any setting can also be given as an environment variable named *DBIMPORT_<SECTION>__<KEY>*, for example *DBIMPORT_DATABASE__MYSQL_PASSWORD*; it takes precedence over the file, which keeps passwords out of the file. The important settings that you must configure is the following
 
   - Section [Database], all settings starting with *mysql*. This is the connection to the DBImport configuration database.
   - Section [REST_statistics]. Put *post_column_data* and *post_column_data* to *false* or configure a valid REST interface on *rest_endpoint*
@@ -282,5 +282,5 @@ This command will only upgrade the schema if it's not in the last version. So it
 
 When upgrading from 1.00.006 or earlier: the code moved from *bin/* into the *dbimport* package and the web UI from *bin/Server/html* to *ui*. Change *root* in *conf/webserver.cfg* to */usr/local/dbimport/ui/dist* (see *conf/webserver.cfg.dist*) and build the UI again with *setup --buildHTML*.
 
-There might also be changes in the *conf/dbimport.cfg* configuration file. Please compare your local version with the default config file available in the release. If you are missing certain settings in your local configuration, please add those. If you dont do that, you will most likely get an error saying that you cant find a specific key in the configuration. 
+There might also be changes in the *conf/dbimport.cfg* configuration file. Please compare your local version with the default config file available in the release. If you are missing certain settings in your local configuration, please add those. DBImport checks the whole file when a command starts, so a missing required setting stops every command, also one that does not use the setting, with a list of the missing settings. 
 

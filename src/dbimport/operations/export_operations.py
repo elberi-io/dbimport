@@ -35,8 +35,8 @@ from dbimport.common.exceptions import (
 )
 from dbimport.common.singleton import Singleton
 from dbimport.config_db import export_config
-from dbimport.config_reader import configuration
 from dbimport.operations import atlas_operations, common_operations
+from dbimport.settings import get_settings
 
 
 class Operation(metaclass=Singleton):
@@ -1553,7 +1553,7 @@ class Operation(metaclass=Singleton):
             sc.uiWebUrl,
             self.yarn_application_id,
         )
-        self.kerberos_principal = configuration.get("Kerberos", "principal")
+        self.kerberos_principal = get_settings().kerberos.principal
         spark_auth = HTTPKerberosAuth(
             force_preemptive=True,
             principal=self.kerberos_principal,
@@ -1694,7 +1694,7 @@ class Operation(metaclass=Singleton):
         sqoop_command.extend(
             [
                 "-D",
-                f"mapreduce.job.queuename={configuration.get('Sqoop', 'yarnqueue')}",
+                f"mapreduce.job.queuename={get_settings().sqoop.yarnqueue}",
             ]
         )
         sqoop_command.extend(["-D", "oraoop.disabled=true"])
