@@ -885,9 +885,9 @@ def main(argv):
                 logging.warning("Aborting command by user request")
                 sys.exit(1)
 
-            copy_operation_obj = copy_operations.Operation()
+            copy_operation = copy_operations.Operation()
             if (
-                copy_operation_obj.check_dbimport_instance(instance=dbimport_instance)
+                copy_operation.check_dbimport_instance(instance=dbimport_instance)
                 == False
             ):
                 logging.error("The specified DBImport instance does not exist.")
@@ -901,10 +901,10 @@ def main(argv):
                 logging.warning("Aborting command by user request")
                 sys.exit(1)
 
-            copy_operation_obj.encrypt_user_password(
+            copy_operation.encrypt_user_password(
                 instance=dbimport_instance, username=username, password=password
             )
-            copy_operation_obj.remove_temporary_files()
+            copy_operation.remove_temporary_files()
 
         if operation == "encryptCredentials":
             if json_input is None:
