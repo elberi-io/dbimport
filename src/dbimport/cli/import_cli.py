@@ -142,7 +142,7 @@ def main(argv):
     except getopt.GetoptError:
         print_help()
 
-    full_executed_command = f"{os.path.basename(__file__)} {' '.join(argv)}"
+    full_executed_command = f"{os.path.basename(sys.argv[0])} {' '.join(argv)}"
     hive_db = None
     hive_table = None
     run_only_function = None

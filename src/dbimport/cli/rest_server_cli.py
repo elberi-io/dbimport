@@ -192,7 +192,7 @@ def main(argv):
     elif action == "stop":
         print("Stopping DBImport REST Server")
         for line in os.popen(
-            'ps ax|grep -E "/restServer restart$|/restServer start$|/restServer noDaemon"|grep -v grep'
+            'ps ax|grep -E "/(restServer|dbimport-rest-server) (restart|start)$|/(restServer|dbimport-rest-server) noDaemon"|grep -v grep'
         ):
             pid = int(line.split()[0])
             os.kill(pid, signal.SIGTERM)
@@ -201,7 +201,7 @@ def main(argv):
         print("Stopping DBImport REST Server")
         current_pid = os.getpid()
         for line in os.popen(
-            'ps ax|grep -E "/restServer restart$|/restServer start$|/restServer noDaemon"|grep -v grep'
+            'ps ax|grep -E "/(restServer|dbimport-rest-server) (restart|start)$|/(restServer|dbimport-rest-server) noDaemon"|grep -v grep'
         ):
             pid = int(line.split()[0])
             if pid == current_pid:
@@ -212,7 +212,9 @@ def main(argv):
         StandaloneApplication("dbimport.server.rest_server:app", options).run()
 
     elif action == "status":
-        processes = os.popen('ps ax|grep "/restServer start$"|grep -v grep').read()
+        processes = os.popen(
+            'ps ax|grep -E "/(restServer|dbimport-rest-server) start$"|grep -v grep'
+        ).read()
         if processes == "":
             print("DBImport REST Server is not running")
             sys.exit(1)

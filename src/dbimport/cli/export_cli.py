@@ -81,7 +81,7 @@ def main(argv):
     except getopt.GetoptError:
         print_help()
 
-    full_executed_command = f"{os.path.basename(__file__)} {' '.join(argv)}"
+    full_executed_command = f"{os.path.basename(sys.argv[0])} {' '.join(argv)}"
     connection_alias = None
     target_schema = None
     target_table = None
