@@ -42,7 +42,7 @@ def _write_test_config(workdir: Path) -> Path:
     private_key = workdir / "dbimport_private_key.pem"
     public_key = workdir / "dbimport_public_key.pem"
     private_key.write_bytes(key.export_key())
-    public_key.write_bytes(key.publickey().export_key())
+    public_key.write_bytes(key.public_key().export_key())
 
     text = TEST_CONFIG_TEMPLATE.read_text()
     text = _replace_setting(text, "private_key", str(private_key))
