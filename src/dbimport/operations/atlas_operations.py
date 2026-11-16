@@ -42,7 +42,7 @@ from dbimport.common.exceptions import (
     SQLError,
 )
 from dbimport.config_db import config_schema
-from dbimport.config_reader import configuration
+from dbimport.settings import get_settings
 from dbimport.source_schema import schema_reader
 
 
@@ -65,11 +65,11 @@ class AtlasOperation:
         self.schema_reader = schema_reader.Source()
 
         # Fetch configuration about MySQL database and how to connect to it
-        self.config_hostname = configuration.get("Database", "mysql_hostname")
-        self.config_port = configuration.get("Database", "mysql_port")
-        self.config_database = configuration.get("Database", "mysql_database")
-        self.config_username = configuration.get("Database", "mysql_username")
-        self.config_password = configuration.get("Database", "mysql_password")
+        self.config_hostname = get_settings().database.mysql_hostname
+        self.config_port = get_settings().database.mysql_port
+        self.config_database = get_settings().database.mysql_database
+        self.config_username = get_settings().database.mysql_username
+        self.config_password = get_settings().database.mysql_password.get_secret_value()
 
         # Atlas variables
         self.atlas_enabled = False
@@ -90,7 +90,7 @@ class AtlasOperation:
         self.source_keys_df = pd.DataFrame()
 
         # Get Atlas config
-        self.atlas_address = configuration.get("Atlas", "address")
+        self.atlas_address = get_settings().atlas.address
         if self.atlas_address != None and self.atlas_address.strip() != "":
             self.atlas_rest_type_def_dbimport_process = (
                 f"{self.atlas_address}/api/atlas/v2/types/typedef/name/DBImport_Process"
@@ -105,34 +105,24 @@ class AtlasOperation:
                 "Accept": "application/json",
             }
 
-            try:
-                self.atlas_timeout = int(configuration.get("Atlas", "timeout"))
-            except ValueError:
-                self.atlas_timeout = 5
-                logging.warning(
-                    "Atlas timeout configuration does not contain a valid number. Setting the timeout to 5 seconds"
-                )
+            self.atlas_timeout = get_settings().atlas.timeout
 
-            if configuration.get("Atlas", "ssl_verify").lower() == "false":
+            if not get_settings().atlas.ssl_verify:
                 self.atlas_ssl_verify = False
             else:
-                if configuration.get("Atlas", "ssl_cert_path").strip() != "":
-                    self.atlas_ssl_verify = configuration.get(
-                        "Atlas", "ssl_cert_path"
-                    ).strip()
+                if get_settings().atlas.ssl_cert_path.strip() != "":
+                    self.atlas_ssl_verify = get_settings().atlas.ssl_cert_path.strip()
                 else:
                     self.atlas_ssl_verify = True
 
             # Get authentication configuration
-            if configuration.get("Atlas", "authentication_type").lower() == "username":
-                self.atlas_username = configuration.get("Atlas", "username")
-                self.atlas_password = configuration.get("Atlas", "password")
+            if get_settings().atlas.authentication_type == "username":
+                self.atlas_username = get_settings().atlas.username
+                self.atlas_password = get_settings().atlas.password.get_secret_value()
                 self.atlas_authentication = HTTPBasicAuth(
                     self.atlas_username, self.atlas_password
                 )
-            elif (
-                configuration.get("Atlas", "authentication_type").lower() == "kerberos"
-            ):
+            elif get_settings().atlas.authentication_type == "kerberos":
                 self.atlas_authentication = HTTPKerberosAuth()
 
             if self.atlas_authentication == None:

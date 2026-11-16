@@ -54,7 +54,7 @@
     "E722": 1
   },
   "src/dbimport/config_db/common_config.py": {
-    "B904": 4,
+    "B904": 3,
     "E711": 73,
     "E712": 14,
     "E722": 39,
@@ -99,10 +99,6 @@
     "E711": 2,
     "E712": 1,
     "F841": 1
-  },
-  "src/dbimport/config_reader/configuration.py": {
-    "B904": 1,
-    "E712": 1
   },
   "src/dbimport/operations/atlas_operations.py": {
     "B904": 11,

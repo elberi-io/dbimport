@@ -143,8 +143,8 @@ that a rule reports is marked on its line with `noqa` and a `TODO` that
 names the issue. import-linter checks the package layering defined in
 `pyproject.toml`.
 
-`uv run mypy` checks `tests/` and the typed packages `dbimport.common`
-and `dbimport.config_reader` in strict mode (`files` in
+`uv run mypy` checks `tests/` and the typed modules `dbimport.common`
+and `dbimport.settings` in strict mode (`files` in
 `pyproject.toml`). The other code in `src/dbimport` and the launchers
 has almost no type annotations;
 `tests/unit/test_mypy_ratchet.py` checks it

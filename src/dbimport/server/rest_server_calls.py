@@ -37,8 +37,8 @@ from sqlalchemy.sql.operators import like_op
 from dbimport.common import constants as constant
 from dbimport.common.exceptions import InvalidConfigurationError, SQLError
 from dbimport.config_db import common_config, config_schema
-from dbimport.config_reader import configuration
 from dbimport.server import data_models
+from dbimport.settings import get_settings
 
 
 class DBCalls:
@@ -64,7 +64,7 @@ class DBCalls:
         # self.common_config.disconnect_config_database() # This is needed as we must connect with buffered=False and that is only available during reconnect
         # self.common_config.reconnect_config_database(printReconnectMessage=True, buffered=False)
 
-        self.logdir = configuration.get("Server", "logdir")
+        self.logdir = get_settings().server.logdir
         # self.admin_user = self.common_config.get_config_value("restserver_admin_user")
         # log.warning(self.admin_user)
 

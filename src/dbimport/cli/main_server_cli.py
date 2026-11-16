@@ -23,8 +23,8 @@ import sys
 import psutil
 
 from dbimport.common import constants as constant
-from dbimport.config_reader import configuration
 from dbimport.server import daemon
+from dbimport.settings import get_settings
 
 
 def print_help():
@@ -77,12 +77,9 @@ def main(argv):
         print(f"DBImport version: {constant.VERSION}")
         sys.exit(0)
 
-    logdir = configuration.get("Server", "logdir")
-    pidfile = configuration.get("Server", "pidfile")
-    if configuration.get("Server", "distCP_separate_logs").lower() == "true":
-        dist_cp_separate_logs = True
-    else:
-        dist_cp_separate_logs = False
+    logdir = get_settings().server.logdir
+    pidfile = get_settings().server.pidfile
+    dist_cp_separate_logs = get_settings().server.distcp_separate_logs
 
     # Initiate the logging functions with the correct level
     if logging_level == logging.DEBUG and action == "noDaemon":
@@ -150,7 +147,7 @@ def main(argv):
             logging_level=logging_level,
         )
     else:
-        dist_cp_threads = int(configuration.get("Server", "distCP_threads"))
+        dist_cp_threads = get_settings().server.distcp_threads
 
         for thread_id in range(0, dist_cp_threads):
             dist_cp_log_name = f"distCP-thread{thread_id}"

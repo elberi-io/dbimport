@@ -8,7 +8,7 @@ Configuration
 Global configurations
 ---------------------
 
-There are two places where global configurations are handled. The conf/dbimport.cfg configuration file and the configuration_ table. All available options in the configuration file is already present in the file, so for a new installation, go over them all and set them according to you environment. For the configuration_ table, the following options exists.
+There are two places where global configurations are handled. The conf/dbimport.cfg configuration file and the configuration_ table. All available options in the configuration file is already present in the file, so for a new installation, go over them all and set them according to you environment. An environment variable *DBIMPORT_<SECTION>__<KEY>* (for example *DBIMPORT_DATABASE__MYSQL_PASSWORD*) overrides the value in the file. For the configuration_ table, the following options exists.
 
 ============================== ======== ===========================================================================================================================================================================
 airflow_dag_directory          valueStr Airflow path to DAG directory

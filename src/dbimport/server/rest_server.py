@@ -11,11 +11,10 @@ from gunicorn.app.wsgiapp import WSGIApplication
 from jose import JWTError, jwt
 
 from dbimport.common import constants as constant
-from dbimport.common.exceptions import InvalidConfigurationError
 from dbimport.config_db import common_config
-from dbimport.config_reader import configuration
 from dbimport.schedule import airflow_dags
 from dbimport.server import data_models, rest_server_calls
+from dbimport.settings import get_settings
 
 common_config = common_config.Config()
 
@@ -26,10 +25,6 @@ AUTHENTICATION_METHOD = common_config.get_config_value(
 SECRET_KEY = common_config.get_config_value("restserver_secret_key")
 ACCESS_TOKEN_EXPIRE_MINUTES = common_config.get_config_value("restserver_token_ttl")
 ALGORITHM = "HS256"
-try:
-    AWS_REGION = configuration.get("AWS", "region", exit_on_error=False)
-except InvalidConfigurationError:
-    AWS_REGION = ""
 
 
 class StandaloneApplication(WSGIApplication):
@@ -139,7 +134,8 @@ def authenticate_user(username: str, password: str):
             log.debug("Authenticate with LOCAL using AWS credentials")
             # This user have its password stored in AWS Secrets Manager
 
-            if AWS_REGION == "":
+            aws_region = get_settings().aws.region or ""
+            if aws_region == "":
                 log.error(
                     "AWS Region is not configured in the configuraton file. This is required in order to user Secrets Manager for user credentials"
                 )
@@ -154,7 +150,7 @@ def authenticate_user(username: str, password: str):
             # Create a Secrets Manager client
             session = boto3.session.Session()
             client = session.client(
-                service_name="secretsmanager", region_name=AWS_REGION
+                service_name="secretsmanager", region_name=aws_region
             )
 
             try:

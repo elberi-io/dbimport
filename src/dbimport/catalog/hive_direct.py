@@ -25,8 +25,8 @@ from sqlalchemy.orm import aliased, sessionmaker
 from dbimport.common.exceptions import DatabaseNotFoundError, RowNotFoundError
 from dbimport.common.singleton import Singleton
 from dbimport.config_db import common_config
-from dbimport.config_reader import configuration
 from dbimport.operations import hive_schema
+from dbimport.settings import get_settings
 
 
 class HiveMetastoreDirect(metaclass=Singleton):
@@ -41,8 +41,8 @@ class HiveMetastoreDirect(metaclass=Singleton):
 
         self.common_config = common_config.Config()
 
-        self.hive_connect_str = configuration.get(
-            "Metastore", "hive_metastore_alchemy_conn"
+        self.hive_connect_str = (
+            get_settings().metastore.hive_metastore_alchemy_conn.get_secret_value()
         )
         self.hive_meta_db = None
         self.hive_meta_session = None

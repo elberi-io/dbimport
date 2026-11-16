@@ -13,8 +13,8 @@ from pathlib import Path
 import pytest
 import sqlalchemy as sa
 
-from dbimport.config_reader import configuration
 from dbimport.schedule import airflow_dags
+from dbimport.settings import get_settings
 from tests.configdb import insert_row, set_driver_path
 
 EXPECTED_DIR = Path(__file__).resolve().parents[1] / "fixtures" / "dags"
@@ -212,7 +212,7 @@ def test_generate_dag_in_aws_mwaa_mode_writes_expected_file(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    monkeypatch.setitem(configuration.config["Airflow"], "airflow_mode", "aws_mwaa")
+    monkeypatch.setattr(get_settings().airflow, "airflow_mode", "aws_mwaa")
     _default_dag(db_connection)
 
     generated = _generate(tmp_path)
