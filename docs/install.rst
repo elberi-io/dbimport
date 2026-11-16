@@ -280,6 +280,8 @@ With uv, run *uv sync --locked* instead. Many versions also needs a configuratio
 
 This command will only upgrade the schema if it's not in the last version. So it's safe to run it even if there are no new schema.
 
+It also adds new keys to the *configuration* table with their default values and sets the description of every key to the text of the installed version. The values of existing keys are not changed.
+
 When upgrading from 1.00.006 or earlier: the code moved from *bin/* into the *dbimport* package and the web UI from *bin/Server/html* to *ui*. Change *root* in *conf/webserver.cfg* to */usr/local/dbimport/ui/dist* (see *conf/webserver.cfg.dist*) and build the UI again with *setup --buildHTML*.
 
 There might also be changes in the *conf/dbimport.cfg* configuration file. Please compare your local version with the default config file available in the release. If you are missing certain settings in your local configuration, please add those. DBImport checks the whole file when a command starts, so a missing required setting stops every command, also one that does not use the setting, with a list of the missing settings. 
