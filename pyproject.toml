@@ -254,6 +254,7 @@ extra_checks = false
 # query results stay untyped (Any) until the data layer is rebuilt.
 module = [
     "dbimport.config_db.common_config",
+    "dbimport.config_db.config_keys",
     "dbimport.config_db.decryption",
     "dbimport.config_db.export_config",
     "dbimport.config_db.export_stage",
