@@ -33,8 +33,10 @@ list we derive:
   request.
 
 The UI keeps its copies until its types are generated from the OpenAPI
-schema (#238, REST contract step); a test checks that its key sets equal
-the REST keys. `get_config_value` keeps its string argument and its
+schema (#238, REST contract step); a test checks that `infoTexts.json`
+and the two configuration types in `interfaces.tsx` have exactly the
+REST keys (`cardRenderFormatting.ts` and `nameMappings.ts` are not
+checked). `get_config_value` keeps its string argument and its
 `Any` result until the data layer is rewritten (#238).
 
 ## Alternatives considered
