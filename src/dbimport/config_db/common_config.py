@@ -42,6 +42,7 @@ from dbimport.common.exceptions import (
     UndevelopedFeatureError,
 )
 from dbimport.common.singleton import Singleton
+from dbimport.config_db import config_keys
 from dbimport.config_db import decryption as decryption
 from dbimport.settings import get_settings
 from dbimport.source_schema import schema_reader
@@ -2347,109 +2348,17 @@ class Config(metaclass=Singleton):
         logging.debug("Executing common_config.get_jdbc_sql_from_table() - Finished")
         return from_table
 
-    def get_config_value_column(
-        self, key: str, ignore_error_output: bool = False
-    ) -> tuple[str | None, bool | None]:
-        """Return the type of the column that have the value for the specified key"""
+    def get_config_value_column(self, key: str) -> tuple[str, bool]:
+        """Return the column that holds the value of key, and whether it is a bool.
 
-        value_column = ""
-        bool_value = False
-
-        if key in (
-            "hive_remove_locks_by_force",
-            "airflow_disable",
-            "import_start_disable",
-            "import_stage_disable",
-            "export_start_disable",
-            "export_stage_disable",
-            "hive_validate_before_execution",
-            "hive_print_messages",
-            "import_process_empty",
-            "hive_major_compact_after_merge",
-            "hive_insert_only_tables",
-            "hive_acid_with_clusteredby",
-            "post_data_to_kafka",
-            "post_data_to_kafka_extended",
-            "post_data_to_rest",
-            "post_data_to_rest_extended",
-            "post_data_to_awssns",
-            "post_data_to_awssns_extended",
-            "post_airflow_dag_operations",
-            "rest_verifyssl",
-            "impala_invalidate_metadata",
-            "airflow_aws_pool_to_instanceid",
-            "airflow_create_pool_with_task",
-            "timestamp_with_timezone",
-        ):
-            value_column = "valueInt"
-            bool_value = True
-        elif key in (
-            "spark_max_executors",
-            "import_default_sessions",
-            "import_max_sessions",
-            "export_default_sessions",
-            "export_max_sessions",
-            "atlas_discovery_interval",
-            "airflow_major_version",
-            "rest_timeout",
-            "airflow_default_pool_size",
-            "restserver_token_ttl",
-        ):
-            value_column = "valueInt"
-        elif key in (
-            "import_staging_table",
-            "import_staging_database",
-            "import_work_table",
-            "import_work_database",
-            "import_history_table",
-            "import_history_database",
-            "export_staging_database",
-            "hive_validate_table",
-            "airflow_aws_instanceids",
-            "airflow_sudo_user",
-            "airflow_dbimport_commandpath",
-            "airflow_dag_directory",
-            "airflow_dag_staging_directory",
-            "timezone",
-            "airflow_dag_file_group",
-            "airflow_dag_file_permission",
-            "airflow_dummy_task_queue",
-            "airflow_url",
-            "cluster_name",
-            "hdfs_address",
-            "hdfs_blocksize",
-            "hdfs_basedir",
-            "kafka_brokers",
-            "kafka_saslmechanism",
-            "kafka_securityprotocol",
-            "kafka_topic",
-            "kafka_trustcafile",
-            "rest_url",
-            "rest_trustcafile",
-            "import_columnname_delete",
-            "import_columnname_import",
-            "import_columnname_insert",
-            "import_columnname_iud",
-            "import_columnname_update",
-            "import_columnname_histtime",
-            "import_columnname_source",
-            "restserver_secret_key",
-            "restserver_admin_user",
-            "restserver_authentication_method",
-            "post_data_to_awssns_topic",
-        ):
-            value_column = "valueStr"
-        else:
-            if not ignore_error_output:
-                # This is needed from the REST interface, as it's parsing everything in the database. And entries may exists that isnt a valid config anymore
-                logging.error("There is no configuration with the name '%s'", key)
-                self.remove_temporary_files()
-                sys.exit(1)
-            else:
-                value_column = None
-                bool_value = None
-
-        return (value_column, bool_value)
+        Exits when key is not in config_keys.KEYS.
+        """
+        config_key = config_keys.BY_NAME.get(key)
+        if config_key is None:
+            logging.error("There is no configuration with the name '%s'", key)
+            self.remove_temporary_files()
+            sys.exit(1)
+        return (config_key.column, config_key.kind == "bool")
 
     def get_config_value(self, key: str) -> Any:
         """Returns a value from the configuration table based on the supplied key. Value returned can be Int, Str or DateTime"""

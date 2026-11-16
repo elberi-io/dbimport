@@ -52,9 +52,12 @@ class ConfigKey:
         return "valueStr" if self.kind == "str" else "valueInt"
 
     def initial_value(self) -> int | str:
-        """The value to seed: the default, or a new value from its function."""
+        """The value to seed: the default (a bool as 0 or 1), or a new value
+        from its function."""
         if callable(self.default):
             return self.default()
+        if self.kind == "bool":
+            return int(self.default)
         return self.default
 
 

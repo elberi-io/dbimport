@@ -1,7 +1,7 @@
 import pytest
 import sqlalchemy as sa
 
-from dbimport.config_db import common_config
+from dbimport.config_db import common_config, config_keys
 
 
 def _set_config_row(conn: sa.Connection, key: str, column: str, value: object) -> None:
@@ -71,3 +71,16 @@ def test_get_config_value_whitelisted_key_without_row_exits(
         common_config.Config().get_config_value("timezone")
 
     assert exc_info.value.code == 1
+
+
+def test_get_config_value_every_key_reads_back_its_default(
+    clean_config_db: None,
+) -> None:
+    config = common_config.Config()
+    keys = [key for key in config_keys.KEYS if not callable(key.default)]
+
+    values = {key.name: config.get_config_value(key.name) for key in keys}
+
+    assert {name: (type(v), v) for name, v in values.items()} == {
+        key.name: (type(key.default), key.default) for key in keys
+    }

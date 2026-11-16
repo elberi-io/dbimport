@@ -1,4 +1,8 @@
-from pydantic import BaseModel
+from typing import TYPE_CHECKING
+
+from pydantic import BaseModel, create_model
+
+from dbimport.config_db import config_keys
 
 
 class Token(BaseModel):
@@ -119,80 +123,20 @@ class JDBCDriver(BaseModel):
     classpath: str
 
 
-class Configuration(BaseModel):
-    airflow_aws_instanceids: str | None = None
-    airflow_aws_pool_to_instanceid: bool | None = None
-    airflow_create_pool_with_task: bool | None = None
-    airflow_dag_directory: str | None = None
-    airflow_dag_file_group: str | None = None
-    airflow_dag_file_permission: str | None = None
-    airflow_dag_staging_directory: str | None = None
-    airflow_dbimport_commandpath: str | None = None
-    airflow_default_pool_size: int | None = None
-    airflow_disable: bool | None = None
-    airflow_dummy_task_queue: str | None = None
-    airflow_major_version: int | None = None
-    airflow_sudo_user: str | None = None
-    airflow_url: str | None = None
-    atlas_discovery_interval: int | None = None
-    cluster_name: str | None = None
-    export_default_sessions: int | None = None
-    export_max_sessions: int | None = None
-    export_stage_disable: bool | None = None
-    export_staging_database: str | None = None
-    export_start_disable: bool | None = None
-    hdfs_address: str | None = None
-    hdfs_basedir: str | None = None
-    hdfs_blocksize: str | None = None
-    hive_acid_with_clusteredby: bool | None = None
-    hive_insert_only_tables: bool | None = None
-    hive_major_compact_after_merge: bool | None = None
-    hive_print_messages: bool | None = None
-    hive_remove_locks_by_force: bool | None = None
-    hive_validate_before_execution: bool | None = None
-    hive_validate_table: str | None = None
-    impala_invalidate_metadata: bool | None = None
-    import_columnname_delete: str | None = None
-    import_columnname_histtime: str | None = None
-    import_columnname_import: str | None = None
-    import_columnname_insert: str | None = None
-    import_columnname_iud: str | None = None
-    import_columnname_source: str | None = None
-    import_columnname_update: str | None = None
-    import_default_sessions: int | None = None
-    import_history_database: str | None = None
-    import_history_table: str | None = None
-    import_max_sessions: int | None = None
-    import_process_empty: bool | None = None
-    import_stage_disable: bool | None = None
-    import_staging_database: str | None = None
-    import_staging_table: str | None = None
-    import_start_disable: bool | None = None
-    import_work_database: str | None = None
-    import_work_table: str | None = None
-    kafka_brokers: str | None = None
-    kafka_saslmechanism: str | None = None
-    kafka_securityprotocol: str | None = None
-    kafka_topic: str | None = None
-    kafka_trustcafile: str | None = None
-    post_airflow_dag_operations: bool | None = None
-    post_data_to_kafka_extended: bool | None = None
-    post_data_to_kafka: bool | None = None
-    post_data_to_rest_extended: bool | None = None
-    post_data_to_rest: bool | None = None
-    post_data_to_awssns_extended: bool | None = None
-    post_data_to_awssns: bool | None = None
-    post_data_to_awssns_topic: str | None = None
-    restserver_admin_user: str | None = None
-    restserver_authentication_method: str | None = None
-    restserver_token_ttl: int | None = None
-    rest_timeout: int | None = None
-    rest_trustcafile: str | None = None
-    rest_url: str | None = None
-    rest_verifyssl: bool | None = None
-    spark_max_executors: int | None = None
-    timezone: str | None = None
-    timestamp_with_timezone: bool | None = None
+_FIELD_TYPES = {"bool": bool, "int": int, "str": str}
+
+if TYPE_CHECKING:
+    # The fields are created at run time; mypy only knows the base class.
+    Configuration = BaseModel
+else:
+    Configuration = create_model(
+        "Configuration",
+        **{
+            key.name: (_FIELD_TYPES[key.kind] | None, None)
+            for key in config_keys.KEYS
+            if key.rest
+        },
+    )
 
 
 class DiscoverImportTable(BaseModel):

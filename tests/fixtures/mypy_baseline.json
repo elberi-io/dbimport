@@ -21,7 +21,7 @@
   },
   "src/dbimport/config_db/common_config.py": {
     "arg-type": 5,
-    "assignment": 11,
+    "assignment": 8,
     "attr-defined": 4,
     "operator": 4,
     "return-value": 2,
@@ -116,7 +116,7 @@
   },
   "src/dbimport/schedule/airflow_dags.py": {
     "arg-type": 5,
-    "assignment": 6,
+    "assignment": 5,
     "attr-defined": 2,
     "type-var": 1,
     "union-attr": 326,
@@ -144,14 +144,14 @@
   },
   "src/dbimport/server/rest_server_calls.py": {
     "arg-type": 3,
-    "assignment": 37,
+    "assignment": 36,
     "has-type": 4,
     "name-defined": 5,
     "used-before-def": 2
   },
   "src/dbimport/setup/database.py": {
     "arg-type": 7,
-    "assignment": 4,
+    "assignment": 2,
     "index": 8,
     "operator": 42,
     "str-bytes-safe": 3,
