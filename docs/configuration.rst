@@ -10,59 +10,87 @@ Global configurations
 
 There are two places where global configurations are handled. The conf/dbimport.cfg configuration file and the configuration_ table. All available options in the configuration file is already present in the file, so for a new installation, go over them all and set them according to you environment. An environment variable *DBIMPORT_<SECTION>__<KEY>* (for example *DBIMPORT_DATABASE__MYSQL_PASSWORD*) overrides the value in the file. For the configuration_ table, the following options exists.
 
-============================== ======== ===========================================================================================================================================================================
-airflow_dag_directory          valueStr Airflow path to DAG directory
-airflow_dag_file_group         valueStr Group owner of created DAG file
-airflow_dag_file_permission    valueStr File permission of created DAG file
-airflow_dag_staging_directory  valueStr Airflow path to staging DAG directory
-airflow_dbimport_commandpath   valueStr This is the path to DBImport. If sudo is required, this can be added here aswell. Use the variable ${SUDO_USER} instead of hardcoding the sudo username. Must end with a /
-airflow_disable                valueInt Disable All executions from Airflow. This is what the "start" Task is looking at
-airflow_dummy_task_queue       valueStr Queue to use for dummy tasks (stop, stage_one_complete and more)
-airflow_major_version          valueInt What is the major version of Airflow? 1 or 2 is valid options. Controls how the DAG files are generated
-airflow_sudo_user              valueStr What user will Airflow sudo to for executing DBImport. This value will replace the ${SUDO_USER} variable in airflow_dbimport_commandpath setting
-atlas_discovery_interval       valueInt How many hours there should pass between each Atlas discovery of a jdbc connection
-cluster_name                   valueStr Name of Hadoop cluster
-export_stage_disable           valueInt With 1, you prevent new Export tasks from starting and running tasks will stop after the current stage is completed.
-export_staging_database        valueStr Name of staging database to use during Exports
-export_start_disable           valueInt With 1, you prevent new Export tasks from starting. Running tasks will be completed
-hdfs_address                   valueStr Address to HDFS
-hdfs_basedir                   valueStr The base dir to write data to. Example /apps/dbimport
-hdfs_blocksize                 valueStr The HDFS blocksize in bytes. Can usually be found in /etc/hadoop/conf/hdfs-site.xml (search for dfs.blocksize)
-hive_acid_with_clusteredby     valueInt If 1, then ACID tables will be created with a clustered by option based on the PK. Not required with Hive3 and later
-hive_insert_only_tables        valueInt If 1, then the non-merge tables in Hive will be ACID insert-only
-hive_major_compact_after_merge valueInt With 1, DBImport will run a major compaction after the merge operations is completed
-hive_print_messages            valueInt With 1, Hive will print additional messages during SQL operations
-hive_remove_locks_by_force     valueInt With 1, DBImport will remove Hive locks by force
-hive_validate_before_execution valueInt With 1, DBImport will run a group by query agains the validate table and verify the result against reference values hardcoded in DBImport
-hive_validate_table            valueStr The table to run the validate query against
-import_process_empty           valueInt If 1, then the import will do a full processing of import even if they contain no data.
-import_stage_disable           valueInt With 1, you prevent new tasks from starting and running Import tasks will stop after the current stage is completed.
-import_staging_database        valueStr Name of staging database to use during Imports
-import_start_disable           valueInt With 1, you prevent new Import tasks from starting. Running tasks will be completed
-kafka_brokers                  valueStr Comma separeted list of Kafka brokers
-kafka_saslmechanism            valueStr Kafka SASL mechanism
-kafka_securityprotocol         valueStr Kafka Security Protocol
-kafka_topic                    valueStr Kafka topic to send the data to
-kafka_trustcafile              valueStr Kafka CA Trust file for SSL
-post_airflow_dag_operations    valueInt Post start and stop activities for Airflow DAGs to Kafka and/or Rest, depending on what is enabled
-post_data_to_kafka             valueInt Enable the Kafka endpoint to be able to receive information regarding completed imports and exports
-post_data_to_kafka_extended    valueInt Enable extended statistics in Kafka data
-post_data_to_rest              valueInt Enable the REST endpoint to be able to receive information regarding completed imports and exports
-post_data_to_rest_extended     valueInt Enable extended statistics in the REST data
-rest_timeout                   valueInt Timeout for the REST call
-rest_trustcafile               valueStr REST CA Trust file for SSL
-rest_url                       valueStr Rest server URL
-rest_verifyssl                 valueInt Verify SSL certificate during REST call
-spark_export_default_executors valueInt How many executors should be used for tables who have never been exported before
-spark_export_max_executors     valueInt The maximum number of executors to use during exports
-spark_import_default_executors valueInt How many executors should be used for tables who have never been imported before
-spark_import_max_executors     valueInt The maximum number of executors to use during imports
-sqoop_export_default_mappers   valueInt How many mappers should be used for tables who have never been exported before
-sqoop_export_max_mappers       valueInt The maximum number of mappers to use during exports
-sqoop_import_default_mappers   valueInt How many mappers should be used for tables who have never been imported before
-sqoop_import_max_mappers       valueInt The maximum number of mappers to use during imports
-timezone                       valueStr The timezone that the configured times are meant for (example is Europe/Stockholm) 
-============================== ======== ===========================================================================================================================================================================
+.. The table below is generated from dbimport.config_db.config_keys by
+.. tests/unit/test_configuration_docs.py; do not edit it here.
+
+================================ ======== ======================================================================================================================================================================================================================================================================================================================================================================================================================
+airflow_aws_instanceids          valueStr AWS Instance IDs to start the DBImport commands on. Comma-separated list of instance IDs. Tasks will be randomly assigned to one of the EMR clusters specified.
+airflow_aws_pool_to_instanceid   valueInt When using AWS, should the Airflow pool be set to the same name as the instance id?
+airflow_create_pool_with_task    valueInt If 1, then the Airflow pool will be created with standard tasks. If 0, then a direct database connection is required to add the pool through sql commands directly the airflow database. Connection details are available in dbimport.cfg for this.
+airflow_dag_directory            valueStr Airflow path to DAG directory. When using AWS MWAA, this is the name of the S3 bucket.
+airflow_dag_file_group           valueStr Group owner of created DAG file
+airflow_dag_file_permission      valueStr File permission of created DAG file
+airflow_dag_staging_directory    valueStr Airflow path to staging DAG directory
+airflow_dbimport_commandpath     valueStr This is the path to DBImport. If sudo is required, this can be added here aswell. Use the variable ${SUDO_USER} instead of hardcoding the sudo username. Must end with a /
+airflow_default_pool_size        valueInt If DBImport creates the Airflow pool, this is the initial size of it
+airflow_disable                  valueInt Disable All executions from Airflow. This is what the "start" Task is looking at
+airflow_dummy_task_queue         valueStr Queue to use for dummy tasks (stop, stage_one_complete and more)
+airflow_major_version            valueInt What is the major version of Airflow? 1 or 2 is valid options. Controls how the DAG files are generated
+airflow_sudo_user                valueStr What user will Airflow sudo to for executing DBImport. This value will replace the ${SUDO_USER} variable in airflow_dbimport_commandpath setting
+airflow_url                      valueStr URL to Airflow webUI
+atlas_discovery_interval         valueInt How many hours there should pass between each Atlas discovery of a jdbc connection
+cluster_name                     valueStr Name of Hadoop cluster
+export_default_sessions          valueInt How many SQL sessions should be used for tables that have never been exported before
+export_max_sessions              valueInt The maximum number of SQL sessions to use during export
+export_stage_disable             valueInt With 1, you prevent new Export tasks from starting and running tasks will stop after the current stage is completed.
+export_staging_database          valueStr Name of staging database to use during Exports
+export_start_disable             valueInt With 1, you prevent new Export tasks from starting. Running tasks will be completed
+hdfs_address                     valueStr Address to HDFS
+hdfs_basedir                     valueStr The base dir to write data to. Example /apps/dbimport
+hdfs_blocksize                   valueStr The HDFS blocksize in bytes. Can usually be found in /etc/hadoop/conf/hdfs-site.xml (search for dfs.blocksize)
+hive_acid_with_clusteredby       valueInt If 1, then ACID tables will be created with a clustered by option based on the PK. Not required with Hive3 and later
+hive_insert_only_tables          valueInt If 1, then the non-merge tables in Hive will be ACID insert-only
+hive_major_compact_after_merge   valueInt With 1, DBImport will run a major compaction after the merge operations is completed
+hive_print_messages              valueInt With 1, Hive will print additional messages during SQL operations
+hive_remove_locks_by_force       valueInt With 1, DBImport will remove Hive locks before import by force
+hive_validate_before_execution   valueInt With 1, DBImport will run a group by query agains the validate table and verify the result against reference values hardcoded in DBImport
+hive_validate_table              valueStr The table to run the validate query against
+impala_invalidate_metadata       valueInt If 1, then DBImport will connect to Impala and invalidate or refresh the metadata after import is completed
+import_columnname_delete         valueStr Column name for timestamp column with delete date that is added to table during merge operations. Only exists if soft-delete is enabled for the import
+import_columnname_histtime       valueStr Column name for timestamp column added to history table to contain information about when the insert, update or delete operation was done
+import_columnname_import         valueStr Column name for timestamp column added to table during none-merge operations
+import_columnname_insert         valueStr Column name for timestamp column with insert time that is added to table during merge operations
+import_columnname_iud            valueStr Column name for char(1) column added to table during merge operations with information if the last operation is an insert, update or delete
+import_columnname_source         valueStr Column name for source information if that is configured in jdbc_connections table
+import_columnname_update         valueStr Column name for timestamp column with update time that is added to table during merge operations
+import_default_sessions          valueInt How many SQL sessions should be used for tables that have never been imported before
+import_history_database          valueStr Name of history database to use during Imports. {DATABASE} is supported within the name and will be replaced during import with the name of the import database.
+import_history_table             valueStr Name of history table to use during Imports. Both {DATABASE} and {TABLE} is supported within the name and will be replaced during import with the name of the import database and table.  Both {DATABASE} and {TABLE} must be used once, but {DATABASE} could be specified in the "import_history_database" setting instead
+import_max_sessions              valueInt The maximum number of SQL sessions to use during imports
+import_process_empty             valueInt If 1, then the import will do a full processing of import even if they contain no data.
+import_stage_disable             valueInt With 1, you prevent new tasks from starting and running Import tasks will stop after the current stage is completed.
+import_staging_database          valueStr Name of staging database to use during Imports. {DATABASE} is supported within the name and will be replaced during import with the name of the import database.
+import_staging_table             valueStr Name of staging table to use during Imports. Both {DATABASE} and {TABLE} is supported within the name and will be replaced during import with the name of the import database and table.  Both {DATABASE} and {TABLE} must be used once, but {DATABASE} could be specified in the "import_staging_database" setting instead
+import_start_disable             valueInt With 1, you prevent new Import tasks from starting. Running tasks will be completed
+import_work_database             valueStr Name of work database to use during Imports. This is used for internal tables and should not be accessed by end-users. {DATABASE} is supported within the name and will be replaced during import with the name of the import database.
+import_work_table                valueStr Prefix-name of work tables to use during Imports. These tables is used for internal DBImport tables and should not be access by end-users. Both {DATABASE} and {TABLE} is supported within the name and will be replaced during import with the name of the import database and table.  Both {DATABASE} and {TABLE} must be used once, but {DATABASE} could be specified in the "import_work_database" setting instead
+kafka_brokers                    valueStr Comma separeted list of Kafka brokers
+kafka_saslmechanism              valueStr Kafka SASL mechanism
+kafka_securityprotocol           valueStr Kafka Security Protocol
+kafka_topic                      valueStr Kafka topic to send the data to
+kafka_trustcafile                valueStr Kafka CA Trust file for SSL
+post_airflow_dag_operations      valueInt Post start and stop activities for Airflow DAGs to Kafka and/or Rest, depending on what is enabled
+post_data_to_awssns              valueInt Enable the AWS SNS endpoint to be able to receive information regarding completed imports and exports
+post_data_to_awssns_extended     valueInt Enable extended statistics in AWS SNS data
+post_data_to_awssns_topic        valueStr Full ARN to AWS SNS Topic where the json message will be sent
+post_data_to_kafka               valueInt Enable the Kafka endpoint to be able to receive information regarding completed imports and exports
+post_data_to_kafka_extended      valueInt Enable extended statistics in Kafka data
+post_data_to_rest                valueInt Enable the REST endpoint to be able to receive information regarding completed imports and exports
+post_data_to_rest_extended       valueInt Enable extended statistics in the REST data
+rest_timeout                     valueInt Timeout for the REST call
+rest_trustcafile                 valueStr REST CA Trust file for SSL
+rest_url                         valueStr Rest server URL
+rest_verifyssl                   valueInt Verify SSL certificate during REST call
+restserver_admin_user            valueStr Username of administrator on the REST server with all permission
+restserver_authentication_method valueStr REST server authentication method. The following options are supported: local, pam
+restserver_secret_key            valueStr Secret key used for oauth2 tokens
+restserver_token_ttl             valueInt Time-to-live, in minutes, that the oauth2 tokens are valid
+spark_max_executors              valueInt The default value for maximum number of spark executors
+timestamp_with_timezone          valueInt With Spark as the ETL engine, it's possible to save timestamp columns with or without the timezone
+timezone                         valueStr The timezone that the configured times are meant for (example is Europe/Stockholm)
+================================ ======== ======================================================================================================================================================================================================================================================================================================================================================================================================================
+
+.. End of the generated table.
 
 
 
