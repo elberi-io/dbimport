@@ -753,9 +753,7 @@ class DBCalls:
                     getattr(configuration, key),
                 )
 
-                value_column, bool_value = self.common_config.get_config_value_column(
-                    key
-                )
+                value_column = config_keys.BY_NAME[key].column
 
                 session.execute(
                     update(configuration_table),

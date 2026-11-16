@@ -291,7 +291,6 @@ class Initialize:
         for i in result_df:
             list_of_db_types.append(i[0])
 
-        # The description of every existing configuration key
         conf_descriptions = {
             key: description
             for key, description in session.query(
@@ -420,8 +419,7 @@ class Initialize:
             session.execute(query)
             session.commit()
 
-        # Configuration table: missing keys get their default value, and
-        # existing keys today's description.
+        # Configuration table
         for key in config_keys.KEYS:
             if key.name not in conf_descriptions:
                 query = sa.insert(config_schema.Configuration).values(
