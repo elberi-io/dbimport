@@ -14,6 +14,11 @@ from tests.configdb import insert_row
 
 USERNAME = "tester"
 PASSWORD = "secret"
+ADMIN_KEYS = [
+    "restserver_admin_user",
+    "restserver_authentication_method",
+    "restserver_token_ttl",
+]
 
 
 @pytest.fixture
@@ -164,7 +169,7 @@ def test_get_config_hides_the_admin_keys_from_other_users(
 ) -> None:
     response = client.get("/config/getConfig", headers=auth_headers)
 
-    assert response.json()["restserver_admin_user"] is None
+    assert [response.json()[key] for key in ADMIN_KEYS] == [None, None, None]
     assert response.json()["timezone"] == "UTC"
 
 
@@ -187,6 +192,8 @@ def test_get_config_ignores_rows_of_unknown_keys(
         ({"airflow_major_version": 3}, 400),
         ({"restserver_authentication_method": "ldap"}, 400),
         ({"timezone": " "}, 400),
+        ({"restserver_admin_user": "tester"}, 403),
+        ({"restserver_authentication_method": "pam"}, 403),
         ({"restserver_token_ttl": 60}, 403),
     ],
 )

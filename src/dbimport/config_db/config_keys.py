@@ -38,18 +38,23 @@ def _new_secret_key() -> str:
 @dataclass(frozen=True)
 class ConfigKey:
     """A key: its kind, the value a new installation gets (a function is
-    called once per installation), its description, and whether the REST
-    API shows and changes it."""
+    called once per installation), its description, whether the REST API
+    shows and changes it, and whether only the REST admin user may."""
 
     name: str
     kind: Literal["bool", "int", "str"]
     default: int | str | Callable[[], str]
     description: str
     rest: bool = True
+    admin_only: bool = False
 
     @property
     def column(self) -> Literal["valueInt", "valueStr"]:
         return "valueStr" if self.kind == "str" else "valueInt"
+
+    @property
+    def python_type(self) -> type[bool] | type[int] | type[str]:
+        return {"bool": bool, "int": int, "str": str}[self.kind]
 
     def initial_value(self) -> int | str:
         """The value to seed: the default (a bool as 0 or 1), or a new value
@@ -414,12 +419,14 @@ KEYS: tuple[ConfigKey, ...] = (
         "str",
         "admin",
         "Username of administrator on the REST server with all permission",
+        admin_only=True,
     ),
     ConfigKey(
         "restserver_authentication_method",
         "str",
         "local",
         "REST server authentication method. The following options are supported: local, pam",
+        admin_only=True,
     ),
     ConfigKey(
         "restserver_secret_key",
@@ -433,6 +440,7 @@ KEYS: tuple[ConfigKey, ...] = (
         "int",
         120,
         "Time-to-live, in minutes, that the oauth2 tokens are valid",
+        admin_only=True,
     ),
     ConfigKey("rest_timeout", "int", 5, "Timeout for the REST call"),
     ConfigKey(

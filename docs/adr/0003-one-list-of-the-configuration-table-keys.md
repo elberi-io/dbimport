@@ -21,14 +21,15 @@ and data layer.
 
 We will keep every key in `dbimport.config_db.config_keys.KEYS`, a tuple
 of frozen dataclasses with name, kind (`bool`, `int`, `str`), default,
-description and whether the REST API shows it. A default can be a
-function, called once per installation (the REST token key). From the
-list we derive:
+description, whether the REST API shows it and whether only the REST
+admin user may read and change it. A default can be a function, called
+once per installation (the REST token key). From the list we derive:
 
 - the read whitelist (`get_config_value` accepts only listed keys);
 - the seed: `setup` inserts missing keys with their default and sets the
   description of existing rows to the listed text, never their value;
-- the REST model, with `pydantic.create_model`;
+- the REST model, with `pydantic.create_model`, and the admin-only
+  checks of the REST read and update;
 - the key table in the docs, checked by a test that rewrites it on
   request.
 

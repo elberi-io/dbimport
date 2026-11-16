@@ -662,13 +662,8 @@ class DBCalls:
             if row[0] == "restserver_admin_user":
                 self.admin_user = row[2]
 
-            if row[0] in [
-                "restserver_admin_user",
-                "restserver_authentication_method",
-                "restserver_token_ttl",
-            ]:
-                if current_user != self.admin_user:
-                    continue
+            if config_key.admin_only and current_user != self.admin_user:
+                continue
 
             if config_key.column == "valueInt":
                 result_dict[row[0]] = row[1]
@@ -725,16 +720,14 @@ class DBCalls:
                             detail="only valid options for 'restserver_authentication_method' is 'local' and 'pam'",
                         )
 
-                    if key in [
-                        "restserver_admin_user",
-                        "restserver_authentication_method",
-                        "restserver_token_ttl",
-                    ]:
-                        if current_user != self.admin_user:
-                            raise HTTPException(
-                                status_code=status.HTTP_403_FORBIDDEN,
-                                detail="You are not allowed to update '%s'" % (key),
-                            )
+                    if (
+                        config_keys.BY_NAME[key].admin_only
+                        and current_user != self.admin_user
+                    ):
+                        raise HTTPException(
+                            status_code=status.HTTP_403_FORBIDDEN,
+                            detail="You are not allowed to update '%s'" % (key),
+                        )
 
         except AttributeError as e:
             print(e)

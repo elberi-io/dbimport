@@ -123,8 +123,6 @@ class JDBCDriver(BaseModel):
     classpath: str
 
 
-_FIELD_TYPES = {"bool": bool, "int": int, "str": str}
-
 if TYPE_CHECKING:
     # The fields are created at run time; mypy only knows the base class.
     Configuration = BaseModel
@@ -132,7 +130,7 @@ else:
     Configuration = create_model(
         "Configuration",
         **{
-            key.name: (_FIELD_TYPES[key.kind] | None, None)
+            key.name: (key.python_type | None, None)
             for key in config_keys.KEYS
             if key.rest
         },
