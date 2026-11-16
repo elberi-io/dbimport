@@ -1217,6 +1217,7 @@ export interface ConfigGlobalWithIndex {
   airflow_dummy_task_queue: string | null
   airflow_major_version: number | null
   airflow_sudo_user: string | null
+  airflow_url: string | null
   atlas_discovery_interval: number | null
   cluster_name: string | null
   export_default_sessions: number | null
@@ -1275,6 +1276,7 @@ export interface ConfigGlobalWithIndex {
   rest_verifyssl: number | null
   spark_max_executors: number | null
   timezone: string | null
+  timestamp_with_timezone: boolean | null
 }
 
 export interface JDBCdrivers {

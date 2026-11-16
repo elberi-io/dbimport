@@ -14,6 +14,11 @@ from tests.configdb import insert_row
 
 USERNAME = "tester"
 PASSWORD = "secret"
+ADMIN_KEYS = [
+    "restserver_admin_user",
+    "restserver_authentication_method",
+    "restserver_token_ttl",
+]
 
 
 @pytest.fixture
@@ -148,3 +153,79 @@ def test_login_with_unknown_user_returns_401(rest_server: ModuleType) -> None:
         )
 
     assert response.status_code == 401
+
+
+def test_get_config_does_not_return_the_secret_key(
+    client: TestClient, auth_headers: dict[str, str]
+) -> None:
+    response = client.get("/config/getConfig", headers=auth_headers)
+
+    assert response.status_code == 200
+    assert "restserver_secret_key" not in response.json()
+
+
+def test_get_config_hides_the_admin_keys_from_other_users(
+    client: TestClient, auth_headers: dict[str, str]
+) -> None:
+    response = client.get("/config/getConfig", headers=auth_headers)
+
+    assert [response.json()[key] for key in ADMIN_KEYS] == [None, None, None]
+    assert response.json()["timezone"] == "UTC"
+
+
+def test_get_config_ignores_rows_of_unknown_keys(
+    client: TestClient, auth_headers: dict[str, str], db_connection: sa.Connection
+) -> None:
+    insert_row(
+        db_connection, "configuration", configKey="sqoop_max_mappers", valueInt=4
+    )
+
+    response = client.get("/config/getConfig", headers=auth_headers)
+
+    assert response.status_code == 200
+    assert "sqoop_max_mappers" not in response.json()
+
+
+@pytest.mark.parametrize(
+    ("change", "status_code"),
+    [
+        ({"airflow_major_version": 3}, 400),
+        ({"restserver_authentication_method": "ldap"}, 400),
+        ({"timezone": " "}, 400),
+        ({"restserver_admin_user": "tester"}, 403),
+        ({"restserver_authentication_method": "pam"}, 403),
+        ({"restserver_token_ttl": 60}, 403),
+    ],
+)
+def test_update_config_invalid_or_admin_only_change_is_rejected(
+    client: TestClient,
+    auth_headers: dict[str, str],
+    change: dict[str, object],
+    status_code: int,
+) -> None:
+    response = client.post("/config/updateConfig", json=change, headers=auth_headers)
+
+    assert response.status_code == status_code
+
+
+def test_update_config_stores_the_new_values(
+    client: TestClient, auth_headers: dict[str, str], db_connection: sa.Connection
+) -> None:
+    response = client.post(
+        "/config/updateConfig",
+        json={"rest_timeout": 9, "airflow_disable": True, "timezone": "UTC+1"},
+        headers=auth_headers,
+    )
+
+    assert response.status_code == 200
+    rows = db_connection.execute(
+        sa.text(
+            "SELECT configKey, valueInt, valueStr FROM configuration "
+            "WHERE configKey IN ('rest_timeout', 'airflow_disable', 'timezone')"
+        )
+    )
+    assert {row[0]: row[1:] for row in rows} == {
+        "rest_timeout": (9, None),
+        "airflow_disable": (1, None),
+        "timezone": (None, "UTC+1"),
+    }

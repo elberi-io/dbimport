@@ -36,7 +36,7 @@ from sqlalchemy.sql.operators import like_op
 
 from dbimport.common import constants as constant
 from dbimport.common.exceptions import InvalidConfigurationError, SQLError
-from dbimport.config_db import common_config, config_schema
+from dbimport.config_db import common_config, config_keys, config_schema
 from dbimport.server import data_models
 from dbimport.settings import get_settings
 
@@ -71,82 +71,6 @@ class DBCalls:
         self.admin_user = self.get_config_value("restserver_admin_user")
 
         self.content_max_rows = 1000
-
-        self.all_config_keys = [
-            "airflow_aws_instanceids",
-            "airflow_aws_pool_to_instanceid",
-            "airflow_create_pool_with_task",
-            "airflow_dag_directory",
-            "airflow_dag_file_group",
-            "airflow_dag_file_permission",
-            "airflow_dag_staging_directory",
-            "airflow_dbimport_commandpath",
-            "airflow_default_pool_size",
-            "airflow_disable",
-            "airflow_dummy_task_queue",
-            "airflow_major_version",
-            "airflow_sudo_user",
-            "airflow_url",
-            "atlas_discovery_interval",
-            "cluster_name",
-            "export_default_sessions",
-            "export_max_sessions",
-            "export_stage_disable",
-            "export_staging_database",
-            "export_start_disable",
-            "hdfs_address",
-            "hdfs_basedir",
-            "hdfs_blocksize",
-            "hive_acid_with_clusteredby",
-            "hive_insert_only_tables",
-            "hive_major_compact_after_merge",
-            "hive_print_messages",
-            "hive_remove_locks_by_force",
-            "hive_validate_before_execution",
-            "hive_validate_table",
-            "impala_invalidate_metadata",
-            "import_columnname_delete",
-            "import_columnname_histtime",
-            "import_columnname_import",
-            "import_columnname_insert",
-            "import_columnname_iud",
-            "import_columnname_source",
-            "import_columnname_update",
-            "import_default_sessions",
-            "import_history_database",
-            "import_history_table",
-            "import_max_sessions",
-            "import_process_empty",
-            "import_stage_disable",
-            "import_staging_database",
-            "import_staging_table",
-            "import_start_disable",
-            "import_work_database",
-            "import_work_table",
-            "kafka_brokers",
-            "kafka_saslmechanism",
-            "kafka_securityprotocol",
-            "kafka_topic",
-            "kafka_trustcafile",
-            "post_airflow_dag_operations",
-            "post_data_to_kafka",
-            "post_data_to_kafka_extended",
-            "post_data_to_rest",
-            "post_data_to_rest_extended",
-            "post_data_to_awssns",
-            "post_data_to_awssns_extended",
-            "post_data_to_awssns_topic",
-            "restserver_admin_user",
-            "restserver_authentication_method",
-            "restserver_token_ttl",
-            "rest_timeout",
-            "rest_trustcafile",
-            "rest_url",
-            "rest_verifyssl",
-            "spark_max_executors",
-            "timezone",
-            "timestamp_with_timezone",
-        ]
 
         self.create_default_admin_user()
 
@@ -729,35 +653,22 @@ class DBCalls:
 
         result_dict = {}
         for row in configurations:
-            if row[0] in ["restserver_secret_key"]:
-                # These should not be visable in the REST service. Skip them
+            config_key = config_keys.BY_NAME.get(row[0])
+            if config_key is None or not config_key.rest:
+                # Rows of keys that are no longer used, and keys the REST
+                # service does not show.
                 continue
 
             if row[0] == "restserver_admin_user":
                 self.admin_user = row[2]
 
-            value_column, bool_value = self.common_config.get_config_value_column(
-                row[0], ignore_error_output=True
-            )
-            if value_column is None:
-                # If there is no handling of the value in self.common_config.get_config_value_column we will ignore it.
-                # But even if it's handling in that configuration, it must also exists in the datamodel for it to be shown
+            if config_key.admin_only and current_user != self.admin_user:
                 continue
 
-            if row[0] in [
-                "restserver_admin_user",
-                "restserver_authentication_method",
-                "restserver_token_ttl",
-            ]:
-                if current_user != self.admin_user:
-                    continue
-
-            if value_column == "valueInt":
+            if config_key.column == "valueInt":
                 result_dict[row[0]] = row[1]
-            elif value_column == "valueStr":
+            else:
                 result_dict[row[0]] = row[2]
-            elif value_column == "valueDate":
-                result_dict[row[0]] = row[3]
 
         session.remove()
 
@@ -780,7 +691,7 @@ class DBCalls:
 
         # First check to make sure we have valid options in the changed options
         try:
-            for key in self.all_config_keys:
+            for key in data_models.Configuration.model_fields:
                 if type(getattr(configuration, key)) in (str, bool, int):
                     # At this point, only configuration items that exists in the class is iterrated
                     if type(getattr(configuration, key)) is str:
@@ -809,16 +720,14 @@ class DBCalls:
                             detail="only valid options for 'restserver_authentication_method' is 'local' and 'pam'",
                         )
 
-                    if key in [
-                        "restserver_admin_user",
-                        "restserver_authentication_method",
-                        "restserver_token_ttl",
-                    ]:
-                        if current_user != self.admin_user:
-                            raise HTTPException(
-                                status_code=status.HTTP_403_FORBIDDEN,
-                                detail="You are not allowed to update '%s'" % (key),
-                            )
+                    if (
+                        config_keys.BY_NAME[key].admin_only
+                        and current_user != self.admin_user
+                    ):
+                        raise HTTPException(
+                            status_code=status.HTTP_403_FORBIDDEN,
+                            detail="You are not allowed to update '%s'" % (key),
+                        )
 
         except AttributeError as e:
             print(e)
@@ -827,7 +736,7 @@ class DBCalls:
                 detail="invalid configuration option",
             )
 
-        for key in self.all_config_keys:
+        for key in data_models.Configuration.model_fields:
             if type(getattr(configuration, key)) in (str, bool, int):
                 # At this point, only configuration items that exists in the class is iterrated
                 log.info(
@@ -837,9 +746,7 @@ class DBCalls:
                     getattr(configuration, key),
                 )
 
-                value_column, bool_value = self.common_config.get_config_value_column(
-                    key
-                )
+                value_column = config_keys.BY_NAME[key].column
 
                 session.execute(
                     update(configuration_table),
