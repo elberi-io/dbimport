@@ -146,13 +146,13 @@ class DBCalls:
 
         configuration = (
             session.query(
-                configuration_table.configKey,
-                configuration_table.valueInt,
-                configuration_table.valueStr,
-                configuration_table.valueDate,
+                configuration_table.config_key,
+                configuration_table.value_int,
+                configuration_table.value_str,
+                configuration_table.value_date,
             )
             .select_from(configuration_table)
-            .filter(configuration_table.configKey == key)
+            .filter(configuration_table.config_key == key)
             .one()
         )
 
@@ -643,13 +643,13 @@ class DBCalls:
 
         configurations = (
             session.query(
-                configuration_table.configKey,
-                configuration_table.valueInt,
-                configuration_table.valueStr,
-                configuration_table.valueDate,
+                configuration_table.config_key,
+                configuration_table.value_int,
+                configuration_table.value_str,
+                configuration_table.value_date,
             )
             .select_from(configuration_table)
-            .order_by(configuration_table.configKey)
+            .order_by(configuration_table.config_key)
             .all()
         )
 
@@ -688,8 +688,6 @@ class DBCalls:
         except SQLError:
             self.disconnect_dbimport_db()
             return None
-
-        configuration_table = aliased(config_schema.Configuration)
 
         # First check to make sure we have valid options in the changed options
         try:
@@ -748,11 +746,14 @@ class DBCalls:
                     getattr(configuration, key),
                 )
 
-                value_column = config_keys.BY_NAME[key].column
+                value_column = config_schema.Configuration.__table__.c[
+                    config_keys.BY_NAME[key].column
+                ]
 
                 session.execute(
-                    update(configuration_table),
-                    [{"configKey": key, value_column: getattr(configuration, key)}],
+                    update(config_schema.Configuration)
+                    .where(config_schema.Configuration.config_key == key)
+                    .values({value_column: getattr(configuration, key)})
                 )
                 session.commit()
 
@@ -1561,20 +1562,20 @@ class DBCalls:
                 import_tables.include_in_airflow,
                 import_tables.airflow_priority,
                 import_tables.validate_import,
-                import_tables.validationMethod,
+                import_tables.validation_method,
                 import_tables.validate_source,
                 import_tables.validate_diff_allowed,
-                import_tables.validationCustomQuerySourceSQL,
-                import_tables.validationCustomQueryHiveSQL,
-                import_tables.validationCustomQueryValidateImportTable,
+                import_tables.validation_custom_query_source_sql,
+                import_tables.validation_custom_query_hive_sql,
+                import_tables.validation_custom_query_validate_import_table,
                 import_tables.truncate_hive,
                 import_tables.mappers,
                 import_tables.soft_delete_during_merge,
                 import_tables.source_rowcount,
                 import_tables.source_rowcount_incr,
                 import_tables.hive_rowcount,
-                import_tables.validationCustomQuerySourceValue,
-                import_tables.validationCustomQueryHiveValue,
+                import_tables.validation_custom_query_source_value,
+                import_tables.validation_custom_query_hive_value,
                 import_tables.incr_mode,
                 import_tables.incr_column,
                 import_tables.incr_validation_method,
@@ -1611,8 +1612,8 @@ class DBCalls:
                 import_tables.create_foreign_keys,
                 import_tables.invalidate_impala,
                 import_tables.custom_max_query,
-                import_tables.mergeCompactionMethod,
-                import_tables.sourceTableType,
+                import_tables.merge_compaction_method,
+                import_tables.source_table_type,
                 import_tables.import_database,
                 import_tables.import_table,
                 import_tables.history_database,
@@ -2790,18 +2791,18 @@ class DBCalls:
                 export_tables.sql_where_addition,
                 export_tables.include_in_airflow,
                 export_tables.airflow_priority,
-                export_tables.forceCreateTempTable,
+                export_tables.force_create_temp_table,
                 export_tables.validate_export,
-                export_tables.validationMethod,
-                export_tables.validationCustomQueryHiveSQL,
-                export_tables.validationCustomQueryTargetSQL,
+                export_tables.validation_method,
+                export_tables.validation_custom_query_hive_sql,
+                export_tables.validation_custom_query_target_sql,
                 export_tables.uppercase_columns,
                 export_tables.truncate_target,
                 export_tables.mappers,
                 export_tables.hive_rowcount,
                 export_tables.target_rowcount,
-                export_tables.validationCustomQueryHiveValue,
-                export_tables.validationCustomQueryTargetValue,
+                export_tables.validation_custom_query_hive_value,
+                export_tables.validation_custom_query_target_value,
                 export_tables.incr_column,
                 export_tables.incr_validation_method,
                 export_tables.incr_minvalue,

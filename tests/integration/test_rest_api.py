@@ -231,6 +231,86 @@ def test_update_config_stores_the_new_values(
     }
 
 
+def test_update_config_leaves_the_other_keys_unchanged(
+    client: TestClient, auth_headers: dict[str, str], db_connection: sa.Connection
+) -> None:
+    query = sa.text(
+        "SELECT configKey, valueInt, valueStr FROM configuration "
+        "WHERE configKey NOT IN ('rest_timeout', 'timezone') ORDER BY configKey"
+    )
+    before = db_connection.execute(query).all()
+
+    response = client.post(
+        "/config/updateConfig",
+        json={"rest_timeout": 9, "timezone": "UTC+1"},
+        headers=auth_headers,
+    )
+
+    assert response.status_code == 200
+    assert db_connection.execute(query).all() == before
+
+
+def test_import_table_update_stores_the_changed_settings(
+    client: TestClient, auth_headers: dict[str, str], db_connection: sa.Connection
+) -> None:
+    insert_row(db_connection, "jdbc_connections", dbalias="src_conn", jdbc_url="x")
+    table = {
+        "connection": "src_conn",
+        "sourceSchema": "src",
+        "sourceTable": "orders",
+        "importPhaseType": "full",
+        "etlPhaseType": "truncate_insert",
+        "importTool": "spark",
+        "etlEngine": "spark",
+    }
+    changes = {"validationMethod": "customQuery", "mergeCompactionMethod": "major"}
+
+    created = client.post(
+        "/import/table/salesdb/orders", json=table, headers=auth_headers
+    )
+    updated = client.post(
+        "/import/table/salesdb/orders", json=table | changes, headers=auth_headers
+    )
+
+    assert (created.status_code, updated.status_code) == (200, 200)
+    row = db_connection.execute(
+        sa.text(
+            "SELECT validationMethod, mergeCompactionMethod FROM import_tables "
+            "WHERE hive_db = 'salesdb' AND hive_table = 'orders'"
+        )
+    ).one()
+    assert tuple(row) == ("customQuery", "major")
+
+
+def test_export_table_update_stores_the_changed_settings(
+    client: TestClient, auth_headers: dict[str, str], db_connection: sa.Connection
+) -> None:
+    insert_row(db_connection, "jdbc_connections", dbalias="tgt_conn", jdbc_url="x")
+    table = {
+        "exportType": "full",
+        "exportTool": "spark",
+        "database": "salesdb",
+        "table": "orders",
+    }
+    changes = {"validationMethod": "customQuery", "forceCreateTempTable": True}
+
+    created = client.post(
+        "/export/table/tgt_conn/tgt/orders", json=table, headers=auth_headers
+    )
+    updated = client.post(
+        "/export/table/tgt_conn/tgt/orders", json=table | changes, headers=auth_headers
+    )
+
+    assert (created.status_code, updated.status_code) == (200, 200)
+    row = db_connection.execute(
+        sa.text(
+            "SELECT validationMethod, forceCreateTempTable FROM export_tables "
+            "WHERE dbalias = 'tgt_conn' AND target_table = 'orders'"
+        )
+    ).one()
+    assert tuple(row) == ("customQuery", 1)
+
+
 @pytest.fixture
 def admin_headers(client: TestClient) -> dict[str, str]:
     # The REST server creates the admin user with password "admin" at start.

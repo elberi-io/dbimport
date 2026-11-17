@@ -255,12 +255,15 @@ extra_checks = false
 module = [
     "dbimport.config_db.common_config",
     "dbimport.config_db.config_keys",
+    "dbimport.config_db.config_schema",
     "dbimport.config_db.decryption",
     "dbimport.config_db.export_config",
     "dbimport.config_db.export_stage",
     "dbimport.config_db.import_config",
     "dbimport.config_db.import_stage",
     "dbimport.config_db.send_statistics",
+    "dbimport.operations.hive_schema",
+    "dbimport.schedule.airflow_schema",
 ]
 disallow_untyped_defs = true
 disallow_incomplete_defs = true

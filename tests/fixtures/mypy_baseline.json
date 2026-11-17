@@ -27,11 +27,6 @@
     "return-value": 2,
     "union-attr": 7
   },
-  "src/dbimport/config_db/config_schema.py": {
-    "misc": 37,
-    "valid-type": 37,
-    "var-annotated": 22
-  },
   "src/dbimport/config_db/decryption.py": {
     "arg-type": 2,
     "assignment": 3,
@@ -99,11 +94,6 @@
     "operator": 7,
     "union-attr": 97
   },
-  "src/dbimport/operations/hive_schema.py": {
-    "misc": 11,
-    "valid-type": 11,
-    "var-annotated": 15
-  },
   "src/dbimport/operations/import_operations.py": {
     "arg-type": 15,
     "assignment": 11,
@@ -121,10 +111,6 @@
     "type-var": 1,
     "union-attr": 326,
     "var-annotated": 2
-  },
-  "src/dbimport/schedule/airflow_schema.py": {
-    "misc": 1,
-    "valid-type": 1
   },
   "src/dbimport/server/atlas_discovery.py": {
     "misc": 1,
@@ -144,7 +130,7 @@
   },
   "src/dbimport/server/rest_server_calls.py": {
     "arg-type": 3,
-    "assignment": 36,
+    "assignment": 45,
     "has-type": 4,
     "name-defined": 5,
     "used-before-def": 2

@@ -1450,10 +1450,12 @@ class Operation(metaclass=Singleton):
                     update_dict["%s" % (name)] = value
 
                 # Update the values in import_table on the remote instance
-                (
-                    remote_session.query(config_schema.ExportTables)
-                    .filter(config_schema.ExportTables.table_id == remote_table_id)
-                    .update(update_dict)
+                # update_dict has the column names of the row read above.
+                table = config_schema.metadata.tables["export_tables"]
+                remote_session.execute(
+                    sa.update(table)
+                    .where(table.c.table_id == remote_table_id)
+                    .values(update_dict)
                 )
                 remote_session.commit()
 
@@ -1880,10 +1882,12 @@ class Operation(metaclass=Singleton):
                     update_dict["copy_finished"] = None
 
                 # Update the values in import_table on the remote instance
-                (
-                    remote_session.query(config_schema.ImportTables)
-                    .filter(config_schema.ImportTables.table_id == remote_table_id)
-                    .update(update_dict)
+                # update_dict has the column names of the row read above.
+                table = config_schema.metadata.tables["import_tables"]
+                remote_session.execute(
+                    sa.update(table)
+                    .where(table.c.table_id == remote_table_id)
+                    .values(update_dict)
                 )
                 remote_session.commit()
                 remote_session.close()
