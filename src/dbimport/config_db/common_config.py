@@ -24,7 +24,6 @@ import subprocess
 import sys
 from datetime import datetime, timedelta
 from typing import Any
-from urllib.parse import quote
 
 import jaydebeapi
 import mysql.connector
@@ -44,6 +43,7 @@ from dbimport.common.exceptions import (
 from dbimport.common.singleton import Singleton
 from dbimport.config_db import config_keys
 from dbimport.config_db import decryption as decryption
+from dbimport.config_db import engine as config_engine
 from dbimport.settings import get_settings
 from dbimport.source_schema import schema_reader
 
@@ -239,56 +239,14 @@ class Config(metaclass=Singleton):
             # This information is already fetched from the configuration. Just return the fetched values
             return self.mysql_connection_details
 
-        mysql_hostname = get_settings().database.mysql_hostname
-        mysql_port = get_settings().database.mysql_port
-        mysql_database = get_settings().database.mysql_database
-        mysql_username = get_settings().database.mysql_username
-        mysql_password = get_settings().database.mysql_password.get_secret_value()
-
-        if mysql_password == "" and mysql_username == "" and self.aws_region != None:
-            # No password is configured. Lets try the AWS get_secret function if configured
-            aws_secret_name = get_settings().database.aws_secret_name
-            if aws_secret_name is None:
-                raise InvalidConfigurationError(
-                    "Credentials configuration to configuration database in config file is incorrect. Either use username/password or a AWS Secret Manager name"
-                )
-
-            import boto3
-            from botocore.exceptions import ClientError
-
-            # Create a Secrets Manager client
-            session = boto3.session.Session()
-            client = session.client(
-                service_name="secretsmanager", region_name=self.aws_region
-            )
-
-            try:
-                get_secret_value_response = client.get_secret_value(
-                    SecretId=aws_secret_name
-                )
-            except ClientError as e:
-                # For a list of exceptions thrown, see
-                # https://docs.aws.amazon.com/secretsmanager/latest/apireference/API_GetSecretValue.html
-                raise e
-
-            rds_credentials = json.loads(get_secret_value_response["SecretString"])
-            mysql_username = rds_credentials["username"]
-            mysql_password = rds_credentials["password"]
-
-        elif mysql_password == "" or mysql_username == "":
-            raise InvalidConfigurationError(
-                "Credentials configuration to configuration database in config file is incorrect. Either use username/password or a AWS Secret Manager name"
-            )
+        found = config_engine.configured_credentials()
 
         self.mysql_connection_details = {}
-        self.mysql_connection_details["mysql_hostname"] = mysql_hostname
-        self.mysql_connection_details["mysql_port"] = str(mysql_port)
-        self.mysql_connection_details["mysql_database"] = mysql_database
-        self.mysql_connection_details["mysql_username"] = mysql_username
-        self.mysql_connection_details["mysql_password"] = mysql_password
-
-        # print(mysql_username)
-        # print(mysql_password)
+        self.mysql_connection_details["mysql_hostname"] = found.hostname
+        self.mysql_connection_details["mysql_port"] = str(found.port)
+        self.mysql_connection_details["mysql_database"] = found.database
+        self.mysql_connection_details["mysql_username"] = found.username
+        self.mysql_connection_details["mysql_password"] = found.password
 
         return self.mysql_connection_details
 
@@ -385,15 +343,9 @@ class Config(metaclass=Singleton):
             # If we already have a connection, we just say that it's ok....
             return True
 
-        mysql_credentials = self.get_mysql_credentials()
-
-        self.connect_str = f"mysql+pymysql://{mysql_credentials['mysql_username']}:{quote(mysql_credentials['mysql_password'], safe=' +')}@{mysql_credentials['mysql_hostname']}:{mysql_credentials['mysql_port']}/{mysql_credentials['mysql_database']}"
-
         try:
-            self.config_db = sa.create_engine(
-                self.connect_str, echo=self.debug_log_level, pool_pre_ping=True
-            )
-            self.config_db.connect()
+            self.config_db = config_engine.create(echo=self.debug_log_level)
+            self.config_db.connect().close()
             self.config_db_session = sessionmaker(bind=self.config_db)
 
         except sa.exc.OperationalError as err:

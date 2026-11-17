@@ -21,7 +21,6 @@ import os
 import re
 import subprocess
 import sys
-from urllib.parse import quote
 
 import bcrypt
 import sqlalchemy as sa
@@ -37,6 +36,7 @@ from sqlalchemy.sql.operators import like_op
 from dbimport.common import constants as constant
 from dbimport.common.exceptions import InvalidConfigurationError, SQLError
 from dbimport.config_db import common_config, config_keys, config_schema
+from dbimport.config_db import engine as config_engine
 from dbimport.server import data_models
 from dbimport.settings import get_settings
 
@@ -100,15 +100,9 @@ class DBCalls:
             # return self.config_db_session()
             return scoped_session(self.config_db_session)
 
-        mysql_credentials = self.common_config.get_mysql_credentials()
-
-        self.connect_str = f"mysql+pymysql://{mysql_credentials['mysql_username']}:{quote(mysql_credentials['mysql_password'], safe=' +')}@{mysql_credentials['mysql_hostname']}:{mysql_credentials['mysql_port']}/{mysql_credentials['mysql_database']}"
-
         try:
-            self.config_db = sa.create_engine(
-                self.connect_str, echo=self.debug_log_level, pool_pre_ping=True
-            )
-            self.config_db.connect()
+            self.config_db = config_engine.create(echo=self.debug_log_level)
+            self.config_db.connect().close()
             self.config_db_session = sessionmaker(bind=self.config_db)
 
         except sa.exc.OperationalError as err:

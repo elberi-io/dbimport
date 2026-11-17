@@ -42,6 +42,7 @@ from dbimport.common.exceptions import (
     SQLError,
 )
 from dbimport.config_db import config_schema
+from dbimport.config_db import engine as config_engine
 from dbimport.settings import get_settings
 from dbimport.source_schema import schema_reader
 
@@ -65,11 +66,6 @@ class AtlasOperation:
         self.schema_reader = schema_reader.Source()
 
         # Fetch configuration about MySQL database and how to connect to it
-        self.config_hostname = get_settings().database.mysql_hostname
-        self.config_port = get_settings().database.mysql_port
-        self.config_database = get_settings().database.mysql_database
-        self.config_username = get_settings().database.mysql_username
-        self.config_password = get_settings().database.mysql_password.get_secret_value()
 
         # Atlas variables
         self.atlas_enabled = False
@@ -1365,13 +1361,10 @@ class AtlasOperation:
     def connect_dbimport_db(self):
         # Esablish a SQLAlchemy connection to the DBImport database
         log = logging.getLogger(self.logger_name)
-        self.connect_str = f"mysql+pymysql://{self.config_username}:{self.config_password}@{self.config_hostname}:{self.config_port}/{self.config_database}"
 
         try:
-            self.config_db_engine = sa.create_engine(
-                self.connect_str, echo=self.debug_log_level
-            )
-            self.config_db_engine.connect()
+            self.config_db_engine = config_engine.create(echo=self.debug_log_level)
+            self.config_db_engine.connect().close()
             self.config_db_session = sessionmaker(bind=self.config_db_engine)
 
         except sa.exc.OperationalError as err:

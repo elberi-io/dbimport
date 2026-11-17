@@ -35,6 +35,7 @@ from dbimport.common.exceptions import (
     JDBCConnectionError,
 )
 from dbimport.config_db import common_config, config_schema
+from dbimport.config_db import engine as config_engine
 from dbimport.operations import atlas_operations
 from dbimport.settings import get_settings
 
@@ -139,11 +140,6 @@ class AtlasDiscovery(threading.Thread):
         self.jdbc_connection_mutex = threading.Lock()
 
         # Fetch configuration about MySQL database and how to connect to it
-        self.config_hostname = get_settings().database.mysql_hostname
-        self.config_port = get_settings().database.mysql_port
-        self.config_database = get_settings().database.mysql_database
-        self.config_username = get_settings().database.mysql_username
-        self.config_password = get_settings().database.mysql_password.get_secret_value()
 
         atlas_crawler_objects = []
         atlas_crawler_threads = get_settings().server.atlas_threads
@@ -461,13 +457,10 @@ class AtlasDiscovery(threading.Thread):
     def connect_dbimport_db(self):
         # Esablish a SQLAlchemy connection to the DBImport database
         log = logging.getLogger("atlasDiscovery")
-        self.connect_str = f"mysql+pymysql://{self.config_username}:{self.config_password}@{self.config_hostname}:{self.config_port}/{self.config_database}"
 
         try:
-            self.config_db_engine = sa.create_engine(
-                self.connect_str, echo=self.debug_log_level
-            )
-            self.config_db_engine.connect()
+            self.config_db_engine = config_engine.create(echo=self.debug_log_level)
+            self.config_db_engine.connect().close()
             self.config_db_session = sessionmaker(bind=self.config_db_engine)
 
         except sa.exc.OperationalError as err:

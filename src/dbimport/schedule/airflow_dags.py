@@ -23,7 +23,6 @@ import re
 import shutil
 import sys
 from datetime import datetime, time, timedelta
-from urllib.parse import quote
 
 import boto3
 import botocore
@@ -34,6 +33,7 @@ from sqlalchemy.orm import Query, aliased, scoped_session, sessionmaker
 
 from dbimport.common.exceptions import InvalidConfigurationError, SQLError
 from dbimport.config_db import common_config, config_schema, send_statistics
+from dbimport.config_db import engine as config_engine
 from dbimport.schedule import airflow_schema
 from dbimport.settings import get_settings
 
@@ -154,15 +154,9 @@ class Initialize:
             # return self.config_db_session()
             return scoped_session(self.config_db_session)
 
-        mysql_credentials = self.common_config.get_mysql_credentials()
-
-        self.connect_str = f"mysql+pymysql://{mysql_credentials['mysql_username']}:{quote(mysql_credentials['mysql_password'], safe=' +')}@{mysql_credentials['mysql_hostname']}:{mysql_credentials['mysql_port']}/{mysql_credentials['mysql_database']}"
-
         try:
-            self.config_db = sa.create_engine(
-                self.connect_str, echo=self.debug_log_level, pool_pre_ping=True
-            )
-            self.config_db.connect()
+            self.config_db = config_engine.create(echo=self.debug_log_level)
+            self.config_db.connect().close()
             self.config_db_session = sessionmaker(bind=self.config_db)
 
         except sa.exc.OperationalError as err:

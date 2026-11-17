@@ -17,7 +17,6 @@
 
 import logging
 import sys
-from urllib.parse import quote
 
 import mysql.connector
 import pandas as pd
@@ -30,6 +29,7 @@ from mysql.connector import errorcode
 from sqlalchemy.orm import sessionmaker
 
 from dbimport.config_db import common_config, config_keys, config_schema
+from dbimport.config_db import engine as config_engine
 
 
 class Initialize:
@@ -53,14 +53,10 @@ class Initialize:
         self.config_username = self.database_credentials["mysql_username"]
         self.config_password = self.database_credentials["mysql_password"]
 
-        self.connect_str = f"mysql+pymysql://{self.config_username}:{quote(self.config_password, safe=' +')}@{self.config_hostname}:{self.config_port}/{self.config_database}"
-
         # Esablish a SQLAlchemy connection to the DBImport database
         try:
-            self.config_db = sa.create_engine(
-                self.connect_str, echo=self.debug_log_level
-            )
-            self.config_db.connect()
+            self.config_db = config_engine.create(echo=self.debug_log_level)
+            self.config_db.connect().close()
             self.config_db_session = sessionmaker(bind=self.config_db)
 
         except sa.exc.OperationalError as err:
@@ -75,8 +71,10 @@ class Initialize:
         self.alembic_schema_dir = "dbimport:migrations"
         self.alembic_config = Config()
         self.alembic_config.set_main_option("script_location", self.alembic_schema_dir)
-        self.connect_str = self.connect_str.replace("%", "%%")
-        self.alembic_config.set_main_option("sqlalchemy.url", self.connect_str)
+        self.alembic_config.set_main_option(
+            "sqlalchemy.url",
+            self.config_db.url.render_as_string(hide_password=False).replace("%", "%%"),
+        )
 
         # Esablish a connection to the DBImport database in MySQL
         try:
