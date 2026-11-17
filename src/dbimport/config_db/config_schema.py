@@ -75,7 +75,7 @@ class DBImportInstances(Base):
         TINYINT(4),
         nullable=False,
         server_default=text("'0'"),
-        comment="0 = Credentials wont be synced, 1 = The credentials information will be synced to the other cluster",
+        comment="0 = Credentials won't be synced, 1 = The credentials information will be synced to the other cluster",
     )
 
 
@@ -165,7 +165,7 @@ class CopyAsyncStatus(Base):
 class AirflowCustomDAGs(Base):
     __tablename__ = "airflow_custom_dags"
     __table_args__ = {
-        "comment": 'Its possible to construct a DAG that have no import, export or ETL definitions in it, but instead just Tasks from the airflow_task table. That might nbe useful to for example run custom Hive Code after an import is completed as a separate DAG. Defining a DAG in here also requires you to have at least one task in airflow_tasks defined "in main"'
+        "comment": 'Its possible to construct a DAG that have no import, export or ETL definitions in it, but instead just Tasks from the airflow_task table. That might be useful to for example run custom Hive Code after an import is completed as a separate DAG. Defining a DAG in here also requires you to have at least one task in airflow_tasks defined "in main"'
     }
 
     dag_name: Mapped[str] = mapped_column(
@@ -180,14 +180,14 @@ class AirflowCustomDAGs(Base):
         Integer,
         nullable=False,
         server_default=text("'0'"),
-        comment="How many retries should be Task do in Airflow before it failes",
+        comment="How many retries should be Task do in Airflow before it fails",
     )
     operator_notes: Mapped[str | None] = mapped_column(
         Text, comment="Free text field to write a note about the custom DAG. "
     )
     application_notes: Mapped[str | None] = mapped_column(
         Text,
-        comment="Free text field that can be used for application documentaton, notes or links. ",
+        comment="Free text field that can be used for application documentation, notes or links. ",
     )
     auto_regenerate_dag: Mapped[int] = mapped_column(
         TINYINT(4),
@@ -226,7 +226,7 @@ class AirflowCustomDAGs(Base):
     tags: Mapped[str | None] = mapped_column(
         String(256),
         nullable=True,
-        comment="Comma seperated list of Airflow tags that will be set on the Dag",
+        comment="Comma separated list of Airflow tags that will be set on the Dag",
     )
     sla_warning_time: Mapped[time | None] = mapped_column(
         Time,
@@ -305,7 +305,7 @@ class AirflowETLDAGs(Base):
     )
     retries: Mapped[int | None] = mapped_column(
         TINYINT(4),
-        comment="How many retries should be Task do in Airflow before it failes",
+        comment="How many retries should be Task do in Airflow before it fails",
     )
     trigger_dag_on_success: Mapped[str | None] = mapped_column(
         String(64), comment="<NOT USED>"
@@ -315,7 +315,7 @@ class AirflowETLDAGs(Base):
     )
     application_notes: Mapped[str | None] = mapped_column(
         Text,
-        comment="Free text field that can be used for application documentaton, notes or links. ",
+        comment="Free text field that can be used for application documentation, notes or links. ",
     )
     auto_regenerate_dag: Mapped[int] = mapped_column(
         TINYINT(4),
@@ -354,7 +354,7 @@ class AirflowETLDAGs(Base):
     tags: Mapped[str | None] = mapped_column(
         String(256),
         nullable=True,
-        comment="Comma seperated list of Airflow tags that will be set on the Dag",
+        comment="Comma separated list of Airflow tags that will be set on the Dag",
     )
     sla_warning_time: Mapped[time | None] = mapped_column(
         Time,
@@ -407,18 +407,18 @@ class AirflowExportDAGs(Base):
     )
     retries: Mapped[int | None] = mapped_column(
         TINYINT(4),
-        comment="How many retries should be Task do in Airflow before it failes",
+        comment="How many retries should be Task do in Airflow before it fails",
     )
     trigger_dag_on_success: Mapped[str | None] = mapped_column(
         String(64),
-        comment="Name of DAG to trigger if export is successfull. Comma seperated list of DAGs (optional)",
+        comment="Name of DAG to trigger if export is successful. Comma separated list of DAGs (optional)",
     )
     operator_notes: Mapped[str | None] = mapped_column(
         Text, comment="Free text field to write a note about the export. "
     )
     application_notes: Mapped[str | None] = mapped_column(
         Text,
-        comment="Free text field that can be used for application documentaton, notes or links. ",
+        comment="Free text field that can be used for application documentation, notes or links. ",
     )
     auto_regenerate_dag: Mapped[int] = mapped_column(
         TINYINT(4),
@@ -457,7 +457,7 @@ class AirflowExportDAGs(Base):
     tags: Mapped[str | None] = mapped_column(
         String(256),
         nullable=True,
-        comment="Comma seperated list of Airflow tags that will be set on the Dag",
+        comment="Comma separated list of Airflow tags that will be set on the Dag",
     )
     sla_warning_time: Mapped[time | None] = mapped_column(
         Time,
@@ -506,13 +506,13 @@ class AirflowImportDAGs(Base):
         TINYINT(4),
         nullable=False,
         server_default=text("'0'"),
-        comment="1 = All Import phase jobs will be completed first, and when all is successfull, the ETL phase start",
+        comment="1 = All Import phase jobs will be completed first, and when all is successful, the ETL phase start",
     )
     retries: Mapped[int] = mapped_column(
         TINYINT(4),
         nullable=False,
         server_default=text("'5'"),
-        comment="How many retries should be Task do in Airflow before it failes",
+        comment="How many retries should be Task do in Airflow before it fails",
     )
     retries_stage1: Mapped[int | None] = mapped_column(
         TINYINT(4), comment="Specific retries number for Import Phase"
@@ -533,7 +533,7 @@ class AirflowImportDAGs(Base):
     )
     application_notes: Mapped[str | None] = mapped_column(
         Text,
-        comment="Free text field that can be used for application documentaton, notes or links. ",
+        comment="Free text field that can be used for application documentation, notes or links. ",
     )
     auto_table_discovery: Mapped[int] = mapped_column(
         TINYINT(4), nullable=False, server_default=text("'1'"), comment="<NOT USED>"
@@ -587,7 +587,7 @@ class AirflowImportDAGs(Base):
     tags: Mapped[str | None] = mapped_column(
         String(256),
         nullable=True,
-        comment="Comma seperated list of Airflow tags that will be set on the Dag",
+        comment="Comma separated list of Airflow tags that will be set on the Dag",
     )
     sla_warning_time: Mapped[time | None] = mapped_column(
         Time,
@@ -636,7 +636,7 @@ class Configuration(Base):
         "configKey",
         String(32),
         primary_key=True,
-        comment="Name of the configuration item. These are controlled and maintained by thee setup tool. Dont change these manually",
+        comment="Name of the configuration item. These are controlled and maintained by the setup tool. Don't change these manually",
     )
     value_int: Mapped[int | None] = mapped_column(
         "valueInt", Integer, comment="Integer based Value"
@@ -716,7 +716,7 @@ class ExportRetriesLog(Base):
 class ExportStage(Base):
     __tablename__ = "export_stage"
     __table_args__ = {
-        "comment": 'The export tool keeps track of how far in the export the tool have succeeded. So in case of an error, lets say that Hive is not responding, the next time an export is executed it will skip the first part and continue from where it ended in error on the previous run. If you want to rerun from the begining, the information in this table needs to be cleared. This is done with the "manage --clearExportStage" tool. Keep in mind that clearing the stage of an incremental export might result in the loss of the data.'
+        "comment": 'The export tool keeps track of how far in the export the tool have succeeded. So in case of an error, lets say that Hive is not responding, the next time an export is executed it will skip the first part and continue from where it ended in error on the previous run. If you want to rerun from the beginning, the information in this table needs to be cleared. This is done with the "manage --clearExportStage" tool. Keep in mind that clearing the stage of an incremental export might result in the loss of the data.'
     }
 
     dbalias: Mapped[str] = mapped_column(
@@ -801,7 +801,7 @@ class ExportStatistic(Base):
             "target_table",
         ),
         {
-            "comment": "At the end of each export, all statistics about how long each part took aswell as general information about Hive database and table, number of rows imported, size of the export and much more are logged in this table. This table grows and will never be truncated by DBImport itself. If it becomes to large for you, it's up to each user to delete or truncate this table as you see fit."
+            "comment": "At the end of each export, all statistics about how long each part took as well as general information about Hive database and table, number of rows imported, size of the export and much more are logged in this table. This table grows and will never be truncated by DBImport itself. If it becomes to large for you, it's up to each user to delete or truncate this table as you see fit."
         },
     )
 
@@ -839,10 +839,10 @@ class ExportStatistic(Base):
     )
     sessions: Mapped[int | None] = mapped_column(
         TINYINT(4),
-        comment="How many parallell sessions was used against the source (sqoop mappers)",
+        comment="How many parallel sessions was used against the source (sqoop mappers)",
     )
     duration: Mapped[int | None] = mapped_column(
-        Integer, comment="Tota duration in seconds"
+        Integer, comment="Total duration in seconds"
     )
     start: Mapped[datetime | None] = mapped_column(
         DateTime, comment="Timestamp of start"
@@ -895,7 +895,7 @@ class ExportStatistic(Base):
 class ExportStatisticsLast(Base):
     __tablename__ = "export_statistics_last"
     __table_args__ = {
-        "comment": "The last entry in table export_statistics is also stored in this table. This makes it easier to find the latest data without first grouping to find the latest entry. When export_statistics table grows to a high number of million rows, it saves alot of cpu power for the database server."
+        "comment": "The last entry in table export_statistics is also stored in this table. This makes it easier to find the latest data without first grouping to find the latest entry. When export_statistics table grows to a high number of million rows, it saves a lot of cpu power for the database server."
     }
 
     dbalias: Mapped[str] = mapped_column(
@@ -935,10 +935,10 @@ class ExportStatisticsLast(Base):
     )
     sessions: Mapped[int | None] = mapped_column(
         TINYINT(4),
-        comment="How many parallell sessions was used against the source (sqoop mappers)",
+        comment="How many parallel sessions was used against the source (sqoop mappers)",
     )
     duration: Mapped[int | None] = mapped_column(
-        Integer, comment="Tota duration in seconds"
+        Integer, comment="Total duration in seconds"
     )
     start: Mapped[datetime | None] = mapped_column(
         DateTime, comment="Timestamp of start"
@@ -1111,20 +1111,20 @@ class ExportTables(Base):
         server_default=text("'-1'"),
     )
     hive_rowcount: Mapped[int | None] = mapped_column(
-        BIGINT(20), comment="Number of rows in Hive table. Dont change manually"
+        BIGINT(20), comment="Number of rows in Hive table. Don't change manually"
     )
     target_rowcount: Mapped[int | None] = mapped_column(
-        BIGINT(20), comment="Number of rows in Target table. Dont change manually"
+        BIGINT(20), comment="Number of rows in Target table. Don't change manually"
     )
     validation_custom_query_hive_value: Mapped[str | None] = mapped_column(
         "validationCustomQueryHiveValue",
         Text,
-        comment="Used for validation. Dont change manually",
+        comment="Used for validation. Don't change manually",
     )
     validation_custom_query_target_value: Mapped[str | None] = mapped_column(
         "validationCustomQueryTargetValue",
         Text,
-        comment="Used for validation. Dont change manually",
+        comment="Used for validation. Don't change manually",
     )
     incr_column: Mapped[str | None] = mapped_column(
         String(256),
@@ -1137,38 +1137,38 @@ class ExportTables(Base):
     )
     incr_minvalue: Mapped[str | None] = mapped_column(
         String(32),
-        comment="Used by incremental exports to keep track of progress. Dont change manually",
+        comment="Used by incremental exports to keep track of progress. Don't change manually",
     )
     incr_maxvalue: Mapped[str | None] = mapped_column(
         String(32),
-        comment="Used by incremental exports to keep track of progress. Dont change manually",
+        comment="Used by incremental exports to keep track of progress. Don't change manually",
     )
     incr_minvalue_pending: Mapped[str | None] = mapped_column(
         String(32),
-        comment="Used by incremental exports to keep track of progress. Dont change manually",
+        comment="Used by incremental exports to keep track of progress. Don't change manually",
     )
     incr_maxvalue_pending: Mapped[str | None] = mapped_column(
         String(32),
-        comment="Used by incremental exports to keep track of progress. Dont change manually",
+        comment="Used by incremental exports to keep track of progress. Don't change manually",
     )
     sqoop_options: Mapped[str | None] = mapped_column(
         String(1024), comment="Sqoop options to use during export."
     )
     sqoop_last_size: Mapped[int | None] = mapped_column(
-        BIGINT(20), comment="Used to track sqoop operation. Dont change manually"
+        BIGINT(20), comment="Used to track sqoop operation. Don't change manually"
     )
     sqoop_last_rows: Mapped[int | None] = mapped_column(
-        BIGINT(20), comment="Used to track sqoop operation. Dont change manually"
+        BIGINT(20), comment="Used to track sqoop operation. Don't change manually"
     )
     sqoop_last_mappers: Mapped[int | None] = mapped_column(
-        TINYINT(4), comment="Used to track sqoop operation. Dont change manually"
+        TINYINT(4), comment="Used to track sqoop operation. Don't change manually"
     )
     sqoop_last_execution: Mapped[int | None] = mapped_column(
-        BIGINT(20), comment="Used to track sqoop operation. Dont change manually"
+        BIGINT(20), comment="Used to track sqoop operation. Don't change manually"
     )
     create_target_table_sql: Mapped[str | None] = mapped_column(
         Text,
-        comment="SQL statement that was used to create the target table. Dont change manually",
+        comment="SQL statement that was used to create the target table. Don't change manually",
     )
     operator_notes: Mapped[str | None] = mapped_column(
         Text, comment="Free text field to write a note about the export. "
@@ -1189,7 +1189,7 @@ class ImportFailureLog(Base):
     __table_args__ = (
         Index("hive_db_hive_table", "hive_db", "hive_table"),
         {
-            "comment": "If there is an error or a warning during import, bu the import still continues, these errors are logged in this table. An example could be that  a column cant be altered, foreign key not created, no new columns can be added and such."
+            "comment": "If there is an error or a warning during import, but the import still continues, these errors are logged in this table. An example could be that  a column can't be altered, foreign key not created, no new columns can be added and such."
         },
     )
 
@@ -1258,7 +1258,7 @@ class ImportRetriesLog(Base):
 class ImportStage(Base):
     __tablename__ = "import_stage"
     __table_args__ = {
-        "comment": 'The import tool keeps track of how far in the import the tool have succeeded. So in case of an error, lets say that Hive is not responding, the next time an import is executed it will skip the first part and continue from where it ended in error on the previous run. If you want to rerun from the begining, the information in this table needs to be cleared. This is done with the "manage --clearImportStage" tool. Keep in mind that clearing the stage of an incremental import might result in the loss of the data.'
+        "comment": 'The import tool keeps track of how far in the import the tool have succeeded. So in case of an error, lets say that Hive is not responding, the next time an import is executed it will skip the first part and continue from where it ended in error on the previous run. If you want to rerun from the beginning, the information in this table needs to be cleared. This is done with the "manage --clearImportStage" tool. Keep in mind that clearing the stage of an incremental import might result in the loss of the data.'
     }
 
     hive_db: Mapped[str] = mapped_column(
@@ -1315,7 +1315,7 @@ class ImportStatistic(Base):
     __table_args__ = (
         Index("hive_db_hive_table", "hive_db", "hive_table"),
         {
-            "comment": "At the end of each import, all statistics about how long each part took aswell as general information about Hive datbase and table, number of rows imported, size of the import and much more are logged in this table. This table grows and will never be truncated by DBImport itself. If it becomes to large for you, it's up to each user to delete or truncate this table as you see fit."
+            "comment": "At the end of each import, all statistics about how long each part took as well as general information about Hive database and table, number of rows imported, size of the import and much more are logged in this table. This table grows and will never be truncated by DBImport itself. If it becomes to large for you, it's up to each user to delete or truncate this table as you see fit."
         },
     )
 
@@ -1362,10 +1362,10 @@ class ImportStatistic(Base):
     )
     sessions: Mapped[int | None] = mapped_column(
         TINYINT(4),
-        comment="How many parallell sessions was used against the source (sqoop mappers)",
+        comment="How many parallel sessions was used against the source (sqoop mappers)",
     )
     duration: Mapped[int | None] = mapped_column(
-        Integer, comment="Tota duration in seconds"
+        Integer, comment="Total duration in seconds"
     )
     start: Mapped[datetime | None] = mapped_column(
         DateTime, comment="Timestamp of start"
@@ -1448,7 +1448,7 @@ class ImportStatistic(Base):
 class ImportStatisticsLast(Base):
     __tablename__ = "import_statistics_last"
     __table_args__ = {
-        "comment": "The last entry in table import_statistics is also stored in this table. This makes it easier to find the latest data without first grouping to find the latest entry. When import_statistics table grows to a high number of million rows, it saves alot of cpu power for the database server."
+        "comment": "The last entry in table import_statistics is also stored in this table. This makes it easier to find the latest data without first grouping to find the latest entry. When import_statistics table grows to a high number of million rows, it saves a lot of cpu power for the database server."
     }
 
     hive_db: Mapped[str] = mapped_column(
@@ -1492,10 +1492,10 @@ class ImportStatisticsLast(Base):
     )
     sessions: Mapped[int | None] = mapped_column(
         TINYINT(4),
-        comment="How many parallell sessions was used against the source (sqoop mappers)",
+        comment="How many parallel sessions was used against the source (sqoop mappers)",
     )
     duration: Mapped[int | None] = mapped_column(
-        Integer, comment="Tota duration in seconds"
+        Integer, comment="Total duration in seconds"
     )
     start: Mapped[datetime | None] = mapped_column(
         DateTime, comment="Timestamp of start"
@@ -1658,7 +1658,7 @@ class ImportTables(Base):
     )
     nomerge_ingestion_sql_addition: Mapped[str | None] = mapped_column(
         String(2048),
-        comment="This will be added to the data ingestion of None-Merge imports (full, full_direct and incr). Usefull to filter out data from import tables to target tables",
+        comment="This will be added to the data ingestion of None-Merge imports (full, full_direct and incr). Useful to filter out data from import tables to target tables",
     )
     include_in_airflow: Mapped[int] = mapped_column(
         TINYINT(4),
@@ -1690,7 +1690,7 @@ class ImportTables(Base):
     validate_diff_allowed: Mapped[int] = mapped_column(
         BIGINT(20),
         nullable=False,
-        comment="-1 = auto calculated diff allowed. If a positiv number, this is the amount of rows that the diff is allowed to have",
+        comment="-1 = auto calculated diff allowed. If a positive number, this is the amount of rows that the diff is allowed to have",
         server_default=text("'-1'"),
     )
     validation_custom_query_source_sql: Mapped[str | None] = mapped_column(
@@ -1705,7 +1705,7 @@ class ImportTables(Base):
         "validationCustomQueryValidateImportTable",
         TINYINT(4),
         nullable=False,
-        comment="1 = Validate Import table, 0 = Dont validate Import table",
+        comment="1 = Validate Import table, 0 = Don't validate Import table",
         server_default=text("'1'"),
     )
     truncate_hive: Mapped[int] = mapped_column(
@@ -1714,7 +1714,7 @@ class ImportTables(Base):
     mappers: Mapped[int] = mapped_column(
         TINYINT(4),
         nullable=False,
-        comment="-1 = auto or positiv number for a fixed number of mappers. If Auto, then it's calculated based of last sqoop import size",
+        comment="-1 = auto or positive number for a fixed number of mappers. If Auto, then it's calculated based of last sqoop import size",
         server_default=text("'-1'"),
     )
     soft_delete_during_merge: Mapped[int] = mapped_column(
@@ -1724,21 +1724,21 @@ class ImportTables(Base):
         server_default=text("'0'"),
     )
     source_rowcount: Mapped[int | None] = mapped_column(
-        BIGINT(20), comment="Used for validation. Dont change manually"
+        BIGINT(20), comment="Used for validation. Don't change manually"
     )
     source_rowcount_incr: Mapped[int | None] = mapped_column(BIGINT(20))
     hive_rowcount: Mapped[int | None] = mapped_column(
-        BIGINT(20), comment="Used for validation. Dont change manually"
+        BIGINT(20), comment="Used for validation. Don't change manually"
     )
     validation_custom_query_source_value: Mapped[str | None] = mapped_column(
         "validationCustomQuerySourceValue",
         Text,
-        comment="Used for validation. Dont change manually",
+        comment="Used for validation. Don't change manually",
     )
     validation_custom_query_hive_value: Mapped[str | None] = mapped_column(
         "validationCustomQueryHiveValue",
         Text,
-        comment="Used for validation. Dont change manually",
+        comment="Used for validation. Don't change manually",
     )
     incr_mode: Mapped[str | None] = mapped_column(
         Enum("append", "lastmodified"), comment="Incremental import mode"
@@ -1752,24 +1752,24 @@ class ImportTables(Base):
         server_default=text("'full'"),
     )
     incr_minvalue: Mapped[str | None] = mapped_column(
-        String(32), comment="Used for incremental imports. Dont change manually"
+        String(32), comment="Used for incremental imports. Don't change manually"
     )
     incr_maxvalue: Mapped[str | None] = mapped_column(
-        String(32), comment="Used for incremental imports. Dont change manually"
+        String(32), comment="Used for incremental imports. Don't change manually"
     )
     incr_minvalue_pending: Mapped[str | None] = mapped_column(
-        String(32), comment="Used for incremental imports. Dont change manually"
+        String(32), comment="Used for incremental imports. Don't change manually"
     )
     incr_maxvalue_pending: Mapped[str | None] = mapped_column(
-        String(32), comment="Used for incremental imports. Dont change manually"
+        String(32), comment="Used for incremental imports. Don't change manually"
     )
     pk_column_override: Mapped[str | None] = mapped_column(
         String(1024),
-        comment="Force the import and Hive table to define another PrimaryKey constraint. Comma separeted list of columns",
+        comment="Force the import and Hive table to define another PrimaryKey constraint. Comma separated list of columns",
     )
     pk_column_override_mergeonly: Mapped[str | None] = mapped_column(
         String(1024),
-        comment="Force the import to use another PrimaryKey constraint during Merge operations. Comma separeted list of columns",
+        comment="Force the import to use another PrimaryKey constraint during Merge operations. Comma separated list of columns",
     )
     hive_merge_heap: Mapped[int | None] = mapped_column(
         Integer,
@@ -1788,16 +1788,16 @@ class ImportTables(Base):
         Text, comment="Options to send to sqoop. Most common used for --split-by option"
     )
     sqoop_last_size: Mapped[int | None] = mapped_column(
-        BIGINT(20), comment="Used to track sqoop operation. Dont change manually"
+        BIGINT(20), comment="Used to track sqoop operation. Don't change manually"
     )
     sqoop_last_rows: Mapped[int | None] = mapped_column(
-        BIGINT(20), comment="Used to track sqoop operation. Dont change manually"
+        BIGINT(20), comment="Used to track sqoop operation. Don't change manually"
     )
     sqoop_last_mappers: Mapped[int | None] = mapped_column(
-        TINYINT(4), comment="Used to track sqoop operation. Dont change manually"
+        TINYINT(4), comment="Used to track sqoop operation. Don't change manually"
     )
     sqoop_last_execution: Mapped[int | None] = mapped_column(
-        BIGINT(20), comment="Used to track sqoop operation. Dont change manually"
+        BIGINT(20), comment="Used to track sqoop operation. Don't change manually"
     )
     sqoop_use_generated_sql: Mapped[int] = mapped_column(
         TINYINT(4),
@@ -1818,20 +1818,20 @@ class ImportTables(Base):
         server_default=text("'-1'"),
     )
     comment: Mapped[str | None] = mapped_column(
-        Text, comment="Table comment from source system. Dont change manually"
+        Text, comment="Table comment from source system. Don't change manually"
     )
     generated_hive_column_definition: Mapped[str | None] = mapped_column(
         Text,
-        comment="Generated column definition for Hive create table. Dont change manually",
+        comment="Generated column definition for Hive create table. Don't change manually",
     )
     generated_sqoop_query: Mapped[str | None] = mapped_column(
-        Text, comment="Generated query for sqoop. Dont change manually"
+        Text, comment="Generated query for sqoop. Don't change manually"
     )
     generated_sqoop_options: Mapped[str | None] = mapped_column(
-        Text, comment="Generated options for sqoop. Dont change manually"
+        Text, comment="Generated options for sqoop. Don't change manually"
     )
     generated_pk_columns: Mapped[str | None] = mapped_column(
-        Text, comment="Generated Primary Keys. Dont change manually"
+        Text, comment="Generated Primary Keys. Don't change manually"
     )
     generated_foreign_keys: Mapped[str | None] = mapped_column(
         Text, comment="<NOT USED>"
@@ -1845,12 +1845,12 @@ class ImportTables(Base):
     )
     copy_finished: Mapped[datetime | None] = mapped_column(
         DateTime,
-        comment="Time when last copy from Master DBImport instance was completed. Dont change manually",
+        comment="Time when last copy from Master DBImport instance was completed. Don't change manually",
     )
     copy_slave: Mapped[int] = mapped_column(
         TINYINT(4),
         nullable=False,
-        comment="Defines if this table is a Master table or a Slave table. Dont change manually",
+        comment="Defines if this table is a Master table or a Slave table. Don't change manually",
         server_default=text("'0'"),
     )
     create_foreign_keys: Mapped[int] = mapped_column(
@@ -1868,7 +1868,7 @@ class ImportTables(Base):
     )
     spark_executor_memory: Mapped[str | None] = mapped_column(
         String(8),
-        comment="Memory used by spark when importring data. Overrides default value in global configuration",
+        comment="Memory used by spark when importing data. Overrides default value in global configuration",
     )
     spark_executors: Mapped[int | None] = mapped_column(
         Integer,
@@ -1876,7 +1876,7 @@ class ImportTables(Base):
     )
     custom_max_query: Mapped[str | None] = mapped_column(
         String(256),
-        comment="You can use a custom SQL query that will get the Max value from the source database. This Max value will be used in an inremental import to know how much to read in each execution",
+        comment="You can use a custom SQL query that will get the Max value from the source database. This Max value will be used in an incremental import to know how much to read in each execution",
     )
     merge_compaction_method: Mapped[str] = mapped_column(
         "mergeCompactionMethod",
@@ -1985,7 +1985,7 @@ class JDBCConnections(Base):
     create_foreign_keys: Mapped[int] = mapped_column(
         TINYINT(4),
         nullable=False,
-        comment="1 = Create foreign keys, 0 = Dont create foreign keys",
+        comment="1 = Create foreign keys, 0 = Don't create foreign keys",
         server_default=text("'1'"),
     )
     contact_info: Mapped[str | None] = mapped_column(
@@ -2000,7 +2000,7 @@ class JDBCConnections(Base):
     atlas_discovery: Mapped[int] = mapped_column(
         TINYINT(4),
         nullable=False,
-        comment="1 = Discover tables/views on this connection, 0 = Dont use Atlas discovery on this connection",
+        comment="1 = Discover tables/views on this connection, 0 = Don't use Atlas discovery on this connection",
         server_default=text("'1'"),
     )
     atlas_include_filter: Mapped[str | None] = mapped_column(
@@ -2092,7 +2092,7 @@ t_jdbc_table_change_history = Table(
         "schema_name",
         "table_name",
     ),
-    comment="This table keeps track of all changes that was done to a JDBC table after the initial creation. Example could be that a colum type was changed from char(10) to varchar(10). That kind of information is logged in this table",
+    comment="This table keeps track of all changes that was done to a JDBC table after the initial creation. Example could be that a column type was changed from char(10) to varchar(10). That kind of information is logged in this table",
 )
 
 
@@ -2146,7 +2146,7 @@ t_table_change_history = Table(
         comment="Detailed description of the event",
     ),
     Index("hive_db_hive_table", "hive_db", "hive_table"),
-    comment="This table keeps track of all changes that was done to an abject after the initial load. Example could be that a colum type was changed from char(10) to varchar(10). That kind of information is logged in this table",
+    comment="This table keeps track of all changes that was done to an object after the initial load. Example could be that a column type was changed from char(10) to varchar(10). That kind of information is logged in this table",
 )
 
 
@@ -2214,7 +2214,7 @@ class AirflowTasks(Base):
     )
     task_dependency_downstream: Mapped[str | None] = mapped_column(
         String(256),
-        comment="Defines the upstream dependency for the Task. Comma separated list",
+        comment="Defines the downstream dependency for the Task. Comma separated list",
     )
     task_config: Mapped[str | None] = mapped_column(
         String(512),
@@ -2268,13 +2268,13 @@ class ExportColumns(Base):
         String(256),
         primary_key=True,
         nullable=False,
-        comment="Name of column in target table. Dont change this manually",
+        comment="Name of column in target table. Don't change this manually",
     )
     column_type: Mapped[str | None] = mapped_column(
-        String(2048), comment="Column type from Hive. Dont change this manually"
+        String(2048), comment="Column type from Hive. Don't change this manually"
     )
     column_order: Mapped[int | None] = mapped_column(
-        Integer, comment="The order of the columns. Dont change this manually"
+        Integer, comment="The order of the columns. Don't change this manually"
     )
     hive_db: Mapped[str | None] = mapped_column(
         String(256),
@@ -2293,10 +2293,10 @@ class ExportColumns(Base):
     last_update_from_hive: Mapped[datetime] = mapped_column(
         DateTime,
         nullable=False,
-        comment="Timestamp of last schema update from Hive. Dont change this manually",
+        comment="Timestamp of last schema update from Hive. Don't change this manually",
     )
     last_export_time: Mapped[datetime | None] = mapped_column(
-        DateTime, comment="Timestamp of last export. Dont change this manually"
+        DateTime, comment="Timestamp of last export. Don't change this manually"
     )
     selection: Mapped[str | None] = mapped_column(String(256), comment="<NOT USED>")
     include_in_export: Mapped[int] = mapped_column(
@@ -2307,7 +2307,7 @@ class ExportColumns(Base):
     )
     comment: Mapped[str | None] = mapped_column(
         Text,
-        comment="The column comment from the source system. Dont change this manually",
+        comment="The column comment from the source system. Don't change this manually",
     )
     operator_notes: Mapped[str | None] = mapped_column(
         Text, comment="Free text field to write a note about the import. "
@@ -2347,24 +2347,24 @@ class ImportColumns(Base):
         String(256),
         primary_key=True,
         nullable=False,
-        comment="Name of column in Hive. Dont change this manually",
+        comment="Name of column in Hive. Don't change this manually",
     )
     hive_db: Mapped[str | None] = mapped_column(String(256), comment="Hive Database")
     hive_table: Mapped[str | None] = mapped_column(String(256), comment="Hive Table")
     source_column_name: Mapped[str] = mapped_column(
         String(256),
         nullable=False,
-        comment="Name of column in source system. Dont change this manually",
+        comment="Name of column in source system. Don't change this manually",
     )
     column_type: Mapped[str] = mapped_column(
         String(2048),
         nullable=False,
-        comment="Column type in Hive. Dont change this manually",
+        comment="Column type in Hive. Don't change this manually",
     )
     source_column_type: Mapped[str] = mapped_column(
         String(2048),
         nullable=False,
-        comment="Column type in source system. Dont change this manually",
+        comment="Column type in source system. Don't change this manually",
     )
     source_database_type: Mapped[str | None] = mapped_column(
         String(256), comment="That database type was the column imported from"
@@ -2393,7 +2393,7 @@ class ImportColumns(Base):
     )
     source_primary_key: Mapped[int | None] = mapped_column(
         TINYINT(4),
-        comment="Number starting from 1 listing the order of the column in the PK. Dont change this manually",
+        comment="Number starting from 1 listing the order of the column in the PK. Don't change this manually",
     )
     last_update_from_source: Mapped[datetime] = mapped_column(
         DateTime, nullable=False, comment="Timestamp of last schema update from source"
@@ -2621,7 +2621,7 @@ class ImportTablesIndexes(Base):
             "hive_db", "hive_table", "index_name", "column", name="hive_db"
         ),
         {
-            "comment": "Information table that contains what indexes are available on the source system. The data in the table is not used by DBImport itsealf, instead it's a help for the users to know what indexes exists to make an effective import."
+            "comment": "Information table that contains what indexes are available on the source system. The data in the table is not used by DBImport itself, instead it's a help for the users to know what indexes exists to make an effective import."
         },
     )
 
@@ -2713,7 +2713,7 @@ t_yarn_statistics = Table(
     Column(
         "application_stop",
         DateTime,
-        comment="Timestampe when the operation was completed",
+        comment="Timestamp when the operation was completed",
     ),
     Column(
         "yarn_containers_total",
@@ -2721,10 +2721,12 @@ t_yarn_statistics = Table(
         comment="Number of containers used. For spark and sqoop, this will be the maximum that was used during the operation",
     ),
     Column(
-        "yarn_containers_failed", Integer, comment="Number of contaners that failed"
+        "yarn_containers_failed", Integer, comment="Number of containers that failed"
     ),
     Column(
-        "yarn_containers_killed", Integer, comment="Number of contaners that was killed"
+        "yarn_containers_killed",
+        Integer,
+        comment="Number of containers that was killed",
     ),
     Index(
         "hive_db_hive_table_last_update_from_source",
