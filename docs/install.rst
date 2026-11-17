@@ -280,6 +280,8 @@ With uv, run *uv sync --locked* instead. Many versions also needs a configuratio
 
 This command will only upgrade the schema if it's not in the last version. So it's safe to run it even if there are no new schema.
 
+When upgrading from a version before 1.0.0: upgrade to 1.00.006 first and run *setup --upgradeDB* with it. The versions after 1.00.006 start the schema history with the schema of 1.00.006 and stop with an error on an older configuration database.
+
 It also adds new keys to the *configuration* table with their default values and sets the description of every key to the text of the installed version. The values of existing keys are not changed.
 
 When upgrading from 1.00.006 or earlier: the code moved from *bin/* into the *dbimport* package and the web UI from *bin/Server/html* to *ui*. Change *root* in *conf/webserver.cfg* to */usr/local/dbimport/ui/dist* (see *conf/webserver.cfg.dist*) and build the UI again with *setup --buildHTML*.

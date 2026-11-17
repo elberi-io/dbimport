@@ -192,12 +192,18 @@ exclude = ["docs/**"]
 
 [tool.mypy]
 python_version = "3.11"
-files = ["tests", "src/dbimport/common", "src/dbimport/settings.py"]
+files = [
+    "tests",
+    "src/dbimport/common",
+    "src/dbimport/migrations",
+    "src/dbimport/settings.py",
+]
 mypy_path = ["src", "."]
 explicit_package_bases = true
 strict = true
 enable_error_code = ["ignore-without-code"]
-# Calls from typed tests into the existing, untyped code are allowed.
+# Calls from typed tests into the existing, untyped code are allowed, and
+# to the MySQL types of SQLAlchemy, whose constructors have no annotations.
 untyped_calls_exclude = [
     "dbimport.cli",
     "dbimport.config_db",
@@ -207,6 +213,7 @@ untyped_calls_exclude = [
     "dbimport.catalog",
     "dbimport.setup",
     "dbimport.source_schema",
+    "sqlalchemy.dialects.mysql",
 ]
 
 [[tool.mypy.overrides]]
@@ -222,7 +229,6 @@ module = [
     "dbimport.config_db.*",
     "dbimport.operations.*",
     "dbimport.schedule.*",
-    "dbimport.migrations.*",
     "dbimport.server.*",
     "dbimport.catalog.*",
     "dbimport.setup.*",

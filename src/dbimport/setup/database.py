@@ -24,6 +24,8 @@ import pandas as pd
 import sqlalchemy as sa
 from alembic import command as alembic_command
 from alembic.config import Config
+from alembic.migration import MigrationContext
+from alembic.script import ScriptDirectory
 from mysql.connector import errorcode
 from sqlalchemy.orm import sessionmaker
 
@@ -254,9 +256,29 @@ class Initialize:
     def upgrade_db(self):
 
         print("Upgrading database to latest level")
+        self.exit_on_unknown_revision()
         alembic_command.upgrade(self.alembic_config, "head")
         self.create_default_environment_types()
         self.update_configuration_values()
+
+    def exit_on_unknown_revision(self) -> None:
+        """Exit with an error if the database is at a schema revision that
+        this version does not have, without changing the database."""
+        with self.config_db.connect() as conn:
+            current = MigrationContext.configure(conn).get_current_heads()
+        script = ScriptDirectory.from_config(self.alembic_config)
+        known = {revision.revision for revision in script.walk_revisions()}
+        unknown = [revision for revision in current if revision not in known]
+        if unknown:
+            logging.error(
+                "The configuration database is at schema revision %s, which this "
+                "version of DBImport does not have. A database of a version "
+                "before DBImport 1.0.0 must first be upgraded with DBImport "
+                "1.00.006 (setup --upgradeDB). A database of a newer version "
+                "cannot be used with this one.",
+                ", ".join(unknown),
+            )
+            sys.exit(1)
 
     def create_default_environment_types(self):
         session = self.config_db_session()

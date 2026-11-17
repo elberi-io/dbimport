@@ -82,6 +82,26 @@ Stop the server and delete its data with:
 docker compose down
 ```
 
+## Changing the configuration database schema
+
+The ORM in `src/dbimport/config_db/config_schema.py` describes the schema
+(ADR-0004). The migrations in `src/dbimport/migrations/versions/` start
+with one baseline revision, the schema of DBImport 1.00.006 (ADR-0005).
+To change the schema, change the ORM first, then generate a revision
+against the compose database, with the environment variables of the
+section above and the database at the latest revision
+(`bin/setup --upgradeDB`):
+
+```bash
+uv run alembic revision --autogenerate -m "add the column x to import_tables"
+```
+
+Review the generated file before you commit it. Autogenerate does not
+see everything: it writes a renamed column as a dropped and an added
+one, and does not show AUTO_INCREMENT outside the primary key.
+`tests/integration/test_schema.py` then checks that the migrations and
+the ORM create the same schema.
+
 ## Running the tests
 
 Unit tests (`tests/unit/`) need no database:
