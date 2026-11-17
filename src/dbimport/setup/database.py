@@ -294,7 +294,7 @@ class Initialize:
         conf_descriptions = {
             key: description
             for key, description in session.query(
-                config_schema.Configuration.configKey,
+                config_schema.Configuration.config_key,
                 config_schema.Configuration.description,
             ).all()
         }
@@ -430,7 +430,7 @@ class Initialize:
             elif conf_descriptions[key.name] != key.description:
                 query = (
                     sa.update(config_schema.Configuration)
-                    .where(config_schema.Configuration.configKey == key.name)
+                    .where(config_schema.Configuration.config_key == key.name)
                     .values(description=key.description)
                 )
             else:

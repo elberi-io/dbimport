@@ -201,13 +201,13 @@ class Initialize:
 
         configuration = (
             session.query(
-                configuration_table.configKey,
-                configuration_table.valueInt,
-                configuration_table.valueStr,
-                configuration_table.valueDate,
+                configuration_table.config_key,
+                configuration_table.value_int,
+                configuration_table.value_str,
+                configuration_table.value_date,
             )
             .select_from(configuration_table)
-            .filter(configuration_table.configKey == key)
+            .filter(configuration_table.config_key == key)
             .one()
         )
 

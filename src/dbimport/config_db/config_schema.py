@@ -632,17 +632,20 @@ class Configuration(Base):
         "comment": "This is the DBImport global configuration table. In here you can configure items such as the name of the staging database, disable global executions, max number of mappers and much more. "
     }
 
-    configKey: Mapped[str] = mapped_column(
+    config_key: Mapped[str] = mapped_column(
+        "configKey",
         String(32),
         primary_key=True,
         comment="Name of the configuration item. These are controlled and maintained by thee setup tool. Dont change these manually",
     )
-    valueInt: Mapped[int | None] = mapped_column(Integer, comment="Integer based Value")
-    valueStr: Mapped[str | None] = mapped_column(
-        String(256), comment="String based Value"
+    value_int: Mapped[int | None] = mapped_column(
+        "valueInt", Integer, comment="Integer based Value"
     )
-    valueDate: Mapped[datetime | None] = mapped_column(
-        DateTime, comment="Date based Value"
+    value_str: Mapped[str | None] = mapped_column(
+        "valueStr", String(256), comment="String based Value"
+    )
+    value_date: Mapped[datetime | None] = mapped_column(
+        "valueDate", DateTime, comment="Date based Value"
     )
     description: Mapped[str | None] = mapped_column(
         Text, comment="Description on the setting"
@@ -1047,17 +1050,26 @@ class ExportTables(Base):
         comment="Will the table be included in Airflow DAG when it matches the DAG selection",
         server_default=text("'1'"),
     )
-    notUsed01: Mapped[int] = mapped_column(
-        TINYINT(4), nullable=False, comment="<NOT USED>", server_default=text("'0'")
+    not_used_01: Mapped[int] = mapped_column(
+        "notUsed01",
+        TINYINT(4),
+        nullable=False,
+        comment="<NOT USED>",
+        server_default=text("'0'"),
     )
-    forceCreateTempTable: Mapped[int] = mapped_column(
+    force_create_temp_table: Mapped[int] = mapped_column(
+        "forceCreateTempTable",
         TINYINT(4),
         nullable=False,
         comment="Force export to create a Hive table and export that instead. Useful when exporting views",
         server_default=text("'0'"),
     )
-    notUsed02: Mapped[int] = mapped_column(
-        TINYINT(4), nullable=False, comment="<NOT USED>", server_default=text("'0'")
+    not_used_02: Mapped[int] = mapped_column(
+        "notUsed02",
+        TINYINT(4),
+        nullable=False,
+        comment="<NOT USED>",
+        server_default=text("'0'"),
     )
     validate_export: Mapped[int] = mapped_column(
         TINYINT(4),
@@ -1065,17 +1077,20 @@ class ExportTables(Base):
         comment="1 = Validate the export once it's done. 0 = Disable validation",
         server_default=text("'1'"),
     )
-    validationMethod: Mapped[str] = mapped_column(
+    validation_method: Mapped[str] = mapped_column(
+        "validationMethod",
         Enum("customQuery", "rowCount"),
         nullable=False,
         comment="Validation method to use",
         server_default=text("'rowCount'"),
     )
-    validationCustomQueryHiveSQL: Mapped[str | None] = mapped_column(
-        Text, comment="Custom SQL query for Hive table"
+    validation_custom_query_hive_sql: Mapped[str | None] = mapped_column(
+        "validationCustomQueryHiveSQL", Text, comment="Custom SQL query for Hive table"
     )
-    validationCustomQueryTargetSQL: Mapped[str | None] = mapped_column(
-        Text, comment="Custom SQL query for target table"
+    validation_custom_query_target_sql: Mapped[str | None] = mapped_column(
+        "validationCustomQueryTargetSQL",
+        Text,
+        comment="Custom SQL query for target table",
     )
     uppercase_columns: Mapped[int] = mapped_column(
         TINYINT(4),
@@ -1101,11 +1116,15 @@ class ExportTables(Base):
     target_rowcount: Mapped[int | None] = mapped_column(
         BIGINT(20), comment="Number of rows in Target table. Dont change manually"
     )
-    validationCustomQueryHiveValue: Mapped[str | None] = mapped_column(
-        Text, comment="Used for validation. Dont change manually"
+    validation_custom_query_hive_value: Mapped[str | None] = mapped_column(
+        "validationCustomQueryHiveValue",
+        Text,
+        comment="Used for validation. Dont change manually",
     )
-    validationCustomQueryTargetValue: Mapped[str | None] = mapped_column(
-        Text, comment="Used for validation. Dont change manually"
+    validation_custom_query_target_value: Mapped[str | None] = mapped_column(
+        "validationCustomQueryTargetValue",
+        Text,
+        comment="Used for validation. Dont change manually",
     )
     incr_column: Mapped[str | None] = mapped_column(
         String(256),
@@ -1656,7 +1675,8 @@ class ImportTables(Base):
         comment="Should the import be validated",
         server_default=text("'1'"),
     )
-    validationMethod: Mapped[str] = mapped_column(
+    validation_method: Mapped[str] = mapped_column(
+        "validationMethod",
         Enum("customQuery", "rowCount"),
         nullable=False,
         comment="Validation method to use",
@@ -1673,13 +1693,16 @@ class ImportTables(Base):
         comment="-1 = auto calculated diff allowed. If a positiv number, this is the amount of rows that the diff is allowed to have",
         server_default=text("'-1'"),
     )
-    validationCustomQuerySourceSQL: Mapped[str | None] = mapped_column(
-        Text, comment="Custom SQL query for source table"
+    validation_custom_query_source_sql: Mapped[str | None] = mapped_column(
+        "validationCustomQuerySourceSQL",
+        Text,
+        comment="Custom SQL query for source table",
     )
-    validationCustomQueryHiveSQL: Mapped[str | None] = mapped_column(
-        Text, comment="Custom SQL query for Hive table"
+    validation_custom_query_hive_sql: Mapped[str | None] = mapped_column(
+        "validationCustomQueryHiveSQL", Text, comment="Custom SQL query for Hive table"
     )
-    validationCustomQueryValidateImportTable: Mapped[int] = mapped_column(
+    validation_custom_query_validate_import_table: Mapped[int] = mapped_column(
+        "validationCustomQueryValidateImportTable",
         TINYINT(4),
         nullable=False,
         comment="1 = Validate Import table, 0 = Dont validate Import table",
@@ -1707,11 +1730,15 @@ class ImportTables(Base):
     hive_rowcount: Mapped[int | None] = mapped_column(
         BIGINT(20), comment="Used for validation. Dont change manually"
     )
-    validationCustomQuerySourceValue: Mapped[str | None] = mapped_column(
-        Text, comment="Used for validation. Dont change manually"
+    validation_custom_query_source_value: Mapped[str | None] = mapped_column(
+        "validationCustomQuerySourceValue",
+        Text,
+        comment="Used for validation. Dont change manually",
     )
-    validationCustomQueryHiveValue: Mapped[str | None] = mapped_column(
-        Text, comment="Used for validation. Dont change manually"
+    validation_custom_query_hive_value: Mapped[str | None] = mapped_column(
+        "validationCustomQueryHiveValue",
+        Text,
+        comment="Used for validation. Dont change manually",
     )
     incr_mode: Mapped[str | None] = mapped_column(
         Enum("append", "lastmodified"), comment="Incremental import mode"
@@ -1851,14 +1878,17 @@ class ImportTables(Base):
         String(256),
         comment="You can use a custom SQL query that will get the Max value from the source database. This Max value will be used in an inremental import to know how much to read in each execution",
     )
-    mergeCompactionMethod: Mapped[str] = mapped_column(
+    merge_compaction_method: Mapped[str] = mapped_column(
+        "mergeCompactionMethod",
         Enum("default", "none", "minor", "minor_and_wait", "major", "major_and_wait"),
         nullable=False,
         comment="Compaction method to use after import using merge is completed. Default means a major compaction if it is configured to do so in the configuration table",
         server_default=text("'default'"),
     )
-    sourceTableType: Mapped[str | None] = mapped_column(
-        String(16), comment="Type of table on the source system. This is a read-only"
+    source_table_type: Mapped[str | None] = mapped_column(
+        "sourceTableType",
+        String(16),
+        comment="Type of table on the source system. This is a read-only",
     )
     invalidate_impala: Mapped[int] = mapped_column(
         TINYINT(4),
