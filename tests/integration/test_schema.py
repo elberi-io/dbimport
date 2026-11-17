@@ -4,8 +4,8 @@ from typing import Any
 
 import pytest
 import sqlalchemy as sa
-from alembic.autogenerate import compare_metadata
-from alembic.migration import MigrationContext
+from alembic import command
+from alembic.config import Config
 from alembic.script import ScriptDirectory
 from sqlalchemy.ext.compiler import compiles
 from sqlalchemy.schema import CreateColumn
@@ -19,7 +19,7 @@ SCHEMA_UPGRADE_DIR = REPO_ROOT / "src" / "dbimport" / "migrations"
 ORM_DATABASE = "DBImport_orm"
 
 # What a schema consists of, read from information_schema of the current
-# database. compare_metadata() leaves out server defaults, AUTO_INCREMENT,
+# database. Alembic's comparison leaves out server defaults, AUTO_INCREMENT,
 # constraint names and column order; these queries do not.
 _SCHEMA_QUERIES = {
     "table": """
@@ -75,21 +75,6 @@ def _create_column(
     ):
         ddl += " AUTO_INCREMENT"
     return ddl
-
-
-def _describe(diff: Any) -> list[str]:
-    """One stable line per difference reported by compare_metadata()."""
-    if isinstance(diff, list):
-        # modify_type, modify_nullable, modify_comment, modify_default
-        return [f"{op[0]} {op[2]}.{op[3]}" for op in diff]
-    kind = diff[0]
-    if kind in ("add_table", "remove_table"):
-        return [f"{kind} {diff[1].name}"]
-    if kind in ("add_column", "remove_column"):
-        return [f"{kind} {diff[2]}.{diff[3].name}"]
-    if kind in ("add_index", "remove_index"):
-        return [f"{kind} {diff[1].table.name}.{diff[1].name}"]
-    return [f"{kind} {diff[1]!r}"]
 
 
 def _schema(conn: sa.Connection) -> list[str]:
@@ -169,17 +154,12 @@ def test_create_db_seeds_configuration_drivers_and_environments(
     }
 
 
-def test_orm_compared_by_alembic_equals_migrated_schema(
-    clean_config_db: None, db_connection: sa.Connection
+def test_alembic_check_against_migrated_schema_finds_no_difference(
+    clean_config_db: None,
 ) -> None:
-    context = MigrationContext.configure(
-        db_connection, opts={"compare_server_default": True}
-    )
-    diffs = compare_metadata(context, config_schema.Base.metadata)
+    config = Config(REPO_ROOT / "alembic.ini")
 
-    actual = sorted(line for diff in diffs for line in _describe(diff))
-
-    assert actual == []
+    command.check(config)
 
 
 def test_orm_creates_the_migrated_schema(

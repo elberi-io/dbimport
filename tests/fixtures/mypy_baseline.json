@@ -52,9 +52,6 @@
     "assignment": 3,
     "operator": 1
   },
-  "src/dbimport/migrations/env.py": {
-    "arg-type": 1
-  },
   "src/dbimport/migrations/versions/0cb3d65c99b0_version_0_71_001.py": {
     "name-defined": 1
   },
