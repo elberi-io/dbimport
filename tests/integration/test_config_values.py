@@ -1,7 +1,11 @@
+from collections.abc import Callable
+
 import pytest
 import sqlalchemy as sa
 
 from dbimport.config_db import common_config, config_keys
+from dbimport.schedule import airflow_dags
+from dbimport.server import rest_server_calls
 
 
 def _set_config_row(conn: sa.Connection, key: str, column: str, value: object) -> None:
@@ -84,3 +88,45 @@ def test_get_config_value_every_key_reads_back_its_default(
     assert {name: (type(v), v) for name, v in values.items()} == {
         key.name: (type(key.default), key.default) for key in keys
     }
+
+
+def _dag_reader() -> Callable[[str], object]:
+    return airflow_dags.Initialize().get_config_value
+
+
+def _rest_reader() -> Callable[[str], object]:
+    return rest_server_calls.DBCalls().get_config_value
+
+
+# DAG generation and the REST server log a value they cannot use and go
+# on with None, where the command line programs exit.
+READERS = pytest.mark.parametrize("reader", [_dag_reader, _rest_reader])
+
+
+@READERS
+def test_get_config_value_of_dags_and_rest_returns_typed_value(
+    clean_config_db: None, reader: Callable[[], Callable[[str], object]]
+) -> None:
+    get = reader()
+
+    values = [get("airflow_disable"), get("rest_timeout"), get("timezone")]
+
+    assert [(type(v), v) for v in values] == [(bool, False), (int, 5), (str, "UTC")]
+
+
+@READERS
+@pytest.mark.parametrize(
+    ("key", "column", "value"),
+    [("timezone", "valueStr", ""), ("airflow_disable", "valueInt", 2)],
+)
+def test_get_config_value_of_dags_and_rest_unusable_value_returns_none(
+    clean_config_db: None,
+    db_connection: sa.Connection,
+    reader: Callable[[], Callable[[str], object]],
+    key: str,
+    column: str,
+    value: object,
+) -> None:
+    _set_config_row(db_connection, key, column, value)
+
+    assert reader()(key) is None
