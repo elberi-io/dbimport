@@ -282,6 +282,12 @@ This command will only upgrade the schema if it's not in the last version. So it
 
 It also adds new keys to the *configuration* table with their default values and sets the description of every key to the text of the installed version. The values of existing keys are not changed.
 
+When upgrading from a version before 1.0.0: upgrade to 1.00.006 first and run *setup --upgradeDB* with it. The versions after 1.00.006 start the schema history with the schema of 1.00.006 and stop with an error on an older configuration database.
+
+To go back to an earlier version of DBImport, run *setup --downgradeDB* with the newer version first, once for each schema revision that the newer version added. Each run undoes one revision; it does not go below the schema of 1.00.006.
+
+If you deploy DAGs to another DBImport instance (*deploy --deployTarget*), upgrade that instance too: *deploy* stops with an error while the two configuration databases are at different schema revisions.
+
 When upgrading from 1.00.006 or earlier: the code moved from *bin/* into the *dbimport* package and the web UI from *bin/Server/html* to *ui*. Change *root* in *conf/webserver.cfg* to */usr/local/dbimport/ui/dist* (see *conf/webserver.cfg.dist*) and build the UI again with *setup --buildHTML*.
 
 There might also be changes in the *conf/dbimport.cfg* configuration file. Please compare your local version with the default config file available in the release. If you are missing certain settings in your local configuration, please add those. DBImport checks the whole file when a command starts, so a missing required setting stops every command, also one that does not use the setting, with a list of the missing settings. 

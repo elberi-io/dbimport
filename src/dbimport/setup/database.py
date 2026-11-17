@@ -24,6 +24,8 @@ import pandas as pd
 import sqlalchemy as sa
 from alembic import command as alembic_command
 from alembic.config import Config
+from alembic.migration import MigrationContext
+from alembic.script import ScriptDirectory
 from mysql.connector import errorcode
 from sqlalchemy.orm import sessionmaker
 
@@ -254,9 +256,56 @@ class Initialize:
     def upgrade_db(self):
 
         print("Upgrading database to latest level")
+        script = ScriptDirectory.from_config(self.alembic_config)
+        self.exit_on_unknown_revision(self.current_revisions(), script)
         alembic_command.upgrade(self.alembic_config, "head")
         self.create_default_environment_types()
         self.update_configuration_values()
+
+    def downgrade_db(self) -> None:
+        """Downgrade the schema by one revision. Exits with an error, without
+        changing the database, at the baseline, at an unknown revision or
+        without a revision."""
+        current = self.current_revisions()
+        script = ScriptDirectory.from_config(self.alembic_config)
+        self.exit_on_unknown_revision(current, script)
+        if not current:
+            logging.error(
+                "The configuration database has no schema revision. Create the "
+                "schema with setup --createDB."
+            )
+            sys.exit(1)
+        if set(current) == {script.get_base()}:
+            logging.error(
+                "The configuration database is at the baseline revision %s, the "
+                "schema of DBImport 1.00.006. It cannot be downgraded further.",
+                script.get_base(),
+            )
+            sys.exit(1)
+        print("Downgrading database by one revision")
+        alembic_command.downgrade(self.alembic_config, "-1")
+
+    def current_revisions(self) -> tuple[str, ...]:
+        with self.config_db.connect() as conn:
+            return MigrationContext.configure(conn).get_current_heads()
+
+    def exit_on_unknown_revision(
+        self, current: tuple[str, ...], script: ScriptDirectory
+    ) -> None:
+        """Exit with an error if the database is at a schema revision that
+        this version does not have, without changing the database."""
+        known = {revision.revision for revision in script.walk_revisions()}
+        unknown = [revision for revision in current if revision not in known]
+        if unknown:
+            logging.error(
+                "The configuration database is at schema revision %s, which this "
+                "version of DBImport does not have. A database of a version "
+                "before DBImport 1.0.0 must first be upgraded with DBImport "
+                "1.00.006 (setup --upgradeDB). A database of a newer version "
+                "cannot be used with this one.",
+                ", ".join(unknown),
+            )
+            sys.exit(1)
 
     def create_default_environment_types(self):
         session = self.config_db_session()
