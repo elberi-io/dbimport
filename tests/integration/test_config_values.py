@@ -4,6 +4,7 @@ import pytest
 import sqlalchemy as sa
 
 from dbimport.config_db import common_config, config_keys
+from dbimport.config_db.repositories.configuration import UnknownKeyError
 from dbimport.schedule import airflow_dags
 from dbimport.server import rest_server_calls
 
@@ -130,3 +131,24 @@ def test_get_config_value_of_dags_and_rest_unusable_value_returns_none(
     _set_config_row(db_connection, key, column, value)
 
     assert reader()(key) is None
+
+
+@READERS
+def test_get_config_value_of_dags_and_rest_key_without_row_returns_none(
+    clean_config_db: None,
+    db_connection: sa.Connection,
+    reader: Callable[[], Callable[[str], object]],
+) -> None:
+    db_connection.execute(
+        sa.text("DELETE FROM configuration WHERE configKey = 'timezone'")
+    )
+
+    assert reader()("timezone") is None
+
+
+@READERS
+def test_get_config_value_of_dags_and_rest_unknown_key_raises(
+    clean_config_db: None, reader: Callable[[], Callable[[str], object]]
+) -> None:
+    with pytest.raises(UnknownKeyError):
+        reader()("no_such_key")

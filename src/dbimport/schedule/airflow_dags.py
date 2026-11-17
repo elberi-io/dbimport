@@ -34,6 +34,11 @@ from sqlalchemy.orm import Query, aliased, scoped_session, sessionmaker
 from dbimport.common.exceptions import InvalidConfigurationError, SQLError
 from dbimport.config_db import common_config, config_schema, send_statistics
 from dbimport.config_db import engine as config_engine
+from dbimport.config_db.repositories.configuration import (
+    ConfigurationError,
+    ConfigurationRepository,
+    UnknownKeyError,
+)
 from dbimport.schedule import airflow_schema
 from dbimport.settings import get_settings
 
@@ -177,13 +182,10 @@ class Initialize:
             return scoped_session(self.config_db_session)
 
     def get_config_value(self, key):
-        """Returns a value from the configuration table based on the supplied key. Value returned can be Int, Str or DateTime"""
+        """Returns the value of key in the configuration table, of the type
+        config_keys gives it, or None when its value cannot be used. Raises
+        UnknownKeyError for a key that is not in config_keys.KEYS."""
         log = logging.getLogger(self.logger)
-
-        return_value = None
-        bool_value = False
-
-        value_column, bool_value = self.common_config.get_config_value_column(key)
 
         try:
             session = self.get_dbimport_session()
@@ -191,57 +193,15 @@ class Initialize:
             self.disconnect_dbimport_db()
             return None
 
-        configuration_table = aliased(config_schema.Configuration)
-
-        configuration = (
-            session.query(
-                configuration_table.config_key,
-                configuration_table.value_int,
-                configuration_table.value_str,
-                configuration_table.value_date,
-            )
-            .select_from(configuration_table)
-            .filter(configuration_table.config_key == key)
-            .one()
-        )
-
-        session.remove()
-        return_value = None
-
         try:
-            if value_column == "valueInt":
-                return_value = int(configuration[1])
-
-            if value_column == "valueStr":
-                return_value = configuration[2]
-                if return_value == None or return_value.strip() == "":
-                    log.error(
-                        "Configuration Key '%s' must have a value in '%s'",
-                        key,
-                        value_column,
-                    )
-                    return_value = None
-
-            if bool_value:
-                if return_value == 1:
-                    return_value = True
-                elif return_value == 0:
-                    return_value = False
-                else:
-                    log.error(
-                        "Configuration Key '%s' can only have 0 or 1 in column '%s'",
-                        key,
-                        value_column,
-                    )
-                    return_value = None
-        except TypeError:
-            log.error(
-                "Configuration key '%s' cant be found. Have you upgraded the database schema to the latest version?"
-                % (key)
-            )
-            return_value = None
-
-        return return_value
+            return ConfigurationRepository(session()).value(key)
+        except UnknownKeyError:
+            raise
+        except ConfigurationError as error:
+            log.error("%s", error)
+            return None
+        finally:
+            session.remove()
 
     def check_execution(self):
         """Checks the 'airflow_disable' settings and exit with 0 or 1 depending on that"""

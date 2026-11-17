@@ -196,6 +196,7 @@ files = [
     "tests",
     "src/dbimport/common",
     "src/dbimport/config_db/engine.py",
+    "src/dbimport/config_db/repositories",
     "src/dbimport/migrations",
     "src/dbimport/settings.py",
 ]
@@ -279,7 +280,7 @@ warn_unreachable = true
 [[tool.mypy.overrides]]
 # New modules of the data layer (ADR-0006) inside the packages above: the
 # strict settings again.
-module = ["dbimport.config_db.engine"]
+module = ["dbimport.config_db.engine", "dbimport.config_db.repositories.*"]
 follow_imports = "normal"
 disallow_any_generics = true
 disallow_subclassing_any = true

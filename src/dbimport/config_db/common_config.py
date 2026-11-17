@@ -32,7 +32,7 @@ import pendulum
 import pymongo
 import sqlalchemy as sa
 from mysql.connector import errorcode
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import Session, sessionmaker
 
 from dbimport.common import constants as constant
 from dbimport.common.exceptions import (
@@ -41,9 +41,12 @@ from dbimport.common.exceptions import (
     UndevelopedFeatureError,
 )
 from dbimport.common.singleton import Singleton
-from dbimport.config_db import config_keys
 from dbimport.config_db import decryption as decryption
 from dbimport.config_db import engine as config_engine
+from dbimport.config_db.repositories.configuration import (
+    ConfigurationError,
+    ConfigurationRepository,
+)
 from dbimport.settings import get_settings
 from dbimport.source_schema import schema_reader
 
@@ -2300,75 +2303,22 @@ class Config(metaclass=Singleton):
         logging.debug("Executing common_config.get_jdbc_sql_from_table() - Finished")
         return from_table
 
-    def get_config_value_column(self, key: str) -> tuple[str, bool]:
-        """Return the column that holds the value of key, and whether it is a bool.
-
-        Exits when key is not in config_keys.KEYS.
-        """
-        config_key = config_keys.BY_NAME.get(key)
-        if config_key is None:
-            logging.error("There is no configuration with the name '%s'", key)
-            self.remove_temporary_files()
-            sys.exit(1)
-        return (config_key.column, config_key.kind == "bool")
-
     def get_config_value(self, key: str) -> Any:
-        """Returns a value from the configuration table based on the supplied key. Value returned can be Int, Str or DateTime"""
-        logging.debug("Executing common_config.get_config_value()")
-        return_value = None
-        bool_value = False
-
-        value_column, bool_value = self.get_config_value_column(key)
-
-        query = "select %s from configuration where configkey = '%s'" % (
-            value_column,
-            key,
-        )
-
-        logging.debug("SQL Statement executed: %s", query)
-        self.mysql_cursor.execute(query)
-        row = self.mysql_cursor.fetchone()
-        self.mysql_conn.commit()
-
+        """Returns the value of key in the configuration table, of the type
+        config_keys gives it. Exits when the key or its value cannot be
+        used."""
         try:
-            if value_column == "valueInt":
-                return_value = int(row[0])
-
-            if value_column == "valueStr":
-                return_value = row[0]
-                if return_value == None or return_value.strip() == "":
-                    logging.error(
-                        "Configuration Key '%s' must have a value in '%s'",
-                        key,
-                        value_column,
-                    )
-                    self.remove_temporary_files()
-                    sys.exit(1)
-
-            if bool_value:
-                if return_value == 1:
-                    return_value = True
-                elif return_value == 0:
-                    return_value = False
-                else:
-                    logging.error(
-                        "Configuration Key '%s' can only have 0 or 1 in column '%s'",
-                        key,
-                        value_column,
-                    )
-                    self.remove_temporary_files()
-                    sys.exit(1)
-        except TypeError:
-            logging.error(
-                "Configuration key '%s' cant be found. Have you upgraded the database schema to the latest version?",
-                key,
-            )
+            with Session(config_engine.engine()) as session:
+                value = ConfigurationRepository(session).value(key)
+        except ConfigurationError as error:
+            logging.error("%s", error)
             self.remove_temporary_files()
             sys.exit(1)
-
-        logging.debug("Fetched configuration '%s' as '%s'", key, return_value)
-        logging.debug("Executing common_config.get_config_value() - Finished")
-        return return_value
+        # The SQL read on the raw connection ended its transaction here, and
+        # the config_db code that still uses that connection relies on it.
+        self.mysql_conn.commit()
+        logging.debug("Fetched configuration '%s' as '%s'", key, value)
+        return value
 
     def connect_to_mongo(self, exit_if_failure: bool = True, logger: str = "") -> bool:
         log = logging.getLogger(logger)

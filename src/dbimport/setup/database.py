@@ -28,8 +28,11 @@ from alembic.script import ScriptDirectory
 from mysql.connector import errorcode
 from sqlalchemy.orm import sessionmaker
 
-from dbimport.config_db import common_config, config_keys, config_schema
+from dbimport.config_db import common_config, config_schema
 from dbimport.config_db import engine as config_engine
+from dbimport.config_db.repositories.configuration import (
+    ConfigurationRepository,
+)
 
 
 class Initialize:
@@ -338,14 +341,6 @@ class Initialize:
         for i in result_df:
             list_of_db_types.append(i[0])
 
-        conf_descriptions = {
-            key: description
-            for key, description in session.query(
-                config_schema.Configuration.config_key,
-                config_schema.Configuration.description,
-            ).all()
-        }
-
         # JDBC Connection Drivers table
         if "DB2 AS400" not in list_of_db_types:
             query = sa.insert(config_schema.JDBCConnectionsDrivers).values(
@@ -466,21 +461,5 @@ class Initialize:
             session.execute(query)
             session.commit()
 
-        # Configuration table
-        for key in config_keys.KEYS:
-            if key.name not in conf_descriptions:
-                query = sa.insert(config_schema.Configuration).values(
-                    configKey=key.name,
-                    description=key.description,
-                    **{key.column: key.initial_value()},
-                )
-            elif conf_descriptions[key.name] != key.description:
-                query = (
-                    sa.update(config_schema.Configuration)
-                    .where(config_schema.Configuration.config_key == key.name)
-                    .values(description=key.description)
-                )
-            else:
-                continue
-            session.execute(query)
+        ConfigurationRepository(session).seed()
         session.commit()
