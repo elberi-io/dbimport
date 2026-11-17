@@ -243,9 +243,11 @@ class DBCalls:
             username=user.username,
             password=user.password,
             disabled=user.disabled,
-            fullname=user.fullname,
-            department=user.department,
-            email=user.email,
+            # Details not given are left out: the columns are NOT NULL with
+            # the default ''.
+            **user.model_dump(
+                include={"fullname", "department", "email"}, exclude_none=True
+            ),
         )
         session.execute(query)
         session.commit()
