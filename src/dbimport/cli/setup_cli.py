@@ -32,6 +32,9 @@ def print_help():
     print(
         "  --upgradeDB        Upgrades the configuration database to support a new DBImport version"
     )
+    print(
+        "  --downgradeDB      Downgrades the configuration database schema by one revision"
+    )
     print("")
     print(
         "  --buildHTML        Installs required npm packages and guild HTML files for DBImport UI"
@@ -151,7 +154,7 @@ def main(argv):
 
     if operation == "downgradeDB":
         db_operations = database_operations.Initialize()
-        db_operations.downgradeDB()
+        db_operations.downgrade_db()
 
     if operation == "createSchemaRst":
         db_operations = database_operations.Initialize()

@@ -4,7 +4,12 @@ Importing this module does not import DBImport code, so it is safe before
 pytest_configure has prepared the environment.
 """
 
+from pathlib import Path
+
 import sqlalchemy as sa
+from alembic.config import Config
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
 
 
 def close_dbimport_connections(obj: object) -> None:
@@ -43,3 +48,60 @@ def set_driver_path(conn: sa.Connection, database_type: str) -> None:
         ),
         {"path": "/opt/jdbc/driver.jar", "type": database_type},
     )
+
+
+# What a schema consists of, read from information_schema of the current
+# database. Alembic's comparison leaves out server defaults, AUTO_INCREMENT,
+# constraint names and column order; these queries do not.
+_SCHEMA_QUERIES = {
+    "table": """
+        SELECT TABLE_NAME, TABLE_TYPE, ENGINE, TABLE_COLLATION, TABLE_COMMENT
+        FROM information_schema.TABLES
+        WHERE TABLE_SCHEMA = DATABASE()""",
+    "column": """
+        SELECT TABLE_NAME, ORDINAL_POSITION, COLUMN_NAME, COLUMN_TYPE,
+            IS_NULLABLE, COLUMN_DEFAULT, EXTRA, COLUMN_COMMENT,
+            CHARACTER_SET_NAME, COLLATION_NAME
+        FROM information_schema.COLUMNS
+        WHERE TABLE_SCHEMA = DATABASE()""",
+    "index": """
+        SELECT TABLE_NAME, INDEX_NAME, SEQ_IN_INDEX, COLUMN_NAME, NON_UNIQUE,
+            SUB_PART, INDEX_TYPE, INDEX_COMMENT
+        FROM information_schema.STATISTICS
+        WHERE TABLE_SCHEMA = DATABASE()""",
+    "foreign key": """
+        SELECT k.TABLE_NAME, k.CONSTRAINT_NAME, k.ORDINAL_POSITION,
+            k.COLUMN_NAME, k.REFERENCED_TABLE_NAME, k.REFERENCED_COLUMN_NAME,
+            r.UPDATE_RULE, r.DELETE_RULE
+        FROM information_schema.KEY_COLUMN_USAGE k
+        JOIN information_schema.REFERENTIAL_CONSTRAINTS r
+            ON r.CONSTRAINT_SCHEMA = k.CONSTRAINT_SCHEMA
+            AND r.TABLE_NAME = k.TABLE_NAME
+            AND r.CONSTRAINT_NAME = k.CONSTRAINT_NAME
+        WHERE k.TABLE_SCHEMA = DATABASE()""",
+    "check": """
+        SELECT TABLE_NAME, CONSTRAINT_NAME, CHECK_CLAUSE
+        FROM information_schema.CHECK_CONSTRAINTS
+        WHERE CONSTRAINT_SCHEMA = DATABASE()""",
+    "trigger": """
+        SELECT EVENT_OBJECT_TABLE, TRIGGER_NAME, ACTION_TIMING,
+            EVENT_MANIPULATION, ACTION_STATEMENT
+        FROM information_schema.TRIGGERS
+        WHERE TRIGGER_SCHEMA = DATABASE()""",
+}
+
+
+def schema_rows(conn: sa.Connection) -> list[str]:
+    """The schema of the connection's database as sorted lines, for
+    comparing two schemas."""
+    return sorted(
+        f"{kind} {tuple(row)}"
+        for kind, query in _SCHEMA_QUERIES.items()
+        for row in conn.execute(sa.text(query))
+    )
+
+
+def alembic_config() -> Config:
+    """The configuration of the Alembic command line (alembic.ini); the
+    database comes from DBIMPORT_CONFIGFILE."""
+    return Config(REPO_ROOT / "alembic.ini")

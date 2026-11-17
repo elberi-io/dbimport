@@ -1,62 +1,20 @@
 from collections.abc import Iterator
-from pathlib import Path
 from typing import Any
 
 import pytest
 import sqlalchemy as sa
 from alembic import command
-from alembic.config import Config
 from alembic.script import ScriptDirectory
 from sqlalchemy.ext.compiler import compiles
 from sqlalchemy.schema import CreateColumn
 from sqlalchemy.sql.compiler import DDLCompiler
 
 from dbimport.config_db import config_schema
+from tests.configdb import REPO_ROOT, alembic_config, schema_rows
 
-REPO_ROOT = Path(__file__).resolve().parents[2]
 SCHEMA_UPGRADE_DIR = REPO_ROOT / "src" / "dbimport" / "migrations"
 # Second database of the compose server, created by tests/fixtures/mariadb-init.sql.
 ORM_DATABASE = "DBImport_orm"
-
-# What a schema consists of, read from information_schema of the current
-# database. Alembic's comparison leaves out server defaults, AUTO_INCREMENT,
-# constraint names and column order; these queries do not.
-_SCHEMA_QUERIES = {
-    "table": """
-        SELECT TABLE_NAME, TABLE_TYPE, ENGINE, TABLE_COLLATION, TABLE_COMMENT
-        FROM information_schema.TABLES
-        WHERE TABLE_SCHEMA = DATABASE()""",
-    "column": """
-        SELECT TABLE_NAME, ORDINAL_POSITION, COLUMN_NAME, COLUMN_TYPE,
-            IS_NULLABLE, COLUMN_DEFAULT, EXTRA, COLUMN_COMMENT,
-            CHARACTER_SET_NAME, COLLATION_NAME
-        FROM information_schema.COLUMNS
-        WHERE TABLE_SCHEMA = DATABASE()""",
-    "index": """
-        SELECT TABLE_NAME, INDEX_NAME, SEQ_IN_INDEX, COLUMN_NAME, NON_UNIQUE,
-            SUB_PART, INDEX_TYPE, INDEX_COMMENT
-        FROM information_schema.STATISTICS
-        WHERE TABLE_SCHEMA = DATABASE()""",
-    "foreign key": """
-        SELECT k.TABLE_NAME, k.CONSTRAINT_NAME, k.ORDINAL_POSITION,
-            k.COLUMN_NAME, k.REFERENCED_TABLE_NAME, k.REFERENCED_COLUMN_NAME,
-            r.UPDATE_RULE, r.DELETE_RULE
-        FROM information_schema.KEY_COLUMN_USAGE k
-        JOIN information_schema.REFERENTIAL_CONSTRAINTS r
-            ON r.CONSTRAINT_SCHEMA = k.CONSTRAINT_SCHEMA
-            AND r.TABLE_NAME = k.TABLE_NAME
-            AND r.CONSTRAINT_NAME = k.CONSTRAINT_NAME
-        WHERE k.TABLE_SCHEMA = DATABASE()""",
-    "check": """
-        SELECT TABLE_NAME, CONSTRAINT_NAME, CHECK_CLAUSE
-        FROM information_schema.CHECK_CONSTRAINTS
-        WHERE CONSTRAINT_SCHEMA = DATABASE()""",
-    "trigger": """
-        SELECT EVENT_OBJECT_TABLE, TRIGGER_NAME, ACTION_TIMING,
-            EVENT_MANIPULATION, ACTION_STATEMENT
-        FROM information_schema.TRIGGERS
-        WHERE TRIGGER_SCHEMA = DATABASE()""",
-}
 
 
 # sqlalchemy.ext.compiler and the DDL compiler are not annotated.
@@ -75,14 +33,6 @@ def _create_column(
     ):
         ddl += " AUTO_INCREMENT"
     return ddl
-
-
-def _schema(conn: sa.Connection) -> list[str]:
-    return sorted(
-        f"{kind} {tuple(row)}"
-        for kind, query in _SCHEMA_QUERIES.items()
-        for row in conn.execute(sa.text(query))
-    )
 
 
 @pytest.fixture
@@ -157,9 +107,7 @@ def test_create_db_seeds_configuration_drivers_and_environments(
 def test_alembic_check_against_migrated_schema_finds_no_difference(
     clean_config_db: None,
 ) -> None:
-    config = Config(REPO_ROOT / "alembic.ini")
-
-    command.check(config)
+    command.check(alembic_config())
 
 
 def test_orm_creates_the_migrated_schema(
@@ -167,4 +115,4 @@ def test_orm_creates_the_migrated_schema(
     db_connection: sa.Connection,
     orm_db_connection: sa.Connection,
 ) -> None:
-    assert _schema(orm_db_connection) == _schema(db_connection)
+    assert schema_rows(orm_db_connection) == schema_rows(db_connection)

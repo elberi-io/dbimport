@@ -1,13 +1,16 @@
 import os
 import subprocess
 import sys
-from collections.abc import Iterator
-from pathlib import Path
+from collections.abc import Callable, Iterator
 
 import pytest
 import sqlalchemy as sa
+from alembic import command
+from alembic.script import ScriptDirectory
 
-SETUP = Path(__file__).resolve().parents[2] / "bin" / "setup"
+from tests.configdb import REPO_ROOT, alembic_config, schema_rows
+
+SETUP = REPO_ROOT / "bin" / "setup"
 # A revision of the migration chain before the baseline (0.80.008).
 OLD_REVISION = "af71422a72a2"
 VERSION_QUERY = sa.text("SELECT version_num FROM alembic_version")
@@ -25,34 +28,98 @@ def _setup(option: str) -> subprocess.CompletedProcess[str]:
 
 
 @pytest.fixture
-def old_revision(clean_config_db: None, db_connection: sa.Connection) -> Iterator[None]:
-    """The database stamped with OLD_REVISION; the head is restored after
-    the test, because the schema is built once per session."""
+def stamp(
+    clean_config_db: None, db_connection: sa.Connection
+) -> Iterator[Callable[[str | None], None]]:
+    """Sets the revision the database claims to be at, without changing the
+    schema. The head is restored after the test, because the schema is
+    built once per session."""
     head = db_connection.execute(VERSION_QUERY).scalar_one()
-    update = sa.text("UPDATE alembic_version SET version_num = :revision")
-    db_connection.execute(update, {"revision": OLD_REVISION})
+
+    def _stamp(revision: str | None) -> None:
+        db_connection.execute(sa.text("DELETE FROM alembic_version"))
+        if revision is not None:
+            db_connection.execute(
+                sa.text("INSERT INTO alembic_version VALUES (:revision)"),
+                {"revision": revision},
+            )
+
+    try:
+        yield _stamp
+    finally:
+        _stamp(head)
+
+
+@pytest.fixture
+def upgrade_after(clean_config_db: None) -> Iterator[None]:
+    """For a test that downgrades: upgrades the schema to the head again
+    after it, because the schema is built once per session."""
     try:
         yield
     finally:
-        db_connection.execute(update, {"revision": head})
+        command.upgrade(alembic_config(), "head")
 
 
-def test_setup_downgrade_db_fails_because_the_method_is_missing(
-    clean_config_db: None,
+def test_setup_downgrade_db_goes_back_one_revision(
+    upgrade_after: None, db_connection: sa.Connection
 ) -> None:
-    # Known bug: bin/setup calls initialize.downgradeDB(), which does not
-    # exist. This records the current behaviour. It is not an expected
-    # failure on purpose: a fixed command would downgrade the test schema.
+    head = db_connection.execute(VERSION_QUERY).scalar_one()
+    script = ScriptDirectory.from_config(alembic_config())
+
+    result = _setup("--downgradeDB")
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert (
+        db_connection.execute(VERSION_QUERY).scalar_one()
+        == script.get_revision(head).down_revision
+    )
+
+
+def test_setup_upgrade_db_after_downgrade_db_restores_the_schema(
+    upgrade_after: None, db_connection: sa.Connection
+) -> None:
+    before = schema_rows(db_connection)
+
+    downgrade = _setup("--downgradeDB")
+    downgraded = schema_rows(db_connection)
+    upgrade = _setup("--upgradeDB")
+
+    assert (downgrade.returncode, upgrade.returncode) == (0, 0)
+    assert downgraded != before
+    assert schema_rows(db_connection) == before
+
+
+def test_setup_downgrade_db_at_the_baseline_stops(
+    stamp: Callable[[str | None], None], db_connection: sa.Connection
+) -> None:
+    baseline = ScriptDirectory.from_config(alembic_config()).get_base()
+    assert baseline is not None
+    stamp(baseline)
+
     result = _setup("--downgradeDB")
 
     assert result.returncode == 1
-    assert "AttributeError" in result.stderr
-    assert "downgradeDB" in result.stderr
+    assert "cannot be downgraded further" in result.stdout + result.stderr
+    assert db_connection.execute(VERSION_QUERY).scalar_one() == baseline
+
+
+def test_setup_downgrade_db_without_a_revision_stops(
+    stamp: Callable[[str | None], None], db_connection: sa.Connection
+) -> None:
+    stamp(None)
+
+    result = _setup("--downgradeDB")
+
+    assert result.returncode == 1
+    assert "setup --createDB" in result.stdout + result.stderr
+    assert db_connection.execute(VERSION_QUERY).all() == []
 
 
 def test_setup_upgrade_db_at_a_revision_before_the_baseline_stops(
-    old_revision: None, db_connection: sa.Connection
+    stamp: Callable[[str | None], None], db_connection: sa.Connection
 ) -> None:
+    stamp(OLD_REVISION)
+
     result = _setup("--upgradeDB")
 
     assert result.returncode == 1

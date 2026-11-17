@@ -16,9 +16,6 @@
     "arg-type": 6,
     "union-attr": 13
   },
-  "src/dbimport/cli/setup_cli.py": {
-    "attr-defined": 1
-  },
   "src/dbimport/config_db/common_config.py": {
     "arg-type": 5,
     "assignment": 8,
