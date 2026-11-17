@@ -28,9 +28,9 @@
     "union-attr": 7
   },
   "src/dbimport/config_db/config_schema.py": {
-    "misc": 38,
-    "valid-type": 38,
-    "var-annotated": 21
+    "misc": 37,
+    "valid-type": 37,
+    "var-annotated": 22
   },
   "src/dbimport/config_db/decryption.py": {
     "arg-type": 2,
