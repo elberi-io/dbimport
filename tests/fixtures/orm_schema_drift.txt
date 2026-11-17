@@ -1,8 +1,0 @@
-# Known differences between the ORM in src/dbimport/config_db/config_schema.py
-# and the schema that the Alembic migrations create, as reported by
-# alembic.autogenerate.compare_metadata() on MariaDB 11.4 with latin1.
-# One line per difference, sorted; used by
-# tests/integration/test_schema.py.
-#
-# A change here means the ORM or the migrations changed. Fixing drift
-# removes lines; new drift must not be added without a reason.
