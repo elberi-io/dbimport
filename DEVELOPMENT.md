@@ -40,7 +40,11 @@ uv run python --version
 `compose.yaml` starts a MariaDB 11.4 server for development and tests. It
 listens on 127.0.0.1:3306 and has a database `DBImport` with the user
 `dbimport` and password `dbimport`. These are throwaway values for local
-use only.
+use only. A second database, `DBImport_orm`, is for the schema test (see
+"Running the tests"); `tests/fixtures/mariadb-init.sql` creates it when
+the server starts on an empty data directory. A server started before
+that file existed lacks it: run `docker compose down` and start the
+server again.
 
 The server runs with `latin1` as the default character set. With `utf8mb3`
 or `utf8mb4`, the schema migrations fail because several primary keys
@@ -93,6 +97,13 @@ localhost or the host named in the `DBIMPORT_TEST_DB_HOST` environment
 variable (used when the tests run in a container on the compose
 network). The tests generate their own RSA key pair, so the key pair from
 the section above is not needed for them.
+
+`tests/integration/test_schema.py` checks that the ORM in
+`src/dbimport/config_db/config_schema.py` creates the same schema as the
+migrations: tables and views, columns with their order, types, defaults
+and comments, indexes, foreign keys, CHECK constraints and triggers. It
+builds the ORM schema in the `DBImport_orm` database. A migration therefore comes with
+the matching change in `config_schema.py`.
 
 ```bash
 docker compose up -d --wait
@@ -179,8 +190,3 @@ Do not edit these by hand; regenerate them and review the diff:
 | `tests/fixtures/dags/*.py.txt` | `DBIMPORT_UPDATE_EXPECTED_DAGS=1 uv run pytest tests/integration/test_airflow_dag_generation.py` |
 | `tests/fixtures/ruff_baseline.json` | `DBIMPORT_UPDATE_RUFF_BASELINE=1 uv run pytest tests/unit/test_ruff_ratchet.py` |
 | `tests/fixtures/mypy_baseline.json` | `DBIMPORT_UPDATE_MYPY_BASELINE=1 uv run pytest tests/unit/test_mypy_ratchet.py` |
-
-`tests/fixtures/orm_schema_drift.txt` lists the known differences between
-the ORM and the migrated schema. When the ORM or the migrations change,
-update it from the difference that
-`test_orm_differs_from_migrated_schema_only_by_known_drift` reports.

@@ -229,3 +229,45 @@ def test_update_config_stores_the_new_values(
         "airflow_disable": (1, None),
         "timezone": (None, "UTC+1"),
     }
+
+
+@pytest.fixture
+def admin_headers(client: TestClient) -> dict[str, str]:
+    # The REST server creates the admin user with password "admin" at start.
+    response = client.post(
+        "/oauth2/access_token", data={"username": "admin", "password": "admin"}
+    )
+    return {"Authorization": f"Bearer {response.json()['access_token']}"}
+
+
+@pytest.mark.parametrize(
+    ("details", "stored"),
+    [
+        ({}, ("", "", "")),
+        (
+            {"fullname": "New User", "department": "Data", "email": "new@example.org"},
+            ("New User", "Data", "new@example.org"),
+        ),
+    ],
+)
+def test_create_user_stores_the_given_or_empty_details(
+    client: TestClient,
+    admin_headers: dict[str, str],
+    db_connection: sa.Connection,
+    details: dict[str, str],
+    stored: tuple[str, str, str],
+) -> None:
+    response = client.post(
+        "/users/createUser",
+        json={"username": "newuser", "password": "pw", "disabled": False} | details,
+        headers=admin_headers,
+    )
+
+    assert response.status_code == 200
+    row = db_connection.execute(
+        sa.text(
+            "SELECT fullname, department, email FROM auth_users "
+            "WHERE username = 'newuser'"
+        )
+    ).one()
+    assert tuple(row) == stored

@@ -16,6 +16,8 @@ services:
       MARIADB_USER: dbimport
       MARIADB_PASSWORD: dbimport
       MARIADB_RANDOM_ROOT_PASSWORD: "1"
+    volumes:
+      - ./tests/fixtures/mariadb-init.sql:/docker-entrypoint-initdb.d/mariadb-init.sql:ro
     ports:
       - "127.0.0.1:3306:3306"
     healthcheck:

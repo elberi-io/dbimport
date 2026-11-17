@@ -864,7 +864,7 @@ class Operation(metaclass=Singleton):
             filter_db_alias = ""
             filter_schema = ""
             filter_table = ""
-            for name, values in airflow_dag.iteritems():
+            for name, values in airflow_dag.items():
                 if name in ("dag_name"):
                     continue
 
@@ -953,7 +953,7 @@ class Operation(metaclass=Singleton):
                     remote_session.commit()
 
                 update_dict = {}
-                for name, value in row.iteritems():
+                for name, value in row.items():
                     if name in ("dag_name", "task_name"):
                         continue
 
@@ -1117,7 +1117,7 @@ class Operation(metaclass=Singleton):
 
             # Create dictonary to be used to update the values in airflow_import_dag on the remote Instance
             update_dict = {}
-            for name, values in airflow_dag.iteritems():
+            for name, values in airflow_dag.items():
                 if name in ("dag_name"):
                     continue
 
@@ -1219,7 +1219,7 @@ class Operation(metaclass=Singleton):
                     remote_session.commit()
 
                 update_dict = {}
-                for name, value in row.iteritems():
+                for name, value in row.items():
                     if name in ("dag_name", "task_name"):
                         continue
 
@@ -1355,7 +1355,7 @@ class Operation(metaclass=Singleton):
 
                 # Create dictonary to be used to update the values in import_table on the remote Instance
                 update_dict = {}
-                for name, values in source_jdbc_connection.iteritems():
+                for name, values in source_jdbc_connection.items():
                     if name == "dbalias":
                         continue
 
@@ -1433,7 +1433,7 @@ class Operation(metaclass=Singleton):
 
                 # Create dictonary to be used to update the values in import_table on the remote Instance
                 update_dict = {}
-                for name, values in source_table_definition.iteritems():
+                for name, values in source_table_definition.items():
                     if name in (
                         "table_id",
                         "dbalias",
@@ -1524,7 +1524,7 @@ class Operation(metaclass=Singleton):
 
                     # Create dictonary to be used to update the values in export_table on the remote Instance
                     update_dict = {}
-                    for name, values in source_column_definition.iteritems():
+                    for name, values in source_column_definition.items():
                         if name in ("table_id", "column_id", "column_name"):
                             continue
 
@@ -1793,7 +1793,7 @@ class Operation(metaclass=Singleton):
 
                         # Create dictonary to be used to update the values in import_table on the remote Instance
                         update_dict = {}
-                        for name, values in column_row.iteritems():
+                        for name, values in column_row.items():
                             if name in (
                                 "source_table_id",
                                 "source_column_id",
@@ -1847,7 +1847,7 @@ class Operation(metaclass=Singleton):
                 # Create dictonary to be used to update the values in import_table on the remote Instance
                 update_dict = {}
                 jdbc_connection = ""
-                for name, values in source_table_definition.iteritems():
+                for name, values in source_table_definition.items():
                     if name in (
                         "table_id",
                         "hive_db",
@@ -1959,7 +1959,7 @@ class Operation(metaclass=Singleton):
 
         # Create dictonary to be used to update the values in import_table on the remote Instance
         update_dict = {}
-        for name, values in source_jdbc_connection.iteritems():
+        for name, values in source_jdbc_connection.items():
             if name == "dbalias":
                 continue
 
