@@ -351,3 +351,83 @@ def test_create_user_stores_the_given_or_empty_details(
         )
     ).one()
     assert tuple(row) == stored
+
+
+def test_get_jdbc_drivers_lists_the_drivers_in_database_type_order(
+    client: TestClient, auth_headers: dict[str, str]
+) -> None:
+    response = client.get("/config/getJDBCdrivers", headers=auth_headers)
+
+    assert response.status_code == 200
+    drivers = response.json()
+    # database_type is an ENUM: the database sorts by the order of its values.
+    assert [driver["databaseType"] for driver in drivers] == [
+        "DB2 AS400",
+        "DB2 UDB",
+        "MySQL",
+        "Oracle",
+        "PostgreSQL",
+        "Progress DB",
+        "SQL Server",
+        "SQL Server",
+        "CacheDB",
+        "Snowflake",
+        "Informix",
+        "SQL Anywhere",
+    ]
+    assert {
+        "databaseType": "PostgreSQL",
+        "version": "default",
+        "driver": "org.postgresql.Driver",
+        "classpath": "add path to JAR file",
+    } in drivers
+
+
+DRIVER_ROW = sa.text(
+    "SELECT driver, classpath FROM jdbc_connections_drivers "
+    "WHERE database_type = 'PostgreSQL' AND version = 'default'"
+)
+
+
+def test_update_jdbc_driver_stores_driver_and_classpath(
+    client: TestClient, auth_headers: dict[str, str], db_connection: sa.Connection
+) -> None:
+    driver = {
+        "databaseType": "PostgreSQL",
+        "version": "default",
+        "driver": "org.example.Driver",
+        "classpath": "/opt/jdbc/postgresql.jar",
+    }
+
+    response = client.post(
+        "/config/updateJDBCdriver", json=driver, headers=auth_headers
+    )
+
+    assert response.status_code == 200
+    assert tuple(db_connection.execute(DRIVER_ROW).one()) == (
+        "org.example.Driver",
+        "/opt/jdbc/postgresql.jar",
+    )
+
+
+def test_update_jdbc_driver_of_unknown_version_returns_400(
+    client: TestClient, auth_headers: dict[str, str], db_connection: sa.Connection
+) -> None:
+    driver = {
+        "databaseType": "PostgreSQL",
+        "version": "no_such_version",
+        "driver": "org.example.Driver",
+        "classpath": "/opt/jdbc/postgresql.jar",
+    }
+
+    response = client.post(
+        "/config/updateJDBCdriver", json=driver, headers=auth_headers
+    )
+
+    assert response.status_code == 400
+    assert (
+        db_connection.execute(
+            sa.text("SELECT COUNT(*) FROM jdbc_connections_drivers")
+        ).scalar_one()
+        == 12
+    )
