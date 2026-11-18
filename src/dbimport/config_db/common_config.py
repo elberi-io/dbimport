@@ -47,6 +47,10 @@ from dbimport.config_db.repositories.configuration import (
     ConfigurationError,
     ConfigurationRepository,
 )
+from dbimport.config_db.repositories.connections import (
+    CLASSPATH_PLACEHOLDER,
+    ConnectionsRepository,
+)
 from dbimport.settings import get_settings
 from dbimport.source_schema import schema_reader
 
@@ -686,27 +690,20 @@ class Config(metaclass=Singleton):
     def get_jdbc_driver_config(
         self, database_type: str, version: str
     ) -> tuple[str, str]:
-        logging.debug("Executing common_config.get_jdbc_driver_config()")
-        query = "select driver, classpath from jdbc_connections_drivers where database_type = %s and version = %s"
-        logging.debug("Executing the following SQL: %s", query)
-        self.mysql_cursor.execute(query, (database_type, version))
-
-        if self.mysql_cursor.rowcount != 1:
+        """Driver class and classpath of the JDBC driver of database_type and
+        version. Raises InvalidConfigurationError when there is none or its
+        classpath is not an absolute path."""
+        with Session(config_engine.engine()) as session:
+            found = ConnectionsRepository(session).driver(database_type, version)
+        if found is None:
             raise InvalidConfigurationError(
                 f"Error: Cant find JDBC driver with database_type as '{database_type}' and version as '{version}'"
             )
-
-        row = self.mysql_cursor.fetchone()
-        driver = row[0]
-        class_path = row[1]
-
-        if class_path == "add path to JAR file" or not class_path.startswith("/"):
+        if not found.classpath.startswith("/"):
             raise InvalidConfigurationError(
                 "Error: You need to specify the full path to the JAR files in the table 'jdbc_connections_drivers'"
             )
-
-        logging.debug("Executing common_config.get_jdbc_driver_config() - Finished")
-        return driver, class_path
+        return found.driver, found.classpath
 
     def lookup_connection_alias(
         self,
@@ -1587,16 +1584,13 @@ class Config(metaclass=Singleton):
             return self.connect_to_mongo(exit_if_failure=exit_if_failure, logger=logger)
 
         if all_jar_files:
-            query = "select classpath from jdbc_connections_drivers"
-            log.debug("Executing the following SQL: %s", query)
-            self.mysql_cursor.execute(
-                query,
-            )
-
-            self.jdbc_classpath_for_python = []
-            for row in self.mysql_cursor.fetchall():
-                if row[0] != "add path to JAR file":
-                    self.jdbc_classpath_for_python.append(row[0])
+            with Session(config_engine.engine()) as session:
+                classpaths = ConnectionsRepository(session).classpaths()
+            self.jdbc_classpath_for_python = [
+                classpath
+                for classpath in classpaths
+                if classpath != CLASSPATH_PLACEHOLDER
+            ]
 
         if self.jdbc_driver == None:
             log.error(
