@@ -17,7 +17,7 @@
     "union-attr": 13
   },
   "src/dbimport/config_db/common_config.py": {
-    "arg-type": 5,
+    "arg-type": 7,
     "assignment": 8,
     "attr-defined": 4,
     "operator": 4,

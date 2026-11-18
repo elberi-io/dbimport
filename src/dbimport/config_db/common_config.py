@@ -22,7 +22,7 @@ import re
 import shutil
 import subprocess
 import sys
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import Any
 
 import jaydebeapi
@@ -50,6 +50,7 @@ from dbimport.config_db.repositories.configuration import (
 from dbimport.config_db.repositories.connections import (
     CLASSPATH_PLACEHOLDER,
     ConnectionsRepository,
+    JDBCConnection,
 )
 from dbimport.settings import get_settings
 from dbimport.source_schema import schema_reader
@@ -297,32 +298,16 @@ class Config(metaclass=Singleton):
         if db_alias == None:
             db_alias = self.db_alias
 
-        # Fetch data from jdbc_connection table
-        query = "select contact_info, description, owner, atlas_discovery, atlas_include_filter, atlas_exclude_filter, atlas_last_discovery from jdbc_connections where dbalias = %s "
-        logging.debug("Executing the following SQL: %s", query)
-        self.mysql_cursor.execute(query, (db_alias,))
-
-        if self.mysql_cursor.rowcount != 1:
-            raise InvalidConfigurationError(
-                "The requested connection alias cant be found in the 'jdbc_connections' table"
-            )
-
-        row = self.mysql_cursor.fetchone()
-        return_dict = {}
-        return_dict["contact_info"] = row[0]
-        return_dict["description"] = row[1]
-        return_dict["owner"] = row[2]
-        return_dict["atlas_discovery"] = row[3]
-        return_dict["atlas_include_filter"] = row[4]
-        return_dict["atlas_exclude_filter"] = row[5]
-        return_dict["atlas_last_discovery"] = row[6]
-
-        if return_dict["contact_info"] == None:
-            return_dict["contact_info"] = ""
-        if return_dict["description"] == None:
-            return_dict["description"] = ""
-        if return_dict["owner"] == None:
-            return_dict["owner"] = ""
+        connection = self._stored_connection(db_alias)
+        return_dict = {
+            "contact_info": connection.contact_info or "",
+            "description": connection.description or "",
+            "owner": connection.owner or "",
+            "atlas_discovery": connection.atlas_discovery,
+            "atlas_include_filter": connection.atlas_include_filter,
+            "atlas_exclude_filter": connection.atlas_exclude_filter,
+            "atlas_last_discovery": connection.atlas_last_discovery,
+        }
 
         logging.debug(
             "Executing common_config.get_atlas_jdbc_connection_data() - Finished"
@@ -424,33 +409,27 @@ class Config(metaclass=Singleton):
 
         self.time_zone = self.get_config_value("timezone")
 
-        query = "select timewindow_start, timewindow_stop, timewindow_timezone from jdbc_connections where dbalias = %s"
-        self.mysql_cursor.execute(query, (connection_alias,))
-        logging.debug("SQL Statement executed: %s" % (self.mysql_cursor.statement))
-
-        row = self.mysql_cursor.fetchone()
-        hour = row[0]
-        minute = row[1]
+        connection = self._stored_connection(connection_alias)
+        hour = connection.timewindow_start
+        minute = connection.timewindow_stop
 
         # If there is a local timezone set on the JDBC connection, we use that instead of the configured default timezone
-        if row[2] is not None and row[2].strip() != "":
-            self.time_zone = row[2]
+        timezone = connection.timewindow_timezone
+        if timezone is not None and timezone.strip() != "":
+            self.time_zone = timezone
 
         current_time = pendulum.now(self.time_zone)  # Get time in configured timeZone
         time_window_start = None
         time_window_stop = None
 
         if hour != None:
-            if hour == timedelta(days=1):
-                hour = timedelta(days=0)
-
             time_window_start = current_time.set(
                 hour=int(str(hour).split(":")[0]),
                 minute=int(str(hour).split(":")[1]),
                 second=int(str(hour).split(":")[2]),
             )
 
-        if row[1] != None:
+        if minute != None:
             time_window_stop = current_time.set(
                 hour=int(str(minute).split(":")[0]),
                 minute=int(str(minute).split(":")[1]),
@@ -549,19 +528,21 @@ class Config(metaclass=Singleton):
         logging.debug("Executing common_config.check_time_window() - Finished")
         return True
 
+    def _stored_connection(self, connection_alias: str) -> JDBCConnection:
+        with Session(config_engine.engine()) as session:
+            connection = ConnectionsRepository(session).connection(connection_alias)
+        if connection is None:
+            raise InvalidConfigurationError(
+                "The requested connection alias cant be found in the 'jdbc_connections' table"
+            )
+        return connection
+
     def check_connection_alias(self, connection_alias: str) -> bool:
         """Will check if the connection alias exists in the jdbc_connection table"""
         logging.debug("Executing common_config.check_connection_alias()")
 
-        rc = False
-
-        query = "select count(1) from jdbc_connections where dbalias = %s "
-        logging.debug("Executing the following SQL: %s", query)
-        self.mysql_cursor.execute(query, (connection_alias,))
-
-        row = self.mysql_cursor.fetchone()
-        if row[0] == 1:
-            rc = True
+        with Session(config_engine.engine()) as session:
+            rc = ConnectionsRepository(session).connection(connection_alias) is not None
 
         logging.debug("Executing common_config.check_connection_alias() - Finished")
         return rc
@@ -650,20 +631,9 @@ class Config(metaclass=Singleton):
         self, connection_alias: str, username: str, password: str
     ) -> None:
 
-        # Fetch public/private key from jdbc_connection table if it exists
-        query = "select private_key_path, public_key_path from jdbc_connections where dbalias = %s "
-        logging.debug("Executing the following SQL: %s", query)
-        self.mysql_cursor.execute(query, (connection_alias,))
-
-        if self.mysql_cursor.rowcount != 1:
-            raise InvalidConfigurationError(
-                "The requested connection alias cant be found in the 'jdbc_connections' table"
-            )
-
-        row = self.mysql_cursor.fetchone()
-
-        private_key_file = row[0]
-        public_key_file = row[1]
+        connection = self._stored_connection(connection_alias)
+        private_key_file = connection.private_key_path
+        public_key_file = connection.public_key_path
 
         if (
             private_key_file != None
@@ -682,10 +652,11 @@ class Config(metaclass=Singleton):
         encrypted_str = self.crypto.encrypt(str_to_encrypt)
 
         if encrypted_str is not None and encrypted_str != "":
-            query = "update jdbc_connections set credentials = %s where dbalias = %s "
-            logging.debug("Executing the following SQL: %s", query)
-            self.mysql_cursor.execute(query, (encrypted_str, connection_alias))
-            self.mysql_conn.commit()
+            with Session(config_engine.engine()) as session:
+                ConnectionsRepository(session).set_credentials(
+                    connection_alias, encrypted_str
+                )
+                session.commit()
 
     def get_jdbc_driver_config(
         self, database_type: str, version: str
@@ -738,22 +709,12 @@ class Config(metaclass=Singleton):
             # This is required from RestAPI when looking up all connections and returning a full list including database types. No need to do the lookup here as well
             self.jdbc_url = jdbc_url
         else:
-            query = "select jdbc_url, credentials, private_key_path, public_key_path, environment from jdbc_connections where dbalias = %s "
-            logging.debug("Executing the following SQL: %s", query)
-            self.mysql_cursor.execute(query, (connection_alias,))
-
-            if self.mysql_cursor.rowcount != 1:
-                raise InvalidConfigurationError(
-                    "The requested connection alias cant be found in the 'jdbc_connections' table"
-                )
-
-            row = self.mysql_cursor.fetchone()
-
-            self.jdbc_url = row[0]
-            jdbc_credentials = row[1]
-            private_key_file = row[2]
-            public_key_file = row[3]
-            self.jdbc_environment = row[4]
+            connection = self._stored_connection(connection_alias)
+            self.jdbc_url = connection.jdbc_url
+            jdbc_credentials = connection.credentials
+            private_key_file = connection.private_key_path
+            public_key_file = connection.public_key_path
+            self.jdbc_environment = connection.environment
 
         if decrypt_credentials and not copy_slave:
             if jdbc_credentials is not None and jdbc_credentials.startswith(
@@ -2451,12 +2412,7 @@ class Config(metaclass=Singleton):
         # Set the default seed from the configuration file
         seed = get_settings().anonymization.seed.get_secret_value()
 
-        query = "select seed_file from jdbc_connections where dbalias = %s "
-        logging.debug("Executing the following SQL: %s", query)
-        self.mysql_cursor.execute(query, (self.db_alias,))
-
-        row = self.mysql_cursor.fetchone()
-        seed_file = row[0]
+        seed_file = self._stored_connection(self.db_alias).seed_file
 
         if seed_file != None:
             if not os.path.exists(seed_file):

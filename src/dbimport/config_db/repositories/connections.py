@@ -14,13 +14,16 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-"""JDBC connections: the drivers and the connection environments."""
+"""JDBC connections, their drivers and the connection environments."""
 
-from pydantic import BaseModel, ConfigDict
+from datetime import datetime, time
+
+from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import func, insert, select, update
 from sqlalchemy.orm import Session
 
 from dbimport.config_db.config_schema import (
+    JDBCConnections,
     JDBCConnectionsDrivers,
     JDBCConnectionsEnvironments,
 )
@@ -94,6 +97,29 @@ DEFAULT_DRIVERS: tuple[JDBCDriver, ...] = (
     ),
 )
 
+
+class JDBCConnection(BaseModel):
+    model_config = ConfigDict(frozen=True, from_attributes=True)
+
+    dbalias: str
+    jdbc_url: str
+    private_key_path: str | None
+    public_key_path: str | None
+    credentials: str | None = Field(repr=False)
+    timewindow_start: time | None
+    timewindow_stop: time | None
+    timewindow_timezone: str | None
+    contact_info: str | None
+    description: str | None
+    owner: str | None
+    atlas_discovery: int
+    atlas_include_filter: str | None
+    atlas_exclude_filter: str | None
+    atlas_last_discovery: datetime | None
+    environment: str | None
+    seed_file: str | None
+
+
 DEFAULT_ENVIRONMENTS = (
     "Production",
     "Integration Test",
@@ -160,3 +186,32 @@ class ConnectionsRepository:
                 insert(JDBCConnectionsEnvironments),
                 [{"environment": name} for name in DEFAULT_ENVIRONMENTS],
             )
+
+    def connection(self, dbalias: str) -> JDBCConnection | None:
+        row = self._session.get(JDBCConnections, dbalias)
+        return None if row is None else JDBCConnection.model_validate(row)
+
+    def set_credentials(self, dbalias: str, credentials: str) -> None:
+        """Stores the encrypted credentials of a connection."""
+        self._session.execute(
+            update(JDBCConnections)
+            .where(JDBCConnections.dbalias == dbalias)
+            .values(credentials=credentials)
+        )
+
+    def atlas_candidates(self) -> list[JDBCConnection]:
+        """Connections with Atlas discovery on, the longest undiscovered
+        first (never discovered before all others)."""
+        rows = self._session.scalars(
+            select(JDBCConnections)
+            .where(JDBCConnections.atlas_discovery == 1)
+            .order_by(JDBCConnections.atlas_last_discovery)
+        )
+        return [JDBCConnection.model_validate(row) for row in rows]
+
+    def set_atlas_last_discovery(self, dbalias: str, discovered: datetime) -> None:
+        self._session.execute(
+            update(JDBCConnections)
+            .where(JDBCConnections.dbalias == dbalias)
+            .values(atlas_last_discovery=discovered)
+        )
