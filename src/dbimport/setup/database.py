@@ -28,11 +28,12 @@ from alembic.script import ScriptDirectory
 from mysql.connector import errorcode
 from sqlalchemy.orm import sessionmaker
 
-from dbimport.config_db import common_config, config_schema
+from dbimport.config_db import common_config
 from dbimport.config_db import engine as config_engine
 from dbimport.config_db.repositories.configuration import (
     ConfigurationRepository,
 )
+from dbimport.config_db.repositories.connections import ConnectionsRepository
 
 
 class Initialize:
@@ -310,156 +311,13 @@ class Initialize:
 
     def create_default_environment_types(self):
         session = self.config_db_session()
-
-        number_of_environemnt_types = session.query(
-            config_schema.JDBCConnectionsEnvironments.__table__
-        ).count()
-        if number_of_environemnt_types == 0:
-            objects_to_add = [
-                config_schema.JDBCConnectionsEnvironments(environment="Production"),
-                config_schema.JDBCConnectionsEnvironments(
-                    environment="Integration Test"
-                ),
-                config_schema.JDBCConnectionsEnvironments(environment="System Test"),
-                config_schema.JDBCConnectionsEnvironments(environment="Development"),
-                config_schema.JDBCConnectionsEnvironments(environment="Sandbox"),
-            ]
-            session.add_all(objects_to_add)
-            session.commit()
+        ConnectionsRepository(session).seed_environments()
+        session.commit()
 
     def update_configuration_values(self):
         session = self.config_db_session()
 
-        # Create a list of all available JDBC drivers
-        result_df = (
-            session.query(config_schema.JDBCConnectionsDrivers.database_type)
-            .select_from(config_schema.JDBCConnectionsDrivers)
-            .all()
-        )
-
-        list_of_db_types = []
-        for i in result_df:
-            list_of_db_types.append(i[0])
-
-        # JDBC Connection Drivers table
-        if "DB2 AS400" not in list_of_db_types:
-            query = sa.insert(config_schema.JDBCConnectionsDrivers).values(
-                database_type="DB2 AS400",
-                version="default",
-                driver="com.ibm.as400.access.AS400JDBCDriver",
-                classpath="add path to JAR file",
-            )
-            session.execute(query)
-            session.commit()
-
-        if "DB2 UDB" not in list_of_db_types:
-            query = sa.insert(config_schema.JDBCConnectionsDrivers).values(
-                database_type="DB2 UDB",
-                version="default",
-                driver="com.ibm.db2.jcc.DB2Driver",
-                classpath="add path to JAR file",
-            )
-            session.execute(query)
-            session.commit()
-
-        if "MySQL" not in list_of_db_types:
-            query = sa.insert(config_schema.JDBCConnectionsDrivers).values(
-                database_type="MySQL",
-                version="default",
-                driver="com.mysql.jdbc.Driver",
-                classpath="add path to JAR file",
-            )
-            session.execute(query)
-            session.commit()
-
-        if "Oracle" not in list_of_db_types:
-            query = sa.insert(config_schema.JDBCConnectionsDrivers).values(
-                database_type="Oracle",
-                version="default",
-                driver="oracle.jdbc.driver.OracleDriver",
-                classpath="add path to JAR file",
-            )
-            session.execute(query)
-            session.commit()
-
-        if "PostgreSQL" not in list_of_db_types:
-            query = sa.insert(config_schema.JDBCConnectionsDrivers).values(
-                database_type="PostgreSQL",
-                version="default",
-                driver="org.postgresql.Driver",
-                classpath="add path to JAR file",
-            )
-            session.execute(query)
-            session.commit()
-
-        if "Progress DB" not in list_of_db_types:
-            query = sa.insert(config_schema.JDBCConnectionsDrivers).values(
-                database_type="Progress DB",
-                version="default",
-                driver="com.ddtek.jdbc.openedge.OpenEdgeDriver",
-                classpath="add path to JAR file",
-            )
-            session.execute(query)
-            session.commit()
-
-        if "SQL Server" not in list_of_db_types:
-            query = sa.insert(config_schema.JDBCConnectionsDrivers).values(
-                database_type="SQL Server",
-                version="default",
-                driver="com.microsoft.sqlserver.jdbc.SQLServerDriver",
-                classpath="add path to JAR file",
-            )
-            session.execute(query)
-            session.commit()
-
-            query = sa.insert(config_schema.JDBCConnectionsDrivers).values(
-                database_type="SQL Server",
-                version="jTDS",
-                driver="net.sourceforge.jtds.jdbc.Driver",
-                classpath="add path to JAR file",
-            )
-            session.execute(query)
-            session.commit()
-
-        if "CacheDB" not in list_of_db_types:
-            query = sa.insert(config_schema.JDBCConnectionsDrivers).values(
-                database_type="CacheDB",
-                version="default",
-                driver="com.intersys.jdbc.CacheDriver",
-                classpath="add path to JAR file",
-            )
-            session.execute(query)
-            session.commit()
-
-        if "Snowflake" not in list_of_db_types:
-            query = sa.insert(config_schema.JDBCConnectionsDrivers).values(
-                database_type="Snowflake",
-                version="default",
-                driver="net.snowflake.client.jdbc.SnowflakeDriver",
-                classpath="add path to JAR file",
-            )
-            session.execute(query)
-            session.commit()
-
-        if "Informix" not in list_of_db_types:
-            query = sa.insert(config_schema.JDBCConnectionsDrivers).values(
-                database_type="Informix",
-                version="default",
-                driver="com.informix.jdbc.IfxDriver",
-                classpath="add path to JAR file",
-            )
-            session.execute(query)
-            session.commit()
-
-        if "SQL Anywhere" not in list_of_db_types:
-            query = sa.insert(config_schema.JDBCConnectionsDrivers).values(
-                database_type="SQL Anywhere",
-                version="default",
-                driver="com.sybase.jdbc4.jdbc.SybDriver",
-                classpath="add path to JAR file",
-            )
-            session.execute(query)
-            session.commit()
-
+        ConnectionsRepository(session).seed_drivers()
+        session.commit()
         ConfigurationRepository(session).seed()
         session.commit()

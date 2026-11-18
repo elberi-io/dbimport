@@ -24,7 +24,6 @@ import sys
 
 import bcrypt
 import sqlalchemy as sa
-import sqlalchemy.orm.exc
 from fastapi import HTTPException, status
 from fastapi.responses import JSONResponse
 from sqlalchemy import bindparam
@@ -41,6 +40,10 @@ from dbimport.config_db.repositories.configuration import (
     ConfigurationError,
     ConfigurationRepository,
     UnknownKeyError,
+)
+from dbimport.config_db.repositories.connections import (
+    ConnectionsRepository,
+    JDBCDriver,
 )
 from dbimport.server import data_models
 from dbimport.settings import get_settings
@@ -500,37 +503,25 @@ class DBCalls:
             self.disconnect_dbimport_db()
             return None
 
-        table_jdbc_connections_drivers = aliased(config_schema.JDBCConnectionsDrivers)
-        jdbc_connections_drivers = (
-            session.query(
-                table_jdbc_connections_drivers.database_type,
-                table_jdbc_connections_drivers.version,
-                table_jdbc_connections_drivers.driver,
-                table_jdbc_connections_drivers.classpath,
-            )
-            .select_from(table_jdbc_connections_drivers)
-            .order_by(table_jdbc_connections_drivers.database_type)
-            .all()
-        )
+        drivers = ConnectionsRepository(session()).drivers()
 
-        list_of_jdbc_drivers = []
-        for row in jdbc_connections_drivers:
-            jdbc_driver = {}
-            jdbc_driver["databaseType"] = row[0]
-            jdbc_driver["version"] = row[1]
-            jdbc_driver["driver"] = row[2]
-            jdbc_driver["classpath"] = row[3]
-            list_of_jdbc_drivers.append(jdbc_driver)
+        list_of_jdbc_drivers = [
+            {
+                "databaseType": driver.database_type,
+                "version": driver.version,
+                "driver": driver.driver,
+                "classpath": driver.classpath,
+            }
+            for driver in drivers
+        ]
 
-        json_result = json.loads(json.dumps(list_of_jdbc_drivers))
-
-        # session.close()
         session.remove()
 
-        return json_result
+        return list_of_jdbc_drivers
 
     def update_jdbc_driver(self, jdbc_driver: data_models.JDBCDriver, current_user):
-        """Returns all configuration items from the configuration table"""
+        """Stores driver and classpath of an existing JDBC driver. Returns the
+        message and the HTTP status: 400 for an unknown type and version."""
         log = logging.getLogger(self.logger)
 
         try:
@@ -550,38 +541,26 @@ class DBCalls:
         log.debug("driver: %s" % jdbc_driver.driver)
         log.debug("classpath: %s" % jdbc_driver.classpath)
 
-        table_jdbc_connections_drivers = aliased(config_schema.JDBCConnectionsDrivers)
-        result = "ok"
-        return_code = 200
-
         try:
-            session.execute(
-                update(table_jdbc_connections_drivers),
-                [
-                    {
-                        "database_type": jdbc_driver.databaseType,
-                        "version": jdbc_driver.version,
-                        "driver": jdbc_driver.driver,
-                        "classpath": jdbc_driver.classpath,
-                    }
-                ],
+            updated = ConnectionsRepository(session()).update_driver(
+                JDBCDriver(
+                    database_type=jdbc_driver.databaseType,
+                    version=jdbc_driver.version,
+                    driver=jdbc_driver.driver,
+                    classpath=jdbc_driver.classpath,
+                )
             )
-            session.commit()
-        # except SQLAlchemyError.StaleDataError:
-        except sqlalchemy.orm.exc.StaleDataError:
-            result = (
-                "JDBC Driver databaseType with version is not a supported combination"
+            if updated:
+                session.commit()
+        finally:
+            session.remove()
+
+        if not updated:
+            return (
+                "JDBC Driver databaseType with version is not a supported combination",
+                400,
             )
-            return_code = 400
-
-        result_dict = {}
-        result_dict["status"] = result
-        # session.close()
-        session.remove()
-
-        json_result = json.loads(json.dumps(result_dict))
-        # return (jsonResult, returnCode)
-        return (result, return_code)
+        return ("ok", 200)
 
     def get_configuration(self, current_user):
         """Returns all configuration items from the configuration table"""

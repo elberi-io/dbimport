@@ -431,3 +431,20 @@ def test_update_jdbc_driver_of_unknown_version_returns_400(
         ).scalar_one()
         == 12
     )
+
+
+def test_update_jdbc_driver_with_its_current_values_returns_200(
+    client: TestClient, auth_headers: dict[str, str]
+) -> None:
+    driver = {
+        "databaseType": "PostgreSQL",
+        "version": "default",
+        "driver": "org.postgresql.Driver",
+        "classpath": "add path to JAR file",
+    }
+
+    response = client.post(
+        "/config/updateJDBCdriver", json=driver, headers=auth_headers
+    )
+
+    assert response.status_code == 200
