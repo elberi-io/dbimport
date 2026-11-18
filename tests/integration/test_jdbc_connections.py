@@ -1,6 +1,8 @@
 """Connections (jdbc_connections) as the command line programs and the Atlas
-discovery read and write them through common_config."""
+discovery read and write them: through common_config, and for the Atlas
+discovery loop, which needs a JVM, through the repository."""
 
+import logging
 from collections.abc import Callable
 from datetime import datetime
 from pathlib import Path
@@ -9,9 +11,12 @@ import pendulum
 import pytest
 import sqlalchemy as sa
 from Crypto.PublicKey import RSA
+from sqlalchemy.orm import Session
 
 from dbimport.common.exceptions import InvalidConfigurationError
 from dbimport.config_db import common_config
+from dbimport.config_db import engine as config_engine
+from dbimport.config_db.repositories.connections import ConnectionsRepository
 from tests.configdb import insert_row, set_driver_path
 
 DBALIAS = "test_mysql"
@@ -132,6 +137,7 @@ def test_lookup_connection_alias_with_given_url_does_not_need_the_row(
         ("22:00:00", "02:00:00", "UTC", datetime(2026, 1, 15, 1, 0), True),
         ("22:00:00", "02:00:00", "UTC", datetime(2026, 1, 15, 12, 0), False),
         ("24:00:00", "02:00:00", "UTC", datetime(2026, 1, 15, 1, 0), True),
+        ("22:00:00", "24:00:00", "UTC", datetime(2026, 1, 15, 23, 0), True),
         ("08:00:00", None, "UTC", datetime(2026, 1, 15, 9, 0), False),
         ("08:00:00", "08:00:00", "UTC", datetime(2026, 1, 15, 9, 0), False),
         ("08:00:00", "10:00:00", "Asia/Tokyo", datetime(2026, 1, 15, 0, 30), True),
@@ -162,6 +168,13 @@ def test_check_time_window_in_atlas_mode_returns_whether_now_is_inside(
     )
 
     assert allowed is expected
+
+
+def test_check_time_window_for_unknown_connection_raises(
+    clean_config_db: None,
+) -> None:
+    with pytest.raises(InvalidConfigurationError):
+        common_config.Config().check_time_window(DBALIAS, atlas_discovery_mode=True)
 
 
 def test_get_atlas_jdbc_connection_data_returns_empty_text_for_missing_details(
@@ -213,3 +226,77 @@ def test_get_anonymization_seed_uses_seed_file_of_connection_up_to_16_characters
     config.lookup_connection_alias(DBALIAS, decrypt_credentials=False)
 
     assert config.get_anonymization_seed() == expected
+
+
+def test_get_anonymization_seed_after_connection_was_deleted_raises(
+    clean_config_db: None, db_connection: sa.Connection
+) -> None:
+    _add_connection(db_connection)
+    config = common_config.Config()
+    config.lookup_connection_alias(DBALIAS, decrypt_credentials=False)
+    db_connection.execute(sa.text("DELETE FROM jdbc_connections"))
+
+    with pytest.raises(InvalidConfigurationError):
+        config.get_anonymization_seed()
+
+
+def test_atlas_candidates_are_enabled_connections_longest_undiscovered_first(
+    clean_config_db: None, db_connection: sa.Connection, engine: sa.Engine
+) -> None:
+    for dbalias, discovery, last in [
+        ("recent", 1, "2026-01-15 09:00:00"),
+        ("disabled", 0, None),
+        ("never", 1, None),
+        ("older", 1, "2026-01-14 09:00:00"),
+    ]:
+        insert_row(
+            db_connection,
+            "jdbc_connections",
+            dbalias=dbalias,
+            jdbc_url=JDBC_URL,
+            atlas_discovery=discovery,
+            atlas_last_discovery=last,
+        )
+
+    with Session(engine) as session:
+        candidates = ConnectionsRepository(session).atlas_candidates()
+
+    assert [c.dbalias for c in candidates] == ["never", "older", "recent"]
+
+
+def test_set_atlas_last_discovery_stores_the_time(
+    clean_config_db: None, db_connection: sa.Connection, engine: sa.Engine
+) -> None:
+    _add_connection(db_connection)
+
+    with Session(engine) as session:
+        ConnectionsRepository(session).set_atlas_last_discovery(
+            DBALIAS, datetime(2026, 1, 15, 9, 30)
+        )
+        session.commit()
+
+    stored = db_connection.execute(
+        sa.text("SELECT atlas_last_discovery FROM jdbc_connections")
+    ).scalar_one()
+    assert stored == datetime(2026, 1, 15, 9, 30)
+
+
+def test_set_credentials_with_sql_echo_does_not_log_the_value(
+    clean_config_db: None,
+    db_connection: sa.Connection,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    _add_connection(db_connection)
+    engine = config_engine.create(echo=True)
+    try:
+        with (
+            caplog.at_level(logging.INFO, logger="sqlalchemy.engine"),
+            Session(engine) as session,
+        ):
+            ConnectionsRepository(session).set_credentials(DBALIAS, "encrypted-marker")
+            session.commit()
+    finally:
+        engine.dispose()
+
+    assert "UPDATE jdbc_connections" in caplog.text
+    assert "encrypted-marker" not in caplog.text

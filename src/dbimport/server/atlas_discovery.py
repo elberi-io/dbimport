@@ -21,12 +21,12 @@ import threading
 import time
 from datetime import datetime, timedelta
 from queue import Empty, Queue
+from typing import Any
 
 import jpype
-import pandas as pd
 import sqlalchemy as sa
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.orm import aliased, sessionmaker
+from sqlalchemy.orm import sessionmaker
 
 from dbimport.common.exceptions import (
     AtlasError,
@@ -34,8 +34,9 @@ from dbimport.common.exceptions import (
     InvalidConfigurationError,
     JDBCConnectionError,
 )
-from dbimport.config_db import common_config, config_schema
+from dbimport.config_db import common_config
 from dbimport.config_db import engine as config_engine
+from dbimport.config_db.repositories.connections import ConnectionsRepository
 from dbimport.operations import atlas_operations
 from dbimport.settings import get_settings
 
@@ -168,7 +169,6 @@ class AtlasDiscovery(threading.Thread):
             atlas_crawler_objects.append(thread)
 
         self.common_config = common_config.Config()
-        jdbc_connections = aliased(config_schema.JDBCConnections)
         self.failure_log = {}
         self.connections_sent_to_crawlers = []
 
@@ -198,28 +198,9 @@ class AtlasDiscovery(threading.Thread):
                 try:
                     # Read a list of connection aliases that we are going to process in this iteration
                     session = self.get_dbimport_session()
-                    atlas_discovery_check_time = datetime.utcnow() - timedelta(
-                        hours=atlas_discovery_interval
-                    )
 
-                    # TODO(#229): Probably only run this if jdbc_connections_df is empty from the previous run
-                    jdbc_connections_df = pd.DataFrame(
-                        session.query(
-                            jdbc_connections.dbalias,
-                            jdbc_connections.atlas_last_discovery,
-                            jdbc_connections.atlas_discovery,
-                            jdbc_connections.contact_info,
-                            jdbc_connections.description,
-                            jdbc_connections.owner,
-                            jdbc_connections.atlas_include_filter,
-                            jdbc_connections.atlas_exclude_filter,
-                        )
-                        .select_from(jdbc_connections)
-                        .filter(jdbc_connections.atlas_discovery == 1)
-                        # 						.filter((JDBCConnections.atlas_last_discovery < atlasDiscoveryCheckTime) | (JDBCConnections.atlas_last_discovery == None))
-                        .order_by(jdbc_connections.atlas_last_discovery)
-                        .all()
-                    )
+                    # TODO(#229): Probably only run this if connections is empty from the previous run
+                    connections = ConnectionsRepository(session).atlas_candidates()
                     session.close()
 
                 except SQLAlchemyError as e:
@@ -228,8 +209,8 @@ class AtlasDiscovery(threading.Thread):
                     self.disconnect_dbimport_db()
 
                 else:
-                    for _index, row in jdbc_connections_df.iterrows():
-                        db_alias = row["dbalias"]
+                    for connection in connections:
+                        db_alias = connection.dbalias
 
                         # TODO(#229): Move this into the thread
                         if not self.common_config.check_time_window(
@@ -248,7 +229,6 @@ class AtlasDiscovery(threading.Thread):
                         altas_operation_failed = False
                         print_black_list_warning = True
 
-                        self.common_config.mysql_conn.commit()
                         try:
                             self.common_config.lookup_connection_alias(db_alias)
                         except InvalidConfigurationError as err:
@@ -286,17 +266,21 @@ class AtlasDiscovery(threading.Thread):
                             self.connections_sent_to_crawlers.append(db_alias)
 
                             log.debug("Sending alias '%s' to queue" % (db_alias))
-                            atlas_crawler_request = {}
-                            atlas_crawler_request["dbAlias"] = row["dbalias"]
-                            atlas_crawler_request["contactInfo"] = row["contact_info"]
-                            atlas_crawler_request["description"] = row["description"]
-                            atlas_crawler_request["owner"] = row["owner"]
-                            atlas_crawler_request["atlasIncludeFilter"] = row[
-                                "atlas_include_filter"
-                            ]
-                            atlas_crawler_request["atlasExcludeFilter"] = row[
-                                "atlas_exclude_filter"
-                            ]
+                            atlas_crawler_request: dict[str, Any] = {}
+                            atlas_crawler_request["dbAlias"] = connection.dbalias
+                            atlas_crawler_request["contactInfo"] = (
+                                connection.contact_info
+                            )
+                            atlas_crawler_request["description"] = (
+                                connection.description
+                            )
+                            atlas_crawler_request["owner"] = connection.owner
+                            atlas_crawler_request["atlasIncludeFilter"] = (
+                                connection.atlas_include_filter
+                            )
+                            atlas_crawler_request["atlasExcludeFilter"] = (
+                                connection.atlas_exclude_filter
+                            )
                             atlas_crawler_request["jdbc_hostname"] = (
                                 self.common_config.jdbc_hostname
                             )
@@ -366,17 +350,10 @@ class AtlasDiscovery(threading.Thread):
                 self.connections_sent_to_crawlers.remove(db_alias)
 
                 if result == True:
-                    update_dict = {}
-                    update_dict["atlas_last_discovery"] = str(
-                        datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
-                    )
-
                     try:
                         session = self.get_dbimport_session()
-                        (
-                            session.query(config_schema.JDBCConnections)
-                            .filter(config_schema.JDBCConnections.dbalias == db_alias)
-                            .update(update_dict)
+                        ConnectionsRepository(session).set_atlas_last_discovery(
+                            db_alias, datetime.now()
                         )
                         session.commit()
                         session.close()

@@ -111,6 +111,7 @@ def create(echo: bool = False) -> Engine:
     return create_engine(
         url(configured_credentials()),
         echo=echo,
+        hide_parameters=True,
         pool_pre_ping=True,
         connect_args={"connect_timeout": TIMEOUT_SECONDS},
     )
