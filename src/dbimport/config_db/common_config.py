@@ -24,7 +24,6 @@ import subprocess
 import sys
 from datetime import datetime, timedelta
 from typing import Any
-from urllib.parse import quote
 
 import jaydebeapi
 import mysql.connector
@@ -33,7 +32,7 @@ import pendulum
 import pymongo
 import sqlalchemy as sa
 from mysql.connector import errorcode
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import Session, sessionmaker
 
 from dbimport.common import constants as constant
 from dbimport.common.exceptions import (
@@ -42,8 +41,12 @@ from dbimport.common.exceptions import (
     UndevelopedFeatureError,
 )
 from dbimport.common.singleton import Singleton
-from dbimport.config_db import config_keys
 from dbimport.config_db import decryption as decryption
+from dbimport.config_db import engine as config_engine
+from dbimport.config_db.repositories.configuration import (
+    ConfigurationError,
+    ConfigurationRepository,
+)
 from dbimport.settings import get_settings
 from dbimport.source_schema import schema_reader
 
@@ -239,56 +242,14 @@ class Config(metaclass=Singleton):
             # This information is already fetched from the configuration. Just return the fetched values
             return self.mysql_connection_details
 
-        mysql_hostname = get_settings().database.mysql_hostname
-        mysql_port = get_settings().database.mysql_port
-        mysql_database = get_settings().database.mysql_database
-        mysql_username = get_settings().database.mysql_username
-        mysql_password = get_settings().database.mysql_password.get_secret_value()
-
-        if mysql_password == "" and mysql_username == "" and self.aws_region != None:
-            # No password is configured. Lets try the AWS get_secret function if configured
-            aws_secret_name = get_settings().database.aws_secret_name
-            if aws_secret_name is None:
-                raise InvalidConfigurationError(
-                    "Credentials configuration to configuration database in config file is incorrect. Either use username/password or a AWS Secret Manager name"
-                )
-
-            import boto3
-            from botocore.exceptions import ClientError
-
-            # Create a Secrets Manager client
-            session = boto3.session.Session()
-            client = session.client(
-                service_name="secretsmanager", region_name=self.aws_region
-            )
-
-            try:
-                get_secret_value_response = client.get_secret_value(
-                    SecretId=aws_secret_name
-                )
-            except ClientError as e:
-                # For a list of exceptions thrown, see
-                # https://docs.aws.amazon.com/secretsmanager/latest/apireference/API_GetSecretValue.html
-                raise e
-
-            rds_credentials = json.loads(get_secret_value_response["SecretString"])
-            mysql_username = rds_credentials["username"]
-            mysql_password = rds_credentials["password"]
-
-        elif mysql_password == "" or mysql_username == "":
-            raise InvalidConfigurationError(
-                "Credentials configuration to configuration database in config file is incorrect. Either use username/password or a AWS Secret Manager name"
-            )
+        found = config_engine.configured_credentials()
 
         self.mysql_connection_details = {}
-        self.mysql_connection_details["mysql_hostname"] = mysql_hostname
-        self.mysql_connection_details["mysql_port"] = str(mysql_port)
-        self.mysql_connection_details["mysql_database"] = mysql_database
-        self.mysql_connection_details["mysql_username"] = mysql_username
-        self.mysql_connection_details["mysql_password"] = mysql_password
-
-        # print(mysql_username)
-        # print(mysql_password)
+        self.mysql_connection_details["mysql_hostname"] = found.hostname
+        self.mysql_connection_details["mysql_port"] = str(found.port)
+        self.mysql_connection_details["mysql_database"] = found.database
+        self.mysql_connection_details["mysql_username"] = found.username
+        self.mysql_connection_details["mysql_password"] = found.password
 
         return self.mysql_connection_details
 
@@ -385,15 +346,9 @@ class Config(metaclass=Singleton):
             # If we already have a connection, we just say that it's ok....
             return True
 
-        mysql_credentials = self.get_mysql_credentials()
-
-        self.connect_str = f"mysql+pymysql://{mysql_credentials['mysql_username']}:{quote(mysql_credentials['mysql_password'], safe=' +')}@{mysql_credentials['mysql_hostname']}:{mysql_credentials['mysql_port']}/{mysql_credentials['mysql_database']}"
-
         try:
-            self.config_db = sa.create_engine(
-                self.connect_str, echo=self.debug_log_level, pool_pre_ping=True
-            )
-            self.config_db.connect()
+            self.config_db = config_engine.create(echo=self.debug_log_level)
+            self.config_db.connect().close()
             self.config_db_session = sessionmaker(bind=self.config_db)
 
         except sa.exc.OperationalError as err:
@@ -2348,75 +2303,22 @@ class Config(metaclass=Singleton):
         logging.debug("Executing common_config.get_jdbc_sql_from_table() - Finished")
         return from_table
 
-    def get_config_value_column(self, key: str) -> tuple[str, bool]:
-        """Return the column that holds the value of key, and whether it is a bool.
-
-        Exits when key is not in config_keys.KEYS.
-        """
-        config_key = config_keys.BY_NAME.get(key)
-        if config_key is None:
-            logging.error("There is no configuration with the name '%s'", key)
-            self.remove_temporary_files()
-            sys.exit(1)
-        return (config_key.column, config_key.kind == "bool")
-
     def get_config_value(self, key: str) -> Any:
-        """Returns a value from the configuration table based on the supplied key. Value returned can be Int, Str or DateTime"""
-        logging.debug("Executing common_config.get_config_value()")
-        return_value = None
-        bool_value = False
-
-        value_column, bool_value = self.get_config_value_column(key)
-
-        query = "select %s from configuration where configkey = '%s'" % (
-            value_column,
-            key,
-        )
-
-        logging.debug("SQL Statement executed: %s", query)
-        self.mysql_cursor.execute(query)
-        row = self.mysql_cursor.fetchone()
-        self.mysql_conn.commit()
-
+        """Returns the value of key in the configuration table, of the type
+        config_keys gives it. Exits when the key or its value cannot be
+        used."""
         try:
-            if value_column == "valueInt":
-                return_value = int(row[0])
-
-            if value_column == "valueStr":
-                return_value = row[0]
-                if return_value == None or return_value.strip() == "":
-                    logging.error(
-                        "Configuration Key '%s' must have a value in '%s'",
-                        key,
-                        value_column,
-                    )
-                    self.remove_temporary_files()
-                    sys.exit(1)
-
-            if bool_value:
-                if return_value == 1:
-                    return_value = True
-                elif return_value == 0:
-                    return_value = False
-                else:
-                    logging.error(
-                        "Configuration Key '%s' can only have 0 or 1 in column '%s'",
-                        key,
-                        value_column,
-                    )
-                    self.remove_temporary_files()
-                    sys.exit(1)
-        except TypeError:
-            logging.error(
-                "Configuration key '%s' cant be found. Have you upgraded the database schema to the latest version?",
-                key,
-            )
+            with Session(config_engine.engine()) as session:
+                value = ConfigurationRepository(session).value(key)
+        except ConfigurationError as error:
+            logging.error("%s", error)
             self.remove_temporary_files()
             sys.exit(1)
-
-        logging.debug("Fetched configuration '%s' as '%s'", key, return_value)
-        logging.debug("Executing common_config.get_config_value() - Finished")
-        return return_value
+        # The SQL read on the raw connection ended its transaction here, and
+        # the config_db code that still uses that connection relies on it.
+        self.mysql_conn.commit()
+        logging.debug("Fetched configuration '%s' as '%s'", key, value)
+        return value
 
     def connect_to_mongo(self, exit_if_failure: bool = True, logger: str = "") -> bool:
         log = logging.getLogger(logger)

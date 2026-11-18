@@ -55,12 +55,12 @@
   },
   "src/dbimport/config_db/common_config.py": {
     "B904": 3,
-    "E711": 73,
+    "E711": 71,
     "E712": 14,
     "E722": 39,
     "F841": 2,
     "G002": 2,
-    "UP031": 54
+    "UP031": 53
   },
   "src/dbimport/config_db/decryption.py": {
     "B904": 1,
@@ -153,12 +153,12 @@
   },
   "src/dbimport/schedule/airflow_dags.py": {
     "B904": 6,
-    "E711": 40,
+    "E711": 39,
     "E712": 24,
     "E722": 5,
     "F841": 15,
-    "G002": 16,
-    "UP031": 217
+    "G002": 15,
+    "UP031": 216
   },
   "src/dbimport/server/atlas_discovery.py": {
     "E711": 4,
@@ -184,12 +184,12 @@
   },
   "src/dbimport/server/rest_server_calls.py": {
     "B904": 3,
-    "E711": 50,
+    "E711": 49,
     "E712": 17,
     "E722": 1,
-    "F841": 59,
-    "G002": 8,
-    "UP031": 42
+    "F841": 58,
+    "G002": 7,
+    "UP031": 41
   },
   "src/dbimport/setup/database.py": {
     "E711": 1,

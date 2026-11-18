@@ -21,7 +21,6 @@ import os
 import re
 import subprocess
 import sys
-from urllib.parse import quote
 
 import bcrypt
 import sqlalchemy as sa
@@ -37,6 +36,12 @@ from sqlalchemy.sql.operators import like_op
 from dbimport.common import constants as constant
 from dbimport.common.exceptions import InvalidConfigurationError, SQLError
 from dbimport.config_db import common_config, config_keys, config_schema
+from dbimport.config_db import engine as config_engine
+from dbimport.config_db.repositories.configuration import (
+    ConfigurationError,
+    ConfigurationRepository,
+    UnknownKeyError,
+)
 from dbimport.server import data_models
 from dbimport.settings import get_settings
 
@@ -100,15 +105,9 @@ class DBCalls:
             # return self.config_db_session()
             return scoped_session(self.config_db_session)
 
-        mysql_credentials = self.common_config.get_mysql_credentials()
-
-        self.connect_str = f"mysql+pymysql://{mysql_credentials['mysql_username']}:{quote(mysql_credentials['mysql_password'], safe=' +')}@{mysql_credentials['mysql_hostname']}:{mysql_credentials['mysql_port']}/{mysql_credentials['mysql_database']}"
-
         try:
-            self.config_db = sa.create_engine(
-                self.connect_str, echo=self.debug_log_level, pool_pre_ping=True
-            )
-            self.config_db.connect()
+            self.config_db = config_engine.create(echo=self.debug_log_level)
+            self.config_db.connect().close()
             self.config_db_session = sessionmaker(bind=self.config_db)
 
         except sa.exc.OperationalError as err:
@@ -129,12 +128,10 @@ class DBCalls:
             return scoped_session(self.config_db_session)
 
     def get_config_value(self, key):
-        """Returns a value from the configuration table based on the supplied key. Value returned can be Int, Str or DateTime"""
+        """Returns the value of key in the configuration table, of the type
+        config_keys gives it, or None when its value cannot be used. Raises
+        UnknownKeyError for a key that is not in config_keys.KEYS."""
         log = logging.getLogger(self.logger)
-        return_value = None
-        bool_value = False
-
-        value_column, bool_value = self.common_config.get_config_value_column(key)
 
         try:
             session = self.get_dbimport_session()
@@ -142,57 +139,15 @@ class DBCalls:
             self.disconnect_dbimport_db()
             return None
 
-        configuration_table = aliased(config_schema.Configuration)
-
-        configuration = (
-            session.query(
-                configuration_table.config_key,
-                configuration_table.value_int,
-                configuration_table.value_str,
-                configuration_table.value_date,
-            )
-            .select_from(configuration_table)
-            .filter(configuration_table.config_key == key)
-            .one()
-        )
-
-        session.remove()
-        return_value = None
-
         try:
-            if value_column == "valueInt":
-                return_value = int(configuration[1])
-
-            if value_column == "valueStr":
-                return_value = configuration[2]
-                if return_value == None or return_value.strip() == "":
-                    log.error(
-                        "Configuration Key '%s' must have a value in '%s'",
-                        key,
-                        value_column,
-                    )
-                    return_value = None
-
-            if bool_value:
-                if return_value == 1:
-                    return_value = True
-                elif return_value == 0:
-                    return_value = False
-                else:
-                    log.error(
-                        "Configuration Key '%s' can only have 0 or 1 in column '%s'",
-                        key,
-                        value_column,
-                    )
-                    return_value = None
-        except TypeError:
-            log.error(
-                "Configuration key '%s' cant be found. Have you upgraded the database schema to the latest version?"
-                % (key)
-            )
-            return_value = None
-
-        return return_value
+            return ConfigurationRepository(session()).value(key)
+        except UnknownKeyError:
+            raise
+        except ConfigurationError as error:
+            log.error("%s", error)
+            return None
+        finally:
+            session.remove()
 
     def create_default_admin_user(self):
         """Creates the default admin user in the auth_users table if it doesnt exist"""
@@ -638,41 +593,19 @@ class DBCalls:
             self.disconnect_dbimport_db()
             return None
 
-        configuration_table = aliased(config_schema.Configuration)
-        table_jdbc_connections = aliased(config_schema.JDBCConnections)
-
-        configurations = (
-            session.query(
-                configuration_table.config_key,
-                configuration_table.value_int,
-                configuration_table.value_str,
-                configuration_table.value_date,
-            )
-            .select_from(configuration_table)
-            .order_by(configuration_table.config_key)
-            .all()
-        )
+        stored = ConfigurationRepository(session()).stored_values()
+        session.remove()
 
         result_dict = {}
-        for row in configurations:
-            config_key = config_keys.BY_NAME.get(row[0])
-            if config_key is None or not config_key.rest:
-                # Rows of keys that are no longer used, and keys the REST
-                # service does not show.
+        for key, value in stored.items():
+            config_key = config_keys.BY_NAME[key]
+            if not config_key.rest:
                 continue
-
-            if row[0] == "restserver_admin_user":
-                self.admin_user = row[2]
-
+            if key == "restserver_admin_user":
+                self.admin_user = value
             if config_key.admin_only and current_user != self.admin_user:
                 continue
-
-            if config_key.column == "valueInt":
-                result_dict[row[0]] = row[1]
-            else:
-                result_dict[row[0]] = row[2]
-
-        session.remove()
+            result_dict[key] = value
 
         json_result = json.loads(json.dumps(result_dict))
         return json_result
@@ -736,26 +669,20 @@ class DBCalls:
                 detail="invalid configuration option",
             )
 
-        for key in data_models.Configuration.model_fields:
-            if type(getattr(configuration, key)) in (str, bool, int):
-                # At this point, only configuration items that exists in the class is iterrated
-                log.info(
-                    "User '%s' updated global configuration. %s = %s",
-                    current_user,
-                    key,
-                    getattr(configuration, key),
-                )
-
-                value_column = config_schema.Configuration.__table__.c[
-                    config_keys.BY_NAME[key].column
-                ]
-
-                session.execute(
-                    update(config_schema.Configuration)
-                    .where(config_schema.Configuration.config_key == key)
-                    .values({value_column: getattr(configuration, key)})
-                )
-                session.commit()
+        changes = {
+            key: getattr(configuration, key)
+            for key in data_models.Configuration.model_fields
+            if type(getattr(configuration, key)) in (str, bool, int)
+        }
+        ConfigurationRepository(session()).set_values(changes)
+        session.commit()
+        for key, value in changes.items():
+            log.info(
+                "User '%s' updated global configuration. %s = %s",
+                current_user,
+                key,
+                value,
+            )
 
         result = "ok"
         return_code = 200

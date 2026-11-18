@@ -32,6 +32,7 @@ from sqlalchemy.orm import aliased, sessionmaker
 
 from dbimport.common.exceptions import SQLError
 from dbimport.config_db import common_config, config_schema
+from dbimport.config_db import engine as config_engine
 from dbimport.server import atlas_discovery
 from dbimport.settings import get_settings
 
@@ -231,11 +232,6 @@ class ServerDaemon(run.RunDaemon):
             dist_cp_objects.append(thread)
 
         # Fetch configuration about MySQL database and how to connect to it
-        self.config_hostname = get_settings().database.mysql_hostname
-        self.config_port = get_settings().database.mysql_port
-        self.config_database = get_settings().database.mysql_database
-        self.config_username = get_settings().database.mysql_username
-        self.config_password = get_settings().database.mysql_password.get_secret_value()
 
         # Set all rows that have copy_status = 1 to 0. This is needed in the startup as if they are 1 in this stage, it means that a previous
         # server marked it as 1 but didnt finish the copy. We need to retry that copy here and now
@@ -579,13 +575,10 @@ class ServerDaemon(run.RunDaemon):
     def connect_dbimport_db(self):
         # Esablish a SQLAlchemy connection to the DBImport database
         log = logging.getLogger("server")
-        self.connect_str = f"mysql+pymysql://{self.config_username}:{self.config_password}@{self.config_hostname}:{self.config_port}/{self.config_database}"
 
         try:
-            self.config_db_engine = sa.create_engine(
-                self.connect_str, echo=self.debug_log_level
-            )
-            self.config_db_engine.connect()
+            self.config_db_engine = config_engine.create(echo=self.debug_log_level)
+            self.config_db_engine.connect().close()
             self.config_db_session = sessionmaker(bind=self.config_db_engine)
 
         except sa.exc.OperationalError as err:
