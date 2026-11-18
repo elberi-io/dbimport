@@ -994,6 +994,7 @@ class DBCalls:
         )
 
         if row == None:
+            session.remove()
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="connection does not exist",

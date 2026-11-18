@@ -637,6 +637,21 @@ def test_get_connection_returns_its_details(
     }
 
 
+def test_get_connection_of_unknown_connection_returns_404_and_ends_its_transaction(
+    client: TestClient, auth_headers: dict[str, str], db_connection: sa.Connection
+) -> None:
+    response = client.get("/connection/no_such_conn", headers=auth_headers)
+
+    # An open transaction on the table would make the TRUNCATE wait.
+    db_connection.execute(
+        sa.text(
+            "SET STATEMENT lock_wait_timeout = 2, foreign_key_checks = 0 "
+            "FOR TRUNCATE TABLE jdbc_connections"
+        )
+    )
+    assert response.status_code == 404
+
+
 @pytest.mark.parametrize(
     ("dbalias", "status_code", "remaining"), [("hr_other", 200, 2), ("nope", 404, 3)]
 )
