@@ -16,11 +16,14 @@
 # under the License.
 """JDBC connections, their drivers and the connection environments."""
 
+from collections.abc import Mapping
 from datetime import datetime, time
 
 from pydantic import BaseModel, ConfigDict, Field
-from sqlalchemy import func, insert, select, update
-from sqlalchemy.orm import Session
+from sqlalchemy import delete, func, insert, select, update
+from sqlalchemy.dialects.mysql import insert as mysql_insert
+from sqlalchemy.orm import InstrumentedAttribute, Session
+from sqlalchemy.sql import ColumnElement
 
 from dbimport.config_db.config_schema import (
     JDBCConnections,
@@ -106,9 +109,15 @@ class JDBCConnection(BaseModel):
     private_key_path: str | None
     public_key_path: str | None
     credentials: str | None = Field(repr=False)
+    datalake_source: str | None
+    max_import_sessions: int | None
+    force_string: int
+    create_datalake_import: int
     timewindow_start: time | None
     timewindow_stop: time | None
     timewindow_timezone: str | None
+    operator_notes: str | None
+    create_foreign_keys: int
     contact_info: str | None
     description: str | None
     owner: str | None
@@ -119,6 +128,18 @@ class JDBCConnection(BaseModel):
     environment: str | None
     seed_file: str | None
 
+
+_SEARCHABLE: dict[
+    str, InstrumentedAttribute[str] | InstrumentedAttribute[str | None]
+] = {
+    "dbalias": JDBCConnections.dbalias,
+    "jdbc_url": JDBCConnections.jdbc_url,
+    "timewindow_timezone": JDBCConnections.timewindow_timezone,
+    "operator_notes": JDBCConnections.operator_notes,
+    "contact_info": JDBCConnections.contact_info,
+    "description": JDBCConnections.description,
+    "owner": JDBCConnections.owner,
+}
 
 DEFAULT_ENVIRONMENTS = (
     "Production",
@@ -215,3 +236,56 @@ class ConnectionsRepository:
             .where(JDBCConnections.dbalias == dbalias)
             .values(atlas_last_discovery=discovered)
         )
+
+    def aliases_and_urls(self, limit: int) -> list[tuple[str, str]]:
+        """Alias and JDBC URL of at most limit connections, ordered by alias."""
+        rows = self._session.execute(
+            select(JDBCConnections.dbalias, JDBCConnections.jdbc_url)
+            .order_by(JDBCConnections.dbalias)
+            .limit(limit)
+        )
+        return list(rows.tuples())
+
+    def search(
+        self, filters: Mapping[str, str], limit: int
+    ) -> tuple[list[tuple[str, str]], int]:
+        """Alias and JDBC URL of at most limit connections whose fields match
+        all filters, ordered by alias, and the number of all matches. A
+        filter value containing "%" is a LIKE pattern; others must be equal.
+        Raises KeyError for a field that cannot be searched."""
+        conditions: list[ColumnElement[bool]] = [
+            _SEARCHABLE[field].like(value)
+            if "%" in value
+            else _SEARCHABLE[field] == value
+            for field, value in filters.items()
+        ]
+        rows = self._session.execute(
+            select(JDBCConnections.dbalias, JDBCConnections.jdbc_url)
+            .where(*conditions)
+            .order_by(JDBCConnections.dbalias)
+            .limit(limit)
+        )
+        found = list(rows.tuples())
+        total = self._session.scalar(
+            select(func.count()).select_from(JDBCConnections).where(*conditions)
+        )
+        return found, total or 0
+
+    def save(self, connection: JDBCConnection) -> None:
+        """Creates the connection, or replaces every column of the existing
+        one with the same alias."""
+        values = connection.model_dump()
+        self._session.execute(
+            mysql_insert(JDBCConnections)
+            .values(values)
+            .on_duplicate_key_update(
+                {name: value for name, value in values.items() if name != "dbalias"}
+            )
+        )
+
+    def delete(self, dbalias: str) -> bool:
+        """Deletes the connection; False when there is none."""
+        result = self._session.execute(
+            delete(JDBCConnections).where(JDBCConnections.dbalias == dbalias)
+        )
+        return result.rowcount == 1

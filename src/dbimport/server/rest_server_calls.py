@@ -21,11 +21,13 @@ import os
 import re
 import subprocess
 import sys
+from datetime import time
 
 import bcrypt
 import sqlalchemy as sa
 from fastapi import HTTPException, status
 from fastapi.responses import JSONResponse
+from pydantic import ValidationError
 from sqlalchemy import bindparam
 from sqlalchemy.dialects.mysql import insert
 from sqlalchemy.orm import aliased, scoped_session, sessionmaker
@@ -43,10 +45,48 @@ from dbimport.config_db.repositories.configuration import (
 )
 from dbimport.config_db.repositories.connections import (
     ConnectionsRepository,
+    JDBCConnection,
     JDBCDriver,
 )
 from dbimport.server import data_models
 from dbimport.settings import get_settings
+
+_CONNECTION_FIELDS = {
+    "dbalias": "name",
+    "jdbc_url": "connectionString",
+    "private_key_path": "privateKeyPath",
+    "public_key_path": "publicKeyPath",
+    "credentials": "credentials",
+    "datalake_source": "source",
+    "max_import_sessions": "maxSessions",
+    "force_string": "forceString",
+    "create_datalake_import": "createDatalakeImport",
+    "timewindow_start": "timeWindowStart",
+    "timewindow_stop": "timeWindowStop",
+    "timewindow_timezone": "timeWindowTimezone",
+    "operator_notes": "operatorNotes",
+    "create_foreign_keys": "createForeignKey",
+    "contact_info": "contactInformation",
+    "description": "description",
+    "owner": "owner",
+    "atlas_discovery": "atlasDiscovery",
+    "atlas_include_filter": "atlasIncludeFilter",
+    "atlas_exclude_filter": "atlasExcludeFilter",
+    "atlas_last_discovery": "atlasLastDiscovery",
+    "environment": "environment",
+    "seed_file": "seedFile",
+}
+
+_CONNECTION_DEFAULTS = {
+    "force_string": 0,
+    "create_datalake_import": 1,
+    "create_foreign_keys": 1,
+    "atlas_discovery": 1,
+}
+
+
+def _time_text(value: time | None) -> str | None:
+    return None if value is None else value.strftime("%H:%M:%S")
 
 
 class DBCalls:
@@ -715,49 +755,36 @@ class DBCalls:
 
     def get_all_connections(self, list_only_name):
         """Returns all Connections"""
-        log = logging.getLogger(self.logger)
-
         try:
             session = self.get_dbimport_session()
         except SQLError:
             self.disconnect_dbimport_db()
             return None
 
-        table_jdbc_connections = aliased(config_schema.JDBCConnections)
-        jdbc_connections = (
-            session.query(
-                table_jdbc_connections.dbalias, table_jdbc_connections.jdbc_url
+        try:
+            connections = ConnectionsRepository(session()).aliases_and_urls(
+                self.content_max_rows
             )
-            .select_from(table_jdbc_connections)
-            .order_by(table_jdbc_connections.dbalias)
-            .limit(self.content_max_rows)
-        )
+        finally:
+            session.remove()
 
         list_of_connections = []
-        count = 0
-        for row in jdbc_connections:
-            count = count + 1
-            result_dict = {}
-            result_dict["name"] = row[0]
-            if list_only_name == False:
-                result_dict["connectionString"] = row[1]
+        for dbalias, jdbc_url in connections:
+            result_dict = {"name": dbalias}
+            if not list_only_name:
+                result_dict["connectionString"] = jdbc_url
                 result_dict["serverType"] = self.get_jdbc_server_type(
-                    name=row[0], connection_string=row[1]
+                    name=dbalias, connection_string=jdbc_url
                 )
-
             list_of_connections.append(result_dict)
 
-            if count == self.content_max_rows:
-                break
-
-        json_result = json.loads(json.dumps(list_of_connections))
-        session.remove()
-
         headers = {
-            "content-rows": str(count),
+            "content-rows": str(len(list_of_connections)),
             "content-max-returned-rows": str(self.content_max_rows),
         }
-        return JSONResponse(content=json_result, headers=headers, status_code=200)
+        return JSONResponse(
+            content=list_of_connections, headers=headers, status_code=200
+        )
 
     def search_connections(
         self, search_values: data_models.ConnectionSearch, current_user
@@ -771,89 +798,51 @@ class DBCalls:
             self.disconnect_dbimport_db()
             return None
 
-        jdbc_connections = aliased(config_schema.JDBCConnections)
+        attribute_to_field = {
+            "name": "dbalias",
+            "connectionString": "jdbc_url",
+            "timeWindowTimezone": "timewindow_timezone",
+            "operatorNotes": "operator_notes",
+            "contactInformation": "contact_info",
+            "description": "description",
+            "owner": "owner",
+        }
 
-        attribute_to_column = {}
-        attribute_to_column["name"] = jdbc_connections.dbalias
-        attribute_to_column["connectionString"] = jdbc_connections.jdbc_url
-        attribute_to_column["timeWindowTimezone"] = jdbc_connections.timewindow_timezone
-        attribute_to_column["operatorNotes"] = jdbc_connections.operator_notes
-        attribute_to_column["contactInformation"] = jdbc_connections.contact_info
-        attribute_to_column["description"] = jdbc_connections.description
-        attribute_to_column["owner"] = jdbc_connections.owner
-
-        # Return a list of connections
-        jdbc_connections_data = session.query(
-            jdbc_connections.dbalias, jdbc_connections.jdbc_url
-        ).select_from(jdbc_connections)
-
-        jdbc_connections_data_count = session.query(func.count(1)).select_from(
-            jdbc_connections
-        )
-
-        # Add the filters for the specific column that we search on
-        for items in search_values:
-            if items[1] == None or items[1] == "" or items[1] == "*" or items[1] == "%":
+        filters = {}
+        for attribute, value in search_values:
+            if value is None or value in ("", "*", "%"):
                 # If it's None, empty or search *, it means we dont need to search on that value. So lets skip it
                 continue
+            value = value.replace("*", "%")
+            log.debug("search filter on %s", attribute)
+            filters[attribute_to_field[attribute]] = value
 
-            column = items[0]
-            value = items[1]
-            like_search = False
-
-            if type(value) is str:
-                if "%" in value or "*" in value:
-                    value = value.replace("*", "%")
-                    like_search = True
-
-            log.debug("search filter: %s = %s", column, value)
-
-            if like_search:
-                jdbc_connections_data = jdbc_connections_data.filter(
-                    like_op(attribute_to_column[column], value)
-                )
-                jdbc_connections_data_count = jdbc_connections_data_count.filter(
-                    like_op(attribute_to_column[column], value)
-                )
-            else:
-                jdbc_connections_data = jdbc_connections_data.filter(
-                    attribute_to_column[column] == value
-                )
-                jdbc_connections_data_count = jdbc_connections_data_count.filter(
-                    attribute_to_column[column] == value
-                )
-
-        # Fetch all rows matching the filter
-        jdbc_connections_data = jdbc_connections_data.limit(self.content_max_rows)
-        jdbc_connections_data_count = jdbc_connections_data_count.one()
-
-        # Loop through result and create the return dict
-        count = 0
-        list_of_connections = []
-        for row in jdbc_connections_data:
-            count = count + 1
-            result_dict = {}
-            result_dict["name"] = row[0]
-            result_dict["connectionString"] = row[1]
-            result_dict["serverType"] = self.get_jdbc_server_type(
-                name=row[0], connection_string=row[1]
+        try:
+            connections, total = ConnectionsRepository(session()).search(
+                filters, self.content_max_rows
             )
+        finally:
+            session.remove()
 
-            list_of_connections.append(result_dict)
-
-            if count == self.content_max_rows:
-                break
-
-        json_result = json.loads(json.dumps(list_of_connections))
-        # session.close()
-        session.remove()
+        list_of_connections = [
+            {
+                "name": dbalias,
+                "connectionString": jdbc_url,
+                "serverType": self.get_jdbc_server_type(
+                    name=dbalias, connection_string=jdbc_url
+                ),
+            }
+            for dbalias, jdbc_url in connections
+        ]
 
         headers = {
-            "content-rows": str(count),
+            "content-rows": str(len(list_of_connections)),
             "content-max-returned-rows": str(self.content_max_rows),
-            "content-total-rows": str(jdbc_connections_data_count[0]),
+            "content-total-rows": str(total),
         }
-        return JSONResponse(content=json_result, headers=headers, status_code=200)
+        return JSONResponse(
+            content=list_of_connections, headers=headers, status_code=200
+        )
 
     def update_connection(
         self, connection: data_models.ConnectionDetails, current_user
@@ -861,190 +850,89 @@ class DBCalls:
         """Update or create a Connections"""
         log = logging.getLogger(self.logger)
 
+        values = {
+            column: getattr(connection, field)
+            for column, field in _CONNECTION_FIELDS.items()
+        }
+        for column, default in _CONNECTION_DEFAULTS.items():
+            if values[column] is None:
+                values[column] = default
+        try:
+            stored = JDBCConnection.model_validate(values)
+        except ValidationError as err:
+            fields = ", ".join(
+                _CONNECTION_FIELDS[str(error["loc"][0])] for error in err.errors()
+            )
+            return (f"Invalid value for {fields}", 400)
+
         try:
             session = self.get_dbimport_session()
         except SQLError:
             self.disconnect_dbimport_db()
             return None
 
-        table_jdbc_connections = aliased(config_schema.JDBCConnections)
-        result = "ok"
-        return_code = 200
-
-        log.debug(connection)
         log.info(
             "User '%s' updated/created connection '%s'", current_user, connection.name
         )
 
-        if connection.forceString is None:
-            connection.forceString = 0
-        if connection.createDatalakeImport is None:
-            connection.createDatalakeImport = 1
-        if connection.createForeignKey is None:
-            connection.createForeignKey = 1
-        if connection.atlasDiscovery is None:
-            connection.atlasDiscovery = 1
-
         try:
-            query = insert(config_schema.JDBCConnections).values(
-                dbalias=connection.name,
-                jdbc_url=connection.connectionString,
-                private_key_path=connection.privateKeyPath,
-                public_key_path=connection.publicKeyPath,
-                credentials=connection.credentials,
-                datalake_source=connection.source,
-                force_string=connection.forceString,
-                max_import_sessions=connection.maxSessions,
-                create_datalake_import=connection.createDatalakeImport,
-                timewindow_start=connection.timeWindowStart,
-                timewindow_stop=connection.timeWindowStop,
-                timewindow_timezone=connection.timeWindowTimezone,
-                operator_notes=connection.operatorNotes,
-                contact_info=connection.contactInformation,
-                description=connection.description,
-                owner=connection.owner,
-                environment=connection.environment,
-                seed_file=connection.seedFile,
-                create_foreign_keys=connection.createForeignKey,
-                atlas_discovery=connection.atlasDiscovery,
-                atlas_include_filter=connection.atlasIncludeFilter,
-                atlas_exclude_filter=connection.atlasExcludeFilter,
-                atlas_last_discovery=connection.atlasLastDiscovery,
-            )
-
-            query = query.on_duplicate_key_update(
-                dbalias=connection.name,
-                jdbc_url=connection.connectionString,
-                private_key_path=connection.privateKeyPath,
-                public_key_path=connection.publicKeyPath,
-                credentials=connection.credentials,
-                datalake_source=connection.source,
-                force_string=connection.forceString,
-                max_import_sessions=connection.maxSessions,
-                create_datalake_import=connection.createDatalakeImport,
-                timewindow_start=connection.timeWindowStart,
-                timewindow_stop=connection.timeWindowStop,
-                timewindow_timezone=connection.timeWindowTimezone,
-                operator_notes=connection.operatorNotes,
-                contact_info=connection.contactInformation,
-                description=connection.description,
-                owner=connection.owner,
-                environment=connection.environment,
-                seed_file=connection.seedFile,
-                create_foreign_keys=connection.createForeignKey,
-                atlas_discovery=connection.atlasDiscovery,
-                atlas_include_filter=connection.atlasIncludeFilter,
-                atlas_exclude_filter=connection.atlasExcludeFilter,
-                atlas_last_discovery=connection.atlasLastDiscovery,
-            )
-
-            session.execute(query)
+            ConnectionsRepository(session()).save(stored)
             session.commit()
-        except SQLError as err:
-            log.error(str(err))
-            log.error(column)  # noqa: F821  # TODO(#164): column is undefined here
+        finally:
+            session.remove()
 
-            result = str(err)
-            return_code = 500
-
-        # session.close()
-        session.remove()
-        return (result, return_code)
+        return ("ok", 200)
 
     def get_connection(self, connection):
         """Returns all Connections"""
-        log = logging.getLogger(self.logger)
-
         try:
             session = self.get_dbimport_session()
         except SQLError:
             self.disconnect_dbimport_db()
             return None
 
-        table_jdbc_connections = aliased(config_schema.JDBCConnections)
-        row = (
-            session.query(
-                table_jdbc_connections.dbalias,
-                table_jdbc_connections.jdbc_url,
-                table_jdbc_connections.private_key_path,
-                table_jdbc_connections.public_key_path,
-                table_jdbc_connections.credentials,
-                table_jdbc_connections.datalake_source,
-                table_jdbc_connections.force_string,
-                table_jdbc_connections.max_import_sessions,
-                table_jdbc_connections.create_datalake_import,
-                table_jdbc_connections.timewindow_start,
-                table_jdbc_connections.timewindow_stop,
-                table_jdbc_connections.timewindow_timezone,
-                table_jdbc_connections.operator_notes,
-                table_jdbc_connections.contact_info,
-                table_jdbc_connections.description,
-                table_jdbc_connections.owner,
-                table_jdbc_connections.environment,
-                table_jdbc_connections.seed_file,
-                table_jdbc_connections.create_foreign_keys,
-                table_jdbc_connections.atlas_discovery,
-                table_jdbc_connections.atlas_include_filter,
-                table_jdbc_connections.atlas_exclude_filter,
-                table_jdbc_connections.atlas_last_discovery,
-            )
-            .select_from(table_jdbc_connections)
-            .filter(table_jdbc_connections.dbalias == connection)
-            .one_or_none()
-        )
-
-        if row == None:
+        try:
+            stored = ConnectionsRepository(session()).connection(connection)
+        finally:
             session.remove()
+
+        if stored is None:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="connection does not exist",
             )
 
-        result_dict = {}
-        result_dict["name"] = row[0]
-        result_dict["connectionString"] = row[1]
-        result_dict["privateKeyPath"] = row[2]
-        result_dict["publicKeyPath"] = row[3]
-        result_dict["credentials"] = row[4]
-        result_dict["source"] = row[5]
-        result_dict["forceString"] = row[6]
-        if (
-            result_dict["forceString"] != 0
-            and result_dict["forceString"] != 1
-            and result_dict["forceString"] != -1
-        ):
-            result_dict["forceString"] = -1
-        result_dict["maxSessions"] = row[7]
-        result_dict["createDatalakeImport"] = row[8]
-        try:
-            result_dict["timeWindowStart"] = row[9].strftime("%H:%M:%S")
-        except AttributeError:
-            result_dict["timeWindowStart"] = None
-        try:
-            result_dict["timeWindowStop"] = row[10].strftime("%H:%M:%S")
-        except AttributeError:
-            result_dict["timeWindowStop"] = None
-        result_dict["timeWindowTimezone"] = row[11]
-        result_dict["operatorNotes"] = row[12]
-        result_dict["contactInformation"] = row[13]
-        result_dict["description"] = row[14]
-        result_dict["owner"] = row[15]
-        result_dict["environment"] = row[16]
-        result_dict["seedFile"] = row[17]
-        result_dict["createForeignKey"] = row[18]
-        result_dict["atlasDiscovery"] = row[19]
-        result_dict["atlasIncludeFilter"] = row[20]
-        result_dict["atlasExcludeFilter"] = row[21]
-        try:
-            result_dict["atlasLastDiscovery"] = row[22].strftime("%Y-%m-%d %H:%M:%S")
-        except AttributeError:
-            result_dict["atlasLastDiscovery"] = None
-
-        json_result = json.loads(json.dumps(result_dict))
-        # session.close()
-        session.remove()
-
-        return json_result
+        return {
+            "name": stored.dbalias,
+            "connectionString": stored.jdbc_url,
+            "privateKeyPath": stored.private_key_path,
+            "publicKeyPath": stored.public_key_path,
+            "credentials": stored.credentials,
+            "source": stored.datalake_source,
+            "forceString": (
+                stored.force_string if stored.force_string in (-1, 0, 1) else -1
+            ),
+            "maxSessions": stored.max_import_sessions,
+            "createDatalakeImport": stored.create_datalake_import,
+            "timeWindowStart": _time_text(stored.timewindow_start),
+            "timeWindowStop": _time_text(stored.timewindow_stop),
+            "timeWindowTimezone": stored.timewindow_timezone,
+            "operatorNotes": stored.operator_notes,
+            "contactInformation": stored.contact_info,
+            "description": stored.description,
+            "owner": stored.owner,
+            "environment": stored.environment,
+            "seedFile": stored.seed_file,
+            "createForeignKey": stored.create_foreign_keys,
+            "atlasDiscovery": stored.atlas_discovery,
+            "atlasIncludeFilter": stored.atlas_include_filter,
+            "atlasExcludeFilter": stored.atlas_exclude_filter,
+            "atlasLastDiscovery": (
+                None
+                if stored.atlas_last_discovery is None
+                else stored.atlas_last_discovery.strftime("%Y-%m-%d %H:%M:%S")
+            ),
+        }
 
     def delete_connection(self, connection, current_user):
         """Delete a connection"""
@@ -1056,34 +944,17 @@ class DBCalls:
             self.disconnect_dbimport_db()
             return None
 
-        result = "ok"
-        return_code = 200
-
         log.info("User '%s' deleted connection '%s'", current_user, connection)
 
-        # Fetch the tableID as that is required to update/create data in import_columns
-        row = (
-            session.query(config_schema.JDBCConnections.dbalias)
-            .select_from(config_schema.JDBCConnections)
-            .filter(config_schema.JDBCConnections.dbalias == connection)
-            .one_or_none()
-        )
-        session.commit()
-
-        if row == None:
-            result = "Connection does not exist"
-            return_code = 404
-        else:
-            (
-                session.query(config_schema.JDBCConnections)
-                .filter(config_schema.JDBCConnections.dbalias == connection)
-                .delete()
-            )
+        try:
+            deleted = ConnectionsRepository(session()).delete(connection)
             session.commit()
+        finally:
+            session.remove()
 
-        # session.close()
-        session.remove()
-        return (result, return_code)
+        if not deleted:
+            return ("Connection does not exist", 404)
+        return ("ok", 200)
 
     def encrypted_credentials(
         self, credentials: data_models.EncryptCredential, current_user

@@ -583,6 +583,27 @@ def test_update_connection_replaces_every_column_of_an_existing_connection(
     )
 
 
+def test_update_connection_with_invalid_time_returns_400_and_stores_nothing(
+    client: TestClient, auth_headers: dict[str, str], db_connection: sa.Connection
+) -> None:
+    connection = {
+        "name": "new_conn",
+        "connectionString": MYSQL_URL,
+        "timeWindowStart": "8:00",
+    }
+
+    response = client.post("/connection", json=connection, headers=auth_headers)
+
+    assert response.status_code == 400
+    assert response.json() == "Invalid value for timeWindowStart"
+    assert (
+        db_connection.execute(
+            sa.text("SELECT COUNT(*) FROM jdbc_connections")
+        ).scalar_one()
+        == 0
+    )
+
+
 def test_get_connection_returns_its_details(
     client: TestClient, auth_headers: dict[str, str], db_connection: sa.Connection
 ) -> None:
