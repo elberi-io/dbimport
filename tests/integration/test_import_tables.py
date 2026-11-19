@@ -751,3 +751,10 @@ def test_reading_the_row_again_after_it_was_deleted_raises(
 
     with pytest.raises(InvalidConfigurationError):
         config.get_hive_table_comment()
+
+
+def test_get_import_config_with_custom_query_validation_without_hive_query_raises(
+    table: sa.Connection,
+) -> None:
+    with pytest.raises(InvalidConfigurationError):
+        _config(table, validationMethod="customQuery")

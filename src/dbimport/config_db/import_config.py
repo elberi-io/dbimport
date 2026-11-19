@@ -559,7 +559,8 @@ class Config(metaclass=Singleton):
         if self.validation_method == "customQuery":
             # Check settings to make sure all data is available before starting the import
             if (
-                "${HIVE_DB}" not in self.validation_custom_query_hive_sql
+                self.validation_custom_query_hive_sql is None
+                or "${HIVE_DB}" not in self.validation_custom_query_hive_sql
                 or "${HIVE_TABLE}" not in self.validation_custom_query_hive_sql
             ):
                 raise InvalidConfigurationError(
