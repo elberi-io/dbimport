@@ -637,6 +637,47 @@ def test_get_connection_returns_its_details(
     }
 
 
+def test_saving_a_connection_with_the_body_of_get_keeps_every_column(
+    client: TestClient, auth_headers: dict[str, str], db_connection: sa.Connection
+) -> None:
+    # The UI saves a connection with the body that GET returned.
+    insert_row(
+        db_connection,
+        "jdbc_connections",
+        dbalias="sales_mysql",
+        jdbc_url=MYSQL_URL,
+        private_key_path="/keys/private.pem",
+        public_key_path="/keys/public.pem",
+        credentials="encrypted",
+        datalake_source="sales",
+        max_import_sessions=4,
+        force_string=1,
+        create_datalake_import=0,
+        timewindow_start="22:00:00",
+        timewindow_stop="02:30:00",
+        timewindow_timezone="UTC",
+        operator_notes="notes",
+        create_foreign_keys=0,
+        contact_info="contact",
+        description="description",
+        owner="team",
+        atlas_discovery=0,
+        atlas_include_filter="sales.*",
+        atlas_exclude_filter="tmp.*",
+        atlas_last_discovery="2026-01-15 09:00:00",
+        environment="Production",
+        seed_file="/opt/seed",
+    )
+    row = sa.text("SELECT * FROM jdbc_connections")
+    before = db_connection.execute(row).one()
+    details = client.get("/connection/sales_mysql", headers=auth_headers).json()
+
+    response = client.post("/connection", json=details, headers=auth_headers)
+
+    assert response.status_code == 200
+    assert db_connection.execute(row).one() == before
+
+
 def test_get_connection_of_unknown_connection_returns_404_and_ends_its_transaction(
     client: TestClient, auth_headers: dict[str, str], db_connection: sa.Connection
 ) -> None:

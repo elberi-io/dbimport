@@ -1003,8 +1003,8 @@ class DBCalls:
         result_dict = {}
         result_dict["name"] = row[0]
         result_dict["connectionString"] = row[1]
-        result_dict["private_key_path"] = row[2]
-        result_dict["public_key_path"] = row[3]
+        result_dict["privateKeyPath"] = row[2]
+        result_dict["publicKeyPath"] = row[3]
         result_dict["credentials"] = row[4]
         result_dict["source"] = row[5]
         result_dict["forceString"] = row[6]
