@@ -3,6 +3,7 @@
 import importlib
 import sys
 from collections.abc import Iterator
+from datetime import timedelta
 from types import ModuleType
 
 import pytest
@@ -448,3 +449,213 @@ def test_update_jdbc_driver_with_its_current_values_returns_200(
     )
 
     assert response.status_code == 200
+
+
+MYSQL_URL = "jdbc:mysql://source.example:3306/sourcedb"
+
+
+def _add_connections(conn: sa.Connection) -> None:
+    insert_row(conn, "jdbc_connections", dbalias="sales_mysql", jdbc_url=MYSQL_URL)
+    insert_row(conn, "jdbc_connections", dbalias="hr_other", jdbc_url="x")
+    insert_row(
+        conn,
+        "jdbc_connections",
+        dbalias="sales_other",
+        jdbc_url="x",
+        owner="team",
+    )
+
+
+def test_get_all_connections_lists_names_urls_and_server_types_by_name(
+    client: TestClient, auth_headers: dict[str, str], db_connection: sa.Connection
+) -> None:
+    _add_connections(db_connection)
+
+    response = client.get("/connection", headers=auth_headers)
+
+    assert response.status_code == 200
+    assert response.headers["content-rows"] == "3"
+    assert response.json() == [
+        {"name": "hr_other", "connectionString": "x", "serverType": None},
+        {"name": "sales_mysql", "connectionString": MYSQL_URL, "serverType": "MySQL"},
+        {"name": "sales_other", "connectionString": "x", "serverType": None},
+    ]
+
+
+def test_get_all_connections_with_list_only_name_leaves_out_the_details(
+    client: TestClient, auth_headers: dict[str, str], db_connection: sa.Connection
+) -> None:
+    _add_connections(db_connection)
+
+    response = client.get("/connection?listOnlyName=true", headers=auth_headers)
+
+    assert response.json() == [
+        {"name": "hr_other"},
+        {"name": "sales_mysql"},
+        {"name": "sales_other"},
+    ]
+
+
+@pytest.mark.parametrize(
+    ("search", "expected", "total"),
+    [
+        ({"name": "sales*"}, ["sales_mysql", "sales_other"], "2"),
+        ({"name": "sales_other"}, ["sales_other"], "1"),
+        ({"name": "sales*", "owner": "team"}, ["sales_other"], "1"),
+        ({"name": "*", "owner": ""}, ["hr_other", "sales_mysql", "sales_other"], "3"),
+    ],
+)
+def test_search_connections_filters_by_value_or_wildcard(
+    client: TestClient,
+    auth_headers: dict[str, str],
+    db_connection: sa.Connection,
+    search: dict[str, str],
+    expected: list[str],
+    total: str,
+) -> None:
+    _add_connections(db_connection)
+
+    response = client.post("/connection/search", json=search, headers=auth_headers)
+
+    assert response.status_code == 200
+    assert sorted(c["name"] for c in response.json()) == expected
+    assert response.headers["content-total-rows"] == total
+
+
+CONNECTION_ROW = sa.text(
+    "SELECT jdbc_url, owner, force_string, create_datalake_import, "
+    "create_foreign_keys, atlas_discovery, timewindow_start, description "
+    "FROM jdbc_connections WHERE dbalias = 'new_conn'"
+)
+
+
+def test_update_connection_creates_a_connection_with_defaults(
+    client: TestClient, auth_headers: dict[str, str], db_connection: sa.Connection
+) -> None:
+    connection = {
+        "name": "new_conn",
+        "connectionString": MYSQL_URL,
+        "owner": "team",
+        "timeWindowStart": "08:00:00",
+    }
+
+    response = client.post("/connection", json=connection, headers=auth_headers)
+
+    assert response.status_code == 200
+    assert tuple(db_connection.execute(CONNECTION_ROW).one()) == (
+        MYSQL_URL,
+        "team",
+        0,
+        1,
+        1,
+        1,
+        timedelta(hours=8),
+        None,
+    )
+
+
+def test_update_connection_replaces_every_column_of_an_existing_connection(
+    client: TestClient, auth_headers: dict[str, str], db_connection: sa.Connection
+) -> None:
+    insert_row(
+        db_connection,
+        "jdbc_connections",
+        dbalias="new_conn",
+        jdbc_url="x",
+        owner="team",
+        description="old",
+        force_string=1,
+    )
+    connection = {"name": "new_conn", "connectionString": MYSQL_URL}
+
+    response = client.post("/connection", json=connection, headers=auth_headers)
+
+    assert response.status_code == 200
+    assert tuple(db_connection.execute(CONNECTION_ROW).one()) == (
+        MYSQL_URL,
+        None,
+        0,
+        1,
+        1,
+        1,
+        None,
+        None,
+    )
+
+
+def test_get_connection_returns_its_details(
+    client: TestClient, auth_headers: dict[str, str], db_connection: sa.Connection
+) -> None:
+    insert_row(
+        db_connection,
+        "jdbc_connections",
+        dbalias="sales_mysql",
+        jdbc_url=MYSQL_URL,
+        credentials="encrypted",
+        datalake_source="sales",
+        max_import_sessions=4,
+        timewindow_start="22:00:00",
+        timewindow_stop="02:30:00",
+        timewindow_timezone="UTC",
+        operator_notes="notes",
+        contact_info="contact",
+        description="description",
+        owner="team",
+        environment="Production",
+        seed_file="/opt/seed",
+        atlas_include_filter="sales.*",
+        atlas_last_discovery="2026-01-15 09:00:00",
+    )
+
+    response = client.get("/connection/sales_mysql", headers=auth_headers)
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "name": "sales_mysql",
+        "connectionString": MYSQL_URL,
+        "privateKeyPath": None,
+        "publicKeyPath": None,
+        "credentials": "encrypted",
+        "source": "sales",
+        "forceString": 0,
+        "maxSessions": 4,
+        "createDatalakeImport": True,
+        "timeWindowStart": "22:00:00",
+        "timeWindowStop": "02:30:00",
+        "timeWindowTimezone": "UTC",
+        "operatorNotes": "notes",
+        "contactInformation": "contact",
+        "description": "description",
+        "owner": "team",
+        "environment": "Production",
+        "seedFile": "/opt/seed",
+        "createForeignKey": True,
+        "atlasDiscovery": True,
+        "atlasIncludeFilter": "sales.*",
+        "atlasExcludeFilter": None,
+        "atlasLastDiscovery": "2026-01-15 09:00:00",
+    }
+
+
+@pytest.mark.parametrize(
+    ("dbalias", "status_code", "remaining"), [("hr_other", 200, 2), ("nope", 404, 3)]
+)
+def test_delete_connection_removes_it_or_returns_404_when_unknown(
+    client: TestClient,
+    auth_headers: dict[str, str],
+    db_connection: sa.Connection,
+    dbalias: str,
+    status_code: int,
+    remaining: int,
+) -> None:
+    _add_connections(db_connection)
+
+    response = client.delete(f"/connection/{dbalias}", headers=auth_headers)
+
+    assert response.status_code == status_code
+    assert (
+        db_connection.execute(
+            sa.text("SELECT COUNT(*) FROM jdbc_connections")
+        ).scalar_one()
+        == remaining
+    )
