@@ -39,7 +39,7 @@
     "assignment": 3
   },
   "src/dbimport/config_db/import_config.py": {
-    "arg-type": 35,
+    "arg-type": 40,
     "assignment": 2,
     "operator": 17,
     "return-value": 2,
