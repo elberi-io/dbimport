@@ -715,3 +715,39 @@ def test_add_import_table_with_unknown_catalog_raises(table: sa.Connection) -> N
 
     with pytest.raises(InvalidConfigurationError):
         config.add_import_table(HIVE_DB, HIVE_TABLE, DBALIAS, "src", "orders", "x")
+
+
+def test_get_import_config_with_value_outside_an_enum_raises(
+    table: sa.Connection,
+) -> None:
+    _add_table(table)
+    # Outside strict mode, MariaDB stores an invalid ENUM value as ''.
+    table.execute(
+        sa.text(
+            "SET STATEMENT sql_mode = '' FOR UPDATE import_tables SET import_tool = 'x'"
+        )
+    )
+
+    with pytest.raises(InvalidConfigurationError):
+        import_config.Config(HIVE_DB, HIVE_TABLE).get_import_config()
+
+
+def test_write_before_get_import_config_raises_and_stores_nothing(
+    table: sa.Connection,
+) -> None:
+    _add_table(table)
+    config = import_config.Config(HIVE_DB, HIVE_TABLE)
+
+    with pytest.raises(InvalidConfigurationError):
+        config.save_hive_table_row_count(42)
+    assert _row(table, "hive_rowcount") == (None,)
+
+
+def test_reading_the_row_again_after_it_was_deleted_raises(
+    table: sa.Connection,
+) -> None:
+    config = _config(table)
+    table.execute(sa.text("DELETE FROM import_tables"))
+
+    with pytest.raises(InvalidConfigurationError):
+        config.get_hive_table_comment()

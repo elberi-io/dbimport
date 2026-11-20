@@ -19,12 +19,17 @@ import json
 import logging
 import math
 import re
+from collections.abc import Callable, Iterator
+from contextlib import contextmanager
 from datetime import datetime
 from typing import Any
 
 import mysql.connector
 import numpy as np
 import pandas as pd
+import sqlalchemy as sa
+from pydantic import ValidationError
+from sqlalchemy.orm import Session
 
 from dbimport.common import constants as constant
 from dbimport.common.exceptions import (
@@ -34,7 +39,14 @@ from dbimport.common.exceptions import (
 )
 from dbimport.common.singleton import Singleton
 from dbimport.config_db import common_config, send_statistics
+from dbimport.config_db import engine as config_engine
 from dbimport.config_db import import_stage as stage
+from dbimport.config_db.repositories.connections import ConnectionsRepository
+from dbimport.config_db.repositories.import_tables import (
+    GeneratedDefinitions,
+    ImportTable,
+    ImportTablesRepository,
+)
 
 
 class Config(metaclass=Singleton):
@@ -389,173 +401,152 @@ class Config(metaclass=Singleton):
             self.source_schema, self.source_table
         )
 
+    @contextmanager
+    def _write_import_table(self) -> Iterator[ImportTablesRepository]:
+        # Raw queries still read import_tables: they must not keep a
+        # snapshot from before this write. TODO(#238): remove with them.
+        self.mysql_conn.commit()
+        with Session(config_engine.engine()) as session:
+            yield ImportTablesRepository(session)
+            session.commit()
+
+    def _read_import_table(
+        self, read: Callable[[ImportTablesRepository], ImportTable | None]
+    ) -> ImportTable | None:
+        try:
+            with Session(config_engine.engine()) as session:
+                return read(ImportTablesRepository(session))
+        except (LookupError, ValidationError) as err:
+            raise InvalidConfigurationError(
+                f"The import table {self.hive_db}.{self.hive_table} has an invalid value in the configuration database: {err}"
+            ) from err
+
+    def _known_table_id(self) -> int:
+        if self.table_id is None:
+            raise InvalidConfigurationError(
+                "The import table has not been read from the configuration database"
+            )
+        return self.table_id
+
+    def _stored_import_table(self) -> ImportTable:
+        table_id = self._known_table_id()
+        stored = self._read_import_table(lambda tables: tables.table_by_id(table_id))
+        if stored is None:
+            raise InvalidConfigurationError(
+                "The import table can't be found in the configuration database"
+            )
+        return stored
+
     def get_import_config(self) -> None:
         logging.debug("Executing import_config.get_import_config()")
 
-        query = (
-            "select "
-            "    dbalias,"
-            "    source_schema,"
-            "    source_table,"
-            "    table_id,"
-            "    import_type,"
-            "    mappers,"
-            "    validate_import,"
-            "    truncate_hive,"
-            "    incr_mode,"
-            "    incr_column,"
-            "    sqoop_use_generated_sql,"
-            "    incr_maxvalue,"
-            "    validate_diff_allowed,"
-            "    soft_delete_during_merge,"
-            "    sqoop_last_size,"
-            "    sqoop_last_rows,"
-            "    sqoop_allow_text_splitter,"
-            "    datalake_source,"
-            "    sqoop_last_execution,"
-            "    hive_merge_heap, "
-            "    nomerge_ingestion_sql_addition, "
-            "    sqoop_sql_where_addition, "
-            "    sqoop_options, "
-            "    generated_sqoop_options, "
-            "    generated_sqoop_query, "
-            "    generated_pk_columns, "
-            "    incr_validation_method, "
-            "    sqoop_last_mappers, "
-            "    sqoop_query, "
-            "    validate_source, "
-            "    copy_slave, "
-            "    import_phase_type, "
-            "    etl_phase_type, "
-            "    create_foreign_keys, "
-            "    import_tool, "
-            "    spark_executor_memory, "
-            "    split_by_column, "
-            "    custom_max_query, "
-            "    validationMethod, "
-            "    validationCustomQuerySourceSQL, "
-            "    validationCustomQueryHiveSQL, "
-            "    validationCustomQueryValidateImportTable, "
-            "    validationCustomQuerySourceValue, "
-            "    validationCustomQueryHiveValue, "
-            "    mergeCompactionMethod, "
-            "    hive_split_count, "
-            "    etl_engine, "
-            "    spark_executors, "
-            "    last_update_from_source, "
-            "    invalidate_impala, "
-            "    import_database, "
-            "    import_table, "
-            "    history_database, "
-            "    history_table "
-            "from import_tables "
-            "where "
-            "    hive_db = %s"
-            "    and hive_table = %s "
+        stored = self._read_import_table(
+            lambda tables: tables.table(self.hive_db, self.hive_table)
         )
-
-        self.mysql_cursor01.execute(query, (self.hive_db, self.hive_table))
-        logging.debug("SQL Statement executed: %s" % (self.mysql_cursor01.statement))
-        if self.mysql_cursor01.rowcount != 1:
+        if stored is None:
             raise InvalidConfigurationError(
                 "The specified Hive Database and Table can't be found in the configuration database. Please check that you specified the correct database and table and that the configuration exists in the configuration database"
             )
 
-        row = self.mysql_cursor01.fetchone()
+        self.connection_alias = stored.dbalias
+        self.source_schema = stored.source_schema
+        self.source_table = stored.source_table
+        self.table_id = stored.table_id
+        self.import_type = stored.import_type
+        self.sqoop_mappers = stored.mappers
 
-        self.connection_alias = row[0]
-        self.source_schema = row[1]
-        self.source_table = row[2]
-        self.table_id = row[3]
-        self.import_type = row[4]
-        self.sqoop_mappers = row[5]
-
-        if row[6] == 0:
+        if stored.validate_import == 0:
             self.validate_import = False
         else:
             self.validate_import = True
 
-        if row[7] == 1:
+        if stored.truncate_hive == 1:
             self.truncate_hive_table = True
         else:
             self.truncate_hive_table = False
 
-        self.incr_mode = row[8]
-        self.incr_column = row[9]
+        self.incr_mode = stored.incr_mode
+        self.incr_column = stored.incr_column
 
-        if row[10] == 1:
+        if stored.sqoop_use_generated_sql == 1:
             self.sqoop_use_generated_sql = True
         else:
             self.sqoop_use_generated_sql = False
 
-        self.incr_maxvalue = row[11]
-        self.validate_diff_allowed = row[12]
+        self.incr_maxvalue = stored.incr_maxvalue
+        self.validate_diff_allowed = stored.validate_diff_allowed
 
-        if row[13] == 1:
+        if stored.soft_delete_during_merge == 1:
             self.soft_delete_during_merge = True
         else:
             self.soft_delete_during_merge = False
 
-        self.sqoop_last_size = row[14]
-        self.sqoop_last_rows = row[15]
+        self.sqoop_last_size = stored.sqoop_last_size
+        self.sqoop_last_rows = stored.sqoop_last_rows
 
-        if row[16] == 1:
+        if stored.sqoop_allow_text_splitter == 1:
             self.sqoop_allow_text_splitter = True
         else:
             self.sqoop_allow_text_splitter = False
 
-        self.datalake_source_table = row[17]
-        self.sqoop_last_execution = row[18]
-        self.hive_java_heap = row[19]
-        self.nomerge_ingestion_sql_addition = row[20]
-        self.sqoop_sql_where_addition = row[21]
-        self.sqoop_options = row[22]
-        self.generated_sqoop_options = row[23]
-        self.sql_generated_sqoop_query = row[24]
-        self.generated_pk_columns = row[25]
-        self.incr_validation_method = row[26]
-        self.sqoop_last_mappers = row[27]
-        self.sqoop_query = row[28]
-        self.validate_source = row[29]
+        self.datalake_source_table = stored.datalake_source
+        self.sqoop_last_execution = stored.sqoop_last_execution
+        self.hive_java_heap = stored.hive_merge_heap
+        self.nomerge_ingestion_sql_addition = stored.nomerge_ingestion_sql_addition
+        self.sqoop_sql_where_addition = stored.sqoop_sql_where_addition
+        self.sqoop_options = stored.sqoop_options
+        self.generated_sqoop_options = stored.generated_sqoop_options
+        self.sql_generated_sqoop_query = stored.generated_sqoop_query
+        self.generated_pk_columns = stored.generated_pk_columns
+        self.incr_validation_method = stored.incr_validation_method
+        self.sqoop_last_mappers = stored.sqoop_last_mappers
+        self.sqoop_query = stored.sqoop_query
+        self.validate_source = stored.validate_source
 
-        if row[30] == 1:
+        if stored.copy_slave == 1:
             self.copy_slave = True
         else:
             self.copy_slave = False
 
-        self.import_phase_type = row[31]
-        self.etl_phase_type = row[32]
-        self.create_foreign_keys_table = row[33]
-        self.import_tool = row[34]
-        self.spark_executor_memory = row[35]
-        self.split_by_column = row[36]
-        self.custom_max_query = row[37]
+        self.import_phase_type = stored.import_phase_type
+        self.etl_phase_type = stored.etl_phase_type
+        self.create_foreign_keys_table = stored.create_foreign_keys
+        self.import_tool = stored.import_tool
+        self.spark_executor_memory = stored.spark_executor_memory
+        self.split_by_column = stored.split_by_column
+        self.custom_max_query = stored.custom_max_query
         self.common_config.custom_max_query = self.custom_max_query
 
-        self.validation_method = row[38]
-        self.validation_custom_query_source_sql = row[39]
-        self.validation_custom_query_hive_sql = row[40]
+        self.validation_method = stored.validation_method
+        self.validation_custom_query_source_sql = (
+            stored.validation_custom_query_source_sql
+        )
+        self.validation_custom_query_hive_sql = stored.validation_custom_query_hive_sql
 
-        if row[41] == 1:
+        if stored.validation_custom_query_validate_import_table == 1:
             self.validation_custom_query_validate_import_table = True
         else:
             self.validation_custom_query_validate_import_table = False
 
-        self.validation_custom_query_source_value = row[42]
-        self.validation_custom_query_hive_value = row[43]
-        self.merge_compaction_method = row[44]
-        self.hive_split_count = row[45]
-        self.etl_engine = row[46]
-        self.spark_max_executors = row[47]
+        self.validation_custom_query_source_value = (
+            stored.validation_custom_query_source_value
+        )
+        self.validation_custom_query_hive_value = (
+            stored.validation_custom_query_hive_value
+        )
+        self.merge_compaction_method = stored.merge_compaction_method
+        self.hive_split_count = stored.hive_split_count
+        self.etl_engine = stored.etl_engine
+        self.spark_max_executors = stored.spark_executors
 
-        self.common_config.operation_timestamp = row[48]
+        self.common_config.operation_timestamp = stored.last_update_from_source
 
-        invalidate_impala_metadata_value = row[49]
+        invalidate_impala_metadata_value = stored.invalidate_impala
 
-        self.import_database_override = row[50]
-        self.import_table_override = row[51]
-        self.history_database_override = row[52]
-        self.history_table_override = row[53]
+        self.import_database_override = stored.import_database
+        self.import_table_override = stored.import_table
+        self.history_database_override = stored.history_database
+        self.history_table_override = stored.history_table
 
         if (
             self.validation_method != constant.VALIDATION_METHOD_CUSTOMQUERY
@@ -1105,19 +1096,16 @@ class Config(metaclass=Singleton):
                 key="impala_invalidate_metadata"
             )
 
-        # Fetch data from jdbc_connection table
-        query = "select create_datalake_import, datalake_source, create_foreign_keys from jdbc_connections where dbalias = %s "
-        self.mysql_cursor01.execute(query, (self.connection_alias,))
-        logging.debug("SQL Statement executed: %s" % (self.mysql_cursor01.statement))
-
-        if self.mysql_cursor01.rowcount != 1:
+        with Session(config_engine.engine()) as session:
+            connection = ConnectionsRepository(session).connection(
+                self.connection_alias
+            )
+        if connection is None:
             raise InvalidConfigurationError(
                 "The configured connection alias for this table cant be found in the 'jdbc_connections' table"
             )
 
-        row = self.mysql_cursor01.fetchone()
-
-        if row[0] == 1:
+        if connection.create_datalake_import == 1:
             self.create_datalake_import_column = True
         else:
             self.create_datalake_import_column = False
@@ -1131,7 +1119,7 @@ class Config(metaclass=Singleton):
                     "Full Insert imports requires 'create_datalake_import' to be set in jdbc_connections table"
                 )
 
-        self.datalake_source_connection = row[1]
+        self.datalake_source_connection = connection.datalake_source
 
         # Set self.datalake_source based on values from either self.datalake_source_table or self.datalake_source_connection
         if (
@@ -1145,7 +1133,7 @@ class Config(metaclass=Singleton):
         ):
             self.datalake_source = self.datalake_source_connection
 
-        self.create_foreign_keys_connection = row[2]
+        self.create_foreign_keys_connection = connection.create_foreign_keys
 
         # Set self.create_foreign_keys based on values from either self.create_foreign_keys_table or self.create_foreign_keys_connection
         if self.create_foreign_keys_table == 0 or self.create_foreign_keys_table == 1:
@@ -1399,22 +1387,17 @@ class Config(metaclass=Singleton):
         logging.debug("Executing import_config.update_last_update_from_source()")
 
         # Update the import_tables.last_update_from_source with the current date
-        query = "update import_tables set last_update_from_source = %s where hive_db = %s and hive_table = %s "
         logging.debug("")
         logging.debug("Updating the last_update_from_source in import_tables")
-        self.mysql_cursor01.execute(
-            query, (self.start_date, self.hive_db, self.hive_table)
-        )
-        logging.debug("SQL Statement executed: %s" % (self.mysql_cursor01.statement))
-        self.mysql_conn.commit()
+        with self._write_import_table() as tables:
+            tables.set_last_update_from_source(
+                self.hive_db, self.hive_table, self.start_date
+            )
 
         # We re-read the date just to make sure we have the exakt same in common_config. This will later be used to group yarn applications per import
-        query = "select last_update_from_source from import_tables where hive_db = %s and hive_table = %s "
-        self.mysql_cursor01.execute(query, (self.hive_db, self.hive_table))
-        logging.debug("SQL Statement executed: %s" % (self.mysql_cursor01.statement))
-
-        row = self.mysql_cursor01.fetchone()
-        self.common_config.operation_timestamp = row[0]
+        self.common_config.operation_timestamp = (
+            self._stored_import_table().last_update_from_source
+        )
 
         logging.debug(
             "Executing import_config.update_last_update_from_source() - Finished"
@@ -1424,13 +1407,8 @@ class Config(metaclass=Singleton):
         """Save the min value in the pendings column"""
         logging.debug("Executing import_config.savePendingIncrValues()")
 
-        query = "update import_tables set "
-        query += "	incr_minvalue_pending = incr_maxvalue "
-        query += "where table_id = %s"
-
-        self.mysql_cursor01.execute(query, (self.table_id,))
-        logging.debug("SQL Statement executed: %s" % (self.mysql_cursor01.statement))
-        self.mysql_conn.commit()
+        with self._write_import_table() as tables:
+            tables.begin_incremental_range(self._known_table_id())
 
         logging.debug("Executing import_config.savePendingIncrValues() - Finished")
 
@@ -1438,23 +1416,8 @@ class Config(metaclass=Singleton):
         """After the incremental import is completed, we save the pending values so the next import starts from the correct spot"""
         logging.debug("Executing import_config.savePendingIncrValues()")
 
-        query = "update import_tables set "
-        query += "	incr_minvalue = incr_minvalue_pending, "
-        query += "	incr_maxvalue = incr_maxvalue_pending "
-        query += "where table_id = %s"
-
-        self.mysql_cursor01.execute(query, (self.table_id,))
-        logging.debug("SQL Statement executed: %s" % (self.mysql_cursor01.statement))
-        self.mysql_conn.commit()
-
-        query = "update import_tables set "
-        query += "	incr_minvalue_pending = NULL, "
-        query += "	incr_maxvalue_pending = NULL "
-        query += "where table_id = %s"
-
-        self.mysql_cursor01.execute(query, (self.table_id,))
-        logging.debug("SQL Statement executed: %s" % (self.mysql_cursor01.statement))
-        self.mysql_conn.commit()
+        with self._write_import_table() as tables:
+            tables.commit_pending_range(self._known_table_id())
 
         logging.debug("Executing import_config.savePendingIncrValues() - Finished")
 
@@ -2554,39 +2517,19 @@ class Config(metaclass=Singleton):
         if self.generated_pk_columns == "":
             self.generated_pk_columns = None
 
-        if self.sqoop_use_generated_sql:
-            sqoop_use_generated_sql_local = 1
-        else:
-            sqoop_use_generated_sql_local = 0
-
-        query = (
-            "update import_tables set "
-            "    generated_hive_column_definition = %s, "
-            "    generated_sqoop_query = %s, "
-            "    comment = %s, "
-            "    generated_sqoop_options = %s, "
-            "    generated_pk_columns = %s, "
-            "    generated_foreign_keys = NULL, "
-            "    sqoop_use_generated_sql = %s, "
-            "    sourceTableType = %s "
-            "where table_id = %s "
-        )
-
-        self.mysql_cursor01.execute(
-            query,
-            (
-                self.sql_generated_hive_column_definition,
-                self.sql_generated_sqoop_query,
-                self.table_comment,
-                self.generated_sqoop_options,
-                self.generated_pk_columns,
-                sqoop_use_generated_sql_local,
-                self.common_config.table_type,
-                self.table_id,
-            ),
-        )
-        self.mysql_conn.commit()
-        logging.debug("SQL Statement executed: %s" % (self.mysql_cursor01.statement))
+        with self._write_import_table() as tables:
+            tables.save_generated_definitions(
+                self._known_table_id(),
+                GeneratedDefinitions(
+                    hive_column_definition=self.sql_generated_hive_column_definition,
+                    sqoop_query=self.sql_generated_sqoop_query,
+                    comment=self.table_comment,
+                    sqoop_options=self.generated_sqoop_options,
+                    pk_columns=self.generated_pk_columns,
+                    use_generated_sql=bool(self.sqoop_use_generated_sql),
+                    source_table_type=self.common_config.table_type,
+                ),
+            )
 
         logging.debug("Executing import_config.save_generated_data() - Finished")
 
@@ -2712,10 +2655,8 @@ class Config(metaclass=Singleton):
         self.validation_custom_query_source_value = None
         self.validation_custom_query_hive_value = None
 
-        query = "update import_tables set source_rowcount = NULL, source_rowcount_incr = NULL, hive_rowcount = NULL, validationCustomQuerySourceValue = NULL, validationCustomQueryHiveValue = NULL where table_id = %s"
-        self.mysql_cursor01.execute(query, (self.table_id,))
-        self.mysql_conn.commit()
-        logging.debug("SQL Statement executed: %s" % (self.mysql_cursor01.statement))
+        with self._write_import_table() as tables:
+            tables.clear_validation(self._known_table_id())
 
         logging.debug("Executing import_config.clear_validation_data() - Finished")
 
@@ -2762,30 +2703,25 @@ class Config(metaclass=Singleton):
                 self.sqoop_incr_maxvalue_pending = max_scn
                 self.sqoop_incr_minvalue_pending: Any = self.sqoop_incr_lastvalue
 
-                query = "update import_tables set incr_minvalue_pending = %s, incr_maxvalue_pending = %s where table_id = %s"
-                self.mysql_cursor01.execute(
-                    query,
-                    (
+                with self._write_import_table() as tables:
+                    tables.set_pending_range(
+                        self._known_table_id(),
                         self.sqoop_incr_minvalue_pending,
                         self.sqoop_incr_maxvalue_pending,
-                        self.table_id,
-                    ),
-                )
-                self.mysql_conn.commit()
-                logging.debug(
-                    "SQL Statement executed: %s" % (self.mysql_cursor01.statement)
-                )
+                    )
             else:
-                # COALESCE is needed if you are going to call a function that counts source target rows outside the normal import
-                query = "select COALESCE(incr_minvalue_pending, incr_minvalue), COALESCE(incr_maxvalue_pending, incr_maxvalue) from import_tables where table_id = %s"
-                self.mysql_cursor01.execute(query, (self.table_id,))
-                logging.debug(
-                    "SQL Statement executed: %s" % (self.mysql_cursor01.statement)
+                # The stored range is needed if you are going to call a function that counts source target rows outside the normal import
+                stored = self._stored_import_table()
+                self.sqoop_incr_minvalue_pending = (
+                    stored.incr_minvalue_pending
+                    if stored.incr_minvalue_pending is not None
+                    else stored.incr_minvalue
                 )
-
-                row = self.mysql_cursor01.fetchone()
-                self.sqoop_incr_minvalue_pending = row[0]
-                self.sqoop_incr_maxvalue_pending = row[1]
+                self.sqoop_incr_maxvalue_pending = (
+                    stored.incr_maxvalue_pending
+                    if stored.incr_maxvalue_pending is not None
+                    else stored.incr_maxvalue
+                )
 
             if self.incr_maxvalue == None:
                 # There is no MaxValue stored form previous imports. That means we need to do a full import up to SCN number
@@ -2885,30 +2821,21 @@ class Config(metaclass=Singleton):
 
                 self.sqoop_incr_minvalue_pending = self.sqoop_incr_lastvalue
 
-                query = "update import_tables set incr_minvalue_pending = %s, incr_maxvalue_pending = %s where table_id = %s"
-                self.mysql_cursor01.execute(
-                    query,
-                    (
+                with self._write_import_table() as tables:
+                    tables.set_pending_range(
+                        self._known_table_id(),
                         self.sqoop_incr_minvalue_pending,
                         self.sqoop_incr_maxvalue_pending,
-                        self.table_id,
-                    ),
-                )
-                self.mysql_conn.commit()
-                logging.debug(
-                    "SQL Statement executed: %s" % (self.mysql_cursor01.statement)
-                )
+                    )
 
             if self.sqoop_incr_maxvalue_pending == None:
-                # COALESCE is needed if you are going to call a function that counts source target rows outside the normal import
-                query = "select COALESCE(incr_maxvalue_pending, incr_maxvalue) from import_tables where table_id = %s"
-                self.mysql_cursor01.execute(query, (self.table_id,))
-                logging.debug(
-                    "SQL Statement executed: %s" % (self.mysql_cursor01.statement)
+                # The stored maximum is needed if you are going to call a function that counts source target rows outside the normal import
+                stored = self._stored_import_table()
+                self.sqoop_incr_maxvalue_pending = (
+                    stored.incr_maxvalue_pending
+                    if stored.incr_maxvalue_pending is not None
+                    else stored.incr_maxvalue
                 )
-
-                row = self.mysql_cursor01.fetchone()
-                self.sqoop_incr_maxvalue_pending = row[0]
                 logging.debug(
                     "sqoopIncrMaxvaluePending = %s" % (self.sqoop_incr_maxvalue_pending)
                 )
@@ -3146,25 +3073,18 @@ class Config(metaclass=Singleton):
             )
 
         # Save the value to the database
-        query = "update import_tables set "
-
         if jdbc_rows_incr != None:
-            query += "source_rowcount_incr = %s " % (jdbc_rows_incr)
             logging.debug(
                 "Source table contains %s rows for the incremental part", jdbc_rows_incr
             )
-
         if jdbc_rows_full != None:
-            if jdbc_rows_incr != None:
-                query += ", "
-            query += "source_rowcount = %s " % (jdbc_rows_full)
             logging.debug("Source table contains %s rows", jdbc_rows_full)
-
-        query += "where table_id = %s" % (self.table_id)
-
-        self.mysql_cursor01.execute(query)
-        self.mysql_conn.commit()
-        logging.debug("SQL Statement executed: %s" % (self.mysql_cursor01.statement))
+        with self._write_import_table() as tables:
+            tables.set_row_counts(
+                self._known_table_id(),
+                source=jdbc_rows_full,
+                source_incr=jdbc_rows_incr,
+            )
 
         logging.debug("Executing import_config.get_jdbc_table_row_count() - Finished")
 
@@ -3191,11 +3111,8 @@ class Config(metaclass=Singleton):
                 "Saving the custom SQL validation data from Source Table to the configuration database"
             )
 
-        query = "update import_tables set validationCustomQuerySourceValue = %s where table_id = %s"
-
-        self.mysql_cursor01.execute(query, (json_value, self.table_id))
-        self.mysql_conn.commit()
-        logging.debug("SQL Statement executed: %s" % (self.mysql_cursor01.statement))
+        with self._write_import_table() as tables:
+            tables.set_custom_query_value(self._known_table_id(), source=json_value)
 
         logging.debug(
             "Executing import_config.save_custom_sql_validation_source_value() - Finished"
@@ -3210,11 +3127,8 @@ class Config(metaclass=Singleton):
                 "Saving the custom SQL validation data from Hive Table to the configuration database"
             )
 
-        query = "update import_tables set validationCustomQueryHiveValue = %s where table_id = %s"
-
-        self.mysql_cursor01.execute(query, (json_value, self.table_id))
-        self.mysql_conn.commit()
-        logging.debug("SQL Statement executed: %s" % (self.mysql_cursor01.statement))
+        with self._write_import_table() as tables:
+            tables.set_custom_query_value(self._known_table_id(), hive=json_value)
 
         logging.debug(
             "Executing import_config.save_custom_sql_validation_hive_value() - Finished"
@@ -3237,16 +3151,11 @@ class Config(metaclass=Singleton):
             return
 
         # Save the value to the database
-        if incr == False:
-            query = "update import_tables set source_rowcount = %s where table_id = %s"
-        else:
-            query = (
-                "update import_tables set source_rowcount_incr = %s where table_id = %s"
-            )
-
-        self.mysql_cursor01.execute(query, (row_count, self.table_id))
-        self.mysql_conn.commit()
-        logging.debug("SQL Statement executed: %s" % (self.mysql_cursor01.statement))
+        with self._write_import_table() as tables:
+            if incr == False:
+                tables.set_row_counts(self._known_table_id(), source=row_count)
+            else:
+                tables.set_row_counts(self._known_table_id(), source_incr=row_count)
 
         logging.debug(
             "Executing import_config.save_source_table_row_count() - Finished"
@@ -3259,10 +3168,8 @@ class Config(metaclass=Singleton):
         )
 
         # Save the value to the database
-        query = "update import_tables set hive_rowcount = %s where table_id = %s"
-        self.mysql_cursor01.execute(query, (row_count, self.table_id))
-        self.mysql_conn.commit()
-        logging.debug("SQL Statement executed: %s" % (self.mysql_cursor01.statement))
+        with self._write_import_table() as tables:
+            tables.set_row_counts(self._known_table_id(), hive=row_count)
 
         logging.debug("Executing import_config.save_hive_table_row_count() - Finished")
 
@@ -3274,16 +3181,8 @@ class Config(metaclass=Singleton):
                 % (max_value)
             )
 
-        query = "update import_tables set "
-        query += "	incr_minvalue = NULL, "
-        query += "	incr_maxvalue = %s, "
-        query += "	incr_minvalue_pending = NULL, "
-        query += "	incr_maxvalue_pending = NULL "
-        query += "where table_id = %s "
-
-        self.mysql_cursor01.execute(query, (max_value, self.table_id))
-        logging.debug("SQL Statement executed: %s" % (self.mysql_cursor01.statement))
-        self.mysql_conn.commit()
+        with self._write_import_table() as tables:
+            tables.reset_incremental_range(self._known_table_id(), max_value)
 
         logging.debug("Executing import_config.reset_sqoop_statistics() - Finished")
 
@@ -3306,49 +3205,35 @@ class Config(metaclass=Singleton):
         except TypeError:
             self.sqoop_last_execution_timestamp = None
 
-        query_param = []
-        query = "update import_tables set "
-        query += "	sqoop_last_execution = %s "
-        query_param.append(sqoop_start_uts)
-
         if sqoop_size != None:
-            query += "  ,sqoop_last_size = %s "
             self.sqoop_last_size = sqoop_size
-            query_param.append(sqoop_size)
-
         if sqoop_rows != None:
-            query += "  ,sqoop_last_rows = %s "
             self.sqoop_last_rows = sqoop_rows
-            query_param.append(sqoop_rows)
-
         if sqoop_incr_maxvalue_pending != None:
-            query += "  ,incr_maxvalue_pending = %s "
             self.sqoop_incr_maxvalue_pending = sqoop_incr_maxvalue_pending
-            query_param.append(sqoop_incr_maxvalue_pending)
-
         if sqoop_mappers != None:
-            query += "  ,sqoop_last_mappers = %s "
             self.sqoop_last_mappers = sqoop_mappers
-            query_param.append(sqoop_mappers)
 
+        source_row_counts: tuple[int | None, int | None] | None = None
         if self.validate_source == "sqoop" and self.validation_method == "rowCount":
             logging.info(
                 "Saving the imported row count as the number of rows in the source system."
             )
             if self.import_is_incremental:
-                query += "  ,source_rowcount = NULL "
-                query += "  ,source_rowcount_incr = %s "
+                source_row_counts = (None, sqoop_rows)
             else:
-                query += "  ,source_rowcount = %s "
-                query += "  ,source_rowcount_incr = NULL "
-            query_param.append(sqoop_rows)
+                source_row_counts = (sqoop_rows, None)
 
-        query += "where table_id = %s "
-        query_param.append(self.table_id)
-
-        self.mysql_cursor01.execute(query, query_param)
-        logging.debug("SQL Statement executed: %s" % (self.mysql_cursor01.statement))
-        self.mysql_conn.commit()
+        with self._write_import_table() as tables:
+            tables.save_import_statistics(
+                self._known_table_id(),
+                sqoop_start_uts,
+                size=sqoop_size,
+                rows=sqoop_rows,
+                incr_maxvalue_pending=sqoop_incr_maxvalue_pending,
+                mappers=sqoop_mappers,
+                source_row_counts=source_row_counts,
+            )
 
         logging.debug("Executing import_config.save_import_statistics() - Finished")
 
@@ -3655,22 +3540,10 @@ class Config(metaclass=Singleton):
         logging.debug("Executing import_config.get_hive_table_comment()")
         hive_column_definition = ""
 
-        query = "select comment from import_tables where table_id = %s "
-        self.mysql_cursor01.execute(query, (self.table_id,))
-        logging.debug("SQL Statement executed: %s" % (self.mysql_cursor01.statement))
-
-        if self.mysql_cursor01.rowcount == 0:
-            logging.error("Error: Zero rows returned from query on 'import_table'")
-            logging.error(
-                "SQL Statement that generated the error: %s"
-                % (self.mysql_cursor01.statement)
-            )
-            raise Exception
-
-        row = self.mysql_cursor01.fetchone()
+        comment = self._stored_import_table().comment
 
         logging.debug("Executing import_config.get_hive_table_comment() - Finished")
-        return row[0]
+        return comment
 
     def validate_custom_query(self) -> bool:
         """Validates the custom queries"""
@@ -3728,7 +3601,7 @@ class Config(metaclass=Singleton):
                         "validateSqoop == False & self.import_is_incremental == False"
                     )
                     # Standard full validation
-                    query = "select source_rowcount, hive_rowcount from import_tables where table_id = %s "
+                    incr_count = False
                     if self.etl_engine == constant.ETL_ENGINE_HIVE:
                         validate_text_target = "Hive table"
                     else:
@@ -3741,7 +3614,7 @@ class Config(metaclass=Singleton):
                     )
                     # We are not validating the sqoop import, but the validation is an incremental import and
                     # we are going to validate all the data
-                    query = "select source_rowcount, hive_rowcount from import_tables where table_id = %s "
+                    incr_count = False
                     validate_text_target = "Hive table"
                     validate_text_source = "Source table"
                     validate_text = validate_text_target
@@ -3749,7 +3622,7 @@ class Config(metaclass=Singleton):
                     logging.debug("validateSqoop == False & else")
                     # We are not validating the sqoop import, but the validation is an incremental import and
                     # we are going to validate only the incremental part of the import (what sqoop imported)
-                    query = "select source_rowcount_incr, hive_rowcount from import_tables where table_id = %s "
+                    incr_count = True
                     validate_text_target = "Hive table (incr)"
                     validate_text_source = "Source table (incr)"
                     validate_text = "Hive table"
@@ -3759,30 +3632,25 @@ class Config(metaclass=Singleton):
                         "validateSqoop == True & self.import_is_incremental == False"
                     )
                     # Sqoop validation for full imports
-                    query = (
-                        "select source_rowcount from import_tables where table_id = %s "
-                    )
+                    incr_count = False
                     validate_text_target = "%s import" % (self.import_tool.capitalize())
                     validate_text_source = "Source table"
                     validate_text = validate_text_target
                 else:
                     logging.debug("validateSqoop == True & else")
                     # Sqoop validation for incremental imports
-                    query = "select source_rowcount_incr from import_tables where table_id = %s "
+                    incr_count = True
                     validate_text_target = "%s import (incr)" % (
                         self.import_tool.capitalize()
                     )
                     validate_text_source = "Source table (incr)"
                     validate_text = "%s import" % (self.import_tool.capitalize())
-            self.mysql_cursor01.execute(query, (self.table_id,))
-            logging.debug(
-                "SQL Statement executed: %s" % (self.mysql_cursor01.statement)
+            stored = self._stored_import_table()
+            source_rowcount = (
+                stored.source_rowcount_incr if incr_count else stored.source_rowcount
             )
-
-            row = self.mysql_cursor01.fetchone()
-            source_rowcount = row[0]
             if not validate_sqoop:
-                target_rowcount = row[1]
+                target_rowcount = stored.hive_rowcount
             else:
                 target_rowcount = self.sqoop_last_rows
                 if target_rowcount == -1:
@@ -3867,13 +3735,9 @@ class Config(metaclass=Singleton):
         return_value = None
 
         # First fetch the override if it exists
-        query = "select pk_column_override, pk_column_override_mergeonly from import_tables where table_id = %s "
-        self.mysql_cursor01.execute(query, (self.table_id,))
-        logging.debug("SQL Statement executed: %s" % (self.mysql_cursor01.statement))
-
-        row = self.mysql_cursor01.fetchone()
-        self.pk_column_override = row[0]
-        self.pk_column_override_mergeonly = row[1]
+        stored = self._stored_import_table()
+        self.pk_column_override = stored.pk_column_override
+        self.pk_column_override_mergeonly = stored.pk_column_override_mergeonly
 
         if self.import_phase == constant.IMPORT_PHASE_MSSQL_CHANGE_TRACKING:
             if (
@@ -4232,38 +4096,18 @@ class Config(metaclass=Singleton):
         logging.debug("Executing import_config.get_import_tables()")
         result_df = None
 
-        query = "select "
-        query += "	hive_db, "
-        query += "	hive_table, "
-        query += "	dbalias, "
-        query += "	source_schema, "
-        query += "	source_table "
-        query += "from import_tables "
-        query += "where hive_db = %s"
-
-        self.mysql_cursor01.execute(query, (hive_db,))
-        logging.debug("SQL Statement executed: %s" % (self.mysql_cursor01.statement))
-
-        if self.mysql_cursor01.rowcount == 0:
-            return pd.DataFrame(
-                columns=[
-                    "hive_db",
-                    "hive_table",
-                    "dbalias",
-                    "source_schema",
-                    "source_table",
-                ]
-            )
-
-        result_df = pd.DataFrame(self.mysql_cursor01.fetchall())
-
-        # Set the correct column namnes in the DataFrame
-        result_df_columns = []
-        for columns in self.mysql_cursor01.description:
-            result_df_columns.append(
-                columns[0]
-            )  # Name of the column is in the first position
-        result_df.columns = result_df_columns
+        with Session(config_engine.engine()) as session:
+            tables = ImportTablesRepository(session).tables_of_database(hive_db)
+        result_df = pd.DataFrame(
+            tables,
+            columns=[
+                "hive_db",
+                "hive_table",
+                "dbalias",
+                "source_schema",
+                "source_table",
+            ],
+        )
 
         logging.debug("Executing import_config.get_import_tables() - Finished")
         return result_df
@@ -4282,46 +4126,18 @@ class Config(metaclass=Singleton):
         return_value = True
 
         if catalog == constant.CATALOG_HIVE_DIRECT:
-            query = (
-                "insert into import_tables "
-                "("
-                "    hive_db, "
-                "    hive_table, "
-                "    dbalias, "
-                "    source_schema, "
-                "    source_table,  "
-                "    etl_engine  "
-                ") values ( %s, %s, %s, %s, %s, 'hive' )"
-            )
+            etl_engine = constant.ETL_ENGINE_HIVE
         elif catalog == constant.CATALOG_GLUE:
-            query = (
-                "insert into import_tables "
-                "("
-                "    hive_db, "
-                "    hive_table, "
-                "    dbalias, "
-                "    source_schema, "
-                "    source_table,  "
-                "    etl_engine  "
-                ") values ( %s, %s, %s, %s, %s, 'spark' )"
-            )
+            etl_engine = constant.ETL_ENGINE_SPARK
         else:
             raise InvalidConfigurationError(
                 "catalog option supplied to import_config.add_import_table does not contain a valid option"
             )
 
-        logging.debug("hiveDB:    %s", hive_db)
-        logging.debug("hiveTable: %s", hive_table)
-        logging.debug("dbalias:   %s", dbalias)
-        logging.debug("schema:    %s", schema)
-        logging.debug("table:     %s", table)
-
         try:
-            self.mysql_cursor01.execute(
-                query, (hive_db, hive_table, dbalias, schema, table)
-            )
-            self.mysql_conn.commit()
-        except mysql.connector.errors.IntegrityError:
+            with self._write_import_table() as tables:
+                tables.add(hive_db, hive_table, dbalias, schema, table, etl_engine)
+        except sa.exc.IntegrityError:
             logging.warning(
                 "Hive table %s.%s cant be added as it's not unique in the configuration database",
                 hive_db,
@@ -4442,16 +4258,8 @@ class Config(metaclass=Singleton):
         else:
             logging.info("Reseting incremental values for import.")
 
-        query = "update import_tables set "
-        query += "  incr_minvalue = NULL, "
-        query += "  incr_maxvalue = %s, "
-        query += "  incr_minvalue_pending = NULL, "
-        query += "  incr_maxvalue_pending = NULL "
-        query += "where table_id = %s "
-
-        self.mysql_cursor01.execute(query, (max_value, self.table_id))
-        logging.debug("SQL Statement executed: %s" % (self.mysql_cursor01.statement))
-        self.mysql_conn.commit()
+        with self._write_import_table() as tables:
+            tables.reset_incremental_range(self._known_table_id(), max_value)
 
         logging.debug("Executing import_config.reset_incr_min_max_values() - Finished")
 
