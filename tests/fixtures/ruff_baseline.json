@@ -82,11 +82,11 @@
   },
   "src/dbimport/config_db/import_config.py": {
     "B904": 3,
-    "E711": 83,
+    "E711": 82,
     "E712": 39,
     "F841": 4,
-    "G002": 89,
-    "UP031": 144
+    "G002": 63,
+    "UP031": 115
   },
   "src/dbimport/config_db/import_stage.py": {
     "E711": 7,
