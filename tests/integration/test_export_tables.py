@@ -456,3 +456,28 @@ def test_add_export_table_stores_it_and_refuses_a_second_one(
         DBALIAS,
         SCHEMA,
     )
+
+
+def test_write_before_get_export_config_raises_and_stores_nothing(
+    target: sa.Connection,
+) -> None:
+    _add_export(target)
+    config = export_config.Config(DBALIAS, SCHEMA, TABLE)
+
+    with pytest.raises(InvalidConfigurationError, match="not been read"):
+        config.save_hive_table_row_count(42)
+
+    assert _row(target, "hive_rowcount") == (None,)
+
+
+@pytest.mark.parametrize(
+    "method", ["is_there_incr_data_to_export", "calculate_job_mappers"]
+)
+def test_reading_the_row_again_after_it_was_deleted_raises(
+    target: sa.Connection, method: str
+) -> None:
+    config = _config(target, **INCREMENTAL)
+    target.execute(sa.text("DELETE FROM export_tables"))
+
+    with pytest.raises(InvalidConfigurationError, match="can't be found"):
+        getattr(config, method)()
