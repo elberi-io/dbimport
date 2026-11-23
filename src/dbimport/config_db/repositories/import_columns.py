@@ -17,7 +17,8 @@
 """Import columns: the columns, indexes and foreign keys of an imported
 table as the last read of the source schema found them."""
 
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
+from datetime import datetime
 from typing import Any, TypeVar
 
 from pydantic import BaseModel, ConfigDict
@@ -52,6 +53,13 @@ class ImportColumn(BaseModel):
     include_in_import: int
     comment: str | None
     anonymization_function: str
+    column_order: int | None
+    source_column_type: str
+    source_database_type: str | None
+    force_string: int
+    source_primary_key: int | None
+    last_update_from_source: datetime
+    operator_notes: str | None
 
 
 class SourceColumn(BaseModel):
@@ -207,6 +215,42 @@ class ImportColumnsRepository:
             )
             .values(source_primary_key=position)
         )
+
+    def columns_of_table(self, hive_db: str, hive_table: str) -> list[ImportColumn]:
+        """Every stored column with this Hive database and table, in their
+        order."""
+        rows = self._session.scalars(
+            select(ImportColumns)
+            .where(
+                ImportColumns.hive_db == hive_db, ImportColumns.hive_table == hive_table
+            )
+            .order_by(ImportColumns.column_order)
+        )
+        return [ImportColumn.model_validate(row) for row in rows]
+
+    def save_column(self, table_id: int, settings: Mapping[str, object]) -> None:
+        """Creates the column, or replaces the given settings on the stored
+        column of the table with the same column_name. Raises
+        MultipleResultsFound when more than one has that name."""
+        column_id = self._session.scalars(
+            select(ImportColumns.column_id).where(
+                ImportColumns.table_id == table_id,
+                ImportColumns.column_name == settings["column_name"],
+            )
+        ).one_or_none()
+        if column_id is None:
+            self._session.execute(
+                insert(ImportColumns).values(table_id=table_id, **settings)
+            )
+        else:
+            self._session.execute(
+                update(ImportColumns)
+                .where(
+                    ImportColumns.table_id == table_id,
+                    ImportColumns.column_id == column_id,
+                )
+                .values(**settings)
+            )
 
     def remove_indexes(self, table_id: int) -> None:
         self._session.execute(
