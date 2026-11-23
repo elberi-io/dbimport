@@ -677,8 +677,45 @@ def test_reading_the_columns_without_current_columns_raises(
     config = _config(conn)
     _add_column(conn, _table_id(config), "Gone", 1, last_update_from_source=STALE)
 
-    with pytest.raises(Exception):  # noqa: B017 (records the bare Exception)
+    with pytest.raises(
+        InvalidConfigurationError, match="no columns from the last read"
+    ):
         getattr(config, method)()
+
+
+def test_save_key_data_for_a_column_that_is_not_stored_raises(
+    conn: sa.Connection,
+) -> None:
+    _referenced_table(conn)
+    config = _config(conn)
+    _common(config).source_keys_df = _source_keys(
+        ("fk_customer", "F", "CustomerId", "customers", "id", 1),
+    )
+
+    with pytest.raises(InvalidConfigurationError, match="CustomerId"):
+        config.save_key_data()
+
+    assert _rows(conn, FK_FIELDS) == []
+
+
+def test_save_index_data_without_source_indexes_removes_the_stored_ones(
+    conn: sa.Connection,
+) -> None:
+    config = _config(conn)
+    conn.execute(
+        sa.text(
+            "INSERT INTO import_tables_indexes (table_id, hive_db, hive_table,"
+            " index_name, index_type, index_unique, `column`, column_type,"
+            " column_order, column_is_nullable) VALUES (:t, 'testdb', 'testtable',"
+            " 'idx_old', 'BTREE', 'Unique', 'ID', 'int(11)', 1, 0)"
+        ),
+        {"t": _table_id(config)},
+    )
+    _common(config).source_index_df = pd.DataFrame()
+
+    config.save_index_data()
+
+    assert _rows(conn, INDEX_FIELDS) == []
 
 
 def test_get_select_for_import_view_casts_columns_with_a_sqoop_type(
