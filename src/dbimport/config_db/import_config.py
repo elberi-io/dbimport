@@ -19,12 +19,11 @@ import json
 import logging
 import math
 import re
-from collections.abc import Callable, Iterator
+from collections.abc import Callable, Iterator, Sequence
 from contextlib import contextmanager
 from datetime import datetime
-from typing import Any
+from typing import Any, TypeVar
 
-import mysql.connector
 import numpy as np
 import pandas as pd
 import sqlalchemy as sa
@@ -42,11 +41,18 @@ from dbimport.config_db import common_config, send_statistics
 from dbimport.config_db import engine as config_engine
 from dbimport.config_db import import_stage as stage
 from dbimport.config_db.repositories.connections import ConnectionsRepository
+from dbimport.config_db.repositories.import_columns import (
+    ImportColumn,
+    ImportColumnsRepository,
+    SourceColumn,
+)
 from dbimport.config_db.repositories.import_tables import (
     GeneratedDefinitions,
     ImportTable,
     ImportTablesRepository,
 )
+
+_T = TypeVar("_T")
 
 
 class Config(metaclass=Singleton):
@@ -402,13 +408,27 @@ class Config(metaclass=Singleton):
         )
 
     @contextmanager
-    def _write_import_table(self) -> Iterator[ImportTablesRepository]:
+    def _write_session(self) -> Iterator[Session]:
         # Raw queries still read import_tables: they must not keep a
         # snapshot from before this write. TODO(#238): remove with them.
         self.mysql_conn.commit()
         with Session(config_engine.engine()) as session:
-            yield ImportTablesRepository(session)
+            yield session
             session.commit()
+
+    @contextmanager
+    def _write_import_table(self) -> Iterator[ImportTablesRepository]:
+        with self._write_session() as session:
+            yield ImportTablesRepository(session)
+
+    @contextmanager
+    def _write_import_columns(self) -> Iterator[ImportColumnsRepository]:
+        with self._write_session() as session:
+            yield ImportColumnsRepository(session)
+
+    def _read_import_columns(self, read: Callable[[ImportColumnsRepository], _T]) -> _T:
+        with Session(config_engine.engine()) as session:
+            return read(ImportColumnsRepository(session))
 
     def _read_import_table(
         self, read: Callable[[ImportTablesRepository], ImportTable | None]
@@ -420,6 +440,21 @@ class Config(metaclass=Singleton):
             raise InvalidConfigurationError(
                 f"The import table {self.hive_db}.{self.hive_table} has an invalid value in the configuration database: {err}"
             ) from err
+
+    def _current_columns(
+        self, *, imported_only: bool = False, column_names: Sequence[str] = ()
+    ) -> list[ImportColumn]:
+        table_id = self._known_table_id()
+        current = self._read_import_columns(
+            lambda columns: columns.current_columns(
+                table_id, imported_only=imported_only, column_names=column_names
+            )
+        )
+        if not current:
+            raise InvalidConfigurationError(
+                f"The import table {self.hive_db}.{self.hive_table} has no columns from the last read of the source schema in the configuration database"
+            )
+        return current
 
     def _known_table_id(self) -> int:
         if self.table_id is None:
@@ -1427,12 +1462,10 @@ class Config(metaclass=Singleton):
         logging.debug("")
         logging.debug("Executing import_config.remove_fk_for_table()")
 
-        query = "delete from import_foreign_keys where table_id = %s"
         logging.debug("")
         logging.debug("Deleting FK's from import_foreign_keys")
-        self.mysql_cursor01.execute(query, (self.table_id,))
-        logging.debug("SQL Statement executed: %s" % (self.mysql_cursor01.statement))
-        self.mysql_conn.commit()
+        with self._write_import_columns() as columns:
+            columns.remove_foreign_keys(self._known_table_id())
 
         logging.debug("Executing import_config.remove_fk_for_table() - Finished")
 
@@ -1463,44 +1496,24 @@ class Config(metaclass=Singleton):
         work_string = work_string.replace('"', "")
         return work_string.strip()
 
-    def get_column_force_string(self, column_name: str) -> bool:
+    def get_column_force_string(
+        self, columns: ImportColumnsRepository, column_name: str
+    ) -> bool:
         logging.debug("Executing import_config.get_column_force_string()")
         # Used to determine if char/varchar fields should be forced to string in Hive
 
-        query = "select "
-        query += "	jc.force_string, "
-        query += "	t.force_string, "
-        query += "	c.force_string "
-        query += "from import_tables t "
-        query += "left join jdbc_connections jc "
-        query += "	on t.dbalias = jc.dbalias "
-        query += "left join import_columns c "
-        query += "	on c.table_id = t.table_id "
-        query += "	and c.column_name = %s "
-        query += "where "
-        query += "	t.hive_db = %s "
-        query += "	and t.hive_table = %s "
-
-        self.mysql_cursor01.execute(
-            query, (column_name.lower(), self.hive_db, self.hive_table)
+        settings = columns.force_string_settings(
+            self._known_table_id(), column_name.lower()
         )
-        logging.debug("SQL Statement executed: %s" % (self.mysql_cursor01.statement))
 
-        if self.mysql_cursor01.rowcount != 1:
+        if len(settings) != 1:
             logging.error(
                 "Error: Number of rows returned from query on 'import_tables' was not one."
             )
-            logging.error("Rows returned: %d" % (self.mysql_cursor01.rowcount))
-            logging.error(
-                "SQL Statement that generated the error: %s"
-                % (self.mysql_cursor01.statement)
-            )
+            logging.error("Rows returned: %d" % (len(settings)))
             raise Exception
 
-        row = self.mysql_cursor01.fetchone()
-        force_string_connection = row[0]
-        force_string_table = row[1]
-        force_string_column = row[2]
+        force_string_connection, force_string_table, force_string_column = settings[0]
 
         if force_string_column == 0:
             force_string = False
@@ -1546,23 +1559,16 @@ class Config(metaclass=Singleton):
         """Reads all columns and returns a dict with column name and anonymization function"""
         logging.debug("Executing import_config.get_anonymization_function()")
 
-        query = "select "
-        query += "	source_column_name, "
-        query += "	anonymization_function "
-        query += "from import_columns where table_id = %s and anonymization_function != 'None'"
-        self.mysql_cursor01.execute(query, (self.table_id,))
-        logging.debug("SQL Statement executed: \n%s" % (self.mysql_cursor01.statement))
+        table_id = self._known_table_id()
+        rows = self._read_import_columns(
+            lambda columns: columns.anonymized_columns(table_id)
+        )
 
         result_df = pd.DataFrame()
-        result_df = pd.DataFrame(self.mysql_cursor01.fetchall())
-        if result_df.empty == False:
-            # Set the correct column namnes in the DataFrame
-            result_df_columns = []
-            for columns in self.mysql_cursor01.description:
-                result_df_columns.append(
-                    columns[0]
-                )  # Name of the column is in the first position
-            result_df.columns = result_df_columns
+        if rows:
+            result_df = pd.DataFrame(
+                rows, columns=["source_column_name", "anonymization_function"]
+            )
 
         logging.debug("Executing import_config.get_anonymization_function() - Finished")
         return result_df
@@ -1583,11 +1589,36 @@ class Config(metaclass=Singleton):
         # SOURCE_COLUMN_TYPE
         # TABLE_COMMENT
         # TABLE_NAME
+        with self._write_import_columns() as columns:
+            column_name_reserved = self._save_source_columns(columns)
+
+        # Some columnnames are reserved. But in order to change them, we need the information inside import_columns. So we just mark
+        # the columns with columnNameReserved = True and saves the data. After the save we check if it's equal to True
+        # and raise an exception. This way, the user have a chance to fix the problem
+
+        if column_name_reserved:
+            raise InvalidConfigurationError(
+                "There are columns with reserved words. DBImport cant continue until that is handled"
+            )
+
+        logging.debug("Settings from import_config.save_column_data()")
+        logging.debug("    sqlGeneratedSqoopQuery = %s", self.sql_generated_sqoop_query)
+        logging.debug(
+            "    sqlGeneratedHiveColumnDefinition = %s",
+            self.sql_generated_hive_column_definition,
+        )
+        logging.debug("Executing import_config.save_column_data() - Finished")
+
+    def _save_source_columns(self, columns: ImportColumnsRepository) -> bool:
+        """Saves every source column with its Hive type and builds the
+        generated Hive definition and query; True when a column name is
+        reserved in sqoop."""
+        table_id = self._known_table_id()
         self.sql_generated_hive_column_definition = ""
         self.sql_generated_sqoop_query = ""
         self.sqoop_mapcolumnjava = []
-        column_order = 0
         self.sqoop_use_generated_sql = False
+        column_order = 0
         column_name_reserved = False
 
         for _index, row in self.common_config.source_columns_df.iterrows():
@@ -1606,20 +1637,7 @@ class Config(metaclass=Singleton):
             self.table_comment = self.strip_unwanted_char_comment(row["TABLE_COMMENT"])
 
             # Get the settings for this specific column
-            query = "select "
-            query += "	column_id, "
-            query += "	include_in_import, "
-            query += "	column_name_override, "
-            query += "	column_type_override, "
-            query += "	sqoop_column_type_override, "
-            query += "	anonymization_function "
-            query += (
-                "from import_columns where table_id = %s and source_column_name = %s "
-            )
-            self.mysql_cursor01.execute(query, (self.table_id, source_column_name))
-            logging.debug(
-                "SQL Statement executed: \n%s" % (self.mysql_cursor01.statement)
-            )
+            stored_column = columns.column(table_id, source_column_name)
 
             include_column_in_import = True
             column_id = None
@@ -1627,21 +1645,21 @@ class Config(metaclass=Singleton):
             sqoop_column_type_override = None
             anonymization_function = "None"
 
-            column_row = self.mysql_cursor01.fetchone()
-            if column_row != None:
-                column_id = column_row[0]
-                if column_row[1] == 0:
+            if stored_column is not None:
+                column_id = stored_column.column_id
+                if stored_column.include_in_import == 0:
                     include_column_in_import = False
-                if column_row[2] != None and column_row[2].strip() != "":
-                    column_name = column_row[2].strip().lower()
-                if column_row[3] != None and column_row[3].strip() != "":
-                    column_type_override = column_row[3].strip().lower()
-                if column_row[4] != None and column_row[4].strip() != "":
-                    sqoop_column_type_override = (
-                        column_row[4].strip().lower().capitalize()
-                    )
+                override = stored_column.column_name_override
+                if override is not None and override.strip() != "":
+                    column_name = override.strip().lower()
+                override = stored_column.column_type_override
+                if override is not None and override.strip() != "":
+                    column_type_override = override.strip().lower()
+                override = stored_column.sqoop_column_type_override
+                if override is not None and override.strip() != "":
+                    sqoop_column_type_override = override.strip().lower().capitalize()
 
-                anonymization_function = column_row[5]
+                anonymization_function = stored_column.anonymization_function
 
             # Handle reserved column names in Hive
             column_name = self.convert_hive_column_name_reserved_words(column_name)
@@ -1915,7 +1933,7 @@ class Config(metaclass=Singleton):
                 column_type.startswith("char(") == True
                 or column_type.startswith("varchar(") == True
             ):
-                column_force_string = self.get_column_force_string(column_name)
+                column_force_string = self.get_column_force_string(columns, column_name)
                 if column_force_string:
                     column_type = "string"
 
@@ -2011,94 +2029,23 @@ class Config(metaclass=Singleton):
                             % (source_column_name)
                         )
 
-            if column_id == None:
-                query = (
-                    "insert into import_columns "
-                    "("
-                    "    table_id,"
-                    "    hive_db,"
-                    "    hive_table,"
-                    "    column_name,"
-                    "    column_order,"
-                    "    source_column_name,"
-                    "    column_type,"
-                    "    source_column_type,"
-                    "    source_database_type,"
-                    "    sqoop_column_type,"
-                    "    last_update_from_source,"
-                    "    comment"
-                    ") values ( %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s )"
-                )
-
-                self.mysql_cursor01.execute(
-                    query,
-                    (
-                        self.table_id,
-                        self.hive_db,
-                        self.hive_table,
-                        column_name.lower(),
-                        column_order,
-                        source_column_name,
-                        column_type,
-                        source_column_type,
-                        self.common_config.jdbc_servertype,
-                        sqoop_column_type,
-                        self.start_date,
-                        source_column_comment,
-                    ),
-                )
-                logging.debug(
-                    "SQL Statement executed: %s" % (self.mysql_cursor01.statement)
-                )
-            else:
-                query = (
-                    "update import_columns set "
-                    "    hive_db = %s, "
-                    "    hive_table = %s, "
-                    "    column_name = %s, "
-                    "    column_order = %s, "
-                    "    column_type = %s, "
-                    "    source_column_type = %s, "
-                    "    source_database_type = %s, "
-                    "    sqoop_column_type = %s, "
-                    "    source_primary_key = NULL, "
-                    "    last_update_from_source = %s, "
-                    "    comment = %s "
-                    "where table_id = %s and source_column_name = %s "
-                )
-
-                self.mysql_cursor01.execute(
-                    query,
-                    (
-                        self.hive_db,
-                        self.hive_table,
-                        column_name.lower(),
-                        column_order,
-                        column_type,
-                        source_column_type,
-                        self.common_config.jdbc_servertype,
-                        sqoop_column_type,
-                        self.start_date,
-                        source_column_comment,
-                        self.table_id,
-                        source_column_name,
-                    ),
-                )
-                logging.debug(
-                    "SQL Statement executed: %s" % (self.mysql_cursor01.statement)
-                )
-
-        # Commit all the changes to the import_column column
-        self.mysql_conn.commit()
-
-        # Some columnnames are reserved. But in order to change them, we need the information inside import_columns. So we just mark
-        # the columns with columnNameReserved = True and saves the data. After the save we check if it's equal to True
-        # and raise an exception. This way, the user have a chance to fix the problem
-
-        if column_name_reserved:
-            raise InvalidConfigurationError(
-                "There are columns with reserved words. DBImport cant continue until that is handled"
+            source_column = SourceColumn(
+                hive_db=self.hive_db,
+                hive_table=self.hive_table,
+                column_name=column_name.lower(),
+                column_order=column_order,
+                source_column_name=source_column_name,
+                column_type=column_type,
+                source_column_type=source_column_type,
+                source_database_type=self.common_config.jdbc_servertype,
+                sqoop_column_type=sqoop_column_type,
+                last_update_from_source=self.start_date,
+                comment=source_column_comment,
             )
+            if column_id == None:
+                columns.add_source_column(table_id, source_column)
+            else:
+                columns.update_source_column(table_id, source_column)
 
         # Add the source the to the generated sql query
         self.sql_generated_sqoop_query += " from %s" % (
@@ -2112,13 +2059,7 @@ class Config(metaclass=Singleton):
             "( " + self.sql_generated_hive_column_definition + " )"
         )
 
-        logging.debug("Settings from import_config.save_column_data()")
-        logging.debug("    sqlGeneratedSqoopQuery = %s", self.sql_generated_sqoop_query)
-        logging.debug(
-            "    sqlGeneratedHiveColumnDefinition = %s",
-            self.sql_generated_hive_column_definition,
-        )
-        logging.debug("Executing import_config.save_column_data() - Finished")
+        return column_name_reserved
 
     def is_column_name_reserved_in_sqoop(self, column_name: str) -> bool:
         """Returns True or False depending if the column_name is reserved in Sqoop"""
@@ -2183,11 +2124,13 @@ class Config(metaclass=Singleton):
         # TABLE_NAME
 
         self.generated_pk_columns = ""
+        key_positions: list[tuple[str, object]] = []
 
         for _index, row in self.common_config.source_keys_df.iterrows():
             key_type = row["CONSTRAINT_TYPE"]
             key_id = row["COL_KEY_POSITION"]
             column_name = self.strip_unwanted_char_column_name(row["COL_NAME"])
+            key_column = column_name
 
             # Handle reserved column names in Hive
             if column_name == "date":
@@ -2210,20 +2153,12 @@ class Config(metaclass=Singleton):
             if len(self.generated_pk_columns) > 0:
                 self.generated_pk_columns += ","
             self.generated_pk_columns += column_name
+            key_positions.append((key_column, key_id))
 
-            query = (
-                "update import_columns set "
-                "    source_primary_key = %s "
-                "where table_id = %s and lower(source_column_name) = %s "
-            )
-
-            self.mysql_cursor01.execute(query, (key_id, self.table_id, column_name))
-            logging.debug(
-                "SQL Statement executed: %s" % (self.mysql_cursor01.statement)
-            )
-
-        # Commit all the changes to the import_column column
-        self.mysql_conn.commit()
+        table_id = self._known_table_id()
+        with self._write_import_columns() as columns:
+            for column_name, key_id in key_positions:
+                columns.set_primary_key_position(table_id, column_name, key_id)
 
         logging.debug("Executing import_config.set_primary_key_column() - Finished")
 
@@ -2233,43 +2168,15 @@ class Config(metaclass=Singleton):
         logging.debug("Executing import_config.save_index_data()")
         logging.info("Saving index metadata to MySQL table - import_tables_indexes")
 
-        try:
-            query = "delete from import_tables_indexes where table_id = %s"
-            self.mysql_cursor01.execute(query, (self.table_id,))
-            logging.debug(
-                "SQL Statement executed: %s" % (self.mysql_cursor01.statement)
-            )
-        except mysql.connector.errors.IntegrityError as e:
-            logging.error(
-                "Unknown error when deleting old index data from DBImport configuration database"
-            )
-            raise (e)
-
+        index_columns: list[dict[str, object]] = []
         try:
             for _index, row in self.common_config.source_index_df.sort_values(
                 by=["Name", "ColumnOrder"]
             ).iterrows():
-                # Save the Index data to the MySQL table
-                query = (
-                    "insert into import_tables_indexes "
-                    "("
-                    "    `table_id`, "
-                    "    `hive_db`, "
-                    "    `hive_table`, "
-                    "    `index_name`, "
-                    "    `index_type`, "
-                    "    `index_unique`, "
-                    "    `column`, "
-                    "    `column_type`, "
-                    "    `column_order`, "
-                    "    `column_is_nullable` "
-                    ") values ( %s, %s, %s, %s, %s, %s, %s, %s, %s, %s )"
-                )
-
                 try:
                     column_type = self.common_config.source_columns_df.loc[
                         self.common_config.source_columns_df["SOURCE_COLUMN_NAME"]
-                        == row[3],
+                        == row.iloc[3],
                         "SOURCE_COLUMN_TYPE",
                     ].iloc[0]
                 except IndexError:
@@ -2277,38 +2184,30 @@ class Config(metaclass=Singleton):
                     # If that is the case, we will get an IndexError here and that is what we need to handle as it obvious is incorrect
                     continue
 
-                try:
-                    self.mysql_cursor02.execute(
-                        query,
-                        (
-                            self.table_id,
-                            self.hive_db,
-                            self.hive_table,
-                            row[0],
-                            row[1],
-                            row[2],
-                            row[3],
-                            column_type,
-                            row[4],
-                            row[5],
-                        ),
-                    )
-                    self.mysql_conn.commit()
-                    logging.debug(
-                        "SQL Statement executed: %s" % (self.mysql_cursor02.statement)
-                    )
-                except mysql.connector.errors.IntegrityError as e:
-                    if "Duplicate entry" in str(e):
-                        logging.warning(
-                            "Table indexes cant be saved as name/id is not unique in DBImport Configuration Database"
-                        )
-                    else:
-                        logging.error(
-                            "Unknown error when saving index data to DBImport configuration database"
-                        )
-                        raise (e)
+                index_columns.append(
+                    {
+                        "index_name": row.iloc[0],
+                        "index_type": row.iloc[1],
+                        "index_unique": row.iloc[2],
+                        "column": row.iloc[3],
+                        "column_type": column_type,
+                        "column_order": row.iloc[4],
+                        "column_is_nullable": row.iloc[5],
+                    }
+                )
         except KeyError:
             pass
+
+        table_id = self._known_table_id()
+        with self._write_import_columns() as columns:
+            columns.remove_indexes(table_id)
+            for index_column in index_columns:
+                if not columns.add_index_column(
+                    table_id, self.hive_db, self.hive_table, index_column
+                ):
+                    logging.warning(
+                        "Table indexes cant be saved as name/id is not unique in DBImport Configuration Database"
+                    )
 
         logging.debug("Executing import_config.save_index_data() - Finished")
 
@@ -2350,6 +2249,7 @@ class Config(metaclass=Singleton):
             self.common_config.source_keys_df["CONSTRAINT_TYPE"] == key_type_reference
         ]
 
+        foreign_key_columns: list[tuple[int, str, str, str, str, object]] = []
         # Loop through all unique ForeignKeys that is presented in the source.
         for source_fk in source_fk_df.CONSTRAINT_NAME.unique():
             logging.debug("Parsing FK with name '%s'" % (source_fk))
@@ -2378,115 +2278,70 @@ class Config(metaclass=Singleton):
                 if self.common_config.db_mysql == True:
                     ref_schema_name = "-"
 
+                foreign_key_columns.append(
+                    (
+                        fk_index,
+                        column_name,
+                        ref_schema_name,
+                        ref_table_name,
+                        ref_column_name,
+                        key_position,
+                    )
+                )
+
+        table_id = self._known_table_id()
+        with self._write_import_columns() as columns:
+            for (
+                fk_index,
+                column_name,
+                ref_schema_name,
+                ref_table_name,
+                ref_column_name,
+                key_position,
+            ) in foreign_key_columns:
                 # Select table_id's that matches the source based on dbalias, schema and table name
                 # This can be many table_id's as we might have imported the same source multiple times
                 # under different names.
                 # Right now, we only support reference to one table per FK. If we have imported the same table more than once
                 # the FK will add with primary key validation. To get this error, remove the "limit 1" in the sql statement and import
                 # the same source table twice
-                query = "select table_id from import_tables where dbalias = %s and source_schema = %s and source_table = %s limit 1"
-                self.mysql_cursor01.execute(
-                    query, (self.connection_alias, ref_schema_name, ref_table_name)
+                ref_table_id = columns.imported_table_id(
+                    self.connection_alias, ref_schema_name, ref_table_name
                 )
-                logging.debug(
-                    "SQL Statement executed: %s" % (self.mysql_cursor01.statement)
-                )
-
-                if self.mysql_cursor01.rowcount == 0:
+                if ref_table_id is None:
                     logging.warning(
                         "Reference table '%s.%s' on alias '%s' does not exist in MySQL. Skipping FK on this table",
                         ref_schema_name,
                         ref_table_name,
                         self.connection_alias,
                     )
-                else:
-                    rows = self.mysql_cursor01.fetchall()
-                    for ref_table_id in rows:
-                        # Looping through all table_id's that matches the source from the previous select
-                        logging.debug(
-                            "Parsing referenced table with table_id: %s"
-                            % (ref_table_id[0])
-                        )
+                    continue
 
-                        # Fetch the column_id for the table own column
-                        query = "select column_id from import_columns where table_id = %s and lower(source_column_name) = %s"
-                        self.mysql_cursor02.execute(query, (self.table_id, column_name))
-                        logging.debug(
-                            "SQL Statement executed: %s"
-                            % (self.mysql_cursor02.statement)
-                        )
-                        row = self.mysql_cursor02.fetchone()
-                        source_column_id = row[0]
+                source_column_id = columns.column_id(table_id, column_name)
+                if source_column_id is None:
+                    raise InvalidConfigurationError(
+                        f"The foreign key column '{column_name}' is not a column of the import table {self.hive_db}.{self.hive_table} in the configuration database"
+                    )
+                ref_column_id = columns.column_id(ref_table_id, ref_column_name)
+                if ref_column_id is None:
+                    logging.warning(
+                        "Referenced column '%s' in '%s.%s' cant be found in MySQL. Skipping FK on this table",
+                        ref_column_name,
+                        ref_schema_name,
+                        ref_table_name,
+                    )
+                    continue
 
-                        # Fetch the column_id for the column in the referensed table
-                        query = "select column_id from import_columns where table_id = %s and lower(source_column_name) = %s"
-                        self.mysql_cursor02.execute(
-                            query, (ref_table_id[0], ref_column_name)
-                        )
-                        logging.debug(
-                            "SQL Statement executed: %s"
-                            % (self.mysql_cursor02.statement)
-                        )
-                        row = self.mysql_cursor02.fetchone()
-
-                        if self.mysql_cursor02.rowcount == 0:
-                            logging.warning(
-                                "Referenced column '%s' in '%s.%s' cant be found in MySQL. Skipping FK on this table",
-                                ref_column_name,
-                                ref_schema_name,
-                                ref_table_name,
-                            )
-                            ref_column_id = None
-                        else:
-                            ref_column_id = row[0]
-
-                            # Save the FK data to the MySQL table
-                            query = (
-                                "insert into import_foreign_keys "
-                                "("
-                                "    table_id, "
-                                "    column_id, "
-                                "    fk_index, "
-                                "    fk_table_id, "
-                                "    fk_column_id, "
-                                "    key_position "
-                                ") values ( %s, %s, %s, %s, %s, %s )"
-                            )
-
-                            logging.debug("self.table_id:    %s", self.table_id)
-                            logging.debug("source_column_id: %s" % (source_column_id))
-                            logging.debug("fk_index:         %s", fk_index)
-                            logging.debug("ref_table_id[0]:  %s" % (ref_table_id[0]))
-                            logging.debug("ref_column_id:    %s" % (ref_column_id))
-                            logging.debug("key_position:     %s" % (key_position))
-
-                            try:
-                                self.mysql_cursor02.execute(
-                                    query,
-                                    (
-                                        self.table_id,
-                                        source_column_id,
-                                        fk_index,
-                                        ref_table_id[0],
-                                        ref_column_id,
-                                        key_position,
-                                    ),
-                                )
-                                self.mysql_conn.commit()
-                                logging.debug(
-                                    "SQL Statement executed: %s"
-                                    % (self.mysql_cursor02.statement)
-                                )
-                            except mysql.connector.errors.IntegrityError as e:
-                                if "Duplicate entry" in str(e):
-                                    logging.warning(
-                                        "Foreign Key cant be saved as name is not unique in DBImport Configuration Database"
-                                    )
-                                else:
-                                    logging.error(
-                                        "Unknown error when saving ForeignKey data to DBImport configuration database"
-                                    )
-                                    raise (e)
+                if not columns.add_foreign_key_column(
+                    table_id,
+                    source_column_id,
+                    fk_index,
+                    (ref_table_id, ref_column_id),
+                    key_position,
+                ):
+                    logging.warning(
+                        "Foreign Key cant be saved as name is not unique in DBImport Configuration Database"
+                    )
 
         logging.debug("Executing import_config.save_key_data() - Finished")
 
@@ -3351,28 +3206,13 @@ class Config(metaclass=Singleton):
 
         quote = self.common_config.get_quote_around_column()
 
-        query = "select "
-        query += "   c.source_column_name, "
-        query += "   c.column_name "
-        query += "from import_tables t "
-        query += "join import_columns c on t.table_id = c.table_id "
-        query += "where t.table_id = %s and t.last_update_from_source = c.last_update_from_source "
-        query += "and c.include_in_import = 1 "
-        query += "order by c.column_order"
-
-        self.mysql_cursor01.execute(query, (self.table_id,))
-        logging.debug("SQL Statement executed: %s" % (self.mysql_cursor01.statement))
-
-        if self.mysql_cursor01.rowcount == 0:
-            logging.error("Error: Zero rows returned from query on 'import_table'")
-            logging.error(
-                "SQL Statement that generated the error: %s"
-                % (self.mysql_cursor01.statement)
-            )
-            raise Exception
-
-        result_df = pd.DataFrame(self.mysql_cursor01.fetchall())
-        result_df.columns = ["source_name", "name"]
+        result_df = pd.DataFrame(
+            [
+                (column.source_column_name, column.column_name)
+                for column in self._current_columns(imported_only=True)
+            ],
+            columns=["source_name", "name"],
+        )
 
         spark_query = ""
         for _index, row in result_df.iterrows():
@@ -3447,43 +3287,22 @@ class Config(metaclass=Singleton):
         if restrict_columns != None:
             restrict_columns_list = restrict_columns.split(",")
 
-        query = "select "
-        query += "   COALESCE(c.column_name_override, c.column_name) as name, "
-        query += "   c.column_type as type, "
-        query += "   c.comment "
-        query += "from import_tables t "
-        query += "join import_columns c on t.table_id = c.table_id "
-        query += "where t.table_id = %s and t.last_update_from_source = c.last_update_from_source "
-
-        if not include_all_columns:
-            query += " and c.include_in_import = 1 "
-
-        if restrict_columns_list != []:
-            query += " and c.column_name in ('"
-            query += "', '".join(restrict_columns_list)
-            query += "') "
-
-        query += "order by c.column_order"
-        self.mysql_cursor01.execute(query, (self.table_id,))
-        logging.debug("SQL Statement executed: %s" % (self.mysql_cursor01.statement))
-
-        if self.mysql_cursor01.rowcount == 0:
-            logging.error("Error: Zero rows returned from query on 'import_table'")
-            logging.error(
-                "SQL Statement that generated the error: %s"
-                % (self.mysql_cursor01.statement)
-            )
-            raise Exception
-
-        result_df = pd.DataFrame(self.mysql_cursor01.fetchall())
-
-        # Set the correct column namnes in the DataFrame
-        result_df_columns = []
-        for columns in self.mysql_cursor01.description:
-            result_df_columns.append(
-                columns[0]
-            )  # Name of the column is in the first position
-        result_df.columns = result_df_columns
+        result_df = pd.DataFrame(
+            [
+                (
+                    column.column_name_override
+                    if column.column_name_override is not None
+                    else column.column_name,
+                    column.column_type,
+                    column.comment,
+                )
+                for column in self._current_columns(
+                    imported_only=not include_all_columns,
+                    column_names=restrict_columns_list,
+                )
+            ],
+            columns=["name", "type", "comment"],
+        )
 
         if source_is_parquet_file == True:
             result_df["name"] = result_df["name"].apply(
@@ -3790,21 +3609,12 @@ class Config(metaclass=Singleton):
             return self.pk_column_override.lower()
 
         # If we reach this part, it means that we didnt override the PK. So lets fetch the real one
-        query = "select c.source_column_name "
-        query += "from import_tables t "
-        query += "join import_columns c on t.table_id = c.table_id "
-        query += "where t.table_id = %s and c.source_primary_key is not null and t.last_update_from_source = c.last_update_from_source "
-        query += "order by c.source_primary_key "
-
-        self.mysql_cursor01.execute(query, (self.table_id,))
-        logging.debug("SQL Statement executed: %s" % (self.mysql_cursor01.statement))
-
-        for row in self.mysql_cursor01.fetchall():
-            if return_value == None:
-                return_value = str(row[0])
-            else:
-                return_value += "," + str(row[0])
-
+        table_id = self._known_table_id()
+        key_columns = self._read_import_columns(
+            lambda columns: columns.primary_key_columns(table_id)
+        )
+        if key_columns:
+            return_value = ",".join(key_columns)
             if convert_to_lower:
                 return_value = return_value.lower()
 
@@ -3815,32 +3625,12 @@ class Config(metaclass=Singleton):
     ) -> pd.DataFrame:
         """Reads the ForeignKeys from the configuration tables and return the result in a Pandas DF"""
         logging.debug("Executing import_config.get_foreign_keys_from_config()")
-        result_df = None
+        table_id = self._known_table_id()
+        foreign_keys = self._read_import_columns(
+            lambda columns: columns.foreign_keys(table_id)
+        )
 
-        query = "select "
-        query += "   s.hive_db as source_hive_db, "
-        query += "   s.hive_table as source_hive_table, "
-        query += "   lower(s.column_name) as source_column_name, "
-        query += "   lower(s.source_column_name) as source_source_column_name, "
-        query += "   refT.source_schema as ref_source_schema, "
-        query += "   refT.source_table as ref_source_table, "
-        query += "   ref.column_name as ref_column_name, "
-        query += "   lower(ref.source_column_name) as ref_source_column_name, "
-        query += "   ref.hive_db as ref_hive_db, "
-        query += "   ref.hive_table as ref_hive_table, "
-        query += "   fk.fk_index as fk_index, "
-        query += "   fk.key_position as key_position "
-        query += "from import_foreign_keys fk "
-        query += "   join import_columns s on s.table_id = fk.table_id and s.column_id = fk.column_id "
-        query += "   join import_columns ref on ref.table_id = fk.fk_table_id and ref.column_id = fk.fk_column_id "
-        query += "   join import_tables refT on fk.fk_table_id = refT.table_id "
-        query += "where fk.table_id = %s "
-        query += "order by fk.fk_index, fk.key_position "
-
-        self.mysql_cursor01.execute(query, (self.table_id,))
-        logging.debug("SQL Statement executed: %s" % (self.mysql_cursor01.statement))
-
-        if self.mysql_cursor01.rowcount == 0:
+        if not foreign_keys:
             return pd.DataFrame(
                 columns=[
                     "fk_name",
@@ -3853,15 +3643,7 @@ class Config(metaclass=Singleton):
                 ]
             )
 
-        result_df = pd.DataFrame(self.mysql_cursor01.fetchall())
-
-        # Set the correct column namnes in the DataFrame
-        result_df_columns = []
-        for columns in self.mysql_cursor01.description:
-            result_df_columns.append(
-                columns[0]
-            )  # Name of the column is in the first position
-        result_df.columns = result_df_columns
+        result_df = pd.DataFrame([key.model_dump() for key in foreign_keys])
 
         result_df = (
             result_df.groupby(
@@ -4165,23 +3947,19 @@ class Config(metaclass=Singleton):
     def get_select_for_import_view(self) -> str:
         logging.debug("Executing import_config.get_select_for_import_view()")
 
-        query = "select c.column_name as name, c.column_name_override, c.column_type as type, c.sqoop_column_type, c.sqoop_column_type_override "
-        query += "from import_tables t "
-        query += "join import_columns c on t.table_id = c.table_id "
-        query += "where t.table_id = %s and t.last_update_from_source = c.last_update_from_source "
-        query += "order by c.column_order"
-
-        self.mysql_cursor01.execute(query, (self.table_id,))
-        logging.debug("SQL Statement executed: \n%s" % (self.mysql_cursor01.statement))
+        table_id = self._known_table_id()
+        current = self._read_import_columns(
+            lambda columns: columns.current_columns(table_id)
+        )
 
         select_query = ""
 
-        for row in self.mysql_cursor01.fetchall():
-            column_name = row[0]
-            column_name_override = row[1]
-            column_type = row[2]
-            sqoop_column_type = row[3]
-            sqoop_column_type_override = row[4]
+        for column in current:
+            column_name = column.column_name
+            column_name_override = column.column_name_override
+            column_type = column.column_type
+            sqoop_column_type = column.sqoop_column_type
+            sqoop_column_type_override = column.sqoop_column_type_override
 
             if column_name_override != None:
                 column_name = column_name_override
