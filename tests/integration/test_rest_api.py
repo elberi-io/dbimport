@@ -3,7 +3,7 @@
 import importlib
 import sys
 from collections.abc import Iterator
-from datetime import timedelta
+from datetime import datetime, timedelta
 from types import ModuleType
 
 import pytest
@@ -736,3 +736,848 @@ def test_delete_connection_removes_it_or_returns_404_when_unknown(
         ).scalar_one()
         == remaining
     )
+
+
+def _add_table(
+    conn: sa.Connection,
+    hive_db: str = "salesdb",
+    hive_table: str = "orders",
+    /,
+    **values: object,
+) -> int:
+    insert_row(
+        conn,
+        "import_tables",
+        **{
+            "hive_db": hive_db,
+            "hive_table": hive_table,
+            "dbalias": "src_conn",
+            "source_schema": "src",
+            "source_table": hive_table,
+            "import_phase_type": "full",
+            "etl_phase_type": "truncate_insert",
+            **values,
+        },
+    )
+    table_id: int = conn.execute(
+        sa.text(
+            "SELECT table_id FROM import_tables WHERE hive_db = :d AND hive_table = :t"
+        ),
+        {"d": hive_db, "t": hive_table},
+    ).scalar_one()
+    return table_id
+
+
+def _tables(conn: sa.Connection) -> list[tuple[str, str]]:
+    query = "SELECT hive_db, hive_table FROM import_tables ORDER BY hive_db, hive_table"
+    return [(row[0], row[1]) for row in conn.execute(sa.text(query))]
+
+
+def test_get_all_import_databases_summarises_each_database(
+    client: TestClient, auth_headers: dict[str, str], db_connection: sa.Connection
+) -> None:
+    _add_table(
+        db_connection,
+        "salesdb",
+        "orders",
+        last_update_from_source="2026-01-15 09:00:00",
+        sqoop_last_size=100,
+        sqoop_last_rows=10,
+    )
+    _add_table(
+        db_connection,
+        "salesdb",
+        "lines",
+        last_update_from_source="2026-01-16 09:00:00",
+        sqoop_last_size=50,
+        sqoop_last_rows=5,
+    )
+    _add_table(db_connection, "hrdb", "staff")
+
+    response = client.get("/import/db", headers=auth_headers)
+
+    assert response.status_code == 200
+    assert sorted(response.json(), key=lambda db: db["name"]) == [
+        {"name": "hrdb", "tables": 1, "lastImport": "", "lastSize": 0, "lastRows": 0},
+        {
+            "name": "salesdb",
+            "tables": 2,
+            "lastImport": "2026-01-16 09:00:00",
+            "lastSize": 150,
+            "lastRows": 15,
+        },
+    ]
+    assert response.headers["content-rows"] == "2"
+
+
+def _add_search_tables(conn: sa.Connection) -> None:
+    _add_table(conn, "salesdb", "orders")
+    _add_table(conn, "salesdb", "lines", import_phase_type="incr")
+    _add_table(
+        conn,
+        "hrdb",
+        "staff",
+        dbalias="hr_conn",
+        include_in_airflow=0,
+        operator_notes="hr team",
+    )
+
+
+@pytest.mark.parametrize(
+    ("search", "expected"),
+    [
+        ({"database": "salesdb"}, [("salesdb", "lines"), ("salesdb", "orders")]),
+        ({"database": "sales*"}, [("salesdb", "lines"), ("salesdb", "orders")]),
+        ({"table": "%e%"}, [("salesdb", "lines"), ("salesdb", "orders")]),
+        ({"importPhaseType": "incr"}, [("salesdb", "lines")]),
+        ({"connection": "hr_conn", "table": "*"}, [("hrdb", "staff")]),
+        ({"includeInAirflow": False}, [("hrdb", "staff")]),
+        (
+            {
+                "database": "hrdb",
+                "table": "staff",
+                "connection": "hr_conn",
+                "sourceSchema": "src",
+                "sourceTable": "staff",
+                "importPhaseType": "full",
+                "etlPhaseType": "truncate_insert",
+                "importTool": "spark",
+                "etlEngine": "hive",
+                "includeInAirflow": False,
+                "operatorNotes": "hr*",
+            },
+            [("hrdb", "staff")],
+        ),
+        (
+            {"database": ""},
+            [("hrdb", "staff"), ("salesdb", "lines"), ("salesdb", "orders")],
+        ),
+    ],
+)
+def test_search_import_tables_filters_by_value_or_wildcard(
+    client: TestClient,
+    auth_headers: dict[str, str],
+    db_connection: sa.Connection,
+    search: dict[str, object],
+    expected: list[tuple[str, str]],
+) -> None:
+    _add_search_tables(db_connection)
+
+    response = client.post("/import/search", json=search, headers=auth_headers)
+
+    assert response.status_code == 200
+    found = sorted((t["database"], t["table"]) for t in response.json())
+    assert found == expected
+    assert response.headers["content-total-rows"] == str(len(expected))
+
+
+def test_search_import_tables_returns_the_list_fields(
+    client: TestClient, auth_headers: dict[str, str], db_connection: sa.Connection
+) -> None:
+    _add_table(
+        db_connection,
+        import_tool="sqoop",
+        etl_engine="spark",
+        last_update_from_source="2026-01-15 09:00:00",
+        operator_notes="notes",
+    )
+
+    response = client.post(
+        "/import/search", json={"database": "salesdb"}, headers=auth_headers
+    )
+
+    assert response.json() == [
+        {
+            "database": "salesdb",
+            "table": "orders",
+            "connection": "src_conn",
+            "sourceSchema": "src",
+            "sourceTable": "orders",
+            "importPhaseType": "full",
+            "etlPhaseType": "truncate_insert",
+            "importTool": "sqoop",
+            "etlEngine": "spark",
+            "lastUpdateFromSource": "2026-01-15 09:00:00",
+            "includeInAirflow": True,
+            "operatorNotes": "notes",
+        }
+    ]
+
+
+DETAILS_ROW = {
+    "import_phase_type": "incr",
+    "etl_phase_type": "merge",
+    "import_tool": "sqoop",
+    "etl_engine": "spark",
+    "last_update_from_source": "2026-01-15 09:00:00",
+    "sqoop_sql_where_addition": "a = 1",
+    "nomerge_ingestion_sql_addition": "b = 2",
+    "include_in_airflow": 0,
+    "airflow_priority": 5,
+    "validate_import": 0,
+    "validationMethod": "customQuery",
+    "validate_source": "sqoop",
+    "validate_diff_allowed": 7,
+    "validationCustomQuerySourceSQL": "select 1",
+    "validationCustomQueryHiveSQL": "select 2",
+    "validationCustomQueryValidateImportTable": 0,
+    "truncate_hive": 0,
+    "mappers": 3,
+    "soft_delete_during_merge": 1,
+    "source_rowcount": 10,
+    "source_rowcount_incr": 2,
+    "hive_rowcount": 9,
+    "validationCustomQuerySourceValue": "[1]",
+    "validationCustomQueryHiveValue": "[2]",
+    "incr_mode": "append",
+    "incr_column": "id",
+    "incr_validation_method": "incr",
+    "incr_minvalue": "1",
+    "incr_maxvalue": "5",
+    "incr_minvalue_pending": "5",
+    "incr_maxvalue_pending": "9",
+    "pk_column_override": "id",
+    "pk_column_override_mergeonly": "id2",
+    "hive_merge_heap": 2048,
+    "hive_split_count": 4,
+    "spark_executor_memory": "2g",
+    "spark_executors": 3,
+    "split_by_column": "id",
+    "sqoop_query": "select x",
+    "sqoop_options": "--opt",
+    "sqoop_last_size": 1000,
+    "sqoop_last_rows": 10,
+    "sqoop_last_mappers": 2,
+    "sqoop_last_execution": 1700000000,
+    "sqoop_use_generated_sql": 0,
+    "sqoop_allow_text_splitter": 1,
+    "force_string": 1,
+    "comment": "the orders",
+    "generated_hive_column_definition": "(a int)",
+    "generated_sqoop_query": "select gen",
+    "generated_sqoop_options": "--gen",
+    "generated_pk_columns": "id",
+    "generated_foreign_keys": "fk",
+    "datalake_source": "sales",
+    "operator_notes": "notes",
+    "copy_finished": "2026-01-16 10:00:00",
+    "copy_slave": 1,
+    "create_foreign_keys": 0,
+    "invalidate_impala": 1,
+    "custom_max_query": "select max(x)",
+    "mergeCompactionMethod": "minor",
+    "sourceTableType": "view",
+    "import_database": "imp_db",
+    "import_table": "imp_tbl",
+    "history_database": "hist_db",
+    "history_table": "hist_tbl",
+}
+
+DETAILS = {
+    "database": "salesdb",
+    "table": "orders",
+    "connection": "src_conn",
+    "sourceSchema": "src",
+    "sourceTable": "orders",
+    "importPhaseType": "incr",
+    "etlPhaseType": "merge",
+    "importTool": "sqoop",
+    "etlEngine": "spark",
+    "lastUpdateFromSource": "2026-01-15 09:00:00",
+    "sqlWhereAddition": "a = 1",
+    "nomergeIngestionSqlAddition": "b = 2",
+    "includeInAirflow": False,
+    "airflowPriority": 5,
+    "validateImport": False,
+    "validationMethod": "customQuery",
+    "validateSource": "sqoop",
+    "validateDiffAllowed": 7,
+    "validationCustomQuerySourceSQL": "select 1",
+    "validationCustomQueryHiveSQL": "select 2",
+    "validationCustomQueryValidateImportTable": False,
+    "sqlSessions": 3,
+    "softDeleteDuringMerge": True,
+    "sourceRowcount": 10,
+    "sourceRowcountIncr": 2,
+    "targetRowcount": 9,
+    "validationCustomQuerySourceValue": "[1]",
+    "validationCustomQueryHiveValue": "[2]",
+    "incrMode": "append",
+    "incrColumn": "id",
+    "incrValidationMethod": "incr",
+    "incrMinvalue": "1",
+    "incrMaxvalue": "5",
+    "incrMinvaluePending": "5",
+    "incrMaxvaluePending": "9",
+    "pkColumnOverride": "id",
+    "pkColumnOverrideMergeonly": "id2",
+    "hiveContainerSize": 2048,
+    "splitCount": 4,
+    "sparkExecutorMemory": "2g",
+    "sparkExecutors": 3,
+    "splitByColumn": "id",
+    "sqoopCustomQuery": "select x",
+    "sqoopOptions": "--opt",
+    "lastSize": 1000,
+    "lastRows": 10,
+    "lastSqlSessions": 2,
+    "lastExecution": 1700000000,
+    "sqoopUseGeneratedSql": False,
+    "allowTextSplitter": True,
+    "forceString": 1,
+    "comment": "the orders",
+    "generatedHiveColumnDefinition": "(a int)",
+    "generatedSqoopQuery": "select gen",
+    "generatedSqoopOptions": "--gen",
+    "generatedPkColumns": "id",
+    "datalakeSource": "sales",
+    "operatorNotes": "notes",
+    "copyFinished": "2026-01-16 10:00:00",
+    "copySlave": True,
+    "createForeignKeys": 0,
+    "invalidateImpala": 1,
+    "customMaxQuery": "select max(x)",
+    "mergeCompactionMethod": "minor",
+    "sourceTableType": "view",
+    "importDatabase": "imp_db",
+    "importTable": "imp_tbl",
+    "historyDatabase": "hist_db",
+    "historyTable": "hist_tbl",
+    "columns": [],
+}
+
+
+def test_get_import_table_details_returns_every_field(
+    client: TestClient, auth_headers: dict[str, str], db_connection: sa.Connection
+) -> None:
+    _add_table(db_connection, **DETAILS_ROW)
+
+    response = client.get(
+        "/import/table/salesdb/orders?includeColumns=false", headers=auth_headers
+    )
+
+    assert response.status_code == 200
+    assert response.json() == DETAILS
+
+
+def test_get_import_table_details_replaces_values_the_ui_cannot_show(
+    client: TestClient, auth_headers: dict[str, str], db_connection: sa.Connection
+) -> None:
+    _add_table(
+        db_connection, incr_mode=None, sqoop_use_generated_sql=-1, force_string=5
+    )
+
+    response = client.get(
+        "/import/table/salesdb/orders?includeColumns=false", headers=auth_headers
+    )
+
+    details = response.json()
+    assert (
+        details["incrMode"],
+        details["sqoopUseGeneratedSql"],
+        details["forceString"],
+        details["lastUpdateFromSource"],
+        details["copyFinished"],
+    ) == ("lastmodified", True, -1, None, None)
+
+
+def _add_column(
+    conn: sa.Connection, table_id: int, name: str, order: int, **values: object
+) -> None:
+    insert_row(
+        conn,
+        "import_columns",
+        **{
+            "table_id": table_id,
+            "hive_db": "salesdb",
+            "hive_table": "orders",
+            "column_name": name,
+            "column_order": order,
+            "source_column_name": name.upper(),
+            "column_type": "int",
+            "source_column_type": "int(11)",
+            "last_update_from_source": "2026-01-15 09:00:00",
+            **values,
+        },
+    )
+
+
+def test_get_import_table_details_includes_the_columns_in_order(
+    client: TestClient, auth_headers: dict[str, str], db_connection: sa.Connection
+) -> None:
+    table_id = _add_table(db_connection)
+    _add_column(
+        db_connection,
+        table_id,
+        "note",
+        2,
+        column_type="string",
+        source_column_type="varchar(50)",
+        source_database_type="mysql",
+        column_name_override="remark",
+        column_type_override="varchar(60)",
+        sqoop_column_type="String",
+        sqoop_column_type_override="Integer",
+        force_string=7,
+        include_in_import=0,
+        comment="free text",
+        operator_notes="notes",
+        anonymization_function="Hash",
+    )
+    _add_column(db_connection, table_id, "id", 1, source_primary_key=1)
+
+    response = client.get("/import/table/salesdb/orders", headers=auth_headers)
+
+    assert response.json()["columns"] == [
+        {
+            "columnName": "id",
+            "columnOrder": 1,
+            "sourceColumnName": "ID",
+            "columnType": "int",
+            "sourceColumnType": "int(11)",
+            "sourceDatabaseType": None,
+            "columnNameOverride": None,
+            "columnTypeOverride": None,
+            "sqoopColumnType": None,
+            "sqoopColumnTypeOverride": None,
+            "forceString": -1,
+            "includeInImport": True,
+            "sourcePrimaryKey": 1,
+            "lastUpdateFromSource": "2026-01-15 09:00:00",
+            "comment": None,
+            "operatorNotes": None,
+            "anonymizationFunction": "None",
+        },
+        {
+            "columnName": "note",
+            "columnOrder": 2,
+            "sourceColumnName": "NOTE",
+            "columnType": "string",
+            "sourceColumnType": "varchar(50)",
+            "sourceDatabaseType": "mysql",
+            "columnNameOverride": "remark",
+            "columnTypeOverride": "varchar(60)",
+            "sqoopColumnType": "String",
+            "sqoopColumnTypeOverride": "Integer",
+            "forceString": -1,
+            "includeInImport": False,
+            "sourcePrimaryKey": None,
+            "lastUpdateFromSource": "2026-01-15 09:00:00",
+            "comment": "free text",
+            "operatorNotes": "notes",
+            "anonymizationFunction": "Hash",
+        },
+    ]
+
+
+@pytest.mark.parametrize(
+    ("table", "status_code", "remaining"),
+    [
+        ("orders", 200, [("hrdb", "staff"), ("salesdb", "lines")]),
+        ("nope", 404, [("hrdb", "staff"), ("salesdb", "lines"), ("salesdb", "orders")]),
+    ],
+)
+def test_delete_import_table_removes_it_or_returns_404_when_unknown(
+    client: TestClient,
+    auth_headers: dict[str, str],
+    db_connection: sa.Connection,
+    table: str,
+    status_code: int,
+    remaining: list[tuple[str, str]],
+) -> None:
+    _add_search_tables(db_connection)
+
+    response = client.delete(f"/import/table/salesdb/{table}", headers=auth_headers)
+
+    assert response.status_code == status_code
+    assert _tables(db_connection) == remaining
+
+
+def test_bulk_delete_of_import_tables_removes_the_listed_tables(
+    client: TestClient, auth_headers: dict[str, str], db_connection: sa.Connection
+) -> None:
+    _add_search_tables(db_connection)
+
+    response = client.request(
+        "DELETE",
+        "/import/table",
+        json=[
+            {"database": "salesdb", "table": "orders"},
+            {"database": "hrdb", "table": "staff"},
+            {"database": "salesdb", "table": "nope"},
+        ],
+        headers=auth_headers,
+    )
+
+    assert response.status_code == 200
+    assert _tables(db_connection) == [("salesdb", "lines")]
+
+
+@pytest.mark.parametrize(
+    ("method", "body"), [("DELETE", []), ("POST", {"importTables": []})]
+)
+def test_bulk_change_of_import_tables_without_tables_returns_422(
+    client: TestClient,
+    auth_headers: dict[str, str],
+    method: str,
+    body: object,
+) -> None:
+    response = client.request(method, "/import/table", json=body, headers=auth_headers)
+
+    assert response.status_code == 422
+
+
+def test_bulk_update_of_import_tables_changes_only_the_given_fields(
+    client: TestClient, auth_headers: dict[str, str], db_connection: sa.Connection
+) -> None:
+    _add_search_tables(db_connection)
+
+    response = client.post(
+        "/import/table",
+        json={
+            "importTool": "sqoop",
+            "includeInAirflow": False,
+            "operatorNotes": "moved",
+            "importTables": [
+                {"database": "salesdb", "table": "orders"},
+                {"database": "hrdb", "table": "staff"},
+            ],
+        },
+        headers=auth_headers,
+    )
+
+    assert response.status_code == 200
+    rows = db_connection.execute(
+        sa.text(
+            "SELECT hive_db, hive_table, dbalias, import_tool, include_in_airflow,"
+            " operator_notes FROM import_tables ORDER BY hive_db, hive_table"
+        )
+    )
+    assert [tuple(row) for row in rows] == [
+        ("hrdb", "staff", "hr_conn", "sqoop", 0, "moved"),
+        ("salesdb", "lines", "src_conn", "spark", 1, None),
+        ("salesdb", "orders", "src_conn", "sqoop", 0, "moved"),
+    ]
+
+
+def test_bulk_update_of_import_tables_sets_every_field_it_accepts(
+    client: TestClient, auth_headers: dict[str, str], db_connection: sa.Connection
+) -> None:
+    _add_table(db_connection)
+
+    response = client.post(
+        "/import/table",
+        json={
+            "connection": "new_conn",
+            "importPhaseType": "incr",
+            "etlPhaseType": "merge",
+            "importTool": "sqoop",
+            "etlEngine": "hive",
+            "includeInAirflow": False,
+            "operatorNotes": "moved",
+            "importTables": [{"database": "salesdb", "table": "orders"}],
+        },
+        headers=auth_headers,
+    )
+
+    assert response.status_code == 200
+    row = db_connection.execute(
+        sa.text(
+            "SELECT dbalias, import_phase_type, etl_phase_type, import_tool,"
+            " etl_engine, include_in_airflow, operator_notes FROM import_tables"
+        )
+    ).one()
+    assert tuple(row) == ("new_conn", "incr", "merge", "sqoop", "hive", 0, "moved")
+
+
+WRITE_MINIMAL = {
+    "connection": "src_conn",
+    "sourceSchema": "src",
+    "sourceTable": "orders",
+    "importPhaseType": "full",
+    "etlPhaseType": "truncate_insert",
+    "importTool": "spark",
+    "etlEngine": "spark",
+}
+DEFAULTED_COLUMNS = (
+    "include_in_airflow, validate_import, validationMethod, validate_source,"
+    " validate_diff_allowed, validationCustomQueryValidateImportTable,"
+    " incr_validation_method, mappers, soft_delete_during_merge,"
+    " sqoop_use_generated_sql, sqoop_allow_text_splitter, force_string,"
+    " invalidate_impala, mergeCompactionMethod, create_foreign_keys, copy_slave"
+)
+
+
+def test_update_import_table_creates_a_table_with_defaults(
+    client: TestClient, auth_headers: dict[str, str], db_connection: sa.Connection
+) -> None:
+    response = client.post(
+        "/import/table/salesdb/orders", json=WRITE_MINIMAL, headers=auth_headers
+    )
+
+    assert response.status_code == 200
+    row = db_connection.execute(
+        sa.text(f"SELECT {DEFAULTED_COLUMNS} FROM import_tables")
+    ).one()
+    assert tuple(row) == (
+        1,
+        1,
+        "rowCount",
+        "query",
+        -1,
+        1,
+        "full",
+        -1,
+        0,
+        -1,
+        0,
+        -1,
+        -1,
+        "default",
+        -1,
+        0,
+    )
+
+
+WRITE_FULL = WRITE_MINIMAL | {
+    "importPhaseType": "incr",
+    "etlPhaseType": "merge",
+    "importTool": "sqoop",
+    "lastUpdateFromSource": "2026-01-15 09:00:00",
+    "sqlWhereAddition": "a = 1",
+    "nomergeIngestionSqlAddition": "b = 2",
+    "includeInAirflow": False,
+    "airflowPriority": 5,
+    "validateImport": False,
+    "validationMethod": "customQuery",
+    "validateSource": "sqoop",
+    "validateDiffAllowed": 7,
+    "validationCustomQuerySourceSQL": "select 1",
+    "validationCustomQueryHiveSQL": "select 2",
+    "validationCustomQueryValidateImportTable": False,
+    "sqlSessions": 3,
+    "softDeleteDuringMerge": True,
+    "incrMode": "append",
+    "incrColumn": "id",
+    "incrValidationMethod": "incr",
+    "pkColumnOverride": "id",
+    "pkColumnOverrideMergeonly": "id2",
+    "hiveContainerSize": 2048,
+    "splitCount": 4,
+    "sparkExecutorMemory": "2g",
+    "sparkExecutors": 3,
+    "splitByColumn": "id",
+    "sqoopCustomQuery": "select x",
+    "sqoopOptions": "--opt",
+    "sqoopUseGeneratedSql": False,
+    "allowTextSplitter": True,
+    "forceString": 1,
+    "comment": "the orders",
+    "datalakeSource": "sales",
+    "operatorNotes": "notes",
+    "copySlave": True,
+    "createForeignKeys": 0,
+    "invalidateImpala": 1,
+    "customMaxQuery": "select max(x)",
+    "mergeCompactionMethod": "minor",
+    "sourceTableType": "view",
+    "importDatabase": "imp_db",
+    "importTable": "imp_tbl",
+    "historyDatabase": "hist_db",
+    "historyTable": "hist_tbl",
+}
+WRITTEN_COLUMNS = (
+    "dbalias, source_schema, source_table, import_phase_type, etl_phase_type,"
+    " import_tool, etl_engine, last_update_from_source, sqoop_sql_where_addition,"
+    " nomerge_ingestion_sql_addition, include_in_airflow, airflow_priority,"
+    " validate_import, validationMethod, validate_source, validate_diff_allowed,"
+    " validationCustomQuerySourceSQL, validationCustomQueryHiveSQL,"
+    " validationCustomQueryValidateImportTable, mappers, soft_delete_during_merge,"
+    " incr_mode, incr_column, incr_validation_method, pk_column_override,"
+    " pk_column_override_mergeonly, hive_merge_heap, hive_split_count,"
+    " spark_executor_memory, spark_executors, split_by_column, sqoop_query,"
+    " sqoop_options, sqoop_use_generated_sql, sqoop_allow_text_splitter,"
+    " force_string, comment, datalake_source, operator_notes, copy_slave,"
+    " create_foreign_keys, invalidate_impala, custom_max_query,"
+    " mergeCompactionMethod, sourceTableType, import_database, import_table,"
+    " history_database, history_table"
+)
+
+
+def test_update_import_table_replaces_every_field_of_an_existing_table(
+    client: TestClient, auth_headers: dict[str, str], db_connection: sa.Connection
+) -> None:
+    _add_table(db_connection, operator_notes="old", sqoop_last_rows=10)
+
+    response = client.post(
+        "/import/table/salesdb/orders", json=WRITE_FULL, headers=auth_headers
+    )
+
+    assert response.status_code == 200
+    row = db_connection.execute(
+        sa.text(f"SELECT {WRITTEN_COLUMNS}, sqoop_last_rows FROM import_tables")
+    ).one()
+    assert tuple(row) == (
+        "src_conn",
+        "src",
+        "orders",
+        "incr",
+        "merge",
+        "sqoop",
+        "spark",
+        datetime(2026, 1, 15, 9, 0),
+        "a = 1",
+        "b = 2",
+        0,
+        5,
+        0,
+        "customQuery",
+        "sqoop",
+        7,
+        "select 1",
+        "select 2",
+        0,
+        3,
+        1,
+        "append",
+        "id",
+        "incr",
+        "id",
+        "id2",
+        2048,
+        4,
+        "2g",
+        3,
+        "id",
+        "select x",
+        "--opt",
+        0,
+        1,
+        1,
+        "the orders",
+        "sales",
+        "notes",
+        1,
+        0,
+        1,
+        "select max(x)",
+        "minor",
+        "view",
+        "imp_db",
+        "imp_tbl",
+        "hist_db",
+        "hist_tbl",
+        10,
+    )
+
+
+def _write_column(name: str, order: int, **values: object) -> dict[str, object]:
+    return {
+        "columnName": name,
+        "columnOrder": order,
+        "sourceColumnName": name.upper(),
+        "columnType": "int",
+        "sourceColumnType": "int(11)",
+        "forceString": -1,
+        "includeInImport": True,
+        "lastUpdateFromSource": "2026-01-15 09:00:00",
+        "anonymizationFunction": "None",
+        **values,
+    }
+
+
+def test_update_import_table_updates_known_columns_and_adds_new_ones(
+    client: TestClient, auth_headers: dict[str, str], db_connection: sa.Connection
+) -> None:
+    table_id = _add_table(db_connection)
+    _add_column(db_connection, table_id, "id", 1)
+    body = WRITE_MINIMAL | {
+        "columns": [
+            _write_column(
+                "id",
+                1,
+                columnNameOverride=" ",
+                columnTypeOverride="bigint",
+                sourcePrimaryKey=1,
+                comment="the key",
+            ),
+            _write_column(
+                "note",
+                2,
+                columnType="string",
+                sourceDatabaseType="mysql",
+                columnNameOverride="remark",
+                columnTypeOverride="",
+                sqoopColumnType="String",
+                sqoopColumnTypeOverride="Integer",
+                forceString=1,
+                includeInImport=False,
+                operatorNotes="notes",
+                anonymizationFunction="Hash",
+            ),
+        ]
+    }
+
+    response = client.post(
+        "/import/table/salesdb/orders", json=body, headers=auth_headers
+    )
+
+    assert response.status_code == 200
+    rows = db_connection.execute(
+        sa.text(
+            "SELECT table_id, hive_db, hive_table, column_name, column_order,"
+            " source_column_name, column_type, source_column_type,"
+            " source_database_type, column_name_override, column_type_override,"
+            " sqoop_column_type, sqoop_column_type_override, force_string,"
+            " include_in_import, source_primary_key, last_update_from_source,"
+            " comment, operator_notes, anonymization_function"
+            " FROM import_columns ORDER BY column_order"
+        )
+    )
+    synced = datetime(2026, 1, 15, 9, 0)
+    assert [tuple(row) for row in rows] == [
+        (
+            table_id,
+            "salesdb",
+            "orders",
+            "id",
+            1,
+            "ID",
+            "int",
+            "int(11)",
+            None,
+            None,
+            "bigint",
+            None,
+            None,
+            -1,
+            1,
+            1,
+            synced,
+            "the key",
+            None,
+            "None",
+        ),
+        (
+            table_id,
+            "salesdb",
+            "orders",
+            "note",
+            2,
+            "NOTE",
+            "string",
+            "int(11)",
+            "mysql",
+            "remark",
+            None,
+            "String",
+            "Integer",
+            1,
+            0,
+            None,
+            synced,
+            None,
+            "notes",
+            "Hash",
+        ),
+    ]
