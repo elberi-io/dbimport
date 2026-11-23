@@ -1596,3 +1596,28 @@ def test_get_import_table_details_of_unknown_table_returns_404_and_ends_its_tran
         )
     )
     assert response.status_code == 404
+
+
+def test_update_import_table_with_an_invalid_column_saves_nothing(
+    rest_server: ModuleType, auth_headers: dict[str, str], db_connection: sa.Connection
+) -> None:
+    body = WRITE_MINIMAL | {
+        "columns": [
+            _write_column("id", 1),
+            _write_column("note", 2, anonymizationFunction="Encrypt"),
+        ]
+    }
+
+    with TestClient(rest_server.app, raise_server_exceptions=False) as client:
+        response = client.post(
+            "/import/table/salesdb/orders", json=body, headers=auth_headers
+        )
+
+    assert response.status_code == 500
+    assert _tables(db_connection) == []
+    assert (
+        db_connection.execute(
+            sa.text("SELECT COUNT(*) FROM import_columns")
+        ).scalar_one()
+        == 0
+    )

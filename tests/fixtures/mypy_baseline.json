@@ -114,11 +114,11 @@
     "no-redef": 1
   },
   "src/dbimport/server/rest_server_calls.py": {
-    "arg-type": 2,
-    "assignment": 37,
-    "has-type": 4,
+    "arg-type": 1,
+    "assignment": 26,
+    "has-type": 3,
     "name-defined": 4,
-    "used-before-def": 2
+    "used-before-def": 1
   },
   "src/dbimport/setup/database.py": {
     "arg-type": 7,

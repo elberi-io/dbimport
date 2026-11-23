@@ -21,7 +21,7 @@ import os
 import re
 import subprocess
 import sys
-from datetime import time
+from datetime import datetime, time
 
 import bcrypt
 import sqlalchemy as sa
@@ -48,6 +48,8 @@ from dbimport.config_db.repositories.connections import (
     JDBCConnection,
     JDBCDriver,
 )
+from dbimport.config_db.repositories.import_columns import ImportColumnsRepository
+from dbimport.config_db.repositories.import_tables import ImportTablesRepository
 from dbimport.server import data_models
 from dbimport.settings import get_settings
 
@@ -85,8 +87,130 @@ _CONNECTION_DEFAULTS = {
 }
 
 
+_IMPORT_TABLE_FIELDS = {
+    "dbalias": "connection",
+    "source_schema": "sourceSchema",
+    "source_table": "sourceTable",
+    "import_phase_type": "importPhaseType",
+    "etl_phase_type": "etlPhaseType",
+    "import_tool": "importTool",
+    "etl_engine": "etlEngine",
+    "last_update_from_source": "lastUpdateFromSource",
+    "sqoop_sql_where_addition": "sqlWhereAddition",
+    "nomerge_ingestion_sql_addition": "nomergeIngestionSqlAddition",
+    "include_in_airflow": "includeInAirflow",
+    "airflow_priority": "airflowPriority",
+    "validate_import": "validateImport",
+    "validation_method": "validationMethod",
+    "validate_source": "validateSource",
+    "validate_diff_allowed": "validateDiffAllowed",
+    "validation_custom_query_source_sql": "validationCustomQuerySourceSQL",
+    "validation_custom_query_hive_sql": "validationCustomQueryHiveSQL",
+    "validation_custom_query_validate_import_table": (
+        "validationCustomQueryValidateImportTable"
+    ),
+    "mappers": "sqlSessions",
+    "soft_delete_during_merge": "softDeleteDuringMerge",
+    "incr_mode": "incrMode",
+    "incr_column": "incrColumn",
+    "incr_validation_method": "incrValidationMethod",
+    "pk_column_override": "pkColumnOverride",
+    "pk_column_override_mergeonly": "pkColumnOverrideMergeonly",
+    "hive_merge_heap": "hiveContainerSize",
+    "hive_split_count": "splitCount",
+    "spark_executor_memory": "sparkExecutorMemory",
+    "spark_executors": "sparkExecutors",
+    "split_by_column": "splitByColumn",
+    "sqoop_query": "sqoopCustomQuery",
+    "sqoop_options": "sqoopOptions",
+    "sqoop_use_generated_sql": "sqoopUseGeneratedSql",
+    "sqoop_allow_text_splitter": "allowTextSplitter",
+    "force_string": "forceString",
+    "comment": "comment",
+    "datalake_source": "datalakeSource",
+    "operator_notes": "operatorNotes",
+    "copy_slave": "copySlave",
+    "create_foreign_keys": "createForeignKeys",
+    "invalidate_impala": "invalidateImpala",
+    "custom_max_query": "customMaxQuery",
+    "merge_compaction_method": "mergeCompactionMethod",
+    "source_table_type": "sourceTableType",
+    "import_database": "importDatabase",
+    "import_table": "importTable",
+    "history_database": "historyDatabase",
+    "history_table": "historyTable",
+}
+
+_IMPORT_TABLE_DEFAULTS = {
+    "include_in_airflow": 1,
+    "validate_import": 1,
+    "validation_method": "rowCount",
+    "validate_source": "query",
+    "validate_diff_allowed": -1,
+    "validation_custom_query_validate_import_table": 1,
+    "incr_validation_method": "full",
+    "mappers": -1,
+    "soft_delete_during_merge": 0,
+    "sqoop_use_generated_sql": -1,
+    "sqoop_allow_text_splitter": 0,
+    "force_string": -1,
+    "invalidate_impala": -1,
+    "merge_compaction_method": "default",
+    "create_foreign_keys": -1,
+    "copy_slave": 0,
+}
+
+_IMPORT_TABLE_SEARCH = {
+    "database": "hive_db",
+    "table": "hive_table",
+    "connection": "dbalias",
+    "sourceSchema": "source_schema",
+    "sourceTable": "source_table",
+    "importPhaseType": "import_phase_type",
+    "etlPhaseType": "etl_phase_type",
+    "importTool": "import_tool",
+    "etlEngine": "etl_engine",
+    "includeInAirflow": "include_in_airflow",
+    "operatorNotes": "operator_notes",
+}
+
+_IMPORT_TABLE_BULK = {
+    "connection": "dbalias",
+    "importPhaseType": "import_phase_type",
+    "etlPhaseType": "etl_phase_type",
+    "importTool": "import_tool",
+    "etlEngine": "etl_engine",
+    "includeInAirflow": "include_in_airflow",
+    "operatorNotes": "operator_notes",
+}
+
+_IMPORT_COLUMN_FIELDS = {
+    "column_name": "columnName",
+    "column_order": "columnOrder",
+    "source_column_name": "sourceColumnName",
+    "column_type": "columnType",
+    "source_column_type": "sourceColumnType",
+    "source_database_type": "sourceDatabaseType",
+    "column_name_override": "columnNameOverride",
+    "column_type_override": "columnTypeOverride",
+    "sqoop_column_type": "sqoopColumnType",
+    "sqoop_column_type_override": "sqoopColumnTypeOverride",
+    "force_string": "forceString",
+    "include_in_import": "includeInImport",
+    "source_primary_key": "sourcePrimaryKey",
+    "last_update_from_source": "lastUpdateFromSource",
+    "comment": "comment",
+    "operator_notes": "operatorNotes",
+    "anonymization_function": "anonymizationFunction",
+}
+
+
 def _time_text(value: time | None) -> str | None:
     return None if value is None else value.strftime("%H:%M:%S")
+
+
+def _datetime_text(value: datetime | None) -> str | None:
+    return None if value is None else value.strftime("%Y-%m-%d %H:%M:%S")
 
 
 class DBCalls:
@@ -1019,63 +1143,35 @@ class DBCalls:
 
     def get_all_import_databases(self):
         """Returns all databases that have imports configured in them"""
-        log = logging.getLogger(self.logger)
-
         try:
             session = self.get_dbimport_session()
         except SQLError:
             self.disconnect_dbimport_db()
             return None
 
-        import_tables = aliased(config_schema.ImportTables)
-
-        import_table_dbs = (
-            session.query(
-                import_tables.hive_db,
-                func.count(import_tables.hive_db),
-                func.max(import_tables.last_update_from_source),
-                func.sum(import_tables.sqoop_last_size),
-                func.sum(import_tables.sqoop_last_rows),
+        try:
+            summaries = ImportTablesRepository(session()).database_summaries(
+                self.content_max_rows
             )
-            .select_from(import_tables)
-            .group_by(import_tables.hive_db)
-            .limit(self.content_max_rows)
-        )
+        finally:
+            session.remove()
 
-        list_of_dbs = []
-        count = 0
-        for row in import_table_dbs:
-            count = count + 1
-            result_dict = {}
-            result_dict["name"] = row[0]
-            result_dict["tables"] = row[1]
-            if row[2] == None:
-                result_dict["lastImport"] = ""
-            else:
-                result_dict["lastImport"] = row[2].strftime("%Y-%m-%d %H:%M:%S")
-
-            if row[3] == None:
-                result_dict["lastSize"] = 0
-            else:
-                result_dict["lastSize"] = int(row[3])
-
-            if row[4] == None:
-                result_dict["lastRows"] = 0
-            else:
-                result_dict["lastRows"] = int(row[4])
-            list_of_dbs.append(result_dict)
-
-            if count == self.content_max_rows:
-                break
-
-        json_result = json.loads(json.dumps(list_of_dbs))
-        session.remove()
+        list_of_dbs = [
+            {
+                "name": summary.hive_db,
+                "tables": summary.tables,
+                "lastImport": _datetime_text(summary.last_import) or "",
+                "lastSize": summary.last_size or 0,
+                "lastRows": summary.last_rows or 0,
+            }
+            for summary in summaries
+        ]
 
         headers = {
-            "content-rows": str(count),
+            "content-rows": str(len(list_of_dbs)),
             "content-max-returned-rows": str(self.content_max_rows),
         }
-        return JSONResponse(content=json_result, headers=headers, status_code=200)
+        return JSONResponse(content=list_of_dbs, headers=headers, status_code=200)
 
     def discover_import_tables(
         self, data: data_models.DiscoverImportTableOptions, current_user
@@ -1178,119 +1274,47 @@ class DBCalls:
             self.disconnect_dbimport_db()
             return None
 
-        import_tables = aliased(config_schema.ImportTables)
-
-        attribute_to_column = {}
-        attribute_to_column["database"] = import_tables.hive_db
-        attribute_to_column["table"] = import_tables.hive_table
-        attribute_to_column["connection"] = import_tables.dbalias
-        attribute_to_column["sourceSchema"] = import_tables.source_schema
-        attribute_to_column["sourceTable"] = import_tables.source_table
-        attribute_to_column["importPhaseType"] = import_tables.import_phase_type
-        attribute_to_column["etlPhaseType"] = import_tables.etl_phase_type
-        attribute_to_column["importTool"] = import_tables.import_tool
-        attribute_to_column["etlEngine"] = import_tables.etl_engine
-        attribute_to_column["includeInAirflow"] = import_tables.include_in_airflow
-        attribute_to_column["operatorNotes"] = import_tables.operator_notes
-
-        # Return a list of Hive tables with details
-        import_tables_data = session.query(
-            import_tables.hive_db,
-            import_tables.hive_table,
-            import_tables.dbalias,
-            import_tables.source_schema,
-            import_tables.source_table,
-            import_tables.import_phase_type,
-            import_tables.etl_phase_type,
-            import_tables.import_tool,
-            import_tables.etl_engine,
-            import_tables.last_update_from_source,
-            import_tables.include_in_airflow,
-            import_tables.operator_notes,
-        ).select_from(import_tables)
-
-        import_tables_data_count = session.query(func.count(1)).select_from(
-            import_tables
-        )
-
-        # Add the filters for the specific column that we search on
-        for items in search_values:
-            if items[1] == None or items[1] == "" or items[1] == "*" or items[1] == "%":
+        filters = {}
+        for attribute, value in search_values:
+            if value is None or value in ("", "*", "%"):
                 # If it's None, empty or search *, it means we dont need to search on that value. So lets skip it
                 continue
+            if isinstance(value, str):
+                value = value.replace("*", "%")
+            log.debug("search filter on %s", attribute)
+            filters[_IMPORT_TABLE_SEARCH[attribute]] = value
 
-            column = items[0]
-            value = items[1]
-            like_search = False
+        try:
+            tables, total = ImportTablesRepository(session()).search(
+                filters, self.content_max_rows
+            )
+        finally:
+            session.remove()
 
-            if type(value) is str:
-                if "%" in value or "*" in value:
-                    value = value.replace("*", "%")
-                    like_search = True
-
-            log.debug("search filter: %s = %s", column, value)
-
-            if like_search:
-                import_tables_data = import_tables_data.filter(
-                    like_op(attribute_to_column[column], value)
-                )
-                import_tables_data_count = import_tables_data_count.filter(
-                    like_op(attribute_to_column[column], value)
-                )
-            else:
-                import_tables_data = import_tables_data.filter(
-                    attribute_to_column[column] == value
-                )
-                import_tables_data_count = import_tables_data_count.filter(
-                    attribute_to_column[column] == value
-                )
-
-        # Fetch all rows matching the filter
-        import_tables_data = import_tables_data.limit(self.content_max_rows)
-        import_tables_data_count = import_tables_data_count.one()
-
-        # Loop through result and create the return dict
-        count = 0
-        list_of_tables = []
-        for row in import_tables_data:
-            count = count + 1
-            result_dict = {}
-            result_dict["database"] = row[0]
-            result_dict["table"] = row[1]
-            result_dict["connection"] = row[2]
-            result_dict["sourceSchema"] = row[3]
-            result_dict["sourceTable"] = row[4]
-            result_dict["importPhaseType"] = row[5]
-            result_dict["etlPhaseType"] = row[6]
-            result_dict["importTool"] = row[7]
-            result_dict["etlEngine"] = row[8]
-            try:
-                result_dict["lastUpdateFromSource"] = row[9].strftime(
-                    "%Y-%m-%d %H:%M:%S"
-                )
-            except AttributeError:
-                result_dict["lastUpdateFromSource"] = None
-            if row[10] == 1:
-                result_dict["includeInAirflow"] = True
-            else:
-                result_dict["includeInAirflow"] = False
-            result_dict["operatorNotes"] = row[11]
-
-            list_of_tables.append(result_dict)
-
-            if count == self.content_max_rows:
-                break
-
-        json_result = json.loads(json.dumps(list_of_tables))
-        # session.close()
-        session.remove()
+        list_of_tables = [
+            {
+                "database": stored.hive_db,
+                "table": stored.hive_table,
+                "connection": stored.dbalias,
+                "sourceSchema": stored.source_schema,
+                "sourceTable": stored.source_table,
+                "importPhaseType": stored.import_phase_type,
+                "etlPhaseType": stored.etl_phase_type,
+                "importTool": stored.import_tool,
+                "etlEngine": stored.etl_engine,
+                "lastUpdateFromSource": _datetime_text(stored.last_update_from_source),
+                "includeInAirflow": stored.include_in_airflow == 1,
+                "operatorNotes": stored.operator_notes,
+            }
+            for stored in tables
+        ]
 
         headers = {
-            "content-rows": str(count),
+            "content-rows": str(len(list_of_tables)),
             "content-max-returned-rows": str(self.content_max_rows),
-            "content-total-rows": str(import_tables_data_count[0]),
+            "content-total-rows": str(total),
         }
-        return JSONResponse(content=json_result, headers=headers, status_code=200)
+        return JSONResponse(content=list_of_tables, headers=headers, status_code=200)
 
     def get_import_tables_on_connection(self, connection, current_user):
         """Returns all import tables in a specific database"""
@@ -1312,213 +1336,113 @@ class DBCalls:
 
     def get_import_table_details(self, database, table, include_columns):
         """Returns all import table details"""
-        log = logging.getLogger(self.logger)
-
         try:
             session = self.get_dbimport_session()
         except SQLError:
             self.disconnect_dbimport_db()
             return None
 
-        import_tables = aliased(config_schema.ImportTables)
-
-        # Return a list of Hive tables with details
-        row = (
-            session.query(
-                import_tables.hive_db,
-                import_tables.hive_table,
-                import_tables.dbalias,
-                import_tables.source_schema,
-                import_tables.source_table,
-                import_tables.import_phase_type,
-                import_tables.etl_phase_type,
-                import_tables.import_tool,
-                import_tables.etl_engine,
-                import_tables.last_update_from_source,
-                import_tables.sqoop_sql_where_addition,
-                import_tables.nomerge_ingestion_sql_addition,
-                import_tables.include_in_airflow,
-                import_tables.airflow_priority,
-                import_tables.validate_import,
-                import_tables.validation_method,
-                import_tables.validate_source,
-                import_tables.validate_diff_allowed,
-                import_tables.validation_custom_query_source_sql,
-                import_tables.validation_custom_query_hive_sql,
-                import_tables.validation_custom_query_validate_import_table,
-                import_tables.truncate_hive,
-                import_tables.mappers,
-                import_tables.soft_delete_during_merge,
-                import_tables.source_rowcount,
-                import_tables.source_rowcount_incr,
-                import_tables.hive_rowcount,
-                import_tables.validation_custom_query_source_value,
-                import_tables.validation_custom_query_hive_value,
-                import_tables.incr_mode,
-                import_tables.incr_column,
-                import_tables.incr_validation_method,
-                import_tables.incr_minvalue,
-                import_tables.incr_maxvalue,
-                import_tables.incr_minvalue_pending,
-                import_tables.incr_maxvalue_pending,
-                import_tables.pk_column_override,
-                import_tables.pk_column_override_mergeonly,
-                import_tables.hive_merge_heap,
-                import_tables.hive_split_count,
-                import_tables.spark_executor_memory,
-                import_tables.spark_executors,
-                import_tables.split_by_column,
-                import_tables.sqoop_query,
-                import_tables.sqoop_options,
-                import_tables.sqoop_last_size,
-                import_tables.sqoop_last_rows,
-                import_tables.sqoop_last_mappers,
-                import_tables.sqoop_last_execution,
-                import_tables.sqoop_use_generated_sql,
-                import_tables.sqoop_allow_text_splitter,
-                import_tables.force_string,
-                import_tables.comment,
-                import_tables.generated_hive_column_definition,
-                import_tables.generated_sqoop_query,
-                import_tables.generated_sqoop_options,
-                import_tables.generated_pk_columns,
-                import_tables.generated_foreign_keys,
-                import_tables.datalake_source,
-                import_tables.operator_notes,
-                import_tables.copy_finished,
-                import_tables.copy_slave,
-                import_tables.create_foreign_keys,
-                import_tables.invalidate_impala,
-                import_tables.custom_max_query,
-                import_tables.merge_compaction_method,
-                import_tables.source_table_type,
-                import_tables.import_database,
-                import_tables.import_table,
-                import_tables.history_database,
-                import_tables.history_table,
-            )
-            .select_from(import_tables)
-            .filter(
-                (import_tables.hive_db == database)
-                & (import_tables.hive_table == table)
-            )
-            .one_or_none()
-        )
-
-        if row == None:
+        try:
+            stored = ImportTablesRepository(session()).table(database, table)
+        finally:
             session.remove()
+
+        if stored is None:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="import table does not exist",
             )
 
-        result_dict = {}
-        result_dict["database"] = row[0]
-        result_dict["table"] = row[1]
-        result_dict["connection"] = row[2]
-        result_dict["sourceSchema"] = row[3]
-        result_dict["sourceTable"] = row[4]
-        result_dict["importPhaseType"] = row[5]
-        result_dict["etlPhaseType"] = row[6]
-        result_dict["importTool"] = row[7]
-        result_dict["etlEngine"] = row[8]
-        try:
-            result_dict["lastUpdateFromSource"] = row[9].strftime("%Y-%m-%d %H:%M:%S")
-        except AttributeError:
-            result_dict["lastUpdateFromSource"] = None
-        result_dict["sqlWhereAddition"] = row[10]
-        result_dict["nomergeIngestionSqlAddition"] = row[11]
-        if row[12] == 1:
-            result_dict["includeInAirflow"] = True
-        else:
-            result_dict["includeInAirflow"] = False
-        result_dict["airflowPriority"] = row[13]
-        result_dict["validateImport"] = row[14]
-        result_dict["validationMethod"] = row[15]
-        result_dict["validateSource"] = row[16]
-        result_dict["validateDiffAllowed"] = row[17]
-        result_dict["validationCustomQuerySourceSQL"] = row[18]
-        result_dict["validationCustomQueryHiveSQL"] = row[19]
-        result_dict["validationCustomQueryValidateImportTable"] = row[20]
-        # 		resultDict['truncateTable'] = row[21]
-        result_dict["sqlSessions"] = row[22]
-        result_dict["softDeleteDuringMerge"] = row[23]
-        result_dict["sourceRowcount"] = row[24]
-        result_dict["sourceRowcountIncr"] = row[25]
-        result_dict["targetRowcount"] = row[26]
-        result_dict["validationCustomQuerySourceValue"] = row[27]
-        result_dict["validationCustomQueryHiveValue"] = row[28]
-        if row[29] == None or row[29] == "":
-            result_dict["incrMode"] = "lastmodified"
-        else:
-            result_dict["incrMode"] = row[29]
-        result_dict["incrColumn"] = row[30]
-        result_dict["incrValidationMethod"] = row[31]
-        result_dict["incrMinvalue"] = row[32]
-        result_dict["incrMaxvalue"] = row[33]
-        result_dict["incrMinvaluePending"] = row[34]
-        result_dict["incrMaxvaluePending"] = row[35]
-        result_dict["pkColumnOverride"] = row[36]
-        result_dict["pkColumnOverrideMergeonly"] = row[37]
-        result_dict["hiveContainerSize"] = row[38]
-        result_dict["splitCount"] = row[39]
-        result_dict["sparkExecutorMemory"] = row[40]
-        result_dict["sparkExecutors"] = row[41]
-        result_dict["splitByColumn"] = row[42]
-        result_dict["sqoopCustomQuery"] = row[43]
-        result_dict["sqoopOptions"] = row[44]
-        result_dict["lastSize"] = row[45]
-        result_dict["lastRows"] = row[46]
-        result_dict["lastSqlSessions"] = row[47]
-        result_dict["lastExecution"] = row[48]
-        if (
-            row[49] == -1
-        ):  # -1 is not allowed, but default in the database. Setting these to 1
-            result_dict["sqoopUseGeneratedSql"] = 1
-        else:
-            result_dict["sqoopUseGeneratedSql"] = row[49]
-        result_dict["allowTextSplitter"] = row[50]
-        result_dict["forceString"] = row[51]
-        if (
-            result_dict["forceString"] != 0
-            and result_dict["forceString"] != 1
-            and result_dict["forceString"] != -1
-        ):
-            result_dict["forceString"] = -1
-        result_dict["comment"] = row[52]
-        result_dict["generatedHiveColumnDefinition"] = row[53]
-        result_dict["generatedSqoopQuery"] = row[54]
-        result_dict["generatedSqoopOptions"] = row[55]
-        result_dict["generatedPkColumns"] = row[56]
-        # 		resultDict['generatedForeignKeys'] = row[57]
-        result_dict["datalakeSource"] = row[58]
-        result_dict["operatorNotes"] = row[59]
-        try:
-            result_dict["copyFinished"] = row[60].strftime("%Y-%m-%d %H:%M:%S")
-        except AttributeError:
-            result_dict["copyFinished"] = None
-        result_dict["copySlave"] = row[61]
-        result_dict["createForeignKeys"] = row[62]
-        result_dict["invalidateImpala"] = row[63]
-        result_dict["customMaxQuery"] = row[64]
-        result_dict["mergeCompactionMethod"] = row[65]
-        result_dict["sourceTableType"] = row[66]
-        result_dict["importDatabase"] = row[67]
-        result_dict["importTable"] = row[68]
-        result_dict["historyDatabase"] = row[69]
-        result_dict["historyTable"] = row[70]
+        result_dict = {
+            "database": stored.hive_db,
+            "table": stored.hive_table,
+            "connection": stored.dbalias,
+            "sourceSchema": stored.source_schema,
+            "sourceTable": stored.source_table,
+            "importPhaseType": stored.import_phase_type,
+            "etlPhaseType": stored.etl_phase_type,
+            "importTool": stored.import_tool,
+            "etlEngine": stored.etl_engine,
+            "lastUpdateFromSource": _datetime_text(stored.last_update_from_source),
+            "sqlWhereAddition": stored.sqoop_sql_where_addition,
+            "nomergeIngestionSqlAddition": stored.nomerge_ingestion_sql_addition,
+            "includeInAirflow": stored.include_in_airflow == 1,
+            "airflowPriority": stored.airflow_priority,
+            "validateImport": stored.validate_import,
+            "validationMethod": stored.validation_method,
+            "validateSource": stored.validate_source,
+            "validateDiffAllowed": stored.validate_diff_allowed,
+            "validationCustomQuerySourceSQL": stored.validation_custom_query_source_sql,
+            "validationCustomQueryHiveSQL": stored.validation_custom_query_hive_sql,
+            "validationCustomQueryValidateImportTable": (
+                stored.validation_custom_query_validate_import_table
+            ),
+            "sqlSessions": stored.mappers,
+            "softDeleteDuringMerge": stored.soft_delete_during_merge,
+            "sourceRowcount": stored.source_rowcount,
+            "sourceRowcountIncr": stored.source_rowcount_incr,
+            "targetRowcount": stored.hive_rowcount,
+            "validationCustomQuerySourceValue": (
+                stored.validation_custom_query_source_value
+            ),
+            "validationCustomQueryHiveValue": stored.validation_custom_query_hive_value,
+            "incrMode": stored.incr_mode or "lastmodified",
+            "incrColumn": stored.incr_column,
+            "incrValidationMethod": stored.incr_validation_method,
+            "incrMinvalue": stored.incr_minvalue,
+            "incrMaxvalue": stored.incr_maxvalue,
+            "incrMinvaluePending": stored.incr_minvalue_pending,
+            "incrMaxvaluePending": stored.incr_maxvalue_pending,
+            "pkColumnOverride": stored.pk_column_override,
+            "pkColumnOverrideMergeonly": stored.pk_column_override_mergeonly,
+            "hiveContainerSize": stored.hive_merge_heap,
+            "splitCount": stored.hive_split_count,
+            "sparkExecutorMemory": stored.spark_executor_memory,
+            "sparkExecutors": stored.spark_executors,
+            "splitByColumn": stored.split_by_column,
+            "sqoopCustomQuery": stored.sqoop_query,
+            "sqoopOptions": stored.sqoop_options,
+            "lastSize": stored.sqoop_last_size,
+            "lastRows": stored.sqoop_last_rows,
+            "lastSqlSessions": stored.sqoop_last_mappers,
+            "lastExecution": stored.sqoop_last_execution,
+            # -1 is not allowed, but default in the database.
+            "sqoopUseGeneratedSql": (
+                1
+                if stored.sqoop_use_generated_sql == -1
+                else stored.sqoop_use_generated_sql
+            ),
+            "allowTextSplitter": stored.sqoop_allow_text_splitter,
+            "forceString": (
+                stored.force_string if stored.force_string in (-1, 0, 1) else -1
+            ),
+            "comment": stored.comment,
+            "generatedHiveColumnDefinition": stored.generated_hive_column_definition,
+            "generatedSqoopQuery": stored.generated_sqoop_query,
+            "generatedSqoopOptions": stored.generated_sqoop_options,
+            "generatedPkColumns": stored.generated_pk_columns,
+            "datalakeSource": stored.datalake_source,
+            "operatorNotes": stored.operator_notes,
+            "copyFinished": _datetime_text(stored.copy_finished),
+            "copySlave": stored.copy_slave,
+            "createForeignKeys": stored.create_foreign_keys,
+            "invalidateImpala": stored.invalidate_impala,
+            "customMaxQuery": stored.custom_max_query,
+            "mergeCompactionMethod": stored.merge_compaction_method,
+            "sourceTableType": stored.source_table_type,
+            "importDatabase": stored.import_database,
+            "importTable": stored.import_table,
+            "historyDatabase": stored.history_database,
+            "historyTable": stored.history_table,
+        }
 
         if include_columns == True:
             result_dict["columns"] = self.get_import_table_columns(database, table)
 
-        json_result = json.loads(json.dumps(result_dict))
-        # session.close()
-        session.remove()
-
-        return json_result
+        return result_dict
 
     def delete_import_table(self, database, table, current_user):
-        """Update or create an import table"""
+        """Delete an import table"""
         log = logging.getLogger(self.logger)
 
         try:
@@ -1527,50 +1451,24 @@ class DBCalls:
             self.disconnect_dbimport_db()
             return None
 
-        import_columns = aliased(config_schema.ImportColumns)
-        import_tables = aliased(config_schema.ImportTables)
-        result = "ok"
-        return_code = 200
-
         log.info(
             "User '%s' deleted import table '%s.%s'", current_user, database, table
         )
 
-        # Fetch the tableID as that is required to update/create data in import_columns
-        row = (
-            session.query(config_schema.ImportTables.table_id)
-            .select_from(config_schema.ImportTables)
-            .filter(
-                (config_schema.ImportTables.hive_db == database)
-                & (config_schema.ImportTables.hive_table == table)
-            )
-            .one_or_none()
-        )
-        session.commit()
-
-        if row == None:
-            result = "Table does not exist"
-            return_code = 404
-        else:
-            table_id = row[0]
-
-            (
-                session.query(config_schema.ImportTables)
-                .filter(config_schema.ImportTables.table_id == table_id)
-                .delete()
-            )
+        try:
+            deleted = ImportTablesRepository(session()).delete(database, table)
             session.commit()
+        finally:
+            session.remove()
 
-        # session.close()
-        session.remove()
-        return (result, return_code)
+        if not deleted:
+            return ("Table does not exist", 404)
+        return ("ok", 200)
 
     def bulk_delete_import_table(
         self, bulk_data: list[data_models.ImportTablePK], current_user
     ):
         """Bulk delete of import tables"""
-        log = logging.getLogger(self.logger)
-
         if len(bulk_data) == 0:
             result_msg = {
                 "result": "Body must contain a list of databas and table to delete"
@@ -1584,32 +1482,20 @@ class DBCalls:
             self.disconnect_dbimport_db()
             return None
 
-        delete_statement = delete(config_schema.ImportTables)
-        delete_statement = delete_statement.where(
-            (config_schema.ImportTables.hive_db == bindparam("database"))
-            & (config_schema.ImportTables.hive_table == bindparam("table"))
-        )
+        try:
+            ImportTablesRepository(session()).delete_many(
+                [(tables.database, tables.table) for tables in bulk_data]
+            )
+            session.commit()
+        finally:
+            session.remove()
 
-        # Create a list of dicts that contain all the databas and table combinations that will be deleted
-        table_list = []
-        for tables in bulk_data:
-            table_list.append({"database": tables.database, "table": tables.table})
-
-        session.connection().execute(delete_statement, table_list)
-        session.commit()
-        session.remove()
-
-        return_code = 200
-        result_msg = {"result": "Ok"}
-
-        return (result_msg, return_code)
+        return ({"result": "Ok"}, 200)
 
     def bulk_update_import_table(
         self, bulk_data: data_models.ImportTableBulkUpdate, current_user
     ):
         """Bulk update of import tables"""
-        log = logging.getLogger(self.logger)
-
         if len(bulk_data.importTables) == 0:
             result_msg = {
                 "result": "importTables must contain a list of database/tables to update"
@@ -1623,59 +1509,23 @@ class DBCalls:
             self.disconnect_dbimport_db()
             return None
 
-        import_tables = aliased(config_schema.ImportTables)
-        update_statement = update(import_tables)
-        update_statement = update_statement.where(
-            (import_tables.hive_db == bindparam("database"))
-            & (import_tables.hive_table == bindparam("table"))
-        )
+        # Only the fields given in the posted JSON are changed.
+        settings = {
+            _IMPORT_TABLE_BULK[field]: getattr(bulk_data, field)
+            for field in bulk_data.__pydantic_fields_set__
+            if field in _IMPORT_TABLE_BULK
+        }
 
-        # This will loop through only the fields specified in the Posted JSON. So if a field have got a default None value in dataModel validation,
-        # that field wont be part of this loop
-        for update_field in bulk_data.__pydantic_fields_set__:
-            if update_field == "connection":
-                update_statement = update_statement.values(dbalias=bulk_data.connection)
-            elif update_field == "importPhaseType":
-                update_statement = update_statement.values(
-                    import_phase_type=bulk_data.importPhaseType
-                )
-            elif update_field == "etlPhaseType":
-                update_statement = update_statement.values(
-                    etl_phase_type=bulk_data.etlPhaseType
-                )
-            elif update_field == "importTool":
-                update_statement = update_statement.values(
-                    import_tool=bulk_data.importTool
-                )
-            elif update_field == "etlEngine":
-                update_statement = update_statement.values(
-                    etl_engine=bulk_data.etlEngine
-                )
-            elif update_field == "includeInAirflow":
-                update_statement = update_statement.values(
-                    include_in_airflow=bulk_data.includeInAirflow
-                )
-            elif update_field == "operatorNotes":
-                update_statement = update_statement.values(
-                    operator_notes=bulk_data.operatorNotes
-                )
+        try:
+            ImportTablesRepository(session()).update_many(
+                [(tables.database, tables.table) for tables in bulk_data.importTables],
+                settings,
+            )
+            session.commit()
+        finally:
+            session.remove()
 
-        # Create a list of dicts that contain all the databas/table combinations that will be updated
-        table_list = []
-        for tables in bulk_data.importTables:
-            table_list.append({"database": tables.database, "table": tables.table})
-
-        update_statement = update_statement.execution_options(synchronize_session=False)
-        # 		print(updateStatement)
-
-        session.connection().execute(update_statement, table_list)
-        session.commit()
-        session.remove()
-
-        return_code = 200
-        result_msg = {"result": "Ok"}
-
-        return (result_msg, return_code)
+        return ({"result": "Ok"}, 200)
 
     def update_import_table(
         self, database, table, data: data_models.ImportTableDetailsWrite, current_user
@@ -1689,13 +1539,6 @@ class DBCalls:
             self.disconnect_dbimport_db()
             return None
 
-        import_columns = aliased(config_schema.ImportColumns)
-        import_tables = aliased(config_schema.ImportTables)
-        result = "ok"
-        return_code = 200
-
-        log.debug(data)
-        # log.info("User '%s' updated/created import table '%s.%s'"%(currentUser, getattr(data, "database"), getattr(data, "table")))
         log.info(
             "User '%s' updated/created import table '%s.%s'",
             current_user,
@@ -1703,374 +1546,79 @@ class DBCalls:
             table,
         )
 
-        # Set default values
-        if data.includeInAirflow is None:
-            data.includeInAirflow = 1
-        if data.validateImport is None:
-            data.validateImport = 1
-        if data.validationMethod is None:
-            data.validationMethod = "rowCount"
-        if data.validateSource is None:
-            data.validateSource = "query"
-        if data.validateDiffAllowed is None:
-            data.validateDiffAllowed = -1
-        if data.validationCustomQueryValidateImportTable is None:
-            data.validationCustomQueryValidateImportTable = 1
-        if data.incrValidationMethod is None:
-            data.incrValidationMethod = "full"
-            # 		if getattr(data, "truncateTable") == None:								setattr(data, "truncateTable", 1)
-        if data.sqlSessions is None:
-            data.sqlSessions = -1
-        if data.softDeleteDuringMerge is None:
-            data.softDeleteDuringMerge = 0
-        if data.sqoopUseGeneratedSql is None:
-            data.sqoopUseGeneratedSql = -1
-        if data.allowTextSplitter is None:
-            data.allowTextSplitter = 0
-        if data.forceString is None:
-            data.forceString = -1
-        if data.invalidateImpala is None:
-            data.invalidateImpala = -1
-        if data.mergeCompactionMethod is None:
-            data.mergeCompactionMethod = "default"
-        if data.createForeignKeys is None:
-            data.createForeignKeys = -1
-        if data.copySlave is None:
-            data.copySlave = 0
+        settings = {
+            column: getattr(data, field)
+            for column, field in _IMPORT_TABLE_FIELDS.items()
+        }
+        for column, default in _IMPORT_TABLE_DEFAULTS.items():
+            if settings[column] is None:
+                settings[column] = default
+
+        columns = []
+        for column in data.columns:
+            values = {
+                name: getattr(column, field)
+                for name, field in _IMPORT_COLUMN_FIELDS.items()
+            }
+            # Force set to Null if string is empty. This will otherwise cause problems during executions as it's not handled there
+            for name in ("column_name_override", "column_type_override"):
+                override = values[name]
+                if isinstance(override, str) and override.strip() == "":
+                    values[name] = None
+            columns.append(values | {"hive_db": database, "hive_table": table})
 
         try:
-            # 				hive_db = getattr(data, "database"),
-            # 				hive_table = getattr(data, "table"),
-            query = insert(config_schema.ImportTables).values(
-                hive_db=database,
-                hive_table=table,
-                dbalias=data.connection,
-                source_schema=data.sourceSchema,
-                source_table=data.sourceTable,
-                import_phase_type=data.importPhaseType,
-                etl_phase_type=data.etlPhaseType,
-                import_tool=data.importTool,
-                etl_engine=data.etlEngine,
-                last_update_from_source=data.lastUpdateFromSource,
-                sqoop_sql_where_addition=data.sqlWhereAddition,
-                nomerge_ingestion_sql_addition=data.nomergeIngestionSqlAddition,
-                include_in_airflow=data.includeInAirflow,
-                airflow_priority=data.airflowPriority,
-                validate_import=data.validateImport,
-                validationMethod=data.validationMethod,
-                validate_source=data.validateSource,
-                validate_diff_allowed=data.validateDiffAllowed,
-                validationCustomQuerySourceSQL=data.validationCustomQuerySourceSQL,
-                validationCustomQueryHiveSQL=data.validationCustomQueryHiveSQL,
-                validationCustomQueryValidateImportTable=data.validationCustomQueryValidateImportTable,
-                # 				truncate_hive = getattr(data, "truncateTable"),
-                mappers=data.sqlSessions,
-                soft_delete_during_merge=data.softDeleteDuringMerge,
-                incr_mode=data.incrMode,
-                incr_column=data.incrColumn,
-                incr_validation_method=data.incrValidationMethod,
-                pk_column_override=data.pkColumnOverride,
-                pk_column_override_mergeonly=data.pkColumnOverrideMergeonly,
-                hive_merge_heap=data.hiveContainerSize,
-                hive_split_count=data.splitCount,
-                spark_executor_memory=data.sparkExecutorMemory,
-                spark_executors=data.sparkExecutors,
-                split_by_column=data.splitByColumn,
-                sqoop_query=data.sqoopCustomQuery,
-                sqoop_options=data.sqoopOptions,
-                sqoop_use_generated_sql=data.sqoopUseGeneratedSql,
-                sqoop_allow_text_splitter=data.allowTextSplitter,
-                force_string=data.forceString,
-                comment=data.comment,
-                datalake_source=data.datalakeSource,
-                operator_notes=data.operatorNotes,
-                copy_slave=data.copySlave,
-                create_foreign_keys=data.createForeignKeys,
-                invalidate_impala=data.invalidateImpala,
-                custom_max_query=data.customMaxQuery,
-                mergeCompactionMethod=data.mergeCompactionMethod,
-                sourceTableType=data.sourceTableType,
-                import_database=data.importDatabase,
-                import_table=data.importTable,
-                history_database=data.historyDatabase,
-                history_table=data.historyTable,
-            )
-
-            query = query.on_duplicate_key_update(
-                dbalias=data.connection,
-                source_schema=data.sourceSchema,
-                source_table=data.sourceTable,
-                import_phase_type=data.importPhaseType,
-                etl_phase_type=data.etlPhaseType,
-                import_tool=data.importTool,
-                etl_engine=data.etlEngine,
-                last_update_from_source=data.lastUpdateFromSource,
-                sqoop_sql_where_addition=data.sqlWhereAddition,
-                nomerge_ingestion_sql_addition=data.nomergeIngestionSqlAddition,
-                include_in_airflow=data.includeInAirflow,
-                airflow_priority=data.airflowPriority,
-                validate_import=data.validateImport,
-                validationMethod=data.validationMethod,
-                validate_source=data.validateSource,
-                validate_diff_allowed=data.validateDiffAllowed,
-                validationCustomQuerySourceSQL=data.validationCustomQuerySourceSQL,
-                validationCustomQueryHiveSQL=data.validationCustomQueryHiveSQL,
-                validationCustomQueryValidateImportTable=data.validationCustomQueryValidateImportTable,
-                # 				truncate_hive = getattr(data, "truncateTable"),
-                mappers=data.sqlSessions,
-                soft_delete_during_merge=data.softDeleteDuringMerge,
-                incr_mode=data.incrMode,
-                incr_column=data.incrColumn,
-                incr_validation_method=data.incrValidationMethod,
-                pk_column_override=data.pkColumnOverride,
-                pk_column_override_mergeonly=data.pkColumnOverrideMergeonly,
-                hive_merge_heap=data.hiveContainerSize,
-                hive_split_count=data.splitCount,
-                spark_executor_memory=data.sparkExecutorMemory,
-                spark_executors=data.sparkExecutors,
-                split_by_column=data.splitByColumn,
-                sqoop_query=data.sqoopCustomQuery,
-                sqoop_options=data.sqoopOptions,
-                sqoop_use_generated_sql=data.sqoopUseGeneratedSql,
-                sqoop_allow_text_splitter=data.allowTextSplitter,
-                force_string=data.forceString,
-                comment=data.comment,
-                datalake_source=data.datalakeSource,
-                operator_notes=data.operatorNotes,
-                copy_slave=data.copySlave,
-                create_foreign_keys=data.createForeignKeys,
-                invalidate_impala=data.invalidateImpala,
-                custom_max_query=data.customMaxQuery,
-                mergeCompactionMethod=data.mergeCompactionMethod,
-                sourceTableType=data.sourceTableType,
-                import_database=data.importDatabase,
-                import_table=data.importTable,
-                history_database=data.historyDatabase,
-                history_table=data.historyTable,
-            )
-
-            session.execute(query)
+            tables = ImportTablesRepository(session())
+            tables.save_settings(database, table, settings)
+            table_id = tables.table_id_of(database, table)
+            stored_columns = ImportColumnsRepository(session())
+            for values in columns:
+                stored_columns.save_column(table_id, values)
             session.commit()
-        except SQLError as err:
-            log.error(str(err))
-            log.error(column)  # noqa: F821  # TODO(#164): column is undefined here
-
-            result = str(err)
-            return_code = 500
-
-            # session.close()
+        finally:
             session.remove()
-            return (result, return_code)
 
-        # Fetch the tableID as that is required to update/create data in import_columns
-        row = (
-            session.query(import_tables.table_id)
-            .select_from(import_tables)
-            .filter(
-                (import_tables.hive_db == database)
-                & (import_tables.hive_table == table)
-            )
-            .one()
-        )
-        # 				.filter((ImportTables.hive_db == getattr(table, "database")) & (ImportTables.hive_table == getattr(table, "table")))
-
-        session.execute(query)
-        table_id = row[0]
-
-        columns = data.columns
-        for column in columns:
-            # PK in import_columns is not the most optimal. So we need to check first if it exists and then insert or update. Upsert is not available
-            row = (
-                session.query(import_columns.column_id)
-                .select_from(import_columns)
-                .filter(
-                    (import_columns.table_id == table_id)
-                    & (import_columns.column_name == column.columnName)
-                )
-                .one_or_none()
-            )
-
-            # Force set to Null if string is empty. This will otherwise cause problems during executions as it's not handled there
-            if (
-                column.columnNameOverride is not None
-                and column.columnNameOverride.strip() == ""
-            ):
-                column.columnNameOverride = None
-            if (
-                column.columnTypeOverride is not None
-                and column.columnTypeOverride.strip() == ""
-            ):
-                column.columnTypeOverride = None
-
-            try:
-                if row == None:
-                    log.debug("Column does not exist")
-
-                    # 						hive_db = getattr(data, "database"),
-                    # 						hive_table = getattr(data, "table"),
-                    query = sa.insert(config_schema.ImportColumns).values(
-                        table_id=table_id,
-                        hive_db=database,
-                        hive_table=table,
-                        column_name=column.columnName,
-                        column_order=column.columnOrder,
-                        source_column_name=column.sourceColumnName,
-                        column_type=column.columnType,
-                        source_column_type=column.sourceColumnType,
-                        source_database_type=column.sourceDatabaseType,
-                        column_name_override=column.columnNameOverride,
-                        column_type_override=column.columnTypeOverride,
-                        sqoop_column_type=column.sqoopColumnType,
-                        sqoop_column_type_override=column.sqoopColumnTypeOverride,
-                        force_string=column.forceString,
-                        include_in_import=column.includeInImport,
-                        source_primary_key=column.sourcePrimaryKey,
-                        last_update_from_source=column.lastUpdateFromSource,
-                        comment=column.comment,
-                        operator_notes=column.operatorNotes,
-                        anonymization_function=column.anonymizationFunction,
-                    )
-                    session.execute(query)
-
-                else:
-                    column_id = row[0]
-                    log.debug("Import column with id '%s' was updated" % (column_id))
-                    # 							"hive_db": getattr(data, "database"),
-                    # 							"hive_table": getattr(data, "table"),
-                    session.execute(
-                        update(import_columns),
-                        [
-                            {
-                                "table_id": table_id,
-                                "column_id": column_id,
-                                "hive_db": database,
-                                "hive_table": table,
-                                "column_name": column.columnName,
-                                "column_order": column.columnOrder,
-                                "source_column_name": column.sourceColumnName,
-                                "column_type": column.columnType,
-                                "source_column_type": column.sourceColumnType,
-                                "source_database_type": column.sourceDatabaseType,
-                                "column_name_override": column.columnNameOverride,
-                                "column_type_override": column.columnTypeOverride,
-                                "sqoop_column_type": column.sqoopColumnType,
-                                "sqoop_column_type_override": column.sqoopColumnTypeOverride,
-                                "force_string": column.forceString,
-                                "include_in_import": column.includeInImport,
-                                "source_primary_key": column.sourcePrimaryKey,
-                                "last_update_from_source": column.lastUpdateFromSource,
-                                "comment": column.comment,
-                                "operator_notes": column.operatorNotes,
-                                "anonymization_function": column.anonymizationFunction,
-                            }
-                        ],
-                    )
-
-                session.commit()
-            except SQLError as err:
-                log.error(str(err))
-                log.error(column)
-
-                result = str(err)
-                return_code = 500
-
-                # session.close()
-                session.remove()
-
-                return (result, return_code)
-
-            log.debug(column)
-
-        # session.close()
-        session.remove()
-        return (result, return_code)
+        return ("ok", 200)
 
     def get_import_table_columns(self, database, table):
         """Returns all columns in an import table"""
-        log = logging.getLogger(self.logger)
-
         try:
             session = self.get_dbimport_session()
         except SQLError:
             self.disconnect_dbimport_db()
             return None
 
-        import_columns = aliased(config_schema.ImportColumns)
-        list_of_columns = []
-
-        # Return a list of Hive tables with details
-        import_columns_data = (
-            session.query(
-                import_columns.hive_db,
-                import_columns.hive_table,
-                import_columns.column_name,
-                import_columns.column_order,
-                import_columns.source_column_name,
-                import_columns.column_type,
-                import_columns.source_column_type,
-                import_columns.source_database_type,
-                import_columns.column_name_override,
-                import_columns.column_type_override,
-                import_columns.sqoop_column_type,
-                import_columns.sqoop_column_type_override,
-                import_columns.force_string,
-                import_columns.include_in_import,
-                import_columns.source_primary_key,
-                import_columns.last_update_from_source,
-                import_columns.comment,
-                import_columns.operator_notes,
-                import_columns.anonymization_function,
+        try:
+            columns = ImportColumnsRepository(session()).columns_of_table(
+                database, table
             )
-            .select_from(import_columns)
-            .filter(
-                (import_columns.hive_db == database)
-                & (import_columns.hive_table == table)
-            )
-            .order_by(import_columns.column_order)
-            .all()
-        )
+        finally:
+            session.remove()
 
-        for row in import_columns_data:
-            result_dict = {}
-            # 			resultDict['database'] = row[0]
-            # 			resultDict['table'] = row[1]
-            result_dict["columnName"] = row[2]
-            result_dict["columnOrder"] = row[3]
-            result_dict["sourceColumnName"] = row[4]
-            result_dict["columnType"] = row[5]
-            result_dict["sourceColumnType"] = row[6]
-            result_dict["sourceDatabaseType"] = row[7]
-            result_dict["columnNameOverride"] = row[8]
-            result_dict["columnTypeOverride"] = row[9]
-            result_dict["sqoopColumnType"] = row[10]
-            result_dict["sqoopColumnTypeOverride"] = row[11]
-            result_dict["forceString"] = row[12]
-            if (
-                result_dict["forceString"] != 0
-                and result_dict["forceString"] != 1
-                and result_dict["forceString"] != -1
-            ):
-                result_dict["forceString"] = -1
-            result_dict["includeInImport"] = row[13]
-            result_dict["sourcePrimaryKey"] = row[14]
-            try:
-                result_dict["lastUpdateFromSource"] = row[15].strftime(
-                    "%Y-%m-%d %H:%M:%S"
-                )
-            except AttributeError:
-                result_dict["lastUpdateFromSource"] = None
-            result_dict["comment"] = row[16]
-            result_dict["operatorNotes"] = row[17]
-            result_dict["anonymizationFunction"] = row[18]
-
-            list_of_columns.append(result_dict)
-
-        # 		jsonResult = json.loads(json.dumps(listOfColumns))
-        # session.close()
-        session.remove()
-
-        # 		return jsonResult
-        return list_of_columns
+        return [
+            {
+                "columnName": column.column_name,
+                "columnOrder": column.column_order,
+                "sourceColumnName": column.source_column_name,
+                "columnType": column.column_type,
+                "sourceColumnType": column.source_column_type,
+                "sourceDatabaseType": column.source_database_type,
+                "columnNameOverride": column.column_name_override,
+                "columnTypeOverride": column.column_type_override,
+                "sqoopColumnType": column.sqoop_column_type,
+                "sqoopColumnTypeOverride": column.sqoop_column_type_override,
+                "forceString": (
+                    column.force_string if column.force_string in (-1, 0, 1) else -1
+                ),
+                "includeInImport": column.include_in_import,
+                "sourcePrimaryKey": column.source_primary_key,
+                "lastUpdateFromSource": _datetime_text(column.last_update_from_source),
+                "comment": column.comment,
+                "operatorNotes": column.operator_notes,
+                "anonymizationFunction": column.anonymization_function,
+            }
+            for column in columns
+        ]
 
     def repair_import_table(self, database, table, current_user):
         """Repair Import table"""

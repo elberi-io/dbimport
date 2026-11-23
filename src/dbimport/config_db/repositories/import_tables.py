@@ -16,11 +16,14 @@
 # under the License.
 """Import tables: the import_tables row of a table that is imported."""
 
+from collections.abc import Mapping, Sequence
 from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict
-from sqlalchemy import insert, select, update
+from sqlalchemy import bindparam, delete, func, insert, select, update
+from sqlalchemy.dialects.mysql import insert as mysql_insert
 from sqlalchemy.orm import Session
+from sqlalchemy.sql import ColumnElement
 
 from dbimport.config_db.config_schema import ImportTables
 
@@ -93,6 +96,139 @@ class ImportTable(BaseModel):
     import_table: str | None
     history_database: str | None
     history_table: str | None
+    include_in_airflow: int
+    airflow_priority: int | None
+    force_string: int
+    generated_hive_column_definition: str | None
+    operator_notes: str | None
+    copy_finished: datetime | None
+    source_table_type: str | None
+
+
+class ImportTableEntry(BaseModel):
+    """A table as the search lists it."""
+
+    model_config = ConfigDict(frozen=True)
+
+    hive_db: str
+    hive_table: str
+    dbalias: str
+    source_schema: str
+    source_table: str
+    import_phase_type: str | None
+    etl_phase_type: str | None
+    import_tool: str
+    etl_engine: str
+    last_update_from_source: datetime | None
+    include_in_airflow: int
+    operator_notes: str | None
+
+
+class DatabaseSummary(BaseModel):
+    """The tables imported into one Hive database."""
+
+    model_config = ConfigDict(frozen=True)
+
+    hive_db: str
+    tables: int
+    last_import: datetime | None
+    last_size: int | None
+    last_rows: int | None
+
+
+_SEARCHABLE = frozenset(
+    {
+        "hive_db",
+        "hive_table",
+        "dbalias",
+        "source_schema",
+        "source_table",
+        "import_phase_type",
+        "etl_phase_type",
+        "import_tool",
+        "etl_engine",
+        "include_in_airflow",
+        "operator_notes",
+    }
+)
+
+_SETTINGS = frozenset(
+    {
+        "dbalias",
+        "source_schema",
+        "source_table",
+        "import_phase_type",
+        "etl_phase_type",
+        "import_tool",
+        "etl_engine",
+        "last_update_from_source",
+        "sqoop_sql_where_addition",
+        "nomerge_ingestion_sql_addition",
+        "include_in_airflow",
+        "airflow_priority",
+        "validate_import",
+        "validation_method",
+        "validate_source",
+        "validate_diff_allowed",
+        "validation_custom_query_source_sql",
+        "validation_custom_query_hive_sql",
+        "validation_custom_query_validate_import_table",
+        "mappers",
+        "soft_delete_during_merge",
+        "incr_mode",
+        "incr_column",
+        "incr_validation_method",
+        "pk_column_override",
+        "pk_column_override_mergeonly",
+        "hive_merge_heap",
+        "hive_split_count",
+        "spark_executor_memory",
+        "spark_executors",
+        "split_by_column",
+        "sqoop_query",
+        "sqoop_options",
+        "sqoop_use_generated_sql",
+        "sqoop_allow_text_splitter",
+        "force_string",
+        "comment",
+        "datalake_source",
+        "operator_notes",
+        "copy_slave",
+        "create_foreign_keys",
+        "invalidate_impala",
+        "custom_max_query",
+        "merge_compaction_method",
+        "source_table_type",
+        "import_database",
+        "import_table",
+        "history_database",
+        "history_table",
+    }
+)
+
+_BULK_SETTINGS = frozenset(
+    {
+        "dbalias",
+        "import_phase_type",
+        "etl_phase_type",
+        "import_tool",
+        "etl_engine",
+        "include_in_airflow",
+        "operator_notes",
+    }
+)
+
+
+def _columns(
+    values: Mapping[str, object], allowed: frozenset[str]
+) -> dict[str, object]:
+    """values keyed by column name instead of attribute name. Raises
+    KeyError for an attribute that is not allowed."""
+    unknown = set(values) - allowed
+    if unknown:
+        raise KeyError(", ".join(sorted(unknown)))
+    mapped = ImportTables.__mapper__.columns
+    return {mapped[name].name: value for name, value in values.items()}
 
 
 class GeneratedDefinitions(BaseModel):
@@ -285,6 +421,122 @@ class ImportTablesRepository:
             generated_foreign_keys=None,
             sqoop_use_generated_sql=1 if generated.use_generated_sql else 0,
             source_table_type=generated.source_table_type,
+        )
+
+    def database_summaries(self, limit: int) -> list[DatabaseSummary]:
+        """Per Hive database (at most limit): the number of tables, the
+        last update from the source and the sums of the last sizes and
+        rows."""
+        rows = self._session.execute(
+            select(
+                ImportTables.hive_db,
+                func.count(ImportTables.hive_db),
+                func.max(ImportTables.last_update_from_source),
+                func.sum(ImportTables.sqoop_last_size),
+                func.sum(ImportTables.sqoop_last_rows),
+            )
+            .group_by(ImportTables.hive_db)
+            .limit(limit)
+        )
+        return [
+            DatabaseSummary(
+                hive_db=hive_db,
+                tables=tables,
+                last_import=last_import,
+                last_size=last_size,
+                last_rows=last_rows,
+            )
+            for hive_db, tables, last_import, last_size, last_rows in rows.tuples()
+        ]
+
+    def search(
+        self, filters: Mapping[str, object], limit: int
+    ) -> tuple[list[ImportTableEntry], int]:
+        """At most limit tables whose fields match all filters, ordered by
+        Hive database and table, and the number of all matches. A string
+        containing "%" is a LIKE pattern; other values must be equal.
+        Raises KeyError for a field that cannot be searched."""
+        unknown = set(filters) - _SEARCHABLE
+        if unknown:
+            raise KeyError(", ".join(sorted(unknown)))
+        conditions: list[ColumnElement[bool]] = [
+            getattr(ImportTables, field).like(value)
+            if isinstance(value, str) and "%" in value
+            else getattr(ImportTables, field) == value
+            for field, value in filters.items()
+        ]
+        rows = self._session.execute(
+            select(
+                *(
+                    getattr(ImportTables, name).label(name)
+                    for name in ImportTableEntry.model_fields
+                )
+            )
+            .where(*conditions)
+            .order_by(ImportTables.hive_db, ImportTables.hive_table)
+            .limit(limit)
+        )
+        found = [ImportTableEntry.model_validate(row._mapping) for row in rows]
+        total = self._session.scalar(
+            select(func.count()).select_from(ImportTables).where(*conditions)
+        )
+        return found, total or 0
+
+    def save_settings(
+        self, hive_db: str, hive_table: str, settings: Mapping[str, object]
+    ) -> None:
+        """Creates the table with the given settings, or replaces them on
+        the existing one; other columns keep their values. Raises KeyError
+        for a column that is not a setting."""
+        values = _columns(settings, _SETTINGS)
+        self._session.execute(
+            mysql_insert(ImportTables)
+            .values(hive_db=hive_db, hive_table=hive_table, **values)
+            .on_duplicate_key_update(values)
+        )
+
+    def table_id_of(self, hive_db: str, hive_table: str) -> int:
+        """Raises sqlalchemy.exc.NoResultFound when the table is missing."""
+        return self._session.scalars(
+            select(ImportTables.table_id).where(
+                ImportTables.hive_db == hive_db, ImportTables.hive_table == hive_table
+            )
+        ).one()
+
+    def delete(self, hive_db: str, hive_table: str) -> bool:
+        """Deletes the table; False when there is none."""
+        result = self._session.execute(
+            delete(ImportTables).where(
+                ImportTables.hive_db == hive_db, ImportTables.hive_table == hive_table
+            )
+        )
+        return result.rowcount == 1
+
+    def delete_many(self, tables: Sequence[tuple[str, str]]) -> None:
+        """Deletes the given (hive_db, hive_table) tables; unknown ones are
+        ignored."""
+        self._session.connection().execute(
+            delete(ImportTables).where(
+                ImportTables.hive_db == bindparam("b_hive_db"),
+                ImportTables.hive_table == bindparam("b_hive_table"),
+            ),
+            [{"b_hive_db": db, "b_hive_table": name} for db, name in tables],
+        )
+
+    def update_many(
+        self, tables: Sequence[tuple[str, str]], settings: Mapping[str, object]
+    ) -> None:
+        """Sets the given settings on the given (hive_db, hive_table)
+        tables. Raises KeyError for a column that cannot be changed in
+        bulk."""
+        self._session.connection().execute(
+            update(ImportTables)
+            .where(
+                ImportTables.hive_db == bindparam("b_hive_db"),
+                ImportTables.hive_table == bindparam("b_hive_table"),
+            )
+            .values(_columns(settings, _BULK_SETTINGS)),
+            [{"b_hive_db": db, "b_hive_table": name} for db, name in tables],
         )
 
     def _update(self, table_id: int, **values: object) -> None:
