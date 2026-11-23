@@ -38,10 +38,19 @@ from dbimport.common.singleton import Singleton
 from dbimport.config_db import common_config, export_stage, send_statistics
 from dbimport.config_db import engine as config_engine
 from dbimport.config_db.repositories.connections import ConnectionsRepository
+from dbimport.config_db.repositories.export_columns import (
+    ExportColumnsRepository,
+    HiveColumn,
+)
 from dbimport.config_db.repositories.export_tables import (
     ExportTable,
     ExportTablesRepository,
 )
+from dbimport.config_db.repositories.import_columns import (
+    ColumnTypeSource,
+    ImportColumnsRepository,
+)
+from dbimport.config_db.repositories.import_tables import ImportTablesRepository
 
 _T = TypeVar("_T")
 
@@ -55,7 +64,6 @@ class Config(metaclass=Singleton):
     ) -> None:
         logging.debug("Executing export_config.__init__()")
         self.mysql_conn: Any = None
-        self.mysql_cursor01: Any = None
         self.start_date: str | None = None
         self.common_config = None
 
@@ -72,8 +80,6 @@ class Config(metaclass=Singleton):
 
         self.start_date = self.common_config.start_date
         self.mysql_conn = self.common_config.mysql_conn
-        self.mysql_cursor01 = self.mysql_conn.cursor(buffered=True)
-        self.mysql_cursor02 = self.mysql_conn.cursor(buffered=True)
 
         self.table_id: int | None = None
         self.export_type: str | None = None
@@ -528,9 +534,6 @@ class Config(metaclass=Singleton):
 
     @contextmanager
     def _write_export_table(self) -> Iterator[ExportTablesRepository]:
-        # Raw queries still read export_tables: they must not keep a
-        # snapshot from before this write. TODO(#238): remove with them.
-        self.mysql_conn.commit()
         with Session(config_engine.engine()) as session:
             yield ExportTablesRepository(session)
             session.commit()
@@ -538,6 +541,16 @@ class Config(metaclass=Singleton):
     def _read_export_table(self, read: Callable[[ExportTablesRepository], _T]) -> _T:
         with Session(config_engine.engine()) as session:
             return read(ExportTablesRepository(session))
+
+    @contextmanager
+    def _write_export_columns(self) -> Iterator[ExportColumnsRepository]:
+        with Session(config_engine.engine()) as session:
+            yield ExportColumnsRepository(session)
+            session.commit()
+
+    def _read_export_columns(self, read: Callable[[ExportColumnsRepository], _T]) -> _T:
+        with Session(config_engine.engine()) as session:
+            return read(ExportColumnsRepository(session))
 
     def _known_table_id(self) -> int:
         if self.table_id is None:
@@ -657,83 +670,23 @@ class Config(metaclass=Singleton):
         logging.debug("Executing export_config.save_column_data()")
         logging.info("Saving column data to MySQL table - export_columns")
 
-        for _index, row in columns_df.iterrows():
-            column_name = row["name"]
-            column_type = row["type"]
-            column_comment = self.common_config.strip_unwanted_char_comment(
-                row["comment"]
-            )
-            column_order = row["idx"]
-
-            query = "select column_id from export_columns where table_id = %s and column_name = %s "
-            self.mysql_cursor01.execute(query, (self.table_id, column_name))
-            logging.debug(
-                "SQL Statement executed: %s" % (self.mysql_cursor01.statement)
-            )
-
-            row = self.mysql_cursor01.fetchone()
-            if row != None:
-                column_id = row[0]
-            else:
-                column_id = None
-
-            if column_id == None:
-                query = (
-                    "insert into export_columns "
-                    "( "
-                    "    table_id, "
-                    "    column_name, "
-                    "    column_type, "
-                    "    column_order, "
-                    "    hive_db, "
-                    "    hive_table, "
-                    "    last_update_from_hive, "
-                    "    comment "
-                    ") values ( %s, %s, %s, %s, %s, %s, %s, %s )"
-                )
-
-                self.mysql_cursor01.execute(
-                    query,
-                    (
-                        self.table_id,
-                        column_name,
-                        column_type,
-                        column_order,
-                        self.hive_db,
-                        self.hive_table,
-                        self.start_date,
-                        column_comment,
+        table_id = self._known_table_id()
+        with self._write_export_columns() as columns:
+            for _index, row in columns_df.iterrows():
+                columns.save_hive_column(
+                    table_id,
+                    HiveColumn(
+                        column_name=row["name"],
+                        column_type=row["type"],
+                        column_order=row["idx"],
+                        hive_db=self.hive_db,
+                        hive_table=self.hive_table,
+                        last_update_from_hive=self.start_date,
+                        comment=self.common_config.strip_unwanted_char_comment(
+                            row["comment"]
+                        ),
                     ),
                 )
-            else:
-                query = (
-                    "update export_columns set "
-                    "    column_type = %s, "
-                    "    column_order = %s, "
-                    "    hive_db = %s, "
-                    "    hive_table = %s, "
-                    "    last_update_from_hive = %s, "
-                    "    comment = %s "
-                    "where column_id = %s "
-                )
-
-                self.mysql_cursor01.execute(
-                    query,
-                    (
-                        column_type,
-                        column_order,
-                        self.hive_db,
-                        self.hive_table,
-                        self.start_date,
-                        column_comment,
-                        column_id,
-                    ),
-                )
-
-            logging.debug(
-                "SQL Statement executed: %s" % (self.mysql_cursor01.statement)
-            )
-            self.mysql_conn.commit()
 
         logging.debug("Executing export_config.save_column_data() - Finished")
 
@@ -772,13 +725,10 @@ class Config(metaclass=Singleton):
         ):
             self.temp_table_needed = True
 
-        query = "select count(column_id) from export_columns "
-        query += "where table_id = %s and target_column_name is not null"
-        self.mysql_cursor01.execute(query, (self.table_id,))
-        logging.debug("SQL Statement executed: %s" % (self.mysql_cursor01.statement))
-
-        row = self.mysql_cursor01.fetchone()
-        if row[0] > 0:
+        table_id = self._known_table_id()
+        if self._read_export_columns(
+            lambda columns: columns.has_target_column_names(table_id)
+        ):
             self.temp_table_needed = True
 
         logging.debug("tempTableNeeded: %s", self.temp_table_needed)
@@ -814,39 +764,32 @@ class Config(metaclass=Singleton):
     ) -> pd.DataFrame:
         """Reads the columns from the configuration database and returns the information in a Pandas DF with the columns name, type and comment"""
         logging.debug("Executing export_config.get_columns_from_config_database()")
-        hive_column_definition = ""
 
-        query = "select "
-        if not force_column_uppercase:
-            query += "	c.column_name as hiveColumnName, "
-            query += "	c.target_column_name as targetColumnName, "
-        else:
-            query += "	upper(c.column_name) as hiveColumnName, "
-            query += "	upper(c.target_column_name) as targetColumnName, "
-        if get_replaced_column_types:
-            query += "	if (c.target_column_type is not null and trim(c.target_column_type) != '', c.target_column_type, c.column_type) as columnType, "
-        else:
-            query += "	c.column_type as columnType, "
-        query += " 	c.comment as comment "
-        query += "from export_tables t "
-        query += "join export_columns c on t.table_id = c.table_id "
-        query += "where t.table_id = %s and t.last_update_from_hive = c.last_update_from_hive "
-        if exclude_columns:
-            query += "   and c.include_in_export = 1 "
-        query += "order by c.column_order"
-
-        self.mysql_cursor01.execute(query, (self.table_id,))
-        logging.debug("SQL Statement executed: %s" % (self.mysql_cursor01.statement))
-
-        result_df = pd.DataFrame(self.mysql_cursor01.fetchall())
-
-        # Set the correct column namnes in the DataFrame
-        result_df_columns = []
-        for columns in self.mysql_cursor01.description:
-            result_df_columns.append(
-                columns[0]
-            )  # Name of the column is in the first position
-        result_df.columns = result_df_columns
+        table_id = self._known_table_id()
+        definitions = self._read_export_columns(
+            lambda columns: columns.column_definitions(
+                table_id,
+                included_only=exclude_columns,
+                uppercase=force_column_uppercase,
+                target_types=get_replaced_column_types,
+            )
+        )
+        if not definitions:
+            raise InvalidConfigurationError(
+                f"The export table {self.hive_db}.{self.hive_table} has no columns from the last read of the Hive schema in the configuration database"
+            )
+        result_df = pd.DataFrame(
+            [
+                (
+                    column.hive_column_name,
+                    column.target_column_name,
+                    column.column_type,
+                    column.comment,
+                )
+                for column in definitions
+            ],
+            columns=["hiveColumnName", "targetColumnName", "columnType", "comment"],
+        )
 
         logging.debug(
             "Executing export_config.get_columns_from_config_database() - Finished"
@@ -860,95 +803,57 @@ class Config(metaclass=Singleton):
         logging.debug("Executing export_config.convert_column_type_for_target_table()")
 
         map_column_java = None
-        source_database_type = ""
+        source_database_type: str | None = ""
 
         source_db = self.hive_db
         source_table = self.hive_table
-        history_table_export = False
 
-        if source_table.endswith("_history"):
+        sources: list[ColumnTypeSource] = []
+        with Session(config_engine.engine()) as session:
+            tables = ImportTablesRepository(session)
             # First check to see that we dont have a import table that actually is called _history in the end
-            query = "select count(hive_table) from import_tables where hive_db = %s and hive_table = %s"
-            self.mysql_cursor01.execute(query, (source_db, source_table))
-            logging.debug(
-                "SQL Statement executed: %s" % (self.mysql_cursor01.statement)
-            )
-            row = self.mysql_cursor01.fetchone()
-            if row[0] == 0:
+            if source_table.endswith("_history") and not tables.exists(
+                source_db, source_table
+            ):
                 # No import table exists with this name. Lets try without the _history part
-                source_table = re.sub("_history$", "", source_table)
-                self.mysql_cursor01.execute(query, (source_db, source_table))
-                logging.debug(
-                    "SQL Statement executed: %s" % (self.mysql_cursor01.statement)
-                )
-                row = self.mysql_cursor01.fetchone()
-                if row[0] == 1:
+                without_history = re.sub("_history$", "", source_table)
+                if tables.exists(source_db, without_history):
                     # A table without _history exists. So lets use that to determine if we need force_string and such
-                    history_table_export = True
+                    source_table = without_history
+
+            if column_type in ("string", "binary"):
+                # If the columnType is "string", it might be because we are exporting a table that was imported with force_string = 1.
+                sources = ImportColumnsRepository(session).type_sources(
+                    source_db, source_table, column_name.lower()
+                )
+        source = sources[0] if len(sources) == 1 else None
+
+        if column_type == "binary":
+            if source is not None:
+                source_database_type = source.source_database_type
+                column_type = source.source_column_type
+
+        elif column_type == "string":
+            if source is not None:
+                source_database_type = source.source_database_type
+
+                if source.column_force_string == 0:
+                    force_string = False
+                elif source.column_force_string == 1:
+                    force_string = True
+                elif source.table_force_string == 0:
+                    force_string = False
+                elif source.table_force_string == 1:
+                    force_string = True
+                elif source.connection_force_string == 0:
+                    force_string = False
+                elif source.connection_force_string == 1:
+                    force_string = True
                 else:
-                    source_table = self.hive_table
-
-        if column_type in ("string", "binary"):
-            # If the columnType is "string", it might be because we are exporting a table that was imported with force_string = 1.
-
-            query = "select "
-            query += "  jc.force_string, "
-            query += "  t.force_string, "
-            query += "  c.force_string, "
-            query += "  c.source_column_type, "
-            query += "  c.source_database_type "
-            query += "from import_tables t "
-            query += "left join jdbc_connections jc "
-            query += "  on t.dbalias = jc.dbalias "
-            query += "left join import_columns c "
-            query += "  on c.hive_db = t.hive_db "
-            query += "  and c.hive_table = t.hive_table "
-            query += "  and c.column_name = %s "
-            query += "where "
-            query += "  t.hive_db = %s "
-            query += "  and t.hive_table = %s "
-
-            self.mysql_cursor01.execute(
-                query, (column_name.lower(), source_db, source_table)
-            )
-            logging.debug(
-                "SQL Statement executed: %s" % (self.mysql_cursor01.statement)
-            )
-
-            if column_type == "binary":
-                if self.mysql_cursor01.rowcount == 1:
-                    row = self.mysql_cursor01.fetchone()
-                    source_column_type = row[3]
-                    source_database_type = row[4]
-                    column_type = source_column_type
-
-            if column_type == "string":
-                force_string = False
-                if self.mysql_cursor01.rowcount == 1:
-                    row = self.mysql_cursor01.fetchone()
-                    force_string_connection = row[0]
-                    force_string_table = row[1]
-                    force_string_column = row[2]
-                    source_column_type = row[3]
-                    source_database_type = row[4]
-
-                    if force_string_column == 0:
-                        force_string = False
-                    elif force_string_column == 1:
-                        force_string = True
-                    elif force_string_table == 0:
-                        force_string = False
-                    elif force_string_table == 1:
-                        force_string = True
-                    elif force_string_connection == 0:
-                        force_string = False
-                    elif force_string_connection == 1:
-                        force_string = True
-                    else:
-                        force_string = True
+                    force_string = True
 
                 if force_string:
-                    column_type = source_column_type
+                    column_type = source.source_column_type
 
         if self.common_config.db_mssql == True:
             column_type = re.sub("^timestamp", "datetime", column_type)
@@ -2193,11 +2098,15 @@ class Config(metaclass=Singleton):
         column_quotation = ""
         where_statement = ""
 
-        query = "select column_type from export_columns where table_id = %s and column_name = %s "
-        self.mysql_cursor01.execute(query, (self.table_id, column_name))
-        logging.debug("SQL Statement executed: %s" % (self.mysql_cursor01.statement))
-        row = self.mysql_cursor01.fetchone()
-        column_type = row[0]
+        table_id = self._known_table_id()
+        column = self._read_export_columns(
+            lambda columns: columns.column(table_id, column_name)
+        )
+        if column is None:
+            raise InvalidConfigurationError(
+                f"The incremental column '{column_name}' of the export table {self.hive_db}.{self.hive_table} can't be found in the configuration database"
+            )
+        column_type = column.column_type
 
         # The stored range is needed if you are going to call a function that counts source target rows outside the normal import
         stored = self._stored_export_table()

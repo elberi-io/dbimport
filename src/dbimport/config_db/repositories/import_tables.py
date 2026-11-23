@@ -253,6 +253,9 @@ class ImportTablesRepository:
         row = self._session.get(ImportTables, (hive_db, hive_table))
         return None if row is None else ImportTable.model_validate(row)
 
+    def exists(self, hive_db: str, hive_table: str) -> bool:
+        return self._session.get(ImportTables, (hive_db, hive_table)) is not None
+
     def table_by_id(self, table_id: int) -> ImportTable | None:
         row = self._session.scalars(
             select(ImportTables).where(ImportTables.table_id == table_id)

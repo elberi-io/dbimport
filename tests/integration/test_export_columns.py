@@ -10,6 +10,7 @@ import pandas as pd
 import pytest
 import sqlalchemy as sa
 
+from dbimport.common.exceptions import InvalidConfigurationError
 from dbimport.config_db import common_config, export_config
 from tests.configdb import insert_row, set_driver_path
 
@@ -81,7 +82,7 @@ def _config() -> export_config.Config:
     return config
 
 
-def _hive_columns(*columns: tuple[str, str, str | None, int]) -> pd.DataFrame:
+def _hive_columns(*columns: tuple[str, str | None, str | None, int]) -> pd.DataFrame:
     return pd.DataFrame(columns, columns=["name", "type", "comment", "idx"])
 
 
@@ -426,3 +427,81 @@ def test_convert_column_type_of_a_column_without_import_column_returns_a_type(
     column_type, _ = config.convert_column_type_for_target_table("extra", hive_type)
 
     assert column_type is not None
+
+
+def test_save_column_data_before_get_export_config_raises_and_stores_nothing(
+    conn: sa.Connection,
+) -> None:
+    _add_target(conn)
+    _add_export(conn)
+    config = export_config.Config(DBALIAS, SCHEMA, TABLE)
+
+    with pytest.raises(InvalidConfigurationError, match="not been read"):
+        config.save_column_data(_hive_columns(("id", "int", None, 0)))
+
+    assert _stored_columns(conn) == []
+
+
+def test_save_column_data_with_an_invalid_column_saves_no_column(
+    conn: sa.Connection,
+) -> None:
+    _add_target(conn)
+    _add_export(conn)
+    config = _config()
+
+    with pytest.raises(sa.exc.DataError):
+        config.save_column_data(
+            _hive_columns(("id", "int", None, 0), ("big", "x" * 2049, None, 1))
+        )
+
+    assert _stored_columns(conn) == []
+
+
+def test_get_columns_from_config_database_without_current_columns_raises(
+    conn: sa.Connection,
+) -> None:
+    _add_target(conn)
+    table_id = _add_export(conn)
+    _add_column(conn, table_id, "gone", 0, last_update_from_hive=STALE)
+    config = _config()
+
+    with pytest.raises(InvalidConfigurationError, match="no columns"):
+        config.get_columns_from_config_database()
+
+
+def test_get_incr_where_statement_without_the_incremental_column_raises(
+    conn: sa.Connection,
+) -> None:
+    _add_target(conn)
+    _add_export(conn, export_type="incr", incr_column="updated")
+    config = _config()
+
+    with pytest.raises(InvalidConfigurationError, match="'updated'"):
+        config.get_incr_where_statement()
+
+
+def test_save_column_data_saves_a_hive_column_without_type(
+    conn: sa.Connection,
+) -> None:
+    _add_target(conn)
+    _add_export(conn)
+    config = _config()
+    config.start_date = STARTED
+
+    config.save_column_data(_hive_columns(("id", None, None, 0)))
+
+    assert [row[:2] for row in _stored_columns(conn)] == [("id", None)]
+
+
+def test_convert_column_type_of_a_binary_with_string_source_type_keeps_string(
+    conn: sa.Connection,
+) -> None:
+    _add_target(conn)
+    _add_export(conn)
+    _add_import(conn, column_type="binary", source_column_type="string")
+    config = _config()
+
+    assert config.convert_column_type_for_target_table("name", "binary") == (
+        "text",
+        None,
+    )

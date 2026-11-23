@@ -67,11 +67,11 @@
     "E711": 1
   },
   "src/dbimport/config_db/export_config.py": {
-    "E711": 23,
+    "E711": 21,
     "E712": 22,
-    "F841": 6,
-    "G002": 20,
-    "UP031": 78
+    "F841": 4,
+    "G002": 12,
+    "UP031": 70
   },
   "src/dbimport/config_db/export_stage.py": {
     "E711": 7,
