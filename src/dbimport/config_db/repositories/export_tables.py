@@ -16,14 +16,13 @@
 # under the License.
 """Export tables: the export_tables row of a table that is exported."""
 
-from datetime import datetime
-
 from pydantic import BaseModel, ConfigDict
 from sqlalchemy import cast, insert, select, update
 from sqlalchemy.dialects.mysql import INTEGER
 from sqlalchemy.orm import Session
 
 from dbimport.config_db.config_schema import ExportTables
+from dbimport.config_db.repositories.types import StoredDateTime
 
 _MAPPER_SIZE = 1024 * 1024 * 128
 
@@ -58,7 +57,7 @@ class ExportTable(BaseModel):
     validation_custom_query_hive_value: str | None
     validation_custom_query_target_value: str | None
     force_create_temp_table: int
-    last_update_from_hive: datetime | None
+    last_update_from_hive: StoredDateTime
     hive_rowcount: int | None
     target_rowcount: int | None
     mappers: int

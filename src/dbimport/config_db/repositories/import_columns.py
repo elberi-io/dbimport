@@ -18,7 +18,6 @@
 table as the last read of the source schema found them."""
 
 from collections.abc import Mapping, Sequence
-from datetime import datetime
 from typing import Any, TypeVar
 
 from pydantic import BaseModel, ConfigDict
@@ -33,6 +32,7 @@ from dbimport.config_db.config_schema import (
     ImportTablesIndexes,
     JDBCConnections,
 )
+from dbimport.config_db.repositories.types import StoredDateTime
 
 _DUPLICATE_ENTRY = 1062
 
@@ -58,7 +58,7 @@ class ImportColumn(BaseModel):
     source_database_type: str | None
     force_string: int
     source_primary_key: int | None
-    last_update_from_source: datetime
+    last_update_from_source: StoredDateTime
     operator_notes: str | None
 
 

@@ -481,3 +481,19 @@ def test_reading_the_row_again_after_it_was_deleted_raises(
 
     with pytest.raises(InvalidConfigurationError, match="can't be found"):
         getattr(config, method)()
+
+
+def test_get_export_config_reads_a_zero_date_as_none(target: sa.Connection) -> None:
+    _add_export(target)
+    # Outside strict mode, MariaDB stores an invalid DATETIME as zero.
+    target.execute(
+        sa.text(
+            "SET STATEMENT sql_mode = '' FOR UPDATE export_tables"
+            " SET last_update_from_hive = '0000-00-00 00:00:00'"
+        )
+    )
+    config = export_config.Config(DBALIAS, SCHEMA, TABLE)
+
+    config.get_export_config()
+
+    assert _common(config).operation_timestamp is None

@@ -1621,3 +1621,26 @@ def test_update_import_table_with_an_invalid_column_saves_nothing(
         ).scalar_one()
         == 0
     )
+
+
+def test_details_read_a_zero_date_as_none(
+    client: TestClient, auth_headers: dict[str, str], db_connection: sa.Connection
+) -> None:
+    insert_row(db_connection, "jdbc_connections", dbalias="src_conn", jdbc_url="x")
+    _add_table(db_connection)
+    # Outside strict mode, MariaDB stores an invalid DATETIME as zero.
+    for update in (
+        "jdbc_connections SET atlas_last_discovery = '0000-00-00 00:00:00'",
+        "import_tables SET copy_finished = '0000-00-00 00:00:00'",
+    ):
+        db_connection.execute(
+            sa.text(f"SET STATEMENT sql_mode = '' FOR UPDATE {update}")
+        )
+
+    connection = client.get("/connection/src_conn", headers=auth_headers)
+    table = client.get(
+        "/import/table/salesdb/orders?includeColumns=false", headers=auth_headers
+    )
+
+    assert connection.json()["atlasLastDiscovery"] is None
+    assert table.json()["copyFinished"] is None
