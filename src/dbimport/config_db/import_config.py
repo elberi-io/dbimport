@@ -2130,6 +2130,7 @@ class Config(metaclass=Singleton):
             key_type = row["CONSTRAINT_TYPE"]
             key_id = row["COL_KEY_POSITION"]
             column_name = self.strip_unwanted_char_column_name(row["COL_NAME"])
+            key_column = column_name
 
             # Handle reserved column names in Hive
             if column_name == "date":
@@ -2152,7 +2153,7 @@ class Config(metaclass=Singleton):
             if len(self.generated_pk_columns) > 0:
                 self.generated_pk_columns += ","
             self.generated_pk_columns += column_name
-            key_positions.append((column_name, key_id))
+            key_positions.append((key_column, key_id))
 
         table_id = self._known_table_id()
         with self._write_import_columns() as columns:

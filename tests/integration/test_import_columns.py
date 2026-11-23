@@ -297,6 +297,20 @@ def test_set_primary_key_column_stores_the_key_positions(conn: sa.Connection) ->
     assert config.generated_pk_columns == "Line,ID"
 
 
+@pytest.mark.parametrize("name", ["date", "interval"])
+def test_set_primary_key_column_with_a_name_reserved_in_hive_stores_its_position(
+    conn: sa.Connection, name: str
+) -> None:
+    config = _config(conn)
+    _add_column(conn, _table_id(config), name, 1)
+    _common(config).source_keys_df = _source_keys(("PRIMARY", "P", name, "", "", 1))
+
+    config.set_primary_key_column()
+
+    assert _rows(conn, "SELECT source_primary_key FROM import_columns") == [(1,)]
+    assert config.generated_pk_columns == f"{name}_HIVE"
+
+
 @pytest.mark.parametrize(
     ("convert_to_lower", "expected"), [(True, "id,line"), (False, "ID,Line")]
 )
