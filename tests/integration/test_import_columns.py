@@ -784,3 +784,20 @@ def test_get_select_for_import_view_for_flashback_keeps_the_latest_row_per_key(
         "   and ( S.datalake_flashback_startscn = G.max_startscn"
         " or G.max_startscn is NULL )"
     )
+
+
+def test_reading_columns_with_a_zero_date_reads_it_as_none(
+    conn: sa.Connection,
+) -> None:
+    config = _config(conn)
+    _add_column(conn, _table_id(config), "ID", 1)
+    # Outside strict mode, MariaDB stores an invalid DATETIME as zero.
+    for table in ("import_tables", "import_columns"):
+        conn.execute(
+            sa.text(
+                f"SET STATEMENT sql_mode = '' FOR UPDATE {table}"
+                " SET last_update_from_source = '0000-00-00 00:00:00'"
+            )
+        )
+
+    assert config.get_select_for_import_view().startswith("select S.`id` from ")

@@ -758,3 +758,20 @@ def test_get_import_config_with_custom_query_validation_without_hive_query_raise
 ) -> None:
     with pytest.raises(InvalidConfigurationError):
         _config(table, validationMethod="customQuery")
+
+
+def test_get_import_config_reads_a_zero_date_as_none(table: sa.Connection) -> None:
+    _add_table(table)
+    # Outside strict mode, MariaDB stores an invalid DATETIME as zero.
+    table.execute(
+        sa.text(
+            "SET STATEMENT sql_mode = '' FOR UPDATE import_tables"
+            " SET last_update_from_source = '0000-00-00 00:00:00',"
+            " copy_finished = '0000-00-00 00:00:00'"
+        )
+    )
+    config = import_config.Config(HIVE_DB, HIVE_TABLE)
+
+    config.get_import_config()
+
+    assert config.table_id is not None

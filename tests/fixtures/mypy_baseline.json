@@ -30,9 +30,9 @@
     "return-value": 3
   },
   "src/dbimport/config_db/export_config.py": {
-    "arg-type": 21,
+    "arg-type": 24,
     "attr-defined": 1,
-    "operator": 13,
+    "operator": 22,
     "union-attr": 127
   },
   "src/dbimport/config_db/export_stage.py": {

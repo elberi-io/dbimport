@@ -30,6 +30,7 @@ from dbimport.config_db.config_schema import (
     JDBCConnectionsDrivers,
     JDBCConnectionsEnvironments,
 )
+from dbimport.config_db.repositories.types import StoredDateTime
 
 CLASSPATH_PLACEHOLDER = "add path to JAR file"
 
@@ -124,7 +125,7 @@ class JDBCConnection(BaseModel):
     atlas_discovery: int
     atlas_include_filter: str | None
     atlas_exclude_filter: str | None
-    atlas_last_discovery: datetime | None
+    atlas_last_discovery: StoredDateTime
     environment: str | None
     seed_file: str | None
 

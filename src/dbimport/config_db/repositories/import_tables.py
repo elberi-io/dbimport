@@ -17,7 +17,6 @@
 """Import tables: the import_tables row of a table that is imported."""
 
 from collections.abc import Mapping, Sequence
-from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict
 from sqlalchemy import bindparam, delete, func, insert, select, update
@@ -26,6 +25,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy.sql import ColumnElement
 
 from dbimport.config_db.config_schema import ImportTables
+from dbimport.config_db.repositories.types import StoredDateTime
 
 
 class ImportTable(BaseModel):
@@ -42,7 +42,7 @@ class ImportTable(BaseModel):
     import_type: str | None
     import_tool: str
     etl_engine: str
-    last_update_from_source: datetime | None
+    last_update_from_source: StoredDateTime
     sqoop_sql_where_addition: str | None
     nomerge_ingestion_sql_addition: str | None
     validate_import: int
@@ -101,7 +101,7 @@ class ImportTable(BaseModel):
     force_string: int
     generated_hive_column_definition: str | None
     operator_notes: str | None
-    copy_finished: datetime | None
+    copy_finished: StoredDateTime
     source_table_type: str | None
 
 
@@ -119,7 +119,7 @@ class ImportTableEntry(BaseModel):
     etl_phase_type: str | None
     import_tool: str
     etl_engine: str
-    last_update_from_source: datetime | None
+    last_update_from_source: StoredDateTime
     include_in_airflow: int
     operator_notes: str | None
 
@@ -131,7 +131,7 @@ class DatabaseSummary(BaseModel):
 
     hive_db: str
     tables: int
-    last_import: datetime | None
+    last_import: StoredDateTime
     last_size: int | None
     last_rows: int | None
 
