@@ -2408,3 +2408,16 @@ def test_get_export_table_details_of_unknown_table_returns_404_and_ends_its_tran
         )
     )
     assert response.status_code == 404
+
+
+def test_get_export_connections_of_a_connection_never_exported_has_empty_last_export(
+    client: TestClient, auth_headers: dict[str, str], db_connection: sa.Connection
+) -> None:
+    insert_row(db_connection, "jdbc_connections", dbalias="tgt_conn", jdbc_url="x")
+    _add_export_table(db_connection)
+
+    response = client.get("/export/connection", headers=auth_headers)
+
+    assert response.json() == [
+        {"name": "tgt_conn", "tables": 1, "lastExport": "", "lastRows": 0}
+    ]

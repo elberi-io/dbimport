@@ -1824,7 +1824,7 @@ class DBCalls:
             connection["name"] = row[0]
             connection["tables"] = row[1]
             if row[2] == None:
-                connection["laportImport"] = ""
+                connection["lastExport"] = ""
             else:
                 connection["lastExport"] = row[2].strftime("%Y-%m-%d %H:%M:%S")
 
