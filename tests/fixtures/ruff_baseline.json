@@ -184,12 +184,12 @@
   },
   "src/dbimport/server/rest_server_calls.py": {
     "B904": 3,
-    "E711": 38,
+    "E711": 30,
     "E712": 16,
     "E722": 1,
-    "F841": 47,
-    "G002": 6,
-    "UP031": 40
+    "F841": 39,
+    "G002": 5,
+    "UP031": 39
   },
   "src/dbimport/setup/database.py": {
     "E711": 1,

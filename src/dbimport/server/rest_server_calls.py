@@ -31,8 +31,7 @@ from pydantic import ValidationError
 from sqlalchemy import bindparam
 from sqlalchemy.dialects.mysql import insert
 from sqlalchemy.orm import aliased, scoped_session, sessionmaker
-from sqlalchemy.sql import delete, func, update
-from sqlalchemy.sql.operators import like_op
+from sqlalchemy.sql import delete, update
 
 from dbimport.common import constants as constant
 from dbimport.common.exceptions import InvalidConfigurationError, SQLError
@@ -48,6 +47,8 @@ from dbimport.config_db.repositories.connections import (
     JDBCConnection,
     JDBCDriver,
 )
+from dbimport.config_db.repositories.export_columns import ExportColumnsRepository
+from dbimport.config_db.repositories.export_tables import ExportTablesRepository
 from dbimport.config_db.repositories.import_columns import ImportColumnsRepository
 from dbimport.config_db.repositories.import_tables import ImportTablesRepository
 from dbimport.server import data_models
@@ -202,6 +203,74 @@ _IMPORT_COLUMN_FIELDS = {
     "comment": "comment",
     "operator_notes": "operatorNotes",
     "anonymization_function": "anonymizationFunction",
+}
+
+
+_EXPORT_TABLE_FIELDS = {
+    "export_type": "exportType",
+    "export_tool": "exportTool",
+    "hive_db": "database",
+    "hive_table": "table",
+    "last_update_from_hive": "lastUpdateFromHive",
+    "sql_where_addition": "sqlWhereAddition",
+    "include_in_airflow": "includeInAirflow",
+    "airflow_priority": "airflowPriority",
+    "force_create_temp_table": "forceCreateTempTable",
+    "validate_export": "validateExport",
+    "validation_method": "validationMethod",
+    "validation_custom_query_hive_sql": "validationCustomQueryHiveSQL",
+    "validation_custom_query_target_sql": "validationCustomQueryTargetSQL",
+    "uppercase_columns": "uppercaseColumns",
+    "truncate_target": "truncateTarget",
+    "mappers": "sqlSessions",
+    "incr_column": "incrColumn",
+    "incr_validation_method": "incrValidationMethod",
+    "sqoop_options": "sqoopOptions",
+    "hive_javaheap": "hiveContainerSize",
+    "create_target_table_sql": "createTargetTableSql",
+    "operator_notes": "operatorNotes",
+}
+
+_EXPORT_TABLE_DEFAULTS = {
+    "include_in_airflow": 1,
+    "force_create_temp_table": 0,
+    "validate_export": 1,
+    "validation_method": "rowCount",
+    "uppercase_columns": -1,
+    "truncate_target": 1,
+    "mappers": -1,
+    "incr_validation_method": "full",
+}
+
+_EXPORT_TABLE_SEARCH = {
+    "connection": "dbalias",
+    "targetSchema": "target_schema",
+    "targetTable": "target_table",
+    "database": "hive_db",
+    "table": "hive_table",
+    "exportType": "export_type",
+    "exportTool": "export_tool",
+    "includeInAirflow": "include_in_airflow",
+    "operatorNotes": "operator_notes",
+}
+
+_EXPORT_TABLE_BULK = {
+    "exportType": "export_type",
+    "exportTool": "export_tool",
+    "includeInAirflow": "include_in_airflow",
+    "operatorNotes": "operator_notes",
+}
+
+_EXPORT_COLUMN_FIELDS = {
+    "column_name": "columnName",
+    "column_type": "columnType",
+    "column_order": "columnOrder",
+    "target_column_name": "targetColumnName",
+    "target_column_type": "targetColumnType",
+    "last_update_from_hive": "lastUpdateFromHive",
+    "include_in_export": "includeInExport",
+    "comment": "comment",
+    "operator_notes": "operatorNotes",
 }
 
 
@@ -1794,58 +1863,36 @@ class DBCalls:
 
     def get_export_connections(self):
         """Returns all connections that have exports configured in them"""
-        log = logging.getLogger(self.logger)
-
         try:
             session = self.get_dbimport_session()
         except SQLError:
             self.disconnect_dbimport_db()
             return None
 
-        export_tables = aliased(config_schema.ExportTables)
-
-        export_table_dbs = (
-            session.query(
-                export_tables.dbalias,
-                func.count(export_tables.dbalias),
-                func.max(export_tables.last_update_from_hive),
-                func.sum(export_tables.sqoop_last_rows),
+        try:
+            summaries = ExportTablesRepository(session()).connection_summaries(
+                self.content_max_rows
             )
-            .select_from(export_tables)
-            .group_by(export_tables.dbalias)
-            .limit(self.content_max_rows)
-        )
+        finally:
+            session.remove()
 
-        list_of_connections = []
-        count = 0
-        for row in export_table_dbs:
-            count = count + 1
-            connection = {}
-            connection["name"] = row[0]
-            connection["tables"] = row[1]
-            if row[2] == None:
-                connection["lastExport"] = ""
-            else:
-                connection["lastExport"] = row[2].strftime("%Y-%m-%d %H:%M:%S")
-
-            if row[3] == None:
-                connection["lastRows"] = 0
-            else:
-                connection["lastRows"] = int(row[3])
-            list_of_connections.append(connection)
-
-            if count == self.content_max_rows:
-                break
-
-        json_result = json.loads(json.dumps(list_of_connections))
-        # session.close()
-        session.remove()
+        list_of_connections = [
+            {
+                "name": summary.dbalias,
+                "tables": summary.tables,
+                "lastExport": _datetime_text(summary.last_export) or "",
+                "lastRows": summary.last_rows or 0,
+            }
+            for summary in summaries
+        ]
 
         headers = {
-            "content-rows": str(count),
+            "content-rows": str(len(list_of_connections)),
             "content-max-returned-rows": str(self.content_max_rows),
         }
-        return JSONResponse(content=json_result, headers=headers, status_code=200)
+        return JSONResponse(
+            content=list_of_connections, headers=headers, status_code=200
+        )
 
     def discover_export_tables(
         self, data: data_models.DiscoverExportTableOptions, current_user
@@ -1967,7 +2014,7 @@ class DBCalls:
     def search_export_tables(
         self, search_values: data_models.ExportTableSearch, current_user
     ):
-        """Search for import tables"""
+        """Search for export tables"""
         log = logging.getLogger(self.logger)
 
         try:
@@ -1976,115 +2023,48 @@ class DBCalls:
             self.disconnect_dbimport_db()
             return None
 
-        export_tables = aliased(config_schema.ExportTables)
-
-        attribute_to_column = {}
-        attribute_to_column["connection"] = export_tables.dbalias
-        attribute_to_column["targetSchema"] = export_tables.target_schema
-        attribute_to_column["targetTable"] = export_tables.target_table
-        attribute_to_column["database"] = export_tables.hive_db
-        attribute_to_column["table"] = export_tables.hive_table
-        attribute_to_column["exportType"] = export_tables.export_type
-        attribute_to_column["exportTool"] = export_tables.export_tool
-        attribute_to_column["includeInAirflow"] = export_tables.include_in_airflow
-        attribute_to_column["operatorNotes"] = export_tables.operator_notes
-
-        # Return a list of Hive tables with details
-        export_tables_data = session.query(
-            export_tables.dbalias,
-            export_tables.target_schema,
-            export_tables.target_table,
-            export_tables.hive_db,
-            export_tables.hive_table,
-            export_tables.export_type,
-            export_tables.export_tool,
-            export_tables.last_update_from_hive,
-            export_tables.include_in_airflow,
-            export_tables.operator_notes,
-        ).select_from(export_tables)
-
-        export_tables_data_count = session.query(func.count(1)).select_from(
-            export_tables
-        )
-
-        # Add the filters for the specific column that we search on
-        for items in search_values:
-            if items[1] == None or items[1] == "" or items[1] == "*" or items[1] == "%":
+        filters = {}
+        for attribute, value in search_values:
+            if value is None or value in ("", "*", "%"):
                 # If it's None, empty or search *, it means we dont need to search on that value. So lets skip it
                 continue
+            if isinstance(value, str):
+                value = value.replace("*", "%")
+            log.debug("search filter on %s", attribute)
+            filters[_EXPORT_TABLE_SEARCH[attribute]] = value
 
-            column = items[0]
-            value = items[1]
-            like_search = False
+        try:
+            tables, total = ExportTablesRepository(session()).search(
+                filters, self.content_max_rows
+            )
+        finally:
+            session.remove()
 
-            if type(value) is str:
-                if "%" in value or "*" in value:
-                    value = value.replace("*", "%")
-                    like_search = True
-
-            log.debug("search filter: %s = %s", column, value)
-
-            if like_search:
-                export_tables_data = export_tables_data.filter(
-                    like_op(attribute_to_column[column], value)
-                )
-                export_tables_data_count = export_tables_data_count.filter(
-                    like_op(attribute_to_column[column], value)
-                )
-            else:
-                export_tables_data = export_tables_data.filter(
-                    attribute_to_column[column] == value
-                )
-                export_tables_data_count = export_tables_data_count.filter(
-                    attribute_to_column[column] == value
-                )
-
-        # Fetch all rows matching the filter
-        export_tables_data = export_tables_data.limit(self.content_max_rows)
-        export_tables_data_count = export_tables_data_count.one()
-
-        # Loop through result and create the return dict
-        count = 0
-        list_of_tables = []
-        for row in export_tables_data:
-            count = count + 1
-            result_dict = {}
-            result_dict["connection"] = row[0]
-            result_dict["targetSchema"] = row[1]
-            result_dict["targetTable"] = row[2]
-            result_dict["database"] = row[3]
-            result_dict["table"] = row[4]
-            result_dict["exportType"] = row[5]
-            result_dict["exportTool"] = row[6]
-            try:
-                result_dict["lastUpdateFromHive"] = row[7].strftime("%Y-%m-%d %H:%M:%S")
-            except AttributeError:
-                result_dict["lastUpdateFromHive"] = None
-            if row[8] == 1:
-                result_dict["includeInAirflow"] = True
-            else:
-                result_dict["includeInAirflow"] = False
-            result_dict["operatorNotes"] = row[9]
-
-            list_of_tables.append(result_dict)
-
-            if count == self.content_max_rows:
-                break
-
-        json_result = json.loads(json.dumps(list_of_tables))
-        session.remove()
+        list_of_tables = [
+            {
+                "connection": stored.dbalias,
+                "targetSchema": stored.target_schema,
+                "targetTable": stored.target_table,
+                "database": stored.hive_db,
+                "table": stored.hive_table,
+                "exportType": stored.export_type,
+                "exportTool": stored.export_tool,
+                "lastUpdateFromHive": _datetime_text(stored.last_update_from_hive),
+                "includeInAirflow": stored.include_in_airflow == 1,
+                "operatorNotes": stored.operator_notes,
+            }
+            for stored in tables
+        ]
 
         headers = {
-            "content-rows": str(count),
+            "content-rows": str(len(list_of_tables)),
             "content-max-returned-rows": str(self.content_max_rows),
-            "content-total-rows": str(export_tables_data_count[0]),
+            "content-total-rows": str(total),
         }
-        return JSONResponse(content=json_result, headers=headers, status_code=200)
+        return JSONResponse(content=list_of_tables, headers=headers, status_code=200)
 
     def get_export_tables(self, connection, schema, current_user):
-        """Returns all connections that have exports configured in them"""
-        log = logging.getLogger(self.logger)
-
+        """Returns the export tables of a connection, and of a schema in it"""
         if schema == None:
             schema = "*"
         search_values = data_models.ExportTableSearch(
@@ -2094,216 +2074,113 @@ class DBCalls:
         return self.search_export_tables(search_values, current_user)
 
     def get_export_table_details(self, connection, schema, table, include_columns):
-        """Returns all connections that have exports configured in them"""
-        log = logging.getLogger(self.logger)
-
+        """Returns all export table details"""
         try:
             session = self.get_dbimport_session()
         except SQLError:
             self.disconnect_dbimport_db()
             return None
 
-        export_tables = aliased(config_schema.ExportTables)
-
-        row = (
-            session.query(
-                export_tables.dbalias,
-                export_tables.target_schema,
-                export_tables.target_table,
-                export_tables.export_type,
-                export_tables.export_tool,
-                export_tables.hive_db,
-                export_tables.hive_table,
-                export_tables.last_update_from_hive,
-                export_tables.sql_where_addition,
-                export_tables.include_in_airflow,
-                export_tables.airflow_priority,
-                export_tables.force_create_temp_table,
-                export_tables.validate_export,
-                export_tables.validation_method,
-                export_tables.validation_custom_query_hive_sql,
-                export_tables.validation_custom_query_target_sql,
-                export_tables.uppercase_columns,
-                export_tables.truncate_target,
-                export_tables.mappers,
-                export_tables.hive_rowcount,
-                export_tables.target_rowcount,
-                export_tables.validation_custom_query_hive_value,
-                export_tables.validation_custom_query_target_value,
-                export_tables.incr_column,
-                export_tables.incr_validation_method,
-                export_tables.incr_minvalue,
-                export_tables.incr_maxvalue,
-                export_tables.incr_minvalue_pending,
-                export_tables.incr_maxvalue_pending,
-                export_tables.sqoop_options,
-                export_tables.sqoop_last_size,
-                export_tables.sqoop_last_rows,
-                export_tables.sqoop_last_mappers,
-                export_tables.sqoop_last_execution,
-                export_tables.hive_javaheap,
-                export_tables.create_target_table_sql,
-                export_tables.operator_notes,
-            )
-            .select_from(export_tables)
-            .filter(
-                (export_tables.dbalias == connection)
-                & (export_tables.target_schema == schema)
-                & (export_tables.target_table == table)
-            )
-            .one_or_none()
-        )
-
-        if row == None:
+        try:
+            stored = ExportTablesRepository(session()).table(connection, schema, table)
+        finally:
             session.remove()
+
+        if stored is None:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="export table does not exist",
             )
 
-        result_dict = {}
-        result_dict["connection"] = row[0]
-        result_dict["targetSchema"] = row[1]
-        result_dict["targetTable"] = row[2]
-        result_dict["exportType"] = row[3]
-        result_dict["exportTool"] = row[4]
-        result_dict["database"] = row[5]
-        result_dict["table"] = row[6]
-        try:
-            result_dict["lastUpdateFromHive"] = row[7].strftime("%Y-%m-%d %H:%M:%S")
-        except AttributeError:
-            result_dict["lastUpdateFromHive"] = None
-        result_dict["sqlWhereAddition"] = row[8]
-        if row[9] == 1:
-            result_dict["includeInAirflow"] = True
-        else:
-            result_dict["includeInAirflow"] = False
-        result_dict["airflowPriority"] = row[10]
-        result_dict["forceCreateTempTable"] = row[11]
-        result_dict["validateExport"] = row[12]
-        result_dict["validationMethod"] = row[13]
-        result_dict["validationCustomQueryHiveSQL"] = row[14]
-        result_dict["validationCustomQueryTargetSQL"] = row[15]
-        result_dict["uppercaseColumns"] = row[16]
-        result_dict["truncateTarget"] = row[17]
-        result_dict["sqlSessions"] = row[18]
-        result_dict["tableRowcount"] = row[19]
-        result_dict["targetRowcount"] = row[20]
-        result_dict["validationCustomQueryHiveValue"] = row[21]
-        result_dict["validationCustomQueryTargetValue"] = row[22]
-        result_dict["incrColumn"] = row[23]
-        result_dict["incrValidationMethod"] = row[24]
-        result_dict["incrMinvalue"] = row[25]
-        result_dict["incrMaxvalue"] = row[26]
-        result_dict["incrMinvaluePending"] = row[27]
-        result_dict["incrMaxvaluePending"] = row[28]
-        result_dict["sqoopOptions"] = row[29]
-        result_dict["lastSize"] = row[30]
-        result_dict["lastRows"] = row[31]
-        result_dict["lastSqlSessions"] = row[32]
-        result_dict["lastExecution"] = row[33]
-        result_dict["hiveContainerSize"] = row[34]
-        result_dict["createTargetTableSql"] = row[35]
-        result_dict["operatorNotes"] = row[36]
+        result_dict = {
+            "connection": stored.dbalias,
+            "targetSchema": stored.target_schema,
+            "targetTable": stored.target_table,
+            "exportType": stored.export_type,
+            "exportTool": stored.export_tool,
+            "database": stored.hive_db,
+            "table": stored.hive_table,
+            "lastUpdateFromHive": _datetime_text(stored.last_update_from_hive),
+            "sqlWhereAddition": stored.sql_where_addition,
+            "includeInAirflow": stored.include_in_airflow == 1,
+            "airflowPriority": stored.airflow_priority,
+            "forceCreateTempTable": stored.force_create_temp_table,
+            "validateExport": stored.validate_export,
+            "validationMethod": stored.validation_method,
+            "validationCustomQueryHiveSQL": stored.validation_custom_query_hive_sql,
+            "validationCustomQueryTargetSQL": (
+                stored.validation_custom_query_target_sql
+            ),
+            "uppercaseColumns": stored.uppercase_columns,
+            "truncateTarget": stored.truncate_target,
+            "sqlSessions": stored.mappers,
+            "tableRowcount": stored.hive_rowcount,
+            "targetRowcount": stored.target_rowcount,
+            "validationCustomQueryHiveValue": stored.validation_custom_query_hive_value,
+            "validationCustomQueryTargetValue": (
+                stored.validation_custom_query_target_value
+            ),
+            "incrColumn": stored.incr_column,
+            "incrValidationMethod": stored.incr_validation_method,
+            "incrMinvalue": stored.incr_minvalue,
+            "incrMaxvalue": stored.incr_maxvalue,
+            "incrMinvaluePending": stored.incr_minvalue_pending,
+            "incrMaxvaluePending": stored.incr_maxvalue_pending,
+            "sqoopOptions": stored.sqoop_options,
+            "lastSize": stored.sqoop_last_size,
+            "lastRows": stored.sqoop_last_rows,
+            "lastSqlSessions": stored.sqoop_last_mappers,
+            "lastExecution": stored.sqoop_last_execution,
+            "hiveContainerSize": stored.hive_javaheap,
+            "createTargetTableSql": stored.create_target_table_sql,
+            "operatorNotes": stored.operator_notes,
+        }
 
         if include_columns == True:
             result_dict["columns"] = self.get_export_table_columns(
                 connection, schema, table
             )
 
-        json_result = json.loads(json.dumps(result_dict))
-        # session.close()
-        session.remove()
-
-        return json_result
+        return result_dict
 
     def get_export_table_columns(self, connection, schema, table):
         """Returns all columns in an export table"""
-        log = logging.getLogger(self.logger)
-
         try:
             session = self.get_dbimport_session()
         except SQLError:
             self.disconnect_dbimport_db()
             return None
 
-        export_columns = aliased(config_schema.ExportColumns)
-        export_tables = aliased(config_schema.ExportTables)
-        list_of_columns = []
-
-        # Return a list of Hive tables with details
-        export_columns_data = (
-            session.query(
-                export_tables.dbalias,
-                export_tables.target_schema,
-                export_tables.target_table,
-                export_columns.column_name,
-                export_columns.column_type,
-                export_columns.column_order,
-                export_columns.target_column_name,
-                export_columns.target_column_type,
-                export_columns.last_update_from_hive,
-                export_columns.include_in_export,
-                export_columns.comment,
-                export_columns.operator_notes,
+        try:
+            columns = ExportColumnsRepository(session()).columns_of_table(
+                connection, schema, table
             )
-            .select_from(export_tables)
-            .join(
-                export_columns,
-                export_tables.table_id == export_columns.table_id,
-                isouter=False,
-            )
-            .filter(
-                (export_tables.dbalias == connection)
-                & (export_tables.target_schema == schema)
-                & (export_tables.target_table == table)
-            )
-            .all()
-        )
+        finally:
+            session.remove()
 
-        for row in export_columns_data:
-            result_dict = {}
-
-            # 			resultDict['connection'] = row[0]
-            # 			resultDict['targetSchema'] = row[1]
-            # 			resultDict['targetTable'] = row[2]
-            result_dict["columnName"] = row[3]
-
-            if row[4] == None:
-                result_dict["columnType"] = "unknown"
-            else:
-                result_dict["columnType"] = row[4]
-
-            # ColumnOrder should start with 1 in API, but database stores is as a start with 0.
-            # For ImportColumns, it starts with 1. So we need to do a +1 here to have the same functionality as ImportColumns
-            if row[5] != None:
-                result_dict["columnOrder"] = int(row[5]) + 1
-
-            result_dict["targetColumnName"] = row[6]
-            result_dict["targetColumnType"] = row[7]
-
-            try:
-                result_dict["lastUpdateFromHive"] = row[8].strftime("%Y-%m-%d %H:%M:%S")
-            except AttributeError:
-                result_dict["lastUpdateFromHive"] = None
-
-            if row[9] == 1:
-                result_dict["includeInExport"] = True
-            else:
-                result_dict["includeInExport"] = False
-
-            result_dict["comment"] = row[10]
-            result_dict["operatorNotes"] = row[11]
-
-            list_of_columns.append(result_dict)
-
-        # session.close()
-        session.remove()
-
-        return list_of_columns
+        # ColumnOrder starts with 1 in the API, as for import columns, but with
+        # 0 in the database.
+        return [
+            {
+                "columnName": column.column_name,
+                "columnType": (
+                    "unknown" if column.column_type is None else column.column_type
+                ),
+                "columnOrder": (
+                    None if column.column_order is None else column.column_order + 1
+                ),
+                "targetColumnName": column.target_column_name,
+                "targetColumnType": column.target_column_type,
+                "lastUpdateFromHive": _datetime_text(column.last_update_from_hive),
+                "includeInExport": column.include_in_export == 1,
+                "comment": column.comment,
+                "operatorNotes": column.operator_notes,
+            }
+            for column in columns
+        ]
 
     def delete_export_table(self, connection, schema, table, current_user):
-        """Update or create an export table"""
+        """Delete an export table"""
         log = logging.getLogger(self.logger)
 
         try:
@@ -2311,11 +2188,6 @@ class DBCalls:
         except SQLError:
             self.disconnect_dbimport_db()
             return None
-
-        export_columns = aliased(config_schema.ExportColumns)
-        export_tables = aliased(config_schema.ExportTables)
-        result = "ok"
-        return_code = 200
 
         log.info(
             "User '%s' deleted export table '%s.%s' on connection '%s'",
@@ -2325,42 +2197,22 @@ class DBCalls:
             connection,
         )
 
-        # Fetch the tableID as that is required to update/create data in import_columns
-        row = (
-            session.query(config_schema.ExportTables.table_id)
-            .select_from(config_schema.ExportTables)
-            .filter(
-                (config_schema.ExportTables.dbalias == connection)
-                & (config_schema.ExportTables.target_schema == schema)
-                & (config_schema.ExportTables.target_table == table)
-            )
-            .one_or_none()
-        )
-        session.commit()
-
-        if row == None:
-            result = "Table does not exist"
-            return_code = 404
-        else:
-            table_id = row[0]
-
-            (
-                session.query(config_schema.ExportTables)
-                .filter(config_schema.ExportTables.table_id == table_id)
-                .delete()
+        try:
+            deleted = ExportTablesRepository(session()).delete(
+                connection, schema, table
             )
             session.commit()
+        finally:
+            session.remove()
 
-        # session.close()
-        session.remove()
-        return (result, return_code)
+        if not deleted:
+            return ("Table does not exist", 404)
+        return ("ok", 200)
 
     def bulk_delete_export_table(
         self, bulk_data: list[data_models.ExportTablePK], current_user
     ):
         """Bulk delete of export tables"""
-        log = logging.getLogger(self.logger)
-
         if len(bulk_data) == 0:
             result_msg = {
                 "result": "Body must contain a list of connection, database and table to delete"
@@ -2374,39 +2226,23 @@ class DBCalls:
             self.disconnect_dbimport_db()
             return None
 
-        delete_statement = delete(config_schema.ExportTables)
-        delete_statement = delete_statement.where(
-            (config_schema.ExportTables.dbalias == bindparam("connection"))
-            & (config_schema.ExportTables.target_schema == bindparam("targetSchema"))
-            & (config_schema.ExportTables.target_table == bindparam("targetTable"))
-        )
-
-        # Create a list of dicts that contain all the connection, schema and table combinations that will be deleted
-        table_list = []
-        for tables in bulk_data:
-            table_list.append(
-                {
-                    "connection": tables.connection,
-                    "targetSchema": tables.targetSchema,
-                    "targetTable": tables.targetTable,
-                }
+        try:
+            ExportTablesRepository(session()).delete_many(
+                [
+                    (tables.connection, tables.targetSchema, tables.targetTable)
+                    for tables in bulk_data
+                ]
             )
+            session.commit()
+        finally:
+            session.remove()
 
-        session.connection().execute(delete_statement, table_list)
-        session.commit()
-        session.remove()
-
-        return_code = 200
-        result_msg = {"result": "Ok"}
-
-        return (result_msg, return_code)
+        return ({"result": "Ok"}, 200)
 
     def bulk_update_export_table(
         self, bulk_data: data_models.ExportTableBulkUpdate, current_user
     ):
         """Bulk update of export tables"""
-        log = logging.getLogger(self.logger)
-
         if len(bulk_data.exportTables) == 0:
             result_msg = {
                 "result": "exportTables must contain a list of connections/targetSchema/targetDatabase to update"
@@ -2420,56 +2256,26 @@ class DBCalls:
             self.disconnect_dbimport_db()
             return None
 
-        export_tables = aliased(config_schema.ExportTables)
-        update_statement = update(export_tables)
-        update_statement = update_statement.where(
-            (export_tables.dbalias == bindparam("connection"))
-            & (export_tables.target_schema == bindparam("targetSchema"))
-            & (export_tables.target_table == bindparam("targetTable"))
-        )
+        # Only the fields given in the posted JSON are changed.
+        settings = {
+            _EXPORT_TABLE_BULK[field]: getattr(bulk_data, field)
+            for field in bulk_data.__pydantic_fields_set__
+            if field in _EXPORT_TABLE_BULK
+        }
 
-        # This will loop through only the fields specified in the Posted JSON. So if a field have got a default None value in dataModel validation,
-        # that field wont be part of this loop
-        for update_field in bulk_data.__pydantic_fields_set__:
-            if update_field == "exportType":
-                update_statement = update_statement.values(
-                    export_type=bulk_data.exportType
-                )
-            elif update_field == "exportTool":
-                update_statement = update_statement.values(
-                    export_tool=bulk_data.exportTool
-                )
-            elif update_field == "includeInAirflow":
-                update_statement = update_statement.values(
-                    include_in_airflow=bulk_data.includeInAirflow
-                )
-            elif update_field == "operatorNotes":
-                update_statement = update_statement.values(
-                    operator_notes=bulk_data.operatorNotes
-                )
-
-        # Create a list of dicts that contain all the databas/table combinations that will be updated
-        table_list = []
-        for tables in bulk_data.exportTables:
-            table_list.append(
-                {
-                    "connection": tables.connection,
-                    "targetSchema": tables.targetSchema,
-                    "targetTable": tables.targetTable,
-                }
+        try:
+            ExportTablesRepository(session()).update_many(
+                [
+                    (tables.connection, tables.targetSchema, tables.targetTable)
+                    for tables in bulk_data.exportTables
+                ],
+                settings,
             )
+            session.commit()
+        finally:
+            session.remove()
 
-        update_statement = update_statement.execution_options(synchronize_session=False)
-        # 		print(updateStatement)
-
-        session.connection().execute(update_statement, table_list)
-        session.commit()
-        session.remove()
-
-        return_code = 200
-        result_msg = {"result": "Ok"}
-
-        return (result_msg, return_code)
+        return ({"result": "Ok"}, 200)
 
     def update_export_table(
         self,
@@ -2488,12 +2294,6 @@ class DBCalls:
             self.disconnect_dbimport_db()
             return None
 
-        export_columns = aliased(config_schema.ExportColumns)
-        export_tables = aliased(config_schema.ExportTables)
-        result = "ok"
-        return_code = 200
-
-        log.debug(table)
         log.info(
             "User '%s' updated/created export table '%s.%s' on connection '%s'",
             current_user,
@@ -2502,202 +2302,43 @@ class DBCalls:
             connection,
         )
 
-        # Set default values
-        if data.includeInAirflow is None:
-            data.includeInAirflow = 1
-        if data.forceCreateTempTable is None:
-            data.forceCreateTempTable = 0
-        if data.validateExport is None:
-            data.validateExport = 1
-        if data.validationMethod is None:
-            data.validationMethod = "rowCount"
-        if data.uppercaseColumns is None:
-            data.uppercaseColumns = -1
-        if data.truncateTarget is None:
-            data.truncateTarget = 1
-        if data.sqlSessions is None:
-            data.sqlSessions = -1
-        if data.incrValidationMethod is None:
-            data.incrValidationMethod = "full"
+        settings = {
+            column: getattr(data, field)
+            for column, field in _EXPORT_TABLE_FIELDS.items()
+        }
+        for setting, default in _EXPORT_TABLE_DEFAULTS.items():
+            if settings[setting] is None:
+                settings[setting] = default
+
+        columns = []
+        for column in data.columns:
+            values = {
+                name: getattr(column, field)
+                for name, field in _EXPORT_COLUMN_FIELDS.items()
+            }
+            if column.columnOrder is not None:
+                values["column_order"] = int(column.columnOrder) - 1
+            # Force set to Null if string is empty. This will otherwise cause problems during executions as it's not handled there
+            for name in ("target_column_name", "target_column_type"):
+                target = values[name]
+                if isinstance(target, str) and target.strip() == "":
+                    values[name] = None
+            columns.append(
+                values | {"hive_db": data.database, "hive_table": data.table}
+            )
 
         try:
-            query = insert(config_schema.ExportTables).values(
-                dbalias=connection,
-                target_schema=schema,
-                target_table=table,
-                export_type=data.exportType,
-                export_tool=data.exportTool,
-                hive_db=data.database,
-                hive_table=data.table,
-                last_update_from_hive=data.lastUpdateFromHive,
-                sql_where_addition=data.sqlWhereAddition,
-                include_in_airflow=data.includeInAirflow,
-                airflow_priority=data.airflowPriority,
-                forceCreateTempTable=data.forceCreateTempTable,
-                validate_export=data.validateExport,
-                validationMethod=data.validationMethod,
-                validationCustomQueryHiveSQL=data.validationCustomQueryHiveSQL,
-                validationCustomQueryTargetSQL=data.validationCustomQueryTargetSQL,
-                uppercase_columns=data.uppercaseColumns,
-                truncate_target=data.truncateTarget,
-                mappers=data.sqlSessions,
-                incr_column=data.incrColumn,
-                incr_validation_method=data.incrValidationMethod,
-                sqoop_options=data.sqoopOptions,
-                hive_javaheap=data.hiveContainerSize,
-                create_target_table_sql=data.createTargetTableSql,
-                operator_notes=data.operatorNotes,
-            )
-
-            query = query.on_duplicate_key_update(
-                dbalias=connection,
-                target_schema=schema,
-                target_table=table,
-                export_type=data.exportType,
-                export_tool=data.exportTool,
-                hive_db=data.database,
-                hive_table=data.table,
-                last_update_from_hive=data.lastUpdateFromHive,
-                sql_where_addition=data.sqlWhereAddition,
-                include_in_airflow=data.includeInAirflow,
-                airflow_priority=data.airflowPriority,
-                forceCreateTempTable=data.forceCreateTempTable,
-                validate_export=data.validateExport,
-                validationMethod=data.validationMethod,
-                validationCustomQueryHiveSQL=data.validationCustomQueryHiveSQL,
-                validationCustomQueryTargetSQL=data.validationCustomQueryTargetSQL,
-                uppercase_columns=data.uppercaseColumns,
-                truncate_target=data.truncateTarget,
-                mappers=data.sqlSessions,
-                incr_column=data.incrColumn,
-                incr_validation_method=data.incrValidationMethod,
-                sqoop_options=data.sqoopOptions,
-                hive_javaheap=data.hiveContainerSize,
-                create_target_table_sql=data.createTargetTableSql,
-                operator_notes=data.operatorNotes,
-            )
-
-            session.execute(query)
+            tables = ExportTablesRepository(session())
+            tables.save_settings(connection, schema, table, settings)
+            table_id = tables.table_id_of(connection, schema, table)
+            stored_columns = ExportColumnsRepository(session())
+            for values in columns:
+                stored_columns.save_column(table_id, values)
             session.commit()
-        except SQLError as err:
-            log.error(str(err))
-            log.error(column)  # noqa: F821  # TODO(#164): column is undefined here
-
-            result = str(err)
-            return_code = 500
-
-            # session.close()
+        finally:
             session.remove()
-            return (result, return_code)
 
-        # Fetch the tableID as that is required to update/create data in export_columns
-        row = (
-            session.query(export_tables.table_id)
-            .select_from(export_tables)
-            .filter(
-                (export_tables.dbalias == connection)
-                & (export_tables.target_schema == schema)
-                & (export_tables.target_table == table)
-            )
-            .one()
-        )
-
-        session.execute(query)
-        table_id = row[0]
-
-        columns = data.columns
-        for column in columns:
-            # PK in export_columns is not the most optimal. So we need to check first if it exists and then insert or update.
-            # Upsert is not available
-            row = (
-                session.query(export_columns.column_id)
-                .select_from(export_columns)
-                .filter(
-                    (export_columns.table_id == table_id)
-                    & (export_columns.column_name == column.columnName)
-                )
-                .one_or_none()
-            )
-
-            try:
-                column_order = None
-                if column.columnOrder is not None:
-                    column_order = int(column.columnOrder) - 1
-
-                # Force set to Null if string is empty. This will otherwise cause problems during executions as it's not handled there
-                if (
-                    column.targetColumnName is not None
-                    and column.targetColumnName.strip() == ""
-                ):
-                    column.targetColumnName = None
-                if (
-                    column.targetColumnType is not None
-                    and column.targetColumnType.strip() == ""
-                ):
-                    column.targetColumnType = None
-
-                if row == None:
-                    log.debug("Column does not exist")
-
-                    query = sa.insert(config_schema.ExportColumns).values(
-                        table_id=table_id,
-                        column_name=column.columnName,
-                        column_type=column.columnType,
-                        column_order=column_order,
-                        hive_db=data.database,
-                        hive_table=data.table,
-                        target_column_name=column.targetColumnName,
-                        target_column_type=column.targetColumnType,
-                        last_update_from_hive=column.lastUpdateFromHive,
-                        include_in_export=column.includeInExport,
-                        comment=column.comment,
-                        operator_notes=column.operatorNotes,
-                    )
-
-                    session.execute(query)
-
-                else:
-                    column_id = row[0]
-                    log.debug("Export column with id '%s' was updated" % (column_id))
-
-                    session.execute(
-                        update(export_columns),
-                        [
-                            {
-                                "table_id": table_id,
-                                "column_id": column_id,
-                                "column_name": column.columnName,
-                                "column_type": column.columnType,
-                                "column_order": column_order,
-                                "hive_db": data.database,
-                                "hive_table": data.table,
-                                "target_column_name": column.targetColumnName,
-                                "target_column_type": column.targetColumnType,
-                                "last_update_from_hive": column.lastUpdateFromHive,
-                                "include_in_export": column.includeInExport,
-                                "comment": column.comment,
-                                "operator_notes": column.operatorNotes,
-                            }
-                        ],
-                    )
-
-                session.commit()
-            except SQLError as err:
-                log.error(str(err))
-                log.error(column)
-
-                result = str(err)
-                return_code = 500
-
-                # session.close()
-                session.remove()
-                return (result, return_code)
-
-            log.debug(column)
-
-        # session.close()
-        session.remove()
-        return (result, return_code)
+        return ("ok", 200)
 
     def get_all_airflow_dags(self):
         """Returns all Airflow DAGs"""

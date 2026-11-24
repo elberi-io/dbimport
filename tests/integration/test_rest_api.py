@@ -2421,3 +2421,28 @@ def test_get_export_connections_of_a_connection_never_exported_has_empty_last_ex
     assert response.json() == [
         {"name": "tgt_conn", "tables": 1, "lastExport": "", "lastRows": 0}
     ]
+
+
+def test_update_export_table_with_an_invalid_column_changes_nothing(
+    rest_server: ModuleType, auth_headers: dict[str, str], db_connection: sa.Connection
+) -> None:
+    insert_row(db_connection, "jdbc_connections", dbalias="tgt_conn", jdbc_url="x")
+    _add_export_table(db_connection, operator_notes="old")
+    body = EXPORT_WRITE_MINIMAL | {
+        "operatorNotes": "new",
+        "columns": [
+            _write_export_column("id", 1),
+            _write_export_column("note", 2, lastUpdateFromHive=None),
+        ],
+    }
+
+    with TestClient(rest_server.app, raise_server_exceptions=False) as client:
+        response = client.post(
+            "/export/table/tgt_conn/tgt/orders", json=body, headers=auth_headers
+        )
+
+    assert response.status_code == 500
+    notes = db_connection.execute(sa.text("SELECT operator_notes FROM export_tables"))
+    assert notes.scalar_one() == "old"
+    count = db_connection.execute(sa.text("SELECT COUNT(*) FROM export_columns"))
+    assert count.scalar_one() == 0

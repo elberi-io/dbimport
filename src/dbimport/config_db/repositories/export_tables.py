@@ -16,9 +16,21 @@
 # under the License.
 """Export tables: the export_tables row of a table that is exported."""
 
+from collections.abc import Mapping, Sequence
+
 from pydantic import BaseModel, ConfigDict
-from sqlalchemy import cast, insert, select, update
+from sqlalchemy import (
+    ColumnElement,
+    bindparam,
+    cast,
+    delete,
+    func,
+    insert,
+    select,
+    update,
+)
 from sqlalchemy.dialects.mysql import INTEGER
+from sqlalchemy.dialects.mysql import insert as mysql_insert
 from sqlalchemy.orm import Session
 
 from dbimport.config_db.config_schema import ExportTables
@@ -61,6 +73,103 @@ class ExportTable(BaseModel):
     hive_rowcount: int | None
     target_rowcount: int | None
     mappers: int
+    include_in_airflow: int
+    airflow_priority: int | None
+    uppercase_columns: int
+    sqoop_options: str | None
+    sqoop_last_execution: int | None
+    create_target_table_sql: str | None
+    operator_notes: str | None
+
+
+class ExportTableEntry(BaseModel):
+    """A table as the search lists it."""
+
+    model_config = ConfigDict(frozen=True)
+
+    dbalias: str
+    target_schema: str
+    target_table: str
+    hive_db: str
+    hive_table: str
+    export_type: str
+    export_tool: str
+    last_update_from_hive: StoredDateTime
+    include_in_airflow: int
+    operator_notes: str | None
+
+
+class ConnectionSummary(BaseModel):
+    """The tables exported to one connection."""
+
+    model_config = ConfigDict(frozen=True)
+
+    dbalias: str
+    tables: int
+    last_export: StoredDateTime
+    last_rows: int | None
+
+
+_SEARCHABLE = frozenset(ExportTableEntry.model_fields) - {"last_update_from_hive"}
+
+_SETTINGS = frozenset(
+    {
+        "export_type",
+        "export_tool",
+        "hive_db",
+        "hive_table",
+        "last_update_from_hive",
+        "sql_where_addition",
+        "include_in_airflow",
+        "airflow_priority",
+        "force_create_temp_table",
+        "validate_export",
+        "validation_method",
+        "validation_custom_query_hive_sql",
+        "validation_custom_query_target_sql",
+        "uppercase_columns",
+        "truncate_target",
+        "mappers",
+        "incr_column",
+        "incr_validation_method",
+        "sqoop_options",
+        "hive_javaheap",
+        "create_target_table_sql",
+        "operator_notes",
+    }
+)
+
+_BULK_SETTINGS = frozenset(
+    {"export_type", "export_tool", "include_in_airflow", "operator_notes"}
+)
+
+
+def _columns(
+    values: Mapping[str, object], allowed: frozenset[str]
+) -> dict[str, object]:
+    """values keyed by column name instead of attribute name. Raises
+    KeyError for an attribute that is not allowed."""
+    unknown = set(values) - allowed
+    if unknown:
+        raise KeyError(", ".join(sorted(unknown)))
+    mapped = ExportTables.__mapper__.columns
+    return {mapped[name].name: value for name, value in values.items()}
+
+
+def _bound_tables(
+    tables: Sequence[tuple[str, str, str]],
+) -> list[dict[str, str]]:
+    return [
+        {"b_dbalias": dbalias, "b_schema": schema, "b_table": table}
+        for dbalias, schema, table in tables
+    ]
+
+
+_BOUND_TABLE = (
+    (ExportTables.dbalias == bindparam("b_dbalias"))
+    & (ExportTables.target_schema == bindparam("b_schema"))
+    & (ExportTables.target_table == bindparam("b_table"))
+)
 
 
 class ExportTablesRepository:
@@ -208,6 +317,129 @@ class ExportTablesRepository:
             incr_maxvalue=maximum,
             incr_minvalue_pending=None,
             incr_maxvalue_pending=None,
+        )
+
+    def connection_summaries(self, limit: int) -> list[ConnectionSummary]:
+        """Per connection (at most limit): the number of tables, the last
+        update from Hive and the sum of the last rows."""
+        rows = self._session.execute(
+            select(
+                ExportTables.dbalias,
+                func.count(ExportTables.dbalias),
+                func.max(ExportTables.last_update_from_hive),
+                func.sum(ExportTables.sqoop_last_rows),
+            )
+            .group_by(ExportTables.dbalias)
+            .limit(limit)
+        )
+        return [
+            ConnectionSummary(
+                dbalias=dbalias,
+                tables=tables,
+                last_export=last_export,
+                last_rows=last_rows,
+            )
+            for dbalias, tables, last_export, last_rows in rows.tuples()
+        ]
+
+    def search(
+        self, filters: Mapping[str, object], limit: int
+    ) -> tuple[list[ExportTableEntry], int]:
+        """At most limit tables whose fields match all filters, ordered by
+        connection, target schema and table, and the number of all matches.
+        A string containing "%" is a LIKE pattern; other values must be
+        equal. Raises KeyError for a field that cannot be searched."""
+        unknown = set(filters) - _SEARCHABLE
+        if unknown:
+            raise KeyError(", ".join(sorted(unknown)))
+        conditions: list[ColumnElement[bool]] = [
+            getattr(ExportTables, field).like(value)
+            if isinstance(value, str) and "%" in value
+            else getattr(ExportTables, field) == value
+            for field, value in filters.items()
+        ]
+        rows = self._session.execute(
+            select(
+                *(
+                    getattr(ExportTables, name).label(name)
+                    for name in ExportTableEntry.model_fields
+                )
+            )
+            .where(*conditions)
+            .order_by(
+                ExportTables.dbalias,
+                ExportTables.target_schema,
+                ExportTables.target_table,
+            )
+            .limit(limit)
+        )
+        found = [ExportTableEntry.model_validate(row._mapping) for row in rows]
+        total = self._session.scalar(
+            select(func.count()).select_from(ExportTables).where(*conditions)
+        )
+        return found, total or 0
+
+    def save_settings(
+        self,
+        dbalias: str,
+        target_schema: str,
+        target_table: str,
+        settings: Mapping[str, object],
+    ) -> None:
+        """Creates the table with the given settings, or replaces them on
+        the existing one; other columns keep their values. Raises KeyError
+        for a column that is not a setting."""
+        values = _columns(settings, _SETTINGS)
+        self._session.execute(
+            mysql_insert(ExportTables)
+            .values(
+                dbalias=dbalias,
+                target_schema=target_schema,
+                target_table=target_table,
+                **values,
+            )
+            .on_duplicate_key_update(values)
+        )
+
+    def table_id_of(self, dbalias: str, target_schema: str, target_table: str) -> int:
+        """Raises sqlalchemy.exc.NoResultFound when the table is missing."""
+        return self._session.scalars(
+            select(ExportTables.table_id).where(
+                ExportTables.dbalias == dbalias,
+                ExportTables.target_schema == target_schema,
+                ExportTables.target_table == target_table,
+            )
+        ).one()
+
+    def delete(self, dbalias: str, target_schema: str, target_table: str) -> bool:
+        """Deletes the table and its columns; False when there is none."""
+        result = self._session.execute(
+            delete(ExportTables).where(
+                ExportTables.dbalias == dbalias,
+                ExportTables.target_schema == target_schema,
+                ExportTables.target_table == target_table,
+            )
+        )
+        return result.rowcount == 1
+
+    def delete_many(self, tables: Sequence[tuple[str, str, str]]) -> None:
+        """Deletes the given (dbalias, target_schema, target_table) tables;
+        unknown ones are ignored."""
+        self._session.connection().execute(
+            delete(ExportTables).where(_BOUND_TABLE), _bound_tables(tables)
+        )
+
+    def update_many(
+        self, tables: Sequence[tuple[str, str, str]], settings: Mapping[str, object]
+    ) -> None:
+        """Sets the given settings on the given (dbalias, target_schema,
+        target_table) tables. Raises KeyError for a column that cannot be
+        changed in bulk."""
+        self._session.connection().execute(
+            update(ExportTables)
+            .where(_BOUND_TABLE)
+            .values(_columns(settings, _BULK_SETTINGS)),
+            _bound_tables(tables),
         )
 
     def _update(self, table_id: int, **values: object) -> None:
