@@ -18,10 +18,18 @@
 import json
 import logging
 import time
+from collections.abc import Callable, Iterator
+from contextlib import contextmanager
 from datetime import datetime
-from typing import Any
+from typing import Any, TypeVar
+
+from sqlalchemy.orm import Session
 
 from dbimport.config_db import common_config, send_statistics
+from dbimport.config_db import engine as config_engine
+from dbimport.config_db.repositories.import_stages import ImportStagesRepository
+
+_T = TypeVar("_T")
 
 
 class Stage:
@@ -39,8 +47,8 @@ class Stage:
         self.mysql_cursor = self.mysql_conn.cursor(buffered=False)
         self.current_stage: int | None = None
         self.memory_stage = False
-        self.stage_time_start: str | None = None
-        self.stage_time_stop: str | None = None
+        self.stage_time_start: datetime | None = None
+        self.stage_time_stop: datetime | None = None
         self.stage_duration_start = 0.0
         self.stage_duration_stop = 0.0
         self.stage_duration_time = 0.0
@@ -61,6 +69,24 @@ class Stage:
         """Sets the parameters to work against a new Hive database and table"""
         self.hive_db = hive_db.lower()
         self.hive_table = hive_table.lower()
+
+    def _table(self) -> tuple[str, str]:
+        if self.hive_db is None or self.hive_table is None:
+            raise ValueError("The stage has no Hive table")
+        return self.hive_db, self.hive_table
+
+    @contextmanager
+    def _write_stages(self) -> Iterator[ImportStagesRepository]:
+        # Raw queries still read the stage times: they must not keep a
+        # snapshot from before this write. TODO(#238): remove with them.
+        self.mysql_conn.commit()
+        with Session(config_engine.engine()) as session:
+            yield ImportStagesRepository(session)
+            session.commit()
+
+    def _read_stages(self, read: Callable[[ImportStagesRepository], _T]) -> _T:
+        with Session(config_engine.engine()) as session:
+            return read(ImportStagesRepository(session))
 
     def get_stage_description(self, stage: int) -> str:
         stage_description = ""
@@ -1289,15 +1315,8 @@ class Stage:
         logging.debug("Executing Stage.clear_stage()")
 
         if not self.memory_stage:
-            query = "delete from import_stage where hive_db = %s and hive_table = %s"
-            self.mysql_cursor.execute(query, (self.hive_db, self.hive_table))
-            self.mysql_conn.commit()
-            logging.debug("SQL Statement executed: %s" % (self.mysql_cursor.statement))
-
-            query = "delete from import_stage_statistics where hive_db = %s and hive_table = %s"
-            self.mysql_cursor.execute(query, (self.hive_db, self.hive_table))
-            self.mysql_conn.commit()
-            logging.debug("SQL Statement executed: %s" % (self.mysql_cursor.statement))
+            with self._write_stages() as stages:
+                stages.clear(*self._table())
 
         logging.debug("Executing Stage.clear_stage() - Finished")
 
@@ -1309,19 +1328,10 @@ class Stage:
             if self.memory_stage:
                 self.current_stage = 0
             else:
-                query = "select stage from import_stage where hive_db = %s and hive_table = %s"
-                self.mysql_cursor.execute(query, (self.hive_db, self.hive_table))
-                logging.debug(
-                    "SQL Statement executed: %s" % (self.mysql_cursor.statement)
-                )
+                stored = self._read_stages(lambda stages: stages.stage(*self._table()))
+                self.current_stage = 0 if stored is None else stored
 
-                row = self.mysql_cursor.fetchone()
-                if row == None:
-                    self.current_stage = 0
-                else:
-                    self.current_stage = row[0]
-
-        self.stage_time_start = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
+        self.stage_time_start = datetime.now()
         self.stage_time_stop = None
         self.stage_duration_start = time.monotonic()
         self.stage_duration_stop = 0.0
@@ -1334,24 +1344,26 @@ class Stage:
         """Returns the start and stop time for a specific stage. If no info can be found, 1970-01-01T00:00:00.000000Z is returned for both"""
         logging.debug("Executing Stage.get_stage_start_stop()")
 
-        query = "select stage, start, stop, duration from import_stage_statistics where hive_db = %s and hive_table = %s "
-        self.mysql_cursor.execute(query, (self.hive_db, self.hive_table))
-        logging.debug("SQL Statement executed: %s" % (self.mysql_cursor.statement))
-
         return_dict = {}
         return_dict["startTime"] = "1970-01-01T00:00:00.000000Z"
         return_dict["stopTime"] = "1970-01-01T00:00:00.000000Z"
 
-        for row in self.mysql_cursor.fetchall():
-            stage_id = row[0]
-            stage_start = row[1]
-            stage_stop = row[2]
-            stage_duration = row[3]
-
-            stage_short_name = self.get_stage_short_name(stage_id)
+        stage_times = self._read_stages(
+            lambda stages: stages.stage_times(*self._table())
+        )
+        for stage_time in stage_times:
+            stage_short_name = self.get_stage_short_name(stage_time.stage)
             if stage_short_name == stage:
-                return_dict["startTime"] = stage_start.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
-                return_dict["stopTime"] = stage_stop.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+                if stage_time.start is None or stage_time.stop is None:
+                    raise ValueError(
+                        f"Stage {stage_time.stage} has an invalid start or stop time"
+                    )
+                return_dict["startTime"] = stage_time.start.strftime(
+                    "%Y-%m-%dT%H:%M:%S.%fZ"
+                )
+                return_dict["stopTime"] = stage_time.stop.strftime(
+                    "%Y-%m-%dT%H:%M:%S.%fZ"
+                )
                 break
 
         return return_dict
@@ -1375,7 +1387,7 @@ class Stage:
             return
 
         # Calculate time and save to import_stage_statistics
-        self.stage_time_stop = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
+        self.stage_time_stop = datetime.now()
         self.stage_duration_stop = time.monotonic()
         self.stage_duration_time = self.stage_duration_stop - self.stage_duration_start
 
@@ -1386,85 +1398,29 @@ class Stage:
         logging.debug("stageDurationStop:  %s", self.stage_duration_stop)
         logging.debug("stageDurationTime:  %s", self.stage_duration_time)
 
-        query = "select count(stage) from import_stage_statistics where hive_db = %s and hive_table = %s and stage = %s"
-        self.mysql_cursor.execute(
-            query, (self.hive_db, self.hive_table, self.current_stage)
-        )
-        logging.debug("SQL Statement executed: %s" % (self.mysql_cursor.statement))
+        if self.current_stage is None or self.stage_time_start is None:
+            raise ValueError("get_stage() must run before set_stage()")
 
-        row = self.mysql_cursor.fetchone()
-        row_count = row[0]
-        if row_count == 0:
-            query = "insert into import_stage_statistics "
-            query += "( hive_db, hive_table, stage, start, stop, duration )"
-            query += "values "
-            query += "( "
-            query += "	'%s', " % (self.hive_db)
-            query += "	'%s', " % (self.hive_table)
-            query += "	%s, " % (self.current_stage)
-            query += "	'%s', " % (self.stage_time_start)
-            query += "	'%s', " % (self.stage_time_stop)
-            query += "	%s " % (round(self.stage_duration_time))
-            query += ") "
-        else:
-            query = "update import_stage_statistics set"
-            query += "	start = '%s', " % (self.stage_time_start)
-            query += "	stop = '%s', " % (self.stage_time_stop)
-            query += "	duration = %s " % (round(self.stage_duration_time))
-            query += "where "
-            query += "	hive_db = '%s' " % (self.hive_db)
-            query += "	and hive_table = '%s' " % (self.hive_table)
-            query += "	and stage = '%s' " % (self.current_stage)
-
-        self.mysql_cursor.execute(query)
-        self.mysql_conn.commit()
-        logging.debug("SQL Statement executed: %s" % (self.mysql_cursor.statement))
-
-        stage_description = self.get_stage_description(new_stage)
-
-        # Save stage information in import_stage
-        query = "select count(stage) from import_stage where hive_db = %s and hive_table = %s"
-        self.mysql_cursor.execute(query, (self.hive_db, self.hive_table))
-        logging.debug("SQL Statement executed: %s" % (self.mysql_cursor.statement))
-
-        row = self.mysql_cursor.fetchone()
-        row_count = row[0]
-        if row_count == 0:
-            query = "insert into import_stage "
-            query += "( "
-            query += "	hive_db, "
-            query += "	hive_table, "
-            query += "	stage, "
-            query += "	stage_description, "
-            query += "	stage_time "
-            # 			query += "	unrecoverable_error "
-            query += ") "
-            query += "values "
-            query += "( "
-            query += "	'%s', " % (self.hive_db)
-            query += "	'%s', " % (self.hive_table)
-            query += "	%s, " % (new_stage)
-            query += "	'%s', " % (stage_description)
-            query += "	'%s' " % (datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f"))
-            # 			query += "	0 "
-            query += ") "
-        else:
-            query = "update import_stage set"
-            query += "	stage = %s, " % (new_stage)
-            query += "	stage_description = '%s', " % (stage_description)
-            query += "	stage_time = '%s' " % (
-                datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
+        hive_db, hive_table = self._table()
+        with self._write_stages() as stages:
+            stages.save_stage_time(
+                hive_db,
+                hive_table,
+                self.current_stage,
+                self.stage_time_start,
+                self.stage_time_stop,
+                round(self.stage_duration_time),
             )
-            query += "where "
-            query += "	hive_db = '%s' " % (self.hive_db)
-            query += "	and hive_table = '%s' " % (self.hive_table)
-
-        self.mysql_cursor.execute(query)
-        self.mysql_conn.commit()
-        logging.debug("SQL Statement executed: %s" % (self.mysql_cursor.statement))
+            stages.save_stage(
+                hive_db,
+                hive_table,
+                new_stage,
+                self.get_stage_description(new_stage),
+                datetime.now(),
+            )
 
         self.current_stage = new_stage
-        self.stage_time_start = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
+        self.stage_time_start = datetime.now()
         self.stage_time_stop = None
         self.stage_duration_start = time.monotonic()
         self.stage_duration_stop = 0.0
@@ -1479,29 +1435,12 @@ class Stage:
         if self.memory_stage:
             return
 
-        stage_description = self.get_stage_description(stage)
-
-        query = "insert into import_retries_log "
-        query += "( "
-        query += "	hive_db, "
-        query += "	hive_table, "
-        query += "	retry_time, "
-        query += "	stage, "
-        query += "	stage_description "
-        query += ") "
-        query += "values (%s, %s, %s, %s, %s)"
-
-        self.mysql_cursor.execute(
-            query,
-            (
-                self.hive_db,
-                self.hive_table,
-                datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f"),
+        with self._write_stages() as stages:
+            stages.log_retry(
+                *self._table(),
                 stage,
-                stage_description,
-            ),
-        )
-        self.mysql_conn.commit()
-        logging.debug("SQL Statement executed: %s" % (self.mysql_cursor.statement))
+                self.get_stage_description(stage),
+                datetime.now(),
+            )
 
         logging.debug("Executing Stage.save_retry_attempt() - Finished")

@@ -74,26 +74,24 @@
     "UP031": 70
   },
   "src/dbimport/config_db/export_stage.py": {
-    "E711": 7,
+    "E711": 6,
     "E712": 15,
-    "F841": 1,
-    "G002": 15,
-    "UP031": 41
+    "G002": 6,
+    "UP031": 6
   },
   "src/dbimport/config_db/import_config.py": {
     "B904": 3,
     "E711": 77,
     "E712": 38,
     "F841": 4,
-    "G002": 37,
-    "UP031": 89
+    "G002": 36,
+    "UP031": 88
   },
   "src/dbimport/config_db/import_stage.py": {
-    "E711": 7,
+    "E711": 6,
     "E712": 15,
-    "F841": 1,
-    "G002": 15,
-    "UP031": 37
+    "G002": 6,
+    "UP031": 6
   },
   "src/dbimport/config_db/send_statistics.py": {
     "E711": 2,

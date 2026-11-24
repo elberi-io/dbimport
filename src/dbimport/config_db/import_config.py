@@ -46,6 +46,7 @@ from dbimport.config_db.repositories.import_columns import (
     ImportColumnsRepository,
     SourceColumn,
 )
+from dbimport.config_db.repositories.import_stages import ImportStagesRepository
 from dbimport.config_db.repositories.import_tables import (
     GeneratedDefinitions,
     ImportTable,
@@ -3684,34 +3685,14 @@ class Config(metaclass=Singleton):
     def get_all_active_incr_imports(self) -> pd.DataFrame:
         """Return all rows from import_stage that uses an incremental import_type"""
         logging.debug("Executing import_config.get_all_active_incr_imports()")
-        result_df = None
 
-        query = "select "
-        query += "	stage.hive_db, "
-        query += "	stage.hive_table, "
-        query += "	stage.stage "
-        query += "from import_stage stage "
-        query += "join import_tables tabl "
-        query += "	on stage.hive_db = tabl.hive_db and stage.hive_table = tabl.hive_table "
-        query += (
-            "where tabl.import_type like 'incr%' or tabl.import_phase_type = 'incr' "
-        )
+        with Session(config_engine.engine()) as session:
+            stages = ImportStagesRepository(session).active_incremental_stages()
 
-        self.mysql_cursor01.execute(query)
-        logging.debug("SQL Statement executed: %s" % (self.mysql_cursor01.statement))
-
-        if self.mysql_cursor01.rowcount == 0:
+        if not stages:
             return pd.DataFrame()
 
-        result_df = pd.DataFrame(self.mysql_cursor01.fetchall())
-
-        # Set the correct column namnes in the DataFrame
-        result_df_columns = []
-        for columns in self.mysql_cursor01.description:
-            result_df_columns.append(
-                columns[0]
-            )  # Name of the column is in the first position
-        result_df.columns = result_df_columns
+        result_df = pd.DataFrame([stage.model_dump() for stage in stages])
 
         logging.debug(
             "Executing import_config.get_all_active_incr_imports() - Finished"
