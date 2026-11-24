@@ -2393,3 +2393,18 @@ def test_export_details_read_a_zero_date_as_none(
         details["columns"][0]["lastUpdateFromHive"],
     )
     assert stored == (None, None)
+
+
+def test_get_export_table_details_of_unknown_table_returns_404_and_ends_its_transaction(
+    client: TestClient, auth_headers: dict[str, str], db_connection: sa.Connection
+) -> None:
+    response = client.get("/export/table/tgt_conn/tgt/nope", headers=auth_headers)
+
+    # An open transaction on the table would make the TRUNCATE wait.
+    db_connection.execute(
+        sa.text(
+            "SET STATEMENT lock_wait_timeout = 2, foreign_key_checks = 0 "
+            "FOR TRUNCATE TABLE export_tables"
+        )
+    )
+    assert response.status_code == 404
