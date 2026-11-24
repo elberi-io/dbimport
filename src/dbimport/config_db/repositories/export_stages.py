@@ -38,6 +38,7 @@ class StageTime(BaseModel):
     stage: int
     start: StoredDateTime
     stop: StoredDateTime
+    duration: int
 
 
 class ExportStagesRepository:

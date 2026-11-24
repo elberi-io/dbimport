@@ -6,7 +6,7 @@ from typing import Any
 import pytest
 import sqlalchemy as sa
 
-from dbimport.config_db import common_config, import_config, import_stage
+from dbimport.config_db import import_config, import_stage
 from tests.configdb import close_dbimport_connections, insert_row
 
 HIVE_DB = "testdb"
@@ -17,8 +17,7 @@ EARLIER = datetime(2000, 1, 1, 10, 0, 0)
 @pytest.fixture
 def stage(clean_config_db: None) -> import_stage.Stage:
     """Stage handler for HIVE_DB.HIVE_TABLE, as import_config creates it."""
-    conn = common_config.Config(HIVE_DB, HIVE_TABLE).mysql_conn
-    return import_stage.Stage(conn, HIVE_DB, HIVE_TABLE)
+    return import_stage.Stage(HIVE_DB, HIVE_TABLE)
 
 
 def _persisted_stage(conn: sa.Connection) -> int | None:
@@ -159,7 +158,7 @@ def test_get_stage_returns_the_stored_stage(
 ) -> None:
     stage.get_stage()
     stage.set_stage(1010)
-    other = import_stage.Stage(stage.mysql_conn, HIVE_DB, HIVE_TABLE)
+    other = import_stage.Stage(HIVE_DB, HIVE_TABLE)
 
     assert other.get_stage() == 1010
 

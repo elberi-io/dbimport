@@ -28,6 +28,9 @@ from sqlalchemy.orm import Session
 from dbimport.config_db import common_config, send_statistics
 from dbimport.config_db import engine as config_engine
 from dbimport.config_db.repositories.import_stages import ImportStagesRepository
+from dbimport.config_db.repositories.import_statistics import (
+    ImportStatisticsRepository,
+)
 
 _T = TypeVar("_T")
 
@@ -35,7 +38,6 @@ _T = TypeVar("_T")
 class Stage:
     def __init__(
         self,
-        mysql_conn: Any,
         hive_db: str | None,
         hive_table: str | None,
     ) -> None:
@@ -43,8 +45,6 @@ class Stage:
 
         self.hive_db = hive_db
         self.hive_table = hive_table
-        self.mysql_conn = mysql_conn
-        self.mysql_cursor = self.mysql_conn.cursor(buffered=False)
         self.current_stage: int | None = None
         self.memory_stage = False
         self.stage_time_start: datetime | None = None
@@ -61,10 +61,6 @@ class Stage:
 
         self.send_statistics = send_statistics.SendStatistics()
 
-    def set_mysql_connection(self, mysql_conn: Any) -> None:
-        self.mysql_conn = mysql_conn
-        self.mysql_cursor = self.mysql_conn.cursor(buffered=False)
-
     def set_hive_table(self, hive_db: str, hive_table: str) -> None:
         """Sets the parameters to work against a new Hive database and table"""
         self.hive_db = hive_db.lower()
@@ -77,11 +73,14 @@ class Stage:
 
     @contextmanager
     def _write_stages(self) -> Iterator[ImportStagesRepository]:
-        # Raw queries still read the stage times: they must not keep a
-        # snapshot from before this write. TODO(#238): remove with them.
-        self.mysql_conn.commit()
         with Session(config_engine.engine()) as session:
             yield ImportStagesRepository(session)
+            session.commit()
+
+    @contextmanager
+    def _write_statistics(self) -> Iterator[ImportStatisticsRepository]:
+        with Session(config_engine.engine()) as session:
+            yield ImportStatisticsRepository(session)
             session.commit()
 
     def _read_stages(self, read: Callable[[ImportStagesRepository], _T]) -> _T:
@@ -1066,8 +1065,9 @@ class Stage:
         ):
             return
 
-        import_stop = None
-        json_data_kafka = {}
+        import_start: datetime | None = None
+        import_stop: datetime | None = None
+        json_data_kafka: dict[str, Any] = {}
         json_data_kafka["type"] = "import"
         json_data_kafka["status"] = "finished"
         json_data_rest = json_data_kafka.copy()
@@ -1090,15 +1090,15 @@ class Stage:
             json_data_aws_sns.pop("sessions")
             json_data_aws_sns.pop("copy_phase")
 
-        query = "select stage, start, stop, duration from import_stage_statistics where hive_db = %s and hive_table = %s"
-        self.mysql_cursor.execute(query, (self.hive_db, self.hive_table))
-        logging.debug("SQL Statement executed: %s" % (self.mysql_cursor.statement))
+        stage_times = self._read_stages(
+            lambda stages: stages.stage_times(*self._table())
+        )
 
-        for row in self.mysql_cursor.fetchall():
-            stage = row[0]
-            stage_start = row[1]
-            stage_stop = row[2]
-            stage_duration = row[3]
+        for stage_time in stage_times:
+            stage = stage_time.stage
+            stage_start = stage_time.start
+            stage_stop = stage_time.stop
+            stage_duration = stage_time.duration
 
             stage_short_name = self.get_stage_short_name(stage)
 
@@ -1131,26 +1131,29 @@ class Stage:
             if stage == 0:
                 import_start = stage_start
 
-            if import_stop == None or stage_stop > import_stop:
+            if import_stop is None or (
+                stage_stop is not None and stage_stop > import_stop
+            ):
                 import_stop = stage_stop
 
-        try:
-            import_duration = int((import_stop - import_start).total_seconds())
-        except UnboundLocalError:
-            import_start = -1
-            import_stop = -1
+        if import_start is None or import_stop is None:
+            start_text = stop_text = "-1"
             import_duration = -1
+        else:
+            start_text = str(import_start)
+            stop_text = str(import_stop)
+            import_duration = int((import_stop - import_start).total_seconds())
 
-        json_data_kafka["start"] = str(import_start)
-        json_data_kafka["stop"] = str(import_stop)
+        json_data_kafka["start"] = start_text
+        json_data_kafka["stop"] = stop_text
         json_data_kafka["duration"] = import_duration
 
-        json_data_rest["start"] = str(import_start)
-        json_data_rest["stop"] = str(import_stop)
+        json_data_rest["start"] = start_text
+        json_data_rest["stop"] = stop_text
         json_data_rest["duration"] = import_duration
 
-        json_data_aws_sns["start"] = str(import_start)
-        json_data_aws_sns["stop"] = str(import_stop)
+        json_data_aws_sns["start"] = start_text
+        json_data_aws_sns["stop"] = stop_text
         json_data_aws_sns["duration"] = import_duration
 
         if self.post_data_to_kafka == True:
@@ -1190,120 +1193,61 @@ class Stage:
         """Reads the import_stage_statistics and insert it to the import_statistics table"""
         logging.debug("Executing Stage.save_stage_statistics()")
 
-        columns_part = []
-        values_part = []
-        import_start = None
-        import_stop = None
-        import_duration = None
+        statistics: dict[str, object] = {}
+        import_start: datetime | None = None
+        import_stop: datetime | None = None
 
         for key, value in kwargs.items():
-            columns_part.append(key)
             if value == True:
                 value = 1
             if value == False:
                 value = 0
-            values_part.append(value)
+            statistics[key] = value
 
-        query = "select stage, start, stop, duration from import_stage_statistics where hive_db = %s and hive_table = %s"
-        self.mysql_cursor.execute(query, (self.hive_db, self.hive_table))
-        logging.debug("SQL Statement executed: %s" % (self.mysql_cursor.statement))
+        hive_db, hive_table = self._table()
+        stage_times = self._read_stages(
+            lambda stages: stages.stage_times(hive_db, hive_table)
+        )
 
         duplicate_columns = False
-        for row in self.mysql_cursor.fetchall():
-            stage = row[0]
-            stage_start = row[1]
-            stage_stop = row[2]
-            stage_duration = row[3]
-
-            stage_short_name = self.get_stage_short_name(stage)
+        for stage_time in stage_times:
+            stage_short_name = self.get_stage_short_name(stage_time.stage)
 
             if stage_short_name != "" and stage_short_name != "skip":
-                if f"{stage_short_name}_start" in columns_part:
+                if f"{stage_short_name}_start" in statistics:
                     duplicate_columns = True
-                columns_part.append(f"{stage_short_name}_start")
-                values_part.append(str(stage_start))
+                statistics[f"{stage_short_name}_start"] = stage_time.start
+                statistics[f"{stage_short_name}_stop"] = stage_time.stop
+                statistics[f"{stage_short_name}_duration"] = stage_time.duration
 
-                columns_part.append(f"{stage_short_name}_stop")
-                values_part.append(str(stage_stop))
+            if stage_time.stage == 0:
+                import_start = stage_time.start
 
-                columns_part.append(f"{stage_short_name}_duration")
-                values_part.append(str(stage_duration))
+            if import_stop is None or (
+                stage_time.stop is not None and stage_time.stop > import_stop
+            ):
+                import_stop = stage_time.stop
 
-            if stage == 0:
-                import_start = stage_start
-
-            if import_stop == None or stage_stop > import_stop:
-                import_stop = stage_stop
-
-        try:
-            import_duration = int((import_stop - import_start).total_seconds())
-        except TypeError:
+        if import_start is None or import_stop is None:
             logging.warning(
                 "'import_duration' cant be calculated due to invalid format of start or stop time. It will be set to 0"
             )
             import_duration = 0
-
-        columns_part.append("start")
-        if import_start == None:
-            values_part.append(import_start)
         else:
-            values_part.append(str(import_start))
+            import_duration = int((import_stop - import_start).total_seconds())
 
-        columns_part.append("stop")
-        if import_stop == None:
-            values_part.append(import_stop)
-        else:
-            values_part.append(str(import_stop))
+        statistics["start"] = import_start
+        statistics["stop"] = import_stop
+        statistics["duration"] = import_duration
 
-        columns_part.append("duration")
-        values_part.append(str(import_duration))
-
-        query = "insert into import_statistics "
-        # 		insertQuery = "("
-        # 		insertQuery += ", ".join(map(str, columnsPart))
-        # 		insertQuery += ") values ("
-        insert_query = "(`"
-        insert_query += "`, `".join(map(str, columns_part))
-        insert_query += "`) values ("
-
-        str_insert = ""
-        for _i in values_part:
-            if str_insert != "":
-                str_insert += ", "
-            str_insert += "%s"
-
-        insert_query += str_insert
-        insert_query += ")"
-        query += insert_query
-
-        # 		print(columnsPart)
-        # 		print("-------------------------------------------------")
-        # 		print(valuesPart)
-        # 		print("-------------------------------------------------")
-        # 		print(insertQuery)
-
-        if duplicate_columns:
-            logging.warning(
-                "There are duplicate column in the statistics. This usually happens when changing import_method on a ongoing import without reseting the stage in between. As a result, the statistics wont be saved for this import"
-            )
-        else:
-            self.mysql_cursor.execute(query, values_part)
-            self.mysql_conn.commit()
-            logging.debug("SQL Statement executed: %s" % (self.mysql_cursor.statement))
-
-        query = (
-            "delete from import_statistics_last where hive_db = %s and hive_table = %s"
-        )
-        self.mysql_cursor.execute(query, (self.hive_db, self.hive_table))
-        self.mysql_conn.commit()
-        logging.debug("SQL Statement executed: %s" % (self.mysql_cursor.statement))
-
-        if not duplicate_columns:
-            query = "insert into import_statistics_last "
-            query += insert_query
-            self.mysql_cursor.execute(query, values_part)
-            self.mysql_conn.commit()
-            logging.debug("SQL Statement executed: %s" % (self.mysql_cursor.statement))
+        with self._write_statistics() as run_statistics:
+            if duplicate_columns:
+                logging.warning(
+                    "There are duplicate column in the statistics. This usually happens when changing import_method on a ongoing import without reseting the stage in between. As a result, the statistics wont be saved for this import"
+                )
+                run_statistics.clear_last(hive_db, hive_table)
+            else:
+                run_statistics.save_run(hive_db, hive_table, statistics)
 
         logging.debug("Executing Stage.save_stage_statistics() - Finished")
 

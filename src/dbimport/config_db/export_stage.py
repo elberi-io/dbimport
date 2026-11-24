@@ -28,6 +28,9 @@ from sqlalchemy.orm import Session
 from dbimport.config_db import common_config, send_statistics
 from dbimport.config_db import engine as config_engine
 from dbimport.config_db.repositories.export_stages import ExportStagesRepository
+from dbimport.config_db.repositories.export_statistics import (
+    ExportStatisticsRepository,
+)
 
 _T = TypeVar("_T")
 
@@ -35,7 +38,6 @@ _T = TypeVar("_T")
 class Stage:
     def __init__(
         self,
-        mysql_conn: Any,
         connection_alias: str | None = None,
         target_schema: str | None = None,
         target_table: str | None = None,
@@ -46,8 +48,6 @@ class Stage:
         self.target_schema = target_schema
         self.target_table = target_table
 
-        self.mysql_conn = mysql_conn
-        self.mysql_cursor = self.mysql_conn.cursor(buffered=False)
         self.current_stage: int | None = None
         self.memory_stage = False
         self.stage_time_start: datetime | None = None
@@ -86,11 +86,14 @@ class Stage:
 
     @contextmanager
     def _write_stages(self) -> Iterator[ExportStagesRepository]:
-        # Raw queries still read the stage times: they must not keep a
-        # snapshot from before this write. TODO(#238): remove with them.
-        self.mysql_conn.commit()
         with Session(config_engine.engine()) as session:
             yield ExportStagesRepository(session)
+            session.commit()
+
+    @contextmanager
+    def _write_statistics(self) -> Iterator[ExportStatisticsRepository]:
+        with Session(config_engine.engine()) as session:
+            yield ExportStatisticsRepository(session)
             session.commit()
 
     def _read_stages(self, read: Callable[[ExportStagesRepository], _T]) -> _T:
@@ -292,8 +295,9 @@ class Stage:
         ):
             return
 
-        export_stop = None
-        json_data_kafka = {}
+        export_start: datetime | None = None
+        export_stop: datetime | None = None
+        json_data_kafka: dict[str, Any] = {}
         json_data_kafka["type"] = "export"
         json_data_kafka["status"] = "finished"
         json_data_rest = json_data_kafka.copy()
@@ -313,17 +317,15 @@ class Stage:
         if self.post_data_to_aws_sns_extended == False:
             json_data_aws_sns.pop("sessions")
 
-        query = "select stage, start, stop, duration from export_stage_statistics where dbalias = %s and target_schema = %s and target_table = %s"
-        self.mysql_cursor.execute(
-            query, (self.connection_alias, self.target_schema, self.target_table)
+        stage_times = self._read_stages(
+            lambda stages: stages.stage_times(*self._table())
         )
-        logging.debug("SQL Statement executed: %s" % (self.mysql_cursor.statement))
 
-        for row in self.mysql_cursor.fetchall():
-            stage = row[0]
-            stage_start = row[1]
-            stage_stop = row[2]
-            stage_duration = row[3]
+        for stage_time in stage_times:
+            stage = stage_time.stage
+            stage_start = stage_time.start
+            stage_stop = stage_time.stop
+            stage_duration = stage_time.duration
 
             stage_short_name = self.get_stage_short_name(stage)
 
@@ -356,26 +358,29 @@ class Stage:
             if stage == 0:
                 export_start = stage_start
 
-            if export_stop == None or stage_stop > export_stop:
+            if export_stop is None or (
+                stage_stop is not None and stage_stop > export_stop
+            ):
                 export_stop = stage_stop
 
-        try:
-            export_duration = int((export_stop - export_start).total_seconds())
-        except UnboundLocalError:
-            export_start = -1
-            export_stop = -1
+        if export_start is None or export_stop is None:
+            start_text = stop_text = "-1"
             export_duration = -1
+        else:
+            start_text = str(export_start)
+            stop_text = str(export_stop)
+            export_duration = int((export_stop - export_start).total_seconds())
 
-        json_data_kafka["start"] = str(export_start)
-        json_data_kafka["stop"] = str(export_stop)
+        json_data_kafka["start"] = start_text
+        json_data_kafka["stop"] = stop_text
         json_data_kafka["duration"] = export_duration
 
-        json_data_rest["start"] = str(export_start)
-        json_data_rest["stop"] = str(export_stop)
+        json_data_rest["start"] = start_text
+        json_data_rest["stop"] = stop_text
         json_data_rest["duration"] = export_duration
 
-        json_data_aws_sns["start"] = str(export_start)
-        json_data_aws_sns["stop"] = str(export_stop)
+        json_data_aws_sns["start"] = start_text
+        json_data_aws_sns["stop"] = stop_text
         json_data_aws_sns["duration"] = export_duration
 
         # 		print(jsonDataKafka)
@@ -417,107 +422,54 @@ class Stage:
         """Reads the export_stage_statistics and insert it to the export_statistics table"""
         logging.debug("Executing Stage.save_stage_statistics()")
 
-        columns_part = []
-        values_part = []
-        export_start = None
-        export_stop = None
-        export_duration = None
+        statistics: dict[str, object] = {}
+        export_start: datetime | None = None
+        export_stop: datetime | None = None
+        export_duration: int | None = None
 
         for key, value in kwargs.items():
-            columns_part.append(key)
             if value == True:
                 value = 1
             if value == False:
                 value = 0
-            values_part.append(value)
+            statistics[key] = value
 
-        query = "select stage, start, stop, duration from export_stage_statistics where dbalias = %s and target_schema = %s and target_table = %s"
-        self.mysql_cursor.execute(
-            query, (self.connection_alias, self.target_schema, self.target_table)
-        )
-        logging.debug("SQL Statement executed: %s" % (self.mysql_cursor.statement))
+        table = self._table()
+        stage_times = self._read_stages(lambda stages: stages.stage_times(*table))
 
-        row_counter = 0
-        for row in self.mysql_cursor.fetchall():
-            row_counter += 1
-            stage = row[0]
-            stage_start = row[1]
-            stage_stop = row[2]
-            stage_duration = row[3]
-
-            stage_short_name = self.get_stage_short_name(stage)
+        for stage_time in stage_times:
+            stage_short_name = self.get_stage_short_name(stage_time.stage)
 
             if stage_short_name != "" and stage_short_name != "skip":
-                columns_part.append(f"{stage_short_name}_start")
-                values_part.append(str(stage_start))
+                if f"{stage_short_name}_start" in statistics:
+                    raise ValueError(
+                        f"Two stages have the statistics column {stage_short_name}_start"
+                    )
+                statistics[f"{stage_short_name}_start"] = stage_time.start
+                statistics[f"{stage_short_name}_stop"] = stage_time.stop
+                statistics[f"{stage_short_name}_duration"] = stage_time.duration
 
-                columns_part.append(f"{stage_short_name}_stop")
-                values_part.append(str(stage_stop))
+            if stage_time.stage == 0:
+                export_start = stage_time.start
 
-                columns_part.append(f"{stage_short_name}_duration")
-                values_part.append(str(stage_duration))
+            if export_stop is None or (
+                stage_time.stop is not None and stage_time.stop > export_stop
+            ):
+                export_stop = stage_time.stop
 
-            if stage == 0:
-                export_start = stage_start
-
-            if export_stop == None or stage_stop > export_stop:
-                export_stop = stage_stop
-
-        if row_counter == 0:
+        if not stage_times:
             logging.warning("There is no statistical data to save.")
             return
 
-        if export_stop != None and export_start != None:
+        if export_stop is not None and export_start is not None:
             export_duration = int((export_stop - export_start).total_seconds())
-        else:
-            export_duration = None
 
-        columns_part.append("start")
-        values_part.append(None if export_start is None else str(export_start))
+        statistics["start"] = export_start
+        statistics["stop"] = export_stop
+        statistics["duration"] = export_duration
 
-        columns_part.append("stop")
-        values_part.append(str(export_stop))
-
-        columns_part.append("duration")
-        values_part.append(None if export_duration is None else str(export_duration))
-
-        query = "insert into export_statistics "
-        insert_query = "(`"
-        insert_query += "`, `".join(map(str, columns_part))
-        insert_query += "`) values ("
-
-        str_insert = ""
-        for _i in values_part:
-            if str_insert != "":
-                str_insert += ", "
-            str_insert += "%s"
-
-        insert_query += str_insert
-        insert_query += ")"
-        query += insert_query
-
-        # 		print(columnsPart)
-        # 		print("-------------------------------------------------")
-        # 		print(valuesPart)
-        # 		print("-------------------------------------------------")
-        # 		print(insertQuery)
-
-        self.mysql_cursor.execute(query, values_part)
-        self.mysql_conn.commit()
-        logging.debug("SQL Statement executed: %s" % (self.mysql_cursor.statement))
-
-        query = "delete from export_statistics_last where dbalias = %s and target_schema = %s and target_table = %s"
-        self.mysql_cursor.execute(
-            query, (self.connection_alias, self.target_schema, self.target_table)
-        )
-        self.mysql_conn.commit()
-        logging.debug("SQL Statement executed: %s" % (self.mysql_cursor.statement))
-
-        query = "insert into export_statistics_last "
-        query += insert_query
-        self.mysql_cursor.execute(query, values_part)
-        self.mysql_conn.commit()
-        logging.debug("SQL Statement executed: %s" % (self.mysql_cursor.statement))
+        with self._write_statistics() as run_statistics:
+            run_statistics.save_run(*table, statistics)
 
         logging.debug("Executing Stage.save_stage_statistics() - Finished")
 

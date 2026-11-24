@@ -6,7 +6,7 @@ from typing import Any
 import pytest
 import sqlalchemy as sa
 
-from dbimport.config_db import common_config, export_stage
+from dbimport.config_db import export_stage
 from tests.configdb import close_dbimport_connections, insert_row
 
 DBALIAS = "test_mysql"
@@ -19,11 +19,9 @@ EARLIER = datetime(2000, 1, 1, 10, 0, 0)
 @pytest.fixture
 def stage(clean_config_db: None) -> Iterator[export_stage.Stage]:
     """Stage handler for the export table, as export_config creates it."""
-    config = common_config.Config()
-    stage = export_stage.Stage(config.mysql_conn, DBALIAS, SCHEMA, TABLE)
+    stage = export_stage.Stage(DBALIAS, SCHEMA, TABLE)
     yield stage
     close_dbimport_connections(stage.common_config)
-    close_dbimport_connections(config)
 
 
 def _stored(conn: sa.Connection, table: str, *columns: str) -> list[tuple[Any, ...]]:
@@ -473,3 +471,16 @@ def test_convert_stage_statistics_to_json_without_stage_zero_sends_no_times(
 
     sent = fake.sent["rest"]
     assert (sent["start"], sent["stop"], sent["duration"]) == ("-1", "-1", -1)
+
+
+def test_save_stage_statistics_with_duplicate_stage_columns_raises(
+    stage: export_stage.Stage, db_connection: sa.Connection
+) -> None:
+    _add_run(db_connection, 0, 100, 150)
+    _add_last_statistics(db_connection)
+
+    with pytest.raises(ValueError, match="get_hive_tableschema_start"):
+        stage.save_stage_statistics(**EXPORT_RUN)
+
+    assert _statistics(db_connection, "export_statistics") == []
+    assert len(_statistics(db_connection, "export_statistics_last")) == 1
