@@ -99,6 +99,19 @@ class ForeignKeyColumn(BaseModel):
     key_position: int
 
 
+class ColumnTypeSource(BaseModel):
+    """force_string of the connection, the table and the column, and the
+    source type of the column; None where no row joins."""
+
+    model_config = ConfigDict(frozen=True)
+
+    connection_force_string: int | None
+    table_force_string: int | None
+    column_force_string: int | None
+    source_column_type: str | None
+    source_database_type: str | None
+
+
 class ImportColumnsRepository:
     def __init__(self, session: Session) -> None:
         self._session = session
@@ -173,6 +186,37 @@ class ImportColumnsRepository:
             .where(ImportTables.table_id == table_id)
         )
         return list(self._session.execute(query).tuples())
+
+    def type_sources(
+        self, hive_db: str, hive_table: str, column_name: str
+    ) -> list[ColumnTypeSource]:
+        """One row per stored column with this Hive database, table and
+        name; one row with None for the column when none is stored; no
+        row when the table is not imported."""
+        query = (
+            select(
+                JDBCConnections.force_string.label("connection_force_string"),
+                ImportTables.force_string.label("table_force_string"),
+                ImportColumns.force_string.label("column_force_string"),
+                ImportColumns.source_column_type,
+                ImportColumns.source_database_type,
+            )
+            .select_from(ImportTables)
+            .outerjoin(JDBCConnections, ImportTables.dbalias == JDBCConnections.dbalias)
+            .outerjoin(
+                ImportColumns,
+                (ImportColumns.hive_db == ImportTables.hive_db)
+                & (ImportColumns.hive_table == ImportTables.hive_table)
+                & (ImportColumns.column_name == column_name),
+            )
+            .where(
+                ImportTables.hive_db == hive_db, ImportTables.hive_table == hive_table
+            )
+        )
+        return [
+            ColumnTypeSource.model_validate(row._mapping)
+            for row in self._session.execute(query)
+        ]
 
     def anonymized_columns(self, table_id: int) -> list[tuple[str, str]]:
         """source_column_name and anonymization_function of every column
