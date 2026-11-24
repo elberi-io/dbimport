@@ -359,7 +359,12 @@ class Stage:
             if export_stop == None or stage_stop > export_stop:
                 export_stop = stage_stop
 
-        export_duration = int((export_stop - export_start).total_seconds())
+        try:
+            export_duration = int((export_stop - export_start).total_seconds())
+        except UnboundLocalError:
+            export_start = -1
+            export_stop = -1
+            export_duration = -1
 
         json_data_kafka["start"] = str(export_start)
         json_data_kafka["stop"] = str(export_stop)
@@ -468,13 +473,13 @@ class Stage:
             export_duration = None
 
         columns_part.append("start")
-        values_part.append(str(export_start))
+        values_part.append(None if export_start is None else str(export_start))
 
         columns_part.append("stop")
         values_part.append(str(export_stop))
 
         columns_part.append("duration")
-        values_part.append(str(export_duration))
+        values_part.append(None if export_duration is None else str(export_duration))
 
         query = "insert into export_statistics "
         insert_query = "(`"

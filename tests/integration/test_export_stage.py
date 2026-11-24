@@ -446,3 +446,30 @@ def test_convert_stage_statistics_to_json_saves_a_failed_aws_sns_document(
 
     stored = db_connection.execute(sa.text("SELECT jsondata FROM json_to_send"))
     assert [json.loads(row[0]) for row in stored] == [fake.sent["awssns"]]
+
+
+def test_save_stage_statistics_without_stage_zero_stores_no_start(
+    stage: export_stage.Stage, db_connection: sa.Connection
+) -> None:
+    _add_run(db_connection, 100, 101)
+
+    stage.save_stage_statistics(**EXPORT_RUN)
+
+    [row] = _statistics(db_connection, "export_statistics")
+    assert row[-3:] == (None, datetime(2000, 1, 1, 10, 0, 20), None)
+
+
+def test_convert_stage_statistics_to_json_without_stage_zero_sends_no_times(
+    stage: export_stage.Stage,
+    db_connection: sa.Connection,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _add_run(db_connection, 100, 101)
+    _enable(db_connection, "post_data_to_rest")
+    fake = _FakeSendStatistics(succeed=True)
+    monkeypatch.setattr(stage, "send_statistics", fake)
+
+    stage.convert_stage_statistics_to_json(**EXPORT_JSON)
+
+    sent = fake.sent["rest"]
+    assert (sent["start"], sent["stop"], sent["duration"]) == ("-1", "-1", -1)
