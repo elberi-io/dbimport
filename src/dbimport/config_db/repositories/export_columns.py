@@ -17,6 +17,7 @@
 """Export columns: the columns of an exported table as the last read of
 the Hive schema found them."""
 
+from collections.abc import Mapping
 from typing import Any
 
 from pydantic import BaseModel, ConfigDict
@@ -24,6 +25,7 @@ from sqlalchemy import Select, SQLColumnExpression, case, func, insert, select, 
 from sqlalchemy.orm import Session
 
 from dbimport.config_db.config_schema import ExportColumns, ExportTables
+from dbimport.config_db.repositories.types import StoredDateTime
 
 
 class HiveColumn(BaseModel):
@@ -43,6 +45,13 @@ class ExportColumn(BaseModel):
 
     column_name: str
     column_type: str | None
+    column_order: int | None
+    target_column_name: str | None
+    target_column_type: str | None
+    last_update_from_hive: StoredDateTime
+    include_in_export: int
+    comment: str | None
+    operator_notes: str | None
 
 
 class ColumnDefinition(BaseModel):
@@ -85,6 +94,47 @@ class ExportColumnsRepository:
                 update(ExportColumns)
                 .where(ExportColumns.column_id == column_id)
                 .values(**column.model_dump(exclude={"column_name"}))
+            )
+
+    def columns_of_table(
+        self, dbalias: str, target_schema: str, target_table: str
+    ) -> list[ExportColumn]:
+        """Every stored column of the export table, also one no longer in
+        Hive, in the order they were added."""
+        rows = self._session.scalars(
+            select(ExportColumns)
+            .join(ExportTables, ExportTables.table_id == ExportColumns.table_id)
+            .where(
+                ExportTables.dbalias == dbalias,
+                ExportTables.target_schema == target_schema,
+                ExportTables.target_table == target_table,
+            )
+            .order_by(ExportColumns.column_id)
+        )
+        return [ExportColumn.model_validate(row) for row in rows]
+
+    def save_column(self, table_id: int, settings: Mapping[str, object]) -> None:
+        """Creates the column, or replaces the given settings on the stored
+        column of the table with the same column_name. Raises
+        MultipleResultsFound when more than one has that name."""
+        column_id = self._session.scalars(
+            select(ExportColumns.column_id).where(
+                ExportColumns.table_id == table_id,
+                ExportColumns.column_name == settings["column_name"],
+            )
+        ).one_or_none()
+        if column_id is None:
+            self._session.execute(
+                insert(ExportColumns).values(table_id=table_id, **settings)
+            )
+        else:
+            self._session.execute(
+                update(ExportColumns)
+                .where(
+                    ExportColumns.table_id == table_id,
+                    ExportColumns.column_id == column_id,
+                )
+                .values(**settings)
             )
 
     def has_target_column_names(self, table_id: int) -> bool:

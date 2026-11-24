@@ -1644,3 +1644,805 @@ def test_details_read_a_zero_date_as_none(
 
     assert connection.json()["atlasLastDiscovery"] is None
     assert table.json()["copyFinished"] is None
+
+
+def _add_export_table(
+    conn: sa.Connection,
+    dbalias: str = "tgt_conn",
+    target_table: str = "orders",
+    /,
+    **values: object,
+) -> int:
+    insert_row(
+        conn,
+        "export_tables",
+        **{
+            "dbalias": dbalias,
+            "target_schema": "tgt",
+            "target_table": target_table,
+            "hive_db": "salesdb",
+            "hive_table": target_table,
+            **values,
+        },
+    )
+    table_id: int = conn.execute(
+        sa.text(
+            "SELECT table_id FROM export_tables"
+            " WHERE dbalias = :dbalias AND target_table = :target_table"
+        ),
+        {"dbalias": dbalias, "target_table": target_table},
+    ).scalar_one()
+    return table_id
+
+
+def _export_tables(conn: sa.Connection) -> list[tuple[str, str, str]]:
+    query = (
+        "SELECT dbalias, target_schema, target_table FROM export_tables"
+        " ORDER BY dbalias, target_schema, target_table"
+    )
+    return [(row[0], row[1], row[2]) for row in conn.execute(sa.text(query))]
+
+
+def _add_export_search_tables(conn: sa.Connection) -> None:
+    for dbalias in ("tgt_conn", "hr_conn"):
+        insert_row(conn, "jdbc_connections", dbalias=dbalias, jdbc_url="x")
+    _add_export_table(conn, "tgt_conn", "orders")
+    _add_export_table(conn, "tgt_conn", "lines", export_type="incr")
+    _add_export_table(
+        conn,
+        "hr_conn",
+        "staff",
+        hive_db="hrdb",
+        export_tool="sqoop",
+        include_in_airflow=0,
+        operator_notes="hr team",
+    )
+
+
+def test_get_export_connections_summarises_each_connection(
+    client: TestClient, auth_headers: dict[str, str], db_connection: sa.Connection
+) -> None:
+    insert_row(db_connection, "jdbc_connections", dbalias="tgt_conn", jdbc_url="x")
+    _add_export_table(
+        db_connection,
+        "tgt_conn",
+        "orders",
+        last_update_from_hive="2026-01-15 09:00:00",
+        sqoop_last_rows=10,
+    )
+    _add_export_table(
+        db_connection,
+        "tgt_conn",
+        "lines",
+        last_update_from_hive="2026-01-16 09:00:00",
+        sqoop_last_rows=5,
+    )
+
+    response = client.get("/export/connection", headers=auth_headers)
+
+    assert response.status_code == 200
+    assert response.json() == [
+        {
+            "name": "tgt_conn",
+            "tables": 2,
+            "lastExport": "2026-01-16 09:00:00",
+            "lastRows": 15,
+        }
+    ]
+    assert response.headers["content-rows"] == "1"
+
+
+@pytest.mark.parametrize(
+    ("search", "expected"),
+    [
+        ({"connection": "tgt_conn"}, [("tgt_conn", "lines"), ("tgt_conn", "orders")]),
+        ({"connection": "tgt*"}, [("tgt_conn", "lines"), ("tgt_conn", "orders")]),
+        ({"targetTable": "%e%"}, [("tgt_conn", "lines"), ("tgt_conn", "orders")]),
+        ({"exportType": "incr"}, [("tgt_conn", "lines")]),
+        ({"database": "hrdb", "table": "*"}, [("hr_conn", "staff")]),
+        ({"includeInAirflow": False}, [("hr_conn", "staff")]),
+        (
+            {
+                "connection": "hr_conn",
+                "targetSchema": "tgt",
+                "targetTable": "staff",
+                "database": "hrdb",
+                "table": "staff",
+                "exportType": "full",
+                "exportTool": "sqoop",
+                "includeInAirflow": False,
+                "operatorNotes": "hr*",
+            },
+            [("hr_conn", "staff")],
+        ),
+        (
+            {"connection": ""},
+            [("hr_conn", "staff"), ("tgt_conn", "lines"), ("tgt_conn", "orders")],
+        ),
+    ],
+)
+def test_search_export_tables_filters_by_value_or_wildcard(
+    client: TestClient,
+    auth_headers: dict[str, str],
+    db_connection: sa.Connection,
+    search: dict[str, object],
+    expected: list[tuple[str, str]],
+) -> None:
+    _add_export_search_tables(db_connection)
+
+    response = client.post("/export/search", json=search, headers=auth_headers)
+
+    assert response.status_code == 200
+    found = sorted((t["connection"], t["targetTable"]) for t in response.json())
+    assert found == expected
+    assert response.headers["content-total-rows"] == str(len(expected))
+
+
+@pytest.mark.parametrize(
+    ("path", "expected"),
+    [
+        ("/export/table/tgt_conn", [("tgt_conn", "lines"), ("tgt_conn", "orders")]),
+        ("/export/table/hr_conn/tgt", [("hr_conn", "staff")]),
+        ("/export/table/hr_conn/other", []),
+    ],
+)
+def test_get_export_tables_lists_the_tables_of_a_connection_and_schema(
+    client: TestClient,
+    auth_headers: dict[str, str],
+    db_connection: sa.Connection,
+    path: str,
+    expected: list[tuple[str, str]],
+) -> None:
+    _add_export_search_tables(db_connection)
+
+    response = client.get(path, headers=auth_headers)
+
+    assert response.status_code == 200
+    found = sorted((t["connection"], t["targetTable"]) for t in response.json())
+    assert found == expected
+
+
+def test_search_export_tables_returns_the_list_fields(
+    client: TestClient, auth_headers: dict[str, str], db_connection: sa.Connection
+) -> None:
+    insert_row(db_connection, "jdbc_connections", dbalias="tgt_conn", jdbc_url="x")
+    _add_export_table(
+        db_connection,
+        export_tool="sqoop",
+        last_update_from_hive="2026-01-15 09:00:00",
+        operator_notes="notes",
+    )
+
+    response = client.post(
+        "/export/search", json={"connection": "tgt_conn"}, headers=auth_headers
+    )
+
+    assert response.json() == [
+        {
+            "connection": "tgt_conn",
+            "targetSchema": "tgt",
+            "targetTable": "orders",
+            "database": "salesdb",
+            "table": "orders",
+            "exportType": "full",
+            "exportTool": "sqoop",
+            "lastUpdateFromHive": "2026-01-15 09:00:00",
+            "includeInAirflow": True,
+            "operatorNotes": "notes",
+        }
+    ]
+
+
+EXPORT_DETAILS_ROW = {
+    "export_type": "incr",
+    "export_tool": "sqoop",
+    "last_update_from_hive": "2026-01-15 09:00:00",
+    "sql_where_addition": "a = 1",
+    "include_in_airflow": 0,
+    "airflow_priority": 5,
+    "forceCreateTempTable": 1,
+    "validate_export": 0,
+    "validationMethod": "customQuery",
+    "validationCustomQueryHiveSQL": "select 1",
+    "validationCustomQueryTargetSQL": "select 2",
+    "uppercase_columns": 1,
+    "truncate_target": 0,
+    "mappers": 3,
+    "hive_rowcount": 10,
+    "target_rowcount": 9,
+    "validationCustomQueryHiveValue": "[1]",
+    "validationCustomQueryTargetValue": "[2]",
+    "incr_column": "id",
+    "incr_validation_method": "incr",
+    "incr_minvalue": "1",
+    "incr_maxvalue": "5",
+    "incr_minvalue_pending": "5",
+    "incr_maxvalue_pending": "9",
+    "sqoop_options": "--opt",
+    "sqoop_last_size": 1000,
+    "sqoop_last_rows": 10,
+    "sqoop_last_mappers": 2,
+    "sqoop_last_execution": 1700000000,
+    "hive_javaheap": 2048,
+    "create_target_table_sql": "create table x",
+    "operator_notes": "notes",
+}
+
+EXPORT_DETAILS = {
+    "connection": "tgt_conn",
+    "targetSchema": "tgt",
+    "targetTable": "orders",
+    "exportType": "incr",
+    "exportTool": "sqoop",
+    "database": "salesdb",
+    "table": "orders",
+    "lastUpdateFromHive": "2026-01-15 09:00:00",
+    "sqlWhereAddition": "a = 1",
+    "includeInAirflow": False,
+    "airflowPriority": 5,
+    "forceCreateTempTable": True,
+    "validateExport": False,
+    "validationMethod": "customQuery",
+    "validationCustomQueryHiveSQL": "select 1",
+    "validationCustomQueryTargetSQL": "select 2",
+    "uppercaseColumns": 1,
+    "truncateTarget": False,
+    "sqlSessions": 3,
+    "tableRowcount": 10,
+    "targetRowcount": 9,
+    "validationCustomQueryHiveValue": "[1]",
+    "validationCustomQueryTargetValue": "[2]",
+    "incrColumn": "id",
+    "incrValidationMethod": "incr",
+    "incrMinvalue": "1",
+    "incrMaxvalue": "5",
+    "incrMinvaluePending": "5",
+    "incrMaxvaluePending": "9",
+    "sqoopOptions": "--opt",
+    "lastSize": 1000,
+    "lastRows": 10,
+    "lastSqlSessions": 2,
+    "lastExecution": 1700000000,
+    "hiveContainerSize": 2048,
+    "createTargetTableSql": "create table x",
+    "operatorNotes": "notes",
+    "columns": [],
+}
+
+
+def test_get_export_table_details_returns_every_field(
+    client: TestClient, auth_headers: dict[str, str], db_connection: sa.Connection
+) -> None:
+    insert_row(db_connection, "jdbc_connections", dbalias="tgt_conn", jdbc_url="x")
+    _add_export_table(db_connection, **EXPORT_DETAILS_ROW)
+
+    response = client.get(
+        "/export/table/tgt_conn/tgt/orders?includeColumns=false", headers=auth_headers
+    )
+
+    assert response.status_code == 200
+    assert response.json() == EXPORT_DETAILS
+
+
+def _add_export_column(
+    conn: sa.Connection, table_id: int, name: str, order: int | None, **values: object
+) -> None:
+    insert_row(
+        conn,
+        "export_columns",
+        **{
+            "table_id": table_id,
+            "column_name": name,
+            "column_type": "int",
+            "column_order": order,
+            "last_update_from_hive": "2026-01-15 09:00:00",
+            **values,
+        },
+    )
+
+
+def _export_read_column(
+    name: str, order: int | None, **values: object
+) -> dict[str, object]:
+    return {
+        "columnName": name,
+        "columnType": "int",
+        "columnOrder": order,
+        "targetColumnName": None,
+        "targetColumnType": None,
+        "lastUpdateFromHive": "2026-01-15 09:00:00",
+        "includeInExport": True,
+        "comment": None,
+        "operatorNotes": None,
+        **values,
+    }
+
+
+def test_get_export_table_details_includes_every_stored_column(
+    client: TestClient, auth_headers: dict[str, str], db_connection: sa.Connection
+) -> None:
+    insert_row(db_connection, "jdbc_connections", dbalias="tgt_conn", jdbc_url="x")
+    table_id = _add_export_table(db_connection)
+    _add_export_column(
+        db_connection,
+        table_id,
+        "note",
+        1,
+        column_type=None,
+        target_column_name="NOTE",
+        target_column_type="varchar(60)",
+        include_in_export=0,
+        comment="free text",
+        operator_notes="notes",
+    )
+    _add_export_column(
+        db_connection, table_id, "id", 0, last_update_from_hive="2025-12-01 09:00:00"
+    )
+    _add_export_column(db_connection, table_id, "unordered", None)
+
+    response = client.get("/export/table/tgt_conn/tgt/orders", headers=auth_headers)
+
+    assert response.json()["columns"] == [
+        _export_read_column(
+            "note",
+            2,
+            columnType="unknown",
+            targetColumnName="NOTE",
+            targetColumnType="varchar(60)",
+            includeInExport=False,
+            comment="free text",
+            operatorNotes="notes",
+        ),
+        _export_read_column("id", 1, lastUpdateFromHive="2025-12-01 09:00:00"),
+        _export_read_column("unordered", None),
+    ]
+
+
+@pytest.mark.parametrize(
+    ("table", "status_code", "remaining"),
+    [
+        ("orders", 200, [("hr_conn", "tgt", "staff"), ("tgt_conn", "tgt", "lines")]),
+        (
+            "nope",
+            404,
+            [
+                ("hr_conn", "tgt", "staff"),
+                ("tgt_conn", "tgt", "lines"),
+                ("tgt_conn", "tgt", "orders"),
+            ],
+        ),
+    ],
+)
+def test_delete_export_table_removes_it_or_returns_404_when_unknown(
+    client: TestClient,
+    auth_headers: dict[str, str],
+    db_connection: sa.Connection,
+    table: str,
+    status_code: int,
+    remaining: list[tuple[str, str, str]],
+) -> None:
+    _add_export_search_tables(db_connection)
+
+    response = client.delete(
+        f"/export/table/tgt_conn/tgt/{table}", headers=auth_headers
+    )
+
+    assert response.status_code == status_code
+    assert _export_tables(db_connection) == remaining
+
+
+def test_delete_export_table_removes_its_columns(
+    client: TestClient, auth_headers: dict[str, str], db_connection: sa.Connection
+) -> None:
+    insert_row(db_connection, "jdbc_connections", dbalias="tgt_conn", jdbc_url="x")
+    table_id = _add_export_table(db_connection)
+    _add_export_column(db_connection, table_id, "id", 0)
+
+    client.delete("/export/table/tgt_conn/tgt/orders", headers=auth_headers)
+
+    count = db_connection.execute(sa.text("SELECT COUNT(*) FROM export_columns"))
+    assert count.scalar_one() == 0
+
+
+def test_bulk_delete_of_export_tables_removes_the_listed_tables(
+    client: TestClient, auth_headers: dict[str, str], db_connection: sa.Connection
+) -> None:
+    _add_export_search_tables(db_connection)
+
+    response = client.request(
+        "DELETE",
+        "/export/table",
+        json=[
+            {"connection": "tgt_conn", "targetSchema": "tgt", "targetTable": "orders"},
+            {"connection": "hr_conn", "targetSchema": "tgt", "targetTable": "staff"},
+            {"connection": "tgt_conn", "targetSchema": "tgt", "targetTable": "nope"},
+        ],
+        headers=auth_headers,
+    )
+
+    assert response.status_code == 200
+    assert _export_tables(db_connection) == [("tgt_conn", "tgt", "lines")]
+
+
+@pytest.mark.parametrize(
+    ("method", "body"), [("DELETE", []), ("POST", {"exportTables": []})]
+)
+def test_bulk_change_of_export_tables_without_tables_returns_422(
+    client: TestClient,
+    auth_headers: dict[str, str],
+    method: str,
+    body: object,
+) -> None:
+    response = client.request(method, "/export/table", json=body, headers=auth_headers)
+
+    assert response.status_code == 422
+
+
+def test_bulk_update_of_export_tables_changes_only_the_given_fields(
+    client: TestClient, auth_headers: dict[str, str], db_connection: sa.Connection
+) -> None:
+    _add_export_search_tables(db_connection)
+
+    response = client.post(
+        "/export/table",
+        json={
+            "exportTool": "sqoop",
+            "operatorNotes": "moved",
+            "exportTables": [
+                {
+                    "connection": "tgt_conn",
+                    "targetSchema": "tgt",
+                    "targetTable": "orders",
+                },
+                {
+                    "connection": "hr_conn",
+                    "targetSchema": "tgt",
+                    "targetTable": "staff",
+                },
+            ],
+        },
+        headers=auth_headers,
+    )
+
+    assert response.status_code == 200
+    rows = db_connection.execute(
+        sa.text(
+            "SELECT dbalias, target_table, export_type, export_tool,"
+            " include_in_airflow, operator_notes FROM export_tables"
+            " ORDER BY dbalias, target_table"
+        )
+    )
+    assert [tuple(row) for row in rows] == [
+        ("hr_conn", "staff", "full", "sqoop", 0, "moved"),
+        ("tgt_conn", "lines", "incr", "spark", 1, None),
+        ("tgt_conn", "orders", "full", "sqoop", 1, "moved"),
+    ]
+
+
+def test_bulk_update_of_export_tables_sets_every_field_it_accepts(
+    client: TestClient, auth_headers: dict[str, str], db_connection: sa.Connection
+) -> None:
+    insert_row(db_connection, "jdbc_connections", dbalias="tgt_conn", jdbc_url="x")
+    _add_export_table(db_connection)
+
+    response = client.post(
+        "/export/table",
+        json={
+            "exportType": "incr",
+            "exportTool": "sqoop",
+            "includeInAirflow": False,
+            "operatorNotes": "moved",
+            "exportTables": [
+                {
+                    "connection": "tgt_conn",
+                    "targetSchema": "tgt",
+                    "targetTable": "orders",
+                }
+            ],
+        },
+        headers=auth_headers,
+    )
+
+    assert response.status_code == 200
+    row = db_connection.execute(
+        sa.text(
+            "SELECT export_type, export_tool, include_in_airflow, operator_notes"
+            " FROM export_tables"
+        )
+    ).one()
+    assert tuple(row) == ("incr", "sqoop", 0, "moved")
+
+
+EXPORT_WRITE_MINIMAL = {
+    "exportType": "full",
+    "exportTool": "spark",
+    "database": "salesdb",
+    "table": "orders",
+}
+EXPORT_DEFAULTED_COLUMNS = (
+    "include_in_airflow, forceCreateTempTable, validate_export, validationMethod,"
+    " uppercase_columns, truncate_target, mappers, incr_validation_method"
+)
+
+
+def test_update_export_table_creates_a_table_with_defaults(
+    client: TestClient, auth_headers: dict[str, str], db_connection: sa.Connection
+) -> None:
+    insert_row(db_connection, "jdbc_connections", dbalias="tgt_conn", jdbc_url="x")
+
+    response = client.post(
+        "/export/table/tgt_conn/tgt/orders",
+        json=EXPORT_WRITE_MINIMAL,
+        headers=auth_headers,
+    )
+
+    assert response.status_code == 200
+    row = db_connection.execute(
+        sa.text(
+            "SELECT dbalias, target_schema, target_table, hive_db, hive_table,"
+            f" export_type, export_tool, {EXPORT_DEFAULTED_COLUMNS} FROM export_tables"
+        )
+    ).one()
+    assert tuple(row) == (
+        "tgt_conn",
+        "tgt",
+        "orders",
+        "salesdb",
+        "orders",
+        "full",
+        "spark",
+        1,
+        0,
+        1,
+        "rowCount",
+        -1,
+        1,
+        -1,
+        "full",
+    )
+
+
+EXPORT_WRITE_FULL = EXPORT_WRITE_MINIMAL | {
+    "exportType": "incr",
+    "exportTool": "sqoop",
+    "database": "otherdb",
+    "table": "other",
+    "lastUpdateFromHive": "2026-01-15 09:00:00",
+    "sqlWhereAddition": "a = 1",
+    "includeInAirflow": False,
+    "airflowPriority": 5,
+    "forceCreateTempTable": True,
+    "validateExport": False,
+    "validationMethod": "customQuery",
+    "validationCustomQueryHiveSQL": "select 1",
+    "validationCustomQueryTargetSQL": "select 2",
+    "uppercaseColumns": 1,
+    "truncateTarget": False,
+    "sqlSessions": 3,
+    "incrColumn": "id",
+    "incrValidationMethod": "incr",
+    "sqoopOptions": "--opt",
+    "hiveContainerSize": 2048,
+    "createTargetTableSql": "create table x",
+    "operatorNotes": "notes",
+}
+EXPORT_WRITTEN_COLUMNS = (
+    "export_type, export_tool, hive_db, hive_table, last_update_from_hive,"
+    " sql_where_addition, include_in_airflow, airflow_priority,"
+    " forceCreateTempTable, validate_export, validationMethod,"
+    " validationCustomQueryHiveSQL, validationCustomQueryTargetSQL,"
+    " uppercase_columns, truncate_target, mappers, incr_column,"
+    " incr_validation_method, sqoop_options, hive_javaheap,"
+    " create_target_table_sql, operator_notes"
+)
+
+
+def test_update_export_table_replaces_every_field_of_an_existing_table(
+    client: TestClient, auth_headers: dict[str, str], db_connection: sa.Connection
+) -> None:
+    insert_row(db_connection, "jdbc_connections", dbalias="tgt_conn", jdbc_url="x")
+    _add_export_table(db_connection, operator_notes="old", sqoop_last_rows=10)
+
+    response = client.post(
+        "/export/table/tgt_conn/tgt/orders",
+        json=EXPORT_WRITE_FULL,
+        headers=auth_headers,
+    )
+
+    assert response.status_code == 200
+    row = db_connection.execute(
+        sa.text(f"SELECT {EXPORT_WRITTEN_COLUMNS}, sqoop_last_rows FROM export_tables")
+    ).one()
+    assert tuple(row) == (
+        "incr",
+        "sqoop",
+        "otherdb",
+        "other",
+        datetime(2026, 1, 15, 9, 0),
+        "a = 1",
+        0,
+        5,
+        1,
+        0,
+        "customQuery",
+        "select 1",
+        "select 2",
+        1,
+        0,
+        3,
+        "id",
+        "incr",
+        "--opt",
+        2048,
+        "create table x",
+        "notes",
+        10,
+    )
+
+
+def test_update_export_table_without_hive_time_clears_the_stored_time(
+    client: TestClient, auth_headers: dict[str, str], db_connection: sa.Connection
+) -> None:
+    insert_row(db_connection, "jdbc_connections", dbalias="tgt_conn", jdbc_url="x")
+    _add_export_table(db_connection, last_update_from_hive="2026-01-15 09:00:00")
+
+    response = client.post(
+        "/export/table/tgt_conn/tgt/orders",
+        json=EXPORT_WRITE_MINIMAL,
+        headers=auth_headers,
+    )
+
+    assert response.status_code == 200
+    stored = db_connection.execute(
+        sa.text("SELECT last_update_from_hive FROM export_tables")
+    )
+    assert stored.scalar_one() is None
+
+
+def _write_export_column(
+    name: str, order: int | None, **values: object
+) -> dict[str, object]:
+    return {
+        "columnName": name,
+        "columnType": "int",
+        "columnOrder": order,
+        "includeInExport": True,
+        "lastUpdateFromHive": "2026-01-15 09:00:00",
+        **values,
+    }
+
+
+def test_update_export_table_updates_known_columns_and_adds_new_ones(
+    client: TestClient, auth_headers: dict[str, str], db_connection: sa.Connection
+) -> None:
+    insert_row(db_connection, "jdbc_connections", dbalias="tgt_conn", jdbc_url="x")
+    table_id = _add_export_table(db_connection)
+    _add_export_column(
+        db_connection, table_id, "id", 0, target_column_name="OLD", hive_db="olddb"
+    )
+    _add_export_column(db_connection, table_id, "kept", 5)
+    body = EXPORT_WRITE_MINIMAL | {
+        "columns": [
+            _write_export_column(
+                "id",
+                1,
+                columnType="bigint",
+                targetColumnName=" ",
+                targetColumnType="",
+                comment="the key",
+            ),
+            _write_export_column(
+                "note",
+                2,
+                columnType="string",
+                targetColumnName="NOTE",
+                targetColumnType="varchar(60)",
+                includeInExport=False,
+                operatorNotes="notes",
+                lastUpdateFromHive="2026-01-16 09:00:00",
+            ),
+            _write_export_column("unordered", None),
+        ]
+    }
+
+    response = client.post(
+        "/export/table/tgt_conn/tgt/orders", json=body, headers=auth_headers
+    )
+
+    assert response.status_code == 200
+    rows = db_connection.execute(
+        sa.text(
+            "SELECT table_id, column_name, column_type, column_order, hive_db,"
+            " hive_table, target_column_name, target_column_type,"
+            " last_update_from_hive, include_in_export, comment, operator_notes"
+            " FROM export_columns ORDER BY column_name"
+        )
+    )
+    synced = datetime(2026, 1, 15, 9, 0)
+    assert [tuple(row) for row in rows] == [
+        (table_id, "id", "bigint", 0, "salesdb", "orders", None, None, synced)
+        + (1, "the key", None),
+        (table_id, "kept", "int", 5, None, None, None, None, synced) + (1, None, None),
+        (table_id, "note", "string", 1, "salesdb", "orders", "NOTE", "varchar(60)")
+        + (datetime(2026, 1, 16, 9, 0), 0, None, "notes"),
+        (table_id, "unordered", "int", None, "salesdb", "orders", None, None, synced)
+        + (1, None, None),
+    ]
+
+
+def test_export_details_read_a_zero_date_as_none(
+    client: TestClient, auth_headers: dict[str, str], db_connection: sa.Connection
+) -> None:
+    insert_row(db_connection, "jdbc_connections", dbalias="tgt_conn", jdbc_url="x")
+    table_id = _add_export_table(db_connection)
+    _add_export_column(db_connection, table_id, "id", 0)
+    # Outside strict mode, MariaDB stores an invalid DATETIME as zero.
+    for table in ("export_tables", "export_columns"):
+        db_connection.execute(
+            sa.text(
+                f"SET STATEMENT sql_mode = '' FOR UPDATE {table}"
+                " SET last_update_from_hive = '0000-00-00 00:00:00'"
+            )
+        )
+
+    response = client.get("/export/table/tgt_conn/tgt/orders", headers=auth_headers)
+
+    details = response.json()
+    stored = (
+        details["lastUpdateFromHive"],
+        details["columns"][0]["lastUpdateFromHive"],
+    )
+    assert stored == (None, None)
+
+
+def test_get_export_table_details_of_unknown_table_returns_404_and_ends_its_transaction(
+    client: TestClient, auth_headers: dict[str, str], db_connection: sa.Connection
+) -> None:
+    response = client.get("/export/table/tgt_conn/tgt/nope", headers=auth_headers)
+
+    # An open transaction on the table would make the TRUNCATE wait.
+    db_connection.execute(
+        sa.text(
+            "SET STATEMENT lock_wait_timeout = 2, foreign_key_checks = 0 "
+            "FOR TRUNCATE TABLE export_tables"
+        )
+    )
+    assert response.status_code == 404
+
+
+def test_get_export_connections_of_a_connection_never_exported_has_empty_last_export(
+    client: TestClient, auth_headers: dict[str, str], db_connection: sa.Connection
+) -> None:
+    insert_row(db_connection, "jdbc_connections", dbalias="tgt_conn", jdbc_url="x")
+    _add_export_table(db_connection)
+
+    response = client.get("/export/connection", headers=auth_headers)
+
+    assert response.json() == [
+        {"name": "tgt_conn", "tables": 1, "lastExport": "", "lastRows": 0}
+    ]
+
+
+def test_update_export_table_with_an_invalid_column_changes_nothing(
+    rest_server: ModuleType, auth_headers: dict[str, str], db_connection: sa.Connection
+) -> None:
+    insert_row(db_connection, "jdbc_connections", dbalias="tgt_conn", jdbc_url="x")
+    _add_export_table(db_connection, operator_notes="old")
+    body = EXPORT_WRITE_MINIMAL | {
+        "operatorNotes": "new",
+        "columns": [
+            _write_export_column("id", 1),
+            _write_export_column("note", 2, lastUpdateFromHive=None),
+        ],
+    }
+
+    with TestClient(rest_server.app, raise_server_exceptions=False) as client:
+        response = client.post(
+            "/export/table/tgt_conn/tgt/orders", json=body, headers=auth_headers
+        )
+
+    assert response.status_code == 500
+    notes = db_connection.execute(sa.text("SELECT operator_notes FROM export_tables"))
+    assert notes.scalar_one() == "old"
+    count = db_connection.execute(sa.text("SELECT COUNT(*) FROM export_columns"))
+    assert count.scalar_one() == 0
