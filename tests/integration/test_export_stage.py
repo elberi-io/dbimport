@@ -1,5 +1,6 @@
+import json
 from collections.abc import Iterator
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Any
 
 import pytest
@@ -43,15 +44,17 @@ def _stages(conn: sa.Connection, table: str) -> list[int]:
     return [int(row[0]) for row in _stored(conn, table, "stage")]
 
 
-def _add_stage_statistics(conn: sa.Connection, stage: int) -> None:
+def _add_stage_statistics(
+    conn: sa.Connection, stage: int, start: datetime = EARLIER, seconds: int = 5
+) -> None:
     insert_row(
         conn,
         "export_stage_statistics",
         **KEY,
         stage=stage,
-        start=EARLIER,
-        stop=datetime(2000, 1, 1, 10, 0, 5),
-        duration=5,
+        start=start,
+        stop=start + timedelta(seconds=seconds),
+        duration=seconds,
     )
 
 
@@ -259,3 +262,187 @@ def test_get_stage_start_stop_ignores_a_zero_date_of_another_stage(
         "startTime": "2000-01-01T10:00:00.000000Z",
         "stopTime": "2000-01-01T10:00:05.000000Z",
     }
+
+
+EXPORT_RUN: dict[str, object] = {
+    "dbalias": DBALIAS,
+    "target_database": "targetdb",
+    "target_schema": SCHEMA,
+    "target_table": TABLE,
+    "hive_db": "hivedb",
+    "hive_table": "orders",
+    "export_phase": "full",
+    "incremental": False,
+    "size": 1024,
+    "rows": 10,
+    "sessions": 2,
+}
+STATISTICS_COLUMNS = (
+    "export_phase",
+    "incremental",
+    "size",
+    "`rows`",
+    "sessions",
+    "get_hive_tableschema_start",
+    "get_hive_tableschema_stop",
+    "get_hive_tableschema_duration",
+    "clear_table_rowcount_duration",
+    "start",
+    "stop",
+    "duration",
+)
+
+
+def _add_run(conn: sa.Connection, *stages: int) -> None:
+    """Stage times one after the other, from EARLIER: 5, 15 and 40 s."""
+    start = EARLIER
+    for stage, seconds in zip(stages, (5, 15, 40), strict=False):
+        _add_stage_statistics(conn, stage, start, seconds)
+        start += timedelta(seconds=seconds)
+
+
+def _statistics(conn: sa.Connection, table: str) -> list[tuple[Any, ...]]:
+    return [
+        tuple(row)
+        for row in conn.execute(
+            sa.text(f"SELECT {', '.join(STATISTICS_COLUMNS)} FROM {table}")
+        )
+    ]
+
+
+def _add_last_statistics(conn: sa.Connection) -> None:
+    insert_row(
+        conn,
+        "export_statistics_last",
+        **KEY,
+        target_database="targetdb",
+        size=1,
+    )
+
+
+def test_save_stage_statistics_stores_the_run_with_its_stage_times(
+    stage: export_stage.Stage, db_connection: sa.Connection
+) -> None:
+    _add_run(db_connection, 0, 100, 101)
+    _add_last_statistics(db_connection)
+
+    stage.save_stage_statistics(**EXPORT_RUN)
+
+    expected = (
+        "full",
+        0,
+        1024,
+        10,
+        2,
+        datetime(2000, 1, 1, 10, 0, 5),
+        datetime(2000, 1, 1, 10, 0, 20),
+        15,
+        40,
+        EARLIER,
+        datetime(2000, 1, 1, 10, 1, 0),
+        60,
+    )
+    assert _statistics(db_connection, "export_statistics") == [expected]
+    assert _statistics(db_connection, "export_statistics_last") == [expected]
+
+
+def test_save_stage_statistics_without_stage_times_saves_nothing(
+    stage: export_stage.Stage, db_connection: sa.Connection
+) -> None:
+    _add_last_statistics(db_connection)
+
+    stage.save_stage_statistics(**EXPORT_RUN)
+
+    assert _statistics(db_connection, "export_statistics") == []
+    assert len(_statistics(db_connection, "export_statistics_last")) == 1
+
+
+class _FakeSendStatistics:
+    """Records the documents instead of posting them (external services)."""
+
+    def __init__(self, *, succeed: bool) -> None:
+        self.succeed = succeed
+        self.sent: dict[str, dict[str, Any]] = {}
+
+    def send_rest_data(self, data: str) -> int:
+        self.sent["rest"] = json.loads(data)
+        return 200 if self.succeed else 500
+
+    def publish_kafka_data(self, data: str) -> bool:
+        self.sent["kafka"] = json.loads(data)
+        return self.succeed
+
+    def send_aws_sns_data(self, data: str) -> bool:
+        self.sent["awssns"] = json.loads(data)
+        return self.succeed
+
+
+def _enable(conn: sa.Connection, *keys: str) -> None:
+    for key in keys:
+        conn.execute(
+            sa.text("UPDATE configuration SET valueInt = 1 WHERE configKey = :key"),
+            {"key": key},
+        )
+
+
+EXPORT_JSON: dict[str, object] = {
+    "dbalias": DBALIAS,
+    "target_database": "targetdb",
+    "target_schema": SCHEMA,
+    "target_table": TABLE,
+    "hive_db": "hivedb",
+    "hive_table": "orders",
+    "export_phase": "full",
+    "incremental": False,
+    "rows": 10,
+    "sessions": 2,
+}
+
+
+def test_convert_stage_statistics_to_json_posts_the_extended_document(
+    stage: export_stage.Stage,
+    db_connection: sa.Connection,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _add_run(db_connection, 0, 100)
+    _enable(db_connection, "post_data_to_rest", "post_data_to_rest_extended")
+    fake = _FakeSendStatistics(succeed=True)
+    monkeypatch.setattr(stage, "send_statistics", fake)
+
+    stage.convert_stage_statistics_to_json(**EXPORT_JSON)
+
+    assert fake.sent == {
+        "rest": {
+            "type": "export",
+            "status": "finished",
+            **EXPORT_JSON,
+            "get_hive_tableschema_start": "2000-01-01 10:00:05",
+            "get_hive_tableschema_stop": "2000-01-01 10:00:20",
+            "get_hive_tableschema_duration": 15,
+            "start": "2000-01-01 10:00:00",
+            "stop": "2000-01-01 10:00:20",
+            "duration": 20,
+        }
+    }
+
+
+@pytest.mark.xfail(
+    reason="Known bug #280: a failed AWS SNS document is saved as the REST "
+    "document, for destination rest",
+    raises=AssertionError,
+    strict=True,
+)
+def test_convert_stage_statistics_to_json_saves_a_failed_aws_sns_document(
+    stage: export_stage.Stage,
+    db_connection: sa.Connection,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _add_run(db_connection, 0, 100)
+    _enable(db_connection, "post_data_to_awssns", "post_data_to_awssns_extended")
+    fake = _FakeSendStatistics(succeed=False)
+    monkeypatch.setattr(stage, "send_statistics", fake)
+
+    stage.convert_stage_statistics_to_json(**EXPORT_JSON)
+
+    stored = db_connection.execute(sa.text("SELECT jsondata FROM json_to_send"))
+    assert [json.loads(row[0]) for row in stored] == [fake.sent["awssns"]]
