@@ -775,3 +775,57 @@ def test_get_import_config_reads_a_zero_date_as_none(table: sa.Connection) -> No
     config.get_import_config()
 
     assert config.table_id is not None
+
+
+BLOCK = 128 * 1024 * 1024
+
+
+@pytest.mark.parametrize(
+    ("max_import_sessions", "values", "last_size", "expected"),
+    [
+        (None, {}, None, (4, -1)),
+        (None, {}, 3 * BLOCK, (3, -1)),
+        (None, {}, 100, (1, -1)),
+        (None, {}, 5 * BLOCK // 2, (3, -1)),
+        (None, {}, 100 * BLOCK, (32, -1)),
+        (8, {}, 100 * BLOCK, (8, -1)),
+        (2, {}, None, (2, -1)),
+        (0, {}, 3 * BLOCK, (3, -1)),
+        (None, {"mappers": 6}, 3 * BLOCK, (6, 6)),
+    ],
+    ids=[
+        "default",
+        "size",
+        "minimum",
+        "size-rounded",
+        "maximum-from-configuration",
+        "maximum-from-connection",
+        "default-below-connection-maximum",
+        "connection-zero-ignored",
+        "fixed",
+    ],
+)
+def test_calculate_job_mappers_sizes_the_sessions_from_the_last_import(
+    table: sa.Connection,
+    max_import_sessions: int | None,
+    values: dict[str, object],
+    last_size: int | None,
+    expected: tuple[int, int],
+) -> None:
+    table.execute(
+        sa.text("UPDATE jdbc_connections SET max_import_sessions = :value"),
+        {"value": max_import_sessions},
+    )
+    if last_size is not None:
+        insert_row(
+            table,
+            "import_statistics_last",
+            hive_db=HIVE_DB,
+            hive_table=HIVE_TABLE,
+            size=last_size,
+        )
+    config = _config(table, **values)
+
+    config.calculate_job_mappers()
+
+    assert (config.sql_sessions, config.sqoop_mappers) == expected

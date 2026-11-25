@@ -64,7 +64,6 @@ class Config(metaclass=Singleton):
         self.hive_db = hive_db
         self.hive_table = hive_table
         self.mysql_conn: Any = None
-        self.mysql_cursor01: Any = None
         self.start_date: str | None = None
         self.common_config = None
 
@@ -174,11 +173,9 @@ class Config(metaclass=Singleton):
 
         self.start_date = self.common_config.start_date
         self.mysql_conn = self.common_config.mysql_conn
-        self.mysql_cursor01 = self.mysql_conn.cursor(buffered=True)
-        self.mysql_cursor02 = self.mysql_conn.cursor(buffered=True)
 
         # Initialize the stage class that will handle all stage operations for us
-        self.stage = stage.Stage(self.mysql_conn, self.hive_db, self.hive_table)
+        self.stage = stage.Stage(self.hive_db, self.hive_table)
 
         logging.debug("Executing import_config.__init__() - Finished")
 
@@ -186,16 +183,10 @@ class Config(metaclass=Singleton):
         # During long imports, depending on connection timout, the connection against the config database might be closed. This checks if it is closed and reconnect if needed
         if self.mysql_conn.is_connected() == False:
             self.mysql_conn.close()
-            self.mysql_cursor01.close()
-            self.mysql_cursor02.close()
 
             self.common_config.reconnect_config_database()
 
             self.mysql_conn = self.common_config.mysql_conn
-            self.mysql_cursor01 = self.mysql_conn.cursor(buffered=True)
-            self.mysql_cursor02 = self.mysql_conn.cursor(buffered=True)
-
-            self.stage.set_mysql_connection(self.mysql_conn)
 
     def set_hive_table(self, hive_db: str, hive_table: str) -> None:
         """Sets the parameters to work against a new Hive database and table"""
@@ -410,9 +401,6 @@ class Config(metaclass=Singleton):
 
     @contextmanager
     def _write_session(self) -> Iterator[Session]:
-        # Raw queries still read import_tables: they must not keep a
-        # snapshot from before this write. TODO(#238): remove with them.
-        self.mysql_conn.commit()
         with Session(config_engine.engine()) as session:
             yield session
             session.commit()
@@ -2402,20 +2390,26 @@ class Config(metaclass=Singleton):
         sql_sessions_min = 1
         sql_sessions_max = None
 
-        query = "select max_import_sessions from jdbc_connections where dbalias = %s "
-        self.mysql_cursor01.execute(query, (self.connection_alias,))
-        logging.debug("SQL Statement executed: %s" % (self.mysql_cursor01.statement))
+        connection = None
+        if self.connection_alias is not None:
+            with Session(config_engine.engine()) as session:
+                connection = ConnectionsRepository(session).connection(
+                    self.connection_alias
+                )
+        if connection is None:
+            raise InvalidConfigurationError(
+                "The configured connection alias for this table cant be found in the 'jdbc_connections' table"
+            )
+        max_import_sessions = connection.max_import_sessions
 
-        row = self.mysql_cursor01.fetchone()
-
-        if row[0] != None and row[0] > 0:
-            sql_sessions_max = row[0]
+        if max_import_sessions != None and max_import_sessions > 0:
+            sql_sessions_max = max_import_sessions
             logging.info(
                 "\u001b[33mThis connection is limited to a maximum of %s parallel sessions during import\u001b[0m"
                 % (sql_sessions_max)
             )
 
-        if row[0] != None and row[0] == 0:
+        if max_import_sessions != None and max_import_sessions == 0:
             logging.warning(
                 "Unsupported value of 0 in column 'max_import_sessions' in table 'jdbc_connections'"
             )
@@ -2446,35 +2440,16 @@ class Config(metaclass=Singleton):
             )
             raise Exception
 
-        # Execute SQL query that calculates the value
-        query = "select T.sqoop_last_size, "
-        query += "cast(S.size / %s as unsigned) as calculated_mappers, " % (
-            hdfs_blocksize
-        )
-        query += "T.mappers "
-        query += "from import_tables as T "
-        query += "left join import_statistics_last as S "
-        query += "   on T.hive_db = S.hive_db and T.hive_table = S.hive_table "
-        query += "where table_id = %s "
-
-        self.mysql_cursor01.execute(query, (self.table_id,))
-        logging.debug("SQL Statement executed: %s" % (self.mysql_cursor01.statement))
-
-        if self.mysql_cursor01.rowcount != 1:
-            logging.error(
-                "Error: Number of rows returned from query on 'import_table' was not one."
+        table_id = self._known_table_id()
+        with Session(config_engine.engine()) as session:
+            mappers = ImportTablesRepository(session).job_mappers(
+                table_id, hdfs_blocksize
             )
-            logging.error("Rows returned: %d" % (self.mysql_cursor01.rowcount))
-            logging.error(
-                "SQL Statement that generated the error: %s"
-                % (self.mysql_cursor01.statement)
+        if mappers is None:
+            raise InvalidConfigurationError(
+                "The import table can't be found in the configuration database"
             )
-            raise Exception
-
-        row = self.mysql_cursor01.fetchone()
-        sql_sessions_last = row[0]
-        self.sql_sessions = row[1]
-        self.sqoop_mappers = row[2]
+        sql_sessions_last, self.sql_sessions, self.sqoop_mappers = mappers
 
         logging.debug("sqlSessionsLast: %s" % (sql_sessions_last))
         logging.debug("sqlSessions:     %s", self.sql_sessions)

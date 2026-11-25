@@ -122,7 +122,6 @@ class Config(metaclass=Singleton):
 
         # Initialize the stage class that will handle all stage operations for us
         self.stage = export_stage.Stage(
-            self.mysql_conn,
             connection_alias=connection_alias,
             target_schema=target_schema,
             target_table=target_table,

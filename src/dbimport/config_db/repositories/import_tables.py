@@ -19,12 +19,13 @@
 from collections.abc import Mapping, Sequence
 
 from pydantic import BaseModel, ConfigDict
-from sqlalchemy import bindparam, delete, func, insert, select, update
+from sqlalchemy import bindparam, cast, delete, func, insert, select, update
+from sqlalchemy.dialects.mysql import INTEGER
 from sqlalchemy.dialects.mysql import insert as mysql_insert
 from sqlalchemy.orm import Session
 from sqlalchemy.sql import ColumnElement
 
-from dbimport.config_db.config_schema import ImportTables
+from dbimport.config_db.config_schema import ImportStatisticsLast, ImportTables
 from dbimport.config_db.repositories.types import StoredDateTime
 
 
@@ -255,6 +256,27 @@ class ImportTablesRepository:
 
     def exists(self, hive_db: str, hive_table: str) -> bool:
         return self._session.get(ImportTables, (hive_db, hive_table)) is not None
+
+    def job_mappers(
+        self, table_id: int, block_size: int
+    ) -> tuple[int | None, int | None, int] | None:
+        """sqoop_last_size, the size of the last import in blocks of
+        block_size (rounded as MySQL casts it; None without statistics)
+        and the configured mappers; None when the table is missing."""
+        row = self._session.execute(
+            select(
+                ImportTables.sqoop_last_size,
+                cast(ImportStatisticsLast.size / block_size, INTEGER(unsigned=True)),
+                ImportTables.mappers,
+            )
+            .outerjoin(
+                ImportStatisticsLast,
+                (ImportStatisticsLast.hive_db == ImportTables.hive_db)
+                & (ImportStatisticsLast.hive_table == ImportTables.hive_table),
+            )
+            .where(ImportTables.table_id == table_id)
+        ).one_or_none()
+        return None if row is None else (row[0], row[1], row[2])
 
     def table_by_id(self, table_id: int) -> ImportTable | None:
         row = self._session.scalars(
