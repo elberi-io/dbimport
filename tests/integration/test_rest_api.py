@@ -3073,6 +3073,33 @@ def test_bulk_delete_of_airflow_dags_removes_their_tasks(
     assert _task_names(db_connection) == [("dag_b", "prepare")]
 
 
+@DAG_KINDS
+def test_update_airflow_dag_with_an_invalid_task_changes_nothing(
+    rest_server: ModuleType,
+    auth_headers: dict[str, str],
+    db_connection: sa.Connection,
+    kind: str,
+) -> None:
+    _add_airflow_dag(db_connection, kind, operator_notes="old")
+    task = {
+        "name": "prepare",
+        "type": "shell script",
+        "placement": "nowhere",
+        "includeInAirflow": True,
+    }
+
+    with TestClient(rest_server.app, raise_server_exceptions=False) as client:
+        response = client.post(
+            f"/airflow/dags/{kind}/dag_a",
+            json={"name": "dag_a", "operatorNotes": "new", "tasks": [task]},
+            headers=auth_headers,
+        )
+
+    assert response.status_code == 500
+    assert _dag_row(db_connection, kind, "operator_notes") == ("old",)
+    assert _task_names(db_connection) == []
+
+
 @pytest.mark.parametrize(
     ("kind", "other"),
     [("import", "export"), ("import", "custom"), ("export", "import")],

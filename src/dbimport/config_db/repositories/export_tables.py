@@ -34,6 +34,7 @@ from sqlalchemy.dialects.mysql import insert as mysql_insert
 from sqlalchemy.orm import Session
 
 from dbimport.config_db.config_schema import ExportTables
+from dbimport.config_db.repositories.settings import check_settings
 from dbimport.config_db.repositories.types import StoredDateTime
 
 _MAPPER_SIZE = 1024 * 1024 * 128
@@ -162,9 +163,7 @@ def _columns(
 ) -> dict[str, object]:
     """values keyed by column name instead of attribute name. Raises
     KeyError for an attribute that is not allowed."""
-    unknown = set(values) - allowed
-    if unknown:
-        raise KeyError(", ".join(sorted(unknown)))
+    check_settings(values, allowed)
     mapped = ExportTables.__mapper__.columns
     return {mapped[name].name: value for name, value in values.items()}
 
