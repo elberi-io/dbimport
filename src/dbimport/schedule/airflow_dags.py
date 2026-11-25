@@ -22,25 +22,37 @@ import random
 import re
 import shutil
 import sys
+from collections.abc import Callable, Sequence
 from datetime import datetime, time, timedelta
+from typing import TypeVar
 
 import boto3
 import botocore
 import pandas as pd
 import pendulum
 import sqlalchemy as sa
-from sqlalchemy.orm import Query, aliased, scoped_session, sessionmaker
+from pydantic import BaseModel
+from sqlalchemy.orm import Session, aliased, scoped_session, sessionmaker
 
 from dbimport.common.exceptions import InvalidConfigurationError, SQLError
-from dbimport.config_db import common_config, config_schema, send_statistics
+from dbimport.config_db import common_config, send_statistics
 from dbimport.config_db import engine as config_engine
+from dbimport.config_db.repositories.airflow_dags import AirflowDAGsRepository
 from dbimport.config_db.repositories.configuration import (
     ConfigurationError,
     ConfigurationRepository,
     UnknownKeyError,
 )
+from dbimport.config_db.repositories.export_tables import ExportTablesRepository
+from dbimport.config_db.repositories.import_tables import ImportTablesRepository
 from dbimport.schedule import airflow_schema
 from dbimport.settings import get_settings
+
+_T = TypeVar("_T")
+
+
+def _frame(rows: Sequence[BaseModel]) -> pd.DataFrame:
+    return pd.DataFrame([row.model_dump() for row in rows]).fillna("")
 
 
 class Initialize:
@@ -181,6 +193,18 @@ class Initialize:
             # return self.config_db_session()
             return scoped_session(self.config_db_session)
 
+    def _read_config(self, read: Callable[[Session], _T]) -> _T:
+        session = self.get_dbimport_session()
+        try:
+            return read(session())
+        finally:
+            session.remove()
+
+    def _schedule_interval(self, dag_name: str) -> str | None:
+        return self._read_config(
+            lambda session: AirflowDAGsRepository(session).schedule_interval(dag_name)
+        )
+
     def get_config_value(self, key):
         """Returns the value of key in the configuration table, of the type
         config_keys gives it, or None when its value cannot be used. Raises
@@ -249,107 +273,13 @@ class Initialize:
         self.write_dag = write_dag
         self.dag_folder = dag_folder
 
-        # session = self.config_db_session()
-        session = self.get_dbimport_session()
-        airflow_custom_dags = aliased(config_schema.AirflowCustomDAGs)
-        airflow_export_dags = aliased(config_schema.AirflowExportDAGs)
-        airflow_import_dags = aliased(config_schema.AirflowImportDAGs)
-        airflow_etl_dags = aliased(config_schema.AirflowETLDAGs)
-
-        export_dag = pd.DataFrame(
-            session.query(
-                airflow_export_dags.dag_name,
-                airflow_export_dags.schedule_interval,
-                airflow_export_dags.filter_dbalias,
-                airflow_export_dags.filter_target_schema,
-                airflow_export_dags.filter_target_table,
-                airflow_export_dags.retries,
-                airflow_export_dags.auto_regenerate_dag,
-                airflow_export_dags.sudo_user,
-                airflow_export_dags.timezone,
-                airflow_export_dags.email,
-                airflow_export_dags.email_on_failure,
-                airflow_export_dags.email_on_retries,
-                airflow_export_dags.tags,
-                airflow_export_dags.sla_warning_time,
-                airflow_export_dags.retry_exponential_backoff,
-                airflow_export_dags.concurrency,
+        export_dag, import_dag, custom_dag = self._read_config(
+            lambda session: (
+                _frame(AirflowDAGsRepository(session).export_dags()),
+                _frame(AirflowDAGsRepository(session).import_dags()),
+                _frame(AirflowDAGsRepository(session).custom_dags()),
             )
-            .select_from(airflow_export_dags)
-            .all()
-        ).fillna("")
-
-        import_dag = pd.DataFrame(
-            session.query(
-                airflow_import_dags.dag_name,
-                airflow_import_dags.schedule_interval,
-                airflow_import_dags.filter_hive,
-                airflow_import_dags.retries,
-                airflow_import_dags.retries_stage1,
-                airflow_import_dags.retries_stage2,
-                airflow_import_dags.pool_stage1,
-                airflow_import_dags.pool_stage2,
-                airflow_import_dags.run_import_and_etl_separate,
-                airflow_import_dags.finish_all_stage1_first,
-                airflow_import_dags.auto_regenerate_dag,
-                airflow_import_dags.sudo_user,
-                airflow_import_dags.metadata_import,
-                airflow_import_dags.timezone,
-                airflow_import_dags.email,
-                airflow_import_dags.email_on_failure,
-                airflow_import_dags.email_on_retries,
-                airflow_import_dags.tags,
-                airflow_import_dags.sla_warning_time,
-                airflow_import_dags.retry_exponential_backoff,
-                airflow_import_dags.concurrency,
-            )
-            .select_from(airflow_import_dags)
-            .all()
-        ).fillna("")
-
-        etl_dag = pd.DataFrame(
-            session.query(
-                airflow_etl_dags.dag_name,
-                airflow_etl_dags.schedule_interval,
-                airflow_etl_dags.filter_job,
-                airflow_etl_dags.filter_task,
-                airflow_etl_dags.filter_source_db,
-                airflow_etl_dags.filter_target_db,
-                airflow_etl_dags.retries,
-                airflow_etl_dags.auto_regenerate_dag,
-                airflow_etl_dags.sudo_user,
-                airflow_etl_dags.timezone,
-                airflow_etl_dags.email,
-                airflow_etl_dags.email_on_failure,
-                airflow_etl_dags.email_on_retries,
-                airflow_etl_dags.tags,
-                airflow_etl_dags.sla_warning_time,
-                airflow_etl_dags.retry_exponential_backoff,
-                airflow_etl_dags.concurrency,
-            )
-            .select_from(airflow_etl_dags)
-            .all()
-        ).fillna("")
-
-        custom_dag = pd.DataFrame(
-            session.query(
-                airflow_custom_dags.dag_name,
-                airflow_custom_dags.schedule_interval,
-                airflow_custom_dags.retries,
-                airflow_custom_dags.auto_regenerate_dag,
-                airflow_custom_dags.sudo_user,
-                airflow_custom_dags.timezone,
-                airflow_custom_dags.email,
-                airflow_custom_dags.email_on_failure,
-                airflow_custom_dags.email_on_retries,
-                airflow_custom_dags.tags,
-                airflow_custom_dags.sla_warning_time,
-                airflow_custom_dags.retry_exponential_backoff,
-                airflow_custom_dags.concurrency,
-            )
-            .select_from(airflow_custom_dags)
-            .all()
-        ).fillna("")
+        )
 
         if name != None:
             if import_dag.empty == False:
@@ -389,8 +319,6 @@ class Initialize:
         # 			log.error("Can't find DAG with that name")
         # 			self.common_config.remove_temporary_files()
         # 			sys.exit(1)
-
-        session.close()
 
     def get_airflow_host_pool_name(self):
         log = logging.getLogger(self.logger)
@@ -469,48 +397,15 @@ class Initialize:
             concurrency=dag["concurrency"],
         )
 
-        # session = self.config_db_session()
-        session = self.get_dbimport_session()
-        export_tables = aliased(config_schema.ExportTables)
-
-        export_tables_query = Query(
-            [
-                export_tables.target_schema,
-                export_tables.target_table,
-                export_tables.dbalias,
-                export_tables.airflow_priority,
-                export_tables.export_type,
-                export_tables.sqoop_last_mappers,
-            ]
-        )
-        export_tables_query = export_tables_query.filter(
-            export_tables.include_in_airflow == 1
-        )
-
         filter_db_alias = dag["filter_dbalias"].strip().replace(r"*", "%")
         filter_target_schema = dag["filter_target_schema"].strip().replace(r"*", "%")
         filter_target_table = dag["filter_target_table"].strip().replace(r"*", "%")
-
-        # 		if filterDBAlias == '':
-        # 			log.error("'filter_dbalias' in airflow_export_dags cant be empty")
-        # 			self.dag_file.close()
-        # 			self.common_config.remove_temporary_files()
-        # 			sys.exit(1)
-
-        if filter_db_alias != "":
-            export_tables_query = export_tables_query.filter(
-                export_tables.dbalias.like(filter_db_alias)
+        tables = _frame(
+            self._read_config(
+                lambda session: ExportTablesRepository(session).dag_tables(
+                    filter_db_alias, filter_target_schema, filter_target_table
+                )
             )
-        if filter_target_schema != "":
-            export_tables_query = export_tables_query.filter(
-                export_tables.target_schema.like(filter_target_schema)
-            )
-        if filter_target_table != "":
-            export_tables_query = export_tables_query.filter(
-                export_tables.target_table.like(filter_target_table)
-            )
-        tables = pd.DataFrame(export_tables_query.with_session(session).all()).fillna(
-            ""
         )
 
         if dag["retries"] == None or dag["retries"] == "":
@@ -629,7 +524,6 @@ class Initialize:
         )
         self.create_airflow_pools(pools=used_pools)
         self.close_dag_file()
-        session.close()
 
     def generate_import_dag(self, dag):
         """Generates a Import DAG"""
@@ -671,27 +565,6 @@ class Initialize:
             concurrency=dag["concurrency"],
         )
 
-        # session = self.config_db_session()
-        session = self.get_dbimport_session()
-        import_tables = aliased(config_schema.ImportTables)
-
-        import_tables_query = Query(
-            [
-                import_tables.hive_db,
-                import_tables.hive_table,
-                import_tables.dbalias,
-                import_tables.airflow_priority,
-                import_tables.import_type,
-                import_tables.import_phase_type,
-                import_tables.etl_phase_type,
-                import_tables.sqoop_last_mappers,
-                import_tables.copy_slave,
-            ]
-        )
-        import_tables_query = import_tables_query.filter(
-            import_tables.include_in_airflow == 1
-        )
-
         for hive_target in dag["filter_hive"].split(";"):
             try:
                 hive_db = hive_target.split(".")[0].strip().replace(r"*", "%")
@@ -716,14 +589,14 @@ class Initialize:
             # 				self.common_config.remove_temporary_files()
             # 				sys.exit(1)
 
-            table_filters.append(
-                (import_tables.hive_db.like(hive_db))
-                & (import_tables.hive_table.like(hive_table))
-            )
+            table_filters.append((hive_db, hive_table))
 
-        import_tables_query = import_tables_query.filter(sa.or_(*table_filters))
-        tables = pd.DataFrame(import_tables_query.with_session(session).all()).fillna(
-            ""
+        tables = _frame(
+            self._read_config(
+                lambda session: ImportTablesRepository(session).dag_tables(
+                    table_filters
+                )
+            )
         )
 
         retries = int(dag["retries"])
@@ -1149,7 +1022,6 @@ class Initialize:
         ):
             self.aws_append_instance_id_as_pools()
         self.close_dag_file()
-        session.close()
 
     def create_airflow_pools(self, pools):
         """Creates the pools in Airflow database"""
@@ -1230,17 +1102,11 @@ class Initialize:
         """Generates a Custom DAG"""
         log = logging.getLogger(self.logger)
 
-        # session = self.config_db_session()
-        session = self.get_dbimport_session()
-        airflow_tasks = aliased(config_schema.AirflowTasks)
-
-        tasks = (
-            session.query(airflow_tasks.task_name)
-            .select_from(airflow_tasks)
-            .filter(airflow_tasks.dag_name == dag["dag_name"])
-            .filter(airflow_tasks.include_in_airflow == 1)
-            .filter(airflow_tasks.placement == "in main")
-            .count()
+        tasks = sum(
+            task.placement == "in main"
+            for task in self._read_config(
+                lambda session: AirflowDAGsRepository(session).tasks(dag["dag_name"])
+            )
         )
 
         if tasks == 0:
@@ -1248,7 +1114,6 @@ class Initialize:
                 "There are no tasks defined 'in main' for DAG '%s'. This is required for a custom DAG"
                 % (dag["dag_name"])
             )
-            session.close()
             return
 
         used_pools = []
@@ -1292,7 +1157,6 @@ class Initialize:
         )
         self.create_airflow_pools(pools=used_pools)
         self.close_dag_file()
-        session.close()
 
     def convert_time_to_cron(self, time):
         """Converts a string in format HH:MM to a CRON time string based on 'minute hour day month weekday'"""
@@ -1332,8 +1196,6 @@ class Initialize:
         concurrency=None,
     ):
         log = logging.getLogger(self.logger)
-        # session = self.config_db_session()
-        session = self.get_dbimport_session()
 
         self.sensor_start_task = "start"
         self.sensor_stop_task = "dag_sensors_finished"
@@ -2105,28 +1967,20 @@ class Initialize:
             self.dag_file.write("    dag=dag)\n")
             self.dag_file.write("\n")
 
-        airflow_dag_sensors = aliased(config_schema.AirflowDAGSensors, name="ads")
-        sensors = (
-            session.query(airflow_dag_sensors.dag_name)
-            .select_from(airflow_dag_sensors)
-            .filter(airflow_dag_sensors.dag_name == dag_name)
-            .count()
+        has_sensors, placements = self._read_config(
+            lambda session: (
+                AirflowDAGsRepository(session).has_sensors(dag_name),
+                [
+                    task.placement
+                    for task in AirflowDAGsRepository(session).tasks(dag_name)
+                ],
+            )
         )
 
-        if sensors > 0:
+        if has_sensors:
             tasks_sensors_exists = True
 
-        airflow_tasks = aliased(config_schema.AirflowTasks)
-        tasks = pd.DataFrame(
-            session.query(airflow_tasks.dag_name, airflow_tasks.placement)
-            .select_from(airflow_tasks)
-            .filter(airflow_tasks.dag_name == dag_name)
-            .filter(airflow_tasks.include_in_airflow == 1)
-            .all()
-        )
-
-        if len(tasks) == 0:
-            tasks = pd.DataFrame(columns=["dag_name", "placement"])
+        tasks = pd.DataFrame({"placement": placements})
 
         if (
             len(tasks.loc[tasks["placement"] == "before main"]) > 0
@@ -2185,8 +2039,6 @@ class Initialize:
 
         if tasks_after_main_exists:
             self.main_stop_task = self.post_start_task
-
-        session.close()
 
         log.debug("sensorStartTask = %s", self.sensor_start_task)
         log.debug("sensorStopTask = %s", self.sensor_stop_task)
@@ -2277,37 +2129,14 @@ class Initialize:
     ):
         log = logging.getLogger(self.logger)
 
-        # session = self.config_db_session()
-        session = self.get_dbimport_session()
-
         if default_sudo_user == None:
             default_sudo_user = ""
 
-        airflow_tasks = aliased(config_schema.AirflowTasks)
-
-        tasks = pd.DataFrame(
-            session.query(
-                airflow_tasks.task_name,
-                airflow_tasks.task_type,
-                airflow_tasks.placement,
-                airflow_tasks.airflow_pool,
-                airflow_tasks.airflow_priority,
-                airflow_tasks.task_dependency_downstream,
-                airflow_tasks.task_dependency_upstream,
-                airflow_tasks.task_config,
-                airflow_tasks.jdbc_dbalias,
-                airflow_tasks.hive_db,
-                airflow_tasks.sensor_poke_interval,
-                airflow_tasks.sensor_timeout_minutes,
-                airflow_tasks.sensor_connection,
-                airflow_tasks.sensor_soft_fail,
-                airflow_tasks.sudo_user,
+        tasks = _frame(
+            self._read_config(
+                lambda session: AirflowDAGsRepository(session).tasks(dag_name)
             )
-            .select_from(airflow_tasks)
-            .filter(airflow_tasks.dag_name == dag_name)
-            .filter(airflow_tasks.include_in_airflow == 1)
-            .all()
-        ).fillna("")
+        )
 
         task_dependencies = ""
         all_task_dependencies = tasks.filter(
@@ -2346,11 +2175,6 @@ class Initialize:
 
             if row["task_type"] == "DAG Sensor":
                 add_dag_sensor = True
-                airflow_custom_dags = aliased(config_schema.AirflowCustomDAGs)
-                airflow_etl_dags = aliased(config_schema.AirflowETLDAGs)
-                airflow_export_dags = aliased(config_schema.AirflowExportDAGs)
-                airflow_import_dags = aliased(config_schema.AirflowImportDAGs)
-
                 if "." in row["task_config"]:
                     wait_for_dag = row["task_config"].split(".")[0]
                     wait_for_task = row["task_config"].split(".")[1]
@@ -2358,36 +2182,9 @@ class Initialize:
                     wait_for_dag = row["task_config"].split(".")[0]
                     wait_for_task = "stop"
 
-                import_sensor_schedule = (
-                    session.query(airflow_import_dags.schedule_interval)
-                    .filter(airflow_import_dags.dag_name == wait_for_dag)
-                    .one_or_none()
-                )
-                export_sensor_schedule = (
-                    session.query(airflow_export_dags.schedule_interval)
-                    .filter(airflow_export_dags.dag_name == wait_for_dag)
-                    .one_or_none()
-                )
-                custom_sensor_schedule = (
-                    session.query(airflow_custom_dags.schedule_interval)
-                    .filter(airflow_custom_dags.dag_name == wait_for_dag)
-                    .one_or_none()
-                )
-                etl_sensor_schedule = (
-                    session.query(airflow_etl_dags.schedule_interval)
-                    .filter(airflow_etl_dags.dag_name == wait_for_dag)
-                    .one_or_none()
-                )
-
-                wait_dag_schedule = ""
-                if import_sensor_schedule != None:
-                    wait_dag_schedule = import_sensor_schedule[0]
-                elif export_sensor_schedule != None:
-                    wait_dag_schedule = export_sensor_schedule[0]
-                elif custom_sensor_schedule != None:
-                    wait_dag_schedule = custom_sensor_schedule[0]
-                elif etl_sensor_schedule != None:
-                    wait_dag_schedule = etl_sensor_schedule[0]
+                wait_dag_schedule = self._schedule_interval(wait_for_dag)
+                if wait_dag_schedule is None:
+                    wait_dag_schedule = ""
 
                 if wait_dag_schedule == "":
                     log.warning("Issue on DAG '%s'" % (dag_name))
@@ -2912,56 +2709,14 @@ class Initialize:
                 task_dependencies += "\n"
 
         self.dag_file.write(task_dependencies)
-        session.close()
 
     def add_sensors_to_dag_file(self, dag_name, main_dag_schedule):
         log = logging.getLogger(self.logger)
-        # session = self.config_db_session()
-        session = self.get_dbimport_session()
-
-        airflow_dag_sensors = aliased(config_schema.AirflowDAGSensors, name="ads")
-        airflow_custom_dags = aliased(config_schema.AirflowCustomDAGs, name="acd")
-        airflow_etl_dags = aliased(config_schema.AirflowETLDAGs, name="aetld")
-        airflow_export_dags = aliased(config_schema.AirflowExportDAGs, name="aed")
-        airflow_import_dags = aliased(config_schema.AirflowImportDAGs, name="aid")
-
-        sensors = pd.DataFrame(
-            session.query(
-                airflow_dag_sensors.dag_name,
-                airflow_dag_sensors.sensor_name,
-                airflow_dag_sensors.wait_for_dag,
-                airflow_dag_sensors.wait_for_task,
-                airflow_dag_sensors.timeout_minutes,
-                airflow_dag_sensors.sensor_soft_fail,
-                airflow_import_dags.schedule_interval.label("import_schedule"),
-                airflow_export_dags.schedule_interval.label("export_schedule"),
-                airflow_custom_dags.schedule_interval.label("custom_schedule"),
-                airflow_etl_dags.schedule_interval.label("etl_schedule"),
+        sensors = _frame(
+            self._read_config(
+                lambda session: AirflowDAGsRepository(session).sensors(dag_name)
             )
-            .select_from(airflow_dag_sensors)
-            .join(
-                airflow_import_dags,
-                airflow_dag_sensors.wait_for_dag == airflow_import_dags.dag_name,
-                isouter=True,
-            )
-            .join(
-                airflow_export_dags,
-                airflow_dag_sensors.wait_for_dag == airflow_export_dags.dag_name,
-                isouter=True,
-            )
-            .join(
-                airflow_custom_dags,
-                airflow_dag_sensors.wait_for_dag == airflow_custom_dags.dag_name,
-                isouter=True,
-            )
-            .join(
-                airflow_etl_dags,
-                airflow_dag_sensors.wait_for_dag == airflow_etl_dags.dag_name,
-                isouter=True,
-            )
-            .filter(airflow_dag_sensors.dag_name == dag_name)
-            .all()
-        ).fillna("")
+        )
 
         for _index, row in sensors.iterrows():
             wait_dag_schedule = ""
@@ -3140,8 +2895,6 @@ class Initialize:
                 "%s.set_downstream(%s)\n" % (row["sensor_name"], self.sensor_stop_task)
             )
             self.dag_file.write("\n")
-
-        session.close()
 
     def send_json(self, airflow_dag, status):
         """Sends a start JSON document to REST and/or Kafka"""

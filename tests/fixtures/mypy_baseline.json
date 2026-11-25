@@ -88,8 +88,7 @@
     "assignment": 5,
     "attr-defined": 2,
     "type-var": 1,
-    "union-attr": 326,
-    "var-annotated": 2
+    "union-attr": 326
   },
   "src/dbimport/server/atlas_discovery.py": {
     "misc": 1,

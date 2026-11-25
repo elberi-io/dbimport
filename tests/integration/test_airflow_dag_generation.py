@@ -124,11 +124,117 @@ def _custom_tasks(conn: sa.Connection) -> None:
     )
 
 
+def _export_dag(conn: sa.Connection) -> None:
+    """A full and an incremental export of connection test_mysql."""
+    _add_connection(conn)
+    for table, export_type in (("orders", "full"), ("events", "incr")):
+        insert_row(
+            conn,
+            "export_tables",
+            dbalias="test_mysql",
+            target_schema="dbo",
+            target_table=table,
+            hive_db="testdb",
+            hive_table=table,
+            export_type=export_type,
+        )
+    insert_row(
+        conn,
+        "airflow_export_dags",
+        dag_name=DAG_NAME,
+        schedule_interval="None",
+        filter_dbalias="test_mysql",
+    )
+
+
+def _add_other_dags(conn: sa.Connection) -> None:
+    """DAGs to wait for: an import DAG at 01:00 and a custom DAG on cron."""
+    insert_row(
+        conn,
+        "airflow_import_dags",
+        dag_name="other_import",
+        filter_hive="otherdb.*",
+        schedule_interval="01:00",
+    )
+    insert_row(
+        conn,
+        "airflow_custom_dags",
+        dag_name="other_cron",
+        schedule_interval="0 1 * * *",
+    )
+
+
+def _custom_dag(conn: sa.Connection) -> None:
+    """A custom DAG at 03:00 whose DAG Sensor tasks wait for another DAG
+    and for a DAG that does not exist."""
+    _add_other_dags(conn)
+    insert_row(
+        conn, "airflow_custom_dags", dag_name=DAG_NAME, schedule_interval="03:00"
+    )
+    insert_row(
+        conn,
+        "airflow_tasks",
+        dag_name=DAG_NAME,
+        task_name="in_main_01",
+        task_type="shell script",
+        placement="in main",
+        task_config="/usr/bin/sleep 1",
+    )
+    insert_row(
+        conn,
+        "airflow_tasks",
+        dag_name=DAG_NAME,
+        task_name="wait_other",
+        task_type="DAG Sensor",
+        placement="before main",
+        task_config="other_import",
+    )
+    insert_row(
+        conn,
+        "airflow_tasks",
+        dag_name=DAG_NAME,
+        task_name="wait_missing",
+        task_type="DAG Sensor",
+        placement="before main",
+        task_config="missing_dag.some_task",
+    )
+
+
+def _dag_sensors(conn: sa.Connection) -> None:
+    """An import DAG at 03:00 with sensors for a DAG at 01:00, a DAG on
+    cron and a DAG that does not exist."""
+    _add_tables(conn)
+    _add_other_dags(conn)
+    insert_row(
+        conn,
+        "airflow_import_dags",
+        dag_name=DAG_NAME,
+        filter_hive="testdb.*",
+        schedule_interval="03:00",
+    )
+    for sensor, wait_for_dag, extra in (
+        ("s_other", "other_import", {"wait_for_task": "stop", "timeout_minutes": 30}),
+        ("s_cron", "other_cron", {}),
+        ("s_missing", "missing_dag", {}),
+    ):
+        insert_row(
+            conn,
+            "airflow_dag_sensors",
+            dag_name=DAG_NAME,
+            sensor_name=sensor,
+            wait_for_dag=wait_for_dag,
+            **extra,
+        )
+
+
 SCENARIOS: dict[str, Setup] = {
     "default_import_dag": _default_dag,
     "import_and_etl_separate": _import_and_etl_separate,
     "finish_all_stage1_first": _finish_all_stage1_first,
     "custom_tasks": _custom_tasks,
+    "export_dag": _export_dag,
+    "custom_dag": _custom_dag,
+    "dag_sensors": _dag_sensors,
 }
 
 

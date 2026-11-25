@@ -19,7 +19,16 @@
 from collections.abc import Mapping, Sequence
 
 from pydantic import BaseModel, ConfigDict
-from sqlalchemy import bindparam, cast, delete, func, insert, select, update
+from sqlalchemy import (
+    bindparam,
+    cast,
+    delete,
+    func,
+    insert,
+    or_,
+    select,
+    update,
+)
 from sqlalchemy.dialects.mysql import INTEGER
 from sqlalchemy.dialects.mysql import insert as mysql_insert
 from sqlalchemy.orm import Session
@@ -123,6 +132,22 @@ class ImportTableEntry(BaseModel):
     last_update_from_source: StoredDateTime
     include_in_airflow: int
     operator_notes: str | None
+
+
+class ImportDAGTable(BaseModel):
+    """An import table as an Airflow DAG schedules it."""
+
+    model_config = ConfigDict(frozen=True)
+
+    hive_db: str
+    hive_table: str
+    dbalias: str
+    airflow_priority: int | None
+    import_type: str | None
+    import_phase_type: str | None
+    etl_phase_type: str | None
+    sqoop_last_mappers: int | None
+    copy_slave: int
 
 
 class DatabaseSummary(BaseModel):
@@ -277,6 +302,36 @@ class ImportTablesRepository:
             .where(ImportTables.table_id == table_id)
         ).one_or_none()
         return None if row is None else (row[0], row[1], row[2])
+
+    def dag_tables(self, patterns: Sequence[tuple[str, str]]) -> list[ImportDAGTable]:
+        """The tables included in Airflow whose Hive database and table
+        match one of the (database, table) LIKE patterns, ordered by
+        database and table."""
+        rows = self._session.execute(
+            select(
+                ImportTables.hive_db,
+                ImportTables.hive_table,
+                ImportTables.dbalias,
+                ImportTables.airflow_priority,
+                ImportTables.import_type,
+                ImportTables.import_phase_type,
+                ImportTables.etl_phase_type,
+                ImportTables.sqoop_last_mappers,
+                ImportTables.copy_slave,
+            )
+            .where(
+                ImportTables.include_in_airflow == 1,
+                or_(
+                    *(
+                        ImportTables.hive_db.like(hive_db)
+                        & ImportTables.hive_table.like(hive_table)
+                        for hive_db, hive_table in patterns
+                    )
+                ),
+            )
+            .order_by(ImportTables.hive_db, ImportTables.hive_table)
+        )
+        return [ImportDAGTable.model_validate(row._mapping) for row in rows]
 
     def table_by_id(self, table_id: int) -> ImportTable | None:
         row = self._session.scalars(

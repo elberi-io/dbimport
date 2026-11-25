@@ -99,6 +99,19 @@ class ExportTableEntry(BaseModel):
     operator_notes: str | None
 
 
+class ExportDAGTable(BaseModel):
+    """An export table as an Airflow DAG schedules it."""
+
+    model_config = ConfigDict(frozen=True)
+
+    target_schema: str
+    target_table: str
+    dbalias: str
+    airflow_priority: int | None
+    export_type: str
+    sqoop_last_mappers: int | None
+
+
 class ConnectionSummary(BaseModel):
     """The tables exported to one connection."""
 
@@ -218,6 +231,35 @@ class ExportTablesRepository:
                 target_table=target_table,
             )
         )
+
+    def dag_tables(
+        self, dbalias: str, target_schema: str, target_table: str
+    ) -> list[ExportDAGTable]:
+        """The tables included in Airflow that match the LIKE patterns; an
+        empty pattern matches every value. Ordered by connection, schema
+        and table."""
+        query = select(
+            ExportTables.target_schema,
+            ExportTables.target_table,
+            ExportTables.dbalias,
+            ExportTables.airflow_priority,
+            ExportTables.export_type,
+            ExportTables.sqoop_last_mappers,
+        ).where(ExportTables.include_in_airflow == 1)
+        if dbalias != "":
+            query = query.where(ExportTables.dbalias.like(dbalias))
+        if target_schema != "":
+            query = query.where(ExportTables.target_schema.like(target_schema))
+        if target_table != "":
+            query = query.where(ExportTables.target_table.like(target_table))
+        rows = self._session.execute(
+            query.order_by(
+                ExportTables.dbalias,
+                ExportTables.target_schema,
+                ExportTables.target_table,
+            )
+        )
+        return [ExportDAGTable.model_validate(row._mapping) for row in rows]
 
     def job_mappers(self, table_id: int) -> tuple[int | None, int] | None:
         """The last size in units of 128 MB (rounded as MySQL casts it) and
