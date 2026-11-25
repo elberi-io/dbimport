@@ -2446,3 +2446,589 @@ def test_update_export_table_with_an_invalid_column_changes_nothing(
     assert notes.scalar_one() == "old"
     count = db_connection.execute(sa.text("SELECT COUNT(*) FROM export_columns"))
     assert count.scalar_one() == 0
+
+
+AIRFLOW_URL = "http://airflow.example:8080"
+DAG_TABLES = {"import": "airflow_import_dags", "export": "airflow_export_dags"}
+DAG_FILTERS: dict[str, dict[str, object]] = {
+    "import": {"filter_hive": "salesdb.*"},
+    "export": {
+        "filter_dbalias": "tgt_conn",
+        "filter_target_schema": "tgt",
+        "filter_target_table": "ord*",
+    },
+}
+DAG_FILTER_FIELDS: dict[str, dict[str, object]] = {
+    "import": {"filterTable": "salesdb.*"},
+    "export": {
+        "filterConnection": "tgt_conn",
+        "filterTargetSchema": "tgt",
+        "filterTargetTable": "ord*",
+    },
+}
+DAG_KINDS = pytest.mark.parametrize("kind", ["import", "export"])
+LISTED_DAG_ROW: dict[str, object] = {
+    "schedule_interval": "03:00",
+    "auto_regenerate_dag": 0,
+    "operator_notes": "nightly",
+    "sudo_user": "etl",
+    "timezone": "Europe/Stockholm",
+    "email": "ops@example.com",
+    "email_on_failure": 1,
+    "email_on_retries": 0,
+    "sla_warning_time": "01:30:00",
+    "concurrency": 4,
+}
+LISTED_DAG: dict[str, object] = {
+    "name": "dag_a",
+    "scheduleInterval": "03:00",
+    "autoRegenerateDag": False,
+    "airflowLink": f"{AIRFLOW_URL}/dags/dag_a",
+    "operatorNotes": "nightly",
+    "sudoUser": "etl",
+    "timezone": "Europe/Stockholm",
+    "email": "ops@example.com",
+    "emailOnFailure": True,
+    "emailOnRetries": False,
+    "slaWarningTime": "01:30:00",
+    "concurrency": 4,
+}
+
+
+def _set_airflow_url(conn: sa.Connection) -> None:
+    conn.execute(
+        sa.text(
+            "UPDATE configuration SET valueStr = :url WHERE configKey = 'airflow_url'"
+        ),
+        {"url": AIRFLOW_URL},
+    )
+
+
+def _add_airflow_dag(
+    conn: sa.Connection, kind: str, name: str = "dag_a", /, **values: object
+) -> None:
+    insert_row(
+        conn,
+        DAG_TABLES[kind],
+        dag_name=name,
+        **({"schedule_interval": "None"} | DAG_FILTERS[kind] | values),
+    )
+
+
+def _add_airflow_task(conn: sa.Connection, dag: str, name: str) -> None:
+    insert_row(
+        conn,
+        "airflow_tasks",
+        dag_name=dag,
+        task_name=name,
+        task_type="shell script",
+        placement="before main",
+        task_config="/usr/bin/true",
+    )
+
+
+def _dag_names(conn: sa.Connection, kind: str) -> list[str]:
+    return list(
+        conn.execute(
+            sa.text(f"SELECT dag_name FROM {DAG_TABLES[kind]} ORDER BY dag_name")
+        ).scalars()
+    )
+
+
+def _task_names(conn: sa.Connection) -> list[tuple[str, str]]:
+    return [
+        (row[0], row[1])
+        for row in conn.execute(
+            sa.text(
+                "SELECT dag_name, task_name FROM airflow_tasks "
+                "ORDER BY dag_name, task_name"
+            )
+        )
+    ]
+
+
+def _dag_row(conn: sa.Connection, kind: str, *columns: str) -> tuple[object, ...]:
+    return tuple(
+        conn.execute(
+            sa.text(f"SELECT {', '.join(columns)} FROM {DAG_TABLES[kind]}")
+        ).one()
+    )
+
+
+@DAG_KINDS
+def test_get_airflow_dags_lists_the_dags_of_one_type_by_name(
+    client: TestClient,
+    auth_headers: dict[str, str],
+    db_connection: sa.Connection,
+    kind: str,
+) -> None:
+    _set_airflow_url(db_connection)
+    _add_airflow_dag(db_connection, kind, "dag_b")
+    _add_airflow_dag(db_connection, kind, "dag_a", **LISTED_DAG_ROW)
+
+    response = client.get(f"/airflow/dags/{kind}", headers=auth_headers)
+
+    assert response.status_code == 200
+    assert response.headers["content-rows"] == "2"
+    dags = response.json()
+    assert [dag["name"] for dag in dags] == ["dag_a", "dag_b"]
+    assert dags[0] == LISTED_DAG | DAG_FILTER_FIELDS[kind]
+
+
+DAG_DETAILS_ROW: dict[str, dict[str, object]] = {
+    "import": {
+        "finish_all_stage1_first": 1,
+        "run_import_and_etl_separate": 0,
+        "retries": 3,
+        "retries_stage1": 2,
+        "retries_stage2": 1,
+        "pool_stage1": "pool_one",
+        "pool_stage2": "pool_two",
+        "metadata_import": 1,
+        "retry_exponential_backoff": 1,
+    },
+    "export": {"retries": 3, "retry_exponential_backoff": 1},
+}
+DAG_DETAILS: dict[str, dict[str, object]] = {
+    "import": {
+        "finishAllStage1First": True,
+        "runImportAndEtlSeparate": False,
+        "retries": 3,
+        "retriesStage1": 2,
+        "retriesStage2": 1,
+        "poolStage1": "pool_one",
+        "poolStage2": "pool_two",
+        "metadataImport": True,
+        "retryExponentialBackoff": True,
+    },
+    "export": {"retries": 3, "retryExponentialBackoff": 1},
+}
+LISTED_TASK = {
+    "name": "prepare",
+    "type": "shell script",
+    "placement": "before main",
+    "connection": None,
+    "airflowPool": None,
+    "airflowPriority": None,
+    "includeInAirflow": True,
+    "taskDependencyDownstream": None,
+    "taskDependencyUpstream": None,
+    "taskConfig": "/usr/bin/true",
+    "sensorPokeInterval": None,
+    "sensorTimeoutMinutes": None,
+    "sensorConnection": None,
+    "sensorSoftFail": None,
+    "sudoUser": None,
+}
+
+
+@DAG_KINDS
+def test_get_airflow_dag_returns_every_field_and_its_tasks(
+    client: TestClient,
+    auth_headers: dict[str, str],
+    db_connection: sa.Connection,
+    kind: str,
+) -> None:
+    _set_airflow_url(db_connection)
+    _add_airflow_dag(
+        db_connection,
+        kind,
+        **LISTED_DAG_ROW,
+        application_notes="app",
+        airflow_notes="air",
+        tags="nightly,sales",
+        **DAG_DETAILS_ROW[kind],
+    )
+    _add_airflow_task(db_connection, "dag_a", "prepare")
+    _add_airflow_task(db_connection, "other_dag", "unrelated")
+
+    response = client.get(f"/airflow/dags/{kind}/dag_a", headers=auth_headers)
+
+    assert response.status_code == 200
+    expected = (
+        LISTED_DAG
+        | DAG_FILTER_FIELDS[kind]
+        | {
+            "applicationNotes": "app",
+            "airflowNotes": "air",
+            "tags": "nightly,sales",
+            "tasks": [LISTED_TASK],
+        }
+        | DAG_DETAILS[kind]
+    )
+    assert response.json() == expected
+
+
+def test_get_export_airflow_dag_without_retries_returns_five(
+    client: TestClient, auth_headers: dict[str, str], db_connection: sa.Connection
+) -> None:
+    _add_airflow_dag(db_connection, "export")
+
+    response = client.get("/airflow/dags/export/dag_a", headers=auth_headers)
+
+    assert response.json()["retries"] == 5
+
+
+@DAG_KINDS
+@pytest.mark.parametrize(
+    ("dag", "status_code", "remaining_dags", "remaining_tasks"),
+    [
+        ("dag_a", 200, ["dag_b"], [("dag_b", "load")]),
+        ("nope", 404, ["dag_a", "dag_b"], [("dag_a", "prepare"), ("dag_b", "load")]),
+    ],
+    ids=["known", "unknown"],
+)
+def test_delete_airflow_dag_removes_it_and_its_tasks_or_returns_404(
+    client: TestClient,
+    auth_headers: dict[str, str],
+    db_connection: sa.Connection,
+    kind: str,
+    dag: str,
+    status_code: int,
+    remaining_dags: list[str],
+    remaining_tasks: list[tuple[str, str]],
+) -> None:
+    _add_airflow_dag(db_connection, kind, "dag_a")
+    _add_airflow_dag(db_connection, kind, "dag_b")
+    _add_airflow_task(db_connection, "dag_a", "prepare")
+    _add_airflow_task(db_connection, "dag_b", "load")
+
+    response = client.delete(f"/airflow/dags/{kind}/{dag}", headers=auth_headers)
+
+    assert response.status_code == status_code
+    assert _dag_names(db_connection, kind) == remaining_dags
+    assert _task_names(db_connection) == remaining_tasks
+
+
+@DAG_KINDS
+def test_bulk_delete_of_airflow_dags_removes_the_listed_dags(
+    client: TestClient,
+    auth_headers: dict[str, str],
+    db_connection: sa.Connection,
+    kind: str,
+) -> None:
+    for name in ("dag_a", "dag_b", "dag_c"):
+        _add_airflow_dag(db_connection, kind, name)
+
+    response = client.request(
+        "DELETE",
+        f"/airflow/dags/{kind}",
+        json=[{"name": "dag_a"}, {"name": "dag_c"}, {"name": "nope"}],
+        headers=auth_headers,
+    )
+
+    assert response.status_code == 200
+    assert response.json() == {"result": "Ok"}
+    assert _dag_names(db_connection, kind) == ["dag_b"]
+
+
+@DAG_KINDS
+@pytest.mark.parametrize(("method", "body"), [("DELETE", []), ("POST", {"dags": []})])
+def test_bulk_change_of_airflow_dags_without_dags_returns_422(
+    client: TestClient,
+    auth_headers: dict[str, str],
+    kind: str,
+    method: str,
+    body: object,
+) -> None:
+    response = client.request(
+        method, f"/airflow/dags/{kind}", json=body, headers=auth_headers
+    )
+
+    assert response.status_code == 422
+
+
+@DAG_KINDS
+def test_bulk_update_of_airflow_dags_changes_only_the_given_fields(
+    client: TestClient,
+    auth_headers: dict[str, str],
+    db_connection: sa.Connection,
+    kind: str,
+) -> None:
+    _add_airflow_dag(db_connection, kind, "dag_a", operator_notes="keep", concurrency=2)
+    _add_airflow_dag(db_connection, kind, "dag_b", operator_notes="keep", concurrency=2)
+
+    response = client.post(
+        f"/airflow/dags/{kind}",
+        json={"concurrency": 8, "dags": [{"name": "dag_a"}]},
+        headers=auth_headers,
+    )
+
+    assert response.status_code == 200
+    rows = db_connection.execute(
+        sa.text(
+            f"SELECT dag_name, operator_notes, concurrency FROM {DAG_TABLES[kind]} "
+            "ORDER BY dag_name"
+        )
+    ).all()
+    assert [tuple(row) for row in rows] == [
+        ("dag_a", "keep", 8),
+        ("dag_b", "keep", 2),
+    ]
+
+
+@DAG_KINDS
+def test_bulk_update_of_airflow_dags_sets_every_field_it_accepts(
+    client: TestClient,
+    auth_headers: dict[str, str],
+    db_connection: sa.Connection,
+    kind: str,
+) -> None:
+    _add_airflow_dag(db_connection, kind)
+
+    client.post(
+        f"/airflow/dags/{kind}",
+        json={
+            "scheduleInterval": "04:00",
+            "autoRegenerateDag": False,
+            "operatorNotes": "bulk",
+            "sudoUser": "etl",
+            "timezone": "UTC",
+            "email": "ops@example.com",
+            "emailOnFailure": True,
+            "emailOnRetries": True,
+            "slaWarningTime": "02:00:00",
+            "concurrency": 6,
+            "dags": [{"name": "dag_a"}],
+        },
+        headers=auth_headers,
+    )
+
+    assert _dag_row(
+        db_connection,
+        kind,
+        "schedule_interval",
+        "auto_regenerate_dag",
+        "operator_notes",
+        "sudo_user",
+        "timezone",
+        "email",
+        "email_on_failure",
+        "email_on_retries",
+        "CAST(sla_warning_time AS CHAR)",
+        "concurrency",
+    ) == ("04:00", 0, "bulk", "etl", "UTC", "ops@example.com", 1, 1, "02:00:00", 6)
+
+
+DAG_DEFAULTED_COLUMNS: dict[str, tuple[str, ...]] = {
+    "import": (
+        "schedule_interval",
+        "filter_hive",
+        "finish_all_stage1_first",
+        "retries",
+        "auto_regenerate_dag",
+        "run_import_and_etl_separate",
+        "metadata_import",
+        "email_on_failure",
+        "email_on_retries",
+        "retry_exponential_backoff",
+    ),
+    "export": (
+        "schedule_interval",
+        "filter_dbalias",
+        "retries",
+        "auto_regenerate_dag",
+        "email_on_failure",
+        "email_on_retries",
+        "retry_exponential_backoff",
+    ),
+}
+DAG_DEFAULTS: dict[str, tuple[object, ...]] = {
+    "import": ("None", "", 0, 5, 1, 0, 0, 0, 0, 0),
+    "export": ("None", "", 5, 1, 0, 0, 0),
+}
+
+
+@DAG_KINDS
+def test_update_airflow_dag_creates_a_dag_with_defaults(
+    client: TestClient,
+    auth_headers: dict[str, str],
+    db_connection: sa.Connection,
+    kind: str,
+) -> None:
+    response = client.post(
+        f"/airflow/dags/{kind}/dag_a", json={"name": "dag_a"}, headers=auth_headers
+    )
+
+    assert response.status_code == 200
+    assert response.json() == "ok"
+    assert _dag_names(db_connection, kind) == ["dag_a"]
+    assert (
+        _dag_row(db_connection, kind, *DAG_DEFAULTED_COLUMNS[kind])
+        == (DAG_DEFAULTS[kind])
+    )
+
+
+DAG_WRITE_FULL: dict[str, dict[str, object]] = {
+    "import": {
+        "filterTable": "salesdb.*",
+        "finishAllStage1First": True,
+        "runImportAndEtlSeparate": True,
+        "retries": 3,
+        "retriesStage1": 2,
+        "retriesStage2": 1,
+        "poolStage1": "pool_one",
+        "poolStage2": "pool_two",
+        "metadataImport": True,
+        "retryExponentialBackoff": True,
+    },
+    "export": {
+        "filterConnection": "tgt_conn",
+        "filterTargetSchema": "tgt",
+        "filterTargetTable": "ord*",
+        "retries": 3,
+        "retryExponentialBackoff": 1,
+    },
+}
+DAG_WRITE_COMMON: dict[str, object] = {
+    "name": "dag_a",
+    "scheduleInterval": "05:00",
+    "operatorNotes": "op",
+    "applicationNotes": "app",
+    "autoRegenerateDag": False,
+    "airflowNotes": "air",
+    "sudoUser": "etl",
+    "timezone": "UTC",
+    "email": "ops@example.com",
+    "emailOnFailure": True,
+    "emailOnRetries": True,
+    "tags": "t1",
+    "slaWarningTime": "02:00:00",
+    "concurrency": 6,
+}
+DAG_WRITTEN_COLUMNS: dict[str, tuple[str, ...]] = {
+    "import": (
+        "filter_hive",
+        "finish_all_stage1_first",
+        "run_import_and_etl_separate",
+        "retries",
+        "retries_stage1",
+        "retries_stage2",
+        "pool_stage1",
+        "pool_stage2",
+        "metadata_import",
+        "retry_exponential_backoff",
+    ),
+    "export": (
+        "filter_dbalias",
+        "filter_target_schema",
+        "filter_target_table",
+        "retries",
+        "retry_exponential_backoff",
+    ),
+}
+DAG_WRITTEN: dict[str, tuple[object, ...]] = {
+    "import": ("salesdb.*", 1, 1, 3, 2, 1, "pool_one", "pool_two", 1, 1),
+    "export": ("tgt_conn", "tgt", "ord*", 3, 1),
+}
+COMMON_WRITTEN_COLUMNS = (
+    "schedule_interval",
+    "operator_notes",
+    "application_notes",
+    "auto_regenerate_dag",
+    "airflow_notes",
+    "sudo_user",
+    "timezone",
+    "email",
+    "email_on_failure",
+    "email_on_retries",
+    "tags",
+    "CAST(sla_warning_time AS CHAR)",
+    "concurrency",
+)
+
+
+@DAG_KINDS
+def test_update_airflow_dag_replaces_every_field_of_an_existing_dag(
+    client: TestClient,
+    auth_headers: dict[str, str],
+    db_connection: sa.Connection,
+    kind: str,
+) -> None:
+    _add_airflow_dag(db_connection, kind, operator_notes="old", tags="old")
+
+    response = client.post(
+        f"/airflow/dags/{kind}/dag_a",
+        json=DAG_WRITE_COMMON | DAG_WRITE_FULL[kind],
+        headers=auth_headers,
+    )
+
+    assert response.status_code == 200
+    assert _dag_row(db_connection, kind, *COMMON_WRITTEN_COLUMNS) == (
+        "05:00",
+        "op",
+        "app",
+        0,
+        "air",
+        "etl",
+        "UTC",
+        "ops@example.com",
+        1,
+        1,
+        "t1",
+        "02:00:00",
+        6,
+    )
+    assert (
+        _dag_row(db_connection, kind, *DAG_WRITTEN_COLUMNS[kind]) == (DAG_WRITTEN[kind])
+    )
+
+
+@DAG_KINDS
+def test_update_airflow_dag_stores_its_tasks(
+    client: TestClient,
+    auth_headers: dict[str, str],
+    db_connection: sa.Connection,
+    kind: str,
+) -> None:
+    _add_airflow_task(db_connection, "dag_a", "kept")
+    task = {
+        "name": "prepare",
+        "type": "shell script",
+        "placement": "before main",
+        "includeInAirflow": True,
+        "taskConfig": "/usr/bin/true",
+    }
+
+    response = client.post(
+        f"/airflow/dags/{kind}/dag_a",
+        json={"name": "dag_a", "tasks": [task]},
+        headers=auth_headers,
+    )
+
+    assert response.status_code == 200
+    assert _task_names(db_connection) == [("dag_a", "kept"), ("dag_a", "prepare")]
+
+
+@pytest.mark.parametrize(
+    ("kind", "other"),
+    [
+        ("import", "export"),
+        ("import", "custom"),
+        ("export", "import"),
+        ("export", "custom"),
+    ],
+)
+def test_update_airflow_dag_with_a_name_of_another_type_returns_400(
+    client: TestClient,
+    auth_headers: dict[str, str],
+    db_connection: sa.Connection,
+    kind: str,
+    other: str,
+) -> None:
+    if other == "custom":
+        insert_row(
+            db_connection,
+            "airflow_custom_dags",
+            dag_name="dag_a",
+            schedule_interval="None",
+        )
+    else:
+        _add_airflow_dag(db_connection, other)
+
+    response = client.post(
+        f"/airflow/dags/{kind}/dag_a", json={"name": "dag_a"}, headers=auth_headers
+    )
+
+    assert response.status_code == 400
+    assert _dag_names(db_connection, kind) == []
