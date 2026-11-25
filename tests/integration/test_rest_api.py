@@ -3032,3 +3032,21 @@ def test_update_airflow_dag_with_a_name_of_another_type_returns_400(
 
     assert response.status_code == 400
     assert _dag_names(db_connection, kind) == []
+
+
+@DAG_KINDS
+def test_get_airflow_dag_of_unknown_dag_returns_404_and_ends_its_transaction(
+    client: TestClient,
+    auth_headers: dict[str, str],
+    db_connection: sa.Connection,
+    kind: str,
+) -> None:
+    response = client.get(f"/airflow/dags/{kind}/nope", headers=auth_headers)
+
+    # An open transaction on the table would make the TRUNCATE wait.
+    db_connection.execute(
+        sa.text(
+            f"SET STATEMENT lock_wait_timeout = 2 FOR TRUNCATE TABLE {DAG_TABLES[kind]}"
+        )
+    )
+    assert response.status_code == 404
