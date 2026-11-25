@@ -31,7 +31,7 @@ from pydantic import ValidationError
 from sqlalchemy import bindparam
 from sqlalchemy.dialects.mysql import insert
 from sqlalchemy.orm import aliased, scoped_session, sessionmaker
-from sqlalchemy.sql import delete, update
+from sqlalchemy.sql import delete, select, update
 
 from dbimport.common import constants as constant
 from dbimport.common.exceptions import InvalidConfigurationError, SQLError
@@ -3205,6 +3205,16 @@ class DBCalls:
         for tables in bulk_data:
             table_list.append({"dag": tables.name})
 
+        # Only the tasks of a DAG of this type: the DAG types share names.
+        session.connection().execute(
+            delete(config_schema.AirflowTasks).where(
+                config_schema.AirflowTasks.dag_name == bindparam("dag"),
+                select(config_schema.AirflowImportDAGs.dag_name)
+                .where(config_schema.AirflowImportDAGs.dag_name == bindparam("dag"))
+                .exists(),
+            ),
+            table_list,
+        )
         session.connection().execute(delete_statement, table_list)
         session.commit()
         session.remove()
@@ -3503,6 +3513,16 @@ class DBCalls:
         for tables in bulk_data:
             table_list.append({"dag": tables.name})
 
+        # Only the tasks of a DAG of this type: the DAG types share names.
+        session.connection().execute(
+            delete(config_schema.AirflowTasks).where(
+                config_schema.AirflowTasks.dag_name == bindparam("dag"),
+                select(config_schema.AirflowExportDAGs.dag_name)
+                .where(config_schema.AirflowExportDAGs.dag_name == bindparam("dag"))
+                .exists(),
+            ),
+            table_list,
+        )
         session.connection().execute(delete_statement, table_list)
         session.commit()
         session.remove()

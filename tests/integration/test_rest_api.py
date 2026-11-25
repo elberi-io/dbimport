@@ -3050,3 +3050,56 @@ def test_get_airflow_dag_of_unknown_dag_returns_404_and_ends_its_transaction(
         )
     )
     assert response.status_code == 404
+
+
+@DAG_KINDS
+def test_bulk_delete_of_airflow_dags_removes_their_tasks(
+    client: TestClient,
+    auth_headers: dict[str, str],
+    db_connection: sa.Connection,
+    kind: str,
+) -> None:
+    for name in ("dag_a", "dag_b"):
+        _add_airflow_dag(db_connection, kind, name)
+        _add_airflow_task(db_connection, name, "prepare")
+
+    client.request(
+        "DELETE",
+        f"/airflow/dags/{kind}",
+        json=[{"name": "dag_a"}],
+        headers=auth_headers,
+    )
+
+    assert _task_names(db_connection) == [("dag_b", "prepare")]
+
+
+@pytest.mark.parametrize(
+    ("kind", "other"),
+    [("import", "export"), ("import", "custom"), ("export", "import")],
+)
+def test_bulk_delete_of_airflow_dags_keeps_the_tasks_of_another_dag_type(
+    client: TestClient,
+    auth_headers: dict[str, str],
+    db_connection: sa.Connection,
+    kind: str,
+    other: str,
+) -> None:
+    if other == "custom":
+        insert_row(
+            db_connection,
+            "airflow_custom_dags",
+            dag_name="dag_a",
+            schedule_interval="None",
+        )
+    else:
+        _add_airflow_dag(db_connection, other)
+    _add_airflow_task(db_connection, "dag_a", "prepare")
+
+    client.request(
+        "DELETE",
+        f"/airflow/dags/{kind}",
+        json=[{"name": "dag_a"}],
+        headers=auth_headers,
+    )
+
+    assert _task_names(db_connection) == [("dag_a", "prepare")]
