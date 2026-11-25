@@ -22,6 +22,8 @@ import re
 import shutil
 import subprocess
 import sys
+from collections.abc import Iterator
+from contextlib import contextmanager
 from datetime import datetime
 from typing import Any
 
@@ -43,6 +45,7 @@ from dbimport.common.exceptions import (
 from dbimport.common.singleton import Singleton
 from dbimport.config_db import decryption as decryption
 from dbimport.config_db import engine as config_engine
+from dbimport.config_db.repositories.change_history import ChangeHistoryRepository
 from dbimport.config_db.repositories.configuration import (
     ConfigurationError,
     ConfigurationRepository,
@@ -52,8 +55,17 @@ from dbimport.config_db.repositories.connections import (
     ConnectionsRepository,
     JDBCConnection,
 )
+from dbimport.config_db.repositories.run_log import RunLogRepository
 from dbimport.settings import get_settings
 from dbimport.source_schema import schema_reader
+
+
+def _logged(value: str | None, name: str) -> str:
+    """A value a log row needs (the column is NOT NULL); None raises
+    ValueError."""
+    if value is None:
+        raise ValueError(f"The log entry has no {name}")
+    return value
 
 
 class Config(metaclass=Singleton):
@@ -150,7 +162,7 @@ class Config(metaclass=Singleton):
         self.spark_log_level = None
 
         self.operation_timestamp: datetime | None = None
-        self.yarn_application_start: str | None = None
+        self.yarn_application_start: datetime | None = None
 
         self.schema_reader = None
         self.table_type: str | None = None
@@ -1918,6 +1930,18 @@ class Config(metaclass=Singleton):
 
         logging.debug("Executing common_config.drop_jdbc_table() - Finished")
 
+    @contextmanager
+    def _write_run_log(self) -> Iterator[RunLogRepository]:
+        with Session(config_engine.engine()) as session:
+            yield RunLogRepository(session)
+            session.commit()
+
+    @contextmanager
+    def _write_change_history(self) -> Iterator[ChangeHistoryRepository]:
+        with Session(config_engine.engine()) as session:
+            yield ChangeHistoryRepository(session)
+            session.commit()
+
     def log_import_failure(
         self,
         error_text: str,
@@ -1932,26 +1956,15 @@ class Config(metaclass=Singleton):
         if hive_table == None:
             hive_table = self.hive_table
 
-        query = "insert into import_failure_log "
-        query += (
-            "( hive_db, hive_table, eventtime, severity, import_type, error_text ) "
-        )
-        query += "values "
-        query += "( %s, %s, %s, %s, %s, %s )"
-
-        logging.debug("SQL Statement executed: %s", query)
-        self.mysql_cursor.execute(
-            query,
-            (
-                hive_db,
-                hive_table,
-                datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f"),
-                severity,
-                import_type,
-                error_text,
-            ),
-        )
-        self.mysql_conn.commit()
+        with self._write_run_log() as run_log:
+            run_log.log_import_failure(
+                _logged(hive_db, "hive_db"),
+                _logged(hive_table, "hive_table"),
+                severity=severity,
+                import_type=import_type,
+                error_text=error_text,
+                eventtime=datetime.now(),
+            )
 
     def log_hive_column_add(
         self,
@@ -1972,24 +1985,17 @@ class Config(metaclass=Singleton):
         if hive_table == None:
             hive_table = self.hive_table
 
-        query = "insert into table_change_history "
-        query += "( hive_db, hive_table, column_name, eventtime, event, value, description ) "
-        query += "values "
-        query += "( %s, %s, %s, %s, 'column_added', %s, %s )"
-
-        logging.debug("SQL Statement executed: %s", query)
-        self.mysql_cursor.execute(
-            query,
-            (
-                hive_db,
-                hive_table,
+        with self._write_change_history() as history:
+            history.log_hive_change(
+                _logged(hive_db, "hive_db"),
+                _logged(hive_table, "hive_table"),
                 column,
-                datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f"),
-                column_type,
-                description,
-            ),
-        )
-        self.mysql_conn.commit()
+                "column_added",
+                previous_value=None,
+                value=column_type,
+                description=description,
+                eventtime=datetime.now(),
+            )
 
     def log_hive_column_type_change(
         self,
@@ -2016,25 +2022,17 @@ class Config(metaclass=Singleton):
         if hive_table == None:
             hive_table = self.hive_table
 
-        query = "insert into table_change_history "
-        query += "( hive_db, hive_table, column_name, eventtime, event, previous_value, value, description ) "
-        query += "values "
-        query += "( %s, %s, %s, %s, 'column_type_change', %s, %s, %s )"
-
-        logging.debug("SQL Statement executed: %s", query)
-        self.mysql_cursor.execute(
-            query,
-            (
-                hive_db,
-                hive_table,
+        with self._write_change_history() as history:
+            history.log_hive_change(
+                _logged(hive_db, "hive_db"),
+                _logged(hive_table, "hive_table"),
                 column,
-                datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f"),
-                previous_column_type,
-                column_type,
-                description,
-            ),
-        )
-        self.mysql_conn.commit()
+                "column_type_change",
+                previous_value=previous_column_type,
+                value=column_type,
+                description=description,
+                eventtime=datetime.now(),
+            )
 
     def log_hive_column_rename(
         self,
@@ -2056,25 +2054,17 @@ class Config(metaclass=Singleton):
         if hive_table == None:
             hive_table = self.hive_table
 
-        query = "insert into table_change_history "
-        query += "( hive_db, hive_table, column_name, eventtime, event, previous_value, value, description ) "
-        query += "values "
-        query += "( %s, %s, %s, %s, 'column_rename', %s, %s, %s )"
-
-        logging.debug("SQL Statement executed: %s", query)
-        self.mysql_cursor.execute(
-            query,
-            (
-                hive_db,
-                hive_table,
+        with self._write_change_history() as history:
+            history.log_hive_change(
+                _logged(hive_db, "hive_db"),
+                _logged(hive_table, "hive_table"),
                 column_name,
-                datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f"),
-                previous_column_name,
-                column_name,
-                description,
-            ),
-        )
-        self.mysql_conn.commit()
+                "column_rename",
+                previous_value=previous_column_name,
+                value=column_name,
+                description=description,
+                eventtime=datetime.now(),
+            )
 
     def log_jdbc_column_add(
         self,
@@ -2092,26 +2082,19 @@ class Config(metaclass=Singleton):
                 column_type,
             )
 
-        query = "insert into jdbc_table_change_history "
-        query += "( dbalias, db_name, schema_name, table_name, column_name, eventtime, event, value, description ) "
-        query += "values "
-        query += "( %s, %s, %s, %s, %s, %s, 'column_added', %s, %s )"
-
-        logging.debug("SQL Statement executed: %s", query)
-        self.mysql_cursor.execute(
-            query,
-            (
-                db_alias,
-                database,
-                schema,
-                table,
+        with self._write_change_history() as history:
+            history.log_jdbc_change(
+                _logged(db_alias, "db_alias"),
+                _logged(database, "database"),
+                _logged(schema, "schema"),
+                _logged(table, "table"),
                 column,
-                datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f"),
-                column_type,
-                description,
-            ),
-        )
-        self.mysql_conn.commit()
+                "column_added",
+                previous_value=None,
+                value=column_type,
+                description=description,
+                eventtime=datetime.now(),
+            )
 
     def log_jdbc_column_type_change(
         self,
@@ -2135,27 +2118,19 @@ class Config(metaclass=Singleton):
                     column_type,
                 )
 
-        query = "insert into jdbc_table_change_history "
-        query += "( dbalias, db_name, schema_name, table_name, column_name, eventtime, event, previous_value, value, description ) "
-        query += "values "
-        query += "( %s, %s, %s, %s, %s, %s, 'column_type_change', %s, %s, %s )"
-
-        logging.debug("SQL Statement executed: %s", query)
-        self.mysql_cursor.execute(
-            query,
-            (
-                db_alias,
-                database,
-                schema,
-                table,
+        with self._write_change_history() as history:
+            history.log_jdbc_change(
+                _logged(db_alias, "db_alias"),
+                _logged(database, "database"),
+                _logged(schema, "schema"),
+                _logged(table, "table"),
                 column,
-                datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f"),
-                previous_column_type,
-                column_type,
-                description,
-            ),
-        )
-        self.mysql_conn.commit()
+                "column_type_change",
+                previous_value=previous_column_type,
+                value=column_type,
+                description=description,
+                eventtime=datetime.now(),
+            )
 
     def log_jdbc_column_rename(
         self,
@@ -2174,27 +2149,19 @@ class Config(metaclass=Singleton):
                 column_name,
             )
 
-        query = "insert into jdbc_table_change_history "
-        query += "( dbalias, db_name, schema_name, table_name, column_name, eventtime, event, previous_value, value, description ) "
-        query += "values "
-        query += "( %s, %s, %s, %s, %s, %s, 'column_rename', %s, %s, %s )"
-
-        logging.debug("SQL Statement executed: %s", query)
-        self.mysql_cursor.execute(
-            query,
-            (
-                db_alias,
-                database,
-                schema,
-                table,
+        with self._write_change_history() as history:
+            history.log_jdbc_change(
+                _logged(db_alias, "db_alias"),
+                _logged(database, "database"),
+                _logged(schema, "schema"),
+                _logged(table, "table"),
                 column_name,
-                datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f"),
-                previous_column_name,
-                column_name,
-                description,
-            ),
-        )
-        self.mysql_conn.commit()
+                "column_rename",
+                previous_value=previous_column_name,
+                value=column_name,
+                description=description,
+                eventtime=datetime.now(),
+            )
 
     def get_quote_around_column(self) -> str:
         quote_around_column = ""
@@ -2269,9 +2236,6 @@ class Config(metaclass=Singleton):
             logging.error("%s", error)
             self.remove_temporary_files()
             sys.exit(1)
-        # The SQL read on the raw connection ended its transaction here, and
-        # the config_db code that still uses that connection relies on it.
-        self.mysql_conn.commit()
         logging.debug("Fetched configuration '%s' as '%s'", key, value)
         return value
 
@@ -2464,14 +2428,8 @@ class Config(metaclass=Singleton):
         """Saves a json that was unable to be sent successfully to the 'json_to_send' table so it can be sent at a later time"""
         logging.debug("Executing common_config.save_json_to_database()")
 
-        query = "insert into json_to_send "
-        query += "( type, status, destination, jsondata ) "
-        query += "values "
-        query += "( %s, 0, %s, %s )"
-
-        logging.debug("SQL Statement executed: %s", query)
-        self.mysql_cursor.execute(query, (datatype, destination, json))
-        self.mysql_conn.commit()
+        with self._write_run_log() as run_log:
+            run_log.keep_json(datatype, destination, json)
 
         logging.debug("Executing common_config.save_json_to_database() - Finished")
 
@@ -2486,77 +2444,49 @@ class Config(metaclass=Singleton):
         """insert or update data to yarn_statistics"""
         logging.debug("Executing common_config.update_yarn_statistics()")
 
-        query = None
-        start_stop_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        start_stop_date = datetime.now().replace(microsecond=0)
         if yarn_containers_total == None:
             # If it's None, it means that it was called when query was started. At this stage, we need to insert the data
-
-            if self.operation_type == "import":
+            if self.operation_type in ("import", "export"):
+                if self.operation_timestamp is None:
+                    raise ValueError("The log entry has no operation_timestamp")
                 self.yarn_application_start = start_stop_date
-
-                query = "insert into yarn_statistics "
-                query += "( yarn_application_id, operation_timestamp, operation_tool, operation_type, hive_db, hive_table, application_start ) "
-                query += "values "
-                query += "( %s, %s, %s, 'import', %s, %s, %s )"
-
-                logging.debug("SQL Statement executed: %s", query)
-                self.mysql_cursor.execute(
-                    query,
-                    (
-                        yarn_application_id,
-                        self.operation_timestamp,
-                        operation_tool,
-                        self.hive_db,
-                        self.hive_table,
-                        start_stop_date,
-                    ),
-                )
-                self.mysql_conn.commit()
-
-            if self.operation_type == "export":
-                self.yarn_application_start = start_stop_date
-
-                query = "insert into yarn_statistics "
-                query += "( yarn_application_id, operation_timestamp, operation_tool, operation_type, dbalias, target_schema, target_table, application_start ) "
-                query += "values "
-                query += "( %s, %s, %s, 'export', %s, %s, %s, %s )"
-
-                logging.debug("SQL Statement executed: %s", query)
-                self.mysql_cursor.execute(
-                    query,
-                    (
-                        yarn_application_id,
-                        self.operation_timestamp,
-                        operation_tool,
-                        self.db_alias,
-                        self.target_schema,
-                        self.target_table,
-                        start_stop_date,
-                    ),
-                )
-                self.mysql_conn.commit()
+                with self._write_run_log() as run_log:
+                    if self.operation_type == "import":
+                        run_log.start_yarn_application(
+                            yarn_application_id,
+                            operation_type="import",
+                            operation_tool=operation_tool,
+                            operation_timestamp=self.operation_timestamp,
+                            application_start=start_stop_date,
+                            hive_db=self.hive_db,
+                            hive_table=self.hive_table,
+                        )
+                    else:
+                        run_log.start_yarn_application(
+                            yarn_application_id,
+                            operation_type="export",
+                            operation_tool=operation_tool,
+                            operation_timestamp=self.operation_timestamp,
+                            application_start=start_stop_date,
+                            dbalias=self.db_alias,
+                            target_schema=self.target_schema,
+                            target_table=self.target_table,
+                        )
 
         else:
             if self.yarn_application_start is None:
                 # This is just a protection-function and should under normal operations never happen as a query must start before we get any data up update about.
                 return
 
-            query = "update yarn_statistics "
-            query += "set application_stop = %s, yarn_containers_total = %s, yarn_containers_failed = %s, yarn_containers_killed = %s "
-            query += "where yarn_application_id = %s and application_start = %s"
-
-            logging.debug("SQL Statement executed: %s", query)
-            self.mysql_cursor.execute(
-                query,
-                (
-                    start_stop_date,
-                    yarn_containers_total,
-                    yarn_containers_failed,
-                    yarn_containers_killed,
+            with self._write_run_log() as run_log:
+                run_log.finish_yarn_application(
                     yarn_application_id,
                     self.yarn_application_start,
-                ),
-            )
-            self.mysql_conn.commit()
+                    application_stop=start_stop_date,
+                    containers_total=yarn_containers_total,
+                    containers_failed=yarn_containers_failed,
+                    containers_killed=yarn_containers_killed,
+                )
 
         logging.debug("Executing common_config.update_yarn_statistics() - Finished")

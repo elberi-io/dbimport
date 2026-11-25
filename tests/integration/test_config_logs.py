@@ -387,3 +387,52 @@ def test_update_yarn_statistics_with_containers_before_the_start_does_nothing(
     )
 
     assert _rows(db_connection, "yarn_statistics", "yarn_application_id") == []
+
+
+@pytest.mark.parametrize(
+    ("method", "kwargs", "table"),
+    [
+        (
+            "log_import_failure",
+            {"error_text": "lock removed", "severity": "Warning"},
+            "import_failure_log",
+        ),
+        ("log_hive_column_add", {"column": "id"}, "table_change_history"),
+        (
+            "log_jdbc_column_add",
+            {"column": "id", **JDBC_TABLE, "schema": None},
+            "jdbc_table_change_history",
+        ),
+    ],
+    ids=["import-failure", "hive-column", "jdbc-column"],
+)
+def test_log_without_its_table_raises_and_stores_nothing(
+    config: common_config.Config,
+    db_connection: sa.Connection,
+    method: str,
+    kwargs: dict[str, str | None],
+    table: str,
+) -> None:
+    config.hive_db = None
+
+    with pytest.raises(ValueError, match="has no"):
+        getattr(config, method)(**kwargs)
+
+    assert (
+        _rows(
+            db_connection, table, "column_name" if "history" in table else "error_text"
+        )
+        == []
+    )
+
+
+def test_update_yarn_statistics_without_operation_timestamp_raises(
+    config: common_config.Config, db_connection: sa.Connection
+) -> None:
+    config.operation_type = "import"
+    config.operation_timestamp = None
+
+    with pytest.raises(ValueError, match="operation_timestamp"):
+        config.update_yarn_statistics("application_1_0001", "spark")
+
+    assert _rows(db_connection, "yarn_statistics", "yarn_application_id") == []
