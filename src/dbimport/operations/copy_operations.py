@@ -921,7 +921,7 @@ class Operation(metaclass=Singleton):
                 local_session.query(config_schema.AirflowTasks.__table__).filter(
                     config_schema.AirflowTasks.dag_name == airflow_dag_name
                 )
-            )
+            ).replace({np.nan: None})
 
             copied_jdbc_connections = []
             for _index, row in airflow_tasks_result.iterrows():
