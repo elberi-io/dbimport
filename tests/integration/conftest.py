@@ -9,9 +9,13 @@ import configparser
 import os
 from collections.abc import Iterator
 from pathlib import Path
+from typing import Any
 
 import pytest
 import sqlalchemy as sa
+from sqlalchemy.ext.compiler import compiles
+from sqlalchemy.schema import CreateColumn
+from sqlalchemy.sql.compiler import DDLCompiler
 
 from tests.configdb import close_dbimport_connections
 
@@ -19,6 +23,8 @@ _INTEGRATION_DIR = Path(__file__).parent
 # Hosts the fixtures may reset. DBIMPORT_TEST_DB_HOST adds one explicitly.
 _LOCAL_HOSTS = {"127.0.0.1", "localhost"}
 _TEST_DATABASE = "DBImport"
+# Second database of the compose server, created by tests/fixtures/mariadb-init.sql.
+ORM_DATABASE = "DBImport_orm"
 
 
 @pytest.hookimpl(tryfirst=True)
@@ -122,3 +128,53 @@ def db_connection(config_db: None, engine: sa.Engine) -> Iterator[sa.Connection]
     """Autocommit connection to the test configuration database."""
     with engine.connect() as conn:
         yield conn
+
+
+# sqlalchemy.ext.compiler and the DDL compiler are not annotated.
+@compiles(CreateColumn, "mysql")  # type: ignore[no-untyped-call, untyped-decorator]
+def _create_column(
+    element: CreateColumn, compiler: DDLCompiler, **kw: Any
+) -> str | None:
+    """Add AUTO_INCREMENT to a column outside the primary key that sets
+    info={"auto_increment": True} in config_schema; SQLAlchemy adds it only
+    to a primary key column."""
+    ddl: str | None = compiler.visit_create_column(element, **kw)  # type: ignore[no-untyped-call]
+    if (
+        ddl is not None
+        and element.element.info.get("auto_increment")
+        and "AUTO_INCREMENT" not in ddl
+    ):
+        ddl += " AUTO_INCREMENT"
+    return ddl
+
+
+@pytest.fixture
+def orm_db_connection(engine: sa.Engine) -> Iterator[sa.Connection]:
+    """Connection to the second test database, holding only the tables that
+    the ORM creates. Uses the host the engine fixture has checked."""
+    from dbimport.config_db import config_schema
+
+    orm_engine = sa.create_engine(
+        engine.url.set(database=ORM_DATABASE),
+        connect_args={"connect_timeout": 10},
+        isolation_level="AUTOCOMMIT",
+    )
+    try:
+        conn = orm_engine.connect()
+    except sa.exc.OperationalError as exc:
+        orm_engine.dispose()
+        pytest.fail(
+            f"Cannot connect to database {ORM_DATABASE} ({exc.orig}). It is "
+            "created when the compose server starts on an empty data "
+            "directory: docker compose down, then docker compose up -d --wait."
+        )
+    try:
+        with conn:
+            conn.execute(sa.text("SET FOREIGN_KEY_CHECKS = 0"))
+            for table in conn.execute(sa.text("SHOW TABLES")).scalars().all():
+                conn.execute(sa.text(f"DROP TABLE `{table}`"))
+            conn.execute(sa.text("SET FOREIGN_KEY_CHECKS = 1"))
+            config_schema.Base.metadata.create_all(conn)
+            yield conn
+    finally:
+        orm_engine.dispose()
