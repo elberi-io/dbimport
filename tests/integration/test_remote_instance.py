@@ -116,7 +116,8 @@ def test_check_remote_instance_schema_at_the_same_version_returns(
 
 
 @pytest.mark.parametrize(
-    "problem", ["other-version", "no-credentials", "unknown-instance"]
+    "problem",
+    ["other-version", "no-version", "no-credentials", "unknown-instance"],
 )
 def test_check_remote_instance_schema_exits_when_it_cannot_confirm_the_version(
     remote: sa.Connection, engine: sa.Engine, problem: str
@@ -125,6 +126,8 @@ def test_check_remote_instance_schema_exits_when_it_cannot_confirm_the_version(
         _save_test_user(engine)
     if problem == "other-version":
         remote.execute(sa.text("UPDATE alembic_version SET version_num = 'other'"))
+    elif problem == "no-version":
+        remote.execute(sa.text("DELETE FROM alembic_version"))
     copy = copy_operations.Operation()
 
     with pytest.raises(SystemExit) as exit_info:

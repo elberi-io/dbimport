@@ -848,7 +848,7 @@ class Operation(metaclass=Singleton):
                 alembic_version.version_num
             ).one_or_none()
 
-            if local_version[0] != remote_version[0]:
+            if remote_version is None or local_version != remote_version:
                 logging.error(
                     "The remote DBImport instance is not running with the same version."
                 )
