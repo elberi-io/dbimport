@@ -145,3 +145,16 @@ def test_connect_remote_dbimport_instance_takes_the_password_literally(
     copy = copy_operations.Operation()
 
     assert copy.connect_remote_dbimport_instance(instance=INSTANCE) is False
+
+
+@pytest.mark.parametrize("extra", [" more", ""], ids=["with-a-space", "empty"])
+def test_connect_remote_dbimport_instance_takes_the_whole_password_after_the_user(
+    remote: sa.Connection, engine: sa.Engine, extra: str
+) -> None:
+    assert engine.url.username is not None
+    assert engine.url.password is not None
+    password = engine.url.password + extra if extra else ""
+    _save_credentials(engine.url.username, password)
+    copy = copy_operations.Operation()
+
+    assert copy.connect_remote_dbimport_instance(instance=INSTANCE) is False

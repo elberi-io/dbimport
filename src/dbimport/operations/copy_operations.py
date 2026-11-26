@@ -193,8 +193,13 @@ class Operation(metaclass=Singleton):
             )
             return False
 
-        username = db_credentials.split(" ")[0]
-        password = db_credentials.split(" ")[1]
+        username, separator, password = db_credentials.partition(" ")
+        if separator == "":
+            logging.warning(
+                "The credentials saved in 'dbimport_instances' for %s have no password",
+                instance,
+            )
+            return False
 
         instance_url = config_engine.url(
             config_engine.Credentials(

@@ -602,8 +602,13 @@ class ServerDaemon(run.RunDaemon):
             )
             return None
 
-        username = db_credentials.split(" ")[0]
-        password = db_credentials.split(" ")[1]
+        username, separator, password = db_credentials.partition(" ")
+        if separator == "":
+            log.warning(
+                "The credentials saved in 'dbimport_instances' for %s have no password",
+                instance,
+            )
+            return None
 
         instance_url = config_engine.url(
             config_engine.Credentials(
