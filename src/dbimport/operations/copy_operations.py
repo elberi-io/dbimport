@@ -25,11 +25,15 @@ from datetime import datetime
 import numpy as np
 import pandas as pd
 import sqlalchemy as sa
-from sqlalchemy.orm import aliased, sessionmaker
+from sqlalchemy.orm import Session, aliased, sessionmaker
 
 from dbimport.common.exceptions import InvalidConfigurationError
 from dbimport.common.singleton import Singleton
 from dbimport.config_db import config_schema, import_config
+from dbimport.config_db import engine as config_engine
+from dbimport.config_db.repositories.airflow_dags import AirflowDAGsRepository
+from dbimport.config_db.repositories.copies import CopiesRepository
+from dbimport.config_db.repositories.import_tables import ImportTablesRepository
 from dbimport.operations import common_operations
 from dbimport.settings import get_settings
 
@@ -65,17 +69,10 @@ class Operation(metaclass=Singleton):
     def check_dbimport_instance(self, instance):
         """Checks if instance exists in the dbimport_instances table"""
 
-        session = self.config_db_session()
-        dbimport_instances = aliased(config_schema.DBImportInstances)
+        with Session(config_engine.engine()) as session:
+            exists = CopiesRepository(session).instance_exists(instance)
 
-        result = (
-            session.query(dbimport_instances.name)
-            .select_from(dbimport_instances)
-            .filter(dbimport_instances.name == instance)
-            .count()
-        )
-
-        if result == 0:
+        if not exists:
             logging.error(
                 "No DBImport Instance with that name can be found in table 'dbimport_instances'"
             )
@@ -96,45 +93,29 @@ class Operation(metaclass=Singleton):
             self.remove_temporary_files()
             sys.exit(1)
 
-        session = self.config_db_session()
-        dbimport_instances = aliased(config_schema.DBImportInstances)
-
-        dbimport_instance = (
-            session.query(dbimport_instances)
-            .filter(dbimport_instances.name == instance)
-            .one()
-        )
-
-        dbimport_instance.db_credentials = encrypted_str
-        session.commit()
+        with Session(config_engine.engine()) as session:
+            CopiesRepository(session).save_credentials(instance, encrypted_str)
+            session.commit()
 
     def get_copy_destinations(self, hive_db, hive_table):
         """Return the Copy Phase that the specified table have"""
 
-        session = self.config_db_session()
-        copy_tables = aliased(config_schema.CopyTables)
+        with Session(config_engine.engine()) as session:
+            rules = CopiesRepository(session).copy_rules()
 
         self.copy_destinations = []
 
-        copy_tables_result = pd.DataFrame(
-            session.query(
-                copy_tables.copy_id,
-                copy_tables.hive_filter,
-                copy_tables.destination,
-                copy_tables.data_transfer,
-            ).all()
-        ).fillna("")
-        for _index, row in copy_tables_result.iterrows():
-            if ";" in row["destination"]:
+        for rule in rules:
+            if ";" in rule.destination:
                 logging.error("';' not supported in the Copy Destination name")
                 self.remove_temporary_files()
                 sys.exit(1)
 
-            for hive_filter_split in row["hive_filter"].split(";"):
+            for hive_filter_split in rule.hive_filter.split(";"):
                 if "." not in hive_filter_split:
                     logging.warning(
                         "The filter in table 'copy_tables' with copy_id = %s contains an invalid filter. Missing a . in the database.table format"
-                        % (row["copy_id"])
+                        % (rule.copy_id)
                     )
                 else:
                     filter_db = hive_filter_split.split(".")[0]
@@ -144,11 +125,11 @@ class Operation(metaclass=Singleton):
                         hive_table, filter_table
                     ):
                         dest_string = "%s;%s" % (
-                            row["destination"],
-                            row["data_transfer"],
+                            rule.destination,
+                            rule.data_transfer,
                         )
-                        dest_string_async = "%s;Asynchronous" % (row["destination"])
-                        dest_string_sync = "%s;Synchronous" % (row["destination"])
+                        dest_string_async = "%s;Asynchronous" % (rule.destination)
+                        dest_string_sync = "%s;Synchronous" % (rule.destination)
                         if (
                             dest_string_sync in self.copy_destinations
                             and dest_string == dest_string_async
@@ -259,38 +240,23 @@ class Operation(metaclass=Singleton):
         """Returns True or False if the previous copy was completed. Returns True if there is nothing to copy.
         If it is a full import, then it will return True if the previous copy have status 0 (not started)."""
 
-        session = self.config_db_session()
-        copy_async_status = aliased(config_schema.CopyAsyncStatus)
-
         if self.copy_destinations == None:
             return True
 
         ongoing_copy = False
 
-        for dest_and_method in self.copy_destinations:
-            destination = dest_and_method.split(";")[0]
-            method = dest_and_method.split(";")[1]
+        with Session(config_engine.engine()) as session:
+            copies = CopiesRepository(session)
+            for dest_and_method in self.copy_destinations:
+                destination = dest_and_method.split(";")[0]
 
-            if self.import_config.import_is_incremental:
-                result = (
-                    session.query(copy_async_status)
-                    .filter(copy_async_status.table_id == self.import_config.table_id)
-                    .filter(copy_async_status.destination == destination)
-                    .count()
+                copy_status = copies.async_copy_status(
+                    self.import_config.table_id, destination
                 )
-            else:
-                result = (
-                    session.query(copy_async_status)
-                    .filter(copy_async_status.table_id == self.import_config.table_id)
-                    .filter(copy_async_status.destination == destination)
-                    .filter(copy_async_status.copy_status > 0)
-                    .count()
-                )
-
-            if result > 0:
-                ongoing_copy = True
-
-        session.close()
+                if copy_status is not None and (
+                    self.import_config.import_is_incremental or copy_status > 0
+                ):
+                    ongoing_copy = True
 
         if ongoing_copy:
             return False
@@ -298,8 +264,6 @@ class Operation(metaclass=Singleton):
             return True
 
     def copy_data_to_destinations(self):
-        session = self.config_db_session()
-
         source_hdfs_address = self.common_operations.hdfs_address
         source_hdfs_basedir = self.common_operations.hdfs_basedir
 
@@ -312,18 +276,11 @@ class Operation(metaclass=Singleton):
             method = dest_and_method.split(";")[1]
 
             # Calculate the source and target HDFS directories
-            dbimport_instances = aliased(config_schema.DBImportInstances)
+            with Session(config_engine.engine()) as session:
+                target = CopiesRepository(session).hdfs_location(destination)
 
-            row = (
-                session.query(
-                    dbimport_instances.hdfs_address, dbimport_instances.hdfs_basedir
-                )
-                .filter(dbimport_instances.name == destination)
-                .one()
-            )
-
-            target_hdfs_address = row[0]
-            target_hdfs_basedir = row[1]
+            target_hdfs_address = target.hdfs_address
+            target_hdfs_basedir = target.hdfs_basedir
 
             source_hdfs_dir = (
                 (source_hdfs_basedir + "/" + self.hive_db + "/" + self.hive_table)
@@ -337,99 +294,23 @@ class Operation(metaclass=Singleton):
             )
 
             if method == "Asynchronous":
-                copy_async_status = aliased(config_schema.CopyAsyncStatus)
+                table_id = self.import_config.table_id
+                source_path = "%s%s" % (source_hdfs_address, source_hdfs_dir)
+                target_path = "%s%s" % (target_hdfs_address, target_hdfs_dir)
 
-                result = (
-                    session.query(copy_async_status)
-                    .filter(copy_async_status.table_id == self.import_config.table_id)
-                    .filter(copy_async_status.destination == destination)
-                    .count()
-                )
+                with Session(config_engine.engine()) as session:
+                    copies = CopiesRepository(session)
+                    copy_status = copies.async_copy_status(table_id, destination)
 
-                if result == 0:
-                    # No current copy ongoing for this table. Just insert it into the table
-                    newcopy_async_status = config_schema.CopyAsyncStatus(
-                        table_id=self.import_config.table_id,
-                        hive_db=self.import_config.hive_db,
-                        hive_table=self.import_config.hive_table,
-                        destination=destination,
-                        hdfs_source_path="%s%s"
-                        % (source_hdfs_address, source_hdfs_dir),
-                        hdfs_target_path="%s%s"
-                        % (target_hdfs_address, target_hdfs_dir),
-                        copy_status=0,
-                    )
-                    session.add(newcopy_async_status)
-                    session.commit()
-                    logging.info(
-                        "DBImport server was notified about asynchronous copy of imported data to '%s'"
-                        % (destination)
-                    )
-                else:
-                    # This table is already scheduled for ASync copy to another cluster
-                    # If it is a full import without history, it's ok to overwrite if it havent started
-                    # If not, we need to exit here to make sure that the other cluster first process the data before we
-                    # write new data to it.
-
-                    if self.import_config.import_is_incremental:
-                        logging.error(
-                            "This is an incremental import and the previous copy to the other cluster is not finnished yet."
-                        )
-                        logging.error(
-                            "Make sure that the other cluster received the data before you make a new copy"
-                        )
-                        self.remove_temporary_files()
-                        sys.exit(1)
-
-                    if self.import_config.import_with_history_table:
-                        logging.error(
-                            "This is an import that will create a history table and the previous copy to the other cluster"
-                        )
-                        logging.error(
-                            "is not finnished yet. Make sure that the other cluster received the data before you make a new copy"
-                        )
-                        self.remove_temporary_files()
-                        sys.exit(1)
-
-                    # If we passed the two tests above, it means that this is not an incremental or history table that we are going to copy
-                    # If the copy havent started yet (copy_status = 0), we can just overwrite it. Otherwise we have to wait until the copy
-                    # is completed
-
-                    result = (
-                        session.query(copy_async_status)
-                        .filter(
-                            copy_async_status.table_id == self.import_config.table_id
-                        )
-                        .filter(copy_async_status.destination == destination)
-                        .filter(copy_async_status.copy_status > 0)
-                        .count()
-                    )
-
-                    if result == 0:
-                        update_dict = {}
-                        update_dict["last_status_update"] = str(
-                            datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
-                        )
-                        update_dict["hdfs_source_path"] = "%s%s" % (
-                            source_hdfs_address,
-                            source_hdfs_dir,
-                        )
-                        update_dict["hdfs_target_path"] = "%s%s" % (
-                            target_hdfs_address,
-                            target_hdfs_dir,
-                        )
-
-                        # Update the date in CopyAsyncStatus table
-                        (
-                            session.query(config_schema.CopyAsyncStatus)
-                            .filter(
-                                config_schema.CopyAsyncStatus.table_id
-                                == self.import_config.table_id
-                            )
-                            .filter(
-                                config_schema.CopyAsyncStatus.destination == destination
-                            )
-                            .update(update_dict)
+                    if copy_status is None:
+                        # No current copy ongoing for this table. Just insert it into the table
+                        copies.schedule_async_copy(
+                            table_id,
+                            self.import_config.hive_db,
+                            self.import_config.hive_table,
+                            destination,
+                            source_path=source_path,
+                            target_path=target_path,
                         )
                         session.commit()
                         logging.info(
@@ -437,12 +318,55 @@ class Operation(metaclass=Singleton):
                             % (destination)
                         )
                     else:
-                        logging.error(
-                            "There is an ongoing copy of this table to destination '%s'. Please wait until that copy is finished and try again"
+                        # This table is already scheduled for ASync copy to another cluster
+                        # If it is a full import without history, it's ok to overwrite if it havent started
+                        # If not, we need to exit here to make sure that the other cluster first process the data before we
+                        # write new data to it.
+
+                        if self.import_config.import_is_incremental:
+                            logging.error(
+                                "This is an incremental import and the previous copy to the other cluster is not finnished yet."
+                            )
+                            logging.error(
+                                "Make sure that the other cluster received the data before you make a new copy"
+                            )
+                            self.remove_temporary_files()
+                            sys.exit(1)
+
+                        if self.import_config.import_with_history_table:
+                            logging.error(
+                                "This is an import that will create a history table and the previous copy to the other cluster"
+                            )
+                            logging.error(
+                                "is not finnished yet. Make sure that the other cluster received the data before you make a new copy"
+                            )
+                            self.remove_temporary_files()
+                            sys.exit(1)
+
+                        # If we passed the two tests above, it means that this is not an incremental or history table that we are going to copy
+                        # If the copy havent started yet (copy_status = 0), we can just overwrite it. Otherwise we have to wait until the copy
+                        # is completed
+
+                        if copy_status > 0:
+                            logging.error(
+                                "There is an ongoing copy of this table to destination '%s'. Please wait until that copy is finished and try again"
+                                % (destination)
+                            )
+                            self.remove_temporary_files()
+                            sys.exit(1)
+
+                        copies.reschedule_async_copy(
+                            table_id,
+                            destination,
+                            source_path=source_path,
+                            target_path=target_path,
+                            updated=datetime.now(),
+                        )
+                        session.commit()
+                        logging.info(
+                            "DBImport server was notified about asynchronous copy of imported data to '%s'"
                             % (destination)
                         )
-                        self.remove_temporary_files()
-                        sys.exit(1)
 
             else:
                 if self.connect_remote_dbimport_instance(instance=destination):
@@ -493,7 +417,11 @@ class Operation(metaclass=Singleton):
                     print("")
 
     def schedule_table_async_copy(
-        self, hive_filter_db, hive_filter_table, copy_destination
+        self,
+        hive_filter_db,
+        hive_filter_table,
+        copy_destination,
+        include_incr_imports=False,
     ):
         """Schdeule an asynchronous copy of one or more Hive table to the specified destination"""
         logging.debug("Executing copy_operations.schedule_table_async_copy()")
@@ -506,20 +434,13 @@ class Operation(metaclass=Singleton):
         hive_filter_db = hive_filter_db.replace("*", "%").strip()
         hive_filter_table = hive_filter_table.replace("*", "%").strip()
 
-        local_session = self.config_db_session()
-        import_tables = aliased(config_schema.ImportTables)
-        copy_async_status = aliased(config_schema.CopyAsyncStatus)
-
         # Check if there are any tabled in this DAG that is marked for copy against the specified destination
-        result = (
-            local_session.query(copy_async_status)
-            .filter(copy_async_status.hive_db.like(hive_filter_db))
-            .filter(copy_async_status.hive_table.like(hive_filter_table))
-            .filter(copy_async_status.destination == copy_destination)
-            .count()
-        )
+        with Session(config_engine.engine()) as session:
+            scheduled = CopiesRepository(session).has_async_copies(
+                hive_filter_db, hive_filter_table, copy_destination
+            )
 
-        if result > 0:
+        if scheduled:
             logging.error(
                 "There is already tables that matches this DAG's filter that is scheduled for copy against"
             )
@@ -529,105 +450,11 @@ class Operation(metaclass=Singleton):
             self.remove_temporary_files()
             sys.exit(1)
 
-        # Calculate the source and target HDFS directories
-        dbimport_instances = aliased(config_schema.DBImportInstances)
-
-        source_hdfs_address = self.common_operations.hdfs_address
-        source_hdfs_basedir = self.common_operations.hdfs_basedir
-
-        row = (
-            local_session.query(
-                dbimport_instances.hdfs_address, dbimport_instances.hdfs_basedir
-            )
-            .filter(dbimport_instances.name == copy_destination)
-            .one()
+        self._schedule_async_copies(
+            [(hive_filter_db, hive_filter_table)],
+            copy_destination,
+            include_incr_imports,
         )
-
-        target_hdfs_address = row[0]
-        target_hdfs_basedir = row[1]
-
-        logging.debug("sourceHDFSaddress: %s" % (source_hdfs_address))
-        logging.debug("sourceHDFSbasedir: %s" % (source_hdfs_basedir))
-        logging.debug("targetHDFSaddress: %s" % (target_hdfs_address))
-        logging.debug("targetHDFSbasedir: %s" % (target_hdfs_basedir))
-
-        # Fetch a list of tables that match the database and table filter
-        result = pd.DataFrame(
-            local_session.query(
-                import_tables.table_id,
-                import_tables.hive_db,
-                import_tables.hive_table,
-                import_tables.dbalias,
-            )
-            .filter(import_tables.hive_db.like(hive_filter_db))
-            .filter(import_tables.hive_table.like(hive_filter_table))
-        )
-
-        for _index, row in result.iterrows():
-            logging.info(
-                "Schedule asynchronous copy for %s.%s",
-                row["hive_db"],
-                row["hive_table"],
-            )
-            self.import_config.hive_db = row["hive_db"]
-            self.import_config.hive_table = row["hive_table"]
-
-            try:
-                self.import_config.get_import_config()
-            except InvalidConfigurationError as errMsg:
-                logging.error(errMsg)
-                self.import_config.remove_temporary_files()
-                sys.exit(1)
-
-            logging.debug("table_id: %s", self.import_config.table_id)
-            logging.debug(
-                "import_is_incremental: %s", self.import_config.import_is_incremental
-            )
-
-            if (
-                self.import_config.import_is_incremental and includeIncrImports == False  # noqa: F821  # TODO(#163): not a parameter of this method
-            ):
-                logging.warning(
-                    "Asynchronous copy for incremental table %s.%s skipped",
-                    row["hive_db"],
-                    row["hive_table"],
-                )
-                continue
-
-            source_hdfs_dir = (
-                (source_hdfs_basedir + "/" + row["hive_db"] + "/" + row["hive_table"])
-                .replace("$", "")
-                .replace(" ", "")
-            )
-            target_hdfs_dir = (
-                (target_hdfs_basedir + "/" + row["hive_db"] + "/" + row["hive_table"])
-                .replace("$", "")
-                .replace(" ", "")
-            )
-            logging.debug("sourceHDFSdir: %s" % (source_hdfs_dir))
-            logging.debug("targetHDFSdir: %s" % (target_hdfs_dir))
-
-            result = (
-                local_session.query(copy_async_status)
-                .filter(copy_async_status.table_id == row["table_id"])
-                .filter(copy_async_status.destination == copy_destination)
-                .count()
-            )
-
-            if result == 0:
-                newcopy_async_status = config_schema.CopyAsyncStatus(
-                    table_id=row["table_id"],
-                    hive_db=row["hive_db"],
-                    hive_table=row["hive_table"],
-                    destination=copy_destination,
-                    hdfs_source_path="%s%s" % (source_hdfs_address, source_hdfs_dir),
-                    hdfs_target_path="%s%s" % (target_hdfs_address, target_hdfs_dir),
-                    copy_status=0,
-                )
-                local_session.add(newcopy_async_status)
-                local_session.commit()
-
-        local_session.close()
 
         logging.debug(
             "Executing copy_operations.schedule_table_async_copy() - Finished"
@@ -643,98 +470,86 @@ class Operation(metaclass=Singleton):
             self.remove_temporary_files()
             sys.exit(1)
 
-        local_session = self.config_db_session()
-        airflow_import_dags = aliased(config_schema.AirflowImportDAGs)
-        import_tables = aliased(config_schema.ImportTables)
-        copy_async_status = aliased(config_schema.CopyAsyncStatus)
+        with Session(config_engine.engine()) as session:
+            dag = AirflowDAGsRepository(session).import_dag(airflow_dag_name)
 
-        hive_filter_str = (
-            local_session.query(airflow_import_dags.filter_hive)
-            .select_from(airflow_import_dags)
-            .filter(airflow_import_dags.dag_name == airflow_dag_name)
-            .one()
-        )
+        if dag is None:
+            logging.error("The specified Airflow DAG does not exist.")
+            self.remove_temporary_files()
+            sys.exit(1)
 
-        for hive_filter in hive_filter_str[0].split(";"):
+        hive_filters = []
+        for hive_filter in dag.filter_hive.split(";"):
             hive_filter_db = hive_filter.split(".")[0]
             hive_filter_table = hive_filter.split(".")[1]
 
-            hive_filter_db = hive_filter_db.replace("*", "%").strip()
-            hive_filter_table = hive_filter_table.replace("*", "%").strip()
-
-            # Check if there are any tabled in this DAG that is marked for copy against the specified destination
-            result = (
-                local_session.query(copy_async_status)
-                .filter(copy_async_status.hive_db.like(hive_filter_db))
-                .filter(copy_async_status.hive_table.like(hive_filter_table))
-                .filter(copy_async_status.destination == copy_destination)
-                .count()
+            hive_filters.append(
+                (
+                    hive_filter_db.replace("*", "%").strip(),
+                    hive_filter_table.replace("*", "%").strip(),
+                )
             )
 
-            if result > 0:
-                logging.error(
-                    "There is already tables that matches this DAG's filter that is scheduled for copy against"
-                )
-                logging.error(
-                    "the specified destination. This operation cant continue until all the current copies are completed"
-                )
-                self.remove_temporary_files()
-                sys.exit(1)
+        with Session(config_engine.engine()) as session:
+            copies = CopiesRepository(session)
+            for hive_filter_db, hive_filter_table in hive_filters:
+                # Check if there are any tabled in this DAG that is marked for copy against the specified destination
+                if copies.has_async_copies(
+                    hive_filter_db, hive_filter_table, copy_destination
+                ):
+                    logging.error(
+                        "There is already tables that matches this DAG's filter that is scheduled for copy against"
+                    )
+                    logging.error(
+                        "the specified destination. This operation cant continue until all the current copies are completed"
+                    )
+                    self.remove_temporary_files()
+                    sys.exit(1)
+
+        # We need this for loop here again as there might be multi table specifications that ovarlap each other. So it's important that we
+        # dont start the actual schedule of copies before we tested them all. Otherwise we might block ourself during the schedule
+        self._schedule_async_copies(
+            hive_filters, copy_destination, include_incr_imports
+        )
+
+    def _schedule_async_copies(
+        self, hive_filters, copy_destination, include_incr_imports
+    ):
+        """Schedules an asynchronous copy to copy_destination for every
+        table matching one of the (database, table) LIKE patterns that has
+        none yet; incremental imports only with include_incr_imports."""
 
         # Calculate the source and target HDFS directories
-        dbimport_instances = aliased(config_schema.DBImportInstances)
-
         source_hdfs_address = self.common_operations.hdfs_address
         source_hdfs_basedir = self.common_operations.hdfs_basedir
 
-        row = (
-            local_session.query(
-                dbimport_instances.hdfs_address, dbimport_instances.hdfs_basedir
-            )
-            .filter(dbimport_instances.name == copy_destination)
-            .one()
-        )
+        with Session(config_engine.engine()) as session:
+            target = CopiesRepository(session).hdfs_location(copy_destination)
 
-        target_hdfs_address = row[0]
-        target_hdfs_basedir = row[1]
+        target_hdfs_address = target.hdfs_address
+        target_hdfs_basedir = target.hdfs_basedir
 
         logging.debug("sourceHDFSaddress: %s" % (source_hdfs_address))
         logging.debug("sourceHDFSbasedir: %s" % (source_hdfs_basedir))
         logging.debug("targetHDFSaddress: %s" % (target_hdfs_address))
         logging.debug("targetHDFSbasedir: %s" % (target_hdfs_basedir))
 
-        # We need this for loop here again as there might be multi table specifications that ovarlap each other. So it's important that we
-        # dont start the actual schedule of copies before we tested them all. Otherwise we might block ourself during the schedule
-        for hive_filter in hive_filter_str[0].split(";"):
-            hive_filter_db = hive_filter.split(".")[0]
-            hive_filter_table = hive_filter.split(".")[1]
-
-            hive_filter_db = hive_filter_db.replace("*", "%").strip()
-            hive_filter_table = hive_filter_table.replace("*", "%").strip()
-
+        for hive_filter_db, hive_filter_table in hive_filters:
             logging.debug("hiveFilterDB: %s" % (hive_filter_db))
             logging.debug("hiveFilterTable: %s" % (hive_filter_table))
 
             # Fetch a list of tables that match the database and table filter
-            result = pd.DataFrame(
-                local_session.query(
-                    import_tables.table_id,
-                    import_tables.hive_db,
-                    import_tables.hive_table,
-                    import_tables.dbalias,
+            with Session(config_engine.engine()) as session:
+                tables = ImportTablesRepository(session).tables_like(
+                    hive_filter_db, hive_filter_table
                 )
-                .filter(import_tables.hive_db.like(hive_filter_db))
-                .filter(import_tables.hive_table.like(hive_filter_table))
-            )
 
-            for _index, row in result.iterrows():
+            for table_id, hive_db, hive_table in tables:
                 logging.info(
-                    "Schedule asynchronous copy for %s.%s",
-                    row["hive_db"],
-                    row["hive_table"],
+                    "Schedule asynchronous copy for %s.%s", hive_db, hive_table
                 )
-                self.import_config.hive_db = row["hive_db"]
-                self.import_config.hive_table = row["hive_table"]
+                self.import_config.hive_db = hive_db
+                self.import_config.hive_table = hive_table
 
                 try:
                     self.import_config.get_import_config()
@@ -755,59 +570,36 @@ class Operation(metaclass=Singleton):
                 ):
                     logging.warning(
                         "Asynchronous copy for incremental table %s.%s skipped",
-                        row["hive_db"],
-                        row["hive_table"],
+                        hive_db,
+                        hive_table,
                     )
                     continue
 
                 source_hdfs_dir = (
-                    (
-                        source_hdfs_basedir
-                        + "/"
-                        + row["hive_db"]
-                        + "/"
-                        + row["hive_table"]
-                    )
+                    (source_hdfs_basedir + "/" + hive_db + "/" + hive_table)
                     .replace("$", "")
                     .replace(" ", "")
                 )
                 target_hdfs_dir = (
-                    (
-                        target_hdfs_basedir
-                        + "/"
-                        + row["hive_db"]
-                        + "/"
-                        + row["hive_table"]
-                    )
+                    (target_hdfs_basedir + "/" + hive_db + "/" + hive_table)
                     .replace("$", "")
                     .replace(" ", "")
                 )
                 logging.debug("sourceHDFSdir: %s" % (source_hdfs_dir))
                 logging.debug("targetHDFSdir: %s" % (target_hdfs_dir))
 
-                result = (
-                    local_session.query(copy_async_status)
-                    .filter(copy_async_status.table_id == row["table_id"])
-                    .filter(copy_async_status.destination == copy_destination)
-                    .count()
-                )
-
-                if result == 0:
-                    newcopy_async_status = config_schema.CopyAsyncStatus(
-                        table_id=row["table_id"],
-                        hive_db=row["hive_db"],
-                        hive_table=row["hive_table"],
-                        destination=copy_destination,
-                        hdfs_source_path="%s%s"
-                        % (source_hdfs_address, source_hdfs_dir),
-                        hdfs_target_path="%s%s"
-                        % (target_hdfs_address, target_hdfs_dir),
-                        copy_status=0,
-                    )
-                    local_session.add(newcopy_async_status)
-                    local_session.commit()
-
-        local_session.close()
+                with Session(config_engine.engine()) as session:
+                    copies = CopiesRepository(session)
+                    if copies.async_copy_status(table_id, copy_destination) is None:
+                        copies.schedule_async_copy(
+                            table_id,
+                            hive_db,
+                            hive_table,
+                            copy_destination,
+                            source_path="%s%s" % (source_hdfs_address, source_hdfs_dir),
+                            target_path="%s%s" % (target_hdfs_address, target_hdfs_dir),
+                        )
+                        session.commit()
 
     def copy_airflow_export_dag(
         self,
@@ -2120,16 +1912,10 @@ class Operation(metaclass=Singleton):
         )
 
         # Calculate the source and target HDFS directories
-        session = self.config_db_session()
-        dbimport_instances = aliased(config_schema.DBImportInstances)
+        with Session(config_engine.engine()) as session:
+            remote = CopiesRepository(session).hdfs_location(remote_instance)
 
-        row = (
-            session.query(dbimport_instances.hdfs_address)
-            .filter(dbimport_instances.name == remote_instance)
-            .one()
-        )
-
-        remote_hdfs_address = row[0]
+        remote_hdfs_address = remote.hdfs_address
         local_hdfs_address = self.common_operations.hdfs_address
 
         if from_cluster_mode == True:

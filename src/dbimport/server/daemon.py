@@ -23,16 +23,17 @@ import threading
 import time
 from datetime import datetime, timedelta
 from queue import Empty, Queue
+from typing import Any
 
-import pandas as pd
 import sqlalchemy as sa
 from daemons.prefab import run
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.orm import aliased, sessionmaker
+from sqlalchemy.orm import Session, aliased, sessionmaker
 
 from dbimport.common.exceptions import SQLError
 from dbimport.config_db import common_config, config_schema
 from dbimport.config_db import engine as config_engine
+from dbimport.config_db.repositories.copies import CopiesRepository
 from dbimport.server import atlas_discovery
 from dbimport.settings import get_settings
 
@@ -161,6 +162,63 @@ class DistCP(threading.Thread):
         log.info("distCP %s stopped", self.name)
 
 
+def restart_started_copies(session: Session, now: datetime) -> None:
+    """Sets the copies a previous server handed to distcp but did not finish
+    back to not started, so that they are copied again; now is their new
+    last_status_update."""
+    CopiesRepository(session).restart_started_copies(now)
+    session.commit()
+
+
+def start_pending_copies(
+    session: Session, requests: Queue[dict[str, Any]], now: datetime
+) -> None:
+    """Hands every copy not started, and every failed copy last updated a
+    minute or more before now, to the distcp threads and marks it as handed
+    over (copy_status 1) at now."""
+    log = logging.getLogger("server")
+    copies = CopiesRepository(session)
+
+    # TODO(#229): make the 1 min interval a configured param
+    for copy in copies.copies_to_start(now - timedelta(minutes=1)):
+        log.info("New sync request for table %s.%s", copy.hive_db, copy.hive_table)
+
+        copies.set_async_copy_status(copy.table_id, copy.destination, 1, updated=now)
+        session.commit()
+
+        requests.put(
+            {
+                "tableID": copy.table_id,
+                "hiveDB": copy.hive_db,
+                "hiveTable": copy.hive_table,
+                "destination": copy.destination,
+                "failures": copy.failures,
+                "HDFSsourcePath": copy.hdfs_source_path,
+                "HDFStargetPath": copy.hdfs_target_path,
+            }
+        )
+
+        log.debug(
+            "Status changed to 1 for table %s.%s and sent to distCP threads",
+            copy.hive_db,
+            copy.hive_table,
+        )
+
+
+def save_copy_result(session: Session, response: dict[str, Any], now: datetime) -> None:
+    """Stores the result of a distcp thread at now: copy_status 3 for a
+    copy that succeeded, 2 for one that failed, and its failures."""
+    copy_status = 3 if response.get("result") == True else 2
+    CopiesRepository(session).set_async_copy_status(
+        response["tableID"],
+        response["destination"],
+        copy_status,
+        updated=now,
+        failures=response.get("failures"),
+    )
+    session.commit()
+
+
 class ServerDaemon(run.RunDaemon):
     def set_config(self, action, log_format):
         self.action = action
@@ -237,20 +295,8 @@ class ServerDaemon(run.RunDaemon):
         # server marked it as 1 but didnt finish the copy. We need to retry that copy here and now
         if dist_cp_threads > 0:
             try:
-                update_dict = {}
-                update_dict["last_status_update"] = str(
-                    datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
-                )
-                update_dict["copy_status"] = 0
-
                 session = self.get_dbimport_session()
-
-                (
-                    session.query(config_schema.CopyAsyncStatus)
-                    .filter(config_schema.CopyAsyncStatus.copy_status == 1)
-                    .update(update_dict)
-                )
-                session.commit()
+                restart_started_copies(session, datetime.now())
                 session.close()
 
                 log.debug("Init part of daemon.ServerDaemon.run() completed")
@@ -274,7 +320,6 @@ class ServerDaemon(run.RunDaemon):
 
         import_tables = aliased(config_schema.ImportTables)
         dbimport_instances = aliased(config_schema.DBImportInstances)
-        copy_async_status = aliased(config_schema.CopyAsyncStatus)
 
         while True:
             # ***********************************
@@ -294,79 +339,9 @@ class ServerDaemon(run.RunDaemon):
                     # Fetch all rows from CopyAsyncStatus that contains the status 0 and send them to DistCP threads
                     # ------------------------------------------
 
-                    # TODO(#229): make the 1 min interval a configured param
-                    status2check_timestamp = (
-                        datetime.now() - timedelta(minutes=1)
-                    ).strftime("%Y-%m-%d %H:%M:%S.%f")
-
-                    async_row = pd.DataFrame(
-                        session.query(
-                            copy_async_status.table_id,
-                            copy_async_status.hive_db,
-                            copy_async_status.hive_table,
-                            copy_async_status.destination,
-                            copy_async_status.failures,
-                            copy_async_status.hdfs_source_path,
-                            copy_async_status.hdfs_target_path,
-                        )
-                        .select_from(copy_async_status)
-                        .filter(
-                            (copy_async_status.copy_status == 0)
-                            | (
-                                (copy_async_status.copy_status == 2)
-                                & (
-                                    copy_async_status.last_status_update
-                                    <= status2check_timestamp
-                                )
-                            )
-                        )
-                        .all()
+                    start_pending_copies(
+                        session, self.dist_cp_req_queue, datetime.now()
                     )
-
-                    for _index, row in async_row.iterrows():
-                        table_id = row["table_id"]
-                        destination = row["destination"]
-                        hive_db = row["hive_db"]
-                        hive_table = row["hive_table"]
-                        failures = row["failures"]
-                        hdfs_source_path = row["hdfs_source_path"]
-                        hdfs_target_path = row["hdfs_target_path"]
-
-                        log.info(
-                            "New sync request for table %s.%s", hive_db, hive_table
-                        )
-
-                        update_dict = {}
-                        update_dict["copy_status"] = 1
-                        update_dict["last_status_update"] = str(
-                            datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
-                        )
-
-                        (
-                            session.query(config_schema.CopyAsyncStatus)
-                            .filter(config_schema.CopyAsyncStatus.table_id == table_id)
-                            .filter(
-                                config_schema.CopyAsyncStatus.destination == destination
-                            )
-                            .update(update_dict)
-                        )
-                        session.commit()
-
-                        dist_cp_request = {}
-                        dist_cp_request["tableID"] = table_id
-                        dist_cp_request["hiveDB"] = hive_db
-                        dist_cp_request["hiveTable"] = hive_table
-                        dist_cp_request["destination"] = destination
-                        dist_cp_request["failures"] = failures
-                        dist_cp_request["HDFSsourcePath"] = hdfs_source_path
-                        dist_cp_request["HDFStargetPath"] = hdfs_target_path
-                        self.dist_cp_req_queue.put(dist_cp_request)
-
-                        log.debug(
-                            "Status changed to 1 for table %s.%s and sent to distCP threads",
-                            hive_db,
-                            hive_table,
-                        )
 
                     session.close()
 
@@ -386,33 +361,9 @@ class ServerDaemon(run.RunDaemon):
                 except Empty:
                     pass
                 else:
-                    update_dict = {}
-                    update_dict["last_status_update"] = str(
-                        datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
-                    )
-                    update_dict["failures"] = dist_cp_response.get("failures")
-
-                    dist_cp_result = dist_cp_response.get("result")
-                    if dist_cp_result == True:
-                        update_dict["copy_status"] = 3
-                    else:
-                        update_dict["copy_status"] = 2
-
                     try:
                         session = self.get_dbimport_session()
-                        (
-                            session.query(config_schema.CopyAsyncStatus)
-                            .filter(
-                                config_schema.CopyAsyncStatus.table_id
-                                == dist_cp_response.get("tableID")
-                            )
-                            .filter(
-                                config_schema.CopyAsyncStatus.destination
-                                == dist_cp_response.get("destination")
-                            )
-                            .update(update_dict)
-                        )
-                        session.commit()
+                        save_copy_result(session, dist_cp_response, datetime.now())
                         session.close()
 
                     except SQLAlchemyError as e:
@@ -430,20 +381,7 @@ class ServerDaemon(run.RunDaemon):
 
                 try:
                     session = self.get_dbimport_session()
-                    async_row = pd.DataFrame(
-                        session.query(
-                            copy_async_status.table_id,
-                            copy_async_status.hive_db,
-                            copy_async_status.hive_table,
-                            copy_async_status.destination,
-                            copy_async_status.failures,
-                            copy_async_status.hdfs_source_path,
-                            copy_async_status.hdfs_target_path,
-                        )
-                        .select_from(copy_async_status)
-                        .filter(copy_async_status.copy_status == 3)
-                        .all()
-                    )
+                    finished = CopiesRepository(session).finished_copies()
                     session.close()
 
                 except SQLAlchemyError as e:
@@ -455,14 +393,11 @@ class ServerDaemon(run.RunDaemon):
                     self.disconnect_dbimport_db()
 
                 else:
-                    for _index, row in async_row.iterrows():
-                        table_id = row["table_id"]
-                        destination = row["destination"]
-                        hive_db = row["hive_db"]
-                        hive_table = row["hive_table"]
-                        failures = row["failures"]
-                        hdfs_source_path = row["hdfs_source_path"]
-                        hdfs_target_path = row["hdfs_target_path"]
+                    for copy in finished:
+                        table_id = copy.table_id
+                        destination = copy.destination
+                        hive_db = copy.hive_db
+                        hive_table = copy.hive_table
 
                         # Get the remote sessions. if sessions is not available, we just continue to the next item in the database
                         _remote_session = self.get_dbimport_remote_session(destination)
@@ -510,17 +445,8 @@ class ServerDaemon(run.RunDaemon):
                             # Delete the record from CopyAsyncStatus
                             try:
                                 session = self.get_dbimport_session()
-                                (
-                                    session.query(config_schema.CopyAsyncStatus)
-                                    .filter(
-                                        config_schema.CopyAsyncStatus.table_id
-                                        == table_id
-                                    )
-                                    .filter(
-                                        config_schema.CopyAsyncStatus.destination
-                                        == destination
-                                    )
-                                    .delete()
+                                CopiesRepository(session).delete_async_copy(
+                                    table_id, destination
                                 )
                                 session.commit()
                                 session.close()

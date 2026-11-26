@@ -117,11 +117,11 @@
   },
   "src/dbimport/operations/copy_operations.py": {
     "E711": 23,
-    "E712": 27,
+    "E712": 26,
     "E722": 3,
-    "F841": 9,
-    "G002": 24,
-    "UP031": 58
+    "F841": 8,
+    "G002": 18,
+    "UP031": 48
   },
   "src/dbimport/operations/etl_operations.py": {
     "E711": 18,

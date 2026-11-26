@@ -1091,7 +1091,7 @@ class Config(metaclass=Singleton):
             self.import_with_merge = False
 
         # Determine if a history table should be created
-        if self.etl_phase in (constant.ETL_PHASE_MERGEHISTORYAUDIT):
+        if self.etl_phase == constant.ETL_PHASE_MERGEHISTORYAUDIT:
             self.import_with_history_table = True
         else:
             self.import_with_history_table = False

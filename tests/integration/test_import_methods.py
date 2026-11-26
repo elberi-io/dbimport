@@ -151,6 +151,38 @@ def test_get_import_config_legacy_import_type_maps_to_phases(
     assert (config.import_phase, config.etl_phase) == expected_phases
 
 
+@pytest.mark.parametrize(
+    ("import_phase_type", "etl_phase_type", "history"),
+    [
+        ("full", "truncate_insert", False),
+        ("full", "insert", False),
+        ("full", "merge", False),
+        ("full", "merge_history_audit", True),
+        ("full", "none", False),
+        ("full", "external", False),
+        ("incr", "merge", False),
+        ("incr", "merge_history_audit", True),
+    ],
+)
+def test_get_import_config_sets_a_history_table_only_for_merge_history_audit(
+    clean_config_db: None,
+    db_connection: sa.Connection,
+    import_phase_type: str,
+    etl_phase_type: str,
+    history: bool,
+) -> None:
+    config = _resolve(
+        db_connection,
+        import_phase_type=import_phase_type,
+        etl_phase_type=etl_phase_type,
+        import_tool="spark",
+        etl_engine="hive",
+        **(INCREMENTAL if import_phase_type == "incr" else {}),
+    )
+
+    assert config.import_with_history_table is history
+
+
 def test_get_import_config_incremental_import_without_incr_column_raises(
     clean_config_db: None, db_connection: sa.Connection
 ) -> None:

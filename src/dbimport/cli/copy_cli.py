@@ -193,6 +193,11 @@ def print_schedule_table_async_copy_help():
         "  --destination=[Destination]                    Name of the destination to where you want to copy the tables"
     )
     print("")
+    print("Optional parameters:")
+    print(
+        "  --includeIncrImports                           The default behaviour is to schedule only full imports. Specify this to include incremental imports"
+    )
+    print("")
     sys.exit(1)
 
 
@@ -495,6 +500,7 @@ def main(argv):
             hive_filter_db=hive_db,
             hive_filter_table=hive_table,
             copy_destination=copy_destination,
+            include_incr_imports=include_incr_imports,
         )
         copy_operation.remove_temporary_files()
 
