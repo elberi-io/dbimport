@@ -2490,6 +2490,7 @@ class DBCalls:
 
             # Just to make sure that two DAGs dont exists with the same name in different tables
             if row[0] in processed_dags:
+                session.remove()
                 raise HTTPException(
                     status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                     detail="Airflow DAG '%s' exists in more than one DAG table"
@@ -2774,6 +2775,7 @@ class DBCalls:
         )
 
         if row == None:
+            session.remove()
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Airflow DAG does not exist",

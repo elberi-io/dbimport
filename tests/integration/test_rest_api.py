@@ -3057,7 +3057,7 @@ def test_update_airflow_dag_with_a_name_of_another_type_returns_400(
     assert _dag_names(db_connection, kind) == []
 
 
-@DAG_KINDS
+@ALL_DAG_KINDS
 def test_get_airflow_dag_of_unknown_dag_returns_404_and_ends_its_transaction(
     client: TestClient,
     auth_headers: dict[str, str],
@@ -3228,3 +3228,23 @@ def test_delete_task_from_airflow_dag_removes_it_or_returns_404(
     assert response.status_code == status_code
     assert response.json() == {"result": result}
     assert _task_names(db_connection) == remaining
+
+
+def test_get_all_airflow_dags_with_a_name_in_two_dag_tables_returns_500(
+    client: TestClient, auth_headers: dict[str, str], db_connection: sa.Connection
+) -> None:
+    _add_airflow_dag(db_connection, "import", "dag_a")
+    _add_airflow_dag(db_connection, "custom", "dag_a")
+
+    response = client.get("/airflow/dags", headers=auth_headers)
+
+    # An open transaction on the table would make the TRUNCATE wait.
+    db_connection.execute(
+        sa.text(
+            "SET STATEMENT lock_wait_timeout = 2 FOR TRUNCATE TABLE airflow_custom_dags"
+        )
+    )
+    assert response.status_code == 500
+    assert response.json() == {
+        "detail": "Airflow DAG 'dag_a' exists in more than one DAG table"
+    }
