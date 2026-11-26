@@ -416,11 +416,6 @@ def test_copy_airflow_import_dag_copies_its_tasks_and_their_connection(
     assert _connections(remote, SECRETS) == _connections(local, SECRETS)
 
 
-@pytest.mark.xfail(
-    strict=True,
-    raises=sa.exc.OperationalError,
-    reason="a task without a connection makes the copy add a connection without a name",
-)
 def test_copy_airflow_import_dag_copies_a_task_without_a_connection(
     local: sa.Connection, remote: sa.Connection
 ) -> None:

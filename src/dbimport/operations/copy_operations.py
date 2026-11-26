@@ -948,7 +948,10 @@ class Operation(metaclass=Singleton):
 
                     update_dict["%s" % (name)] = value
 
-                if row["jdbc_dbalias"] not in copied_jdbc_connections:
+                if (
+                    row["jdbc_dbalias"] is not None
+                    and row["jdbc_dbalias"] not in copied_jdbc_connections
+                ):
                     self.copy_jdbc_connection_to_destination(
                         jdbc_connection=row["jdbc_dbalias"],
                         destination=copy_destination,
