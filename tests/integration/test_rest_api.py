@@ -595,12 +595,6 @@ def test_change_password_as_admin_needs_no_current_password(
     assert _login(client, USERNAME, "set by admin") == 200
 
 
-@pytest.mark.xfail(
-    reason="Known bug: delete_user deletes through an aliased table, which "
-    "MariaDB rejects (DELETE FROM auth_users AS ...), so deleting a user fails",
-    raises=sa.exc.ProgrammingError,
-    strict=True,
-)
 def test_delete_user_as_admin_removes_the_user(
     client: TestClient,
     admin_headers: dict[str, str],
@@ -616,11 +610,15 @@ def test_delete_user_as_admin_removes_the_user(
     assert _auth_user(db_connection, "admin") is not None
 
 
+@pytest.mark.parametrize("name", ["admin", "ADMIN"])
 def test_delete_of_the_admin_user_returns_403(
-    client: TestClient, admin_headers: dict[str, str], db_connection: sa.Connection
+    client: TestClient,
+    admin_headers: dict[str, str],
+    db_connection: sa.Connection,
+    name: str,
 ) -> None:
     response = client.request(
-        "DELETE", "/users/admin/delete", json={}, headers=admin_headers
+        "DELETE", f"/users/{name}/delete", json={}, headers=admin_headers
     )
 
     assert response.status_code == 403

@@ -651,12 +651,10 @@ class DBCalls:
             self.disconnect_dbimport_db()
             return None
 
-        table_auth_users = aliased(config_schema.AuthUsers)
-
-        (
-            session.query(table_auth_users)
-            .filter(table_auth_users.username == username)
-            .delete()
+        session.execute(
+            sa.delete(config_schema.AuthUsers).where(
+                config_schema.AuthUsers.username == username
+            )
         )
         session.commit()
 
