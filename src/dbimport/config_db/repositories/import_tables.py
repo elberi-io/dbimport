@@ -17,6 +17,7 @@
 """Import tables: the import_tables row of a table that is imported."""
 
 from collections.abc import Mapping, Sequence
+from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict
 from sqlalchemy import (
@@ -397,6 +398,9 @@ class ImportTablesRepository:
             )
             .values(last_update_from_source=updated)
         )
+
+    def set_copy_finished(self, table_id: int, finished: datetime) -> None:
+        self._update(table_id, copy_finished=finished)
 
     def begin_incremental_range(self, table_id: int) -> None:
         """The next range starts at the stored maximum."""
