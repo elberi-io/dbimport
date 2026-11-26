@@ -204,7 +204,7 @@ def test_copy_after_import_marks_the_copy_by_its_transfer(
     assert _copy_state(remote) == [(HIVE_TABLE, 1, finished)]
 
 
-@pytest.mark.parametrize("sync_credentials", [0, 1])
+@pytest.mark.parametrize("sync_credentials", [0, 1, 2])
 def test_copy_after_import_copies_credentials_only_when_the_instance_syncs_them(
     local: sa.Connection, remote: sa.Connection, sync_credentials: int
 ) -> None:
@@ -221,7 +221,7 @@ def test_copy_after_import_copies_credentials_only_when_the_instance_syncs_them(
     expected = local.execute(
         sa.text("SELECT credentials FROM jdbc_connections")
     ).scalar_one()
-    assert stored == (expected if sync_credentials else None)
+    assert stored == (expected if sync_credentials == 1 else None)
 
 
 def test_copy_after_import_again_updates_the_copy(
@@ -271,11 +271,6 @@ def test_copy_after_import_copies_a_column_setting_that_is_empty_on_one_column(
     assert _columns(remote) == _columns(local)
 
 
-@pytest.mark.xfail(
-    strict=True,
-    raises=AssertionError,
-    reason="every value is turned into text and the text 'None' into NULL",
-)
 def test_copy_after_import_copies_the_text_none_as_it_is(
     local: sa.Connection, remote: sa.Connection
 ) -> None:
@@ -461,3 +456,75 @@ def test_copy_airflow_import_dag_creates_a_dag_missing_on_the_instance(
     _copy_dag()
 
     assert _dags(remote) == _dags(local)
+
+
+def test_copy_after_import_keeps_the_credentials_there_without_sync(
+    local: sa.Connection, remote: sa.Connection
+) -> None:
+    insert_row(
+        remote, "jdbc_connections", dbalias=DBALIAS, jdbc_url="", credentials="there"
+    )
+
+    _copy_after_import(local)
+
+    assert (
+        remote.execute(sa.text("SELECT credentials FROM jdbc_connections")).scalar_one()
+        == "there"
+    )
+
+
+def test_copy_airflow_import_dag_that_fails_leaves_the_instance_unchanged(
+    local: sa.Connection, remote: sa.Connection
+) -> None:
+    # The tasks come last; a column the other instance lacks fails them.
+    _add_dags(local, remote, retries=3)
+    insert_row(
+        local,
+        "airflow_tasks",
+        dag_name=DAG,
+        task_name="shell_01",
+        task_type="shell script",
+        placement="before main",
+        task_config="/usr/bin/sleep 1",
+    )
+    remote.execute(sa.text("ALTER TABLE airflow_tasks DROP COLUMN airflow_pool"))
+    before = _dags(remote)
+
+    with pytest.raises(sa.exc.OperationalError):
+        _copy_dag()
+
+    assert _dags(remote) == before
+    assert _tables(remote) == []
+
+
+def test_copy_after_import_with_two_matching_columns_there_fails_unchanged(
+    local: sa.Connection, remote: sa.Connection
+) -> None:
+    _copy_after_import(local)
+    table_id = remote.execute(
+        sa.text("SELECT table_id FROM import_tables")
+    ).scalar_one()
+    _add_column(remote, table_id, "ID", 9)
+    local.execute(sa.text("UPDATE import_tables SET source_table = 'orders_v2'"))
+    before = (_tables(remote), _columns(remote))
+
+    with pytest.raises(sa.exc.MultipleResultsFound):
+        _copy_after_import(local)
+
+    assert (_tables(remote), _columns(remote)) == before
+
+
+def test_copy_airflow_import_dag_of_a_table_whose_connection_is_missing_warns(
+    local: sa.Connection,
+    remote: sa.Connection,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    _add_dags(local, remote)
+    local.execute(sa.text("UPDATE import_tables SET dbalias = 'gone'"))
+
+    _copy_dag()
+
+    assert _connections(remote, SECRETS) == []
+    assert "The JDBC connection 'gone' does not exist and is not copied" in (
+        caplog.text
+    )
