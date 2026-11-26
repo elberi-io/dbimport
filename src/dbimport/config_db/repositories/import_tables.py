@@ -352,6 +352,20 @@ class ImportTablesRepository:
         )
         return list(rows.tuples())
 
+    def tables_like(self, hive_db: str, hive_table: str) -> list[tuple[int, str, str]]:
+        """table_id, hive_db and hive_table of the tables matching the
+        hive_db and hive_table LIKE patterns, ordered by database and
+        table."""
+        rows = self._session.execute(
+            select(ImportTables.table_id, ImportTables.hive_db, ImportTables.hive_table)
+            .where(
+                ImportTables.hive_db.like(hive_db),
+                ImportTables.hive_table.like(hive_table),
+            )
+            .order_by(ImportTables.hive_db, ImportTables.hive_table)
+        )
+        return list(rows.tuples())
+
     def add(
         self,
         hive_db: str,

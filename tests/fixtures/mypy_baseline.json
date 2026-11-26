@@ -57,8 +57,10 @@
     "union-attr": 15
   },
   "src/dbimport/operations/copy_operations.py": {
+    "arg-type": 6,
     "assignment": 19,
-    "misc": 21,
+    "misc": 13,
+    "operator": 1,
     "union-attr": 10
   },
   "src/dbimport/operations/etl_operations.py": {
@@ -94,7 +96,6 @@
     "var-annotated": 3
   },
   "src/dbimport/server/daemon.py": {
-    "assignment": 4,
     "misc": 1,
     "union-attr": 2,
     "var-annotated": 2
