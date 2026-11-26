@@ -493,7 +493,11 @@ class Operation(metaclass=Singleton):
                     print("")
 
     def schedule_table_async_copy(
-        self, hive_filter_db, hive_filter_table, copy_destination
+        self,
+        hive_filter_db,
+        hive_filter_table,
+        copy_destination,
+        include_incr_imports=False,
     ):
         """Schdeule an asynchronous copy of one or more Hive table to the specified destination"""
         logging.debug("Executing copy_operations.schedule_table_async_copy()")
@@ -585,7 +589,8 @@ class Operation(metaclass=Singleton):
             )
 
             if (
-                self.import_config.import_is_incremental and includeIncrImports == False  # noqa: F821  # TODO(#163): not a parameter of this method
+                self.import_config.import_is_incremental
+                and include_incr_imports == False
             ):
                 logging.warning(
                     "Asynchronous copy for incremental table %s.%s skipped",

@@ -3,9 +3,12 @@ copy_async_status) as copy_operations reads and writes them. Hadoop
 distcp is an external tool and is replaced; remote instances are not
 used."""
 
+import os
 import subprocess
+import sys
 from collections.abc import Iterator
 from datetime import datetime
+from pathlib import Path
 from typing import Any
 
 import pytest
@@ -17,6 +20,7 @@ from dbimport.config_db import common_config, import_config
 from dbimport.operations import common_operations, copy_operations
 from tests.configdb import insert_row, set_driver_path
 
+COPY = Path(__file__).resolve().parents[2] / "bin" / "copy"
 HIVE_DB = "testdb"
 HIVE_TABLE = "testtable"
 DBALIAS = "test_mysql"
@@ -436,6 +440,60 @@ def test_schedule_table_async_copy_schedules_the_matching_full_imports(
             0,
             *_paths(HIVE_DB, "order_lines"),
         ),
+    ]
+
+
+@pytest.mark.parametrize(
+    ("options", "scheduled"),
+    [({}, ["orders"]), ({"include_incr_imports": True}, ["orders", "events"])],
+    ids=["full-only", "with-incremental"],
+)
+def test_schedule_table_async_copy_includes_incremental_imports_on_request(
+    instance: sa.Connection, options: dict[str, bool], scheduled: list[str]
+) -> None:
+    ids = {
+        "orders": _add_table(instance, HIVE_DB, "orders"),
+        "events": _add_table(instance, HIVE_DB, "events", **INCREMENTAL),
+    }
+    copy = copy_operations.Operation()
+
+    copy.schedule_table_async_copy(
+        hive_filter_db=HIVE_DB,
+        hive_filter_table="*",
+        copy_destination=INSTANCE,
+        **options,
+    )
+
+    assert _statuses(instance) == sorted(
+        (ids[name], HIVE_DB, name, INSTANCE, 0, 0, *_paths(HIVE_DB, name))
+        for name in scheduled
+    )
+
+
+def test_copy_schedule_table_async_copy_passes_include_incr_imports(
+    instance: sa.Connection,
+) -> None:
+    table_id = _add_table(instance, HIVE_DB, "events", **INCREMENTAL)
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            str(COPY),
+            "--scheduleTableAsyncCopy",
+            f"--hiveDB={HIVE_DB}",
+            "--hiveTable=*",
+            f"--destination={INSTANCE}",
+            "--includeIncrImports",
+        ],
+        capture_output=True,
+        text=True,
+        env=os.environ.copy(),
+        timeout=120,
+    )
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert _statuses(instance) == [
+        (table_id, HIVE_DB, "events", INSTANCE, 0, 0, *_paths(HIVE_DB, "events")),
     ]
 
 

@@ -59,7 +59,6 @@
   "src/dbimport/operations/copy_operations.py": {
     "assignment": 19,
     "misc": 21,
-    "name-defined": 1,
     "union-attr": 10
   },
   "src/dbimport/operations/etl_operations.py": {
