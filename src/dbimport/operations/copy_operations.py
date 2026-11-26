@@ -657,8 +657,13 @@ class Operation(metaclass=Singleton):
             local_session.query(airflow_import_dags.filter_hive)
             .select_from(airflow_import_dags)
             .filter(airflow_import_dags.dag_name == airflow_dag_name)
-            .one()
+            .one_or_none()
         )
+
+        if hive_filter_str is None:
+            logging.error("The specified Airflow DAG does not exist.")
+            self.remove_temporary_files()
+            sys.exit(1)
 
         for hive_filter in hive_filter_str[0].split(";"):
             hive_filter_db = hive_filter.split(".")[0]

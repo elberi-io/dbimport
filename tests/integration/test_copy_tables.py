@@ -593,17 +593,19 @@ def test_schedule_dag_async_copy_with_a_scheduled_match_exits(
     assert [row[0] for row in _statuses(instance)] == [table_id]
 
 
-def test_schedule_dag_async_copy_of_an_unknown_dag_raises(
+def test_schedule_dag_async_copy_of_an_unknown_dag_exits(
     instance: sa.Connection,
 ) -> None:
     copy = copy_operations.Operation()
 
-    with pytest.raises(NoResultFound):
+    with pytest.raises(SystemExit) as exit_info:
         copy.schedule_dag_async_copy(
             airflow_dag_name="nope",
             copy_destination=INSTANCE,
             include_incr_imports=False,
         )
+
+    assert exit_info.value.code == 1
 
 
 class _FinishedProcess:
