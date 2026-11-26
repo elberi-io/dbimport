@@ -468,11 +468,6 @@ def test_copy_airflow_import_dag_copies_tasks_with_an_empty_priority(
     assert _tasks(remote) == _tasks(local)
 
 
-@pytest.mark.xfail(
-    strict=True,
-    raises=sa.exc.IntegrityError,
-    reason="the new DAG row is added without schedule_interval, which is NOT NULL",
-)
 def test_copy_airflow_import_dag_creates_a_dag_missing_on_the_instance(
     local: sa.Connection, remote: sa.Connection
 ) -> None:
