@@ -357,11 +357,16 @@ def test_copy_data_to_destinations_schedules_an_async_copy(
     ]
 
 
+@pytest.mark.parametrize(
+    "values",
+    [{}, {"etl_phase_type": "merge"}],
+    ids=["truncate-insert", "merge"],
+)
 def test_copy_data_to_destinations_replaces_a_copy_not_started(
-    instance: sa.Connection,
+    instance: sa.Connection, values: dict[str, object]
 ) -> None:
     _add_copy(instance, "testdb.*", data_transfer="Asynchronous")
-    copy = _copy(instance)
+    copy = _copy(instance, **values)
     copy.get_copy_destinations(HIVE_DB, HIVE_TABLE)
     table_id = _table_id(copy)
     _add_status(instance, table_id)
