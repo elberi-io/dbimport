@@ -28,8 +28,8 @@ SECRETS = {"credentials", "private_key_path", "public_key_path"}
 
 @pytest.fixture(autouse=True)
 def _close_sessions() -> Iterator[None]:
-    """copy_operations leaves its sessions open, and with them a
-    transaction; a command ends them with its process, a test here."""
+    """Ends an ORM session a test leaves open, so that the next test does
+    not wait on its transaction."""
     yield
     close_all_sessions()
 
@@ -410,11 +410,6 @@ def test_copy_airflow_export_dag_creates_a_dag_missing_on_the_instance(
     assert _dags(remote) == _dags(local)
 
 
-@pytest.mark.xfail(
-    strict=True,
-    raises=AssertionError,
-    reason="every value is turned into text and the text 'None' into NULL",
-)
 def test_copy_airflow_export_dag_copies_the_text_none_as_it_is(
     local: sa.Connection, remote: sa.Connection
 ) -> None:
@@ -424,3 +419,58 @@ def test_copy_airflow_export_dag_copies_the_text_none_as_it_is(
     _copy_dag()
 
     assert _tables(remote) == _tables(local)
+
+
+def test_copy_airflow_export_dag_that_fails_leaves_the_instance_unchanged(
+    local: sa.Connection, remote: sa.Connection
+) -> None:
+    # The sensors come last; a column the other instance lacks fails them.
+    _add_dags(local, remote, retries=3)
+    insert_row(
+        local,
+        "airflow_dag_sensors",
+        dag_name=DAG,
+        sensor_name="wait_dag",
+        wait_for_dag="import_dag",
+    )
+    remote.execute(sa.text("ALTER TABLE airflow_tasks DROP COLUMN task_config"))
+    before = _dags(remote)
+
+    with pytest.raises(sa.exc.OperationalError):
+        _copy_dag()
+
+    assert _dags(remote) == before
+    assert _tables(remote) == []
+
+
+def test_copy_airflow_export_dag_keeps_the_credentials_there_without_sync(
+    local: sa.Connection, remote: sa.Connection
+) -> None:
+    _add_dags(local, remote)
+    insert_row(
+        remote, "jdbc_connections", dbalias=DBALIAS, jdbc_url="", credentials="there"
+    )
+
+    _copy_dag()
+
+    assert (
+        remote.execute(sa.text("SELECT credentials FROM jdbc_connections")).scalar_one()
+        == "there"
+    )
+
+
+def test_copy_airflow_export_dag_of_a_table_whose_connection_is_missing_warns(
+    local: sa.Connection,
+    remote: sa.Connection,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    _add_dags(local, remote, filter_dbalias="gone")
+    _add_table(local, "lost", dbalias="gone")
+
+    _copy_dag()
+
+    assert [row["target_table"] for row in _tables(remote)] == ["lost"]
+    assert _connections(remote, SECRETS) == []
+    assert "The JDBC connection 'gone' does not exist and is not copied" in (
+        caplog.text
+    )

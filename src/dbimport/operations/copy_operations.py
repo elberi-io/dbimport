@@ -21,10 +21,8 @@ import subprocess
 import sys
 from datetime import datetime
 
-import pandas as pd
-import sqlalchemy as sa
 from sqlalchemy.exc import DBAPIError
-from sqlalchemy.orm import Session, aliased, sessionmaker
+from sqlalchemy.orm import Session, sessionmaker
 
 from dbimport.common.exceptions import InvalidConfigurationError
 from dbimport.common.singleton import Singleton
@@ -32,6 +30,7 @@ from dbimport.config_db import config_schema, import_config, instances
 from dbimport.config_db import engine as config_engine
 from dbimport.config_db.repositories.airflow_dags import AirflowDAGsRepository
 from dbimport.config_db.repositories.copies import CopiesRepository
+from dbimport.config_db.repositories.export_tables import ExportTablesRepository
 from dbimport.config_db.repositories.import_tables import ImportTablesRepository
 from dbimport.config_db.repositories.instance_copy import InstanceCopy
 from dbimport.config_db.repositories.schema_version import SchemaVersionRepository
@@ -47,7 +46,6 @@ class Operation(metaclass=Singleton):
         self.hive_db = None
         self.hive_table = None
         self.start_date = None
-        self.config_db_session = None
         self.remote_instance_config_db_engine = None
         self.remote_instance_config_db_session = None
         self.copy_destinations = None
@@ -59,8 +57,6 @@ class Operation(metaclass=Singleton):
         self.hive_table = self.common_operations.hive_table
         self.start_date = self.import_config.start_date
 
-        self.import_config.common_config.connect_sqlalchemy()
-        self.config_db_session = self.import_config.common_config.config_db_session
         self.crypto = self.import_config.common_config.crypto
         self.debug_log_level = self.import_config.common_config.debug_log_level
 
@@ -550,228 +546,142 @@ class Operation(metaclass=Singleton):
         set_auto_regenerate_dag=False,
         deploy_mode=False,
     ):
-        """Copy an Airflow Export DAG, including connections, tables and columns to a remote DBImport instance"""
+        """Copy an Airflow Export DAG, including connections, tables and columns to a remote DBImport instance, in one transaction"""
 
         if self.check_dbimport_instance(instance=copy_destination) == False:
             logging.error("The specified remote DBImport instance does not exist.")
             self.remove_temporary_files()
             sys.exit(1)
 
-        local_session = self.config_db_session()
-        airflow_export_dags = aliased(config_schema.AirflowExportDAGs)
-        airflow_tasks = aliased(config_schema.AirflowTasks)
-        export_tables = aliased(config_schema.ExportTables)
+        with Session(config_engine.engine()) as session:
+            dag = AirflowDAGsRepository(session).export_dag(airflow_dag_name)
 
-        # Check if Airflow DAG exists with that name, and if so, get all the details
-        airflow_dag = pd.DataFrame(
-            local_session.query(config_schema.AirflowExportDAGs.__table__).filter(
-                config_schema.AirflowExportDAGs.dag_name == airflow_dag_name
-            )
-        )
-
-        if airflow_dag.empty == True:
+        if dag is None:
             logging.error("The specified Airflow DAG does not exist.")
             self.remove_temporary_files()
             sys.exit(1)
 
-        # airflowDAG now contains a Pandas DF with the complete DAG configuraiton. This needs to be synced to the remote DBImport instance
-        if self.connect_remote_dbimport_instance(instance=copy_destination):
-            remote_session = self.remote_instance_config_db_session()
+        if not self.connect_remote_dbimport_instance(instance=copy_destination):
+            return
 
-            # Check if the DAG exists on the remote DBImport instance
-            result = (
-                remote_session.query(airflow_export_dags)
-                .filter(airflow_export_dags.dag_name == airflow_dag_name)
-                .count()
+        filter_schema = dag.filter_target_schema
+        filter_table = dag.filter_target_table
+        with (
+            Session(config_engine.engine()) as local_session,
+            self.remote_instance_config_db_session() as remote_session,
+        ):
+            instance_copy = InstanceCopy(local_session, remote_session)
+            instance = CopiesRepository(local_session).instance_connection(
+                copy_destination
             )
-
-            if result == 0:
-                # Table does not exist in target system. Lets create a skeleton record
-                new_airflow_export_dags = config_schema.AirflowExportDAGs(
-                    dag_name=airflow_dag_name,
-                    filter_dbalias="None",
-                    schedule_interval="None",
-                )
-                remote_session.add(new_airflow_export_dags)
-                remote_session.commit()
-
-            # Create dictonary to be used to update the values in airflow_import_dag on the remote Instance
-            update_dict = {}
-            filter_db_alias = ""
-            filter_schema = ""
-            filter_table = ""
-            for name, values in airflow_dag.items():
-                if name in ("dag_name"):
-                    continue
-
-                if name == "filter_dbalias":
-                    filter_db_alias = str(values[0])
-
-                if name == "filter_target_schema":
-                    filter_schema = str(values[0])
-                    if filter_schema == "None":
-                        filter_schema = "%"
-
-                if name == "filter_target_table":
-                    filter_table = str(values[0])
-                    if filter_table == "None":
-                        filter_table = "%"
-
-                value = str(values[0])
-                if value == "None":
-                    value = None
-
-                update_dict["%s" % (name)] = value
-
+            dag_name = {"dag_name": airflow_dag_name}
+            dag_row = instance_copy.rows(config_schema.AirflowExportDAGs, dag_name)[0]
             if set_auto_regenerate_dag == True:
-                update_dict["auto_regenerate_dag"] = "1"
+                dag_row["auto_regenerate_dag"] = 1
+            instance_copy.copy(config_schema.AirflowExportDAGs, dag_row, dag_name)
 
-            if update_dict["schedule_interval"] == None:
-                update_dict["schedule_interval"] = "None"
-
-            # Update the values in airflow_import_dag on the remote instance
-            (
-                remote_session.query(config_schema.AirflowExportDAGs)
-                .filter(config_schema.AirflowExportDAGs.dag_name == airflow_dag_name)
-                .update(update_dict)
-            )
-            remote_session.commit()
-
-            if deploy_mode == False:
-                logging.info("DAG definition copied to remote DBImport successfully")
-            else:
-                logging.info("DAG definition deployed successfully")
-
-            # **************************
-            # Prepair and trigger a copy of all schemas to the other cluster
-            # **************************
-
-            self.copy_export_schema_to_destination(
-                filter_db_alias=filter_db_alias,
-                filter_schema=filter_schema,
-                filter_table=filter_table,
-                destination=copy_destination,
-                deploy_mode=deploy_mode,
-            )
-
-            if deploy_mode == False:
-                logging.info(
-                    "Schema definitions copied to remote DBImport successfully"
-                )
-            else:
-                logging.info("Schema definitions deployed successfully")
-
-            # **************************
-            # Copy custom tasks from airflow_tasks table
-            # **************************
-
-            airflow_tasks_result = pd.DataFrame(
-                local_session.query(config_schema.AirflowTasks.__table__).filter(
-                    config_schema.AirflowTasks.dag_name == airflow_dag_name
-                )
-            ).replace({float("nan"): None})
-
-            for _index, row in airflow_tasks_result.iterrows():
-                # Check if the Airflow Task exists on the remote DBImport instance
-                result = (
-                    remote_session.query(airflow_tasks)
-                    .filter(airflow_tasks.dag_name == airflow_dag_name)
-                    .filter(airflow_tasks.task_name == row["task_name"])
-                    .count()
-                )
-
-                if result == 0:
-                    # Create a new row in ImportColumns if it doesnt exists
-                    new_airflow_task = config_schema.AirflowTasks(
-                        dag_name=airflow_dag_name, task_name=row["task_name"]
-                    )
-                    remote_session.add(new_airflow_task)
-                    remote_session.commit()
-
-                update_dict = {}
-                for name, value in row.items():
-                    if name in ("dag_name", "task_name"):
-                        continue
-
-                    update_dict["%s" % (name)] = value
-
-                if row["jdbc_dbalias"] is not None:
-                    self._copy_jdbc_connection(
-                        InstanceCopy(local_session, remote_session),
-                        row["jdbc_dbalias"],
-                        CopiesRepository(local_session)
-                        .instance_connection(copy_destination)
-                        .sync_credentials,
-                    )
-
-                # Update the values in airflow_tasks on the remote instance
-                (
-                    remote_session.query(config_schema.AirflowTasks)
-                    .filter(config_schema.AirflowTasks.dag_name == airflow_dag_name)
-                    .filter(config_schema.AirflowTasks.task_name == row["task_name"])
-                    .update(update_dict)
-                )
-                remote_session.commit()
-
-            if airflow_tasks_result.empty == False:
+            for table_id, hive_db, hive_table in ExportTablesRepository(
+                local_session
+            ).tables_like(
+                dag.filter_dbalias.replace("*", "%"),
+                "%" if filter_schema is None else filter_schema.replace("*", "%"),
+                "%" if filter_table is None else filter_table.replace("*", "%"),
+            ):
                 if deploy_mode == False:
                     logging.info(
-                        "DAG custom tasks copied to remote DBImport successfully"
+                        "Copy schema definitions for %s.%s", hive_db, hive_table
                     )
                 else:
-                    logging.info("DAG custom tasks deployed successfully")
-
-            # **************************
-            # Convert rows in airflow_dag_sensors to airflow_tasks in remote system
-            # **************************
-
-            airflow_dag_sensors_result = pd.DataFrame(
-                local_session.query(config_schema.AirflowDAGSensors.__table__).filter(
-                    config_schema.AirflowDAGSensors.dag_name == airflow_dag_name
+                    logging.info(
+                        "Deploying schema definitions for %s.%s", hive_db, hive_table
+                    )
+                self._copy_export_table(
+                    instance_copy, table_id, instance.sync_credentials
                 )
+
+            tasks = instance_copy.rows(config_schema.AirflowTasks, dag_name)
+            copied_jdbc_connections = set()
+            for task in tasks:
+                dbalias = task["jdbc_dbalias"]
+                if dbalias is not None and dbalias not in copied_jdbc_connections:
+                    self._copy_jdbc_connection(
+                        instance_copy, dbalias, instance.sync_credentials
+                    )
+                    copied_jdbc_connections.add(dbalias)
+                instance_copy.copy(
+                    config_schema.AirflowTasks,
+                    task,
+                    {"dag_name": airflow_dag_name, "task_name": task["task_name"]},
+                )
+
+            sensors = instance_copy.rows(config_schema.AirflowDAGSensors, dag_name)
+            for sensor in sensors:
+                wait_for_task = sensor["wait_for_task"]
+                instance_copy.copy(
+                    config_schema.AirflowTasks,
+                    {
+                        "task_type": "DAG Sensor",
+                        "placement": "before main",
+                        "task_config": "%s.%s"
+                        % (
+                            sensor["wait_for_dag"],
+                            "stop" if wait_for_task is None else wait_for_task,
+                        ),
+                    },
+                    {"dag_name": airflow_dag_name, "task_name": sensor["sensor_name"]},
+                )
+
+            remote_session.commit()
+
+        if deploy_mode == False:
+            logging.info("DAG definition copied to remote DBImport successfully")
+            logging.info("Schema definitions copied to remote DBImport successfully")
+            if tasks:
+                logging.info("DAG custom tasks copied to remote DBImport successfully")
+        else:
+            logging.info("DAG definition deployed successfully")
+            logging.info("Schema definitions deployed successfully")
+            if tasks:
+                logging.info("DAG custom tasks deployed successfully")
+        for sensor in sensors:
+            logging.info(
+                "Converted DAG sensor '%s' to an airflow_tasks entry",
+                sensor["sensor_name"],
             )
 
-            for _index, row in airflow_dag_sensors_result.iterrows():
-                # Check if the Airflow Task exists on the remote DBImport instance
-                result = (
-                    remote_session.query(airflow_tasks)
-                    .filter(airflow_tasks.dag_name == airflow_dag_name)
-                    .filter(airflow_tasks.task_name == row["sensor_name"])
-                    .count()
-                )
+    def _copy_export_table(self, instance_copy, table_id, sync_credentials):
+        """Copy the export table, its JDBC connection and its columns"""
+        table = instance_copy.rows(config_schema.ExportTables, {"table_id": table_id})[
+            0
+        ]
+        self._copy_jdbc_connection(instance_copy, table["dbalias"], sync_credentials)
 
-                if result == 0:
-                    # Create a new row in ImportColumns if it doesnt exists
-                    new_airflow_task = config_schema.AirflowTasks(
-                        dag_name=airflow_dag_name, task_name=row["sensor_name"]
-                    )
-                    remote_session.add(new_airflow_task)
-                    remote_session.commit()
+        match = {
+            "dbalias": table["dbalias"],
+            "target_schema": table["target_schema"],
+            "target_table": table["target_table"],
+        }
+        instance_copy.copy(
+            config_schema.ExportTables,
+            table,
+            match,
+            leave_out={"table_id", "sqoop_last_execution"},
+        )
+        remote_table_id = instance_copy.remote_value(
+            config_schema.ExportTables, "table_id", match
+        )
 
-                update_dict = {}
-                update_dict["task_type"] = "DAG Sensor"
-                update_dict["placement"] = "before main"
-                if row["wait_for_task"] == None:
-                    update_dict["task_config"] = "%s.stop" % (row["wait_for_dag"])
-                else:
-                    update_dict["task_config"] = "%s.%s" % (
-                        row["wait_for_dag"],
-                        row["wait_for_task"],
-                    )
-
-                # Update the values in airflow_tasks on the remote instance
-                (
-                    remote_session.query(config_schema.AirflowTasks)
-                    .filter(config_schema.AirflowTasks.dag_name == airflow_dag_name)
-                    .filter(config_schema.AirflowTasks.task_name == row["sensor_name"])
-                    .update(update_dict)
-                )
-                remote_session.commit()
-
-                logging.info(
-                    "Converted DAG sensor '%s' to an airflow_tasks entry"
-                    % (row["sensor_name"])
-                )
+        for column in instance_copy.rows(
+            config_schema.ExportColumns,
+            {"table_id": table_id},
+            order_by=("column_order",),
+        ):
+            instance_copy.copy(
+                config_schema.ExportColumns,
+                column,
+                {"table_id": remote_table_id, "column_name": column["column_name"]},
+                leave_out={"column_id"},
+            )
 
     def check_remote_instance_schema(self, remote_instance):
         """Checks that the remote instance is using the same database schema version as the local instance is"""
@@ -891,303 +801,6 @@ class Operation(metaclass=Singleton):
             logging.info("Schema definitions deployed successfully")
             if tasks:
                 logging.info("DAG custom tasks deployed successfully")
-
-    def copy_export_schema_to_destination(
-        self,
-        filter_db_alias,
-        filter_schema,
-        filter_table,
-        destination,
-        deploy_mode=False,
-    ):
-        """Copy the schema definitions to the target instances"""
-        local_session = self.config_db_session()
-        export_tables = aliased(config_schema.ExportTables)
-        export_columns = aliased(config_schema.ExportColumns)
-        jdbc_connections = aliased(config_schema.JDBCConnections)
-        dbimport_instances = aliased(config_schema.DBImportInstances)
-
-        if self.connect_remote_dbimport_instance(instance=destination):
-            remote_session = self.remote_instance_config_db_session()
-
-            # Check if if we are going to sync the credentials for this destination
-            result = (
-                local_session.query(dbimport_instances.sync_credentials)
-                .select_from(dbimport_instances)
-                .filter(dbimport_instances.name == destination)
-                .one()
-            )
-
-            if result[0] == 1:
-                sync_credentials = True
-            else:
-                sync_credentials = False
-
-            filter_db_alias = filter_db_alias.replace("*", "%")
-            filter_schema = filter_schema.replace("*", "%")
-            filter_table = filter_table.replace("*", "%")
-
-            result = pd.DataFrame(
-                local_session.query(
-                    export_tables.table_id,
-                    export_tables.hive_db,
-                    export_tables.hive_table,
-                    export_tables.dbalias,
-                    export_tables.target_schema,
-                    export_tables.target_table,
-                )
-                .filter(export_tables.dbalias.like(filter_db_alias))
-                .filter(export_tables.target_schema.like(filter_schema))
-                .filter(export_tables.target_table.like(filter_table))
-            )
-
-            for _index, row in result.iterrows():
-                if deploy_mode == False:
-                    logging.info(
-                        "Copy schema definitions for %s.%s",
-                        row["hive_db"],
-                        row["hive_table"],
-                    )
-                else:
-                    logging.info(
-                        "Deploying schema definitions for %s.%s",
-                        row["hive_db"],
-                        row["hive_table"],
-                    )
-
-                ##################################
-                # Update jdbc_connections
-                ##################################
-
-                # Check if the jdbcConnection exists on the remote DBImport instance
-                result = (
-                    remote_session.query(jdbc_connections)
-                    .filter(jdbc_connections.dbalias == row["dbalias"])
-                    .count()
-                )
-
-                if result == 0:
-                    new_jdbc_connection = config_schema.JDBCConnections(
-                        dbalias=row["dbalias"], jdbc_url=""
-                    )
-                    remote_session.add(new_jdbc_connection)
-                    remote_session.commit()
-
-                # Read the entire import_table row from the source database
-                source_jdbc_connection = pd.DataFrame(
-                    local_session.query(config_schema.JDBCConnections.__table__).filter(
-                        config_schema.JDBCConnections.dbalias == row["dbalias"]
-                    )
-                )
-
-                # Table to update with values from import_table source
-                remote_jdbc_connection = (
-                    remote_session.query(config_schema.JDBCConnections.__table__)
-                    .filter(config_schema.JDBCConnections.dbalias == row["dbalias"])
-                    .one()
-                )
-
-                # Create dictonary to be used to update the values in import_table on the remote Instance
-                update_dict = {}
-                for name, values in source_jdbc_connection.items():
-                    if name == "dbalias":
-                        continue
-
-                    if not sync_credentials and name in (
-                        "credentials",
-                        "private_key_path",
-                        "public_key_path",
-                    ):
-                        continue
-
-                    value = str(values[0])
-                    if value == "None":
-                        value = None
-
-                    update_dict["%s" % (name)] = value
-
-                # Update the values in import_table on the remote instance
-                (
-                    remote_session.query(config_schema.JDBCConnections)
-                    .filter(config_schema.JDBCConnections.dbalias == row["dbalias"])
-                    .update(update_dict)
-                )
-                remote_session.commit()
-
-                ##################################
-                # Update export_tables
-                ##################################
-
-                # Check if the table exists on the remote DBImport instance
-                result = (
-                    remote_session.query(export_tables)
-                    .filter(export_tables.dbalias == row["dbalias"])
-                    .filter(export_tables.target_schema == row["target_schema"])
-                    .filter(export_tables.target_table == row["target_table"])
-                    .count()
-                )
-
-                if result == 0:
-                    # Table does not exist in target system. Lets create a skeleton record
-                    new_export_table = config_schema.ExportTables(
-                        dbalias=row["dbalias"],
-                        target_schema=row["target_schema"],
-                        target_table=row["target_table"],
-                        hive_db=row["hive_db"],
-                        hive_table=row["hive_table"],
-                    )
-                    remote_session.add(new_export_table)
-                    remote_session.commit()
-
-                # Get the table_id from the table at the remote instance
-                remote_export_table_id = (
-                    remote_session.query(export_tables.table_id)
-                    .select_from(export_tables)
-                    .filter(export_tables.dbalias == row["dbalias"])
-                    .filter(export_tables.target_schema == row["target_schema"])
-                    .filter(export_tables.target_table == row["target_table"])
-                    .one()
-                )
-
-                remote_table_id = remote_export_table_id[0]
-
-                # Read the entire export_table row from the source database
-                source_table_definition = pd.DataFrame(
-                    local_session.query(config_schema.ExportTables.__table__).filter(
-                        config_schema.ExportTables.table_id == row["table_id"]
-                    )
-                )
-
-                # Table to update with values from import_table source
-                remote_table_definition = (
-                    remote_session.query(config_schema.ExportTables.__table__)
-                    .filter(config_schema.ExportTables.table_id == remote_table_id)
-                    .one()
-                )
-
-                # Create dictonary to be used to update the values in import_table on the remote Instance
-                update_dict = {}
-                for name, values in source_table_definition.items():
-                    if name in (
-                        "table_id",
-                        "dbalias",
-                        "target_schema",
-                        "target_table",
-                        "sqoop_last_execution",
-                    ):
-                        continue
-
-                    value = str(values[0])
-                    if value == "None":
-                        value = None
-
-                    update_dict["%s" % (name)] = value
-
-                # Update the values in import_table on the remote instance
-                # update_dict has the column names of the row read above.
-                table = config_schema.metadata.tables["export_tables"]
-                remote_session.execute(
-                    sa.update(table)
-                    .where(table.c.table_id == remote_table_id)
-                    .values(update_dict)
-                )
-                remote_session.commit()
-
-                ##################################
-                # Update export_colums
-                ##################################
-
-                # Read the entire export_columns row from the source database
-                source_all_column_definitions = pd.DataFrame(
-                    local_session.query(config_schema.ExportColumns.__table__).filter(
-                        config_schema.ExportColumns.table_id == row["table_id"]
-                    )
-                )
-
-                for (
-                    _column_index,
-                    column_row,
-                ) in source_all_column_definitions.iterrows():
-                    # Check if the column exists on the remote DBImport instance
-                    result = (
-                        remote_session.query(export_columns)
-                        .filter(export_columns.table_id == remote_table_id)
-                        .filter(export_columns.column_name == column_row["column_name"])
-                        .count()
-                    )
-
-                    if result == 0:
-                        # Create a new row in ExportColumns if it doesnt exists
-                        new_export_column = config_schema.ExportColumns(
-                            table_id=remote_table_id,
-                            column_name=column_row["column_name"],
-                            last_update_from_hive=str(
-                                column_row["last_update_from_hive"]
-                            ),
-                        )
-                        remote_session.add(new_export_column)
-                        remote_session.commit()
-
-                    # Get the table_id from the table at the remote instance
-                    remote_export_column_id = (
-                        remote_session.query(export_columns.column_id)
-                        .select_from(export_columns)
-                        .filter(export_columns.table_id == remote_table_id)
-                        .filter(export_columns.column_name == column_row["column_name"])
-                        .one()
-                    )
-
-                    remote_column_id = remote_export_column_id[0]
-
-                    # Read the entire export_columnis row from the source database
-                    source_column_definition = pd.DataFrame(
-                        local_session.query(
-                            config_schema.ExportColumns.__table__
-                        ).filter(
-                            config_schema.ExportColumns.column_id
-                            == column_row["column_id"]
-                        )
-                    )
-
-                    # Table to update with values from export_columns source
-                    remote_column_definition = (
-                        remote_session.query(config_schema.ExportColumns.__table__)
-                        .filter(
-                            config_schema.ExportColumns.column_id == remote_column_id
-                        )
-                        .one()
-                    )
-
-                    # Create dictonary to be used to update the values in export_table on the remote Instance
-                    update_dict = {}
-                    for name, values in source_column_definition.items():
-                        if name in ("table_id", "column_id", "column_name"):
-                            continue
-
-                        value = str(values[0])
-                        if value == "None":
-                            value = None
-
-                        update_dict["%s" % (name)] = value
-
-                    # Update the values in export_table on the remote instance
-                    (
-                        remote_session.query(config_schema.ExportColumns)
-                        .filter(
-                            config_schema.ExportColumns.column_id == remote_column_id
-                        )
-                        .update(update_dict)
-                    )
-                    remote_session.commit()
-
-            remote_session.close()
-        else:
-            logging.warning(
-                "Connection failed! No data will be copied to instance '%s'"
-                % (destination)
-            )
-
-        local_session.close()
 
     def copy_import_schema_to_destinations(self):
         """Copy the definitions of the imported table to its copy

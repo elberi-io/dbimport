@@ -260,6 +260,27 @@ class ExportTablesRepository:
         )
         return [ExportDAGTable.model_validate(row._mapping) for row in rows]
 
+    def tables_like(
+        self, dbalias: str, target_schema: str, target_table: str
+    ) -> list[tuple[int, str, str]]:
+        """table_id, hive_db and hive_table of the tables matching the
+        dbalias, target_schema and target_table LIKE patterns, ordered by
+        connection, schema and table."""
+        rows = self._session.execute(
+            select(ExportTables.table_id, ExportTables.hive_db, ExportTables.hive_table)
+            .where(
+                ExportTables.dbalias.like(dbalias),
+                ExportTables.target_schema.like(target_schema),
+                ExportTables.target_table.like(target_table),
+            )
+            .order_by(
+                ExportTables.dbalias,
+                ExportTables.target_schema,
+                ExportTables.target_table,
+            )
+        )
+        return list(rows.tuples())
+
     def job_mappers(self, table_id: int) -> tuple[int | None, int] | None:
         """The last size in units of 128 MB (rounded as MySQL casts it) and
         the configured mappers; None when the table is missing."""
