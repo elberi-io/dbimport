@@ -133,3 +133,15 @@ def test_check_remote_instance_schema_exits_when_it_cannot_confirm_the_version(
         )
 
     assert exit_info.value.code == 1
+
+
+def test_connect_remote_dbimport_instance_takes_the_password_literally(
+    remote: sa.Connection, engine: sa.Engine
+) -> None:
+    assert engine.url.username is not None
+    assert engine.url.password is not None
+    real = engine.url.password
+    _save_credentials(engine.url.username, f"%{ord(real[0]):02X}{real[1:]}")
+    copy = copy_operations.Operation()
+
+    assert copy.connect_remote_dbimport_instance(instance=INSTANCE) is False

@@ -121,7 +121,7 @@
     "E722": 3,
     "F841": 8,
     "G002": 18,
-    "UP031": 48
+    "UP031": 47
   },
   "src/dbimport/operations/etl_operations.py": {
     "E711": 18,
@@ -172,7 +172,7 @@
     "E722": 3,
     "F841": 3,
     "G002": 3,
-    "UP031": 6
+    "UP031": 5
   },
   "src/dbimport/server/rest_server.py": {
     "B904": 1,

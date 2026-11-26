@@ -605,17 +605,19 @@ class ServerDaemon(run.RunDaemon):
         username = db_credentials.split(" ")[0]
         password = db_credentials.split(" ")[1]
 
-        instance_connect_str = "mysql+pymysql://%s:%s@%s:%s/%s" % (
-            username,
-            password,
-            row[0],
-            row[1],
-            row[2],
+        instance_url = config_engine.url(
+            config_engine.Credentials(
+                hostname=row[0],
+                port=row[1],
+                database=row[2],
+                username=username,
+                password=password,
+            )
         )
 
         try:
             remote_instance_config_db_engine = sa.create_engine(
-                instance_connect_str, echo=self.debug_log_level
+                instance_url, echo=self.debug_log_level
             )
             remote_instance_config_db_engine.connect()
             remote_instance_config_db_session = sessionmaker(
