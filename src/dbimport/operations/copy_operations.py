@@ -669,7 +669,7 @@ class Operation(metaclass=Singleton):
                 local_session.query(config_schema.AirflowTasks.__table__).filter(
                     config_schema.AirflowTasks.dag_name == airflow_dag_name
                 )
-            )
+            ).replace({float("nan"): None})
 
             for _index, row in airflow_tasks_result.iterrows():
                 # Check if the Airflow Task exists on the remote DBImport instance

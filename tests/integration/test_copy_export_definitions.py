@@ -345,11 +345,6 @@ def test_copy_airflow_export_dag_copies_a_task_with_its_connection(
     assert _tasks(remote) == _tasks(local)
 
 
-@pytest.mark.xfail(
-    strict=True,
-    raises=sa.exc.ProgrammingError,
-    reason="an empty number of one task is NaN in the DataFrame of all tasks",
-)
 def test_copy_airflow_export_dag_copies_tasks_with_an_empty_priority(
     local: sa.Connection, remote: sa.Connection
 ) -> None:
