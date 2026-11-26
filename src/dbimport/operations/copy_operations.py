@@ -588,7 +588,9 @@ class Operation(metaclass=Singleton):
             if result == 0:
                 # Table does not exist in target system. Lets create a skeleton record
                 new_airflow_export_dags = config_schema.AirflowExportDAGs(
-                    dag_name=airflow_dag_name, filter_dbalias="None"
+                    dag_name=airflow_dag_name,
+                    filter_dbalias="None",
+                    schedule_interval="None",
                 )
                 remote_session.add(new_airflow_export_dags)
                 remote_session.commit()

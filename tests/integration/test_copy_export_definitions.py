@@ -410,11 +410,6 @@ def test_copy_airflow_export_dag_copies_its_sensors_as_tasks(
     ]
 
 
-@pytest.mark.xfail(
-    strict=True,
-    raises=sa.exc.IntegrityError,
-    reason="the new DAG row is added without schedule_interval, which is NOT NULL",
-)
 def test_copy_airflow_export_dag_creates_a_dag_missing_on_the_instance(
     local: sa.Connection, remote: sa.Connection
 ) -> None:
