@@ -286,11 +286,6 @@ def test_copy_after_import_copies_the_text_none_as_it_is(
     assert _tables(remote) == _tables(local)
 
 
-@pytest.mark.xfail(
-    strict=True,
-    raises=AssertionError,
-    reason="the connection the table had on the other instance is copied",
-)
 def test_copy_after_import_copies_the_connection_of_a_changed_table(
     local: sa.Connection, remote: sa.Connection
 ) -> None:

@@ -1383,7 +1383,7 @@ class Operation(metaclass=Singleton):
 
                 # Get the table_id from the table at the remote instance
                 remote_import_table_id = (
-                    remote_session.query(import_tables.table_id, import_tables.dbalias)
+                    remote_session.query(import_tables.table_id)
                     .select_from(import_tables)
                     .filter(import_tables.hive_db == hive_db)
                     .filter(import_tables.hive_table == hive_table)
@@ -1391,14 +1391,13 @@ class Operation(metaclass=Singleton):
                 )
 
                 remote_table_id = remote_import_table_id[0]
-                jdbc_connection = remote_import_table_id[1]
 
                 ##################################
                 # Update jdbc_connections
                 ##################################
 
                 self.copy_jdbc_connection_to_destination(
-                    jdbc_connection=jdbc_connection,
+                    jdbc_connection=connection_alias,
                     deploy_mode=deploy_mode,
                     destination=destination,
                 )
@@ -1574,7 +1573,6 @@ class Operation(metaclass=Singleton):
 
                 # Create dictonary to be used to update the values in import_table on the remote Instance
                 update_dict = {}
-                jdbc_connection = ""
                 for name, values in source_table_definition.items():
                     if name in (
                         "table_id",
