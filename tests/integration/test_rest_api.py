@@ -2472,8 +2472,7 @@ DAG_FILTER_FIELDS: dict[str, dict[str, object]] = {
     },
     "custom": {},
 }
-DAG_KINDS = pytest.mark.parametrize("kind", ["import", "export"])
-ALL_DAG_KINDS = pytest.mark.parametrize("kind", ["import", "export", "custom"])
+DAG_KINDS = pytest.mark.parametrize("kind", ["import", "export", "custom"])
 LISTED_DAG_ROW: dict[str, object] = {
     "schedule_interval": "03:00",
     "auto_regenerate_dag": 0,
@@ -2562,7 +2561,7 @@ def _dag_row(conn: sa.Connection, kind: str, *columns: str) -> tuple[object, ...
     )
 
 
-@ALL_DAG_KINDS
+@DAG_KINDS
 def test_get_airflow_dags_lists_the_dags_of_one_type_by_name(
     client: TestClient,
     auth_headers: dict[str, str],
@@ -2631,7 +2630,7 @@ LISTED_TASK = {
 }
 
 
-@ALL_DAG_KINDS
+@DAG_KINDS
 def test_get_airflow_dag_returns_every_field_and_its_tasks(
     client: TestClient,
     auth_headers: dict[str, str],
@@ -2678,7 +2677,7 @@ def test_get_export_airflow_dag_without_retries_returns_five(
     assert response.json()["retries"] == 5
 
 
-@ALL_DAG_KINDS
+@DAG_KINDS
 @pytest.mark.parametrize(
     ("dag", "status_code", "remaining_dags", "remaining_tasks"),
     [
@@ -2709,7 +2708,7 @@ def test_delete_airflow_dag_removes_it_and_its_tasks_or_returns_404(
     assert _task_names(db_connection) == remaining_tasks
 
 
-@ALL_DAG_KINDS
+@DAG_KINDS
 def test_bulk_delete_of_airflow_dags_removes_the_listed_dags(
     client: TestClient,
     auth_headers: dict[str, str],
@@ -2731,7 +2730,7 @@ def test_bulk_delete_of_airflow_dags_removes_the_listed_dags(
     assert _dag_names(db_connection, kind) == ["dag_b"]
 
 
-@ALL_DAG_KINDS
+@DAG_KINDS
 @pytest.mark.parametrize(("method", "body"), [("DELETE", []), ("POST", {"dags": []})])
 def test_bulk_change_of_airflow_dags_without_dags_returns_422(
     client: TestClient,
@@ -2747,7 +2746,7 @@ def test_bulk_change_of_airflow_dags_without_dags_returns_422(
     assert response.status_code == 422
 
 
-@ALL_DAG_KINDS
+@DAG_KINDS
 def test_bulk_update_of_airflow_dags_changes_only_the_given_fields(
     client: TestClient,
     auth_headers: dict[str, str],
@@ -2776,7 +2775,7 @@ def test_bulk_update_of_airflow_dags_changes_only_the_given_fields(
     ]
 
 
-@ALL_DAG_KINDS
+@DAG_KINDS
 def test_bulk_update_of_airflow_dags_sets_every_field_it_accepts(
     client: TestClient,
     auth_headers: dict[str, str],
@@ -2857,7 +2856,7 @@ DAG_DEFAULTS: dict[str, tuple[object, ...]] = {
 }
 
 
-@ALL_DAG_KINDS
+@DAG_KINDS
 def test_update_airflow_dag_creates_a_dag_with_defaults(
     client: TestClient,
     auth_headers: dict[str, str],
@@ -2959,7 +2958,7 @@ COMMON_WRITTEN_COLUMNS = (
 )
 
 
-@ALL_DAG_KINDS
+@DAG_KINDS
 def test_update_airflow_dag_replaces_every_field_of_an_existing_dag(
     client: TestClient,
     auth_headers: dict[str, str],
@@ -2995,7 +2994,7 @@ def test_update_airflow_dag_replaces_every_field_of_an_existing_dag(
     )
 
 
-@ALL_DAG_KINDS
+@DAG_KINDS
 def test_update_airflow_dag_stores_its_tasks(
     client: TestClient,
     auth_headers: dict[str, str],
@@ -3057,7 +3056,7 @@ def test_update_airflow_dag_with_a_name_of_another_type_returns_400(
     assert _dag_names(db_connection, kind) == []
 
 
-@ALL_DAG_KINDS
+@DAG_KINDS
 def test_get_airflow_dag_of_unknown_dag_returns_404_and_ends_its_transaction(
     client: TestClient,
     auth_headers: dict[str, str],
@@ -3075,7 +3074,7 @@ def test_get_airflow_dag_of_unknown_dag_returns_404_and_ends_its_transaction(
     assert response.status_code == 404
 
 
-@ALL_DAG_KINDS
+@DAG_KINDS
 def test_bulk_delete_of_airflow_dags_removes_their_tasks(
     client: TestClient,
     auth_headers: dict[str, str],
@@ -3200,7 +3199,7 @@ def test_get_all_airflow_dags_lists_custom_then_import_then_export_dags(
     ]
 
 
-@ALL_DAG_KINDS
+@DAG_KINDS
 @pytest.mark.parametrize(
     ("task", "status_code", "result", "remaining"),
     [

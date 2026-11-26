@@ -29,10 +29,8 @@ import sqlalchemy as sa
 from fastapi import HTTPException, status
 from fastapi.responses import JSONResponse
 from pydantic import ValidationError
-from sqlalchemy import bindparam
-from sqlalchemy.dialects.mysql import insert
 from sqlalchemy.orm import aliased, scoped_session, sessionmaker
-from sqlalchemy.sql import delete, select, update
+from sqlalchemy.sql import update
 
 from dbimport.common import constants as constant
 from dbimport.common.exceptions import InvalidConfigurationError, SQLError
@@ -312,6 +310,24 @@ _AIRFLOW_EXPORT_DAG_FIELDS = {
     "applicationNotes": "application_notes",
     "autoRegenerateDag": "auto_regenerate_dag",
     "airflowNotes": "airflow_notes",
+    "sudoUser": "sudo_user",
+    "timezone": "timezone",
+    "email": "email",
+    "emailOnFailure": "email_on_failure",
+    "emailOnRetries": "email_on_retries",
+    "tags": "tags",
+    "slaWarningTime": "sla_warning_time",
+    "retryExponentialBackoff": "retry_exponential_backoff",
+    "concurrency": "concurrency",
+}
+
+_AIRFLOW_CUSTOM_DAG_FIELDS = {
+    "scheduleInterval": "schedule_interval",
+    "retries": "retries",
+    "operatorNotes": "operator_notes",
+    "applicationNotes": "application_notes",
+    "airflowNotes": "airflow_notes",
+    "autoRegenerateDag": "auto_regenerate_dag",
     "sudoUser": "sudo_user",
     "timezone": "timezone",
     "email": "email",
@@ -1674,7 +1690,6 @@ class DBCalls:
             self.disconnect_dbimport_db()
             return None
 
-        # Only the fields given in the posted JSON are changed.
         settings = {
             _IMPORT_TABLE_BULK[field]: getattr(bulk_data, field)
             for field in bulk_data.__pydantic_fields_set__
@@ -2352,7 +2367,6 @@ class DBCalls:
             self.disconnect_dbimport_db()
             return None
 
-        # Only the fields given in the posted JSON are changed.
         settings = {
             _EXPORT_TABLE_BULK[field]: getattr(bulk_data, field)
             for field in bulk_data.__pydantic_fields_set__
@@ -2438,87 +2452,45 @@ class DBCalls:
 
     def get_all_airflow_dags(self):
         """Returns all Airflow DAGs"""
-        log = logging.getLogger(self.logger)
-
         try:
             session = self.get_dbimport_session()
         except SQLError:
             self.disconnect_dbimport_db()
             return None
 
-        airflow_custom_dags = aliased(config_schema.AirflowCustomDAGs)
-        airflow_export_dags = aliased(config_schema.AirflowExportDAGs)
-        airflow_import_dags = aliased(config_schema.AirflowImportDAGs)
-        list_of_dags = []
-        processed_dags = []
+        try:
+            dags = AirflowDAGsRepository(session()).all_dags(
+                limit=self.content_max_rows
+            )
+        finally:
+            session.remove()
 
-        airflow_custom_dags_query = session.query(
-            airflow_custom_dags.dag_name,
-            sa.sql.expression.literal_column("'custom'").label("dag_type"),
-            airflow_custom_dags.schedule_interval,
-            airflow_custom_dags.auto_regenerate_dag,
-            airflow_custom_dags.operator_notes,
-            airflow_custom_dags.application_notes,
-        ).select_from(airflow_custom_dags)
-
-        airflow_import_dags_query = session.query(
-            airflow_import_dags.dag_name,
-            sa.sql.expression.literal_column("'import'").label("dag_type"),
-            airflow_import_dags.schedule_interval,
-            airflow_import_dags.auto_regenerate_dag,
-            airflow_import_dags.operator_notes,
-            airflow_import_dags.application_notes,
-        ).select_from(airflow_import_dags)
-
-        airflow_export_dags_query = session.query(
-            airflow_export_dags.dag_name,
-            sa.sql.expression.literal_column("'export'").label("dag_type"),
-            airflow_export_dags.schedule_interval,
-            airflow_export_dags.auto_regenerate_dag,
-            airflow_export_dags.operator_notes,
-            airflow_export_dags.application_notes,
-        ).select_from(airflow_export_dags)
-
-        airflow_dags_data = airflow_custom_dags_query.union(
-            airflow_import_dags_query, airflow_export_dags_query
-        ).limit(self.content_max_rows)
-
-        count = 0
-        for row in airflow_dags_data:
-            count = count + 1
-            result_dict = {}
-
+        processed_dags: set[str] = set()
+        for dag in dags:
             # Just to make sure that two DAGs dont exists with the same name in different tables
-            if row[0] in processed_dags:
-                session.remove()
+            if dag.dag_name in processed_dags:
                 raise HTTPException(
                     status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                     detail="Airflow DAG '%s' exists in more than one DAG table"
-                    % (row[0]),
+                    % (dag.dag_name),
                 )
-            else:
-                processed_dags.append(row[0])
+            processed_dags.add(dag.dag_name)
 
-            result_dict["name"] = row[0]
-            result_dict["type"] = row[1]
-            result_dict["scheduleInterval"] = row[2]
-            result_dict["autoRegenerateDag"] = self.convert_int_to_bool(row[3])
-            # 			resultDict['operatorNotes'] = row[4]
-            # 			resultDict['applicationNotes'] = row[5]
-            list_of_dags.append(result_dict)
-
-            if count == self.content_max_rows:
-                break
-
-        json_result = json.loads(json.dumps(list_of_dags))
-        # session.close()
-        session.remove()
+        list_of_dags = [
+            {
+                "name": dag.dag_name,
+                "type": dag.dag_type,
+                "scheduleInterval": dag.schedule_interval,
+                "autoRegenerateDag": self.convert_int_to_bool(dag.auto_regenerate_dag),
+            }
+            for dag in dags
+        ]
 
         headers = {
-            "content-rows": str(count),
+            "content-rows": str(len(list_of_dags)),
             "content-max-returned-rows": str(self.content_max_rows),
         }
-        return JSONResponse(content=json_result, headers=headers, status_code=200)
+        return JSONResponse(content=list_of_dags, headers=headers, status_code=200)
 
     def get_airflow_import_dags(self):
         """Returns all Airflow Import DAGs"""
@@ -2608,137 +2580,82 @@ class DBCalls:
 
     def get_airflow_custom_dags(self):
         """Returns all Airflow Custom DAGs"""
-        log = logging.getLogger(self.logger)
-
-        try:
-            session = self.get_dbimport_session()
-        except SQLError:
-            self.disconnect_dbimport_db()
-            return None
-
         airflow_url = self.get_config_value("airflow_url")
 
-        airflow_custom_dags = aliased(config_schema.AirflowCustomDAGs)
-        list_of_dags = []
-
-        airflow_dags_data = (
-            session.query(
-                airflow_custom_dags.dag_name,
-                airflow_custom_dags.schedule_interval,
-                airflow_custom_dags.auto_regenerate_dag,
-                airflow_custom_dags.operator_notes,
-                airflow_custom_dags.sudo_user,
-                airflow_custom_dags.timezone,
-                airflow_custom_dags.email,
-                airflow_custom_dags.email_on_failure,
-                airflow_custom_dags.email_on_retries,
-                airflow_custom_dags.sla_warning_time,
-                airflow_custom_dags.concurrency,
-            )
-            .select_from(airflow_custom_dags)
-            .limit(self.content_max_rows)
-        )
-
-        count = 0
-        for row in airflow_dags_data:
-            count = count + 1
-            result_dict = {}
-
-            result_dict["name"] = row[0]
-            result_dict["scheduleInterval"] = row[1]
-            result_dict["autoRegenerateDag"] = self.convert_int_to_bool(row[2])
-            result_dict["airflowLink"] = "%s/dags/%s" % (airflow_url, row[0])
-            result_dict["operatorNotes"] = row[3]
-            result_dict["sudoUser"] = row[4]
-            result_dict["timezone"] = row[5]
-            result_dict["email"] = row[6]
-            result_dict["emailOnFailure"] = self.convert_int_to_bool(row[7])
-            result_dict["emailOnRetries"] = self.convert_int_to_bool(row[8])
-            try:
-                result_dict["slaWarningTime"] = row[9].strftime("%H:%M:%S")
-            except AttributeError:
-                result_dict["slaWarningTime"] = None
-            result_dict["concurrency"] = row[10]
-            list_of_dags.append(result_dict)
-
-            if count == self.content_max_rows:
-                break
-
-        json_result = json.loads(json.dumps(list_of_dags))
-        # session.close()
-        session.remove()
-
-        headers = {
-            "content-rows": str(count),
-            "content-max-returned-rows": str(self.content_max_rows),
-        }
-        return JSONResponse(content=json_result, headers=headers, status_code=200)
-
-    def get_airflow_tasks(self, dagname):
-        """Returns a list with all airflow dags associated with a specified dag"""
-        log = logging.getLogger(self.logger)
-
         try:
             session = self.get_dbimport_session()
         except SQLError:
             self.disconnect_dbimport_db()
             return None
 
-        airflow_tasks = aliased(config_schema.AirflowTasks)
-        list_of_tasks = []
-
-        # Return a list of Hive tables with details
-        airflow_tasks_data = (
-            session.query(
-                airflow_tasks.task_name,
-                airflow_tasks.task_type,
-                airflow_tasks.placement,
-                airflow_tasks.jdbc_dbalias,
-                airflow_tasks.airflow_pool,
-                airflow_tasks.airflow_priority,
-                airflow_tasks.include_in_airflow,
-                airflow_tasks.task_dependency_downstream,
-                airflow_tasks.task_dependency_upstream,
-                airflow_tasks.task_config,
-                airflow_tasks.sensor_poke_interval,
-                airflow_tasks.sensor_timeout_minutes,
-                airflow_tasks.sensor_connection,
-                airflow_tasks.sensor_soft_fail,
-                airflow_tasks.sudo_user,
+        try:
+            dags = AirflowDAGsRepository(session()).custom_dags(
+                limit=self.content_max_rows
             )
-            .select_from(airflow_tasks)
-            .filter(airflow_tasks.dag_name == dagname)
-            .all()
-        )
+        finally:
+            session.remove()
 
-        for row in airflow_tasks_data:
-            result_dict = {}
-            result_dict["name"] = row[0]
-            result_dict["type"] = row[1]
-            result_dict["placement"] = row[2]
-            result_dict["connection"] = row[3]
-            result_dict["airflowPool"] = row[4]
-            result_dict["airflowPriority"] = row[5]
-            if row[6] == 1:
-                result_dict["includeInAirflow"] = True
-            else:
-                result_dict["includeInAirflow"] = False
-            result_dict["taskDependencyDownstream"] = row[7]
-            result_dict["taskDependencyUpstream"] = row[8]
-            result_dict["taskConfig"] = row[9]
-            result_dict["sensorPokeInterval"] = row[10]
-            result_dict["sensorTimeoutMinutes"] = row[11]
-            result_dict["sensorConnection"] = row[12]
-            result_dict["sensorSoftFail"] = row[13]
-            result_dict["sudoUser"] = row[14]
-            list_of_tasks.append(result_dict)
+        list_of_dags = [
+            {
+                "name": dag.dag_name,
+                "scheduleInterval": dag.schedule_interval,
+                "autoRegenerateDag": self.convert_int_to_bool(dag.auto_regenerate_dag),
+                "airflowLink": f"{airflow_url}/dags/{dag.dag_name}",
+                "operatorNotes": dag.operator_notes,
+                "sudoUser": dag.sudo_user,
+                "timezone": dag.timezone,
+                "email": dag.email,
+                "emailOnFailure": self.convert_int_to_bool(dag.email_on_failure),
+                "emailOnRetries": self.convert_int_to_bool(dag.email_on_retries),
+                "slaWarningTime": _time_text(dag.sla_warning_time),
+                "concurrency": dag.concurrency,
+            }
+            for dag in dags
+        ]
 
-        session.remove()
-        return list_of_tasks
+        headers = {
+            "content-rows": str(len(list_of_dags)),
+            "content-max-returned-rows": str(self.content_max_rows),
+        }
+        return JSONResponse(content=list_of_dags, headers=headers, status_code=200)
+
+    def get_airflow_tasks(self, dagname):
+        """Returns all Airflow tasks for a specific DAG"""
+        try:
+            session = self.get_dbimport_session()
+        except SQLError:
+            self.disconnect_dbimport_db()
+            return None
+
+        try:
+            tasks = AirflowDAGsRepository(session()).tasks(dagname, included_only=False)
+        finally:
+            session.remove()
+
+        return [
+            {
+                "name": task.task_name,
+                "type": task.task_type,
+                "placement": task.placement,
+                "connection": task.jdbc_dbalias,
+                "airflowPool": task.airflow_pool,
+                "airflowPriority": task.airflow_priority,
+                "includeInAirflow": task.include_in_airflow == 1,
+                "taskDependencyDownstream": task.task_dependency_downstream,
+                "taskDependencyUpstream": task.task_dependency_upstream,
+                "taskConfig": task.task_config,
+                "sensorPokeInterval": task.sensor_poke_interval,
+                "sensorTimeoutMinutes": task.sensor_timeout_minutes,
+                "sensorConnection": task.sensor_connection,
+                "sensorSoftFail": task.sensor_soft_fail,
+                "sudoUser": task.sudo_user,
+            }
+            for task in tasks
+        ]
 
     def get_airflow_custom_dag(self, dagname):
         """Returns an Airflow Custom DAG"""
-        log = logging.getLogger(self.logger)
+        airflow_url = self.get_config_value("airflow_url")
 
         try:
             session = self.get_dbimport_session()
@@ -2746,191 +2663,37 @@ class DBCalls:
             self.disconnect_dbimport_db()
             return None
 
-        airflow_url = self.get_config_value("airflow_url")
-
-        airflow_custom_dags = aliased(config_schema.AirflowCustomDAGs)
-
-        row = (
-            session.query(
-                airflow_custom_dags.dag_name,
-                airflow_custom_dags.schedule_interval,
-                airflow_custom_dags.retries,
-                airflow_custom_dags.operator_notes,
-                airflow_custom_dags.application_notes,
-                airflow_custom_dags.airflow_notes,
-                airflow_custom_dags.auto_regenerate_dag,
-                airflow_custom_dags.sudo_user,
-                airflow_custom_dags.timezone,
-                airflow_custom_dags.email,
-                airflow_custom_dags.email_on_failure,
-                airflow_custom_dags.email_on_retries,
-                airflow_custom_dags.tags,
-                airflow_custom_dags.sla_warning_time,
-                airflow_custom_dags.retry_exponential_backoff,
-                airflow_custom_dags.concurrency,
-            )
-            .select_from(airflow_custom_dags)
-            .filter(airflow_custom_dags.dag_name == dagname)
-            .one_or_none()
-        )
-
-        if row == None:
+        try:
+            dag = AirflowDAGsRepository(session()).custom_dag(dagname)
+        finally:
             session.remove()
+
+        if dag is None:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Airflow DAG does not exist",
             )
 
-        result_dict = {}
-        result_dict["name"] = row[0]
-        result_dict["scheduleInterval"] = row[1]
-        result_dict["retries"] = row[2]
-        if result_dict["retries"] == None or result_dict["retries"] == "":
-            result_dict["retries"] = 0
-        result_dict["operatorNotes"] = row[3]
-        result_dict["applicationNotes"] = row[4]
-        result_dict["airflowNotes"] = row[5]
-        result_dict["autoRegenerateDag"] = self.convert_int_to_bool(row[6])
-        result_dict["sudoUser"] = row[7]
-        result_dict["timezone"] = row[8]
-        result_dict["email"] = row[9]
-        result_dict["emailOnFailure"] = self.convert_int_to_bool(row[10])
-        result_dict["emailOnRetries"] = self.convert_int_to_bool(row[11])
-        result_dict["tags"] = row[12]
-        try:
-            result_dict["slaWarningTime"] = row[13].strftime("%H:%M:%S")
-        except AttributeError:
-            result_dict["slaWarningTime"] = None
-        result_dict["retryExponentialBackoff"] = row[14]
-        result_dict["concurrency"] = row[15]
-        result_dict["airflowLink"] = "%s/dags/%s" % (airflow_url, row[0])
-
-        result_dict["tasks"] = self.get_airflow_tasks(dagname)
-
-        json_result = json.loads(json.dumps(result_dict))
-        # session.close()
-        session.remove()
-
-        return json_result
-
-    def check_dag_name_availability(
-        self, name, exclude_import=False, exclude_export=False, exclude_custom=False
-    ):
-        """Checks if the DAG name is available. Returns True or False"""
-        log = logging.getLogger(self.logger)
-
-        try:
-            session = self.get_dbimport_session()
-        except SQLError:
-            self.disconnect_dbimport_db()
-            return None
-
-        airflow_custom_dags = aliased(config_schema.AirflowCustomDAGs)
-        airflow_export_dags = aliased(config_schema.AirflowExportDAGs)
-        airflow_import_dags = aliased(config_schema.AirflowImportDAGs)
-        list_of_dags = []
-        processed_dags = []
-        dag_name_is_free = True
-
-        if exclude_custom == False:
-            row = (
-                session.query(airflow_custom_dags.dag_name)
-                .select_from(airflow_custom_dags)
-                .filter(airflow_custom_dags.dag_name == name)
-                .one_or_none()
-            )
-
-            if row != None:
-                dag_name_is_free = False
-
-        if exclude_import == False:
-            row = (
-                session.query(airflow_import_dags.dag_name)
-                .select_from(airflow_import_dags)
-                .filter(airflow_import_dags.dag_name == name)
-                .one_or_none()
-            )
-
-            if row != None:
-                dag_name_is_free = False
-
-        if exclude_export == False:
-            row = (
-                session.query(airflow_export_dags.dag_name)
-                .select_from(airflow_export_dags)
-                .filter(airflow_export_dags.dag_name == name)
-                .one_or_none()
-            )
-
-            if row != None:
-                dag_name_is_free = False
-
-        session.remove()
-        return dag_name_is_free
-
-    def update_airflow_tasks(self, dagname, task, current_user):
-        """Create or update Airflow tasks"""
-        log = logging.getLogger(self.logger)
-
-        try:
-            session = self.get_dbimport_session()
-        except SQLError:
-            self.disconnect_dbimport_db()
-            return None
-
-        airflow_tasks = aliased(config_schema.AirflowTasks)
-
-        try:
-            query = insert(config_schema.AirflowTasks).values(
-                dag_name=dagname,
-                task_name=task.name,
-                task_type=task.type,
-                placement=task.placement,
-                jdbc_dbalias=task.connection,
-                airflow_pool=task.airflowPool,
-                airflow_priority=task.airflowPriority,
-                include_in_airflow=task.includeInAirflow,
-                task_dependency_downstream=task.taskDependencyDownstream,
-                task_dependency_upstream=task.taskDependencyUpstream,
-                task_config=task.taskConfig,
-                sensor_poke_interval=task.sensorPokeInterval,
-                sensor_timeout_minutes=task.sensorTimeoutMinutes,
-                sensor_connection=task.sensorConnection,
-                sensor_soft_fail=task.sensorSoftFail,
-                sudo_user=task.sudoUser,
-            )
-
-            query = query.on_duplicate_key_update(
-                dag_name=dagname,
-                task_name=task.name,
-                task_type=task.type,
-                placement=task.placement,
-                jdbc_dbalias=task.connection,
-                airflow_pool=task.airflowPool,
-                airflow_priority=task.airflowPriority,
-                include_in_airflow=task.includeInAirflow,
-                task_dependency_downstream=task.taskDependencyDownstream,
-                task_dependency_upstream=task.taskDependencyUpstream,
-                task_config=task.taskConfig,
-                sensor_poke_interval=task.sensorPokeInterval,
-                sensor_timeout_minutes=task.sensorTimeoutMinutes,
-                sensor_connection=task.sensorConnection,
-                sensor_soft_fail=task.sensorSoftFail,
-                sudo_user=task.sudoUser,
-            )
-
-            session.execute(query)
-            session.commit()
-        except SQLError as err:
-            log.error(str(err))
-            log.error(column)  # noqa: F821  # TODO(#164): column is undefined here
-
-            # session.close()
-            session.remove()
-            return False
-
-        session.remove()
-        return True
+        return {
+            "name": dag.dag_name,
+            "scheduleInterval": dag.schedule_interval,
+            "retries": dag.retries,
+            "operatorNotes": dag.operator_notes,
+            "applicationNotes": dag.application_notes,
+            "airflowNotes": dag.airflow_notes,
+            "autoRegenerateDag": self.convert_int_to_bool(dag.auto_regenerate_dag),
+            "sudoUser": dag.sudo_user,
+            "timezone": dag.timezone,
+            "email": dag.email,
+            "emailOnFailure": self.convert_int_to_bool(dag.email_on_failure),
+            "emailOnRetries": self.convert_int_to_bool(dag.email_on_retries),
+            "tags": dag.tags,
+            "slaWarningTime": _time_text(dag.sla_warning_time),
+            "retryExponentialBackoff": dag.retry_exponential_backoff,
+            "concurrency": dag.concurrency,
+            "airflowLink": f"{airflow_url}/dags/{dag.dag_name}",
+            "tasks": self.get_airflow_tasks(dagname),
+        }
 
     def get_airflow_export_dag(self, dagname):
         """Returns an Airflow Export DAG"""
@@ -3027,24 +2790,6 @@ class DBCalls:
             "tasks": self.get_airflow_tasks(dagname),
         }
 
-    def delete_airflow_tasks(self, dagname):
-        """Delete all Airflow tasks for the specified DAG"""
-        log = logging.getLogger(self.logger)
-
-        try:
-            session = self.get_dbimport_session()
-        except SQLError:
-            self.disconnect_dbimport_db()
-            return None
-
-        (
-            session.query(config_schema.AirflowTasks)
-            .filter(config_schema.AirflowTasks.dag_name == dagname)
-            .delete()
-        )
-        session.commit()
-        session.remove()
-
     def delete_task_from_airflow_dag(self, dagname, taskname, current_user):
         """Delete tasks from an Airflow DAG"""
         log = logging.getLogger(self.logger)
@@ -3055,10 +2800,6 @@ class DBCalls:
             self.disconnect_dbimport_db()
             return None
 
-        airflow_import_dags = aliased(config_schema.AirflowImportDAGs)
-        result_msg = {"result": "ok"}
-        return_code = 200
-
         log.info(
             "User '%s' deleted Airflow task '%s' from DAG '%s'",
             current_user,
@@ -3066,34 +2807,15 @@ class DBCalls:
             dagname,
         )
 
-        # Fetch the tableID as that is required to update/create data in import_columns
-        row = (
-            session.query(config_schema.AirflowTasks.dag_name)
-            .select_from(config_schema.AirflowTasks)
-            .filter(
-                (config_schema.AirflowTasks.dag_name == dagname)
-                & (config_schema.AirflowTasks.task_name == taskname)
-            )
-            .one_or_none()
-        )
-        session.commit()
-
-        if row == None:
-            result_msg = {"result": "Airflow Task on DAG does not exist"}
-            return_code = 404
-        else:
-            (
-                session.query(config_schema.AirflowTasks)
-                .filter(
-                    (config_schema.AirflowTasks.dag_name == dagname)
-                    & (config_schema.AirflowTasks.task_name == taskname)
-                )
-                .delete()
-            )
+        try:
+            deleted = AirflowDAGsRepository(session()).delete_task(dagname, taskname)
             session.commit()
+        finally:
+            session.remove()
 
-        session.remove()
-        return (result_msg, return_code)
+        if not deleted:
+            return ({"result": "Airflow Task on DAG does not exist"}, 404)
+        return ({"result": "ok"}, 200)
 
     def delete_import_airflow_dag(self, dagname, current_user):
         """Delete an Airflow import DAG"""
@@ -3162,7 +2884,6 @@ class DBCalls:
             self.disconnect_dbimport_db()
             return None
 
-        # Only the fields given in the posted JSON are changed.
         settings = {
             _AIRFLOW_DAG_BULK[field]: getattr(bulk_data, field)
             for field in bulk_data.__pydantic_fields_set__
@@ -3311,7 +3032,6 @@ class DBCalls:
             self.disconnect_dbimport_db()
             return None
 
-        # Only the fields given in the posted JSON are changed.
         settings = {
             _AIRFLOW_DAG_BULK[field]: getattr(bulk_data, field)
             for field in bulk_data.__pydantic_fields_set__
@@ -3388,7 +3108,7 @@ class DBCalls:
         return ("ok", 200)
 
     def delete_custom_airflow_dag(self, dagname, current_user):
-        """Delete an Airflow import DAG"""
+        """Delete an Airflow custom DAG"""
         log = logging.getLogger(self.logger)
 
         try:
@@ -3397,49 +3117,30 @@ class DBCalls:
             self.disconnect_dbimport_db()
             return None
 
-        result = "ok"
-        return_code = 200
+        log.info("User '%s' deleted Airflow custom DAG '%s'", current_user, dagname)
 
-        log.info("User '%s' deleted Airflow import DAG '%s'", current_user, dagname)
+        try:
+            dags = AirflowDAGsRepository(session())
+            found = dags.custom_dag(dagname) is not None
+            if found:
+                dags.delete_custom_dags([dagname])
+                session.commit()
+        finally:
+            session.remove()
 
-        # Fetch the tableID as that is required to update/create data in import_columns
-        row = (
-            session.query(config_schema.AirflowCustomDAGs.dag_name)
-            .select_from(config_schema.AirflowCustomDAGs)
-            .filter(config_schema.AirflowCustomDAGs.dag_name == dagname)
-            .one_or_none()
-        )
-        session.commit()
-
-        if row == None:
-            result = "Airflow DAG does not exist"
-            return_code = 404
-        else:
-            (
-                session.query(config_schema.AirflowCustomDAGs)
-                .filter(config_schema.AirflowCustomDAGs.dag_name == dagname)
-                .delete()
-            )
-            session.commit()
-
-            self.delete_airflow_tasks(dagname)
-
-        # session.close()
-        session.remove()
-        return (result, return_code)
+        if not found:
+            return ("Airflow DAG does not exist", 404)
+        return ("ok", 200)
 
     def bulk_delete_custom_airflow_dag(
         self, bulk_data: list[data_models.AirflowDAGPK], current_user
     ):
         """Bulk delete of Airflow custom Dags"""
-        log = logging.getLogger(self.logger)
-
         if len(bulk_data) == 0:
             result_msg = {
                 "result": "Body must contain a list of Airflow dags to delete"
             }
-            return_code = 422
-            return (result_msg, return_code)
+            return (result_msg, 422)
 
         try:
             session = self.get_dbimport_session()
@@ -3447,47 +3148,25 @@ class DBCalls:
             self.disconnect_dbimport_db()
             return None
 
-        delete_statement = delete(config_schema.AirflowCustomDAGs)
-        delete_statement = delete_statement.where(
-            config_schema.AirflowCustomDAGs.dag_name == bindparam("dag")
-        )
+        try:
+            AirflowDAGsRepository(session()).delete_custom_dags(
+                [dag.name for dag in bulk_data]
+            )
+            session.commit()
+        finally:
+            session.remove()
 
-        # Create a list of dicts that contain all the databas and table combinations that will be deleted
-        table_list = []
-        for tables in bulk_data:
-            table_list.append({"dag": tables.name})
-
-        # Only the tasks of a DAG of this type: the DAG types share names.
-        session.connection().execute(
-            delete(config_schema.AirflowTasks).where(
-                config_schema.AirflowTasks.dag_name == bindparam("dag"),
-                select(config_schema.AirflowCustomDAGs.dag_name)
-                .where(config_schema.AirflowCustomDAGs.dag_name == bindparam("dag"))
-                .exists(),
-            ),
-            table_list,
-        )
-        session.connection().execute(delete_statement, table_list)
-        session.commit()
-        session.remove()
-
-        return_code = 200
-        result_msg = {"result": "Ok"}
-
-        return (result_msg, return_code)
+        return ({"result": "Ok"}, 200)
 
     def bulk_update_custom_airflow_dag(
         self, bulk_data: data_models.AirflowDAGBulkUpdate, current_user
     ):
         """Bulk update of Airflow custom Dags"""
-        log = logging.getLogger(self.logger)
-
         if len(bulk_data.dags) == 0:
             result_msg = {
                 "result": "dags must contain a list of Airflow dags to update"
             }
-            return_code = 422
-            return (result_msg, return_code)
+            return (result_msg, 422)
 
         try:
             session = self.get_dbimport_session()
@@ -3495,67 +3174,21 @@ class DBCalls:
             self.disconnect_dbimport_db()
             return None
 
-        export_tables = aliased(config_schema.ExportTables)
-        airflow_custom_dags = aliased(config_schema.AirflowCustomDAGs)
-        update_statement = update(airflow_custom_dags)
-        update_statement = update_statement.where(
-            airflow_custom_dags.dag_name == bindparam("dag")
-        )
+        settings = {
+            _AIRFLOW_DAG_BULK[field]: getattr(bulk_data, field)
+            for field in bulk_data.__pydantic_fields_set__
+            if field in _AIRFLOW_DAG_BULK
+        }
 
-        # This will loop through only the fields specified in the Posted JSON. So if a field have got a default None value in dataModel validation,
-        # that field wont be part of this loop
-        for update_field in bulk_data.__pydantic_fields_set__:
-            if update_field == "scheduleInterval":
-                update_statement = update_statement.values(
-                    schedule_interval=bulk_data.scheduleInterval
-                )
-            elif update_field == "operatorNotes":
-                update_statement = update_statement.values(
-                    operator_notes=bulk_data.operatorNotes
-                )
-            elif update_field == "autoRegenerateDag":
-                update_statement = update_statement.values(
-                    auto_regenerate_dag=bulk_data.autoRegenerateDag
-                )
-            elif update_field == "sudoUser":
-                update_statement = update_statement.values(sudo_user=bulk_data.sudoUser)
-            elif update_field == "timezone":
-                update_statement = update_statement.values(timezone=bulk_data.timezone)
-            elif update_field == "email":
-                update_statement = update_statement.values(email=bulk_data.email)
-            elif update_field == "emailOnFailure":
-                update_statement = update_statement.values(
-                    email_on_failure=bulk_data.emailOnFailure
-                )
-            elif update_field == "emailOnRetries":
-                update_statement = update_statement.values(
-                    email_on_retries=bulk_data.emailOnRetries
-                )
-            elif update_field == "slaWarningTime":
-                update_statement = update_statement.values(
-                    sla_warning_time=bulk_data.slaWarningTime
-                )
-            elif update_field == "concurrency":
-                update_statement = update_statement.values(
-                    concurrency=bulk_data.concurrency
-                )
+        try:
+            AirflowDAGsRepository(session()).update_custom_dags(
+                [dag.name for dag in bulk_data.dags], settings
+            )
+            session.commit()
+        finally:
+            session.remove()
 
-        # Create a list of dicts that contain all the databas/table combinations that will be updated
-        table_list = []
-        for tables in bulk_data.dags:
-            table_list.append({"dag": tables.name})
-
-        update_statement = update_statement.execution_options(synchronize_session=False)
-        # 		print(updateStatement)
-
-        session.connection().execute(update_statement, table_list)
-        session.commit()
-        session.remove()
-
-        return_code = 200
-        result_msg = {"result": "Ok"}
-
-        return (result_msg, return_code)
+        return ({"result": "Ok"}, 200)
 
     def update_custom_airflow_dag(
         self, dagname, airflow_dag: data_models.AirflowCustomDAG, current_user
@@ -3569,104 +3202,47 @@ class DBCalls:
             self.disconnect_dbimport_db()
             return None
 
-        airflow_custom_dags = aliased(config_schema.AirflowCustomDAGs)
-        result = "ok"
-        return_code = 200
-
-        if self.check_dag_name_availability(name=dagname, exclude_custom=True) == False:
-            log.error(
-                "Airflow Import DAG creation was denied as the name was already existing on custom or export DAG"
-            )
-            result = (
-                "Ariflow DAG with the specified name already exists as Custom or Export"
-            )
-            return_code = 400
-            return (result, return_code)
-
-        log.debug(airflow_dag)
-        log.info(
-            "User '%s' updated/created Airflow custom DAG '%s'", current_user, dagname
-        )
-
-        # Set default values
-        if airflow_dag.scheduleInterval is None:
-            airflow_dag.scheduleInterval = "None"
-        if airflow_dag.retries is None:
-            airflow_dag.retries = "0"
-        if airflow_dag.autoRegenerateDag is None:
-            airflow_dag.autoRegenerateDag = "1"
-        if airflow_dag.emailOnFailure is None:
-            airflow_dag.emailOnFailure = "0"
-        if airflow_dag.emailOnRetries is None:
-            airflow_dag.emailOnRetries = "0"
-        if airflow_dag.retryExponentialBackoff is None:
-            airflow_dag.retryExponentialBackoff = "0"
-
         try:
-            query = insert(config_schema.AirflowCustomDAGs).values(
-                dag_name=dagname,
-                schedule_interval=airflow_dag.scheduleInterval,
-                retries=airflow_dag.retries,
-                operator_notes=airflow_dag.operatorNotes,
-                application_notes=airflow_dag.applicationNotes,
-                auto_regenerate_dag=airflow_dag.autoRegenerateDag,
-                airflow_notes=airflow_dag.airflowNotes,
-                sudo_user=airflow_dag.sudoUser,
-                timezone=airflow_dag.timezone,
-                email=airflow_dag.email,
-                email_on_failure=airflow_dag.emailOnFailure,
-                email_on_retries=airflow_dag.emailOnRetries,
-                tags=airflow_dag.tags,
-                sla_warning_time=airflow_dag.slaWarningTime,
-                retry_exponential_backoff=airflow_dag.retryExponentialBackoff,
-                concurrency=airflow_dag.concurrency,
-            )
-
-            query = query.on_duplicate_key_update(
-                dag_name=dagname,
-                schedule_interval=airflow_dag.scheduleInterval,
-                retries=airflow_dag.retries,
-                operator_notes=airflow_dag.operatorNotes,
-                application_notes=airflow_dag.applicationNotes,
-                auto_regenerate_dag=airflow_dag.autoRegenerateDag,
-                airflow_notes=airflow_dag.airflowNotes,
-                sudo_user=airflow_dag.sudoUser,
-                timezone=airflow_dag.timezone,
-                email=airflow_dag.email,
-                email_on_failure=airflow_dag.emailOnFailure,
-                email_on_retries=airflow_dag.emailOnRetries,
-                tags=airflow_dag.tags,
-                sla_warning_time=airflow_dag.slaWarningTime,
-                retry_exponential_backoff=airflow_dag.retryExponentialBackoff,
-                concurrency=airflow_dag.concurrency,
-            )
-
-            session.execute(query)
-            session.commit()
-        except SQLError as err:
-            log.error(str(err))
-            log.error(column)  # noqa: F821  # TODO(#164): column is undefined here
-
-            result = str(err)
-            return_code = 500
-
-            # session.close()
-            session.remove()
-            return (result, return_code)
-
-        # session.close()
-        session.remove()
-
-        tasks = airflow_dag.tasks
-        for task in tasks:
-            if (
-                self.update_airflow_tasks(
-                    dagname=dagname, task=task, current_user=current_user
+            dags = AirflowDAGsRepository(session())
+            if dags.dag_types_named(dagname) - {"custom"}:
+                log.error(
+                    "Airflow Import DAG creation was denied as the name was already existing on custom or export DAG"
                 )
-                == False
-            ):
-                result = "Error while updating/creating Airflow tasks. Please check logs on server"
-                return_code = 400
-                return (result, return_code)
+                return (
+                    "Ariflow DAG with the specified name already exists as Custom or Export",
+                    400,
+                )
 
-        return (result, return_code)
+            log.info(
+                "User '%s' updated/created Airflow custom DAG '%s'",
+                current_user,
+                dagname,
+            )
+
+            # Set default values
+            if airflow_dag.scheduleInterval is None:
+                airflow_dag.scheduleInterval = "None"
+            if airflow_dag.retries is None:
+                airflow_dag.retries = 0
+            if airflow_dag.autoRegenerateDag is None:
+                airflow_dag.autoRegenerateDag = True
+            if airflow_dag.emailOnFailure is None:
+                airflow_dag.emailOnFailure = False
+            if airflow_dag.emailOnRetries is None:
+                airflow_dag.emailOnRetries = False
+            if airflow_dag.retryExponentialBackoff is None:
+                airflow_dag.retryExponentialBackoff = 0
+
+            dags.save_custom_dag(
+                dagname,
+                {
+                    column: getattr(airflow_dag, field)
+                    for field, column in _AIRFLOW_CUSTOM_DAG_FIELDS.items()
+                },
+            )
+            _save_airflow_tasks(dags, dagname, airflow_dag.tasks)
+            session.commit()
+        finally:
+            session.remove()
+
+        return ("ok", 200)

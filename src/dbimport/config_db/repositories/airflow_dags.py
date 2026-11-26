@@ -21,7 +21,7 @@ from collections.abc import Mapping, Sequence
 from datetime import time
 
 from pydantic import BaseModel, ConfigDict
-from sqlalchemy import bindparam, delete, func, select, update
+from sqlalchemy import bindparam, delete, func, literal, select, union_all, update
 from sqlalchemy.dialects.mysql import insert as mysql_insert
 from sqlalchemy.orm import Session
 
@@ -97,6 +97,18 @@ class DAGTask(BaseModel):
     sensor_connection: str | None
     sensor_soft_fail: int | None
     sudo_user: str | None
+    include_in_airflow: int
+
+
+class DAGSummary(BaseModel):
+    """A DAG of any type, as the list of all DAGs shows it."""
+
+    model_config = ConfigDict(frozen=True)
+
+    dag_name: str
+    dag_type: str
+    schedule_interval: str
+    auto_regenerate_dag: int
 
 
 class DAGSensor(BaseModel):
@@ -116,10 +128,11 @@ class DAGSensor(BaseModel):
     etl_schedule: str | None
 
 
-_DAGTable = type[AirflowImportDAGs] | type[AirflowExportDAGs]
+_DAGTable = type[AirflowImportDAGs] | type[AirflowExportDAGs] | type[AirflowCustomDAGs]
 
 _IMPORT_SETTINGS = frozenset(ImportDAG.model_fields) - {"dag_name"}
 _EXPORT_SETTINGS = frozenset(ExportDAG.model_fields) - {"dag_name"}
+_CUSTOM_SETTINGS = frozenset(CustomDAG.model_fields) - {"dag_name"}
 _BULK_SETTINGS = frozenset(
     {
         "schedule_interval",
@@ -277,11 +290,75 @@ class AirflowDAGsRepository:
             .on_duplicate_key_update(dict(settings))
         )
 
-    def custom_dags(self) -> list[CustomDAG]:
+    def custom_dags(self, limit: int | None = None) -> list[CustomDAG]:
+        """The custom DAGs ordered by name, at most limit of them."""
         rows = self._session.scalars(
-            select(AirflowCustomDAGs).order_by(AirflowCustomDAGs.dag_name)
+            select(AirflowCustomDAGs).order_by(AirflowCustomDAGs.dag_name).limit(limit)
         )
         return [CustomDAG.model_validate(row) for row in rows]
+
+    def custom_dag(self, dag_name: str) -> CustomDAG | None:
+        row = self._session.get(AirflowCustomDAGs, dag_name)
+        return None if row is None else CustomDAG.model_validate(row)
+
+    def all_dags(self, limit: int | None = None) -> list[DAGSummary]:
+        """The custom, then the import, then the export DAGs, each type
+        ordered by name; at most limit of them."""
+        dag_types: tuple[tuple[str, _DAGTable], ...] = (
+            ("custom", AirflowCustomDAGs),
+            ("import", AirflowImportDAGs),
+            ("export", AirflowExportDAGs),
+        )
+        summaries = union_all(
+            *(
+                select(
+                    dags.dag_name,
+                    literal(dag_type).label("dag_type"),
+                    dags.schedule_interval,
+                    dags.auto_regenerate_dag,
+                    literal(order).label("type_order"),
+                )
+                for order, (dag_type, dags) in enumerate(dag_types)
+            )
+        ).subquery()
+        rows = self._session.execute(
+            select(
+                summaries.c.dag_name,
+                summaries.c.dag_type,
+                summaries.c.schedule_interval,
+                summaries.c.auto_regenerate_dag,
+            )
+            .order_by(summaries.c.type_order, summaries.c.dag_name)
+            .limit(limit)
+        )
+        return [DAGSummary.model_validate(row._mapping) for row in rows]
+
+    def save_custom_dag(self, dag_name: str, settings: Mapping[str, object]) -> None:
+        """Creates the DAG with the given settings, or replaces them on the
+        existing one. Raises KeyError for a column that is not a setting,
+        ValueError for no settings."""
+        check_settings(settings, _CUSTOM_SETTINGS)
+        self._save(AirflowCustomDAGs, dag_name, settings)
+
+    def delete_custom_dags(self, dag_names: Sequence[str]) -> None:
+        """Deletes the DAGs and their tasks; unknown names are ignored."""
+        self._delete(AirflowCustomDAGs, dag_names)
+
+    def update_custom_dags(
+        self, dag_names: Sequence[str], settings: Mapping[str, object]
+    ) -> None:
+        """Sets the given settings on the DAGs. Raises KeyError for a column
+        that cannot be changed in bulk."""
+        self._update(AirflowCustomDAGs, dag_names, settings)
+
+    def delete_task(self, dag_name: str, task_name: str) -> bool:
+        """Deletes the task; False when the DAG has no such task."""
+        result = self._session.execute(
+            delete(AirflowTasks).where(
+                AirflowTasks.dag_name == dag_name, AirflowTasks.task_name == task_name
+            )
+        )
+        return bool(result.rowcount)
 
     def schedule_interval(self, dag_name: str) -> str | None:
         """The schedule of the import, export, custom or ETL DAG of that
@@ -299,16 +376,13 @@ class AirflowDAGsRepository:
                 return schedule
         return None
 
-    def tasks(self, dag_name: str) -> list[DAGTask]:
-        """The tasks of the DAG that are included in Airflow."""
-        rows = self._session.scalars(
-            select(AirflowTasks)
-            .where(
-                AirflowTasks.dag_name == dag_name,
-                AirflowTasks.include_in_airflow == 1,
-            )
-            .order_by(AirflowTasks.task_name)
-        )
+    def tasks(self, dag_name: str, *, included_only: bool = True) -> list[DAGTask]:
+        """The tasks of the DAG ordered by name; with included_only, only
+        those that are included in Airflow."""
+        query = select(AirflowTasks).where(AirflowTasks.dag_name == dag_name)
+        if included_only:
+            query = query.where(AirflowTasks.include_in_airflow == 1)
+        rows = self._session.scalars(query.order_by(AirflowTasks.task_name))
         return [DAGTask.model_validate(row) for row in rows]
 
     def has_sensors(self, dag_name: str) -> bool:

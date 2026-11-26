@@ -107,9 +107,8 @@
     "no-redef": 1
   },
   "src/dbimport/server/rest_server_calls.py": {
-    "assignment": 6,
-    "has-type": 2,
-    "name-defined": 2
+    "assignment": 1,
+    "has-type": 2
   },
   "src/dbimport/setup/database.py": {
     "arg-type": 7,
