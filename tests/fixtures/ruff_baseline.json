@@ -116,11 +116,11 @@
     "UP031": 32
   },
   "src/dbimport/operations/copy_operations.py": {
-    "E711": 20,
-    "E712": 26,
-    "F841": 8,
-    "G002": 17,
-    "UP031": 46
+    "E711": 14,
+    "E712": 18,
+    "F841": 4,
+    "G002": 15,
+    "UP031": 38
   },
   "src/dbimport/operations/etl_operations.py": {
     "E711": 18,

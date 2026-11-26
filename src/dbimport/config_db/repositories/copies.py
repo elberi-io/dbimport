@@ -43,8 +43,9 @@ class CopyRule(BaseModel):
 
 
 class InstanceConnection(BaseModel):
-    """Where the configuration database of a DBImport instance is, and the
-    credentials stored for it, encrypted."""
+    """Where the configuration database of a DBImport instance is, the
+    credentials stored for it, encrypted, and sync_credentials: 1 when the
+    credentials of JDBC connections are copied to it."""
 
     model_config = ConfigDict(frozen=True, from_attributes=True)
 
@@ -53,6 +54,7 @@ class InstanceConnection(BaseModel):
     db_port: int
     db_database: str
     db_credentials: str | None = Field(repr=False)
+    sync_credentials: int
 
 
 class HDFSLocation(BaseModel):

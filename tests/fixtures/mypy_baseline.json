@@ -58,8 +58,8 @@
   },
   "src/dbimport/operations/copy_operations.py": {
     "arg-type": 6,
-    "assignment": 19,
-    "misc": 11,
+    "assignment": 6,
+    "misc": 7,
     "operator": 1,
     "union-attr": 10
   },
