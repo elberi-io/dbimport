@@ -29,14 +29,14 @@ import sqlalchemy as sa
 from fastapi import HTTPException, status
 from fastapi.responses import JSONResponse
 from pydantic import ValidationError
-from sqlalchemy.orm import aliased, scoped_session, sessionmaker
-from sqlalchemy.sql import update
+from sqlalchemy.orm import scoped_session, sessionmaker
 
 from dbimport.common import constants as constant
 from dbimport.common.exceptions import InvalidConfigurationError, SQLError
-from dbimport.config_db import common_config, config_keys, config_schema
+from dbimport.config_db import common_config, config_keys
 from dbimport.config_db import engine as config_engine
 from dbimport.config_db.repositories.airflow_dags import AirflowDAGsRepository
+from dbimport.config_db.repositories.auth_users import AuthUsersRepository, StoredUser
 from dbimport.config_db.repositories.configuration import (
     ConfigurationError,
     ConfigurationRepository,
@@ -508,27 +508,20 @@ class DBCalls:
             return None
 
         default_admin_user = self.get_config_value("restserver_admin_user")
-        user_object = self.get_user(default_admin_user)
-        if user_object == None:
-            # User does not exists, so lets create it
-            log.info(
-                "Default admin user does not exists in the 'auth_users' table. Creating it with password 'admin'"
-            )
 
-            password_encoded = b"admin"
-            salt = bcrypt.gensalt()
-            hashed_password = bcrypt.hashpw(
-                password=password_encoded, salt=salt
-            ).decode("utf-8")
-
-            query = sa.insert(config_schema.AuthUsers).values(
-                username=default_admin_user, password=hashed_password
-            )
-            session.execute(query)
-            session.commit()
-
-        # session.close()
-        session.remove()
+        try:
+            users = AuthUsersRepository(session())
+            if users.user(default_admin_user) is None:
+                log.info(
+                    "Default admin user does not exists in the 'auth_users' table. Creating it with password 'admin'"
+                )
+                hashed_password = bcrypt.hashpw(
+                    password=b"admin", salt=bcrypt.gensalt()
+                ).decode("utf-8")
+                users.add(default_admin_user, hashed_password)
+                session.commit()
+        finally:
+            session.remove()
 
     def create_user(self, user: data_models.User):
         """Creates a user in the auth_users table"""
@@ -540,64 +533,35 @@ class DBCalls:
             self.disconnect_dbimport_db()
             return None
 
-        log.info("User '%s' created" % (user.username))
+        try:
+            AuthUsersRepository(session()).add(
+                user.username,
+                user.password,
+                disabled=user.disabled,
+                fullname=user.fullname,
+                department=user.department,
+                email=user.email,
+            )
+            session.commit()
+        finally:
+            session.remove()
 
-        query = sa.insert(config_schema.AuthUsers).values(
-            username=user.username,
-            password=user.password,
-            disabled=user.disabled,
-            # Details not given are left out: the columns are NOT NULL with
-            # the default ''.
-            **user.model_dump(
-                include={"fullname", "department", "email"}, exclude_none=True
-            ),
-        )
-        session.execute(query)
-        session.commit()
-
-        # session.close()
-        session.remove()
+        log.info("User '%s' created", user.username)
 
     def get_user(self, username):
         """Returns a dict with user information from the database"""
-        log = logging.getLogger(self.logger)
-
         try:
             session = self.get_dbimport_session()
         except SQLError:
             self.disconnect_dbimport_db()
             return None
 
-        table_auth_users = aliased(config_schema.AuthUsers)
-        auth_user = (
-            session.query(
-                table_auth_users.username,
-                table_auth_users.password,
-                table_auth_users.disabled,
-                table_auth_users.fullname,
-                table_auth_users.department,
-                table_auth_users.email,
-            )
-            .select_from(table_auth_users)
-            .filter(table_auth_users.username == username)
-            .first()
-        )
+        try:
+            stored = AuthUsersRepository(session()).user(username)
+        finally:
+            session.remove()
 
-        # session.close()
-        session.remove()
-
-        user = None
-
-        if auth_user != None:
-            user = {}
-            user["username"] = auth_user[0]
-            user["password"] = auth_user[1]
-            user["disabled"] = auth_user[2]
-            user["fullname"] = auth_user[3]
-            user["department"] = auth_user[4]
-            user["email"] = auth_user[5]
-
-        return user
+        return None if stored is None else stored.model_dump()
 
     def update_user(self, user, password_changed, current_user):
         """Update a user object"""
@@ -622,44 +586,25 @@ class DBCalls:
                 user["username"],
             )
 
-        table_auth_users = aliased(config_schema.AuthUsers)
-        session.execute(
-            update(table_auth_users),
-            [
-                {
-                    "username": user["username"],
-                    "password": user["password"],
-                    "disabled": user["disabled"],
-                    "fullname": user["fullname"],
-                    "department": user["department"],
-                    "email": user["email"],
-                }
-            ],
-        )
-        session.commit()
-
-        # session.close()
-        session.remove()
+        try:
+            AuthUsersRepository(session()).update(StoredUser.model_validate(user))
+            session.commit()
+        finally:
+            session.remove()
 
     def delete_user(self, username):
         """Delete a user"""
-        log = logging.getLogger(self.logger)
-
         try:
             session = self.get_dbimport_session()
         except SQLError:
             self.disconnect_dbimport_db()
             return None
 
-        session.execute(
-            sa.delete(config_schema.AuthUsers).where(
-                config_schema.AuthUsers.username == username
-            )
-        )
-        session.commit()
-
-        # session.close()
-        session.remove()
+        try:
+            AuthUsersRepository(session()).delete(username)
+            session.commit()
+        finally:
+            session.remove()
 
     def generate_jdbc_connection_string(
         self, connection_values: data_models.GenerateJDBCConnectionString, current_user
