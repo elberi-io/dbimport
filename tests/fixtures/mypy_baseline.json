@@ -58,10 +58,9 @@
   },
   "src/dbimport/operations/copy_operations.py": {
     "arg-type": 6,
-    "assignment": 6,
-    "misc": 7,
+    "misc": 4,
     "operator": 1,
-    "union-attr": 10
+    "union-attr": 8
   },
   "src/dbimport/operations/etl_operations.py": {
     "union-attr": 1

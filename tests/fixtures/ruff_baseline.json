@@ -55,10 +55,10 @@
   },
   "src/dbimport/config_db/common_config.py": {
     "B904": 3,
-    "E711": 68,
+    "E711": 66,
     "E712": 14,
-    "E722": 39,
-    "F841": 2,
+    "E722": 38,
+    "F841": 1,
     "G002": 1,
     "UP031": 52
   },
@@ -116,11 +116,10 @@
     "UP031": 32
   },
   "src/dbimport/operations/copy_operations.py": {
-    "E711": 14,
-    "E712": 18,
-    "F841": 4,
-    "G002": 15,
-    "UP031": 38
+    "E711": 12,
+    "E712": 14,
+    "G002": 13,
+    "UP031": 30
   },
   "src/dbimport/operations/etl_operations.py": {
     "E711": 18,

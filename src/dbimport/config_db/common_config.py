@@ -32,9 +32,8 @@ import mysql.connector
 import pandas as pd
 import pendulum
 import pymongo
-import sqlalchemy as sa
 from mysql.connector import errorcode
-from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy.orm import Session
 
 from dbimport.common import constants as constant
 from dbimport.common.exceptions import (
@@ -177,9 +176,6 @@ class Config(metaclass=Singleton):
 
         self.schema_reader = schema_reader.Source()
 
-        # SQLAlchemy connection variables
-        self.config_db: Any = None
-        self.config_db_session: Any = None
         self.mysql_connection_details: dict[str, str] | None = None
 
         self.debug_log_level = False
@@ -325,55 +321,6 @@ class Config(metaclass=Singleton):
             "Executing common_config.get_atlas_jdbc_connection_data() - Finished"
         )
         return return_dict
-
-    def disconnect_sqlalchemy(self, logger: str = "") -> None:
-        """Disconnects from the database and removes all sessions and engine"""
-        log = logging.getLogger(logger)
-
-        if self.config_db != None:
-            log.info("Disconnecting from DBImport database")
-            self.config_db.dispose()
-            self.config_db = None
-
-        self.config_db_session = None
-
-    def connect_sqlalchemy(
-        self, exit_if_failure: bool = True, logger: str = ""
-    ) -> bool:
-        log = logging.getLogger(logger)
-        """ Connects to the configuration database with SQLAlchemy """
-
-        if self.config_db_session != None:
-            # If we already have a connection, we just say that it's ok....
-            return True
-
-        try:
-            self.config_db = config_engine.create(echo=self.debug_log_level)
-            self.config_db.connect().close()
-            self.config_db_session = sessionmaker(bind=self.config_db)
-
-        except sa.exc.OperationalError as err:
-            logging.error("%s", err)
-            if exit_if_failure:
-                self.remove_temporary_files()
-                sys.exit(1)
-            else:
-                self.config_db_session = None
-                self.config_db = None
-                return False
-        except:
-            print("Unexpected error: ")
-            print(sys.exc_info())
-            if exit_if_failure:
-                self.remove_temporary_files()
-                sys.exit(1)
-            else:
-                self.config_db_session = None
-                self.config_db = None
-                return False
-
-        else:
-            return True
 
     def set_hive_table(self, hive_db: str, hive_table: str) -> None:
         """Sets the parameters to work against a new Hive database and table"""
