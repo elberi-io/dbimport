@@ -324,11 +324,6 @@ def test_copy_airflow_export_dag_copies_its_tasks(
     assert _tasks(remote) == _tasks(local)
 
 
-@pytest.mark.xfail(
-    strict=True,
-    raises=sa.exc.IntegrityError,
-    reason="the task's connection is not copied, so its foreign key fails there",
-)
 def test_copy_airflow_export_dag_copies_a_task_with_its_connection(
     local: sa.Connection, remote: sa.Connection
 ) -> None:

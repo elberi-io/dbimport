@@ -695,6 +695,15 @@ class Operation(metaclass=Singleton):
 
                     update_dict["%s" % (name)] = value
 
+                if row["jdbc_dbalias"] is not None:
+                    self._copy_jdbc_connection(
+                        InstanceCopy(local_session, remote_session),
+                        row["jdbc_dbalias"],
+                        CopiesRepository(local_session)
+                        .instance_connection(copy_destination)
+                        .sync_credentials,
+                    )
+
                 # Update the values in airflow_tasks on the remote instance
                 (
                     remote_session.query(config_schema.AirflowTasks)
