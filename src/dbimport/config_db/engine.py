@@ -108,8 +108,14 @@ def url(found: Credentials) -> URL:
 def create(echo: bool = False) -> Engine:
     """A new engine of the configuration database, with its own connection
     pool, for a component that disposes of it on its own."""
+    return create_for(configured_credentials(), echo)
+
+
+def create_for(found: Credentials, echo: bool = False) -> Engine:
+    """A new engine, with its own connection pool, of the configuration
+    database the credentials name."""
     return create_engine(
-        url(configured_credentials()),
+        url(found),
         echo=echo,
         hide_parameters=True,
         pool_pre_ping=True,

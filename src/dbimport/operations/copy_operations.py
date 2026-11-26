@@ -15,7 +15,6 @@
 # specific language governing permissions and limitations
 # under the License.
 
-import binascii
 import fnmatch
 import logging
 import subprocess
@@ -25,15 +24,17 @@ from datetime import datetime
 import numpy as np
 import pandas as pd
 import sqlalchemy as sa
+from sqlalchemy.exc import DBAPIError
 from sqlalchemy.orm import Session, aliased, sessionmaker
 
 from dbimport.common.exceptions import InvalidConfigurationError
 from dbimport.common.singleton import Singleton
-from dbimport.config_db import config_schema, import_config
+from dbimport.config_db import config_schema, import_config, instances
 from dbimport.config_db import engine as config_engine
 from dbimport.config_db.repositories.airflow_dags import AirflowDAGsRepository
 from dbimport.config_db.repositories.copies import CopiesRepository
 from dbimport.config_db.repositories.import_tables import ImportTablesRepository
+from dbimport.config_db.repositories.schema_version import SchemaVersionRepository
 from dbimport.operations import common_operations
 from dbimport.settings import get_settings
 
@@ -147,101 +148,33 @@ class Operation(metaclass=Singleton):
         return self.copy_destinations
 
     def connect_remote_dbimport_instance(self, instance):
-        """Connects to the configuration database with SQLAlchemy"""
-
-        connect_status = True
-        session = self.config_db_session()
-        dbimport_instances = aliased(config_schema.DBImportInstances)
-
-        row = (
-            session.query(
-                dbimport_instances.db_hostname,
-                dbimport_instances.db_port,
-                dbimport_instances.db_database,
-                dbimport_instances.db_credentials,
-            )
-            .filter(dbimport_instances.name == instance)
-            .one()
-        )
-
-        if row[3] == None:
-            logging.warning(
-                "There is no credentials saved in 'dbimport_instance' for %s"
-                % (instance)
-            )
-            return False
+        """Connects to the configuration database of the DBImport instance
+        and makes remote_instance_config_db_session its sessions; False
+        when its credentials cannot be used or it cannot be reached. Raises
+        NoResultFound for an unknown instance."""
 
         # Set the keys to the value in the configuration file. This is needed if the key was overridden in jdbc_connections
         self.crypto.set_private_key_file(get_settings().credentials.private_key)
         self.crypto.set_public_key_file(get_settings().credentials.public_key)
 
+        if self.remote_instance_config_db_engine is not None:
+            self.remote_instance_config_db_engine.dispose()
+        self.remote_instance_config_db_engine = None
+        self.remote_instance_config_db_session = None
+
+        with Session(config_engine.engine()) as session:
+            connection = CopiesRepository(session).instance_connection(instance)
         try:
-            db_credentials = self.crypto.decrypt(row[3])
-        except binascii.Error as err:
-            logging.warning(
-                "Decryption of credentials resulted in error with text: '%s'", err
+            engine = instances.instance_engine(
+                connection, self.crypto, echo=self.debug_log_level
             )
-            return False
-        except:
-            print("Unexpected warning: ")
-            print(sys.exc_info())
-            return False
-
-        if db_credentials == None:
-            logging.warning(
-                "Cant decrypt username and password. Check private/public key in config file"
-            )
-            return False
-
-        username, separator, password = db_credentials.partition(" ")
-        if separator == "":
-            logging.warning(
-                "The credentials saved in 'dbimport_instances' for %s have no password",
-                instance,
-            )
-            return False
-
-        instance_url = config_engine.url(
-            config_engine.Credentials(
-                hostname=row[0],
-                port=row[1],
-                database=row[2],
-                username=username,
-                password=password,
-            )
-        )
-
-        if self.remote_instance_config_db_engine != None:
-            try:
-                self.remote_instance_config_db_engine.dispose()
-            except:
-                print(
-                    "Unexpected warning when closing connection to DBImport Instance database: "
-                )
-                print(sys.exc_info())
-
-        try:
-            self.remote_instance_config_db_engine = sa.create_engine(
-                instance_url, echo=self.debug_log_level, pool_pre_ping=True
-            )
-            self.remote_instance_config_db_engine.connect()
-            self.remote_instance_config_db_session = sessionmaker(
-                bind=self.remote_instance_config_db_engine
-            )
-
-        except sa.exc.OperationalError as err:
+        except (InvalidConfigurationError, DBAPIError) as err:
             logging.warning("%s", err)
-            connect_status = False
-        # 			self.remove_temporary_files()
-        # 			sys.exit(1)
-        except:
-            print("Unexpected warning: ")
-            print(sys.exc_info())
-            connect_status = False
-        # 			self.remove_temporary_files()
-        # 			sys.exit(1)
+            return False
 
-        return connect_status
+        self.remote_instance_config_db_engine = engine
+        self.remote_instance_config_db_session = sessionmaker(bind=engine)
+        return True
 
     def is_previous_copy_completed(self):
         """Returns True or False if the previous copy was completed. Returns True if there is nothing to copy.
@@ -835,33 +768,22 @@ class Operation(metaclass=Singleton):
             self.remove_temporary_files()
             sys.exit(1)
 
-        local_session = self.config_db_session()
-        alembic_version = aliased(config_schema.AlembicVersion)
-
-        if self.connect_remote_dbimport_instance(instance=remote_instance):
-            remote_session = self.remote_instance_config_db_session()
-
-            local_version = local_session.query(
-                alembic_version.version_num
-            ).one_or_none()
-            remote_version = remote_session.query(
-                alembic_version.version_num
-            ).one_or_none()
-
-            if remote_version is None or local_version != remote_version:
-                logging.error(
-                    "The remote DBImport instance is not running with the same version."
-                )
-                self.remove_temporary_files()
-                sys.exit(1)
-
-        else:
+        if not self.connect_remote_dbimport_instance(instance=remote_instance):
             logging.error("Cant connect to remote DBImport instance")
             self.remove_temporary_files()
             sys.exit(1)
 
-        local_session.close()
-        remote_session.close()
+        with Session(config_engine.engine()) as local_session:
+            local_version = SchemaVersionRepository(local_session).version()
+        with self.remote_instance_config_db_session() as remote_session:
+            remote_version = SchemaVersionRepository(remote_session).version()
+
+        if remote_version is None or local_version != remote_version:
+            logging.error(
+                "The remote DBImport instance is not running with the same version."
+            )
+            self.remove_temporary_files()
+            sys.exit(1)
 
     def copy_airflow_import_dag(
         self,

@@ -19,7 +19,7 @@ copy_tables and the asynchronous copies in copy_async_status."""
 
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import delete, insert, select, update
 from sqlalchemy.orm import Session
 
@@ -40,6 +40,19 @@ class CopyRule(BaseModel):
     hive_filter: str
     destination: str
     data_transfer: str
+
+
+class InstanceConnection(BaseModel):
+    """Where the configuration database of a DBImport instance is, and the
+    credentials stored for it, encrypted."""
+
+    model_config = ConfigDict(frozen=True, from_attributes=True)
+
+    name: str
+    db_hostname: str
+    db_port: int
+    db_database: str
+    db_credentials: str | None = Field(repr=False)
 
 
 class HDFSLocation(BaseModel):
@@ -83,6 +96,13 @@ class CopiesRepository:
             ).where(DBImportInstances.name == name)
         ).one()
         return HDFSLocation.model_validate(row._mapping)
+
+    def instance_connection(self, name: str) -> InstanceConnection:
+        """Raises NoResultFound for an unknown instance."""
+        instance = self._session.scalars(
+            select(DBImportInstances).where(DBImportInstances.name == name)
+        ).one()
+        return InstanceConnection.model_validate(instance)
 
     def save_credentials(self, name: str, credentials: str) -> None:
         """Stores the encrypted credentials of the instance. Raises

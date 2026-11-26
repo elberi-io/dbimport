@@ -15,7 +15,6 @@
 # specific language governing permissions and limitations
 # under the License.
 
-import binascii
 import logging
 import subprocess
 import sys
@@ -27,13 +26,14 @@ from typing import Any
 
 import sqlalchemy as sa
 from daemons.prefab import run
-from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.orm import Session, aliased, sessionmaker
+from sqlalchemy.exc import DBAPIError, SQLAlchemyError
+from sqlalchemy.orm import Session, sessionmaker
 
-from dbimport.common.exceptions import SQLError
-from dbimport.config_db import common_config, config_schema
+from dbimport.common.exceptions import InvalidConfigurationError, SQLError
+from dbimport.config_db import common_config, instances
 from dbimport.config_db import engine as config_engine
 from dbimport.config_db.repositories.copies import CopiesRepository
+from dbimport.config_db.repositories.import_tables import ImportTablesRepository
 from dbimport.server import atlas_discovery
 from dbimport.settings import get_settings
 
@@ -219,6 +219,17 @@ def save_copy_result(session: Session, response: dict[str, Any], now: datetime) 
     session.commit()
 
 
+def finish_copy(
+    remote_session: Session, hive_db: str, hive_table: str, now: datetime
+) -> None:
+    """Records in the configuration database of the destination that the
+    copy of the table finished at now. Raises NoResultFound when the table
+    is missing there."""
+    tables = ImportTablesRepository(remote_session)
+    tables.set_copy_finished(tables.table_id_of(hive_db, hive_table), now)
+    remote_session.commit()
+
+
 class ServerDaemon(run.RunDaemon):
     def set_config(self, action, log_format):
         self.action = action
@@ -318,9 +329,6 @@ class ServerDaemon(run.RunDaemon):
                 self.common_config.remove_temporary_files()
                 sys.exit(1)
 
-        import_tables = aliased(config_schema.ImportTables)
-        dbimport_instances = aliased(config_schema.DBImportInstances)
-
         while True:
             # ***********************************
             # Main Loop for server
@@ -406,34 +414,9 @@ class ServerDaemon(run.RunDaemon):
 
                         try:
                             remote_session = _remote_session()
-
-                            # Get the table_id from the table at the remote instance
-                            remote_import_table_id = (
-                                remote_session.query(import_tables.table_id)
-                                .select_from(import_tables)
-                                .filter(import_tables.hive_db == hive_db)
-                                .filter(import_tables.hive_table == hive_table)
-                                .one()
+                            finish_copy(
+                                remote_session, hive_db, hive_table, datetime.now()
                             )
-
-                            remote_table_id = remote_import_table_id[0]
-
-                            update_dict = {}
-                            update_dict["copy_finished"] = str(
-                                datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
-                            )
-
-                            # Update the values in import_table on the remote instance
-                            (
-                                remote_session.query(config_schema.ImportTables)
-                                .filter(
-                                    config_schema.ImportTables.table_id
-                                    == remote_table_id
-                                )
-                                .update(update_dict)
-                            )
-                            remote_session.commit()
-
                             remote_session.close()
 
                         except SQLAlchemyError as e:
@@ -544,7 +527,9 @@ class ServerDaemon(run.RunDaemon):
             log.debug("Cant remove DBImport session or engine. Key does not exist")
 
     def get_dbimport_remote_session(self, instance):
-        """Connects to the remote configuration database with SQLAlchemy"""
+        """The sessionmaker of the configuration database of the DBImport
+        instance, connected on first use; None when its credentials cannot
+        be used or it cannot be reached."""
         log = logging.getLogger("server")
 
         # A dictionary of all remote DBImport configuration databases are keept in self.remote_dbimport_sessions
@@ -552,9 +537,7 @@ class ServerDaemon(run.RunDaemon):
         if instance in self.remote_dbimport_sessions:
             return self.remote_dbimport_sessions.get(instance)
 
-        log.info("Connecting to remote DBImport database for '%s'" % (instance))
-
-        connect_status = True
+        log.info("Connecting to remote DBImport database for '%s'", instance)
 
         try:
             session = self.get_dbimport_session()
@@ -562,81 +545,25 @@ class ServerDaemon(run.RunDaemon):
             self.disconnect_dbimport_db()
             return None
 
-        dbimport_instances = aliased(config_schema.DBImportInstances)
-
-        row = (
-            session.query(
-                dbimport_instances.db_hostname,
-                dbimport_instances.db_port,
-                dbimport_instances.db_database,
-                dbimport_instances.db_credentials,
-            )
-            .filter(dbimport_instances.name == instance)
-            .one()
-        )
-
-        session.close()
-
-        if row[3] == None:
-            log.warning(
-                "There is no credentials saved in 'dbimport_instance' for %s"
-                % (instance)
-            )
+        try:
+            with session:
+                connection = CopiesRepository(session).instance_connection(instance)
+        except DBAPIError as err:
+            log.error("%s", err)
+            self.disconnect_dbimport_db()
             return None
 
         try:
-            db_credentials = self.crypto.decrypt(row[3])
-        except binascii.Error as err:
-            log.warning(
-                "Decryption of credentials resulted in error with text: '%s'", err
+            engine = instances.instance_engine(
+                connection, self.crypto, echo=self.debug_log_level
             )
+        except InvalidConfigurationError as err:
+            log.warning("%s", err)
             return None
-        except:
-            log.error("Unexpected warning: ")
-            log.error(sys.exc_info())
-            return None
-
-        if db_credentials is None:
-            log.warning(
-                "Cant decrypt username and password. Check private/public key in config file"
-            )
-            return None
-
-        username, separator, password = db_credentials.partition(" ")
-        if separator == "":
-            log.warning(
-                "The credentials saved in 'dbimport_instances' for %s have no password",
-                instance,
-            )
-            return None
-
-        instance_url = config_engine.url(
-            config_engine.Credentials(
-                hostname=row[0],
-                port=row[1],
-                database=row[2],
-                username=username,
-                password=password,
-            )
-        )
-
-        try:
-            remote_instance_config_db_engine = sa.create_engine(
-                instance_url, echo=self.debug_log_level
-            )
-            remote_instance_config_db_engine.connect()
-            remote_instance_config_db_session = sessionmaker(
-                bind=remote_instance_config_db_engine
-            )
-
-        except sa.exc.OperationalError as err:
+        except DBAPIError as err:
             log.error("%s", err)
             return None
-        except:
-            log.error("Unexpected error: ")
-            log.error(sys.exc_info())
-            return None
 
-        self.remote_dbimport_engines[instance] = remote_instance_config_db_engine
-        self.remote_dbimport_sessions[instance] = remote_instance_config_db_session
-        return remote_instance_config_db_session
+        self.remote_dbimport_engines[instance] = engine
+        self.remote_dbimport_sessions[instance] = sessionmaker(bind=engine)
+        return self.remote_dbimport_sessions[instance]

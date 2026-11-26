@@ -10,6 +10,8 @@ import sqlalchemy as sa
 from alembic.config import Config
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
+# Second database of the compose server, created by tests/fixtures/mariadb-init.sql.
+ORM_DATABASE = "DBImport_orm"
 
 
 def close_dbimport_connections(obj: object) -> None:
@@ -26,6 +28,9 @@ def close_dbimport_connections(obj: object) -> None:
     engine = getattr(obj, "config_db", None)
     if engine is not None:
         engine.dispose()
+    remote_engine = getattr(obj, "remote_instance_config_db_engine", None)
+    if remote_engine is not None:
+        remote_engine.dispose()
 
 
 def insert_row(conn: sa.Connection, table: str, **values: object) -> None:

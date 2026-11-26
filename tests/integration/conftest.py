@@ -17,14 +17,12 @@ from sqlalchemy.ext.compiler import compiles
 from sqlalchemy.schema import CreateColumn
 from sqlalchemy.sql.compiler import DDLCompiler
 
-from tests.configdb import close_dbimport_connections
+from tests.configdb import ORM_DATABASE, close_dbimport_connections
 
 _INTEGRATION_DIR = Path(__file__).parent
 # Hosts the fixtures may reset. DBIMPORT_TEST_DB_HOST adds one explicitly.
 _LOCAL_HOSTS = {"127.0.0.1", "localhost"}
 _TEST_DATABASE = "DBImport"
-# Second database of the compose server, created by tests/fixtures/mariadb-init.sql.
-ORM_DATABASE = "DBImport_orm"
 
 
 @pytest.hookimpl(tryfirst=True)
