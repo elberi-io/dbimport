@@ -2449,7 +2449,11 @@ def test_update_export_table_with_an_invalid_column_changes_nothing(
 
 
 AIRFLOW_URL = "http://airflow.example:8080"
-DAG_TABLES = {"import": "airflow_import_dags", "export": "airflow_export_dags"}
+DAG_TABLES = {
+    "import": "airflow_import_dags",
+    "export": "airflow_export_dags",
+    "custom": "airflow_custom_dags",
+}
 DAG_FILTERS: dict[str, dict[str, object]] = {
     "import": {"filter_hive": "salesdb.*"},
     "export": {
@@ -2457,6 +2461,7 @@ DAG_FILTERS: dict[str, dict[str, object]] = {
         "filter_target_schema": "tgt",
         "filter_target_table": "ord*",
     },
+    "custom": {},
 }
 DAG_FILTER_FIELDS: dict[str, dict[str, object]] = {
     "import": {"filterTable": "salesdb.*"},
@@ -2465,8 +2470,9 @@ DAG_FILTER_FIELDS: dict[str, dict[str, object]] = {
         "filterTargetSchema": "tgt",
         "filterTargetTable": "ord*",
     },
+    "custom": {},
 }
-DAG_KINDS = pytest.mark.parametrize("kind", ["import", "export"])
+DAG_KINDS = pytest.mark.parametrize("kind", ["import", "export", "custom"])
 LISTED_DAG_ROW: dict[str, object] = {
     "schedule_interval": "03:00",
     "auto_regenerate_dag": 0,
@@ -2588,6 +2594,7 @@ DAG_DETAILS_ROW: dict[str, dict[str, object]] = {
         "retry_exponential_backoff": 1,
     },
     "export": {"retries": 3, "retry_exponential_backoff": 1},
+    "custom": {"retries": 3, "retry_exponential_backoff": 1},
 }
 DAG_DETAILS: dict[str, dict[str, object]] = {
     "import": {
@@ -2602,6 +2609,7 @@ DAG_DETAILS: dict[str, dict[str, object]] = {
         "retryExponentialBackoff": True,
     },
     "export": {"retries": 3, "retryExponentialBackoff": 1},
+    "custom": {"retries": 3, "retryExponentialBackoff": 1},
 }
 LISTED_TASK = {
     "name": "prepare",
@@ -2832,10 +2840,19 @@ DAG_DEFAULTED_COLUMNS: dict[str, tuple[str, ...]] = {
         "email_on_retries",
         "retry_exponential_backoff",
     ),
+    "custom": (
+        "schedule_interval",
+        "retries",
+        "auto_regenerate_dag",
+        "email_on_failure",
+        "email_on_retries",
+        "retry_exponential_backoff",
+    ),
 }
 DAG_DEFAULTS: dict[str, tuple[object, ...]] = {
     "import": ("None", "", 0, 5, 1, 0, 0, 0, 0, 0),
     "export": ("None", "", 5, 1, 0, 0, 0),
+    "custom": ("None", 0, 1, 0, 0, 0),
 }
 
 
@@ -2879,6 +2896,7 @@ DAG_WRITE_FULL: dict[str, dict[str, object]] = {
         "retries": 3,
         "retryExponentialBackoff": 1,
     },
+    "custom": {"retries": 3, "retryExponentialBackoff": 1},
 }
 DAG_WRITE_COMMON: dict[str, object] = {
     "name": "dag_a",
@@ -2916,10 +2934,12 @@ DAG_WRITTEN_COLUMNS: dict[str, tuple[str, ...]] = {
         "retries",
         "retry_exponential_backoff",
     ),
+    "custom": ("retries", "retry_exponential_backoff"),
 }
 DAG_WRITTEN: dict[str, tuple[object, ...]] = {
     "import": ("salesdb.*", 1, 1, 3, 2, 1, "pool_one", "pool_two", 1, 1),
     "export": ("tgt_conn", "tgt", "ord*", 3, 1),
+    "custom": (3, 1),
 }
 COMMON_WRITTEN_COLUMNS = (
     "schedule_interval",
@@ -3007,6 +3027,8 @@ def test_update_airflow_dag_stores_its_tasks(
         ("import", "custom"),
         ("export", "import"),
         ("export", "custom"),
+        ("custom", "import"),
+        ("custom", "export"),
     ],
 )
 def test_update_airflow_dag_with_a_name_of_another_type_returns_400(
@@ -3102,7 +3124,12 @@ def test_update_airflow_dag_with_an_invalid_task_changes_nothing(
 
 @pytest.mark.parametrize(
     ("kind", "other"),
-    [("import", "export"), ("import", "custom"), ("export", "import")],
+    [
+        ("import", "export"),
+        ("import", "custom"),
+        ("export", "import"),
+        ("custom", "import"),
+    ],
 )
 def test_bulk_delete_of_airflow_dags_keeps_the_tasks_of_another_dag_type(
     client: TestClient,
@@ -3130,3 +3157,98 @@ def test_bulk_delete_of_airflow_dags_keeps_the_tasks_of_another_dag_type(
     )
 
     assert _task_names(db_connection) == [("dag_a", "prepare")]
+
+
+def test_get_all_airflow_dags_lists_custom_then_import_then_export_dags(
+    client: TestClient, auth_headers: dict[str, str], db_connection: sa.Connection
+) -> None:
+    _add_airflow_dag(db_connection, "export", "exp_a", auto_regenerate_dag=0)
+    _add_airflow_dag(db_connection, "import", "imp_b", schedule_interval="03:00")
+    _add_airflow_dag(db_connection, "import", "imp_a")
+    _add_airflow_dag(db_connection, "custom", "cus_a")
+
+    response = client.get("/airflow/dags", headers=auth_headers)
+
+    assert response.status_code == 200
+    assert response.headers["content-rows"] == "4"
+    assert response.json() == [
+        {
+            "name": "cus_a",
+            "type": "custom",
+            "scheduleInterval": "None",
+            "autoRegenerateDag": True,
+        },
+        {
+            "name": "imp_a",
+            "type": "import",
+            "scheduleInterval": "None",
+            "autoRegenerateDag": True,
+        },
+        {
+            "name": "imp_b",
+            "type": "import",
+            "scheduleInterval": "03:00",
+            "autoRegenerateDag": True,
+        },
+        {
+            "name": "exp_a",
+            "type": "export",
+            "scheduleInterval": "None",
+            "autoRegenerateDag": False,
+        },
+    ]
+
+
+@DAG_KINDS
+@pytest.mark.parametrize(
+    ("task", "status_code", "result", "remaining"),
+    [
+        ("prepare", 200, "ok", [("dag_a", "load"), ("dag_b", "prepare")]),
+        (
+            "nope",
+            404,
+            "Airflow Task on DAG does not exist",
+            [("dag_a", "load"), ("dag_a", "prepare"), ("dag_b", "prepare")],
+        ),
+    ],
+    ids=["known", "unknown"],
+)
+def test_delete_task_from_airflow_dag_removes_it_or_returns_404(
+    client: TestClient,
+    auth_headers: dict[str, str],
+    db_connection: sa.Connection,
+    kind: str,
+    task: str,
+    status_code: int,
+    result: str,
+    remaining: list[tuple[str, str]],
+) -> None:
+    _add_airflow_task(db_connection, "dag_a", "prepare")
+    _add_airflow_task(db_connection, "dag_a", "load")
+    _add_airflow_task(db_connection, "dag_b", "prepare")
+
+    response = client.delete(f"/airflow/dags/{kind}/dag_a/{task}", headers=auth_headers)
+
+    assert response.status_code == status_code
+    assert response.json() == {"result": result}
+    assert _task_names(db_connection) == remaining
+
+
+def test_get_all_airflow_dags_with_a_name_in_two_dag_tables_returns_500(
+    client: TestClient, auth_headers: dict[str, str], db_connection: sa.Connection
+) -> None:
+    _add_airflow_dag(db_connection, "import", "dag_a")
+    _add_airflow_dag(db_connection, "custom", "dag_a")
+
+    response = client.get("/airflow/dags", headers=auth_headers)
+
+    # An open transaction on the table would make the TRUNCATE wait.
+    db_connection.execute(
+        sa.text(
+            "SET STATEMENT lock_wait_timeout = 2 FOR TRUNCATE TABLE airflow_custom_dags"
+        )
+    )
+    assert response.status_code == 500
+    assert response.json() == {
+        "detail": "Airflow DAG 'dag_a' exists in more than one DAG table"
+    }
