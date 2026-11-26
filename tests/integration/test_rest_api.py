@@ -354,6 +354,279 @@ def test_create_user_stores_the_given_or_empty_details(
     assert tuple(row) == stored
 
 
+def _auth_user(conn: sa.Connection, username: str) -> sa.Row[tuple[object, ...]] | None:
+    return conn.execute(
+        sa.text(
+            "SELECT username, password, disabled, fullname, department, email "
+            "FROM auth_users WHERE username = :user"
+        ),
+        {"user": username},
+    ).one_or_none()
+
+
+def test_rest_server_start_creates_the_admin_user_once(
+    rest_server: ModuleType, db_connection: sa.Connection
+) -> None:
+    first = _auth_user(db_connection, "admin")
+    importlib.reload(rest_server)
+
+    second = _auth_user(db_connection, "admin")
+    assert first is not None
+    assert second == first
+    assert rest_server.verify_password("admin", first.password)
+    assert (first.disabled, first.fullname, first.department, first.email) == (
+        0,
+        "",
+        "",
+        "",
+    )
+
+
+def test_create_user_that_exists_returns_409(
+    client: TestClient, admin_headers: dict[str, str], user: None
+) -> None:
+    response = client.post(
+        "/users/createUser",
+        json={"username": USERNAME, "password": "pw", "disabled": False},
+        headers=admin_headers,
+    )
+
+    assert response.status_code == 409
+
+
+def test_create_user_as_other_user_returns_403(
+    client: TestClient, auth_headers: dict[str, str], db_connection: sa.Connection
+) -> None:
+    response = client.post(
+        "/users/createUser",
+        json={"username": "newuser", "password": "pw", "disabled": False},
+        headers=auth_headers,
+    )
+
+    assert response.status_code == 403
+    assert _auth_user(db_connection, "newuser") is None
+
+
+@pytest.mark.parametrize(
+    ("stored_password", "shown_password"),
+    [
+        (None, "<encrypted>"),
+        ("$2b$12$hash", "<encrypted>"),
+        (
+            "arn:aws:secretsmanager:eu-north-1:1:secret:pw",
+            "arn:aws:secretsmanager:eu-north-1:1:secret:pw",
+        ),
+    ],
+)
+def test_get_user_returns_the_details_and_hides_a_local_password(
+    client: TestClient,
+    auth_headers: dict[str, str],
+    db_connection: sa.Connection,
+    stored_password: str | None,
+    shown_password: str,
+) -> None:
+    insert_row(
+        db_connection,
+        "auth_users",
+        username="other",
+        password=stored_password,
+        disabled=1,
+        fullname="Other User",
+        department="Data",
+        email="other@example.org",
+    )
+
+    response = client.get("/users/other", headers=auth_headers)
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "username": "other",
+        "password": shown_password,
+        "disabled": True,
+        "fullname": "Other User",
+        "department": "Data",
+        "email": "other@example.org",
+    }
+
+
+def test_get_unknown_user_returns_404(
+    client: TestClient, auth_headers: dict[str, str]
+) -> None:
+    response = client.get("/users/nobody", headers=auth_headers)
+
+    assert response.status_code == 404
+
+
+def test_update_user_changes_only_the_given_details(
+    client: TestClient, auth_headers: dict[str, str], db_connection: sa.Connection
+) -> None:
+    before = _auth_user(db_connection, USERNAME)
+
+    response = client.post(
+        f"/users/{USERNAME}/update",
+        json={"fullname": "Test User", "email": "test@example.org"},
+        headers=auth_headers,
+    )
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "username": USERNAME,
+        "password": "<encrypted>",
+        "disabled": False,
+        "fullname": "Test User",
+        "department": "",
+        "email": "test@example.org",
+    }
+    after = _auth_user(db_connection, USERNAME)
+    assert before is not None and after is not None
+    assert after.password == before.password
+    assert (after.disabled, after.fullname, after.department, after.email) == (
+        0,
+        "Test User",
+        "",
+        "test@example.org",
+    )
+
+
+def test_update_user_as_admin_can_disable_another_user(
+    client: TestClient,
+    admin_headers: dict[str, str],
+    user: None,
+    db_connection: sa.Connection,
+) -> None:
+    response = client.post(
+        f"/users/{USERNAME}/update", json={"disabled": True}, headers=admin_headers
+    )
+
+    assert response.status_code == 200
+    row = _auth_user(db_connection, USERNAME)
+    assert row is not None and row.disabled == 1
+
+
+@pytest.mark.parametrize(
+    ("method", "path", "body"),
+    [
+        ("POST", "/users/other/update", {"fullname": "x"}),
+        ("POST", "/users/other/changePassword", {"new_password": "x"}),
+        ("DELETE", "/users/other/delete", {}),
+    ],
+)
+def test_change_of_another_user_as_other_user_returns_403(
+    client: TestClient,
+    auth_headers: dict[str, str],
+    db_connection: sa.Connection,
+    method: str,
+    path: str,
+    body: dict[str, str],
+) -> None:
+    insert_row(db_connection, "auth_users", username="other", password="$2b$12$hash")
+    before = _auth_user(db_connection, "other")
+
+    response = client.request(method, path, json=body, headers=auth_headers)
+
+    assert response.status_code == 403
+    assert _auth_user(db_connection, "other") == before
+
+
+@pytest.mark.parametrize(
+    ("method", "path", "body"),
+    [
+        ("POST", "/users/nobody/update", {"fullname": "x"}),
+        ("POST", "/users/nobody/changePassword", {"new_password": "x"}),
+        ("DELETE", "/users/nobody/delete", {}),
+    ],
+)
+def test_change_of_unknown_user_returns_404(
+    client: TestClient,
+    admin_headers: dict[str, str],
+    method: str,
+    path: str,
+    body: dict[str, str],
+) -> None:
+    response = client.request(method, path, json=body, headers=admin_headers)
+
+    assert response.status_code == 404
+
+
+def _login(client: TestClient, username: str, password: str) -> int:
+    response = client.post(
+        "/oauth2/access_token", data={"username": username, "password": password}
+    )
+    return response.status_code
+
+
+def test_change_own_password_with_the_current_password_replaces_it(
+    client: TestClient, auth_headers: dict[str, str]
+) -> None:
+    response = client.post(
+        f"/users/{USERNAME}/changePassword",
+        json={"old_password": PASSWORD, "new_password": "new secret"},
+        headers=auth_headers,
+    )
+
+    assert response.status_code == 200
+    assert _login(client, USERNAME, "new secret") == 200
+    assert _login(client, USERNAME, PASSWORD) == 401
+
+
+def test_change_own_password_with_a_wrong_current_password_returns_403(
+    client: TestClient, auth_headers: dict[str, str]
+) -> None:
+    response = client.post(
+        f"/users/{USERNAME}/changePassword",
+        json={"old_password": "wrong", "new_password": "new secret"},
+        headers=auth_headers,
+    )
+
+    assert response.status_code == 403
+    assert _login(client, USERNAME, PASSWORD) == 200
+
+
+def test_change_password_as_admin_needs_no_current_password(
+    client: TestClient, admin_headers: dict[str, str], user: None
+) -> None:
+    response = client.post(
+        f"/users/{USERNAME}/changePassword",
+        json={"new_password": "set by admin"},
+        headers=admin_headers,
+    )
+
+    assert response.status_code == 200
+    assert _login(client, USERNAME, "set by admin") == 200
+
+
+@pytest.mark.xfail(
+    reason="Known bug: delete_user deletes through an aliased table, which "
+    "MariaDB rejects (DELETE FROM auth_users AS ...), so deleting a user fails",
+    raises=sa.exc.ProgrammingError,
+    strict=True,
+)
+def test_delete_user_as_admin_removes_the_user(
+    client: TestClient,
+    admin_headers: dict[str, str],
+    user: None,
+    db_connection: sa.Connection,
+) -> None:
+    response = client.request(
+        "DELETE", f"/users/{USERNAME}/delete", json={}, headers=admin_headers
+    )
+
+    assert response.status_code == 200
+    assert _auth_user(db_connection, USERNAME) is None
+    assert _auth_user(db_connection, "admin") is not None
+
+
+def test_delete_of_the_admin_user_returns_403(
+    client: TestClient, admin_headers: dict[str, str], db_connection: sa.Connection
+) -> None:
+    response = client.request(
+        "DELETE", "/users/admin/delete", json={}, headers=admin_headers
+    )
+
+    assert response.status_code == 403
+    assert _auth_user(db_connection, "admin") is not None
+
+
 def test_get_jdbc_drivers_lists_the_drivers_in_database_type_order(
     client: TestClient, auth_headers: dict[str, str]
 ) -> None:
