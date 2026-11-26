@@ -304,7 +304,7 @@ class ServerDaemon(run.RunDaemon):
                 log.info("Server startup completed")
 
             except SQLAlchemyError as e:
-                log.error(str(e.__dict__["orig"]))
+                log.error("%s", e)
                 log.error("Server startup failed")
                 self.disconnect_dbimport_db()
 
@@ -346,7 +346,7 @@ class ServerDaemon(run.RunDaemon):
                     session.close()
 
                 except SQLAlchemyError as e:
-                    log.error(str(e.__dict__["orig"]))
+                    log.error("%s", e)
                     session.rollback()
                     self.disconnect_dbimport_db()
 
@@ -367,7 +367,7 @@ class ServerDaemon(run.RunDaemon):
                         session.close()
 
                     except SQLAlchemyError as e:
-                        log.error(str(e.__dict__["orig"]))
+                        log.error("%s", e)
                         session.rollback()
                         self.disconnect_dbimport_db()
 
@@ -385,7 +385,7 @@ class ServerDaemon(run.RunDaemon):
                     session.close()
 
                 except SQLAlchemyError as e:
-                    log.error(str(e.__dict__["orig"]))
+                    log.error("%s", e)
                     session.rollback()
                     self.disconnect_dbimport_db()
 
@@ -437,7 +437,7 @@ class ServerDaemon(run.RunDaemon):
                             remote_session.close()
 
                         except SQLAlchemyError as e:
-                            log.error(str(e.__dict__["orig"]))
+                            log.error("%s", e)
                             remote_session.rollback()
                             self.disconnect_remote_session(destination)
 
@@ -452,7 +452,7 @@ class ServerDaemon(run.RunDaemon):
                                 session.close()
 
                             except SQLAlchemyError as e:
-                                log.error(str(e.__dict__["orig"]))
+                                log.error("%s", e)
                                 session.rollback()
                                 self.disconnect_dbimport_db()
 
