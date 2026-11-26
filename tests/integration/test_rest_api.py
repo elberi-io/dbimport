@@ -3075,7 +3075,7 @@ def test_get_airflow_dag_of_unknown_dag_returns_404_and_ends_its_transaction(
     assert response.status_code == 404
 
 
-@DAG_KINDS
+@ALL_DAG_KINDS
 def test_bulk_delete_of_airflow_dags_removes_their_tasks(
     client: TestClient,
     auth_headers: dict[str, str],
@@ -3125,7 +3125,12 @@ def test_update_airflow_dag_with_an_invalid_task_changes_nothing(
 
 @pytest.mark.parametrize(
     ("kind", "other"),
-    [("import", "export"), ("import", "custom"), ("export", "import")],
+    [
+        ("import", "export"),
+        ("import", "custom"),
+        ("export", "import"),
+        ("custom", "import"),
+    ],
 )
 def test_bulk_delete_of_airflow_dags_keeps_the_tasks_of_another_dag_type(
     client: TestClient,
