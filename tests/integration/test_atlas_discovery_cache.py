@@ -228,19 +228,7 @@ def test_discovery_sends_a_new_table_to_atlas_and_caches_it(
 
 @pytest.mark.parametrize(
     "created",
-    [
-        pytest.param(
-            CREATED,
-            marks=pytest.mark.xfail(
-                reason="Known bug: the cache reads table_create_time as "
-                "datetime64[ns], the source gives datetime64[s], so a table with "
-                "a create time never matches its cache and is sent again",
-                raises=AssertionError,
-                strict=True,
-            ),
-        ),
-        None,
-    ],
+    [CREATED, datetime(1965, 3, 1, 12, 0), None],
 )
 def test_discovery_of_an_unchanged_table_sends_nothing(
     discovery: Discovery, db_connection: sa.Connection, created: datetime | None

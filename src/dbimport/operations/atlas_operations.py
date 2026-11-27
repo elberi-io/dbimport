@@ -739,10 +739,9 @@ class AtlasOperation:
                 raise SQLError
 
             if len(full_cache_source_column_df) > 0:
-                # Set oldes timestamp to 1970-01-01 00:00:00.000
                 full_cache_source_column_df["table_create_time"] = (
-                    full_cache_source_column_df["table_create_time"].clip(
-                        lower=pd.Timestamp("1970-01-01 00:00:00.000")
+                    full_cache_source_column_df["table_create_time"].astype(
+                        "datetime64[s]"
                     )
                 )
 
