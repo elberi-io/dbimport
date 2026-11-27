@@ -105,6 +105,23 @@ def test_set_stage_stores_the_stage_time_in_utc(
     assert _stored(db_connection, "export_stage", "stage_time") == [(STORED_NOW,)]
 
 
+def test_get_stage_start_stop_returns_the_stage_times_in_utc(
+    stage: export_stage.Stage,
+    db_connection: sa.Connection,
+    in_host_zone: None,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(export_stage, "datetime", frozen_datetime(NOW))
+    stage.get_stage()
+    stage.set_stage(100)
+    stage.set_stage(101)
+
+    assert stage.get_stage_start_stop("get_hive_tableschema") == {
+        "startTime": "2026-06-01T10:00:00.000000Z",
+        "stopTime": "2026-06-01T10:00:00.000000Z",
+    }
+
+
 def test_set_stage_lower_than_current_stage_is_ignored(
     stage: export_stage.Stage, db_connection: sa.Connection
 ) -> None:
@@ -429,11 +446,11 @@ def test_convert_stage_statistics_to_json_posts_the_extended_document(
             "type": "export",
             "status": "finished",
             **EXPORT_JSON,
-            "get_hive_tableschema_start": "2000-01-01 10:00:05",
-            "get_hive_tableschema_stop": "2000-01-01 10:00:20",
+            "get_hive_tableschema_start": "2000-01-01T10:00:05+00:00",
+            "get_hive_tableschema_stop": "2000-01-01T10:00:20+00:00",
             "get_hive_tableschema_duration": 15,
-            "start": "2000-01-01 10:00:00",
-            "stop": "2000-01-01 10:00:20",
+            "start": "2000-01-01T10:00:00+00:00",
+            "stop": "2000-01-01T10:00:20+00:00",
             "duration": 20,
         }
     }

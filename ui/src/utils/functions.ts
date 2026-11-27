@@ -95,3 +95,18 @@ export function isImportPKs(
 ): primaryKeys is ImportPKs {
   return type === 'import' && !!primaryKeys
 }
+
+const ISO_TIME = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})$/
+const twoDigits = (value: number) => String(value).padStart(2, '0')
+
+// A time the REST API sends as ISO 8601 with offset, shown as the
+// browser's local time YYYY-MM-DD HH:mm:ss; any other value as it is.
+export function formatTimestamp<T>(value: T): T | string {
+  if (typeof value !== 'string' || !ISO_TIME.test(value)) return value
+  const date = new Date(value)
+  return (
+    `${date.getFullYear()}-${twoDigits(date.getMonth() + 1)}-` +
+    `${twoDigits(date.getDate())} ${twoDigits(date.getHours())}:` +
+    `${twoDigits(date.getMinutes())}:${twoDigits(date.getSeconds())}`
+  )
+}

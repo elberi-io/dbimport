@@ -25,7 +25,7 @@ from typing import Any, TypeVar
 
 from sqlalchemy.orm import Session
 
-from dbimport.common.host_time import host_time_text, to_host_time
+from dbimport.common.iso_time import iso_time_text
 from dbimport.config_db import common_config, send_statistics
 from dbimport.config_db import engine as config_engine
 from dbimport.config_db.repositories.export_stages import ExportStagesRepository
@@ -339,27 +339,25 @@ class Stage:
                 stage_short_name = str(stage)
 
             if stage_short_name != "skip" and self.post_data_to_rest_extended == True:
-                json_data_rest[f"{stage_short_name}_start"] = host_time_text(
-                    stage_start
-                )
-                json_data_rest[f"{stage_short_name}_stop"] = host_time_text(stage_stop)
+                json_data_rest[f"{stage_short_name}_start"] = iso_time_text(stage_start)
+                json_data_rest[f"{stage_short_name}_stop"] = iso_time_text(stage_stop)
                 json_data_rest[f"{stage_short_name}_duration"] = stage_duration
 
             if stage_short_name != "skip" and self.post_data_to_kafka_extended == True:
-                json_data_kafka[f"{stage_short_name}_start"] = host_time_text(
+                json_data_kafka[f"{stage_short_name}_start"] = iso_time_text(
                     stage_start
                 )
-                json_data_kafka[f"{stage_short_name}_stop"] = host_time_text(stage_stop)
+                json_data_kafka[f"{stage_short_name}_stop"] = iso_time_text(stage_stop)
                 json_data_kafka[f"{stage_short_name}_duration"] = stage_duration
 
             if (
                 stage_short_name != "skip"
                 and self.post_data_to_aws_sns_extended == True
             ):
-                json_data_aws_sns[f"{stage_short_name}_start"] = host_time_text(
+                json_data_aws_sns[f"{stage_short_name}_start"] = iso_time_text(
                     stage_start
                 )
-                json_data_aws_sns[f"{stage_short_name}_stop"] = host_time_text(
+                json_data_aws_sns[f"{stage_short_name}_stop"] = iso_time_text(
                     stage_stop
                 )
                 json_data_aws_sns[f"{stage_short_name}_duration"] = stage_duration
@@ -376,8 +374,8 @@ class Stage:
             start_text = stop_text = "-1"
             export_duration = -1
         else:
-            start_text = host_time_text(export_start)
-            stop_text = host_time_text(export_stop)
+            start_text = iso_time_text(export_start)
+            stop_text = iso_time_text(export_stop)
             export_duration = int((export_stop - export_start).total_seconds())
 
         json_data_kafka["start"] = start_text
@@ -500,10 +498,10 @@ class Stage:
                     raise ValueError(
                         f"Stage {stage_time.stage} has an invalid start or stop time"
                     )
-                return_dict["startTime"] = to_host_time(stage_time.start).strftime(
+                return_dict["startTime"] = stage_time.start.strftime(
                     "%Y-%m-%dT%H:%M:%S.%fZ"
                 )
-                return_dict["stopTime"] = to_host_time(stage_time.stop).strftime(
+                return_dict["stopTime"] = stage_time.stop.strftime(
                     "%Y-%m-%dT%H:%M:%S.%fZ"
                 )
                 break

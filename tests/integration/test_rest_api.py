@@ -926,7 +926,7 @@ def test_get_connection_returns_its_details(
         "atlasDiscovery": True,
         "atlasIncludeFilter": "sales.*",
         "atlasExcludeFilter": None,
-        "atlasLastDiscovery": "2026-01-15 09:00:00",
+        "atlasLastDiscovery": "2026-01-15T09:00:00+00:00",
     }
 
 
@@ -1074,7 +1074,7 @@ def test_get_all_import_databases_summarises_each_database(
         {
             "name": "salesdb",
             "tables": 2,
-            "lastImport": "2026-01-16 09:00:00",
+            "lastImport": "2026-01-16T09:00:00+00:00",
             "lastSize": 150,
             "lastRows": 15,
         },
@@ -1169,7 +1169,7 @@ def test_search_import_tables_returns_the_list_fields(
             "etlPhaseType": "truncate_insert",
             "importTool": "sqoop",
             "etlEngine": "spark",
-            "lastUpdateFromSource": "2026-01-15 09:00:00",
+            "lastUpdateFromSource": "2026-01-15T09:00:00+00:00",
             "includeInAirflow": True,
             "operatorNotes": "notes",
         }
@@ -1255,7 +1255,7 @@ DETAILS = {
     "etlPhaseType": "merge",
     "importTool": "sqoop",
     "etlEngine": "spark",
-    "lastUpdateFromSource": "2026-01-15 09:00:00",
+    "lastUpdateFromSource": "2026-01-15T09:00:00+00:00",
     "sqlWhereAddition": "a = 1",
     "nomergeIngestionSqlAddition": "b = 2",
     "includeInAirflow": False,
@@ -1304,7 +1304,7 @@ DETAILS = {
     "generatedPkColumns": "id",
     "datalakeSource": "sales",
     "operatorNotes": "notes",
-    "copyFinished": "2026-01-16 10:00:00",
+    "copyFinished": "2026-01-16T10:00:00+00:00",
     "copySlave": True,
     "createForeignKeys": 0,
     "invalidateImpala": 1,
@@ -1374,7 +1374,7 @@ def _add_column(
     )
 
 
-def test_import_table_time_reads_and_writes_as_host_time(
+def test_import_table_time_reads_and_writes_in_utc_with_offset(
     client: TestClient,
     auth_headers: dict[str, str],
     db_connection: sa.Connection,
@@ -1389,7 +1389,7 @@ def test_import_table_time_reads_and_writes_as_host_time(
         "/import/table/salesdb/orders", json=details, headers=auth_headers
     )
 
-    assert details["lastUpdateFromSource"] == "2026-06-01 12:00:00"
+    assert details["lastUpdateFromSource"] == "2026-06-01T10:00:00+00:00"
     assert response.status_code == 200
     stored = db_connection.execute(
         sa.text("SELECT last_update_from_source FROM import_tables")
@@ -1438,7 +1438,7 @@ def test_get_import_table_details_includes_the_columns_in_order(
             "forceString": -1,
             "includeInImport": True,
             "sourcePrimaryKey": 1,
-            "lastUpdateFromSource": "2026-01-15 09:00:00",
+            "lastUpdateFromSource": "2026-01-15T09:00:00+00:00",
             "comment": None,
             "operatorNotes": None,
             "anonymizationFunction": "None",
@@ -1457,7 +1457,7 @@ def test_get_import_table_details_includes_the_columns_in_order(
             "forceString": -1,
             "includeInImport": False,
             "sourcePrimaryKey": None,
-            "lastUpdateFromSource": "2026-01-15 09:00:00",
+            "lastUpdateFromSource": "2026-01-15T09:00:00+00:00",
             "comment": "free text",
             "operatorNotes": "notes",
             "anonymizationFunction": "Hash",
@@ -1638,7 +1638,7 @@ WRITE_FULL = WRITE_MINIMAL | {
     "importPhaseType": "incr",
     "etlPhaseType": "merge",
     "importTool": "sqoop",
-    "lastUpdateFromSource": "2026-01-15 09:00:00",
+    "lastUpdateFromSource": "2026-01-15T09:00:00+00:00",
     "sqlWhereAddition": "a = 1",
     "nomergeIngestionSqlAddition": "b = 2",
     "includeInAirflow": False,
@@ -1775,7 +1775,7 @@ def _write_column(name: str, order: int, **values: object) -> dict[str, object]:
         "sourceColumnType": "int(11)",
         "forceString": -1,
         "includeInImport": True,
-        "lastUpdateFromSource": "2026-01-15 09:00:00",
+        "lastUpdateFromSource": "2026-01-15T09:00:00+00:00",
         "anonymizationFunction": "None",
         **values,
     }
@@ -1897,6 +1897,7 @@ def test_get_import_table_details_of_unknown_table_returns_404_and_ends_its_tran
     "body",
     [
         WRITE_MINIMAL | {"lastUpdateFromSource": "yesterday"},
+        WRITE_MINIMAL | {"lastUpdateFromSource": "2026-06-01 12:00:00"},
         WRITE_MINIMAL
         | {"columns": [_write_column("id", 1, lastUpdateFromSource="yesterday")]},
     ],
@@ -2045,7 +2046,7 @@ def test_get_export_connections_summarises_each_connection(
         {
             "name": "tgt_conn",
             "tables": 2,
-            "lastExport": "2026-01-16 09:00:00",
+            "lastExport": "2026-01-16T09:00:00+00:00",
             "lastRows": 15,
         }
     ]
@@ -2146,7 +2147,7 @@ def test_search_export_tables_returns_the_list_fields(
             "table": "orders",
             "exportType": "full",
             "exportTool": "sqoop",
-            "lastUpdateFromHive": "2026-01-15 09:00:00",
+            "lastUpdateFromHive": "2026-01-15T09:00:00+00:00",
             "includeInAirflow": True,
             "operatorNotes": "notes",
         }
@@ -2196,7 +2197,7 @@ EXPORT_DETAILS = {
     "exportTool": "sqoop",
     "database": "salesdb",
     "table": "orders",
-    "lastUpdateFromHive": "2026-01-15 09:00:00",
+    "lastUpdateFromHive": "2026-01-15T09:00:00+00:00",
     "sqlWhereAddition": "a = 1",
     "includeInAirflow": False,
     "airflowPriority": 5,
@@ -2270,7 +2271,7 @@ def _export_read_column(
         "columnOrder": order,
         "targetColumnName": None,
         "targetColumnType": None,
-        "lastUpdateFromHive": "2026-01-15 09:00:00",
+        "lastUpdateFromHive": "2026-01-15T09:00:00+00:00",
         "includeInExport": True,
         "comment": None,
         "operatorNotes": None,
@@ -2313,7 +2314,7 @@ def test_get_export_table_details_includes_every_stored_column(
             comment="free text",
             operatorNotes="notes",
         ),
-        _export_read_column("id", 1, lastUpdateFromHive="2025-12-01 09:00:00"),
+        _export_read_column("id", 1, lastUpdateFromHive="2025-12-01T09:00:00+00:00"),
         _export_read_column("unordered", None),
     ]
 
@@ -2527,7 +2528,7 @@ EXPORT_WRITE_FULL = EXPORT_WRITE_MINIMAL | {
     "exportTool": "sqoop",
     "database": "otherdb",
     "table": "other",
-    "lastUpdateFromHive": "2026-01-15 09:00:00",
+    "lastUpdateFromHive": "2026-01-15T09:00:00+00:00",
     "sqlWhereAddition": "a = 1",
     "includeInAirflow": False,
     "airflowPriority": 5,
@@ -2627,7 +2628,7 @@ def _write_export_column(
         "columnType": "int",
         "columnOrder": order,
         "includeInExport": True,
-        "lastUpdateFromHive": "2026-01-15 09:00:00",
+        "lastUpdateFromHive": "2026-01-15T09:00:00+00:00",
         **values,
     }
 
@@ -2659,7 +2660,7 @@ def test_update_export_table_updates_known_columns_and_adds_new_ones(
                 targetColumnType="varchar(60)",
                 includeInExport=False,
                 operatorNotes="notes",
-                lastUpdateFromHive="2026-01-16 09:00:00",
+                lastUpdateFromHive="2026-01-16T09:00:00+00:00",
             ),
             _write_export_column("unordered", None),
         ]
