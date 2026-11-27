@@ -118,10 +118,10 @@ class Initialize:
         query += (
             "   on c.table_schema = t.table_schema and c.table_name = t.table_name "
         )
-        query += "where c.table_schema = 'DBImport' "
+        query += "where c.table_schema = %s "
 
         logging.debug("SQL Statement executed: %s", query)
-        self.mysql_cursor.execute(query)
+        self.mysql_cursor.execute(query, (self.config_database,))
 
         row = self.mysql_cursor.fetchone()
         max_column_length = row[0]
@@ -170,7 +170,7 @@ class Initialize:
         query += (
             "   on c.table_schema = t.table_schema and c.table_name = t.table_name "
         )
-        query += "where c.table_schema = 'DBImport' "
+        query += "where c.table_schema = %s "
         # 		query += "   and c.table_name not like 'airflow%' "
         # 		query += "   and c.table_name != 'etl_jobs' "
         query += "   and c.table_name != 'auto_discovered_tables' "
@@ -183,7 +183,7 @@ class Initialize:
         query += "order by c.table_name, c.ordinal_position "
 
         logging.debug("SQL Statement executed: %s", query)
-        self.mysql_cursor.execute(query)
+        self.mysql_cursor.execute(query, (self.config_database,))
 
         previous_table = ""
         for row in self.mysql_cursor.fetchall():

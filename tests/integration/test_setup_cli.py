@@ -144,12 +144,6 @@ def test_setup_create_schema_rst_prints_the_database_documentation(
     assert result.stdout == (REPO_ROOT / "docs" / "database.rst").read_text()
 
 
-@pytest.mark.xfail(
-    reason="Known bug: --createSchemaRst reads the schema named DBImport, "
-    "not the configured database",
-    raises=AssertionError,
-    strict=True,
-)
 def test_setup_create_schema_rst_documents_the_configured_database(
     orm_db_connection: sa.Connection,
 ) -> None:
