@@ -17,6 +17,7 @@ from sqlalchemy.ext.compiler import compiles
 from sqlalchemy.schema import CreateColumn
 from sqlalchemy.sql.compiler import DDLCompiler
 
+from tests.clock import host_zone
 from tests.configdb import ORM_DATABASE, close_dbimport_connections
 
 _INTEGRATION_DIR = Path(__file__).parent
@@ -176,3 +177,10 @@ def orm_db_connection(engine: sa.Engine) -> Iterator[sa.Connection]:
             yield conn
     finally:
         orm_engine.dispose()
+
+
+@pytest.fixture
+def in_host_zone() -> Iterator[None]:
+    """The test runs with tests.clock.HOST_ZONE as the local time zone."""
+    with host_zone():
+        yield

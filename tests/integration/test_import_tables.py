@@ -12,6 +12,7 @@ import sqlalchemy as sa
 from dbimport.common import constants
 from dbimport.common.exceptions import InvalidConfigurationError
 from dbimport.config_db import common_config, import_config
+from tests.clock import NOW
 from tests.configdb import insert_row, set_driver_path
 
 HIVE_DB = "testdb"
@@ -226,6 +227,14 @@ def test_update_last_update_from_source_stores_the_start_time_and_reads_it_back(
     assert config.start_date is not None
     start = datetime.strptime(config.start_date, "%Y-%m-%d %H:%M:%S.%f")
     assert stored == start.replace(microsecond=0)
+
+
+def test_get_import_config_reads_the_last_execution_time_in_utc(
+    table: sa.Connection, in_host_zone: None
+) -> None:
+    config = _config(table, sqoop_last_execution=int(NOW.timestamp()))
+
+    assert config.sqoop_last_execution_timestamp == "2026-06-01 10:00:00.000"
 
 
 INCR_COLUMNS = (
