@@ -405,8 +405,6 @@ class DBCalls:
         log = logging.getLogger(self.logger)
         log.debug("Executing dbimport.server.rest_server_calls.__init__()")
 
-        self.mysql_conn = None
-        self.mysql_cursor = None
         self.debug_log_level = False
         self.config_db_session = None
 
@@ -414,8 +412,6 @@ class DBCalls:
             self.debug_log_level = True
 
         self.common_config = common_config.Config()
-        # self.common_config.disconnect_config_database() # This is needed as we must connect with buffered=False and that is only available during reconnect
-        # self.common_config.reconnect_config_database(printReconnectMessage=True, buffered=False)
 
         self.logdir = get_settings().server.logdir
         # self.admin_user = self.common_config.get_config_value("restserver_admin_user")

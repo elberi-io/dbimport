@@ -41,7 +41,7 @@
     "assignment": 2,
     "operator": 17,
     "return-value": 2,
-    "union-attr": 115
+    "union-attr": 113
   },
   "src/dbimport/operations/atlas_operations.py": {
     "assignment": 8,
@@ -80,7 +80,7 @@
     "list-item": 6,
     "misc": 5,
     "operator": 13,
-    "union-attr": 824,
+    "union-attr": 821,
     "var-annotated": 1
   },
   "src/dbimport/schedule/airflow_dags.py": {
@@ -108,14 +108,6 @@
   "src/dbimport/server/rest_server_calls.py": {
     "assignment": 1,
     "has-type": 2
-  },
-  "src/dbimport/setup/database.py": {
-    "arg-type": 7,
-    "assignment": 1,
-    "index": 8,
-    "operator": 42,
-    "str-bytes-safe": 3,
-    "union-attr": 6
   },
   "src/dbimport/source_schema/schema_reader.py": {
     "dict-item": 19

@@ -18,14 +18,11 @@
 import logging
 import sys
 
-import mysql.connector
-import pandas as pd
 import sqlalchemy as sa
 from alembic import command as alembic_command
 from alembic.config import Config
 from alembic.migration import MigrationContext
 from alembic.script import ScriptDirectory
-from mysql.connector import errorcode
 from sqlalchemy.orm import sessionmaker
 
 from dbimport.config_db import common_config
@@ -40,22 +37,13 @@ class Initialize:
     def __init__(self):
         logging.debug("Executing database.__init__()")
 
-        self.mysql_conn = None
-        self.mysql_cursor = None
         self.debug_log_level = False
 
         if logging.root.level == 10:  # DEBUG
             self.debug_log_level = True
 
         self.common_config = common_config.Config()
-
-        # Fetch configuration about MySQL database and how to connect to it
-        self.database_credentials = self.common_config.get_mysql_credentials()
-        self.config_hostname = self.database_credentials["mysql_hostname"]
-        self.config_port = self.database_credentials["mysql_port"]
-        self.config_database = self.database_credentials["mysql_database"]
-        self.config_username = self.database_credentials["mysql_username"]
-        self.config_password = self.database_credentials["mysql_password"]
+        self.config_database = config_engine.configured_credentials().database
 
         # Esablish a SQLAlchemy connection to the DBImport database
         try:
@@ -80,34 +68,6 @@ class Initialize:
             self.config_db.url.render_as_string(hide_password=False).replace("%", "%%"),
         )
 
-        # Esablish a connection to the DBImport database in MySQL
-        try:
-            self.mysql_conn = mysql.connector.connect(
-                host=self.config_hostname,
-                port=self.config_port,
-                database=self.config_database,
-                user=self.config_username,
-                password=self.config_password,
-            )
-        except mysql.connector.errors.ProgrammingError as err:
-            logging.error("%s", err)
-            # 			self.remove_temporary_files()
-            sys.exit(1)
-        except mysql.connector.Error as err:
-            if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
-                logging.error("Something is wrong with your user name or password")
-            elif err.errno == errorcode.ER_BAD_DB_ERROR:
-                logging.error("Database does not exist")
-            else:
-                logging.error("%s", err)
-            logging.error(
-                "Error: There was a problem connecting to the MySQL database. Please check configuration and serverstatus and try again"
-            )
-            # 			self.remove_temporary_files()
-            sys.exit(1)
-        else:
-            self.mysql_cursor = self.mysql_conn.cursor(buffered=False)
-
         logging.debug("Executing database.__init__() - Finished")
 
     def generate_schema_rst(self):
@@ -118,12 +78,11 @@ class Initialize:
         query += (
             "   on c.table_schema = t.table_schema and c.table_name = t.table_name "
         )
-        query += "where c.table_schema = %s "
+        query += "where c.table_schema = :database "
 
         logging.debug("SQL Statement executed: %s", query)
-        self.mysql_cursor.execute(query, (self.config_database,))
-
-        row = self.mysql_cursor.fetchone()
+        with self.config_db.connect() as conn:
+            row = conn.execute(sa.text(query), {"database": self.config_database}).one()
         max_column_length = row[0]
         max_desc_length = row[1]
 
@@ -170,7 +129,7 @@ class Initialize:
         query += (
             "   on c.table_schema = t.table_schema and c.table_name = t.table_name "
         )
-        query += "where c.table_schema = %s "
+        query += "where c.table_schema = :database "
         # 		query += "   and c.table_name not like 'airflow%' "
         # 		query += "   and c.table_name != 'etl_jobs' "
         query += "   and c.table_name != 'auto_discovered_tables' "
@@ -183,10 +142,13 @@ class Initialize:
         query += "order by c.table_name, c.ordinal_position "
 
         logging.debug("SQL Statement executed: %s", query)
-        self.mysql_cursor.execute(query, (self.config_database,))
+        with self.config_db.connect() as conn:
+            rows = conn.execute(
+                sa.text(query), {"database": self.config_database}
+            ).all()
 
         previous_table = ""
-        for row in self.mysql_cursor.fetchall():
+        for row in rows:
             table_name = row[0]
             table_comment = row[1]
             column_name = row[2]
@@ -218,26 +180,6 @@ class Initialize:
             line += "|"
             print(line)
             print(line_single)
-
-    def get_list_of_config_tables(self):
-        logging.debug("Executing common_config.get_list_of_config_tables()")
-
-        query = "select "
-        query += "   table_name "
-        query += "from information_schema.tables  "
-        query += "where table_schema = %s "
-        query += "order by table_name "
-
-        logging.debug("SQL Statement executed: %s", query)
-        self.mysql_cursor.execute(query, (self.config_database,))
-
-        tables_df = pd.DataFrame(self.mysql_cursor.fetchall())
-
-        if len(tables_df) > 0:
-            tables_df.columns = ["table"]
-
-        logging.debug("Executing common_config.get_list_of_config_tables() - Finished")
-        return tables_df
 
     def create_db(self, create_only_table=None):
 

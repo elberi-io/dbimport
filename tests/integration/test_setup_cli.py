@@ -129,12 +129,6 @@ def test_setup_upgrade_db_at_a_revision_before_the_baseline_stops(
     assert db_connection.execute(VERSION_QUERY).scalar_one() == OLD_REVISION
 
 
-@pytest.mark.xfail(
-    reason="Known bug: mysql.connector logs three INFO lines to stdout before "
-    "the documentation",
-    raises=AssertionError,
-    strict=True,
-)
 def test_setup_create_schema_rst_prints_the_database_documentation(
     config_db: None,
 ) -> None:

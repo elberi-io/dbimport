@@ -240,8 +240,6 @@ class ServerDaemon(run.RunDaemon):
         log = logging.getLogger("server")
         log.debug("Executing daemon.ServerDaemon.run()")
         log.info("Server initializing")
-        self.mysql_conn = None
-        self.mysql_cursor = None
         self.debug_log_level = False
 
         if logging.root.level == 10:  # DEBUG
