@@ -22,9 +22,6 @@ def close_dbimport_connections(obj: object) -> None:
     behind by one test would block the next test's TRUNCATE on a
     metadata lock.
     """
-    conn = getattr(obj, "mysql_conn", None)
-    if conn is not None:
-        conn.close()
     engine = getattr(obj, "config_db", None)
     if engine is not None:
         engine.dispose()

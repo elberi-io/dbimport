@@ -55,8 +55,8 @@
   },
   "src/dbimport/config_db/common_config.py": {
     "B904": 3,
-    "E711": 66,
-    "E712": 14,
+    "E711": 64,
+    "E712": 13,
     "E722": 38,
     "F841": 1,
     "G002": 1,
@@ -82,7 +82,7 @@
   "src/dbimport/config_db/import_config.py": {
     "B904": 3,
     "E711": 77,
-    "E712": 38,
+    "E712": 37,
     "F841": 4,
     "G002": 32,
     "UP031": 83

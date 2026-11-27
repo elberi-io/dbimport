@@ -30,8 +30,6 @@ class Operation(metaclass=Singleton):
         logging.debug("Executing etl_operations.__init__()")
         self.hive_db = None
         self.hive_table = None
-        self.mysql_conn = None
-        self.mysql_cursor = None
         self.start_date = None
 
         self.common_operations = common_operations.Operation(hive_db, hive_table)

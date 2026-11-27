@@ -125,8 +125,6 @@ class AtlasDiscovery(threading.Thread):
     def run(self):
         logger = "atlasDiscovery"
         log = logging.getLogger(logger)
-        self.mysql_conn = None
-        self.mysql_cursor = None
         self.config_db_session = None
         self.config_db_engine = None
         self.debug_log_level = False

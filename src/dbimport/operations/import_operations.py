@@ -52,8 +52,6 @@ class Operation(metaclass=Singleton):
         logging.debug("Executing import_operations.__init__()")
         self.hive_db = None
         self.hive_table = None
-        self.mysql_conn = None
-        self.mysql_cursor = None
         self.start_date = None
         self.import_config = None
         self.sql_generated_hive_column_definition = None
@@ -1237,9 +1235,6 @@ class Operation(metaclass=Singleton):
         print("")
         sys.stdout.flush()
 
-        # As the import can take a very long time on a large table, we need to verify that the MySQL connection against the configuration database is still valid
-        self.import_config.reconnect_config_database()
-
         column_dict = {}
         for column in data_types:
             column_type = data_types[column]
@@ -2043,9 +2038,6 @@ class Operation(metaclass=Singleton):
             )
             sys.stdout.flush()
 
-            # As the import can take a very long time on a large table, we need to verify that the MySQL connection against the configuration database is still valid
-            self.import_config.reconnect_config_database()
-
             if pk_only_import == False:
                 try:
                     self.import_config.save_import_statistics(
@@ -2502,9 +2494,6 @@ class Operation(metaclass=Singleton):
         print("| Sqoop Import completed |")
         print("|________________________|")
         print("")
-
-        # As the import can take a very long time on a large table, we need to verify that the MySQL connection against the configuration database is still valid
-        self.import_config.reconnect_config_database()
 
         # At this stage, the entire sqoop job is run and we fetched all data from the output. Lets parse and store it
         if self.sqoop_size == None:

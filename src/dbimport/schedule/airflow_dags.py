@@ -59,8 +59,6 @@ class Initialize:
     def __init__(self):
         logging.debug("Executing Airflow.__init__()")
 
-        self.mysql_conn = None
-        self.mysql_cursor = None
         self.debug_log_level = False
 
         self.logger = "root"

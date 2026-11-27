@@ -63,7 +63,6 @@ class Config(metaclass=Singleton):
         logging.debug("Executing import_config.__init__()")
         self.hive_db = hive_db
         self.hive_table = hive_table
-        self.mysql_conn: Any = None
         self.start_date: str | None = None
         self.common_config = None
 
@@ -172,21 +171,11 @@ class Config(metaclass=Singleton):
         self.send_statistics = send_statistics.SendStatistics()
 
         self.start_date = self.common_config.start_date
-        self.mysql_conn = self.common_config.mysql_conn
 
         # Initialize the stage class that will handle all stage operations for us
         self.stage = stage.Stage(self.hive_db, self.hive_table)
 
         logging.debug("Executing import_config.__init__() - Finished")
-
-    def reconnect_config_database(self) -> None:
-        # During long imports, depending on connection timout, the connection against the config database might be closed. This checks if it is closed and reconnect if needed
-        if self.mysql_conn.is_connected() == False:
-            self.mysql_conn.close()
-
-            self.common_config.reconnect_config_database()
-
-            self.mysql_conn = self.common_config.mysql_conn
 
     def set_hive_table(self, hive_db: str, hive_table: str) -> None:
         """Sets the parameters to work against a new Hive database and table"""

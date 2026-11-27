@@ -28,11 +28,10 @@ from datetime import datetime
 from typing import Any
 
 import jaydebeapi
-import mysql.connector
 import pandas as pd
 import pendulum
 import pymongo
-from mysql.connector import errorcode
+from sqlalchemy.exc import DBAPIError
 from sqlalchemy.orm import Session
 
 from dbimport.common import constants as constant
@@ -58,6 +57,9 @@ from dbimport.config_db.repositories.run_log import RunLogRepository
 from dbimport.settings import get_settings
 from dbimport.source_schema import schema_reader
 
+_ER_ACCESS_DENIED_ERROR = 1045
+_ER_BAD_DB_ERROR = 1049
+
 
 def _logged(value: str | None, name: str) -> str:
     """A value a log row needs (the column is NOT NULL); None raises
@@ -80,8 +82,6 @@ class Config(metaclass=Singleton):
         if hive_table != None and self.hive_table == None:
             self.hive_table = hive_table
 
-        self.mysql_conn: Any = None
-        self.mysql_cursor: Any = None
         self.tempdir = None
         self.start_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
         self.operation_type: str | None = None
@@ -176,8 +176,6 @@ class Config(metaclass=Singleton):
 
         self.schema_reader = schema_reader.Source()
 
-        self.mysql_connection_details: dict[str, str] | None = None
-
         self.debug_log_level = False
         if logging.root.level == 10:  # DEBUG
             self.debug_log_level = True
@@ -238,64 +236,27 @@ class Config(metaclass=Singleton):
             self.remove_temporary_files()
             sys.exit(1)
 
-        self.reconnect_config_database(print_reconnect_message=False)
+        self._check_config_database()
 
         logging.debug("Executing common_config.__init__() - Finished")
 
-    def disconnect_config_database(self) -> None:
-        """Closing connection against config database. Only used during debug and development"""
-        logging.debug("Connection against MySQL Config database have been closed")
-        self.mysql_cursor.close()
-        self.mysql_conn.close()
-
-    def get_mysql_credentials(self) -> dict[str, str]:
-        # Fetch configuration about MySQL database and how to connect to it
-
-        if self.mysql_connection_details != None:
-            # This information is already fetched from the configuration. Just return the fetched values
-            return self.mysql_connection_details
-
-        found = config_engine.configured_credentials()
-
-        self.mysql_connection_details = {}
-        self.mysql_connection_details["mysql_hostname"] = found.hostname
-        self.mysql_connection_details["mysql_port"] = str(found.port)
-        self.mysql_connection_details["mysql_database"] = found.database
-        self.mysql_connection_details["mysql_username"] = found.username
-        self.mysql_connection_details["mysql_password"] = found.password
-
-        return self.mysql_connection_details
-
-    def reconnect_config_database(self, print_reconnect_message: bool = True) -> None:
-        if self.mysql_conn == None or self.mysql_conn.is_connected() == False:
-            if print_reconnect_message:
-                logging.warning("Connection to MySQL have been lost. Reconnecting...")
-
-            mysql_credentials = self.get_mysql_credentials()
-
-            # Esablish a connection to the DBImport database in MySQL
-            try:
-                self.mysql_conn = mysql.connector.connect(
-                    host=mysql_credentials["mysql_hostname"],
-                    port=mysql_credentials["mysql_port"],
-                    database=mysql_credentials["mysql_database"],
-                    user=mysql_credentials["mysql_username"],
-                    password=mysql_credentials["mysql_password"],
-                )
-            except mysql.connector.Error as err:
-                if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
-                    logging.error("Something is wrong with your user name or password")
-                elif err.errno == errorcode.ER_BAD_DB_ERROR:
-                    logging.error("Database does not exist")
-                else:
-                    logging.error("%s", err)
-                logging.error(
-                    "Error: There was a problem connecting to the MySQL database. Please check configuration and serverstatus and try again"
-                )
-                self.remove_temporary_files()
-                sys.exit(1)
+    def _check_config_database(self) -> None:
+        """Exits 1 when the configuration database cannot be reached."""
+        try:
+            config_engine.engine().connect().close()
+        except DBAPIError as err:
+            code = err.orig.args[0] if err.orig is not None and err.orig.args else None
+            if code == _ER_ACCESS_DENIED_ERROR:
+                logging.error("Something is wrong with your user name or password")
+            elif code == _ER_BAD_DB_ERROR:
+                logging.error("Database does not exist")
             else:
-                self.mysql_cursor = self.mysql_conn.cursor(buffered=True)
+                logging.error("%s", err.orig)
+            logging.error(
+                "Error: There was a problem connecting to the MySQL database. Please check configuration and serverstatus and try again"
+            )
+            self.remove_temporary_files()
+            sys.exit(1)
 
     def get_atlas_jdbc_connection_data(
         self, db_alias: str | None = None
@@ -326,12 +287,6 @@ class Config(metaclass=Singleton):
         """Sets the parameters to work against a new Hive database and table"""
         self.hive_db = hive_db.lower()
         self.hive_table = hive_table.lower()
-
-    def get_mysql_cursor(self) -> Any:
-        return self.mysql_cursor
-
-    def get_mysql_connector(self) -> Any:
-        return self.mysql_conn
 
     def remove_temporary_files(self) -> None:
         logging.debug("Executing common_config.remove_temporary_files()")

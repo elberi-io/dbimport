@@ -63,7 +63,6 @@ class Config(metaclass=Singleton):
         target_table: str | None = None,
     ) -> None:
         logging.debug("Executing export_config.__init__()")
-        self.mysql_conn: Any = None
         self.start_date: str | None = None
         self.common_config = None
 
@@ -79,7 +78,6 @@ class Config(metaclass=Singleton):
         self.send_statistics = send_statistics.SendStatistics()
 
         self.start_date = self.common_config.start_date
-        self.mysql_conn = self.common_config.mysql_conn
 
         self.table_id: int | None = None
         self.export_type: str | None = None
