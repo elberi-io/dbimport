@@ -47,14 +47,17 @@
     "F841": 3
   },
   "src/dbimport/common/spark_udf.py": {
+    "DTZ004": 1,
     "E722": 1
   },
   "src/dbimport/common/spark_udf2.py": {
+    "DTZ004": 1,
     "E711": 3,
     "E722": 1
   },
   "src/dbimport/config_db/common_config.py": {
     "B904": 3,
+    "DTZ005": 9,
     "E711": 64,
     "E712": 13,
     "E722": 38,
@@ -67,6 +70,7 @@
     "E711": 1
   },
   "src/dbimport/config_db/export_config.py": {
+    "DTZ004": 1,
     "E711": 21,
     "E712": 22,
     "F841": 4,
@@ -74,6 +78,7 @@
     "UP031": 70
   },
   "src/dbimport/config_db/export_stage.py": {
+    "DTZ005": 5,
     "E711": 2,
     "E712": 15,
     "G002": 1,
@@ -81,6 +86,8 @@
   },
   "src/dbimport/config_db/import_config.py": {
     "B904": 3,
+    "DTZ004": 2,
+    "DTZ007": 2,
     "E711": 77,
     "E712": 37,
     "F841": 4,
@@ -88,6 +95,7 @@
     "UP031": 83
   },
   "src/dbimport/config_db/import_stage.py": {
+    "DTZ005": 5,
     "E711": 2,
     "E712": 15,
     "G002": 1,
@@ -116,12 +124,14 @@
     "UP031": 32
   },
   "src/dbimport/operations/copy_operations.py": {
+    "DTZ005": 2,
     "E711": 12,
     "E712": 14,
     "G002": 13,
     "UP031": 30
   },
   "src/dbimport/operations/etl_operations.py": {
+    "DTZ005": 1,
     "E711": 18,
     "E712": 28,
     "E722": 1,
@@ -130,6 +140,7 @@
     "UP031": 120
   },
   "src/dbimport/operations/export_operations.py": {
+    "DTZ005": 1,
     "E711": 33,
     "E712": 29,
     "E722": 16,
@@ -140,6 +151,8 @@
   "src/dbimport/operations/import_operations.py": {
     "B904": 3,
     "B905": 1,
+    "DTZ003": 1,
+    "DTZ005": 3,
     "E711": 59,
     "E712": 126,
     "E722": 17,
@@ -149,6 +162,8 @@
   },
   "src/dbimport/schedule/airflow_dags.py": {
     "B904": 6,
+    "DTZ005": 1,
+    "DTZ007": 6,
     "E711": 35,
     "E712": 24,
     "E722": 5,
@@ -157,6 +172,7 @@
     "UP031": 216
   },
   "src/dbimport/server/atlas_discovery.py": {
+    "DTZ005": 3,
     "E711": 4,
     "E712": 6,
     "E722": 2,
@@ -165,6 +181,7 @@
     "UP031": 6
   },
   "src/dbimport/server/daemon.py": {
+    "DTZ005": 4,
     "E711": 4,
     "E712": 2,
     "E722": 1,
@@ -174,6 +191,7 @@
   },
   "src/dbimport/server/rest_server.py": {
     "B904": 1,
+    "DTZ003": 1,
     "E711": 8,
     "E712": 2,
     "N803": 21
@@ -193,9 +211,53 @@
     "UP031": 3
   },
   "src/dbimport/source_schema/schema_reader.py": {
+    "DTZ007": 6,
     "E711": 115,
     "E722": 6,
     "G002": 26,
     "UP031": 172
+  },
+  "tests/integration/test_atlas_discovery_cache.py": {
+    "DTZ001": 2
+  },
+  "tests/integration/test_config_logs.py": {
+    "DTZ001": 1
+  },
+  "tests/integration/test_copy_export_definitions.py": {
+    "DTZ001": 1
+  },
+  "tests/integration/test_copy_import_definitions.py": {
+    "DTZ001": 1
+  },
+  "tests/integration/test_copy_tables.py": {
+    "DTZ001": 2
+  },
+  "tests/integration/test_export_columns.py": {
+    "DTZ001": 3
+  },
+  "tests/integration/test_export_stage.py": {
+    "DTZ001": 5
+  },
+  "tests/integration/test_export_tables.py": {
+    "DTZ001": 2
+  },
+  "tests/integration/test_import_stage.py": {
+    "DTZ001": 5
+  },
+  "tests/integration/test_import_tables.py": {
+    "DTZ001": 1,
+    "DTZ007": 1
+  },
+  "tests/integration/test_jdbc_connections.py": {
+    "DTZ001": 15
+  },
+  "tests/integration/test_remote_instance.py": {
+    "DTZ001": 1
+  },
+  "tests/integration/test_rest_api.py": {
+    "DTZ001": 5
+  },
+  "tests/integration/test_server_daemon.py": {
+    "DTZ001": 3
   }
 }
