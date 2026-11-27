@@ -20,7 +20,7 @@ import os
 import subprocess
 import sys
 import time
-from datetime import datetime
+from datetime import UTC, datetime
 
 import boto3
 import pandas as pd
@@ -1602,7 +1602,7 @@ class Operation(metaclass=Singleton):
     def run_sqoop_export(self):
         logging.debug("Executing export_operations.run_sqoop_export()")
 
-        self.sqoop_start_timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
+        self.sqoop_start_timestamp = datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S.%f")
         self.sqoop_start_uts = int(time.time())
 
         force_column_uppercase = False

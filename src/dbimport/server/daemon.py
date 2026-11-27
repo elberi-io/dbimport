@@ -20,7 +20,7 @@ import subprocess
 import sys
 import threading
 import time
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from queue import Empty, Queue
 from typing import Any
 
@@ -305,7 +305,7 @@ class ServerDaemon(run.RunDaemon):
         if dist_cp_threads > 0:
             try:
                 session = self.get_dbimport_session()
-                restart_started_copies(session, datetime.now())
+                restart_started_copies(session, datetime.now(UTC))
                 session.close()
 
                 log.debug("Init part of daemon.ServerDaemon.run() completed")
@@ -346,7 +346,7 @@ class ServerDaemon(run.RunDaemon):
                     # ------------------------------------------
 
                     start_pending_copies(
-                        session, self.dist_cp_req_queue, datetime.now()
+                        session, self.dist_cp_req_queue, datetime.now(UTC)
                     )
 
                     session.close()
@@ -369,7 +369,7 @@ class ServerDaemon(run.RunDaemon):
                 else:
                     try:
                         session = self.get_dbimport_session()
-                        save_copy_result(session, dist_cp_response, datetime.now())
+                        save_copy_result(session, dist_cp_response, datetime.now(UTC))
                         session.close()
 
                     except SQLAlchemyError as e:
@@ -413,7 +413,7 @@ class ServerDaemon(run.RunDaemon):
                         try:
                             remote_session = _remote_session()
                             finish_copy(
-                                remote_session, hive_db, hive_table, datetime.now()
+                                remote_session, hive_db, hive_table, datetime.now(UTC)
                             )
                             remote_session.close()
 

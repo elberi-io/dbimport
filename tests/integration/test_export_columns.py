@@ -4,7 +4,7 @@ target column type. The Hive schema is given as the frame the Hive
 reader returns: Hive is an external system."""
 
 from collections.abc import Iterator
-from datetime import datetime
+from datetime import UTC, datetime
 
 import pandas as pd
 import pytest
@@ -20,7 +20,7 @@ TABLE = "orders"
 HIVE_DB = "testdb"
 SYNCED = "2026-01-15 09:00:00"
 STALE = "2025-12-01 09:00:00"
-STARTED = "2026-02-01 10:00:00"
+STARTED = datetime(2026, 2, 1, 10, 0, tzinfo=UTC)
 MYSQL = ("jdbc:mysql://target.example:3306/db", "MySQL")
 MSSQL = ("jdbc:sqlserver://target.example:1433;database=db", "SQL Server")
 

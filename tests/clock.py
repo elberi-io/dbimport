@@ -10,12 +10,18 @@ import time
 from collections.abc import Iterator
 from contextlib import contextmanager
 from datetime import UTC, datetime, tzinfo
-from zoneinfo import ZoneInfo
 
 HOST_ZONE = "Europe/Stockholm"
+# 12:00 in HOST_ZONE (summer time).
 NOW = datetime(2026, 6, 1, 10, 0, 0, tzinfo=UTC)
-# 12:00, summer time; naive, as a DATETIME column returns it.
-NOW_IN_HOST_ZONE = NOW.astimezone(ZoneInfo(HOST_ZONE)).replace(tzinfo=None)
+# NOW as a DATETIME column holds it: UTC, without a zone (ADR-0007).
+STORED_NOW = NOW.replace(tzinfo=None)
+
+
+def stored_time(text: str) -> datetime:
+    """A value as a DATETIME column holds it, without a zone, from ISO
+    text such as '2026-06-01 12:00'."""
+    return datetime.fromisoformat(text)
 
 
 @contextmanager

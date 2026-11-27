@@ -281,6 +281,24 @@ def test_copy_after_import_copies_the_text_none_as_it_is(
     assert _tables(remote) == _tables(local)
 
 
+def test_copy_after_import_copies_a_zero_date_as_null(
+    local: sa.Connection, remote: sa.Connection
+) -> None:
+    local.execute(
+        sa.text(
+            "SET STATEMENT sql_mode = '' FOR UPDATE import_tables"
+            " SET last_update_from_source = '0000-00-00 00:00:00'"
+        )
+    )
+
+    _copy_after_import(local)
+
+    stored = remote.execute(
+        sa.text("SELECT last_update_from_source FROM import_tables")
+    ).scalar_one()
+    assert stored is None
+
+
 def test_copy_after_import_copies_the_connection_of_a_changed_table(
     local: sa.Connection, remote: sa.Connection
 ) -> None:

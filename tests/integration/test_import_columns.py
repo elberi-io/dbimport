@@ -4,7 +4,7 @@ frames the schema reader returns: the source database is an external
 system."""
 
 from collections.abc import Iterator
-from datetime import datetime
+from datetime import UTC
 
 import pandas as pd
 import pytest
@@ -186,7 +186,9 @@ def test_save_column_data_inserts_the_source_columns(conn: sa.Connection) -> Non
         sa.text("SELECT DISTINCT last_update_from_source FROM import_columns")
     ).scalar_one()
     assert config.start_date is not None
-    assert stored == datetime.fromisoformat(config.start_date).replace(microsecond=0)
+    assert stored == config.start_date.astimezone(UTC).replace(
+        tzinfo=None, microsecond=0
+    )
     assert config.sql_generated_hive_column_definition == (
         "( `ID` int COMMENT 'the key', `Created` timestamp,"
         " `Note` varchar(50) COMMENT 'its free text' )"

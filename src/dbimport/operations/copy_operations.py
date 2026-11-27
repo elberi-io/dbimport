@@ -19,7 +19,7 @@ import fnmatch
 import logging
 import subprocess
 import sys
-from datetime import datetime
+from datetime import UTC, datetime
 
 from sqlalchemy.exc import DBAPIError
 from sqlalchemy.orm import Session, sessionmaker
@@ -298,7 +298,7 @@ class Operation(metaclass=Singleton):
                             destination,
                             source_path=source_path,
                             target_path=target_path,
-                            updated=datetime.now(),
+                            updated=datetime.now(UTC),
                         )
                         session.commit()
                         logging.info(
@@ -838,7 +838,9 @@ class Operation(metaclass=Singleton):
                     self.import_config.table_id,
                     instance.sync_credentials,
                     copy_slave=1,
-                    copy_finished=datetime.now() if method == "Synchronous" else None,
+                    copy_finished=datetime.now(UTC)
+                    if method == "Synchronous"
+                    else None,
                 )
                 remote_session.commit()
 

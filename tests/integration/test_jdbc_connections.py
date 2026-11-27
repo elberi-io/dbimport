@@ -4,7 +4,7 @@ discovery loop, which needs a JVM, through the repository."""
 
 import logging
 from collections.abc import Callable
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 
 import pendulum
@@ -195,7 +195,7 @@ def test_get_atlas_jdbc_connection_data_returns_empty_text_for_missing_details(
         "atlas_discovery": 1,
         "atlas_include_filter": "sales.*",
         "atlas_exclude_filter": None,
-        "atlas_last_discovery": datetime(2026, 1, 15, 9, 0),
+        "atlas_last_discovery": datetime(2026, 1, 15, 9, 0, tzinfo=UTC),
     }
 
 
@@ -271,7 +271,7 @@ def test_set_atlas_last_discovery_stores_the_time(
 
     with Session(engine) as session:
         ConnectionsRepository(session).set_atlas_last_discovery(
-            DBALIAS, datetime(2026, 1, 15, 9, 30)
+            DBALIAS, datetime(2026, 1, 15, 9, 30, tzinfo=UTC)
         )
         session.commit()
 
@@ -279,6 +279,38 @@ def test_set_atlas_last_discovery_stores_the_time(
         sa.text("SELECT atlas_last_discovery FROM jdbc_connections")
     ).scalar_one()
     assert stored == datetime(2026, 1, 15, 9, 30)
+
+
+def test_set_atlas_last_discovery_without_a_time_zone_raises_and_stores_nothing(
+    clean_config_db: None, db_connection: sa.Connection, engine: sa.Engine
+) -> None:
+    _add_connection(db_connection)
+
+    with (
+        Session(engine) as session,
+        pytest.raises(sa.exc.StatementError, match="without a time zone"),
+    ):
+        ConnectionsRepository(session).set_atlas_last_discovery(
+            DBALIAS, datetime(2026, 1, 15, 9, 30)
+        )
+
+    stored = db_connection.execute(
+        sa.text("SELECT atlas_last_discovery FROM jdbc_connections")
+    ).scalar_one()
+    assert stored is None
+
+
+def test_engine_connections_use_utc_as_the_session_time_zone(
+    clean_config_db: None,
+) -> None:
+    engine = config_engine.create()
+    try:
+        with engine.connect() as conn:
+            zone = conn.execute(sa.text("SELECT @@session.time_zone")).scalar_one()
+    finally:
+        engine.dispose()
+
+    assert zone == "+00:00"
 
 
 def test_set_credentials_with_sql_echo_does_not_log_the_value(

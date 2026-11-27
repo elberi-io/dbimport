@@ -2,6 +2,8 @@ from alembic import context
 from sqlalchemy import URL, create_engine, pool
 
 from dbimport.config_db.config_schema import Base
+from dbimport.config_db.engine import CONNECT_ARGS
+from dbimport.migrations.autogenerate import render_item
 from dbimport.settings import get_settings
 
 config = context.config
@@ -32,20 +34,20 @@ def run_migrations_offline() -> None:
         target_metadata=target_metadata,
         literal_binds=True,
         compare_server_default=True,
+        render_item=render_item,
     )
     with context.begin_transaction():
         context.run_migrations()
 
 
 def run_migrations_online() -> None:
-    engine = create_engine(
-        _url(), poolclass=pool.NullPool, connect_args={"connect_timeout": 10}
-    )
+    engine = create_engine(_url(), poolclass=pool.NullPool, connect_args=CONNECT_ARGS)
     with engine.connect() as connection:
         context.configure(
             connection=connection,
             target_metadata=target_metadata,
             compare_server_default=True,
+            render_item=render_item,
         )
         with context.begin_transaction():
             context.run_migrations()

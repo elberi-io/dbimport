@@ -19,7 +19,7 @@ import logging
 import sys
 import threading
 import time
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from queue import Empty, Queue
 from typing import Any
 
@@ -351,7 +351,7 @@ class AtlasDiscovery(threading.Thread):
                     try:
                         session = self.get_dbimport_session()
                         ConnectionsRepository(session).set_atlas_last_discovery(
-                            db_alias, datetime.now()
+                            db_alias, datetime.now(UTC)
                         )
                         session.commit()
                         session.close()
@@ -388,7 +388,7 @@ class AtlasDiscovery(threading.Thread):
                 "blackListStart"
             ] + timedelta(hours=self.failure_log[db_alias]["blackListTime"])
 
-            if datetime.now() < black_list_enable_time:
+            if datetime.now(UTC) < black_list_enable_time:
                 # This dbAlias is still blacklisted
                 return True
 
@@ -412,7 +412,7 @@ class AtlasDiscovery(threading.Thread):
 
         self.failure_log[db_alias] = {
             "blackListTime": black_list_time,
-            "blackListStart": datetime.now(),
+            "blackListStart": datetime.now(UTC),
         }
 
         if print_black_list_warning == True:

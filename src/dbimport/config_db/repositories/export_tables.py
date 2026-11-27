@@ -17,6 +17,7 @@
 """Export tables: the export_tables row of a table that is exported."""
 
 from collections.abc import Mapping, Sequence
+from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict
 from sqlalchemy import (
@@ -309,7 +310,9 @@ class ExportTablesRepository:
             **{name: value for name, value in values.items() if value is not None},
         )
 
-    def set_last_update_from_hive(self, table_id: int, updated: str | None) -> None:
+    def set_last_update_from_hive(
+        self, table_id: int, updated: datetime | None
+    ) -> None:
         self._update(table_id, last_update_from_hive=updated)
 
     def clear_validation(self, table_id: int) -> None:

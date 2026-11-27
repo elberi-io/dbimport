@@ -23,7 +23,7 @@ import shlex
 import subprocess
 import sys
 import time
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 
 import pandas as pd
 import requests
@@ -915,7 +915,7 @@ class Operation(metaclass=Singleton):
     def run_spark_import_for_mongo(self):
         logging.debug("Executing import_operations.run_spark_import_for_mongo()")
 
-        self.spark_start_timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
+        self.spark_start_timestamp = datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S.%f")
         self.spark_start_uts = int(time.time())
         spark_query = ""
 
@@ -1676,7 +1676,7 @@ class Operation(metaclass=Singleton):
     def run_spark_import(self, pk_only_import, incremental_max=None):
         logging.debug("Executing import_operations.run_spark_import()")
 
-        self.spark_start_timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
+        self.spark_start_timestamp = datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S.%f")
         self.spark_start_uts = int(time.time())
         spark_query = ""
 
@@ -2087,7 +2087,7 @@ class Operation(metaclass=Singleton):
             self.import_config.hive_table,
         )
 
-        delete_older_than_ref = datetime.utcnow() - timedelta(hours=24)
+        delete_older_than_ref = datetime.now(UTC) - timedelta(hours=24)
         delete_older_than = delete_older_than_ref.strftime("%Y-%m-%d %H:%M:%S.000")
 
         self.start_spark()
@@ -2154,7 +2154,7 @@ class Operation(metaclass=Singleton):
     def run_sqoop_import(self, pk_only_import, incremental_max=None):
         logging.debug("Executing import_operations.run_sqoop_import()")
 
-        self.sqoop_start_timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
+        self.sqoop_start_timestamp = datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S.%f")
         self.sqoop_start_uts = int(time.time())
 
         # Check if any column is anonymized. If it is, we need to exit as that is only supported with Spark

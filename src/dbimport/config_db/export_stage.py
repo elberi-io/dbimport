@@ -20,11 +20,12 @@ import logging
 import time
 from collections.abc import Callable, Iterator
 from contextlib import contextmanager
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any, TypeVar
 
 from sqlalchemy.orm import Session
 
+from dbimport.common.host_time import host_time_text, to_host_time
 from dbimport.config_db import common_config, send_statistics
 from dbimport.config_db import engine as config_engine
 from dbimport.config_db.repositories.export_stages import ExportStagesRepository
@@ -338,21 +339,29 @@ class Stage:
                 stage_short_name = str(stage)
 
             if stage_short_name != "skip" and self.post_data_to_rest_extended == True:
-                json_data_rest[f"{stage_short_name}_start"] = str(stage_start)
-                json_data_rest[f"{stage_short_name}_stop"] = str(stage_stop)
+                json_data_rest[f"{stage_short_name}_start"] = host_time_text(
+                    stage_start
+                )
+                json_data_rest[f"{stage_short_name}_stop"] = host_time_text(stage_stop)
                 json_data_rest[f"{stage_short_name}_duration"] = stage_duration
 
             if stage_short_name != "skip" and self.post_data_to_kafka_extended == True:
-                json_data_kafka[f"{stage_short_name}_start"] = str(stage_start)
-                json_data_kafka[f"{stage_short_name}_stop"] = str(stage_stop)
+                json_data_kafka[f"{stage_short_name}_start"] = host_time_text(
+                    stage_start
+                )
+                json_data_kafka[f"{stage_short_name}_stop"] = host_time_text(stage_stop)
                 json_data_kafka[f"{stage_short_name}_duration"] = stage_duration
 
             if (
                 stage_short_name != "skip"
                 and self.post_data_to_aws_sns_extended == True
             ):
-                json_data_aws_sns[f"{stage_short_name}_start"] = str(stage_start)
-                json_data_aws_sns[f"{stage_short_name}_stop"] = str(stage_stop)
+                json_data_aws_sns[f"{stage_short_name}_start"] = host_time_text(
+                    stage_start
+                )
+                json_data_aws_sns[f"{stage_short_name}_stop"] = host_time_text(
+                    stage_stop
+                )
                 json_data_aws_sns[f"{stage_short_name}_duration"] = stage_duration
 
             if stage == 0:
@@ -367,8 +376,8 @@ class Stage:
             start_text = stop_text = "-1"
             export_duration = -1
         else:
-            start_text = str(export_start)
-            stop_text = str(export_stop)
+            start_text = host_time_text(export_start)
+            stop_text = host_time_text(export_stop)
             export_duration = int((export_stop - export_start).total_seconds())
 
         json_data_kafka["start"] = start_text
@@ -491,10 +500,10 @@ class Stage:
                     raise ValueError(
                         f"Stage {stage_time.stage} has an invalid start or stop time"
                     )
-                return_dict["startTime"] = stage_time.start.strftime(
+                return_dict["startTime"] = to_host_time(stage_time.start).strftime(
                     "%Y-%m-%dT%H:%M:%S.%fZ"
                 )
-                return_dict["stopTime"] = stage_time.stop.strftime(
+                return_dict["stopTime"] = to_host_time(stage_time.stop).strftime(
                     "%Y-%m-%dT%H:%M:%S.%fZ"
                 )
                 break
@@ -525,7 +534,7 @@ class Stage:
                 stored = self._read_stages(lambda stages: stages.stage(*self._table()))
                 self.current_stage = 0 if stored is None else stored
 
-        self.stage_time_start = datetime.now()
+        self.stage_time_start = datetime.now(UTC)
         self.stage_time_stop = None
         self.stage_duration_start = time.monotonic()
         self.stage_duration_stop = 0.0
@@ -553,7 +562,7 @@ class Stage:
             return
 
         # Calculate time and save to export_stage_statistics
-        self.stage_time_stop = datetime.now()
+        self.stage_time_stop = datetime.now(UTC)
         self.stage_duration_stop = time.monotonic()
         self.stage_duration_time = self.stage_duration_stop - self.stage_duration_start
 
@@ -579,11 +588,11 @@ class Stage:
                 *table,
                 new_stage,
                 self.get_stage_description(new_stage),
-                datetime.now(),
+                datetime.now(UTC),
             )
 
         self.current_stage = new_stage
-        self.stage_time_start = datetime.now()
+        self.stage_time_start = datetime.now(UTC)
         self.stage_time_stop = None
         self.stage_duration_start = time.monotonic()
         self.stage_duration_stop = 0.0
@@ -603,7 +612,7 @@ class Stage:
                 *self._table(),
                 stage,
                 self.get_stage_description(stage),
-                datetime.now(),
+                datetime.now(UTC),
             )
 
         logging.debug("Executing Stage.save_retry_attempt() - Finished")

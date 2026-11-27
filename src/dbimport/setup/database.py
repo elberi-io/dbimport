@@ -17,12 +17,14 @@
 
 import logging
 import sys
+from collections.abc import Callable
 
 import sqlalchemy as sa
 from alembic import command as alembic_command
 from alembic.config import Config
 from alembic.migration import MigrationContext
 from alembic.script import ScriptDirectory
+from alembic.util import CommandError
 from sqlalchemy.orm import sessionmaker
 
 from dbimport.config_db import common_config
@@ -197,19 +199,31 @@ class Initialize:
 
         print("DBImport configuration database is created successfully")
 
-    def upgrade_db(self):
-
+    def upgrade_db(self, local_time_zone: str | None = None) -> None:
+        """Upgrade the schema to the latest revision. local_time_zone is the
+        zone the stored times were written in, for the revision that moves
+        them to UTC (ADR-0007)."""
         print("Upgrading database to latest level")
         script = ScriptDirectory.from_config(self.alembic_config)
         self.exit_on_unknown_revision(self.current_revisions(), script)
-        alembic_command.upgrade(self.alembic_config, "head")
+        self.alembic_config.attributes["local_time_zone"] = local_time_zone
+        self.run_alembic(alembic_command.upgrade, "head")
         self.create_default_environment_types()
         self.update_configuration_values()
 
-    def downgrade_db(self) -> None:
+    def run_alembic(self, command: Callable[[Config, str], None], target: str) -> None:
+        """Run an Alembic command; exits with its message when a revision
+        refuses to run (CommandError)."""
+        try:
+            command(self.alembic_config, target)
+        except CommandError as err:
+            logging.error("%s", err)
+            sys.exit(1)
+
+    def downgrade_db(self, local_time_zone: str | None = None) -> None:
         """Downgrade the schema by one revision. Exits with an error, without
         changing the database, at the baseline, at an unknown revision or
-        without a revision."""
+        without a revision. local_time_zone is used as in upgrade_db."""
         current = self.current_revisions()
         script = ScriptDirectory.from_config(self.alembic_config)
         self.exit_on_unknown_revision(current, script)
@@ -227,7 +241,8 @@ class Initialize:
             )
             sys.exit(1)
         print("Downgrading database by one revision")
-        alembic_command.downgrade(self.alembic_config, "-1")
+        self.alembic_config.attributes["local_time_zone"] = local_time_zone
+        self.run_alembic(alembic_command.downgrade, "-1")
 
     def current_revisions(self) -> tuple[str, ...]:
         with self.config_db.connect() as conn:
