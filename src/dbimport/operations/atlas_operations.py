@@ -1328,7 +1328,6 @@ class AtlasOperation:
         if self.jdbc_cursor == None or force == True:
             log.debug("Connecting to database over JDBC")
             log.debug("	self.jdbc_username = %s" % (self.jdbc_username))
-            log.debug("	self.jdbc_password = %s" % (self.jdbc_password))
             log.debug("	self.jdbc_driver = %s" % (self.jdbc_driver))
             log.debug("	self.jdbc_url = %s" % (self.jdbc_url))
             log.debug(
