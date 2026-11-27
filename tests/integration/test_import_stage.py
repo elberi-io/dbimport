@@ -7,6 +7,7 @@ import pytest
 import sqlalchemy as sa
 
 from dbimport.config_db import import_config, import_stage
+from tests.clock import NOW, NOW_IN_HOST_ZONE, frozen_datetime
 from tests.configdb import close_dbimport_connections, insert_row
 
 HIVE_DB = "testdb"
@@ -175,6 +176,43 @@ def test_set_stage_stores_the_description_and_time_of_the_new_stage(
     )
     assert description == "Getting source tableschema"
     assert isinstance(stage_time, datetime) and stage_time > EARLIER
+
+
+def test_set_stage_stores_the_stage_time_in_the_host_zone(
+    stage: import_stage.Stage,
+    db_connection: sa.Connection,
+    in_host_zone: None,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(import_stage, "datetime", frozen_datetime(NOW))
+    stage.get_stage()
+
+    stage.set_stage(1010)
+
+    assert _stored(db_connection, "import_stage", "stage_time") == [(NOW_IN_HOST_ZONE,)]
+
+
+@pytest.mark.xfail(
+    reason="Known bug: get_stage_start_stop marks the host's local time as "
+    "UTC (Z), so the Atlas lineage times are shifted by the host's offset",
+    raises=AssertionError,
+    strict=True,
+)
+def test_get_stage_start_stop_returns_the_stage_times_in_utc(
+    stage: import_stage.Stage,
+    db_connection: sa.Connection,
+    in_host_zone: None,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(import_stage, "datetime", frozen_datetime(NOW))
+    stage.get_stage()
+    stage.set_stage(1010)
+    stage.set_stage(1011)
+
+    assert stage.get_stage_start_stop("get_source_tableschema") == {
+        "startTime": "2026-06-01T10:00:00.000000Z",
+        "stopTime": "2026-06-01T10:00:00.000000Z",
+    }
 
 
 def test_set_stage_replaces_the_statistics_of_an_earlier_attempt(
@@ -534,6 +572,26 @@ def test_convert_stage_statistics_to_json_posts_the_extended_document(
             "duration": 20,
         }
     }
+
+
+def test_convert_stage_statistics_to_json_sends_the_times_of_the_host_zone(
+    stage: import_stage.Stage,
+    db_connection: sa.Connection,
+    in_host_zone: None,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(import_stage, "datetime", frozen_datetime(NOW))
+    stage.get_stage()
+    stage.set_stage(1010)
+    stage.set_stage(1011)
+    _enable(db_connection, "post_data_to_rest")
+    fake = _FakeSendStatistics(succeed=True)
+    monkeypatch.setattr(stage, "send_statistics", fake)
+
+    stage.convert_stage_statistics_to_json(**IMPORT_JSON)
+
+    sent = fake.sent["rest"]
+    assert (sent["start"], sent["stop"]) == ("2026-06-01 12:00:00",) * 2
 
 
 def test_convert_stage_statistics_to_json_saves_a_failed_document(

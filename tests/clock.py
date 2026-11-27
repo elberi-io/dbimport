@@ -1,0 +1,51 @@
+"""A host time zone other than UTC and a frozen clock, for tests of the
+times DBImport stores and sends.
+
+The test containers and the compose server run in UTC, where local time
+and UTC are the same; these helpers make the difference visible.
+"""
+
+import os
+import time
+from collections.abc import Iterator
+from contextlib import contextmanager
+from datetime import UTC, datetime, tzinfo
+from zoneinfo import ZoneInfo
+
+HOST_ZONE = "Europe/Stockholm"
+NOW = datetime(2026, 6, 1, 10, 0, 0, tzinfo=UTC)
+# 12:00, summer time; naive, as a DATETIME column returns it.
+NOW_IN_HOST_ZONE = NOW.astimezone(ZoneInfo(HOST_ZONE)).replace(tzinfo=None)
+
+
+@contextmanager
+def host_zone(zone: str = HOST_ZONE) -> Iterator[None]:
+    """Runs the block with zone as the local time zone of the process."""
+    before = os.environ.get("TZ")
+    os.environ["TZ"] = zone
+    time.tzset()
+    try:
+        if time.timezone == 0 and time.altzone == 0:
+            raise RuntimeError(
+                f"The time zone {zone} has no effect; is the system time zone "
+                "database (tzdata) installed?"
+            )
+        yield
+    finally:
+        if before is None:
+            del os.environ["TZ"]
+        else:
+            os.environ["TZ"] = before
+        time.tzset()
+
+
+def frozen_datetime(instant: datetime) -> type[datetime]:
+    """A datetime class whose now() returns instant, in local time when no
+    zone is given, as datetime.now() does."""
+
+    class FrozenDatetime(datetime):
+        @classmethod
+        def now(cls, tz: tzinfo | None = None) -> datetime:  # type: ignore[override]  # a plain datetime, which the database driver binds as in production
+            return datetime.fromtimestamp(instant.timestamp(), tz)
+
+    return FrozenDatetime

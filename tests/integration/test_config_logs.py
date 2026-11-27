@@ -10,6 +10,7 @@ import pytest
 import sqlalchemy as sa
 
 from dbimport.config_db import common_config
+from tests.clock import NOW, NOW_IN_HOST_ZONE, frozen_datetime
 from tests.configdb import close_dbimport_connections
 
 HIVE_DB = "testdb"
@@ -55,6 +56,21 @@ def test_log_import_failure_stores_the_failure_of_the_current_table(
         "lock removed",
     )
     assert eventtime > EARLIER
+
+
+def test_log_import_failure_stores_the_event_time_in_the_host_zone(
+    config: common_config.Config,
+    db_connection: sa.Connection,
+    in_host_zone: None,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(common_config, "datetime", frozen_datetime(NOW))
+
+    config.log_import_failure("lock removed", "Warning", import_type="full")
+
+    assert _rows(db_connection, "import_failure_log", "eventtime") == [
+        (NOW_IN_HOST_ZONE,)
+    ]
 
 
 def test_log_import_failure_of_another_table_stores_that_table(
