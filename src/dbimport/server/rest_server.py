@@ -346,7 +346,7 @@ async def update_user_details(
             status_code=status.HTTP_404_NOT_FOUND, detail="User does not exist"
         )
 
-    if username == ADMIN_USER:
+    if user["username"] == ADMIN_USER:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Deleting the defined admin user is not allowed",
@@ -358,7 +358,7 @@ async def update_user_details(
             detail="You are not allowed to delete users",
         )
 
-    db_calls.delete_user(username)
+    db_calls.delete_user(user["username"])
 
     return "User deleted"
 
