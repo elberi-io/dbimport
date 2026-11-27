@@ -17,7 +17,7 @@ import pytest
 import sqlalchemy as sa
 
 from dbimport.common import constants
-from dbimport.common.exceptions import AtlasError
+from dbimport.common.exceptions import AtlasError, SchemaError, SQLError
 from dbimport.operations.atlas_operations import AtlasOperation
 from dbimport.source_schema import schema_reader
 from tests.configdb import insert_row
@@ -302,5 +302,32 @@ def test_discovery_with_an_atlas_error_leaves_the_cache_of_that_table_unchanged(
 
     with pytest.raises(AtlasError):
         discovery.run(changed, ORDERS_KEYS)
+
+    assert _cached_columns(db_connection) == cached
+
+
+def test_discovery_with_a_failing_cache_write_keeps_the_old_cache_rows(
+    discovery: Discovery, db_connection: sa.Connection
+) -> None:
+    discovery.run(ORDERS, ORDERS_KEYS)
+    cached = (_cached_columns(db_connection), _cached_keys(db_connection))
+    changed = [_column("orders", "id"), _column("orders", "customer", "varchar(40)")]
+    duplicate_keys = ORDERS_KEYS + ORDERS_KEYS
+
+    with pytest.raises(SQLError):
+        discovery.run(changed, duplicate_keys)
+
+    assert (_cached_columns(db_connection), _cached_keys(db_connection)) == cached
+
+
+def test_discovery_of_a_table_that_cannot_be_cached_raises_and_keeps_the_cache(
+    discovery: Discovery, db_connection: sa.Connection
+) -> None:
+    discovery.run(ORDERS, ORDERS_KEYS)
+    cached = _cached_columns(db_connection)
+    not_text = [_column("orders", "id") | {"IS_NULLABLE": True}]
+
+    with pytest.raises(SchemaError):
+        discovery.run(not_text, ORDERS_KEYS)
 
     assert _cached_columns(db_connection) == cached

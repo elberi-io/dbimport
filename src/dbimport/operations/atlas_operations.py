@@ -20,6 +20,7 @@ import json
 import logging
 import re
 import sys
+from typing import TypeVar
 
 import jaydebeapi
 import jpype
@@ -27,10 +28,11 @@ import numpy as np
 import pandas as pd
 import requests
 import sqlalchemy as sa
+from pydantic import BaseModel, ValidationError
 from requests.auth import HTTPBasicAuth
 from requests_kerberos import HTTPKerberosAuth
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.orm import aliased, sessionmaker
+from sqlalchemy.orm import sessionmaker
 
 from dbimport.common import constants as constant
 from dbimport.common.exceptions import (
@@ -41,10 +43,23 @@ from dbimport.common.exceptions import (
     SchemaError,
     SQLError,
 )
-from dbimport.config_db import config_schema
 from dbimport.config_db import engine as config_engine
+from dbimport.config_db.repositories.atlas_cache import (
+    AtlasCacheRepository,
+    CachedColumn,
+    CachedKey,
+)
 from dbimport.settings import get_settings
 from dbimport.source_schema import schema_reader
+
+CacheRow = TypeVar("CacheRow", bound=BaseModel)
+
+
+def _cache_rows(frame: pd.DataFrame, model: type[CacheRow]) -> list[CacheRow]:
+    """The rows of frame as model objects; a missing value (NaN, NaT) is
+    None."""
+    rows = frame.astype(object).where(frame.notna(), None).to_dict("records")
+    return [model.model_validate(row) for row in rows]
 
 
 class AtlasOperation:
@@ -617,8 +632,6 @@ class AtlasOperation:
             inplace=True,
         )
 
-        atlas_column_cache = aliased(config_schema.AtlasColumnCache)
-        atlas_key_cache = aliased(config_schema.AtlasKeyCache)
         self.source_columns_df = pd.DataFrame()
         self.source_keys_df = pd.DataFrame()
 
@@ -702,38 +715,25 @@ class AtlasOperation:
                 "DataFrame for schema '%s' was received from the database", schema
             )
 
+            cache_location = (
+                self.jdbc_hostname,
+                self.jdbc_port,
+                self.jdbc_database,
+                schema.strip(),
+            )
             try:
                 session = self.get_dbimport_session()
-
+                cache = AtlasCacheRepository(session)
                 full_cache_source_column_df = pd.DataFrame(
-                    session.query(
-                        atlas_column_cache.hostname,
-                        atlas_column_cache.port,
-                        atlas_column_cache.database_name,
-                        atlas_column_cache.schema_name,
-                        atlas_column_cache.table_name,
-                        atlas_column_cache.table_comment,
-                        atlas_column_cache.column_name,
-                        atlas_column_cache.column_type,
-                        atlas_column_cache.column_length,
-                        atlas_column_cache.column_comment,
-                        atlas_column_cache.column_is_nullable,
-                        atlas_column_cache.table_type,
-                        atlas_column_cache.table_create_time,
-                        atlas_column_cache.default_value,
-                    )
-                    .select_from(atlas_column_cache)
-                    .filter(atlas_column_cache.hostname == self.jdbc_hostname)
-                    .filter(atlas_column_cache.port == self.jdbc_port)
-                    .filter(atlas_column_cache.database_name == self.jdbc_database)
-                    .filter(atlas_column_cache.schema_name == schema.strip())
-                    .all()
+                    [column.model_dump() for column in cache.columns(*cache_location)]
                 )
-
+                full_cache_source_key_df = pd.DataFrame(
+                    [key.model_dump() for key in cache.keys(*cache_location)]
+                )
                 session.close()
 
             except SQLAlchemyError as e:
-                log.error(str(e.__dict__["orig"]))
+                log.error("%s", getattr(e, "orig", e))
                 session.rollback()
                 self.disconnect_dbimport_db()
                 raise SQLError
@@ -746,45 +746,8 @@ class AtlasOperation:
                 )
 
             log.debug(
-                "Column cache for schema '%s' was received from the database", schema
-            )
-
-            try:
-                session = self.get_dbimport_session()
-
-                full_cache_source_key_df = pd.DataFrame(
-                    session.query(
-                        atlas_key_cache.hostname,
-                        atlas_key_cache.port,
-                        atlas_key_cache.database_name,
-                        atlas_key_cache.schema_name,
-                        atlas_key_cache.table_name,
-                        atlas_key_cache.constraint_name,
-                        atlas_key_cache.constraint_type,
-                        atlas_key_cache.column_name,
-                        atlas_key_cache.reference_schema_name,
-                        atlas_key_cache.reference_table_name,
-                        atlas_key_cache.reference_column_name,
-                        atlas_key_cache.col_key_position,
-                    )
-                    .select_from(atlas_key_cache)
-                    .filter(atlas_key_cache.hostname == self.jdbc_hostname)
-                    .filter(atlas_key_cache.port == self.jdbc_port)
-                    .filter(atlas_key_cache.database_name == self.jdbc_database)
-                    .filter(atlas_key_cache.schema_name == schema.strip())
-                    .all()
-                )
-
-                session.close()
-
-            except SQLAlchemyError as e:
-                log.error(str(e.__dict__["orig"]))
-                session.rollback()
-                self.disconnect_dbimport_db()
-                raise SQLError
-
-            log.debug(
-                "Key cache for schema '%s' was received from the database", schema
+                "Column and key cache for schema '%s' was received from the database",
+                schema,
             )
 
             # If the database is empty, we need this objects later when we search for tables to delete
@@ -1010,79 +973,27 @@ class AtlasOperation:
 
                 log.debug("Atlas call completed")
 
-                if cache_operation == "update":
-                    try:
-                        session = self.get_dbimport_session()
-
-                        (
-                            session.query(config_schema.AtlasColumnCache)
-                            .filter(
-                                config_schema.AtlasColumnCache.hostname
-                                == self.jdbc_hostname
-                            )
-                            .filter(
-                                config_schema.AtlasColumnCache.port == self.jdbc_port
-                            )
-                            .filter(
-                                config_schema.AtlasColumnCache.database_name
-                                == self.jdbc_database
-                            )
-                            .filter(
-                                config_schema.AtlasColumnCache.schema_name
-                                == schema.strip()
-                            )
-                            .filter(config_schema.AtlasColumnCache.table_name == table)
-                            .delete()
-                        )
-
-                        (
-                            session.query(config_schema.AtlasKeyCache)
-                            .filter(
-                                config_schema.AtlasKeyCache.hostname
-                                == self.jdbc_hostname
-                            )
-                            .filter(config_schema.AtlasKeyCache.port == self.jdbc_port)
-                            .filter(
-                                config_schema.AtlasKeyCache.database_name
-                                == self.jdbc_database
-                            )
-                            .filter(
-                                config_schema.AtlasKeyCache.schema_name
-                                == schema.strip()
-                            )
-                            .filter(config_schema.AtlasKeyCache.table_name == table)
-                            .delete()
-                        )
-
-                        session.commit()
-                        session.close()
-
-                    except SQLAlchemyError as e:
-                        log.error(str(e.__dict__["orig"]))
-                        session.rollback()
-                        self.disconnect_dbimport_db()
-                        raise SQLError
-
                 if cache_operation == "insert" or cache_operation == "update":
                     try:
+                        cached_columns = _cache_rows(source_column_df, CachedColumn)
+                        cached_keys = _cache_rows(source_key_df, CachedKey)
+                    except ValidationError as e:
+                        log.error("Table '%s' cannot be cached: %s", table, e)
+                        raise SchemaError from e
+
+                    try:
                         session = self.get_dbimport_session()
-                        source_column_df.to_sql(
-                            "atlas_column_cache",
-                            self.config_db_engine,
-                            index=False,
-                            if_exists="append",
-                        )
-                        source_key_df.to_sql(
-                            "atlas_key_cache",
-                            self.config_db_engine,
-                            index=False,
-                            if_exists="append",
+                        AtlasCacheRepository(session).replace_table(
+                            *cache_location,
+                            table,
+                            columns=cached_columns,
+                            keys=cached_keys,
                         )
                         session.commit()
                         session.close()
 
                     except SQLAlchemyError as e:
-                        log.error(str(e.__dict__["orig"]))
+                        log.error("%s", getattr(e, "orig", e))
                         session.rollback()
                         self.disconnect_dbimport_db()
                         raise SQLError
