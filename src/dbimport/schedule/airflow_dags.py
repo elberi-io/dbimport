@@ -35,7 +35,6 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session, aliased, scoped_session, sessionmaker
 
 from dbimport.common.exceptions import InvalidConfigurationError, SQLError
-from dbimport.common.host_time import to_host_time
 from dbimport.config_db import common_config, send_statistics
 from dbimport.config_db import engine as config_engine
 from dbimport.config_db.repositories.airflow_dags import AirflowDAGsRepository
@@ -2925,8 +2924,8 @@ class Initialize:
         json_data["type"] = "airflow_dag"
         json_data["status"] = status
         json_data["dag"] = airflow_dag
-        json_data["airflow_timestamp"] = to_host_time(datetime.now(UTC)).strftime(
-            "%Y-%m-%d %H:%M:%S.%f"
+        json_data["airflow_timestamp"] = datetime.now(UTC).isoformat(
+            timespec="microseconds"
         )
 
         if self.post_data_to_kafka == True:

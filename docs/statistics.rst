@@ -27,6 +27,8 @@ You can select what format should be sent to what endpoint individually. So it's
 
 The configuration for what service and format to use is located in the configurations_ table in the config database, and have the prefix post_.
 
+Times are in UTC, written as ISO 8601 with the offset (*2021-11-08T07:51:30+00:00*). Earlier versions wrote the local time of the DBImport host without an offset (*2021-11-08 07:51:30*).
+
 default format for imports
 
 .. code-block:: json
@@ -43,8 +45,8 @@ default format for imports
         "source_table": "table1", 
         "size": 41671452, 
         "rows": 2989699, 
-        "start": "2021-11-08 06:59:47", 
-        "stop": "2021-11-08 07:08:21", 
+        "start": "2021-11-08T06:59:47+00:00", 
+        "stop": "2021-11-08T07:08:21+00:00", 
         "duration": 514
     }
 
@@ -66,65 +68,65 @@ The extended format depends on what import or export method you are using. The i
         "size": "686", 
         "rows": 5, 
         "sessions": 1, 
-        "get_source_tableschema_start": "2021-11-08 07:51:30", 
-        "get_source_tableschema_stop": "2021-11-08 07:51:31", 
+        "get_source_tableschema_start": "2021-11-08T07:51:30+00:00", 
+        "get_source_tableschema_stop": "2021-11-08T07:51:31+00:00", 
         "get_source_tableschema_duration": 2, 
-        "clear_table_rowcount_start": "2021-11-08 07:51:31", 
-        "clear_table_rowcount_stop": "2021-11-08 07:51:31", 
+        "clear_table_rowcount_start": "2021-11-08T07:51:31+00:00", 
+        "clear_table_rowcount_stop": "2021-11-08T07:51:31+00:00", 
         "clear_table_rowcount_duration": 0, 
-        "get_source_rowcount_start": "2021-11-08 07:51:31", 
-        "get_source_rowcount_stop": "2021-11-08 07:51:31", 
+        "get_source_rowcount_start": "2021-11-08T07:51:31+00:00", 
+        "get_source_rowcount_stop": "2021-11-08T07:51:31+00:00", 
         "get_source_rowcount_duration": 0, 
-        "spark_start": "2021-11-08 07:51:31", 
-        "spark_stop": "2021-11-08 07:52:21", 
+        "spark_start": "2021-11-08T07:51:31+00:00", 
+        "spark_stop": "2021-11-08T07:52:21+00:00", 
         "spark_duration": 50, 
-        "validate_sqoop_import_start": "2021-11-08 07:52:21", 
-        "validate_sqoop_import_stop": "2021-11-08 07:52:21", 
+        "validate_sqoop_import_start": "2021-11-08T07:52:21+00:00", 
+        "validate_sqoop_import_stop": "2021-11-08T07:52:21+00:00", 
         "validate_sqoop_import_duration": 0, 
-        "atlas_schema_start": "2021-11-08 07:52:21", 
-        "atlas_schema_stop": "2021-11-08 07:52:22", 
+        "atlas_schema_start": "2021-11-08T07:52:21+00:00", 
+        "atlas_schema_stop": "2021-11-08T07:52:22+00:00", 
         "atlas_schema_duration": 1, 
-        "copy_data_start": "2021-11-08 07:52:22", 
-        "copy_data_stop": "2021-11-08 07:52:28", 
+        "copy_data_start": "2021-11-08T07:52:22+00:00", 
+        "copy_data_stop": "2021-11-08T07:52:28+00:00", 
         "copy_data_duration": 6, 
-        "copy_schema_start": "2021-11-08 07:52:28", 
-        "copy_schema_stop": "2021-11-08 07:52:29", 
+        "copy_schema_start": "2021-11-08T07:52:28+00:00", 
+        "copy_schema_stop": "2021-11-08T07:52:29+00:00", 
         "copy_schema_duration": 1, 
-        "connect_to_hive_start": "2021-11-08 07:52:29", 
-        "connect_to_hive_stop": "2021-11-08 07:52:31", 
+        "connect_to_hive_start": "2021-11-08T07:52:29+00:00", 
+        "connect_to_hive_stop": "2021-11-08T07:52:31+00:00", 
         "connect_to_hive_duration": 1, 
-        "create_import_table_start": "2021-11-08 07:52:31", 
-        "create_import_table_stop": "2021-11-08 07:52:31", 
+        "create_import_table_start": "2021-11-08T07:52:31+00:00", 
+        "create_import_table_stop": "2021-11-08T07:52:31+00:00", 
         "create_import_table_duration": 0, 
-        "get_import_rowcount_start": "2021-11-08 07:52:31", 
-        "get_import_rowcount_stop": "2021-11-08 07:52:42", 
+        "get_import_rowcount_start": "2021-11-08T07:52:31+00:00", 
+        "get_import_rowcount_stop": "2021-11-08T07:52:42+00:00", 
         "get_import_rowcount_duration": 11, 
-        "validate_import_table_start": "2021-11-08 07:52:42",
-        "validate_import_table_stop": "2021-11-08 07:52:42", 
+        "validate_import_table_start": "2021-11-08T07:52:42+00:00",
+        "validate_import_table_stop": "2021-11-08T07:52:42+00:00", 
         "validate_import_table_duration": 0, 
-        "clear_hive_locks_start": "2021-11-08 07:52:42", 
-        "clear_hive_locks_stop": "2021-11-08 07:52:42", 
+        "clear_hive_locks_start": "2021-11-08T07:52:42+00:00", 
+        "clear_hive_locks_stop": "2021-11-08T07:52:42+00:00", 
         "clear_hive_locks_duration": 0, 
-        "create_target_table_start": "2021-11-08 07:52:42", 
-        "create_target_table_stop": "2021-11-08 07:52:43", 
+        "create_target_table_start": "2021-11-08T07:52:42+00:00", 
+        "create_target_table_stop": "2021-11-08T07:52:43+00:00", 
         "create_target_table_duration": 0, 
-        "truncate_target_table_start": "2021-11-08 07:52:43", 
-        "truncate_target_table_stop": "2021-11-08 07:52:43", 
+        "truncate_target_table_start": "2021-11-08T07:52:43+00:00", 
+        "truncate_target_table_stop": "2021-11-08T07:52:43+00:00", 
         "truncate_target_table_duration": 1, 
-        "hive_import_start": "2021-11-08 07:52:43", 
-        "hive_import_stop": "2021-11-08 07:52:57", 
+        "hive_import_start": "2021-11-08T07:52:43+00:00", 
+        "hive_import_stop": "2021-11-08T07:52:57+00:00", 
         "hive_import_duration": 14, 
-        "update_statistics_start": "2021-11-08 07:52:57", 
-        "update_statistics_stop": "2021-11-08 07:53:02", 
+        "update_statistics_start": "2021-11-08T07:52:57+00:00", 
+        "update_statistics_stop": "2021-11-08T07:53:02+00:00", 
         "update_statistics_duration": 4, 
-        "get_target_rowcount_start": "2021-11-08 07:53:02", 
-        "get_target_rowcount_stop": "2021-11-08 07:53:09", 
+        "get_target_rowcount_start": "2021-11-08T07:53:02+00:00", 
+        "get_target_rowcount_stop": "2021-11-08T07:53:09+00:00", 
         "get_target_rowcount_duration": 7, 
-        "validate_target_table_start": "2021-11-08 07:53:09", 
-        "validate_target_table_stop": "2021-11-08 07:53:09", 
+        "validate_target_table_start": "2021-11-08T07:53:09+00:00", 
+        "validate_target_table_stop": "2021-11-08T07:53:09+00:00", 
         "validate_target_table_duration": 0, 
-        "start": "2021-11-08 07:51:30", 
-        "stop": "2021-11-08 07:53:09", 
+        "start": "2021-11-08T07:51:30+00:00", 
+        "stop": "2021-11-08T07:53:09+00:00", 
         "duration": 99
     }
 
@@ -140,7 +142,8 @@ Start JSON
     {
         "type": "airflow_dag", 
         "status": "started", 
-        "dag": "<name of dag>"
+        "dag": "<name of dag>",
+        "airflow_timestamp": "2026-06-01T10:00:00.000000+00:00"
     }
 
 
@@ -151,7 +154,8 @@ Stop JSON
     {
         "type": "airflow_dag", 
         "status": "finished", 
-        "dag": "<name of dag>"
+        "dag": "<name of dag>",
+        "airflow_timestamp": "2026-06-01T10:05:00.000000+00:00"
     }
 
 

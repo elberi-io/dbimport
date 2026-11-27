@@ -5,6 +5,7 @@ hand. After an intended change to DAG generation, regenerate them with
 DBIMPORT_UPDATE_EXPECTED_DAGS=1 and review the diff.
 """
 
+import json
 import os
 import re
 from collections.abc import Callable
@@ -15,6 +16,7 @@ import sqlalchemy as sa
 
 from dbimport.schedule import airflow_dags
 from dbimport.settings import get_settings
+from tests.clock import NOW, frozen_datetime
 from tests.configdb import insert_row, set_driver_path
 
 EXPECTED_DIR = Path(__file__).resolve().parents[1] / "fixtures" / "dags"
@@ -326,3 +328,43 @@ def test_generate_dag_in_aws_mwaa_mode_writes_expected_file(
     compile(generated, f"{DAG_NAME}.py", "exec")
     assert _undefined_task_references(generated) == set()
     _check_against_expected("aws_mwaa", generated)
+
+
+class _FakeSendStatistics:
+    """Records the documents instead of posting them (an external service)."""
+
+    def __init__(self) -> None:
+        self.sent: list[dict[str, object]] = []
+
+    def send_rest_data(self, data: str) -> int:
+        self.sent.append(json.loads(data))
+        return 200
+
+
+def test_send_json_writes_the_time_in_utc_with_its_offset(
+    clean_config_db: None,
+    db_connection: sa.Connection,
+    in_host_zone: None,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    db_connection.execute(
+        sa.text(
+            "UPDATE configuration SET valueInt = 1 WHERE configKey IN"
+            " ('post_airflow_dag_operations', 'post_data_to_rest')"
+        )
+    )
+    monkeypatch.setattr(airflow_dags, "datetime", frozen_datetime(NOW))
+    dags = airflow_dags.Initialize()
+    fake = _FakeSendStatistics()
+    monkeypatch.setattr(dags, "send_statistics", fake)
+
+    dags.send_json(DAG_NAME, "finished")
+
+    assert fake.sent == [
+        {
+            "type": "airflow_dag",
+            "status": "finished",
+            "dag": DAG_NAME,
+            "airflow_timestamp": "2026-06-01T10:00:00.000000+00:00",
+        }
+    ]

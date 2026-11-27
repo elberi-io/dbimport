@@ -446,11 +446,11 @@ def test_convert_stage_statistics_to_json_posts_the_extended_document(
             "type": "export",
             "status": "finished",
             **EXPORT_JSON,
-            "get_hive_tableschema_start": "2000-01-01 10:00:05",
-            "get_hive_tableschema_stop": "2000-01-01 10:00:20",
+            "get_hive_tableschema_start": "2000-01-01T10:00:05+00:00",
+            "get_hive_tableschema_stop": "2000-01-01T10:00:20+00:00",
             "get_hive_tableschema_duration": 15,
-            "start": "2000-01-01 10:00:00",
-            "stop": "2000-01-01 10:00:20",
+            "start": "2000-01-01T10:00:00+00:00",
+            "stop": "2000-01-01T10:00:20+00:00",
             "duration": 20,
         }
     }

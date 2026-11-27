@@ -558,17 +558,17 @@ def test_convert_stage_statistics_to_json_posts_the_extended_document(
             "type": "import",
             "status": "finished",
             **IMPORT_JSON,
-            "get_source_tableschema_start": "2000-01-01 10:00:05",
-            "get_source_tableschema_stop": "2000-01-01 10:00:20",
+            "get_source_tableschema_start": "2000-01-01T10:00:05+00:00",
+            "get_source_tableschema_stop": "2000-01-01T10:00:20+00:00",
             "get_source_tableschema_duration": 15,
-            "start": "2000-01-01 10:00:00",
-            "stop": "2000-01-01 10:00:20",
+            "start": "2000-01-01T10:00:00+00:00",
+            "stop": "2000-01-01T10:00:20+00:00",
             "duration": 20,
         }
     }
 
 
-def test_convert_stage_statistics_to_json_sends_the_times_of_the_host_zone(
+def test_convert_stage_statistics_to_json_sends_the_times_in_utc_with_offset(
     stage: import_stage.Stage,
     db_connection: sa.Connection,
     in_host_zone: None,
@@ -585,7 +585,7 @@ def test_convert_stage_statistics_to_json_sends_the_times_of_the_host_zone(
     stage.convert_stage_statistics_to_json(**IMPORT_JSON)
 
     sent = fake.sent["rest"]
-    assert (sent["start"], sent["stop"]) == ("2026-06-01 12:00:00",) * 2
+    assert (sent["start"], sent["stop"]) == ("2026-06-01T10:00:00+00:00",) * 2
 
 
 def test_convert_stage_statistics_to_json_saves_a_failed_document(
