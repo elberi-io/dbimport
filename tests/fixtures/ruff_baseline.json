@@ -99,13 +99,13 @@
     "F841": 1
   },
   "src/dbimport/operations/atlas_operations.py": {
-    "B904": 11,
+    "B904": 9,
     "E711": 40,
     "E712": 16,
     "E722": 4,
     "F841": 23,
-    "G002": 41,
-    "UP031": 87
+    "G002": 40,
+    "UP031": 86
   },
   "src/dbimport/operations/common_operations.py": {
     "B904": 2,
