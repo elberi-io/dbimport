@@ -32,3 +32,12 @@ def iso_time(value: datetime) -> str:
 def iso_time_text(value: datetime | None) -> str:
     """iso_time(); 'None' for None, as the statistics documents wrote it."""
     return "None" if value is None else iso_time(value)
+
+
+def from_iso_time(text: str) -> datetime:
+    """An ISO 8601 time with offset as an aware time in UTC. Raises
+    ValueError for other text, also for a time without offset."""
+    value = datetime.fromisoformat(text)
+    if value.tzinfo is None:
+        raise ValueError(f"The time has no offset: {text}")
+    return value.astimezone(UTC)

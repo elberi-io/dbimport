@@ -6,6 +6,7 @@ import ChevronDown from '../../../../assets/icons/ChevronDown'
 import ChevronUp from '../../../../assets/icons/ChevronUp'
 import { SettingType } from '../../../../utils/enums'
 import { useCustomSelection } from '../../../../utils/hooks'
+import { formatTimestamp } from '../../../../utils/functions'
 import InfoText from '../../../../components/InfoText'
 import ArrowRightIcon from '../../../../assets/icons/ArrowRightIcon'
 import { useLocation, useNavigate } from 'react-router-dom'
@@ -179,7 +180,7 @@ function Setting({
         return <span>{value === null ? 'Default from Config' : value}</span>
 
       case 'readonly':
-        return <span>{value}</span>
+        return <span>{formatTimestamp(value)}</span>
 
       case 'text':
         return <span>{getTruncatedText(value, openDropdown === label)}</span>

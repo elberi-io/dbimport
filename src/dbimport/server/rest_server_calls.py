@@ -33,7 +33,7 @@ from sqlalchemy.orm import scoped_session, sessionmaker
 
 from dbimport.common import constants as constant
 from dbimport.common.exceptions import InvalidConfigurationError, SQLError
-from dbimport.common.host_time import from_host_time, to_host_time
+from dbimport.common.iso_time import from_iso_time, iso_time
 from dbimport.config_db import common_config, config_keys
 from dbimport.config_db import engine as config_engine
 from dbimport.config_db.repositories.airflow_dags import AirflowDAGsRepository
@@ -392,19 +392,18 @@ def _time_text(value: time | None) -> str | None:
 
 
 def _datetime_text(value: datetime | None) -> str | None:
-    return None if value is None else to_host_time(value).strftime("%Y-%m-%d %H:%M:%S")
+    return None if value is None else iso_time(value)
 
 
 class _InvalidTimeError(ValueError):
-    """A time field of a request that is not written as _datetime_text
-    writes it."""
+    """A time field of a request that is not ISO 8601 with offset."""
 
 
 def _stored_time(text: str | None, field: str) -> datetime | None:
-    """A time the REST API got back as _datetime_text wrote it. Raises
+    """A time field of a request, ISO 8601 with offset. Raises
     _InvalidTimeError naming the field for other text."""
     try:
-        return None if not text else from_host_time(text)
+        return None if not text else from_iso_time(text)
     except ValueError as err:
         raise _InvalidTimeError(f"Invalid value for {field}") from err
 

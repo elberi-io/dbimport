@@ -12,6 +12,7 @@ import {
   OnChangeFn
 } from '@tanstack/react-table'
 import { Column } from '../utils/interfaces'
+import { formatTimestamp } from '../utils/functions'
 import ImportIcon from '../assets/icons/ImportIcon'
 import ExportIcon from '../assets/icons/ExportIcon'
 import EditIcon from '../assets/icons/EditIcon'
@@ -820,7 +821,7 @@ function TableList<T extends object>({
         )
       }
 
-      return String(cellValue)
+      return String(formatTimestamp(cellValue))
     },
     [
       enableSourceTableOverflow,

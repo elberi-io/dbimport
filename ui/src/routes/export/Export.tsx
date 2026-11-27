@@ -143,13 +143,12 @@ function Export() {
       return null
     }
 
-    try {
-      const isoDateString = timestamp.replace(' ', 'T') + 'Z'
-      return new Date(isoDateString)
-    } catch (error) {
-      console.error('Failed to parse timestamp:', error)
+    const date = new Date(timestamp)
+    if (Number.isNaN(date.getTime())) {
+      console.error('Failed to parse timestamp:', timestamp)
       return null
     }
+    return date
   }
 
   const getDateRange = useCallback((selection: string) => {
