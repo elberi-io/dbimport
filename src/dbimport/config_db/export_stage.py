@@ -25,7 +25,7 @@ from typing import Any, TypeVar
 
 from sqlalchemy.orm import Session
 
-from dbimport.common.host_time import host_time_text, to_host_time
+from dbimport.common.host_time import host_time_text
 from dbimport.config_db import common_config, send_statistics
 from dbimport.config_db import engine as config_engine
 from dbimport.config_db.repositories.export_stages import ExportStagesRepository
@@ -500,10 +500,10 @@ class Stage:
                     raise ValueError(
                         f"Stage {stage_time.stage} has an invalid start or stop time"
                     )
-                return_dict["startTime"] = to_host_time(stage_time.start).strftime(
+                return_dict["startTime"] = stage_time.start.strftime(
                     "%Y-%m-%dT%H:%M:%S.%fZ"
                 )
-                return_dict["stopTime"] = to_host_time(stage_time.stop).strftime(
+                return_dict["stopTime"] = stage_time.stop.strftime(
                     "%Y-%m-%dT%H:%M:%S.%fZ"
                 )
                 break

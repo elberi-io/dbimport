@@ -192,12 +192,6 @@ def test_set_stage_stores_the_stage_time_in_utc(
     assert _stored(db_connection, "import_stage", "stage_time") == [(STORED_NOW,)]
 
 
-@pytest.mark.xfail(
-    reason="Known bug: get_stage_start_stop marks the host's local time as "
-    "UTC (Z), so the Atlas lineage times are shifted by the host's offset",
-    raises=AssertionError,
-    strict=True,
-)
 def test_get_stage_start_stop_returns_the_stage_times_in_utc(
     stage: import_stage.Stage,
     db_connection: sa.Connection,
