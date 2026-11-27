@@ -490,9 +490,9 @@ sqlalchemy==2.0.27 ; sys_platform == 'linux' \
     # via
     #   alembic
     #   dbimport
-starlette==0.36.3 ; sys_platform == 'linux' \
-    --hash=sha256:13d429aa93a61dc40bf503e8c801db1f1bca3dc706b10ef2434a36123568f044 \
-    --hash=sha256:90a671733cfb35771d8cc605e0b679d23b992f8dcfad48cc60b38cb29aeb7080
+starlette==1.3.1 ; sys_platform == 'linux' \
+    --hash=sha256:05d0213193f2fbaae60e2ecb593b4add4262ad4e46536b54abe36f11a71724e0 \
+    --hash=sha256:c7372aae11c3c3f26a42df7bd626cec2f47d03483d261d369516a615a53714c6
     # via
     #   dbimport
     #   fastapi
