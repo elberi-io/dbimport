@@ -3,7 +3,7 @@ import_config. Calls to the source database are replaced: it is an external
 system."""
 
 from collections.abc import Iterator
-from datetime import datetime
+from datetime import UTC, datetime
 
 import pandas as pd
 import pytest
@@ -151,7 +151,9 @@ def test_get_import_config_reads_every_column_of_the_table_and_connection(
     assert {name: getattr(config, name) for name in EXPECTED_ATTRIBUTES} == (
         EXPECTED_ATTRIBUTES
     )
-    assert _common(config).operation_timestamp == datetime(2026, 1, 15, 9, 0)
+    assert _common(config).operation_timestamp == datetime(
+        2026, 1, 15, 9, 0, tzinfo=UTC
+    )
 
 
 EXPECTED_ATTRIBUTES = {
@@ -214,19 +216,20 @@ EXPECTED_ATTRIBUTES = {
 }
 
 
-def test_update_last_update_from_source_stores_the_start_time_and_reads_it_back(
-    table: sa.Connection,
+def test_update_last_update_from_source_stores_the_start_time_in_utc_and_reads_it_back(
+    table: sa.Connection, in_host_zone: None
 ) -> None:
     config = _config(table)
 
     config.update_last_update_from_source()
 
     (stored,) = _row(table, "last_update_from_source")
-    assert stored == _common(config).operation_timestamp
-    # The DATETIME column has no fractional seconds; MariaDB truncates them.
     assert config.start_date is not None
-    start = datetime.strptime(config.start_date, "%Y-%m-%d %H:%M:%S.%f")
-    assert stored == start.replace(microsecond=0)
+    # The DATETIME column holds UTC without fractional seconds; MariaDB
+    # truncates them.
+    start = config.start_date.astimezone(UTC).replace(tzinfo=None, microsecond=0)
+    assert stored == start
+    assert _common(config).operation_timestamp == start.replace(tzinfo=UTC)
 
 
 def test_get_import_config_reads_the_last_execution_time_in_utc(

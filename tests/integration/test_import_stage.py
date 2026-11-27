@@ -7,7 +7,7 @@ import pytest
 import sqlalchemy as sa
 
 from dbimport.config_db import import_config, import_stage
-from tests.clock import NOW, NOW_IN_HOST_ZONE, frozen_datetime
+from tests.clock import NOW, STORED_NOW, frozen_datetime
 from tests.configdb import close_dbimport_connections, insert_row
 
 HIVE_DB = "testdb"
@@ -178,7 +178,7 @@ def test_set_stage_stores_the_description_and_time_of_the_new_stage(
     assert isinstance(stage_time, datetime) and stage_time > EARLIER
 
 
-def test_set_stage_stores_the_stage_time_in_the_host_zone(
+def test_set_stage_stores_the_stage_time_in_utc(
     stage: import_stage.Stage,
     db_connection: sa.Connection,
     in_host_zone: None,
@@ -189,7 +189,7 @@ def test_set_stage_stores_the_stage_time_in_the_host_zone(
 
     stage.set_stage(1010)
 
-    assert _stored(db_connection, "import_stage", "stage_time") == [(NOW_IN_HOST_ZONE,)]
+    assert _stored(db_connection, "import_stage", "stage_time") == [(STORED_NOW,)]
 
 
 @pytest.mark.xfail(

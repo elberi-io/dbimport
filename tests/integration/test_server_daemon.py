@@ -3,7 +3,7 @@ its distcp threads and stores their results. No distcp thread runs; the
 request queue stands in for them."""
 
 from collections.abc import Iterator
-from datetime import datetime
+from datetime import UTC, datetime
 from queue import Queue
 from typing import Any
 
@@ -15,8 +15,8 @@ from dbimport.config_db import engine as config_engine
 from dbimport.server import daemon
 from tests.configdb import insert_row
 
-OLD = datetime(2026, 1, 2, 3, 4, 5)
-NOW = datetime(2026, 3, 4, 5, 6, 7)
+OLD = datetime(2026, 1, 2, 3, 4, 5, tzinfo=UTC)
+NOW = datetime(2026, 3, 4, 5, 6, 7, tzinfo=UTC)
 
 
 def _add_copy(
@@ -77,7 +77,13 @@ def test_start_pending_copies_hands_new_and_long_failed_copies_to_distcp(
     _add_copy(db_connection, 1, 0)
     _add_copy(db_connection, 2, 1)
     _add_copy(db_connection, 3, 2, failures=2)
-    _add_copy(db_connection, 4, 2, updated=datetime(2026, 3, 4, 5, 5, 30), failures=1)
+    _add_copy(
+        db_connection,
+        4,
+        2,
+        updated=datetime(2026, 3, 4, 5, 5, 30, tzinfo=UTC),
+        failures=1,
+    )
     _add_copy(db_connection, 5, 3)
     requests: Queue[dict[str, Any]] = Queue()
 

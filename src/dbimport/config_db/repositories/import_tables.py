@@ -389,7 +389,7 @@ class ImportTablesRepository:
         )
 
     def set_last_update_from_source(
-        self, hive_db: str, hive_table: str, updated: str
+        self, hive_db: str, hive_table: str, updated: datetime
     ) -> None:
         self._session.execute(
             update(ImportTables)

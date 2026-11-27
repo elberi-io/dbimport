@@ -18,6 +18,7 @@
 table as the last read of the source schema found them."""
 
 from collections.abc import Mapping, Sequence
+from datetime import datetime
 from typing import Any, TypeVar
 
 from pydantic import BaseModel, ConfigDict
@@ -76,7 +77,7 @@ class SourceColumn(BaseModel):
     source_column_type: str
     source_database_type: str | None
     sqoop_column_type: str | None
-    last_update_from_source: str | None
+    last_update_from_source: datetime | None
     comment: str | None
 
 

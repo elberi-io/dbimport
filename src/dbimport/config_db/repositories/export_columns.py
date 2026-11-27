@@ -18,6 +18,7 @@
 the Hive schema found them."""
 
 from collections.abc import Mapping
+from datetime import datetime
 from typing import Any
 
 from pydantic import BaseModel, ConfigDict
@@ -36,7 +37,7 @@ class HiveColumn(BaseModel):
     column_order: int
     hive_db: str | None
     hive_table: str | None
-    last_update_from_hive: str | None
+    last_update_from_hive: datetime | None
     comment: str | None
 
 

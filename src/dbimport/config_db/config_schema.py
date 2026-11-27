@@ -1,4 +1,4 @@
-from datetime import datetime, time
+from datetime import UTC, datetime, time
 
 from sqlalchemy import (
     Column,
@@ -18,7 +18,39 @@ from sqlalchemy import (
     text,
 )
 from sqlalchemy.dialects.mysql import BIGINT, TINYINT
+from sqlalchemy.engine import Dialect
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
+from sqlalchemy.types import TypeDecorator
+
+
+class UTCDateTime(TypeDecorator[datetime]):
+    """A DATETIME column that holds UTC (ADR-0007). Takes aware datetimes
+    and returns aware datetimes in UTC; a naive datetime raises ValueError.
+    A zero date is returned as the driver gives it (text) and written back
+    as NULL."""
+
+    impl = DateTime
+    cache_ok = True
+
+    def process_bind_param(
+        self, value: datetime | str | None, dialect: Dialect
+    ) -> datetime | None:
+        if value is None:
+            return None
+        if isinstance(value, str) and value.startswith("0000-00-00"):
+            return None
+        if isinstance(value, str):
+            raise ValueError(f"Text is no time to store: {value}")
+        if value.tzinfo is None:
+            raise ValueError(f"A time without a time zone cannot be stored: {value}")
+        return value.astimezone(UTC).replace(tzinfo=None)
+
+    def process_result_value(
+        self, value: datetime | None, dialect: Dialect
+    ) -> datetime | None:
+        if not isinstance(value, datetime):
+            return value
+        return value.replace(tzinfo=UTC)
 
 
 class Base(DeclarativeBase):
@@ -143,7 +175,7 @@ class CopyAsyncStatus(Base):
         comment="Status of the copy operation",
     )
     last_status_update: Mapped[datetime] = mapped_column(
-        DateTime,
+        UTCDateTime,
         nullable=False,
         server_default=text("CURRENT_TIMESTAMP"),
         comment="Last time the server changed progress on this copy",
@@ -619,7 +651,7 @@ class AutoDiscoveredTable(Base):
         String(256), primary_key=True, nullable=False
     )
     discovery_time: Mapped[datetime] = mapped_column(
-        DateTime, nullable=False, server_default=text("CURRENT_TIMESTAMP")
+        UTCDateTime, nullable=False, server_default=text("CURRENT_TIMESTAMP")
     )
     migrate_to_import_tables: Mapped[int] = mapped_column(
         TINYINT(4), nullable=False, server_default=text("'0'")
@@ -645,7 +677,7 @@ class Configuration(Base):
         "valueStr", String(256), comment="String based Value"
     )
     value_date: Mapped[datetime | None] = mapped_column(
-        "valueDate", DateTime, comment="Date based Value"
+        "valueDate", UTCDateTime, comment="Date based Value"
     )
     description: Mapped[str | None] = mapped_column(
         Text, comment="Description on the setting"
@@ -698,7 +730,7 @@ class ExportRetriesLog(Base):
         comment="Table on the target system",
     )
     retry_time: Mapped[datetime] = mapped_column(
-        DateTime,
+        UTCDateTime,
         primary_key=True,
         nullable=False,
         comment="Time when the retry was started",
@@ -746,7 +778,7 @@ class ExportStage(Base):
         Text, nullable=False, comment="Description of the stage"
     )
     stage_time: Mapped[datetime | None] = mapped_column(
-        DateTime, comment="The date and time when the import entered the stage"
+        UTCDateTime, comment="The date and time when the import entered the stage"
     )
 
 
@@ -781,10 +813,10 @@ class ExportStageStatistic(Base):
         comment="Current stage of the export. This is the internal stage number",
     )
     start: Mapped[datetime] = mapped_column(
-        DateTime, nullable=False, comment="Time when stage started"
+        UTCDateTime, nullable=False, comment="Time when stage started"
     )
     stop: Mapped[datetime] = mapped_column(
-        DateTime, nullable=False, comment="Time when stage was completed"
+        UTCDateTime, nullable=False, comment="Time when stage was completed"
     )
     duration: Mapped[int] = mapped_column(
         Integer, nullable=False, comment="Duration of stage"
@@ -845,51 +877,53 @@ class ExportStatistic(Base):
         Integer, comment="Total duration in seconds"
     )
     start: Mapped[datetime | None] = mapped_column(
-        DateTime, comment="Timestamp of start"
+        UTCDateTime, comment="Timestamp of start"
     )
-    stop: Mapped[datetime | None] = mapped_column(DateTime, comment="Timestamp of stop")
+    stop: Mapped[datetime | None] = mapped_column(
+        UTCDateTime, comment="Timestamp of stop"
+    )
     get_hive_tableschema_duration: Mapped[int | None] = mapped_column(Integer)
-    get_hive_tableschema_start: Mapped[datetime | None] = mapped_column(DateTime)
-    get_hive_tableschema_stop: Mapped[datetime | None] = mapped_column(DateTime)
+    get_hive_tableschema_start: Mapped[datetime | None] = mapped_column(UTCDateTime)
+    get_hive_tableschema_stop: Mapped[datetime | None] = mapped_column(UTCDateTime)
     clear_table_rowcount_duration: Mapped[int | None] = mapped_column(Integer)
-    clear_table_rowcount_start: Mapped[datetime | None] = mapped_column(DateTime)
-    clear_table_rowcount_stop: Mapped[datetime | None] = mapped_column(DateTime)
+    clear_table_rowcount_start: Mapped[datetime | None] = mapped_column(UTCDateTime)
+    clear_table_rowcount_stop: Mapped[datetime | None] = mapped_column(UTCDateTime)
     create_temp_table_duration: Mapped[int | None] = mapped_column(Integer)
-    create_temp_table_start: Mapped[datetime | None] = mapped_column(DateTime)
-    create_temp_table_stop: Mapped[datetime | None] = mapped_column(DateTime)
+    create_temp_table_start: Mapped[datetime | None] = mapped_column(UTCDateTime)
+    create_temp_table_stop: Mapped[datetime | None] = mapped_column(UTCDateTime)
     truncate_temp_table_duration: Mapped[int | None] = mapped_column(Integer)
-    truncate_temp_table_start: Mapped[datetime | None] = mapped_column(DateTime)
-    truncate_temp_table_stop: Mapped[datetime | None] = mapped_column(DateTime)
-    fetch_maxvalue_start: Mapped[datetime | None] = mapped_column(DateTime)
-    fetch_maxvalue_stop: Mapped[datetime | None] = mapped_column(DateTime)
+    truncate_temp_table_start: Mapped[datetime | None] = mapped_column(UTCDateTime)
+    truncate_temp_table_stop: Mapped[datetime | None] = mapped_column(UTCDateTime)
+    fetch_maxvalue_start: Mapped[datetime | None] = mapped_column(UTCDateTime)
+    fetch_maxvalue_stop: Mapped[datetime | None] = mapped_column(UTCDateTime)
     fetch_maxvalue_duration: Mapped[int | None] = mapped_column(Integer)
     insert_into_temp_table_duration: Mapped[int | None] = mapped_column(Integer)
-    insert_into_temp_table_start: Mapped[datetime | None] = mapped_column(DateTime)
-    insert_into_temp_table_stop: Mapped[datetime | None] = mapped_column(DateTime)
+    insert_into_temp_table_start: Mapped[datetime | None] = mapped_column(UTCDateTime)
+    insert_into_temp_table_stop: Mapped[datetime | None] = mapped_column(UTCDateTime)
     create_target_table_duration: Mapped[int | None] = mapped_column(Integer)
-    create_target_table_start: Mapped[datetime | None] = mapped_column(DateTime)
-    create_target_table_stop: Mapped[datetime | None] = mapped_column(DateTime)
+    create_target_table_start: Mapped[datetime | None] = mapped_column(UTCDateTime)
+    create_target_table_stop: Mapped[datetime | None] = mapped_column(UTCDateTime)
     truncate_target_table_duration: Mapped[int | None] = mapped_column(Integer)
-    truncate_target_table_start: Mapped[datetime | None] = mapped_column(DateTime)
-    truncate_target_table_stop: Mapped[datetime | None] = mapped_column(DateTime)
+    truncate_target_table_start: Mapped[datetime | None] = mapped_column(UTCDateTime)
+    truncate_target_table_stop: Mapped[datetime | None] = mapped_column(UTCDateTime)
     sqoop_duration: Mapped[int | None] = mapped_column(Integer)
-    sqoop_start: Mapped[datetime | None] = mapped_column(DateTime)
-    sqoop_stop: Mapped[datetime | None] = mapped_column(DateTime)
+    sqoop_start: Mapped[datetime | None] = mapped_column(UTCDateTime)
+    sqoop_stop: Mapped[datetime | None] = mapped_column(UTCDateTime)
     validate_duration: Mapped[int | None] = mapped_column(Integer)
-    validate_start: Mapped[datetime | None] = mapped_column(DateTime)
-    validate_stop: Mapped[datetime | None] = mapped_column(DateTime)
+    validate_start: Mapped[datetime | None] = mapped_column(UTCDateTime)
+    validate_stop: Mapped[datetime | None] = mapped_column(UTCDateTime)
     update_statistics_duration: Mapped[int | None] = mapped_column(Integer)
-    update_statistics_start: Mapped[datetime | None] = mapped_column(DateTime)
-    update_statistics_stop: Mapped[datetime | None] = mapped_column(DateTime)
+    update_statistics_start: Mapped[datetime | None] = mapped_column(UTCDateTime)
+    update_statistics_stop: Mapped[datetime | None] = mapped_column(UTCDateTime)
     update_target_table_duration: Mapped[int | None] = mapped_column(Integer)
-    update_target_table_start: Mapped[datetime | None] = mapped_column(DateTime)
-    update_target_table_stop: Mapped[datetime | None] = mapped_column(DateTime)
+    update_target_table_start: Mapped[datetime | None] = mapped_column(UTCDateTime)
+    update_target_table_stop: Mapped[datetime | None] = mapped_column(UTCDateTime)
     spark_duration: Mapped[int | None] = mapped_column(Integer)
-    spark_start: Mapped[datetime | None] = mapped_column(DateTime)
-    spark_stop: Mapped[datetime | None] = mapped_column(DateTime)
+    spark_start: Mapped[datetime | None] = mapped_column(UTCDateTime)
+    spark_stop: Mapped[datetime | None] = mapped_column(UTCDateTime)
     atlas_schema_duration: Mapped[int | None] = mapped_column(Integer)
-    atlas_schema_start: Mapped[datetime | None] = mapped_column(DateTime)
-    atlas_schema_stop: Mapped[datetime | None] = mapped_column(DateTime)
+    atlas_schema_start: Mapped[datetime | None] = mapped_column(UTCDateTime)
+    atlas_schema_stop: Mapped[datetime | None] = mapped_column(UTCDateTime)
 
 
 class ExportStatisticsLast(Base):
@@ -941,51 +975,53 @@ class ExportStatisticsLast(Base):
         Integer, comment="Total duration in seconds"
     )
     start: Mapped[datetime | None] = mapped_column(
-        DateTime, comment="Timestamp of start"
+        UTCDateTime, comment="Timestamp of start"
     )
-    stop: Mapped[datetime | None] = mapped_column(DateTime, comment="Timestamp of stop")
+    stop: Mapped[datetime | None] = mapped_column(
+        UTCDateTime, comment="Timestamp of stop"
+    )
     get_hive_tableschema_duration: Mapped[int | None] = mapped_column(Integer)
-    get_hive_tableschema_start: Mapped[datetime | None] = mapped_column(DateTime)
-    get_hive_tableschema_stop: Mapped[datetime | None] = mapped_column(DateTime)
+    get_hive_tableschema_start: Mapped[datetime | None] = mapped_column(UTCDateTime)
+    get_hive_tableschema_stop: Mapped[datetime | None] = mapped_column(UTCDateTime)
     clear_table_rowcount_duration: Mapped[int | None] = mapped_column(Integer)
-    clear_table_rowcount_start: Mapped[datetime | None] = mapped_column(DateTime)
-    clear_table_rowcount_stop: Mapped[datetime | None] = mapped_column(DateTime)
+    clear_table_rowcount_start: Mapped[datetime | None] = mapped_column(UTCDateTime)
+    clear_table_rowcount_stop: Mapped[datetime | None] = mapped_column(UTCDateTime)
     create_temp_table_duration: Mapped[int | None] = mapped_column(Integer)
-    create_temp_table_start: Mapped[datetime | None] = mapped_column(DateTime)
-    create_temp_table_stop: Mapped[datetime | None] = mapped_column(DateTime)
+    create_temp_table_start: Mapped[datetime | None] = mapped_column(UTCDateTime)
+    create_temp_table_stop: Mapped[datetime | None] = mapped_column(UTCDateTime)
     truncate_temp_table_duration: Mapped[int | None] = mapped_column(Integer)
-    truncate_temp_table_start: Mapped[datetime | None] = mapped_column(DateTime)
-    truncate_temp_table_stop: Mapped[datetime | None] = mapped_column(DateTime)
-    fetch_maxvalue_start: Mapped[datetime | None] = mapped_column(DateTime)
-    fetch_maxvalue_stop: Mapped[datetime | None] = mapped_column(DateTime)
+    truncate_temp_table_start: Mapped[datetime | None] = mapped_column(UTCDateTime)
+    truncate_temp_table_stop: Mapped[datetime | None] = mapped_column(UTCDateTime)
+    fetch_maxvalue_start: Mapped[datetime | None] = mapped_column(UTCDateTime)
+    fetch_maxvalue_stop: Mapped[datetime | None] = mapped_column(UTCDateTime)
     fetch_maxvalue_duration: Mapped[int | None] = mapped_column(Integer)
     insert_into_temp_table_duration: Mapped[int | None] = mapped_column(Integer)
-    insert_into_temp_table_start: Mapped[datetime | None] = mapped_column(DateTime)
-    insert_into_temp_table_stop: Mapped[datetime | None] = mapped_column(DateTime)
+    insert_into_temp_table_start: Mapped[datetime | None] = mapped_column(UTCDateTime)
+    insert_into_temp_table_stop: Mapped[datetime | None] = mapped_column(UTCDateTime)
     create_target_table_duration: Mapped[int | None] = mapped_column(Integer)
-    create_target_table_start: Mapped[datetime | None] = mapped_column(DateTime)
-    create_target_table_stop: Mapped[datetime | None] = mapped_column(DateTime)
+    create_target_table_start: Mapped[datetime | None] = mapped_column(UTCDateTime)
+    create_target_table_stop: Mapped[datetime | None] = mapped_column(UTCDateTime)
     truncate_target_table_duration: Mapped[int | None] = mapped_column(Integer)
-    truncate_target_table_start: Mapped[datetime | None] = mapped_column(DateTime)
-    truncate_target_table_stop: Mapped[datetime | None] = mapped_column(DateTime)
+    truncate_target_table_start: Mapped[datetime | None] = mapped_column(UTCDateTime)
+    truncate_target_table_stop: Mapped[datetime | None] = mapped_column(UTCDateTime)
     sqoop_duration: Mapped[int | None] = mapped_column(Integer)
-    sqoop_start: Mapped[datetime | None] = mapped_column(DateTime)
-    sqoop_stop: Mapped[datetime | None] = mapped_column(DateTime)
+    sqoop_start: Mapped[datetime | None] = mapped_column(UTCDateTime)
+    sqoop_stop: Mapped[datetime | None] = mapped_column(UTCDateTime)
     validate_duration: Mapped[int | None] = mapped_column(Integer)
-    validate_start: Mapped[datetime | None] = mapped_column(DateTime)
-    validate_stop: Mapped[datetime | None] = mapped_column(DateTime)
+    validate_start: Mapped[datetime | None] = mapped_column(UTCDateTime)
+    validate_stop: Mapped[datetime | None] = mapped_column(UTCDateTime)
     update_statistics_duration: Mapped[int | None] = mapped_column(Integer)
-    update_statistics_start: Mapped[datetime | None] = mapped_column(DateTime)
-    update_statistics_stop: Mapped[datetime | None] = mapped_column(DateTime)
+    update_statistics_start: Mapped[datetime | None] = mapped_column(UTCDateTime)
+    update_statistics_stop: Mapped[datetime | None] = mapped_column(UTCDateTime)
     update_target_table_duration: Mapped[int | None] = mapped_column(Integer)
-    update_target_table_start: Mapped[datetime | None] = mapped_column(DateTime)
-    update_target_table_stop: Mapped[datetime | None] = mapped_column(DateTime)
+    update_target_table_start: Mapped[datetime | None] = mapped_column(UTCDateTime)
+    update_target_table_stop: Mapped[datetime | None] = mapped_column(UTCDateTime)
     spark_duration: Mapped[int | None] = mapped_column(Integer)
-    spark_start: Mapped[datetime | None] = mapped_column(DateTime)
-    spark_stop: Mapped[datetime | None] = mapped_column(DateTime)
+    spark_start: Mapped[datetime | None] = mapped_column(UTCDateTime)
+    spark_stop: Mapped[datetime | None] = mapped_column(UTCDateTime)
     atlas_schema_duration: Mapped[int | None] = mapped_column(Integer)
-    atlas_schema_start: Mapped[datetime | None] = mapped_column(DateTime)
-    atlas_schema_stop: Mapped[datetime | None] = mapped_column(DateTime)
+    atlas_schema_start: Mapped[datetime | None] = mapped_column(UTCDateTime)
+    atlas_schema_stop: Mapped[datetime | None] = mapped_column(UTCDateTime)
 
 
 class ExportTables(Base):
@@ -1038,7 +1074,7 @@ class ExportTables(Base):
         comment="What tool should be used for exporting data",
     )
     last_update_from_hive: Mapped[datetime | None] = mapped_column(
-        DateTime, comment="Timestamp of last schema update from Hive"
+        UTCDateTime, comment="Timestamp of last schema update from Hive"
     )
     sql_where_addition: Mapped[str | None] = mapped_column(
         String(1024),
@@ -1200,7 +1236,7 @@ class ImportFailureLog(Base):
         String(256), primary_key=True, nullable=False, comment="Hive Table"
     )
     eventtime: Mapped[datetime] = mapped_column(
-        DateTime,
+        UTCDateTime,
         primary_key=True,
         nullable=False,
         comment="Time when error/warning occurred",
@@ -1240,7 +1276,7 @@ class ImportRetriesLog(Base):
         String(256), primary_key=True, nullable=False, comment="Hive Table"
     )
     retry_time: Mapped[datetime] = mapped_column(
-        DateTime,
+        UTCDateTime,
         primary_key=True,
         nullable=False,
         comment="Time when the retry was started",
@@ -1277,7 +1313,7 @@ class ImportStage(Base):
         Text, nullable=False, comment="Description of the stage"
     )
     stage_time: Mapped[datetime | None] = mapped_column(
-        DateTime, comment="The date and time when the import entered the stage"
+        UTCDateTime, comment="The date and time when the import entered the stage"
     )
 
 
@@ -1300,10 +1336,10 @@ class ImportStageStatistic(Base):
         comment="Current stage of the import. This is an internal stage and has nothing to do with stage1 and stage2 in Airflow DAG's",
     )
     start: Mapped[datetime] = mapped_column(
-        DateTime, nullable=False, comment="Time when stage started"
+        UTCDateTime, nullable=False, comment="Time when stage started"
     )
     stop: Mapped[datetime] = mapped_column(
-        DateTime, nullable=False, comment="Time when stage was completed"
+        UTCDateTime, nullable=False, comment="Time when stage was completed"
     )
     duration: Mapped[int] = mapped_column(
         Integer, nullable=False, comment="Duration of stage"
@@ -1368,81 +1404,83 @@ class ImportStatistic(Base):
         Integer, comment="Total duration in seconds"
     )
     start: Mapped[datetime | None] = mapped_column(
-        DateTime, comment="Timestamp of start"
+        UTCDateTime, comment="Timestamp of start"
     )
-    stop: Mapped[datetime | None] = mapped_column(DateTime, comment="Timestamp of stop")
+    stop: Mapped[datetime | None] = mapped_column(
+        UTCDateTime, comment="Timestamp of stop"
+    )
     sqoop_duration: Mapped[int | None] = mapped_column(Integer)
-    sqoop_start: Mapped[datetime | None] = mapped_column(DateTime)
-    sqoop_stop: Mapped[datetime | None] = mapped_column(DateTime)
+    sqoop_start: Mapped[datetime | None] = mapped_column(UTCDateTime)
+    sqoop_stop: Mapped[datetime | None] = mapped_column(UTCDateTime)
     clear_hive_locks_duration: Mapped[int | None] = mapped_column(Integer)
-    clear_hive_locks_start: Mapped[datetime | None] = mapped_column(DateTime)
-    clear_hive_locks_stop: Mapped[datetime | None] = mapped_column(DateTime)
+    clear_hive_locks_start: Mapped[datetime | None] = mapped_column(UTCDateTime)
+    clear_hive_locks_stop: Mapped[datetime | None] = mapped_column(UTCDateTime)
     clear_table_rowcount_duration: Mapped[int | None] = mapped_column(Integer)
-    clear_table_rowcount_start: Mapped[datetime | None] = mapped_column(DateTime)
-    clear_table_rowcount_stop: Mapped[datetime | None] = mapped_column(DateTime)
+    clear_table_rowcount_start: Mapped[datetime | None] = mapped_column(UTCDateTime)
+    clear_table_rowcount_stop: Mapped[datetime | None] = mapped_column(UTCDateTime)
     connect_to_hive_duration: Mapped[int | None] = mapped_column(Integer)
-    connect_to_hive_start: Mapped[datetime | None] = mapped_column(DateTime)
-    connect_to_hive_stop: Mapped[datetime | None] = mapped_column(DateTime)
+    connect_to_hive_start: Mapped[datetime | None] = mapped_column(UTCDateTime)
+    connect_to_hive_stop: Mapped[datetime | None] = mapped_column(UTCDateTime)
     create_import_table_duration: Mapped[int | None] = mapped_column(Integer)
-    create_import_table_start: Mapped[datetime | None] = mapped_column(DateTime)
-    create_import_table_stop: Mapped[datetime | None] = mapped_column(DateTime)
+    create_import_table_start: Mapped[datetime | None] = mapped_column(UTCDateTime)
+    create_import_table_stop: Mapped[datetime | None] = mapped_column(UTCDateTime)
     create_target_table_duration: Mapped[int | None] = mapped_column(Integer)
-    create_target_table_start: Mapped[datetime | None] = mapped_column(DateTime)
-    create_target_table_stop: Mapped[datetime | None] = mapped_column(DateTime)
+    create_target_table_start: Mapped[datetime | None] = mapped_column(UTCDateTime)
+    create_target_table_stop: Mapped[datetime | None] = mapped_column(UTCDateTime)
     get_import_rowcount_duration: Mapped[int | None] = mapped_column(Integer)
-    get_import_rowcount_start: Mapped[datetime | None] = mapped_column(DateTime)
-    get_import_rowcount_stop: Mapped[datetime | None] = mapped_column(DateTime)
+    get_import_rowcount_start: Mapped[datetime | None] = mapped_column(UTCDateTime)
+    get_import_rowcount_stop: Mapped[datetime | None] = mapped_column(UTCDateTime)
     get_source_rowcount_duration: Mapped[int | None] = mapped_column(Integer)
-    get_source_rowcount_start: Mapped[datetime | None] = mapped_column(DateTime)
-    get_source_rowcount_stop: Mapped[datetime | None] = mapped_column(DateTime)
+    get_source_rowcount_start: Mapped[datetime | None] = mapped_column(UTCDateTime)
+    get_source_rowcount_stop: Mapped[datetime | None] = mapped_column(UTCDateTime)
     get_source_tableschema_duration: Mapped[int | None] = mapped_column(Integer)
-    get_source_tableschema_start: Mapped[datetime | None] = mapped_column(DateTime)
-    get_source_tableschema_stop: Mapped[datetime | None] = mapped_column(DateTime)
+    get_source_tableschema_start: Mapped[datetime | None] = mapped_column(UTCDateTime)
+    get_source_tableschema_stop: Mapped[datetime | None] = mapped_column(UTCDateTime)
     get_target_rowcount_duration: Mapped[int | None] = mapped_column(Integer)
-    get_target_rowcount_start: Mapped[datetime | None] = mapped_column(DateTime)
-    get_target_rowcount_stop: Mapped[datetime | None] = mapped_column(DateTime)
+    get_target_rowcount_start: Mapped[datetime | None] = mapped_column(UTCDateTime)
+    get_target_rowcount_stop: Mapped[datetime | None] = mapped_column(UTCDateTime)
     hive_import_duration: Mapped[int | None] = mapped_column(Integer)
-    hive_import_start: Mapped[datetime | None] = mapped_column(DateTime)
-    hive_import_stop: Mapped[datetime | None] = mapped_column(DateTime)
+    hive_import_start: Mapped[datetime | None] = mapped_column(UTCDateTime)
+    hive_import_stop: Mapped[datetime | None] = mapped_column(UTCDateTime)
     truncate_target_table_duration: Mapped[int | None] = mapped_column(Integer)
-    truncate_target_table_start: Mapped[datetime | None] = mapped_column(DateTime)
-    truncate_target_table_stop: Mapped[datetime | None] = mapped_column(DateTime)
+    truncate_target_table_start: Mapped[datetime | None] = mapped_column(UTCDateTime)
+    truncate_target_table_stop: Mapped[datetime | None] = mapped_column(UTCDateTime)
     merge_table_duration: Mapped[int | None] = mapped_column(Integer)
-    merge_table_start: Mapped[datetime | None] = mapped_column(DateTime)
-    merge_table_stop: Mapped[datetime | None] = mapped_column(DateTime)
+    merge_table_start: Mapped[datetime | None] = mapped_column(UTCDateTime)
+    merge_table_stop: Mapped[datetime | None] = mapped_column(UTCDateTime)
     create_history_table_duration: Mapped[int | None] = mapped_column(Integer)
-    create_history_table_start: Mapped[datetime | None] = mapped_column(DateTime)
-    create_history_table_stop: Mapped[datetime | None] = mapped_column(DateTime)
+    create_history_table_start: Mapped[datetime | None] = mapped_column(UTCDateTime)
+    create_history_table_stop: Mapped[datetime | None] = mapped_column(UTCDateTime)
     create_delete_table_duration: Mapped[int | None] = mapped_column(Integer)
-    create_delete_table_start: Mapped[datetime | None] = mapped_column(DateTime)
-    create_delete_table_stop: Mapped[datetime | None] = mapped_column(DateTime)
+    create_delete_table_start: Mapped[datetime | None] = mapped_column(UTCDateTime)
+    create_delete_table_stop: Mapped[datetime | None] = mapped_column(UTCDateTime)
     update_statistics_duration: Mapped[int | None] = mapped_column(Integer)
-    update_statistics_start: Mapped[datetime | None] = mapped_column(DateTime)
-    update_statistics_stop: Mapped[datetime | None] = mapped_column(DateTime)
+    update_statistics_start: Mapped[datetime | None] = mapped_column(UTCDateTime)
+    update_statistics_stop: Mapped[datetime | None] = mapped_column(UTCDateTime)
     validate_import_table_duration: Mapped[int | None] = mapped_column(Integer)
-    validate_import_table_start: Mapped[datetime | None] = mapped_column(DateTime)
-    validate_import_table_stop: Mapped[datetime | None] = mapped_column(DateTime)
+    validate_import_table_start: Mapped[datetime | None] = mapped_column(UTCDateTime)
+    validate_import_table_stop: Mapped[datetime | None] = mapped_column(UTCDateTime)
     validate_sqoop_import_duration: Mapped[int | None] = mapped_column(Integer)
-    validate_sqoop_import_start: Mapped[datetime | None] = mapped_column(DateTime)
-    validate_sqoop_import_stop: Mapped[datetime | None] = mapped_column(DateTime)
+    validate_sqoop_import_start: Mapped[datetime | None] = mapped_column(UTCDateTime)
+    validate_sqoop_import_stop: Mapped[datetime | None] = mapped_column(UTCDateTime)
     validate_target_table_duration: Mapped[int | None] = mapped_column(Integer)
-    validate_target_table_start: Mapped[datetime | None] = mapped_column(DateTime)
-    validate_target_table_stop: Mapped[datetime | None] = mapped_column(DateTime)
+    validate_target_table_start: Mapped[datetime | None] = mapped_column(UTCDateTime)
+    validate_target_table_stop: Mapped[datetime | None] = mapped_column(UTCDateTime)
     copy_data_duration: Mapped[int | None] = mapped_column(Integer)
-    copy_data_start: Mapped[datetime | None] = mapped_column(DateTime)
-    copy_data_stop: Mapped[datetime | None] = mapped_column(DateTime)
+    copy_data_start: Mapped[datetime | None] = mapped_column(UTCDateTime)
+    copy_data_stop: Mapped[datetime | None] = mapped_column(UTCDateTime)
     copy_schema_duration: Mapped[int | None] = mapped_column(Integer)
-    copy_schema_start: Mapped[datetime | None] = mapped_column(DateTime)
-    copy_schema_stop: Mapped[datetime | None] = mapped_column(DateTime)
+    copy_schema_start: Mapped[datetime | None] = mapped_column(UTCDateTime)
+    copy_schema_stop: Mapped[datetime | None] = mapped_column(UTCDateTime)
     spark_duration: Mapped[int | None] = mapped_column(Integer)
-    spark_start: Mapped[datetime | None] = mapped_column(DateTime)
-    spark_stop: Mapped[datetime | None] = mapped_column(DateTime)
+    spark_start: Mapped[datetime | None] = mapped_column(UTCDateTime)
+    spark_stop: Mapped[datetime | None] = mapped_column(UTCDateTime)
     spark_etl_duration: Mapped[int | None] = mapped_column(Integer)
-    spark_etl_start: Mapped[datetime | None] = mapped_column(DateTime)
-    spark_etl_stop: Mapped[datetime | None] = mapped_column(DateTime)
+    spark_etl_start: Mapped[datetime | None] = mapped_column(UTCDateTime)
+    spark_etl_stop: Mapped[datetime | None] = mapped_column(UTCDateTime)
     atlas_schema_duration: Mapped[int | None] = mapped_column(Integer)
-    atlas_schema_start: Mapped[datetime | None] = mapped_column(DateTime)
-    atlas_schema_stop: Mapped[datetime | None] = mapped_column(DateTime)
+    atlas_schema_start: Mapped[datetime | None] = mapped_column(UTCDateTime)
+    atlas_schema_stop: Mapped[datetime | None] = mapped_column(UTCDateTime)
 
 
 class ImportStatisticsLast(Base):
@@ -1498,81 +1536,83 @@ class ImportStatisticsLast(Base):
         Integer, comment="Total duration in seconds"
     )
     start: Mapped[datetime | None] = mapped_column(
-        DateTime, comment="Timestamp of start"
+        UTCDateTime, comment="Timestamp of start"
     )
-    stop: Mapped[datetime | None] = mapped_column(DateTime, comment="Timestamp of stop")
+    stop: Mapped[datetime | None] = mapped_column(
+        UTCDateTime, comment="Timestamp of stop"
+    )
     sqoop_duration: Mapped[int | None] = mapped_column(Integer)
-    sqoop_start: Mapped[datetime | None] = mapped_column(DateTime)
-    sqoop_stop: Mapped[datetime | None] = mapped_column(DateTime)
+    sqoop_start: Mapped[datetime | None] = mapped_column(UTCDateTime)
+    sqoop_stop: Mapped[datetime | None] = mapped_column(UTCDateTime)
     clear_hive_locks_duration: Mapped[int | None] = mapped_column(Integer)
-    clear_hive_locks_start: Mapped[datetime | None] = mapped_column(DateTime)
-    clear_hive_locks_stop: Mapped[datetime | None] = mapped_column(DateTime)
+    clear_hive_locks_start: Mapped[datetime | None] = mapped_column(UTCDateTime)
+    clear_hive_locks_stop: Mapped[datetime | None] = mapped_column(UTCDateTime)
     clear_table_rowcount_duration: Mapped[int | None] = mapped_column(Integer)
-    clear_table_rowcount_start: Mapped[datetime | None] = mapped_column(DateTime)
-    clear_table_rowcount_stop: Mapped[datetime | None] = mapped_column(DateTime)
+    clear_table_rowcount_start: Mapped[datetime | None] = mapped_column(UTCDateTime)
+    clear_table_rowcount_stop: Mapped[datetime | None] = mapped_column(UTCDateTime)
     connect_to_hive_duration: Mapped[int | None] = mapped_column(Integer)
-    connect_to_hive_start: Mapped[datetime | None] = mapped_column(DateTime)
-    connect_to_hive_stop: Mapped[datetime | None] = mapped_column(DateTime)
+    connect_to_hive_start: Mapped[datetime | None] = mapped_column(UTCDateTime)
+    connect_to_hive_stop: Mapped[datetime | None] = mapped_column(UTCDateTime)
     create_import_table_duration: Mapped[int | None] = mapped_column(Integer)
-    create_import_table_start: Mapped[datetime | None] = mapped_column(DateTime)
-    create_import_table_stop: Mapped[datetime | None] = mapped_column(DateTime)
+    create_import_table_start: Mapped[datetime | None] = mapped_column(UTCDateTime)
+    create_import_table_stop: Mapped[datetime | None] = mapped_column(UTCDateTime)
     create_target_table_duration: Mapped[int | None] = mapped_column(Integer)
-    create_target_table_start: Mapped[datetime | None] = mapped_column(DateTime)
-    create_target_table_stop: Mapped[datetime | None] = mapped_column(DateTime)
+    create_target_table_start: Mapped[datetime | None] = mapped_column(UTCDateTime)
+    create_target_table_stop: Mapped[datetime | None] = mapped_column(UTCDateTime)
     get_import_rowcount_duration: Mapped[int | None] = mapped_column(Integer)
-    get_import_rowcount_start: Mapped[datetime | None] = mapped_column(DateTime)
-    get_import_rowcount_stop: Mapped[datetime | None] = mapped_column(DateTime)
+    get_import_rowcount_start: Mapped[datetime | None] = mapped_column(UTCDateTime)
+    get_import_rowcount_stop: Mapped[datetime | None] = mapped_column(UTCDateTime)
     get_source_rowcount_duration: Mapped[int | None] = mapped_column(Integer)
-    get_source_rowcount_start: Mapped[datetime | None] = mapped_column(DateTime)
-    get_source_rowcount_stop: Mapped[datetime | None] = mapped_column(DateTime)
+    get_source_rowcount_start: Mapped[datetime | None] = mapped_column(UTCDateTime)
+    get_source_rowcount_stop: Mapped[datetime | None] = mapped_column(UTCDateTime)
     get_source_tableschema_duration: Mapped[int | None] = mapped_column(Integer)
-    get_source_tableschema_start: Mapped[datetime | None] = mapped_column(DateTime)
-    get_source_tableschema_stop: Mapped[datetime | None] = mapped_column(DateTime)
+    get_source_tableschema_start: Mapped[datetime | None] = mapped_column(UTCDateTime)
+    get_source_tableschema_stop: Mapped[datetime | None] = mapped_column(UTCDateTime)
     get_target_rowcount_duration: Mapped[int | None] = mapped_column(Integer)
-    get_target_rowcount_start: Mapped[datetime | None] = mapped_column(DateTime)
-    get_target_rowcount_stop: Mapped[datetime | None] = mapped_column(DateTime)
+    get_target_rowcount_start: Mapped[datetime | None] = mapped_column(UTCDateTime)
+    get_target_rowcount_stop: Mapped[datetime | None] = mapped_column(UTCDateTime)
     hive_import_duration: Mapped[int | None] = mapped_column(Integer)
-    hive_import_start: Mapped[datetime | None] = mapped_column(DateTime)
-    hive_import_stop: Mapped[datetime | None] = mapped_column(DateTime)
+    hive_import_start: Mapped[datetime | None] = mapped_column(UTCDateTime)
+    hive_import_stop: Mapped[datetime | None] = mapped_column(UTCDateTime)
     truncate_target_table_duration: Mapped[int | None] = mapped_column(Integer)
-    truncate_target_table_start: Mapped[datetime | None] = mapped_column(DateTime)
-    truncate_target_table_stop: Mapped[datetime | None] = mapped_column(DateTime)
+    truncate_target_table_start: Mapped[datetime | None] = mapped_column(UTCDateTime)
+    truncate_target_table_stop: Mapped[datetime | None] = mapped_column(UTCDateTime)
     merge_table_duration: Mapped[int | None] = mapped_column(Integer)
-    merge_table_start: Mapped[datetime | None] = mapped_column(DateTime)
-    merge_table_stop: Mapped[datetime | None] = mapped_column(DateTime)
+    merge_table_start: Mapped[datetime | None] = mapped_column(UTCDateTime)
+    merge_table_stop: Mapped[datetime | None] = mapped_column(UTCDateTime)
     create_history_table_duration: Mapped[int | None] = mapped_column(Integer)
-    create_history_table_start: Mapped[datetime | None] = mapped_column(DateTime)
-    create_history_table_stop: Mapped[datetime | None] = mapped_column(DateTime)
+    create_history_table_start: Mapped[datetime | None] = mapped_column(UTCDateTime)
+    create_history_table_stop: Mapped[datetime | None] = mapped_column(UTCDateTime)
     create_delete_table_duration: Mapped[int | None] = mapped_column(Integer)
-    create_delete_table_start: Mapped[datetime | None] = mapped_column(DateTime)
-    create_delete_table_stop: Mapped[datetime | None] = mapped_column(DateTime)
+    create_delete_table_start: Mapped[datetime | None] = mapped_column(UTCDateTime)
+    create_delete_table_stop: Mapped[datetime | None] = mapped_column(UTCDateTime)
     update_statistics_duration: Mapped[int | None] = mapped_column(Integer)
-    update_statistics_start: Mapped[datetime | None] = mapped_column(DateTime)
-    update_statistics_stop: Mapped[datetime | None] = mapped_column(DateTime)
+    update_statistics_start: Mapped[datetime | None] = mapped_column(UTCDateTime)
+    update_statistics_stop: Mapped[datetime | None] = mapped_column(UTCDateTime)
     validate_import_table_duration: Mapped[int | None] = mapped_column(Integer)
-    validate_import_table_start: Mapped[datetime | None] = mapped_column(DateTime)
-    validate_import_table_stop: Mapped[datetime | None] = mapped_column(DateTime)
+    validate_import_table_start: Mapped[datetime | None] = mapped_column(UTCDateTime)
+    validate_import_table_stop: Mapped[datetime | None] = mapped_column(UTCDateTime)
     validate_sqoop_import_duration: Mapped[int | None] = mapped_column(Integer)
-    validate_sqoop_import_start: Mapped[datetime | None] = mapped_column(DateTime)
-    validate_sqoop_import_stop: Mapped[datetime | None] = mapped_column(DateTime)
+    validate_sqoop_import_start: Mapped[datetime | None] = mapped_column(UTCDateTime)
+    validate_sqoop_import_stop: Mapped[datetime | None] = mapped_column(UTCDateTime)
     validate_target_table_duration: Mapped[int | None] = mapped_column(Integer)
-    validate_target_table_start: Mapped[datetime | None] = mapped_column(DateTime)
-    validate_target_table_stop: Mapped[datetime | None] = mapped_column(DateTime)
+    validate_target_table_start: Mapped[datetime | None] = mapped_column(UTCDateTime)
+    validate_target_table_stop: Mapped[datetime | None] = mapped_column(UTCDateTime)
     copy_data_duration: Mapped[int | None] = mapped_column(Integer)
-    copy_data_start: Mapped[datetime | None] = mapped_column(DateTime)
-    copy_data_stop: Mapped[datetime | None] = mapped_column(DateTime)
+    copy_data_start: Mapped[datetime | None] = mapped_column(UTCDateTime)
+    copy_data_stop: Mapped[datetime | None] = mapped_column(UTCDateTime)
     copy_schema_duration: Mapped[int | None] = mapped_column(Integer)
-    copy_schema_start: Mapped[datetime | None] = mapped_column(DateTime)
-    copy_schema_stop: Mapped[datetime | None] = mapped_column(DateTime)
+    copy_schema_start: Mapped[datetime | None] = mapped_column(UTCDateTime)
+    copy_schema_stop: Mapped[datetime | None] = mapped_column(UTCDateTime)
     spark_duration: Mapped[int | None] = mapped_column(Integer)
-    spark_start: Mapped[datetime | None] = mapped_column(DateTime)
-    spark_stop: Mapped[datetime | None] = mapped_column(DateTime)
+    spark_start: Mapped[datetime | None] = mapped_column(UTCDateTime)
+    spark_stop: Mapped[datetime | None] = mapped_column(UTCDateTime)
     spark_etl_duration: Mapped[int | None] = mapped_column(Integer)
-    spark_etl_start: Mapped[datetime | None] = mapped_column(DateTime)
-    spark_etl_stop: Mapped[datetime | None] = mapped_column(DateTime)
+    spark_etl_start: Mapped[datetime | None] = mapped_column(UTCDateTime)
+    spark_etl_stop: Mapped[datetime | None] = mapped_column(UTCDateTime)
     atlas_schema_duration: Mapped[int | None] = mapped_column(Integer)
-    atlas_schema_start: Mapped[datetime | None] = mapped_column(DateTime)
-    atlas_schema_stop: Mapped[datetime | None] = mapped_column(DateTime)
+    atlas_schema_start: Mapped[datetime | None] = mapped_column(UTCDateTime)
+    atlas_schema_stop: Mapped[datetime | None] = mapped_column(UTCDateTime)
 
 
 class ImportTables(Base):
@@ -1650,7 +1690,7 @@ class ImportTables(Base):
         comment="What engine will be used to process etl stage",
     )
     last_update_from_source: Mapped[datetime | None] = mapped_column(
-        DateTime, comment="Timestamp of last schema update from source"
+        UTCDateTime, comment="Timestamp of last schema update from source"
     )
     sqoop_sql_where_addition: Mapped[str | None] = mapped_column(
         String(1024),
@@ -1844,7 +1884,7 @@ class ImportTables(Base):
         Text, comment="Free text field to write a note about the import. "
     )
     copy_finished: Mapped[datetime | None] = mapped_column(
-        DateTime,
+        UTCDateTime,
         comment="Time when last copy from Master DBImport instance was completed. Don't change manually",
     )
     copy_slave: Mapped[int] = mapped_column(
@@ -2009,7 +2049,7 @@ class JDBCConnections(Base):
     atlas_exclude_filter: Mapped[str | None] = mapped_column(
         String(256), comment="Exclude filter for Atlas discovery"
     )
-    atlas_last_discovery: Mapped[datetime | None] = mapped_column(DateTime)
+    atlas_last_discovery: Mapped[datetime | None] = mapped_column(UTCDateTime)
     environment: Mapped[str | None] = mapped_column(
         String(32),
         ForeignKey(
@@ -2075,7 +2115,9 @@ t_jdbc_table_change_history = Table(
     Column("schema_name", String(256), nullable=False, comment="Schema Name"),
     Column("table_name", String(256), nullable=False, comment="Table Name"),
     Column("column_name", String(256), nullable=False, comment="Column Name"),
-    Column("eventtime", DateTime, nullable=False, comment="Time and date of the event"),
+    Column(
+        "eventtime", UTCDateTime, nullable=False, comment="Time and date of the event"
+    ),
     Column("event", String(128), nullable=False, comment="Event name."),
     Column("previous_value", String(256), comment="Value before the change"),
     Column("value", String(256), comment="Value after the change"),
@@ -2111,7 +2153,7 @@ class JSONToSend(Base):
         comment="The type of JSON data that is saved in the 'jsondata' column",
     )
     create_time: Mapped[datetime] = mapped_column(
-        DateTime,
+        UTCDateTime,
         nullable=False,
         comment="Time when the JSON data was created",
         server_default=text("CURRENT_TIMESTAMP"),
@@ -2135,7 +2177,9 @@ t_table_change_history = Table(
     Column("hive_db", String(256), nullable=False, comment="Hive Database"),
     Column("hive_table", String(256), nullable=False, comment="Hive Table"),
     Column("column_name", String(256), nullable=False, comment="Column Name"),
-    Column("eventtime", DateTime, nullable=False, comment="Time and date of the event"),
+    Column(
+        "eventtime", UTCDateTime, nullable=False, comment="Time and date of the event"
+    ),
     Column("event", String(128), nullable=False, comment="Event name."),
     Column("previous_value", String(256), comment="Value before the change"),
     Column("value", String(256), comment="Value after the change"),
@@ -2291,12 +2335,12 @@ class ExportColumns(Base):
         String(256), comment="Override the column type in the target system"
     )
     last_update_from_hive: Mapped[datetime] = mapped_column(
-        DateTime,
+        UTCDateTime,
         nullable=False,
         comment="Timestamp of last schema update from Hive. Don't change this manually",
     )
     last_export_time: Mapped[datetime | None] = mapped_column(
-        DateTime, comment="Timestamp of last export. Don't change this manually"
+        UTCDateTime, comment="Timestamp of last export. Don't change this manually"
     )
     selection: Mapped[str | None] = mapped_column(String(256), comment="<NOT USED>")
     include_in_export: Mapped[int] = mapped_column(
@@ -2396,7 +2440,9 @@ class ImportColumns(Base):
         comment="Number starting from 1 listing the order of the column in the PK. Don't change this manually",
     )
     last_update_from_source: Mapped[datetime] = mapped_column(
-        DateTime, nullable=False, comment="Timestamp of last schema update from source"
+        UTCDateTime,
+        nullable=False,
+        comment="Timestamp of last schema update from source",
     )
     comment: Mapped[str | None] = mapped_column(
         Text, comment="The column comment from the source system"
@@ -2683,7 +2729,7 @@ t_yarn_statistics = Table(
     ),
     Column(
         "operation_timestamp",
-        DateTime,
+        UTCDateTime,
         nullable=False,
         comment="The timestamp for the complete operation. Can be used for grouping together all applications for a specific operation, i.e a complete import/export",
     ),
@@ -2706,13 +2752,13 @@ t_yarn_statistics = Table(
     ),
     Column(
         "application_start",
-        DateTime,
+        UTCDateTime,
         nullable=False,
         comment="Timestamp when the operation started",
     ),
     Column(
         "application_stop",
-        DateTime,
+        UTCDateTime,
         comment="Timestamp when the operation was completed",
     ),
     Column(

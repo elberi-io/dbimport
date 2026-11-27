@@ -1,6 +1,6 @@
 import json
 import logging
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from typing import Annotated
 
 import bcrypt
@@ -224,7 +224,7 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
 
 
 def create_access_token(data):
-    expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    expire = datetime.now(UTC) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     data.update({"exp": expire})
 
     encoded_jwt = jwt.encode(data, SECRET_KEY, algorithm=ALGORITHM)

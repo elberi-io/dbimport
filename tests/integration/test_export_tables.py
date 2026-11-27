@@ -3,7 +3,7 @@ export_config. Calls to the target database are replaced: it is an
 external system."""
 
 from collections.abc import Iterator
-from datetime import datetime
+from datetime import UTC, datetime
 
 import pytest
 import sqlalchemy as sa
@@ -152,7 +152,7 @@ def test_get_export_config_reads_every_column_of_the_table_and_connection(
         "[1]",
         "[2]",
         True,
-        datetime(2026, 1, 15, 9, 0),
+        datetime(2026, 1, 15, 9, 0, tzinfo=UTC),
         "sales",
         constants.EXPORT_PHASE_INCR,
         True,
@@ -201,13 +201,13 @@ def test_update_last_update_from_hive_stores_the_start_time_and_reads_it_back(
     target: sa.Connection,
 ) -> None:
     config = _config(target)
-    config.start_date = "2026-03-01 08:30:00.123456"
+    config.start_date = datetime(2026, 3, 1, 8, 30, 0, 123456, tzinfo=UTC)
 
     config.update_last_update_from_hive()
 
     stored = datetime(2026, 3, 1, 8, 30)
     assert _row(target, "last_update_from_hive") == (stored,)
-    assert _common(config).operation_timestamp == stored
+    assert _common(config).operation_timestamp == stored.replace(tzinfo=UTC)
 
 
 def test_clear_validation_data_empties_the_validation_columns(

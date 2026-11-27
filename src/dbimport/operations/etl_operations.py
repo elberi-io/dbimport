@@ -17,7 +17,7 @@
 
 import logging
 import sys
-from datetime import datetime
+from datetime import UTC, datetime
 
 from dbimport.common import constants as constant
 from dbimport.common.singleton import Singleton
@@ -101,7 +101,7 @@ class Operation(metaclass=Singleton):
         source_is_incremental=False,
         source_is_import_table=False,
         soft_delete=False,
-        merge_time=datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f"),  # noqa: B008  # every caller passes it; a fallback would hide a missing value
+        merge_time=datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S.%f"),  # noqa: B008  # every caller passes it; a fallback would hide a missing value
         datalake_source=None,
         pk_columns=None,
         hive_merge_java_heap=None,

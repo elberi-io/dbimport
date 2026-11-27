@@ -7,7 +7,7 @@ import pytest
 import sqlalchemy as sa
 
 from dbimport.config_db import export_stage
-from tests.clock import NOW, NOW_IN_HOST_ZONE, frozen_datetime
+from tests.clock import NOW, STORED_NOW, frozen_datetime
 from tests.configdb import close_dbimport_connections, insert_row
 
 DBALIAS = "test_mysql"
@@ -91,7 +91,7 @@ def test_set_stage_stores_the_stage_its_description_and_time(
     assert stage_time > EARLIER
 
 
-def test_set_stage_stores_the_stage_time_in_the_host_zone(
+def test_set_stage_stores_the_stage_time_in_utc(
     stage: export_stage.Stage,
     db_connection: sa.Connection,
     in_host_zone: None,
@@ -102,7 +102,7 @@ def test_set_stage_stores_the_stage_time_in_the_host_zone(
 
     stage.set_stage(100)
 
-    assert _stored(db_connection, "export_stage", "stage_time") == [(NOW_IN_HOST_ZONE,)]
+    assert _stored(db_connection, "export_stage", "stage_time") == [(STORED_NOW,)]
 
 
 def test_set_stage_lower_than_current_stage_is_ignored(

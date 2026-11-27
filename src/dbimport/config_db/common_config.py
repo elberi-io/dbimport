@@ -24,7 +24,7 @@ import subprocess
 import sys
 from collections.abc import Iterator
 from contextlib import contextmanager
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 
 import jaydebeapi
@@ -83,7 +83,7 @@ class Config(metaclass=Singleton):
             self.hive_table = hive_table
 
         self.tempdir = None
-        self.start_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
+        self.start_date = datetime.now(UTC)
         self.operation_type: str | None = None
         self.db_alias: str | None = None
         self.target_schema: str | None = None
@@ -1865,7 +1865,7 @@ class Config(metaclass=Singleton):
                 severity=severity,
                 import_type=import_type,
                 error_text=error_text,
-                eventtime=datetime.now(),
+                eventtime=datetime.now(UTC),
             )
 
     def log_hive_column_add(
@@ -1896,7 +1896,7 @@ class Config(metaclass=Singleton):
                 previous_value=None,
                 value=column_type,
                 description=description,
-                eventtime=datetime.now(),
+                eventtime=datetime.now(UTC),
             )
 
     def log_hive_column_type_change(
@@ -1933,7 +1933,7 @@ class Config(metaclass=Singleton):
                 previous_value=previous_column_type,
                 value=column_type,
                 description=description,
-                eventtime=datetime.now(),
+                eventtime=datetime.now(UTC),
             )
 
     def log_hive_column_rename(
@@ -1965,7 +1965,7 @@ class Config(metaclass=Singleton):
                 previous_value=previous_column_name,
                 value=column_name,
                 description=description,
-                eventtime=datetime.now(),
+                eventtime=datetime.now(UTC),
             )
 
     def log_jdbc_column_add(
@@ -1995,7 +1995,7 @@ class Config(metaclass=Singleton):
                 previous_value=None,
                 value=column_type,
                 description=description,
-                eventtime=datetime.now(),
+                eventtime=datetime.now(UTC),
             )
 
     def log_jdbc_column_type_change(
@@ -2031,7 +2031,7 @@ class Config(metaclass=Singleton):
                 previous_value=previous_column_type,
                 value=column_type,
                 description=description,
-                eventtime=datetime.now(),
+                eventtime=datetime.now(UTC),
             )
 
     def log_jdbc_column_rename(
@@ -2062,7 +2062,7 @@ class Config(metaclass=Singleton):
                 previous_value=previous_column_name,
                 value=column_name,
                 description=description,
-                eventtime=datetime.now(),
+                eventtime=datetime.now(UTC),
             )
 
     def get_quote_around_column(self) -> str:
@@ -2346,7 +2346,7 @@ class Config(metaclass=Singleton):
         """insert or update data to yarn_statistics"""
         logging.debug("Executing common_config.update_yarn_statistics()")
 
-        start_stop_date = datetime.now().replace(microsecond=0)
+        start_stop_date = datetime.now(UTC).replace(microsecond=0)
         if yarn_containers_total == None:
             # If it's None, it means that it was called when query was started. At this stage, we need to insert the data
             if self.operation_type in ("import", "export"):

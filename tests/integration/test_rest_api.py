@@ -11,6 +11,7 @@ import sqlalchemy as sa
 from fastapi.testclient import TestClient
 
 from dbimport.common import constants
+from tests.clock import STORED_NOW
 from tests.configdb import insert_row
 
 USERNAME = "tester"
@@ -1373,6 +1374,29 @@ def _add_column(
     )
 
 
+def test_import_table_time_reads_and_writes_as_host_time(
+    client: TestClient,
+    auth_headers: dict[str, str],
+    db_connection: sa.Connection,
+    in_host_zone: None,
+) -> None:
+    _add_table(db_connection, last_update_from_source=STORED_NOW)
+    details = client.get(
+        "/import/table/salesdb/orders?includeColumns=false", headers=auth_headers
+    ).json()
+
+    response = client.post(
+        "/import/table/salesdb/orders", json=details, headers=auth_headers
+    )
+
+    assert details["lastUpdateFromSource"] == "2026-06-01 12:00:00"
+    assert response.status_code == 200
+    stored = db_connection.execute(
+        sa.text("SELECT last_update_from_source FROM import_tables")
+    ).scalar_one()
+    assert stored == STORED_NOW
+
+
 def test_get_import_table_details_includes_the_columns_in_order(
     client: TestClient, auth_headers: dict[str, str], db_connection: sa.Connection
 ) -> None:
@@ -1867,6 +1891,31 @@ def test_get_import_table_details_of_unknown_table_returns_404_and_ends_its_tran
         )
     )
     assert response.status_code == 404
+
+
+@pytest.mark.parametrize(
+    "body",
+    [
+        WRITE_MINIMAL | {"lastUpdateFromSource": "yesterday"},
+        WRITE_MINIMAL
+        | {"columns": [_write_column("id", 1, lastUpdateFromSource="yesterday")]},
+    ],
+)
+def test_update_import_table_with_an_invalid_time_returns_400_and_saves_nothing(
+    client: TestClient,
+    auth_headers: dict[str, str],
+    db_connection: sa.Connection,
+    body: dict[str, object],
+) -> None:
+    response = client.post(
+        "/import/table/salesdb/orders", json=body, headers=auth_headers
+    )
+
+    assert (response.status_code, response.json()) == (
+        400,
+        "Invalid value for lastUpdateFromSource",
+    )
+    assert _tables(db_connection) == []
 
 
 def test_update_import_table_with_an_invalid_column_saves_nothing(

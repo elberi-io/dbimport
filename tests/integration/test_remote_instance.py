@@ -4,7 +4,7 @@ second database of the compose server, with the schema the ORM creates,
 stands in for the configuration database of the remote instance."""
 
 from collections.abc import Iterator
-from datetime import datetime
+from datetime import UTC, datetime
 
 import pytest
 import sqlalchemy as sa
@@ -20,7 +20,7 @@ from dbimport.settings import get_settings
 from tests.configdb import ORM_DATABASE, insert_row
 
 INSTANCE = "remote"
-NOW = datetime(2026, 3, 4, 5, 6, 7)
+NOW = datetime(2026, 3, 4, 5, 6, 7, tzinfo=UTC)
 
 
 @pytest.fixture(autouse=True)
@@ -255,7 +255,7 @@ def test_finish_copy_records_the_time_on_the_remote_table(
     with Session(remote.engine) as remote_session:
         daemon.finish_copy(remote_session, "db", "orders", NOW)
 
-    assert _copy_finished(remote) == [NOW]
+    assert _copy_finished(remote) == [NOW.replace(tzinfo=None)]
 
 
 def test_finish_copy_of_a_table_missing_on_the_remote_raises(

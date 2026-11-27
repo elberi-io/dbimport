@@ -3,14 +3,14 @@ and JDBC tables, statistics documents that could not be sent, and Yarn
 applications."""
 
 from collections.abc import Iterator
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 
 import pytest
 import sqlalchemy as sa
 
 from dbimport.config_db import common_config
-from tests.clock import NOW, NOW_IN_HOST_ZONE, frozen_datetime
+from tests.clock import NOW, STORED_NOW, frozen_datetime
 from tests.configdb import close_dbimport_connections
 
 HIVE_DB = "testdb"
@@ -58,7 +58,7 @@ def test_log_import_failure_stores_the_failure_of_the_current_table(
     assert eventtime > EARLIER
 
 
-def test_log_import_failure_stores_the_event_time_in_the_host_zone(
+def test_log_import_failure_stores_the_event_time_in_utc(
     config: common_config.Config,
     db_connection: sa.Connection,
     in_host_zone: None,
@@ -68,9 +68,7 @@ def test_log_import_failure_stores_the_event_time_in_the_host_zone(
 
     config.log_import_failure("lock removed", "Warning", import_type="full")
 
-    assert _rows(db_connection, "import_failure_log", "eventtime") == [
-        (NOW_IN_HOST_ZONE,)
-    ]
+    assert _rows(db_connection, "import_failure_log", "eventtime") == [(STORED_NOW,)]
 
 
 def test_log_import_failure_of_another_table_stores_that_table(
@@ -309,7 +307,7 @@ def test_update_yarn_statistics_of_an_import_stores_the_application(
     config: common_config.Config, db_connection: sa.Connection
 ) -> None:
     config.operation_type = "import"
-    config.operation_timestamp = EARLIER
+    config.operation_timestamp = EARLIER.replace(tzinfo=UTC)
 
     config.update_yarn_statistics("application_1_0001", "spark")
 
@@ -339,7 +337,7 @@ def test_update_yarn_statistics_of_an_export_stores_the_application(
     config: common_config.Config, db_connection: sa.Connection
 ) -> None:
     config.operation_type = "export"
-    config.operation_timestamp = EARLIER
+    config.operation_timestamp = EARLIER.replace(tzinfo=UTC)
     config.db_alias = "test_mysql"
     config.target_schema = "dbo"
     config.target_table = "orders"
@@ -368,7 +366,7 @@ def test_update_yarn_statistics_with_containers_finishes_the_application(
     config: common_config.Config, db_connection: sa.Connection
 ) -> None:
     config.operation_type = "import"
-    config.operation_timestamp = EARLIER
+    config.operation_timestamp = EARLIER.replace(tzinfo=UTC)
     config.update_yarn_statistics("application_1_0001", "spark")
 
     config.update_yarn_statistics(
@@ -396,7 +394,7 @@ def test_update_yarn_statistics_with_containers_before_the_start_does_nothing(
     config: common_config.Config, db_connection: sa.Connection
 ) -> None:
     config.operation_type = "import"
-    config.operation_timestamp = EARLIER
+    config.operation_timestamp = EARLIER.replace(tzinfo=UTC)
 
     config.update_yarn_statistics(
         "application_1_0001", "spark", yarn_containers_total=5

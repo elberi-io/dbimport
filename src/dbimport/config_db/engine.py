@@ -28,6 +28,10 @@ from dbimport.common.exceptions import InvalidConfigurationError
 from dbimport.settings import Settings, get_settings
 
 TIMEOUT_SECONDS = 10
+CONNECT_ARGS = {
+    "connect_timeout": TIMEOUT_SECONDS,
+    "init_command": "SET time_zone = '+00:00'",
+}
 
 
 @dataclass(frozen=True)
@@ -113,13 +117,15 @@ def create(echo: bool = False) -> Engine:
 
 def create_for(found: Credentials, echo: bool = False) -> Engine:
     """A new engine, with its own connection pool, of the configuration
-    database the credentials name."""
+    database the credentials name. Its connections use UTC as the session
+    time zone, so the server's CURRENT_TIMESTAMP defaults are UTC too
+    (ADR-0007)."""
     return create_engine(
         url(found),
         echo=echo,
         hide_parameters=True,
         pool_pre_ping=True,
-        connect_args={"connect_timeout": TIMEOUT_SECONDS},
+        connect_args=CONNECT_ARGS,
     )
 
 

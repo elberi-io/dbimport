@@ -21,7 +21,7 @@ import math
 import re
 from collections.abc import Callable, Iterator, Sequence
 from contextlib import contextmanager
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any, TypeVar
 
 import numpy as np
@@ -63,7 +63,7 @@ class Config(metaclass=Singleton):
         logging.debug("Executing import_config.__init__()")
         self.hive_db = hive_db
         self.hive_table = hive_table
-        self.start_date: str | None = None
+        self.start_date: datetime | None = None
         self.common_config = None
 
         self.connection_alias: str | None = None
@@ -598,8 +598,8 @@ class Config(metaclass=Singleton):
 
         # If the self.sqoop_last_execution contains an unix time stamp, we convert it so it's usuable by sqoop
         if self.sqoop_last_execution != None:
-            self.sqoop_last_execution_timestamp = datetime.utcfromtimestamp(
-                self.sqoop_last_execution
+            self.sqoop_last_execution_timestamp = datetime.fromtimestamp(
+                self.sqoop_last_execution, UTC
             ).strftime("%Y-%m-%d %H:%M:%S.000")
 
         if self.validate_diff_allowed == -1:
@@ -3020,8 +3020,8 @@ class Config(metaclass=Singleton):
 
         self.sqoop_start_uts = sqoop_start_uts
         try:
-            self.sqoop_last_execution_timestamp = datetime.utcfromtimestamp(
-                sqoop_start_uts
+            self.sqoop_last_execution_timestamp = datetime.fromtimestamp(
+                sqoop_start_uts, UTC
             ).strftime("%Y-%m-%d %H:%M:%S.000")
         except TypeError:
             self.sqoop_last_execution_timestamp = None

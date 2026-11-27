@@ -33,6 +33,7 @@ from sqlalchemy.orm import scoped_session, sessionmaker
 
 from dbimport.common import constants as constant
 from dbimport.common.exceptions import InvalidConfigurationError, SQLError
+from dbimport.common.host_time import from_host_time, to_host_time
 from dbimport.config_db import common_config, config_keys
 from dbimport.config_db import engine as config_engine
 from dbimport.config_db.repositories.airflow_dags import AirflowDAGsRepository
@@ -391,7 +392,21 @@ def _time_text(value: time | None) -> str | None:
 
 
 def _datetime_text(value: datetime | None) -> str | None:
-    return None if value is None else value.strftime("%Y-%m-%d %H:%M:%S")
+    return None if value is None else to_host_time(value).strftime("%Y-%m-%d %H:%M:%S")
+
+
+class _InvalidTimeError(ValueError):
+    """A time field of a request that is not written as _datetime_text
+    writes it."""
+
+
+def _stored_time(text: str | None, field: str) -> datetime | None:
+    """A time the REST API got back as _datetime_text wrote it. Raises
+    _InvalidTimeError naming the field for other text."""
+    try:
+        return None if not text else from_host_time(text)
+    except ValueError as err:
+        raise _InvalidTimeError(f"Invalid value for {field}") from err
 
 
 class DBCalls:
@@ -1102,6 +1117,12 @@ class DBCalls:
             if values[column] is None:
                 values[column] = default
         try:
+            values["atlas_last_discovery"] = _stored_time(
+                values["atlas_last_discovery"], "atlasLastDiscovery"
+            )
+        except _InvalidTimeError as err:
+            return (str(err), 400)
+        try:
             stored = JDBCConnection.model_validate(values)
         except ValidationError as err:
             fields = ", ".join(
@@ -1171,11 +1192,7 @@ class DBCalls:
             "atlasDiscovery": stored.atlas_discovery,
             "atlasIncludeFilter": stored.atlas_include_filter,
             "atlasExcludeFilter": stored.atlas_exclude_filter,
-            "atlasLastDiscovery": (
-                None
-                if stored.atlas_last_discovery is None
-                else stored.atlas_last_discovery.strftime("%Y-%m-%d %H:%M:%S")
-            ),
+            "atlasLastDiscovery": _datetime_text(stored.atlas_last_discovery),
         }
 
     def delete_connection(self, connection, current_user):
@@ -1652,6 +1669,36 @@ class DBCalls:
         """Update or create an import table"""
         log = logging.getLogger(self.logger)
 
+        settings = {
+            column: getattr(data, field)
+            for column, field in _IMPORT_TABLE_FIELDS.items()
+        }
+        for column, default in _IMPORT_TABLE_DEFAULTS.items():
+            if settings[column] is None:
+                settings[column] = default
+
+        columns = []
+        try:
+            settings["last_update_from_source"] = _stored_time(
+                settings["last_update_from_source"], "lastUpdateFromSource"
+            )
+            for column in data.columns:
+                values = {
+                    name: getattr(column, field)
+                    for name, field in _IMPORT_COLUMN_FIELDS.items()
+                }
+                values["last_update_from_source"] = _stored_time(
+                    values["last_update_from_source"], "lastUpdateFromSource"
+                )
+                # Force set to Null if string is empty. This will otherwise cause problems during executions as it's not handled there
+                for name in ("column_name_override", "column_type_override"):
+                    override = values[name]
+                    if isinstance(override, str) and override.strip() == "":
+                        values[name] = None
+                columns.append(values | {"hive_db": database, "hive_table": table})
+        except _InvalidTimeError as err:
+            return (str(err), 400)
+
         try:
             session = self.get_dbimport_session()
         except SQLError:
@@ -1664,27 +1711,6 @@ class DBCalls:
             database,
             table,
         )
-
-        settings = {
-            column: getattr(data, field)
-            for column, field in _IMPORT_TABLE_FIELDS.items()
-        }
-        for column, default in _IMPORT_TABLE_DEFAULTS.items():
-            if settings[column] is None:
-                settings[column] = default
-
-        columns = []
-        for column in data.columns:
-            values = {
-                name: getattr(column, field)
-                for name, field in _IMPORT_COLUMN_FIELDS.items()
-            }
-            # Force set to Null if string is empty. This will otherwise cause problems during executions as it's not handled there
-            for name in ("column_name_override", "column_type_override"):
-                override = values[name]
-                if isinstance(override, str) and override.strip() == "":
-                    values[name] = None
-            columns.append(values | {"hive_db": database, "hive_table": table})
 
         try:
             tables = ImportTablesRepository(session())
@@ -2337,6 +2363,40 @@ class DBCalls:
         """Update or create an export table"""
         log = logging.getLogger(self.logger)
 
+        settings = {
+            column: getattr(data, field)
+            for column, field in _EXPORT_TABLE_FIELDS.items()
+        }
+        for setting, default in _EXPORT_TABLE_DEFAULTS.items():
+            if settings[setting] is None:
+                settings[setting] = default
+
+        columns = []
+        try:
+            settings["last_update_from_hive"] = _stored_time(
+                settings["last_update_from_hive"], "lastUpdateFromHive"
+            )
+            for column in data.columns:
+                values = {
+                    name: getattr(column, field)
+                    for name, field in _EXPORT_COLUMN_FIELDS.items()
+                }
+                values["last_update_from_hive"] = _stored_time(
+                    values["last_update_from_hive"], "lastUpdateFromHive"
+                )
+                if column.columnOrder is not None:
+                    values["column_order"] = int(column.columnOrder) - 1
+                # Force set to Null if string is empty. This will otherwise cause problems during executions as it's not handled there
+                for name in ("target_column_name", "target_column_type"):
+                    target = values[name]
+                    if isinstance(target, str) and target.strip() == "":
+                        values[name] = None
+                columns.append(
+                    values | {"hive_db": data.database, "hive_table": data.table}
+                )
+        except _InvalidTimeError as err:
+            return (str(err), 400)
+
         try:
             session = self.get_dbimport_session()
         except SQLError:
@@ -2350,31 +2410,6 @@ class DBCalls:
             table,
             connection,
         )
-
-        settings = {
-            column: getattr(data, field)
-            for column, field in _EXPORT_TABLE_FIELDS.items()
-        }
-        for setting, default in _EXPORT_TABLE_DEFAULTS.items():
-            if settings[setting] is None:
-                settings[setting] = default
-
-        columns = []
-        for column in data.columns:
-            values = {
-                name: getattr(column, field)
-                for name, field in _EXPORT_COLUMN_FIELDS.items()
-            }
-            if column.columnOrder is not None:
-                values["column_order"] = int(column.columnOrder) - 1
-            # Force set to Null if string is empty. This will otherwise cause problems during executions as it's not handled there
-            for name in ("target_column_name", "target_column_type"):
-                target = values[name]
-                if isinstance(target, str) and target.strip() == "":
-                    values[name] = None
-            columns.append(
-                values | {"hive_db": data.database, "hive_table": data.table}
-            )
 
         try:
             tables = ExportTablesRepository(session())

@@ -21,7 +21,7 @@ import re
 import sys
 from collections.abc import Callable, Iterator
 from contextlib import contextmanager
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any, TypeVar
 
 import pandas as pd
@@ -63,7 +63,7 @@ class Config(metaclass=Singleton):
         target_table: str | None = None,
     ) -> None:
         logging.debug("Executing export_config.__init__()")
-        self.start_date: str | None = None
+        self.start_date: datetime | None = None
         self.common_config = None
 
         self.connection_alias = connection_alias
@@ -1778,8 +1778,8 @@ class Config(metaclass=Singleton):
         logging.info("Saving export statistics")
 
         self.sqoop_start_uts = sqoop_start_uts
-        self.sqoop_last_execution_timestamp = datetime.utcfromtimestamp(
-            sqoop_start_uts
+        self.sqoop_last_execution_timestamp = datetime.fromtimestamp(
+            sqoop_start_uts, UTC
         ).strftime("%Y-%m-%d %H:%M:%S.000")
 
         statistics: dict[str, object] = {}
