@@ -18,6 +18,12 @@ NOW = datetime(2026, 6, 1, 10, 0, 0, tzinfo=UTC)
 STORED_NOW = NOW.replace(tzinfo=None)
 
 
+def stored_time(text: str) -> datetime:
+    """A value as a DATETIME column holds it, without a zone, from ISO
+    text such as '2026-06-01 12:00'."""
+    return datetime.fromisoformat(text)
+
+
 @contextmanager
 def host_zone(zone: str = HOST_ZONE) -> Iterator[None]:
     """Runs the block with zone as the local time zone of the process."""

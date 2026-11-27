@@ -35,6 +35,9 @@ def print_help():
     print(
         "  --downgradeDB      Downgrades the configuration database schema by one revision"
     )
+    print(
+        "  --localTimeZone=<zone>  With --upgradeDB or --downgradeDB: the time zone the DBImport hosts ran in, for example Europe/Stockholm. Needed once, when the stored times move to UTC"
+    )
     print("")
     print(
         "  --buildHTML        Installs required npm packages and guild HTML files for DBImport UI"
@@ -58,6 +61,7 @@ def main(argv):
                 "createDB",
                 "upgradeDB",
                 "downgradeDB",
+                "localTimeZone=",
                 "createSchemaRst",
                 "debug",
                 "buildHTML",
@@ -70,13 +74,14 @@ def main(argv):
     hive_db = None
     hive_table = None
     operation = None
+    local_time_zone = None
     logging_level = logging.INFO
     print_header = True
 
     if len(opts) == 0:
         print_help()
 
-    for opt, _arg in opts:
+    for opt, arg in opts:
         if opt in ("-v", "--debug"):
             logging_level = logging.DEBUG
         elif opt == "--help":
@@ -87,6 +92,8 @@ def main(argv):
             operation = "upgradeDB"
         elif opt == "--downgradeDB":
             operation = "downgradeDB"
+        elif opt == "--localTimeZone":
+            local_time_zone = arg
         elif opt == "--buildHTML":
             operation = "buildHTML"
         elif opt == "--createSchemaRst":
@@ -150,11 +157,11 @@ def main(argv):
 
     if operation == "upgradeDB":
         db_operations = database_operations.Initialize()
-        db_operations.upgrade_db()
+        db_operations.upgrade_db(local_time_zone)
 
     if operation == "downgradeDB":
         db_operations = database_operations.Initialize()
-        db_operations.downgrade_db()
+        db_operations.downgrade_db(local_time_zone)
 
     if operation == "createSchemaRst":
         db_operations = database_operations.Initialize()

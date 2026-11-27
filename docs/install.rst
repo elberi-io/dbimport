@@ -282,6 +282,12 @@ This command will only upgrade the schema if it's not in the last version. So it
 
 It also adds new keys to the *configuration* table with their default values and sets the description of every key to the text of the installed version. The values of existing keys are not changed.
 
+Versions after 1.00.006 store the times of the configuration database in UTC (ADR-0007). Before, DBImport wrote them in the local time zone of the host it ran on, and the database does not record that zone. The first *setup --upgradeDB* after that change converts the stored times and needs the zone they were written in; without it, it stops with an error before it changes a stored time::
+
+        ./setup --upgradeDB --localTimeZone=Europe/Stockholm
+
+Use the zone the DBImport hosts ran in. The conversion rewrites every time column, which takes long on large statistics tables; take a backup of the configuration database first. Times written in the hour that repeats when daylight saving time ends are taken as the earlier of the two. Three columns took their value from the database server's clock (*copy_async_status.last_status_update* when a copy is queued, *json_to_send.create_time* and *auto_discovered_tables.discovery_time*); they are converted with the same zone, so a database server in another time zone than the DBImport hosts leaves them off by the difference. Going back with *setup --downgradeDB* needs the same option and converts the times back; it stops without a change when two times of a key column would become the same local time.
+
 When upgrading from a version before 1.0.0: upgrade to 1.00.006 first and run *setup --upgradeDB* with it. The versions after 1.00.006 start the schema history with the schema of 1.00.006 and stop with an error on an older configuration database.
 
 To go back to an earlier version of DBImport, run *setup --downgradeDB* with the newer version first, once for each schema revision that the newer version added. Each run undoes one revision; it does not go below the schema of 1.00.006.
