@@ -41,7 +41,6 @@ dependencies = [
     "krb5==0.10.0",
     "Mako==1.3.2",
     "MarkupSafe==2.1.5",
-    "mysql-connector-python==26.10.0",
     "numpy==1.26.4",
     "packaging==26.3",
     "pandas==2.2.1",
